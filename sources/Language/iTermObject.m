@@ -58,6 +58,15 @@ void iTermCallMethodByIdentifierWithConnectionKey(NSString *identifier,
                                                   NSDictionary *args,
                                                   id connectionKey,
                                                   void (^completion)(id, NSError *)) {
+    iTermCallMethodByIdentifierWithConnectionKeyAndCancellation(identifier, name, args, connectionKey, nil, completion);
+}
+
+void iTermCallMethodByIdentifierWithConnectionKeyAndCancellation(NSString *identifier,
+                                                                 NSString *name,
+                                                                 NSDictionary *args,
+                                                                 id connectionKey,
+                                                                 iTermScriptCallCancellation *cancellation,
+                                                                 void (^completion)(id, NSError *)) {
     id<iTermObject> object = [[iTermVariablesIndex sharedInstance] variablesForKey:identifier].owner;
     if (!object) {
         completion(nil,
@@ -67,7 +76,7 @@ void iTermCallMethodByIdentifierWithConnectionKey(NSString *identifier,
         return;
     }
 
-    iTermCallMethodOnObjectWithConnectionKey(object, name, args, connectionKey, completion);
+    iTermCallMethodOnObjectWithConnectionKeyAndCancellation(object, name, args, connectionKey, cancellation, completion);
 }
 
 void iTermCallMethodOnObjectWithConnectionKey(id<iTermObject> object,
@@ -75,6 +84,15 @@ void iTermCallMethodOnObjectWithConnectionKey(id<iTermObject> object,
                                               NSDictionary *args,
                                               id connectionKey,
                                               void (^completion)(id, NSError *)) {
+    iTermCallMethodOnObjectWithConnectionKeyAndCancellation(object, name, args, connectionKey, nil, completion);
+}
+
+void iTermCallMethodOnObjectWithConnectionKeyAndCancellation(id<iTermObject> object,
+                                                             NSString *name,
+                                                             NSDictionary *args,
+                                                             id connectionKey,
+                                                             iTermScriptCallCancellation *cancellation,
+                                                             void (^completion)(id, NSError *)) {
     NSString *const signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(nil, name, args.allKeys);
     iTermBuiltInMethod *const method = [object.objectMethodRegistry methodWithSignature:signature];
     if (!method) {
@@ -86,6 +104,9 @@ void iTermCallMethodOnObjectWithConnectionKey(id<iTermObject> object,
         return;
     }
 
-    [method callWithArguments:args connectionKey:connectionKey completion:completion];
+    [method callWithArguments:args
+                connectionKey:connectionKey
+                 cancellation:cancellation
+                   completion:completion];
 }
 

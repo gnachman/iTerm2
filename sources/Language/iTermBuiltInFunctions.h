@@ -9,6 +9,8 @@
 
 #import "iTermVariableScope.h"
 
+@class iTermScriptCallCancellation;
+
 NS_ASSUME_NONNULL_BEGIN
 
 NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nullable namespace_, NSString *name, NSArray<NSString *> *argumentNames);
@@ -68,6 +70,13 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 // Call with connectionKey - if the method has a connectionKey: parameter, it will be passed.
 - (void)callWithArguments:(NSDictionary<NSString *, id> *)arguments
             connectionKey:(nullable id)connectionKey
+               completion:(iTermBuiltInFunctionCompletionBlock)block;
+
+// Like callWithArguments:connectionKey:completion:. If the method has a cancellation: parameter, `cancellation` is passed. It
+// tells the method that the caller stopped waiting for the result.
+- (void)callWithArguments:(NSDictionary<NSString *, id> *)arguments
+            connectionKey:(nullable id)connectionKey
+             cancellation:(nullable iTermScriptCallCancellation *)cancellation
                completion:(iTermBuiltInFunctionCompletionBlock)block;
 
 - (BOOL)matchedBySignature:(NSString *)signature inNamespace:(NSString *)namespace_;

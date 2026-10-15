@@ -1406,3 +1406,7 @@ Bug Fixes:
   values are ignored, and the window now stays
   between its minimum size and the size of your
   displays, with part of it on a display.
+- If a Python script that loads a URL in a
+  browser session gave up waiting while you
+  read the permission prompt, approving it
+  afterward no longer loads the URL.

@@ -469,9 +469,11 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     if (!argDict) {
         return nil;
     }
-    // Remove connectionKey from the public signature - it's injected internally, not passed by callers
+    // Remove connectionKey and cancellation from the public signature - they're injected
+    // internally, not passed by callers
     NSMutableDictionary *publicArgDict = [argDict mutableCopy];
     [publicArgDict removeObjectForKey:@"connectionKey"];
+    [publicArgDict removeObjectForKey:@"cancellation"];
     self = [super initWithName:name
                      arguments:publicArgDict
              optionalArguments:[NSSet set]
@@ -528,6 +530,16 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 - (void)callWithArguments:(NSDictionary<NSString *, id> *)parameters
             connectionKey:(id)connectionKey
                completion:(iTermBuiltInFunctionCompletionBlock)completion {
+    [self callWithArguments:parameters
+              connectionKey:connectionKey
+               cancellation:nil
+                 completion:completion];
+}
+
+- (void)callWithArguments:(NSDictionary<NSString *, id> *)parameters
+            connectionKey:(id)connectionKey
+             cancellation:(iTermScriptCallCancellation *)cancellation
+               completion:(iTermBuiltInFunctionCompletionBlock)completion {
     NSMethodSignature *signature = [[(NSObject *)_target class] instanceMethodSignatureForSelector:_action];
     NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
     invocation.target = _target;
@@ -540,6 +552,9 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
         } else if ([arg.argumentName isEqualToString:@"connectionKey"]) {
             // Special handling for connectionKey - injected by the caller, not from parameters
             temp[i] = connectionKey;
+        } else if ([arg.argumentName isEqualToString:@"cancellation"]) {
+            // Injected like connectionKey.
+            temp[i] = cancellation;
         } else {
             if (!parameters[arg.argumentName]) {
                 assert([_optionalArguments containsObject:arg.argumentName]);

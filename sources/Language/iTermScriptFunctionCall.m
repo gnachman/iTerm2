@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermAPIHelper.h"
 #import "iTermBuiltInFunctions.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermExpressionParser.h"
 #import "iTermObject.h"
@@ -44,6 +45,8 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
     NSMutableDictionary<NSString *, iTermParsedExpression *> *_argToExpression;
     NSMutableArray<iTermExpressionEvaluator *> *_evaluators;
     NSMutableSet<NSString *> *_remainingArgs;
+    // Cancelled when the call times out. Nil if it has no timeout.
+    iTermScriptCallCancellation *_cancellation;
 }
 
 - (instancetype)init {
@@ -417,6 +420,10 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
     __block NSTimer *timer = nil;
     _remainingArgs = [NSMutableSet setWithArray:_argToExpression.allKeys];
     if (timeout > 0) {
+        // Lets a method that is still waiting (for example, on a prompt) learn that its
+        // caller gave up, so it doesn't act after the caller was told it failed.
+        iTermScriptCallCancellation *cancellation = [[iTermScriptCallCancellation alloc] init];
+        _cancellation = cancellation;
         // NOTE: The timer's block retains the completion block which is what keeps the caller
         // from being dealloc'ed when it is an iTermExpressionEvaluator.
         __weak __typeof(self) weakSelf = self;
@@ -426,6 +433,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                 return;
             }
             timer = nil;
+            [cancellation cancel];
             [weakSelf functionCallDidTimeOutAfter:timeout
                                        invocation:invocation
                                        completion:completion];
@@ -506,13 +514,14 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         return;
     }
     if (receiver) {
-        iTermCallMethodByIdentifierWithConnectionKey(receiver,
-                                                     self.fullyQualifiedName,
-                                                     parameterValues,
-                                                     self.connectionKey,
-                                                     ^(id object, NSError *error) {
-                                                         completion(object, error, nil);
-                                                     });
+        iTermCallMethodByIdentifierWithConnectionKeyAndCancellation(receiver,
+                                                                    self.fullyQualifiedName,
+                                                                    parameterValues,
+                                                                    self.connectionKey,
+                                                                    _cancellation,
+                                                                    ^(id object, NSError *error) {
+            completion(object, error, nil);
+        });
         return;
     }
     if (self.isBuiltinFunction) {

@@ -24206,7 +24206,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                   context:iTermVariablesSuggestionContextSession
                                    sideEffectsPlaceholder:@"[load_url]"
                                                    target:self
-                                                   action:@selector(loadURLWithCompletion:url:connectionKey:)];
+                                                   action:@selector(loadURLWithCompletion:url:connectionKey:cancellation:)];
         [_methods registerFunction:method namespace:@"iterm2"];
 
         method = [[iTermBuiltInMethod alloc] initWithName:@"browser_set_toolbar_hidden"
@@ -24226,7 +24226,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                   context:iTermVariablesSuggestionContextSession
                                    sideEffectsPlaceholder:@"[browser_eval_js]"
                                                    target:self
-                                                   action:@selector(browserEvalJSWithCompletion:js:connectionKey:)];
+                                                   action:@selector(browserEvalJSWithCompletion:js:connectionKey:cancellation:)];
         [_methods registerFunction:method namespace:@"iterm2"];
     }
     return _methods;
@@ -24329,9 +24329,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                            userInfo:@{ NSLocalizedDescriptionKey: message }];
 }
 
+// `cancellation` is cancelled if the script stops waiting, as when the user takes longer to
+// answer the prompt than the script's timeout.
 - (void)loadURLWithCompletion:(void (^)(id, NSError *))completion
                           url:(NSString *)urlString
-                connectionKey:(id)connectionKey {
+                connectionKey:(id)connectionKey
+                 cancellation:(iTermScriptCallCancellation *)cancellation {
     // 1. Validate browser session
     if (!self.isBrowserSession) {
         completion(nil, [self loadURLErrorWithCode:1
@@ -24377,6 +24380,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                      window:self.delegate.realParentWindow.window
                                  completion:^(iTermWarningSelection selection,
                                               iTermWarning *warning) {
+        if (cancellation.isCancelled) {
+            // The script already got a timeout error. Loading now would act on its behalf
+            // after it was told the request failed. A remembered answer is still saved.
+            DLog(@"load_url prompt answered after the script stopped waiting; not loading %@", url);
+            // Localization unneeded (never delivered: the call already timed out)
+            completion(nil, [self loadURLErrorWithCode:5
+                                               message:@"The script stopped waiting before the user answered."]);
+            return;
+        }
         if (selection == kiTermWarningSelection0) {
             [self performLoadURL:url completion:completion];
         } else {
@@ -24416,9 +24428,12 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
 // Runs a JavaScript function body in the page world of a browser session and returns its
 // value as a JSON string. The body may use await and must `return` its result. Like
 // load_url, the first use per origin asks the user; the answer can be remembered.
+// `cancellation` is cancelled if the script stops waiting, as when the user takes longer to
+// answer the prompt than the script's timeout.
 - (void)browserEvalJSWithCompletion:(void (^)(id, NSError *))completion
                                  js:(NSString *)js
-                      connectionKey:(id)connectionKey {
+                      connectionKey:(id)connectionKey
+                       cancellation:(iTermScriptCallCancellation *)cancellation {
     if (!self.isBrowserSession || !_view.browserViewController) {
         completion(nil, PTYSessionBrowserEvalJSError(1, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.NotBrowser", nil, [NSBundle mainBundle], @"browser_eval_js is only supported in browser sessions.", @"Error returned to a script that tried to run JavaScript in a session that is not a web browser; browser_eval_js is a function name")));
         return;
@@ -24435,6 +24450,12 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
             completion(nil, PTYSessionBrowserEvalJSError(6, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.NotWebPage", nil, [NSBundle mainBundle], @"browser_eval_js requires an http or https page.", @"Error returned to a script that tried to run JavaScript on a page that is not a web page, such as a blank page or a local file; browser_eval_js is a function name")));
             return;
         }
+        if (cancellation.isCancelled) {
+            // Don't ask the user about a request the script already gave up on.
+            // Localization unneeded (never delivered: the call already timed out)
+            completion(nil, PTYSessionBrowserEvalJSError(10, @"The script stopped waiting before the user answered."));
+            return;
+        }
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             completion(nil, PTYSessionBrowserEvalJSError(1, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.SessionClosed", nil, [NSBundle mainBundle], @"The browser session closed before the JavaScript could run.", @"Error returned to a script when its browser session closed while the user was approving JavaScript")));
@@ -24444,6 +24465,7 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
                                     pageOrigin:pageOrigin
                                     siteOrigin:siteOrigin
                                  connectionKey:connectionKey
+                                  cancellation:cancellation
                                     completion:completion];
     }];
 }
@@ -24452,6 +24474,7 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
                         pageOrigin:(NSString *)pageOrigin
                         siteOrigin:(NSString *)siteOrigin
                      connectionKey:(id)connectionKey
+                      cancellation:(iTermScriptCallCancellation *)cancellation
                         completion:(void (^)(id, NSError *))completion {
     iTermScriptHistoryEntry *entry = [[iTermAPIHelper sharedInstanceIfEnabled] scriptHistoryEntryForConnectionKey:connectionKey];
     NSString *scriptName = entry.name ?: @"A script";
@@ -24475,6 +24498,15 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
                                      window:self.delegate.realParentWindow.window
                                  completion:^(iTermWarningSelection selection,
                                               iTermWarning *warning) {
+        if (cancellation.isCancelled) {
+            // The script already got a timeout error. Running the JavaScript now would act
+            // on its behalf after it was told the request failed. A remembered answer is
+            // still saved.
+            DLog(@"JavaScript prompt for %@ answered after the script stopped waiting; not running it", siteOrigin);
+            // Localization unneeded (never delivered: the call already timed out)
+            completion(nil, PTYSessionBrowserEvalJSError(10, @"The script stopped waiting before the user answered."));
+            return;
+        }
         if (selection != kiTermWarningSelection0) {
             completion(nil, PTYSessionBrowserEvalJSError(4, NSLocalizedStringWithDefaultValue(@"BrowserEvalJS.Denied", nil, [NSBundle mainBundle], @"The user denied permission to run JavaScript.", @"Error returned to a script when the user declined to let it run JavaScript on a website")));
             return;

@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermBuiltInFunctions;
+@class iTermScriptCallCancellation;
 @class iTermScriptFunctionCall;
 @class iTermVariableScope;
 
@@ -33,6 +34,14 @@ void iTermCallMethodByIdentifierWithConnectionKey(NSString *identifier,
                                                   id _Nullable connectionKey,
                                                   void (^completion)(id, NSError *));
 
+// A method that takes a cancellation: argument receives `cancellation`.
+void iTermCallMethodByIdentifierWithConnectionKeyAndCancellation(NSString *identifier,
+                                                                 NSString *name,
+                                                                 NSDictionary *args,
+                                                                 id _Nullable connectionKey,
+                                                                 iTermScriptCallCancellation * _Nullable cancellation,
+                                                                 void (^completion)(id, NSError *));
+
 void iTermCallMethodOnObject(id<iTermObject> object,
                              NSString *name,
                              NSDictionary *args,
@@ -43,6 +52,13 @@ void iTermCallMethodOnObjectWithConnectionKey(id<iTermObject> object,
                                               NSDictionary *args,
                                               id _Nullable connectionKey,
                                               void (^completion)(id, NSError *));
+
+void iTermCallMethodOnObjectWithConnectionKeyAndCancellation(id<iTermObject> object,
+                                                             NSString *name,
+                                                             NSDictionary *args,
+                                                             id _Nullable connectionKey,
+                                                             iTermScriptCallCancellation * _Nullable cancellation,
+                                                             void (^completion)(id, NSError *));
 
 
 NS_ASSUME_NONNULL_END

@@ -224,9 +224,61 @@ def test_eval_javascript_invokes_builtin_and_decodes_json(monkeypatch):
             connection,
             "session-id",
             'iterm2.browser_eval_js(js: "return \\"a\\" + \\"b\\"")',
-            -1,
+            iterm2.session.PROMPTING_CALL_DEFAULT_TIMEOUT,
         )
     ]
+
+
+def capture_invoke_timeouts(monkeypatch, result=None):
+    timeouts = []
+
+    async def async_invoke_method(actual_connection, session_id, invocation, timeout):
+        timeouts.append(timeout)
+        return result
+
+    monkeypatch.setattr(iterm2.session, "async_invoke_method", async_invoke_method)
+    return timeouts
+
+
+def test_eval_javascript_waits_long_enough_for_a_permission_prompt(monkeypatch):
+    """The first use on a site asks the user, and the prompt doesn't time out.
+
+    The usual 30 second invoke timeout gave up on users who read the prompt.
+    """
+    session, _ = make_session(protocol_version=(1, 22))
+    timeouts = capture_invoke_timeouts(monkeypatch, result="null")
+
+    asyncio.run(session.async_eval_javascript("return null"))
+
+    assert timeouts == [iterm2.session.PROMPTING_CALL_DEFAULT_TIMEOUT]
+    assert iterm2.session.PROMPTING_CALL_DEFAULT_TIMEOUT >= 300
+
+
+def test_eval_javascript_passes_an_explicit_timeout(monkeypatch):
+    session, _ = make_session(protocol_version=(1, 22))
+    timeouts = capture_invoke_timeouts(monkeypatch, result="null")
+
+    asyncio.run(session.async_eval_javascript("return null", timeout=5))
+
+    assert timeouts == [5]
+
+
+def test_load_url_waits_long_enough_for_a_permission_prompt(monkeypatch):
+    session, _ = make_session(protocol_version=(1, 22))
+    timeouts = capture_invoke_timeouts(monkeypatch)
+
+    asyncio.run(session.async_load_url("https://example.com/"))
+
+    assert timeouts == [iterm2.session.PROMPTING_CALL_DEFAULT_TIMEOUT]
+
+
+def test_load_url_passes_an_explicit_timeout(monkeypatch):
+    session, _ = make_session(protocol_version=(1, 22))
+    timeouts = capture_invoke_timeouts(monkeypatch)
+
+    asyncio.run(session.async_load_url("https://example.com/", timeout=-1))
+
+    assert timeouts == [-1]
 
 
 def test_browser_scripting_requires_app_support():

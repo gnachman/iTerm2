@@ -67,6 +67,17 @@ if TYPE_CHECKING:
 # pylint: disable=too-many-lines
 # pylint: disable=too-many-public-methods
 
+# How long a call that may ask the user for permission waits by default. The
+# prompt doesn't time out, and the usual 30 seconds is too short for a user who
+# reads it before answering.
+PROMPTING_CALL_DEFAULT_TIMEOUT = 600.0
+
+
+def _prompting_call_timeout(timeout: float | None) -> float:
+    if timeout is None:
+        return PROMPTING_CALL_DEFAULT_TIMEOUT
+    return timeout
+
 
 class SplitPaneException(Exception):
     """Something went wrong when trying to split a pane."""
@@ -1143,7 +1154,7 @@ class Session:
             await async_invoke_method(self.connection, self.session_id, invocation, -1)
         )
 
-    async def async_load_url(self, url: str) -> None:
+    async def async_load_url(self, url: str, timeout: float | None = None) -> None:
         """
         Load a URL in a browser session.
 
@@ -1152,15 +1163,26 @@ class Session:
         prompt again for any script.
 
         :param url: The URL to load.
+        :param timeout: The number of seconds to wait, including the time the
+            user takes to answer the prompt. If it runs out, this raises an
+            exception and the URL is not loaded, even if the user approves
+            later. Defaults to ten minutes. A negative value uses iTerm2's
+            default of 30 seconds.
 
         :raises: :class:`~iterm2.rpc.RPCException` if the session is not a
-            browser session, the URL is invalid, or the user denies permission.
+            browser session, the URL is invalid, the user denies permission,
+            or the timeout runs out.
 
         .. seealso:: Example ":ref:`open_browser_tab_example`"
         """
         check_supports_load_url(self.connection)
         invocation = invocation_string("iterm2.load_url", {"url": url})
-        await async_invoke_method(self.connection, self.session_id, invocation, -1)
+        await async_invoke_method(
+            self.connection,
+            self.session_id,
+            invocation,
+            _prompting_call_timeout(timeout),
+        )
 
     async def async_set_browser_toolbar_hidden(self, hidden: bool) -> None:
         """
@@ -1178,7 +1200,9 @@ class Session:
         )
         await async_invoke_method(self.connection, self.session_id, invocation, -1)
 
-    async def async_eval_javascript(self, js: str) -> Any:
+    async def async_eval_javascript(
+        self, js: str, timeout: float | None = None
+    ) -> Any:
         """
         Run JavaScript in the page shown by a browser session and return its result.
 
@@ -1191,16 +1215,25 @@ class Session:
         asked to approve it, and may choose to remember the answer.
 
         :param js: The function body to run in the page.
+        :param timeout: The number of seconds to wait, including the time the
+            user takes to answer the prompt. If it runs out while the prompt is
+            up, this raises an exception and the JavaScript does not run, even
+            if the user approves later. It also limits how long the
+            JavaScript may run. Defaults to ten minutes. A negative value uses
+            iTerm2's default of 30 seconds.
         :returns: The decoded return value.
 
         :raises: :class:`~iterm2.rpc.RPCException` if the session is not a
             browser session, the JavaScript throws (the exception's message is
-            included), or the user denies permission.
+            included), the user denies permission, or the timeout runs out.
         """
         check_supports_browser_scripting(self.connection)
         invocation = invocation_string("iterm2.browser_eval_js", {"js": js})
         result = await async_invoke_method(
-            self.connection, self.session_id, invocation, -1
+            self.connection,
+            self.session_id,
+            invocation,
+            _prompting_call_timeout(timeout),
         )
         return json.loads(result) if isinstance(result, str) else result
 

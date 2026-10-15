@@ -4652,6 +4652,7 @@
 		CC1EDD90C29B2AFC43831C81 /* VT100StringConversionConfig.h in Sources */ = {isa = PBXBuildFile; fileRef = 6F87CB3CBFBF0D0E8781513C /* VT100StringConversionConfig.h */; };
 		CCBFF5C9FA0B931ADA3F66F6 /* iTermRemoteDataFileSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ACD26966C02B9319DD9A9EF /* iTermRemoteDataFileSync.swift */; };
 		CD2E8590B507B08EBD3313A3 /* iTermCompactProxyIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6CB27B6647329ACD05CE222 /* iTermCompactProxyIconView.swift */; };
+		CD388563D594128FAE60C524 /* iTermScriptCallCancellation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E172337D1463B9CDE359B55 /* iTermScriptCallCancellation.swift */; };
 		CDCC2B56B9ECB9B461A9EEFA /* AITabTitleGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45FB9AAD273DCCA975189D9B /* AITabTitleGenerator.swift */; };
 		CE902D9AE7A0A17744578496 /* iTermRecordingProfileSanitizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F400887FD7A5B23D916AD9 /* iTermRecordingProfileSanitizer.swift */; };
 		CF138846630690AA6A7BCFD5 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
@@ -5075,6 +5076,7 @@
 		0DB9037425C749B5A0E7E089 /* iTermWorkgroupModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupModel.swift; sourceTree = "<group>"; };
 		0DC8A8C38113E7067A530893 /* iTermBrowserBasicAuthManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBrowserBasicAuthManager.swift; sourceTree = "<group>"; };
 		0DCE6E6D44984C2D7ECD0AB4 /* iTermArrangementTrustGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermArrangementTrustGate.swift; sourceTree = "<group>"; };
+		0E172337D1463B9CDE359B55 /* iTermScriptCallCancellation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScriptCallCancellation.swift; sourceTree = "<group>"; };
 		0E403008EA58864DB2A3AED2 /* ClippingsGutterPanel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClippingsGutterPanel.swift; sourceTree = "<group>"; };
 		0E470DCAD5690B5FD7996CD1 /* CompanionSessionLister.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CompanionSessionLister.swift; path = sources/Companion/CompanionSessionLister.swift; sourceTree = "<group>"; };
 		0E91427E38CF4E13BD822A4C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermHotkeyPreferencesWindowController.xib; sourceTree = "<group>"; };
@@ -11005,6 +11007,7 @@
 				A6BF035B21E179BD0097DA86 /* iTermWeakVariables.m */,
 				A6E9AA1C2F1701F900A04BAE /* Subexpression.swift */,
 				A62EE25427448CDB00D57B54 /* SwiftyStringWithBackreferencesEvaluator.swift */,
+				0E172337D1463B9CDE359B55 /* iTermScriptCallCancellation.swift */,
 			);
 			path = Language;
 			sourceTree = "<group>";
@@ -20099,6 +20102,7 @@
 				C82D25B322F076F4733D63A3 /* CompanionWizardSetupRunner.swift in Sources */,
 				C959D018A0A3F0DE2FFFA2CF /* PasswordManagerOpenGate.swift in Sources */,
 				19A3A8B46203B6BA5983DCC0 /* SetWindowFrameRequest.swift in Sources */,
+				CD388563D594128FAE60C524 /* iTermScriptCallCancellation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
