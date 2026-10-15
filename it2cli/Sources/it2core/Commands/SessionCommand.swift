@@ -202,11 +202,11 @@ extension Session {
             if resp.submessageOneOfCase == .variableResponse,
                let vr = resp.variableResponse,
                vr.status == ITMVariableResponse_Status.ok {
-                if vr.valuesArray_Count > 0, let n = vr.valuesArray.object(at: 0) as? String, n != "null" {
-                    name = n.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                if vr.valuesArray_Count > 0, let n = vr.valuesArray.object(at: 0) as? String {
+                    name = decodeJSONString(n) ?? ""
                 }
-                if vr.valuesArray_Count > 1, let t = vr.valuesArray.object(at: 1) as? String, t != "null" {
-                    tty = t.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                if vr.valuesArray_Count > 1, let t = vr.valuesArray.object(at: 1) as? String {
+                    tty = decodeJSONString(t) ?? ""
                 }
             }
             return (name, tty)
