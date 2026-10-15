@@ -1717,3 +1717,6 @@ Bug Fixes:
   row in the composer’s suggestion list no
   longer shows extra backslashes before
   spaces and other special characters.
+- With Archive On Closure on, closing a pane in
+  a tmux integration window no longer saves an
+  archive of it that could not be restored.

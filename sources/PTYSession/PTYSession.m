@@ -749,6 +749,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     TriggerController *_triggerWindowController;
     iTermEventTriggerEvaluator *_eventTriggerEvaluator;
 
+    // Set by -terminate, which clears tmuxMode before -hardStop runs. A tmux client's contents
+    // belong to the tmux server, so it isn't archived on closure.
+    BOOL _terminatedAsTmuxClient;
     // Tracks the scheduled -hardStop that makes a terminated session stop being
     // restorable. Used to pause/resume the countdown (see -pauseTerminationTimer)
     // so a modal alert can be shown without the restorable session expiring.
@@ -4014,6 +4017,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
+    _terminatedAsTmuxClient = wasTmuxClient;
     BOOL undoable = (![self isTmuxClient] &&
                      !_shouldRestart &&
                      !_synthetic &&
@@ -4167,6 +4171,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         // Its contents are already in that archive.
         archivePath = _restoredArchivePath;
     } else if (!self.isTmuxClient &&
+               !_terminatedAsTmuxClient &&
                !_isArchive &&
                [iTermProfilePreferences boolForKey:KEY_ARCHIVE inProfile:self.profile]) {
         archivePath = [self saveArchive];
