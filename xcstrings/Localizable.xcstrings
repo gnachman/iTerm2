@@ -117320,6 +117320,258 @@
         }
       }
     },
+    "OrchestrationTool.TimerAfter" : {
+      "comment" : "AI chat bubble shown when the AI sets a timer. The placeholder is a short duration, such as 5min.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Timer wird gestellt, der in %@ auslöst"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Setting a timer to fire in %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@後に作動するタイマーを設定しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definindo um timer para disparar em %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установка таймера, который сработает через %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在设置将在 %@ 后触发的计时器"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.TimerAfterWithNote" : {
+      "comment" : "AI chat bubble shown when the AI sets a timer. The first placeholder is a short duration, such as 5min; the second is the timer’s note, already in quotation marks.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Timer wird gestellt, der in %1$@ auslöst: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Setting a timer to fire in %1$@: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@後に作動するタイマーを設定しています: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definindo um timer para disparar em %1$@: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установка таймера, который сработает через %1$@: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在设置将在 %1$@ 后触发的计时器：%2$@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.TimerAt" : {
+      "comment" : "AI chat bubble shown when the AI sets a timer. The placeholder is the time the AI asked for, as an ISO 8601 timestamp.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Timer wird gestellt, der um %@ auslöst"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Setting a timer to fire at %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@に作動するタイマーを設定しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definindo um timer para disparar às %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установка таймера, который сработает в %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在设置将在 %@ 触发的计时器"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.TimerAtWithNote" : {
+      "comment" : "AI chat bubble shown when the AI sets a timer. The first placeholder is the time the AI asked for, as an ISO 8601 timestamp; the second is the timer’s note, already in quotation marks.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Timer wird gestellt, der um %1$@ auslöst: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Setting a timer to fire at %1$@: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@に作動するタイマーを設定しています: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definindo um timer para disparar às %1$@: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установка таймера, который сработает в %1$@: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在设置将在 %1$@ 触发的计时器：%2$@"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.TimerLater" : {
+      "comment" : "AI chat bubble shown when the AI sets a timer without a recognizable time.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Timer wird gestellt, der später auslöst"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Setting a timer to fire later"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "後で作動するタイマーを設定しています"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definindo um timer para disparar mais tarde"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установка таймера, который сработает позже"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在设置稍后触发的计时器"
+          }
+        }
+      }
+    },
+    "OrchestrationTool.TimerLaterWithNote" : {
+      "comment" : "AI chat bubble shown when the AI sets a timer without a recognizable time. The placeholder is the timer’s note, already in quotation marks.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Timer wird gestellt, der später auslöst: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Setting a timer to fire later: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "後で作動するタイマーを設定しています: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definindo um timer para disparar mais tarde: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установка таймера, который сработает позже: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在设置稍后触发的计时器：%@"
+          }
+        }
+      }
+    },
     "OrchestratorDispatcher.DisableCancelledTimers" : {
       "comment" : "Chat notice shown after the user turns off orchestration mode in an AI chat. The placeholder is the number of pending timers (scheduled agent wake-ups) that were cancelled.",
       "localizations" : {
@@ -118354,6 +118606,90 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "OrchestratorDispatcher.WatchScreenReadConsent" : {
+      "comment" : "Body of a prompt asking the user to let an AI chat’s watch read a terminal session’s screen on a timer. The placeholder is the session’s name, such as -zsh. View Contents and Ask are the names of a setting and its value.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Überwachung liest den Bildschirm von %@ wiederholt, während sie wartet. „KI kann Inhalte anzeigen“ ist für diese Sitzung auf „Fragen“ gesetzt. Möchten Sie dieses Lesen im Hintergrund erlauben, bis die Überwachung endet?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This watch reads %@’s screen repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この監視は、待機中に%@の画面を繰り返し読み取ります。このセッションでは「AI が内容を表示可能」が「毎回確認」に設定されています。監視が終了するまで、このバックグラウンドでの読み取りを許可しますか？"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este monitoramento lê a tela de %@ repetidamente enquanto aguarda. “A IA pode ver o conteúdo” está definido como “Perguntar” para esta sessão. Permitir esta leitura em segundo plano até o monitoramento terminar?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это наблюдение многократно считывает экран %@ во время ожидания. Для этого сеанса параметр «ИИ может просматривать содержимое» установлен в значение «Спрашивать». Разрешить это фоновое чтение до завершения наблюдения?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此监视在等待期间会反复读取 %@ 的屏幕。此会话的“AI可以查看文件内容”设置为“询问”。是否允许在监视结束前进行这种后台读取？"
+          }
+        }
+      }
+    },
+    "OrchestratorDispatcher.WatchScreenReadConsentInWorkgroup" : {
+      "comment" : "Body of a prompt asking the user to let an AI chat’s watch read a terminal session’s screen on a timer. The first placeholder is the session’s role name and the second is the name of the workgroup it belongs to. View Contents and Ask are the names of a setting and its value.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Überwachung liest den Bildschirm von %1$@ in %2$@ wiederholt, während sie wartet. „KI kann Inhalte anzeigen“ ist für diese Sitzung auf „Fragen“ gesetzt. Möchten Sie dieses Lesen im Hintergrund erlauben, bis die Überwachung endet?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This watch reads the screen of %1$@ in %2$@ repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この監視は、待機中に%2$@の%1$@の画面を繰り返し読み取ります。このセッションでは「AI が内容を表示可能」が「毎回確認」に設定されています。監視が終了するまで、このバックグラウンドでの読み取りを許可しますか？"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este monitoramento lê a tela de %1$@ em %2$@ repetidamente enquanto aguarda. “A IA pode ver o conteúdo” está definido como “Perguntar” para esta sessão. Permitir esta leitura em segundo plano até o monitoramento terminar?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это наблюдение многократно считывает экран %1$@ в %2$@ во время ожидания. Для этого сеанса параметр «ИИ может просматривать содержимое» установлен в значение «Спрашивать». Разрешить это фоновое чтение до завершения наблюдения?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此监视在等待期间会反复读取 %2$@ 中 %1$@ 的屏幕。此会话的“AI可以查看文件内容”设置为“询问”。是否允许在监视结束前进行这种后台读取？"
           }
         }
       }

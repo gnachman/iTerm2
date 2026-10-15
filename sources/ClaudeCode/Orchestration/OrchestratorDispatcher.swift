@@ -2675,11 +2675,30 @@ final class OrchestratorDispatcher {
     @MainActor
     private func promptForWatchScreenRead(
         resolved: WorkgroupIntrospection.ResolvedTarget) async -> Bool {
-        let summary = "This watch reads \(Self.watcherTargetLabel(role: resolved.roleName, workgroup: resolved.workgroupName, workgroupID: resolved.workgroupID))'s screen repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?"
+        let summary = Self.watchScreenReadConsentText(role: resolved.roleName,
+                                                      workgroup: resolved.workgroupName,
+                                                      workgroupID: resolved.workgroupID)
         return await awaitPermission(
             workgroupID: WorkgroupIntrospection.watchApprovalWorkgroupID,
             workgroupName: resolved.workgroupName,
             summary: summary)
+    }
+
+    // The body of the watch screen-read consent prompt. A standalone session is
+    // named by its role alone; a session in a real workgroup also names the
+    // workgroup (the same distinction watcherTargetLabel draws), each as a
+    // complete sentence so translators can reorder it.
+    nonisolated static func watchScreenReadConsentText(role: String,
+                                                       workgroup: String,
+                                                       workgroupID: String) -> String {
+        if isSyntheticWorkgroup(id: workgroupID) {
+            return String(localized: "OrchestratorDispatcher.WatchScreenReadConsent",
+                          defaultValue: "This watch reads \(role)’s screen repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?",
+                          comment: "Body of a prompt asking the user to let an AI chat’s watch read a terminal session’s screen on a timer. The placeholder is the session’s name, such as -zsh. View Contents and Ask are the names of a setting and its value.")
+        }
+        return String(localized: "OrchestratorDispatcher.WatchScreenReadConsentInWorkgroup",
+                      defaultValue: "This watch reads the screen of \(role) in \(workgroup) repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?",
+                      comment: "Body of a prompt asking the user to let an AI chat’s watch read a terminal session’s screen on a timer. The first placeholder is the session’s role name and the second is the name of the workgroup it belongs to. View Contents and Ask are the names of a setting and its value.")
     }
 
     // Whether this chat may currently READ THE SCREEN for a specific watcher.
