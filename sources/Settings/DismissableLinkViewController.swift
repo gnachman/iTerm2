@@ -35,6 +35,15 @@ class DismissableLinkViewController: NSViewController {
     private let innerMargin = 0.0
     private let clickToHide: Bool
 
+    private static var font: NSFont {
+        return NSFont.systemFont(ofSize: NSFont.systemFontSize - 2)
+    }
+
+    // The width of `text` drawn as the link's title.
+    static func width(of text: String) -> CGFloat {
+        return (text as NSString).size(withAttributes: [.font: font]).width
+    }
+
     @objc public func disabled() -> Bool {
         return iTermUserDefaults.userDefaults().bool(forKey: userDefaultsKey)
     }
@@ -63,7 +72,7 @@ class DismissableLinkViewController: NSViewController {
                                          blue: 204.0 / 255.0,
                                          alpha: 1)
         let title = NSAttributedString(string: text,
-                                       attributes: [.font: NSFont.systemFont(ofSize: NSFont.systemFontSize - 2),
+                                       attributes: [.font: DismissableLinkViewController.font,
                                                     .foregroundColor: hyperlinkBlue,
                                                     .underlineStyle: NSUnderlineStyle.single.rawValue,
                                                     .underlineColor: hyperlinkBlue])

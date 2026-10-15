@@ -640,7 +640,10 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     }
 #endif
     if (addVC) {
-        iTermDonateViewController *vc = [[iTermDonateViewController alloc] init];
+        // The window already has the size and title it opens with.
+        const CGFloat maxTextWidth = [iTermDonateViewController maxTextWidthForWindowWidth:NSWidth(self.window.frame)
+                                                                                     title:self.window.title];
+        iTermDonateViewController *vc = [[iTermDonateViewController alloc] initWithMaxTextWidth:maxTextWidth];
         [self.window addTitlebarAccessoryViewController:vc];
     }
 
