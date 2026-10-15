@@ -86,6 +86,7 @@
     IBOutlet NSPopUpButton *_itemList;
     IBOutlet NSTextView *_preview;
     IBOutlet NSTextField *_estimatedDuration;
+    IBOutlet NSTextField *_estimatedDurationTitle;
     IBOutlet NSView *_terminalModeEnclosure;
     NSView *_pasteSpecialViewContainer;
     iTermPasteSpecialViewController *_pasteSpecialViewController;
@@ -157,6 +158,12 @@
     return self;
 }
 
+// A translated title can be wider than the room the nib leaves before the
+// estimate next to it.
+- (void)layoutEstimatedDurationLabels {
+    [_estimatedDuration it_moveToFollowTitle:_estimatedDurationTitle gap:4];
+}
+
 - (void)awakeFromNib {
     const CGFloat heightBefore = _pasteSpecialViewController.view.frame.size.height;
     _pasteSpecialViewController.profileType = _profileType;
@@ -164,6 +171,7 @@
     if (_profileType != ProfileTypeTerminal) {
         _terminalModeEnclosure.hidden = YES;
     }
+    [self layoutEstimatedDurationLabels];
     const CGFloat shrinkage = heightBefore - heightAfter;
 
     NSRect frame = _statsLabel.frame;

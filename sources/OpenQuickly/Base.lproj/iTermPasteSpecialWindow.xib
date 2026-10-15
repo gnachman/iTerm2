@@ -9,6 +9,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="iTermPasteSpecialWindowController">
             <connections>
                 <outlet property="_estimatedDuration" destination="DaX-cj-kvw" id="qVd-MC-05M"/>
+                <outlet property="_estimatedDurationTitle" destination="Ckp-Vw-AtQ" id="Et7-Dr-Q4t"/>
                 <outlet property="_itemList" destination="vVV-1I-dAt" id="yOZ-sr-R04"/>
                 <outlet property="_pasteSpecialViewContainer" destination="rnF-BN-LAy" id="vn4-Lk-kkp"/>
                 <outlet property="_preview" destination="ddg-3D-gh1" id="Gyc-Y1-foa"/>
@@ -107,7 +108,7 @@ Gw
                         </connections>
                     </popUpButton>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3p4-uG-m6d" customClass="iTermTerminalModeEnclosure">
-                        <rect key="frame" x="20" y="20" width="261" height="17"/>
+                        <rect key="frame" x="20" y="20" width="285" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DaX-cj-kvw">

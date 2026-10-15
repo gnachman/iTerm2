@@ -153,4 +153,18 @@
     return ceil(size.height);
 }
 
+- (void)it_moveToFollowTitle:(NSTextField *)title gap:(CGFloat)gap {
+    NSRect titleFrame = title.frame;
+    const NSRect bounds = NSMakeRect(0, 0, CGFLOAT_MAX, NSHeight(titleFrame));
+    const CGFloat needed = ceil([title.cell cellSizeForBounds:bounds].width);
+    if (NSMinX(titleFrame) + needed + gap <= NSMinX(self.frame)) {
+        return;
+    }
+    titleFrame.size.width = needed;
+    title.frame = titleFrame;
+    NSRect frame = self.frame;
+    frame.origin.x = NSMaxX(titleFrame) + gap;
+    self.frame = frame;
+}
+
 @end
