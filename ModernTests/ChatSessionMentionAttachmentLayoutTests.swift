@@ -191,10 +191,63 @@ final class ChatSessionMentionAttachmentLayoutTests: XCTestCase {
         }
     }
 
+    // QA finding F-330: on a 2x display the name inside the chip was drawn
+    // one device pixel (0.5pt) below the adjacent text, because the chip's
+    // edges sat a fraction of a point from the baseline and got rounded to
+    // the pixel grid when drawn. The chip's box is whole points from the
+    // baseline, so at 1x and 2x the name lands on the same rows as the text.
+    func testChipNameSharesBaselineWithSurroundingTextOnPixelGrid() {
+        for scale: CGFloat in [1, 2] {
+            for font in fonts {
+                let attributed = NSMutableAttributedString(attributedString: chip("HHHH", font))
+                attributed.append(plain(" HHHH", font))
+                let layout = layOut(attributed)
+                let (chipColumns, textColumns) = columns(layout, textRange: NSRange(location: 2, length: 4), scale: scale)
+                let rows = inkRows(layout, columns: [chipColumns, textColumns], scale: scale)
+                guard rows.count == 2, let chipInk = rows[0], let textInk = rows[1] else {
+                    XCTFail("No ink found for \(font) at \(scale)x")
+                    continue
+                }
+                XCTAssertEqual(chipInk.top, textInk.top,
+                               "Chip name top row vs text top row for \(font) at \(scale)x")
+            }
+        }
+    }
+
+    func testChipBoundsAreWholePointsFromBaseline() {
+        for name in ["-zsh", "HHHH", "\u{00C9}lan", "\u{00C5}g\u{1F600}"] {
+            for font in fonts {
+                let attachment = ChatSessionMentionAttachment(guid: "guid", displayName: name)
+                attachment.renderImage(font: font, color: .black)
+                XCTAssertEqual(attachment.bounds.minY, attachment.bounds.minY.rounded(),
+                               "Chip bottom off the point grid for \(name) in \(font)")
+                XCTAssertEqual(attachment.bounds.maxY, attachment.bounds.maxY.rounded(),
+                               "Chip top off the point grid for \(name) in \(font)")
+            }
+        }
+    }
+
     // A name whose glyphs reach past the font's line box (an emoji, an
     // accented capital, a descender) must not be cut off by the chip's
     // image.
     func testChipNameIsNotClipped() {
+        assertChipNameIsNotClipped(fonts: fonts)
+    }
+
+    // Fractional sizes give line boxes that aren't whole points, where the
+    // chip can't round its edges outward (F-330) and must not clip instead.
+    func testChipNameIsNotClippedWithFractionalLineBox() {
+        var fractional: [NSFont] = [NSFont.systemFont(ofSize: 13.5),
+                                    NSFont.monospacedSystemFont(ofSize: 12.3, weight: .regular)]
+        for (name, size) in [("Menlo-Regular", 12.5), ("Courier", 14.7)] {
+            if let font = NSFont(name: name, size: size) {
+                fractional.append(font)
+            }
+        }
+        assertChipNameIsNotClipped(fonts: fractional)
+    }
+
+    private func assertChipNameIsNotClipped(fonts: [NSFont]) {
         let scale: CGFloat = 4
         let name = "\u{00C5}g\u{1F600}\u{2733}\u{FE0F}"
         for font in fonts {

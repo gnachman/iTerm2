@@ -117,8 +117,21 @@ class ChatSessionMentionAttachment: NSTextAttachment {
                                         options: [.usesDeviceMetrics])
             let inkTop = ink.isEmpty ? 0 : ink.maxY
             let inkBottom = ink.isEmpty ? 0 : ink.minY
-            ascent = max(iconAscent, min(inkTop, plain.baseline))
-            descent = min(iconDescent, max(inkBottom, plain.baseline - plain.height))
+            let exactAscent = max(iconAscent, min(inkTop, plain.baseline))
+            let exactDescent = min(iconDescent, max(inkBottom, plain.baseline - plain.height))
+            // Put the image's edges whole points from the baseline. Plain
+            // text's baseline lands on the pixel grid, so edges a fraction
+            // of a point away got rounded to the grid when the chip was
+            // drawn, moving the name off the adjacent text's baseline (a
+            // device pixel low on a 2x display). Grow outward to the next
+            // whole point when the line box has room; otherwise keep the
+            // exact edge rather than clip the name.
+            let lineTop = max(fontOnly.baseline, plain.baseline)
+            let lineBottom = min(fontOnly.baseline - fontOnly.height, plain.baseline - plain.height)
+            let roundedUp = ceil(exactAscent)
+            ascent = roundedUp <= lineTop + 0.001 ? roundedUp : exactAscent
+            let roundedDown = floor(exactDescent)
+            descent = roundedDown >= lineBottom - 0.001 ? roundedDown : exactDescent
         }
 
         // The height of a single laid-out line of `string` and its
