@@ -252,6 +252,27 @@ NSString*    gCrashLogString = nil;
     return !cc || [europeanCountryCodes containsObject:cc];
 }
 
+// The explanation label has a fixed frame sized for English. When its text
+// needs more height at the label's width (as some translations do), grow it
+// downward and take the room from the tab view below it, so the window keeps
+// its size.
+- (void)fitExplanationField
+{
+    NSRect frame = [explanationField frame];
+    const NSRect bounds = NSMakeRect(0, 0, NSWidth(frame), CGFLOAT_MAX);
+    const CGFloat needed = ceil([[explanationField cell] cellSizeForBounds: bounds].height);
+    const CGFloat delta = needed - NSHeight(frame);
+    if( delta <= 0 )
+        return;
+    frame.origin.y -= delta;
+    frame.size.height += delta;
+    [explanationField setFrame: frame];
+
+    NSRect tabFrame = [switchTabView frame];
+    tabFrame.size.height -= delta;
+    [switchTabView setFrame: tabFrame];
+}
+
 -(void)    awakeFromNib
 {
     // Insert the app name into the explanation message:
@@ -264,7 +285,8 @@ NSString*    gCrashLogString = nil;
     [explanation replaceOccurrencesOfString: @"{APPNAME}" withString: appName
                                     options: 0 range: NSMakeRange(0, [explanation length])];
     [explanationField setStringValue: explanation];
-    
+    [self fitExplanationField];
+
     // Insert user name and e-mail address into the information field:
     NSMutableString*    userMessage = nil;
     if( gCrashLogString )
