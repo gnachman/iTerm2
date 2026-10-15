@@ -171553,6 +171553,48 @@
         }
       }
     },
+    "ShellIntegrationInstaller.WriteFailed" : {
+      "comment" : "Shown when the command that writes the shell integration script reports that the file was not written",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Das Shell-Integrationsskript wurde nicht geschrieben. Prüfen Sie das Terminal auf Fehler und wählen Sie dann „Fortfahren“, um es erneut zu versuchen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🛑 The shell integration script was not written. Check the terminal for errors, then select “Continue” to try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Shell Integrationスクリプトは書き込まれませんでした。ターミナルでエラーを確認してから、「続ける」を選択してもう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 O script de integração com o shell não foi gravado. Verifique se há erros no terminal e selecione “Continuar” para tentar novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Скрипт интеграции с оболочкой не записан. Проверьте ошибки в терминале, затем нажмите «Продолжить», чтобы повторить попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 未写入 shell 集成脚本。请检查终端中的错误，然后选择“继续”重试。"
+          }
+        }
+      }
+    },
     "ShellIntegrationInstaller.Wrote" : {
       "comment" : "Completed write script step",
       "extractionState" : "extracted_with_value",

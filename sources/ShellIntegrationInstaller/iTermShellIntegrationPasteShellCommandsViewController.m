@@ -37,6 +37,12 @@
 
 - (void)setStage:(int)stage {
     _stage = stage;
+    _writeFailed = NO;
+    [self update];
+}
+
+- (void)setWriteFailed:(BOOL)writeFailed {
+    _writeFailed = writeFailed;
     [self update];
 }
 
@@ -98,6 +104,8 @@
         } else if (stage == 1) {
             if (_busy) {
                 step = self.waitingText;
+            } else if (_writeFailed) {
+                step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.WriteFailed", nil, [NSBundle mainBundle], @"🛑 The shell integration script was not written. Check the terminal for errors, then select “Continue” to try again.", @"Shown when the command that writes the shell integration script reports that the file was not written");
             } else {
                 step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ContinueToWrite", nil, [NSBundle mainBundle], @"➡ Select “Continue” to write the shell integration script.", @"Prompt to continue to the write script step");
             }

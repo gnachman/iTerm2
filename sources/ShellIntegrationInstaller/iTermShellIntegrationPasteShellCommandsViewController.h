@@ -16,6 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) int stage;
 @property (nonatomic) iTermShellIntegrationShell shell;
 @property (nonatomic) BOOL installUtilities;
+// The last attempt to write the shell integration script reported that the file was not
+// written. Cleared when the stage changes.
+@property (nonatomic) BOOL writeFailed;
 
 - (void)update;
 

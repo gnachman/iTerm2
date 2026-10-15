@@ -50,13 +50,21 @@ BOOL iTermShellIntegrationShellLoadsScriptAutomatically(iTermShellIntegrationShe
     return NO;
 }
 
-// Asks nu where it autoloads per-user scripts from and keeps the answer in the helper shell.
-// nushell 0.102 and later read $nu.user-autoload-dirs; 0.100 and 0.101 only read the vendor
-// directories, so there the per-user one under the data directory is used, which later versions
-// read too. The website installers run the same query. Exported because catString:to: writes
-// the file from a nested helper shell.
+// Asks nu where it autoloads per-user scripts from, keeps the answer in the helper shell, and
+// creates that directory. nushell 0.102 and later read $nu.user-autoload-dirs; 0.100 and 0.101
+// only read the vendor directories, so there the per-user one under the data directory is used,
+// which later versions read too. The website installers run the same query. The command ends by
+// printing a line that iTermShellIntegrationNuAutoloadDirReadyRegex matches. The empty quotes
+// keep the echo of the typed command from matching it.
 static NSString *const iTermShellIntegrationNuAutoloadDirCommand =
-    @"IT2_NU_AUTOLOAD_DIR=$(\"$SHELL\" --no-config-file -c 'print ($nu.user-autoload-dirs? | default [($nu.data-dir | path join vendor autoload)] | first)'); export IT2_NU_AUTOLOAD_DIR\n";
+    @"IT2_NU_AUTOLOAD_DIR=$(\"$SHELL\" --no-config-file -c 'print ($nu.user-autoload-dirs? | default [($nu.data-dir | path join vendor autoload)] | first)'); mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"; echo iTerm2-nu-autoload-dir-\"\"ready\n";
+static NSString *const iTermShellIntegrationNuAutoloadDirReadyRegex = @"^iTerm2-nu-autoload-dir-ready$";
+
+// Sent right after the heredoc that writes the script, so $? is cat's exit status. Prints
+// iTerm2-nu-script-written only if cat succeeded and the file is not empty.
+static NSString *const iTermShellIntegrationNuVerifyScriptCommandFormat =
+    @"if test $? -eq 0 && test -s %1$@; then chmod +x %1$@; echo iTerm2-nu-script-\"\"written; else echo iTerm2-nu-script-\"\"missing; fi\n";
+static NSString *const iTermShellIntegrationNuVerifyScriptRegex = @"^iTerm2-nu-script-(written|missing)$";
 
 typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     iTermShellIntegrationInstallationStateFirstPage,
@@ -184,6 +192,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return self.sendShellCommandsViewController.stage;
 }
 
+- (BOOL)sendShellCommandsWriteFailed {
+    return self.sendShellCommandsViewController.writeFailed;
+}
+
 - (void)setShell:(iTermShellIntegrationShell)shell {
     _shell = shell;
     self.sendShellCommandsViewController.shell = shell;
@@ -304,8 +316,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         return @"~/.config/xonsh/rc.d/iterm2.xsh";
     }
     if (self.shell == iTermShellIntegrationShellNu) {
-        // nushell sources the script from its autoload directory, which catToScript:completion:
-        // asks nu for. Quoted because on macOS it is under ~/Library/Application Support.
+        // nushell sources the script from its autoload directory, which
+        // catToNuScript:reallySend:completion: asks nu for. Quoted because on macOS it is under ~/Library/Application Support.
         return @"\"$IT2_NU_AUTOLOAD_DIR/iterm2_shell_integration.nu\"";
     }
     return [NSString stringWithFormat:@"%@/.iterm2_shell_integration.%@",
@@ -534,9 +546,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)switchToHelperShell:(BOOL)reallySend
                       expectation:(inout iTermExpectation **)expectation {
+    // nushell reads typeahead in bulk, so a command sent before the helper sh prompts would be
+    // read by nushell instead of sh. Wait for the helper's prompt. Other shells leave typeahead
+    // in the tty for sh to read, so any output will do.
+    NSString *regex = (self.shell == iTermShellIntegrationShellNu) ? @"^>> " : @".";
     return [self sendText:self.launchHelperShellString
                reallySend:reallySend
-               afterRegex:@"."
+               afterRegex:regex
               expectation:expectation];
 }
 
@@ -565,11 +581,63 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return result;
 }
 
+// nushell sources every .nu file in its autoload directories at startup, after config.nu, so the
+// script goes there and no dotfile is touched. The directory is asked from nu rather than
+// guessed: it differs between macOS and Linux, honors XDG_CONFIG_HOME, and depends on the
+// nushell version.
+//
+// Each command is sent only once output shows the previous one ran in the helper sh. nushell
+// reads typeahead in bulk, so text typed before sh is reading would go to nushell. The script is
+// written from this helper sh, without the nested one catString:to: starts, and completion
+// reports whether the file was written.
+- (NSString *)catToNuScript:(NSString *)script
+                 reallySend:(BOOL)reallySend
+                 completion:(void (^)(BOOL written))completion {
+    NSString *path = [self shellIntegrationPath];
+    NSMutableString *result = [NSMutableString string];
+    iTermExpectation *expectation = nil;
+    // Each text below is typed when the regex of the one before it matches.
+    // The helper sh has prompted.
+    [result appendString:[self switchToHelperShell:reallySend expectation:&expectation]];
+    // The autoload directory was created (or mkdir said why not).
+    [result appendString:[self sendText:iTermShellIntegrationNuAutoloadDirCommand
+                             reallySend:reallySend
+                             afterRegex:iTermShellIntegrationNuAutoloadDirReadyRegex
+                            expectation:&expectation]];
+    // sh is prompting for the heredoc. The script, its terminator, and the check then go in one
+    // piece so nothing else can be typed into the heredoc.
+    [result appendString:[self sendText:[NSString stringWithFormat:@"cat <<'EOF' > %@\n", path]
+                             reallySend:reallySend
+                             afterRegex:@"^> "
+                            expectation:&expectation]];
+    NSString *verify = [NSString stringWithFormat:iTermShellIntegrationNuVerifyScriptCommandFormat, path];
+    NSString *body = [NSString stringWithFormat:@"%@\nEOF\n%@", script, verify];
+    __weak __typeof(self) weakSelf = self;
+    [result appendString:[self sendText:body
+                             reallySend:reallySend
+                             afterRegex:iTermShellIntegrationNuVerifyScriptRegex
+                            expectation:&expectation
+                             completion:^(NSArray<NSString *> *captures) {
+        // The helper sh printed the result, so it is the one that reads exit, not nushell.
+        [weakSelf sendText:weakSelf.exitHelperShellString reallySend:YES];
+        if (completion) {
+            completion([captures[1] isEqualToString:@"written"]);
+        }
+    }]];
+    if (!reallySend) {
+        [result appendString:self.exitHelperShellString];
+    }
+    return result;
+}
+
 - (NSString *)catToScript:(BOOL)reallySend
-               completion:(void (^)(void))completion {
+               completion:(void (^)(BOOL written))completion {
     NSString *scriptForShell = [self scriptForCurrentShell];
     if (!scriptForShell) {
         return @"# Error: your shell could not be determined or is unsupported.";
+    }
+    if (self.shell == iTermShellIntegrationShellNu) {
+        return [self catToNuScript:scriptForShell reallySend:reallySend completion:completion];
     }
     NSMutableString *result = [NSMutableString string];
     iTermExpectation *expectation = nil;
@@ -577,19 +645,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     if (self.shell == iTermShellIntegrationShellXonsh) {
         // Create the rc.d directory for xonsh (scripts there are auto-loaded)
         [result appendString:[self sendText:@"mkdir -p ~/.config/xonsh/rc.d\n"
-                                 reallySend:reallySend
-                                 afterRegex:@"^>> "
-                                expectation:&expectation]];
-    } else if (self.shell == iTermShellIntegrationShellNu) {
-        // nushell sources every .nu file in its autoload directories at startup, after config.nu,
-        // so the script goes there and no dotfile is touched. The directory is asked from nu
-        // rather than guessed: it differs between macOS and Linux, honors XDG_CONFIG_HOME, and
-        // depends on the nushell version.
-        [result appendString:[self sendText:iTermShellIntegrationNuAutoloadDirCommand
-                                 reallySend:reallySend
-                                 afterRegex:@"^>> "
-                                expectation:&expectation]];
-        [result appendString:[self sendText:@"mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"\n"
                                  reallySend:reallySend
                                  afterRegex:@"^>> "
                                 expectation:&expectation]];
@@ -608,7 +663,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                             expectation:&expectation
                              completion:^(NSArray<NSString *> *captures) {
         if (completion) {
-            completion();
+            completion(YES);
         }
     }]];
     return result;
@@ -693,9 +748,14 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)addScriptFiles:(BOOL)reallySend {
     __weak __typeof(self) weakSelf = self;
-    NSString *result = [self catToScript:reallySend completion:^{
-        if (reallySend) {
+    NSString *result = [self catToScript:reallySend completion:^(BOOL written) {
+        if (!reallySend) {
+            return;
+        }
+        if (written) {
             weakSelf.sendShellCommandsViewController.stage = 2;
+        } else {
+            weakSelf.sendShellCommandsViewController.writeFailed = YES;
         }
     }];
     return result;

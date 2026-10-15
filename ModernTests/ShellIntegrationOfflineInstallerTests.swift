@@ -12,7 +12,7 @@
 import XCTest
 @testable import iTerm2SharedARC
 
-private final class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
+private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
     let dryExpect = iTermExpect(dry: true)
     private var wetExpect: iTermExpect?
     private(set) var sentTexts = [String]()
@@ -20,6 +20,9 @@ private final class FakeShellIntegrationTerminal: NSObject, iTermShellIntegratio
     private let testCase: XCTestCase
     // Maps a command the installer types to the line the shell prints in response.
     var responses = [String: String]()
+    // Things that happen only after the shell has dealt with everything typed so far, such as a
+    // newly launched shell printing its first prompt.
+    var laterEvents = [() -> Void]()
 
     init(testCase: XCTestCase) {
         self.testCase = testCase
@@ -49,8 +52,16 @@ private final class FakeShellIntegrationTerminal: NSObject, iTermShellIntegratio
         testCase.wait(for: [drained], timeout: 10)
     }
 
+    // The lines the shell prints in response to typed text.
+    func respond(to text: String) -> [String] {
+        if let response = responses[text] {
+            return [response]
+        }
+        return []
+    }
+
     // The shell prints a line. The mutation thread checks it against the current wet copy.
-    private func output(_ line: String) {
+    func output(_ line: String) {
         guard let wetExpect else {
             return
         }
@@ -82,24 +93,212 @@ private final class FakeShellIntegrationTerminal: NSObject, iTermShellIntegratio
     // is processed as soon as it is typed, before the next sync, which is the order a fast
     // shell produces in practice.
     func run() {
-        for _ in 0..<20 {
+        for _ in 0..<50 {
             sync()
-            if unansweredTexts.isEmpty {
-                return
-            }
-            while !unansweredTexts.isEmpty {
-                let text = unansweredTexts.removeFirst()
-                if let response = responses[text] {
-                    output(response)
+            if !unansweredTexts.isEmpty {
+                while !unansweredTexts.isEmpty {
+                    let text = unansweredTexts.removeFirst()
+                    for line in respond(to: text) {
+                        output(line)
+                    }
                 }
+            } else if !laterEvents.isEmpty {
+                laterEvents.removeFirst()()
+            } else {
+                return
             }
         }
         XCTFail("Installer kept typing commands")
     }
 }
 
+// Plays nushell with the POSIX sh the installer starts from it. Like nushell's reedline, it
+// reads typeahead in bulk: text typed after `sh -c '…'` but before that sh prints its first
+// prompt is lost to nushell (recorded in textLostToNushell). The sh understands the few
+// commands the installer types, echoes each typed line after its prompt, and keeps the files it
+// writes in `files`.
+private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
+    static let nuPath = "/opt/homebrew/bin/nu"
+    static let autoloadDir = "/Users/someone/Library/Application Support/nushell/autoload"
+    static let scriptPath = autoloadDir + "/iterm2_shell_integration.nu"
+
+    private enum State {
+        case nushell
+        case helperStarting
+        case helper
+    }
+    private var state = State.nushell
+    private var helperDepth = 0
+    private var pendingInput = ""
+    // Set while sh reads a heredoc: where it goes (nil for a pipe) and what was read so far.
+    private var heredoc: (path: String?, lines: [String])?
+    private var lastStatus: Int32 = 0
+    private var autoloadDirVariable = ""
+
+    var canCreateAutoloadDir = true
+    var helperStarts = true
+    private(set) var createdDirectories = Set<String>()
+    private(set) var files = [String: String]()
+    private(set) var textLostToNushell = [String]()
+
+    var helperIsRunning: Bool {
+        return state != .nushell
+    }
+
+    override func respond(to text: String) -> [String] {
+        if state == .helperStarting {
+            textLostToNushell.append(text)
+            return []
+        }
+        pendingInput += text
+        var result = [String]()
+        while let newline = pendingInput.firstIndex(of: "\n") {
+            let line = String(pendingInput[..<newline])
+            pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
+            result.append(contentsOf: handle(line))
+            if state == .helperStarting {
+                // nushell reads whatever else was typed ahead along with this line.
+                if !pendingInput.isEmpty {
+                    textLostToNushell.append(pendingInput)
+                    pendingInput = ""
+                }
+                break
+            }
+        }
+        return result
+    }
+
+    private func handle(_ line: String) -> [String] {
+        switch state {
+        case .nushell:
+            return handleInNushell(line)
+        case .helper:
+            return handleInHelper(line)
+        case .helperStarting:
+            return []
+        }
+    }
+
+    private func handleInNushell(_ line: String) -> [String] {
+        let echo = "~> " + line
+        if line == "sh -c 'echo My shell is $SHELL'" {
+            return [echo, "My shell is \(Self.nuPath)", "~> "]
+        }
+        if line.hasPrefix("sh -c 'ENV=/dev/null") {
+            state = .helperStarting
+            guard helperStarts else {
+                return [echo]
+            }
+            laterEvents.append { [weak self] in
+                guard let self else {
+                    return
+                }
+                self.state = .helper
+                self.helperDepth = 1
+                self.output(">> ")
+            }
+            return [echo]
+        }
+        return [echo, "Error: nu::shell::external_command", "~> "]
+    }
+
+    private func expand(_ string: String) -> String {
+        return string
+            .replacingOccurrences(of: "\"$IT2_NU_AUTOLOAD_DIR", with: "\"" + autoloadDirVariable)
+            .replacingOccurrences(of: "\"", with: "")
+    }
+
+    private func makeAutoloadDir() -> [String] {
+        guard canCreateAutoloadDir, !autoloadDirVariable.isEmpty else {
+            lastStatus = 1
+            return ["mkdir: \(autoloadDirVariable): Permission denied"]
+        }
+        createdDirectories.insert(autoloadDirVariable)
+        lastStatus = 0
+        return []
+    }
+
+    private func handleInHelper(_ line: String) -> [String] {
+        if var heredoc {
+            let echo = "> " + line
+            if line != "EOF" {
+                heredoc.lines.append(line)
+                self.heredoc = heredoc
+                return [echo, "> "]
+            }
+            self.heredoc = nil
+            guard let path = heredoc.path else {
+                lastStatus = 0
+                return [echo, ">> "]
+            }
+            let directory = (path as NSString).deletingLastPathComponent
+            guard createdDirectories.contains(directory) else {
+                lastStatus = 1
+                return [echo, "sh: \(path): No such file or directory", ">> "]
+            }
+            files[path] = heredoc.lines.joined(separator: "\n") + "\n"
+            lastStatus = 0
+            return [echo, ">> "]
+        }
+
+        var result = [">> " + line]
+        let prompt: String
+        if line.hasPrefix("IT2_NU_AUTOLOAD_DIR=$(\"$SHELL\" --no-config-file") {
+            autoloadDirVariable = Self.autoloadDir
+            if line.contains("mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"") {
+                result.append(contentsOf: makeAutoloadDir())
+            }
+            if line.contains("echo iTerm2-nu-autoload-dir-\"\"ready") {
+                result.append("iTerm2-nu-autoload-dir-ready")
+            }
+            prompt = ">> "
+        } else if line.hasPrefix("mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"") {
+            result.append(contentsOf: makeAutoloadDir())
+            prompt = ">> "
+        } else if line.hasPrefix("cat <<'EOF' > ") {
+            heredoc = (path: expand(String(line.dropFirst("cat <<'EOF' > ".count))), lines: [])
+            prompt = "> "
+        } else if line.contains("<<'EOF'") {
+            heredoc = (path: nil, lines: [])
+            prompt = "> "
+        } else if line.hasPrefix("if test $? -eq 0 && test -s ") {
+            let written = lastStatus == 0 && !(files[Self.scriptPath] ?? "").isEmpty
+            result.append(written ? "iTerm2-nu-script-written" : "iTerm2-nu-script-missing")
+            prompt = ">> "
+        } else if line.hasPrefix("chmod +x ") {
+            let path = expand(String(line.dropFirst("chmod +x ".count)))
+            if files[path] == nil {
+                result.append("chmod: \(path): No such file or directory")
+            }
+            prompt = ">> "
+        } else if line.hasPrefix("mkdir ") || line.hasPrefix("cd ") {
+            result.append("ok")
+            prompt = ">> "
+        } else if line.hasPrefix("sh -c 'ENV=/dev/null") {
+            // A nested sh reads the typeahead a byte at a time, so it starts without losing any.
+            helperDepth += 1
+            prompt = ">> "
+        } else if line == "exit" {
+            helperDepth -= 1
+            if helperDepth == 0 {
+                state = .nushell
+                prompt = "~> "
+            } else {
+                prompt = ">> "
+            }
+        } else if line.isEmpty {
+            prompt = ">> "
+        } else {
+            result.append("sh: \(line): command not found")
+            prompt = ">> "
+        }
+        result.append(prompt)
+        return result
+    }
+}
+
 final class ShellIntegrationOfflineInstallerTests: XCTestCase {
-    private static let shellCommand = "echo My shell is $SHELL\n"
+    private static let shellCommand = "sh -c 'echo My shell is $SHELL'\n"
     private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}\n"
 
     private var controller: iTermShellIntegrationWindowController!
@@ -191,5 +390,111 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         let next = controller.shellIntegrationInstallerNextCommandForSendShellCommands() ?? ""
         XCTAssertFalse(next.contains("(null)"), next)
         XCTAssertTrue(next.contains("/Users/someone/.zshrc"), next)
+    }
+}
+
+final class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
+    private var controller: iTermShellIntegrationWindowController!
+    private var terminal: FakeNushellTerminal!
+
+    override func setUp() {
+        super.setUp()
+        terminal = FakeNushellTerminal(testCase: self)
+        controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
+        controller.delegate = terminal
+        XCTAssertNotNil(controller.window)
+        controller.shellIntegrationInstallerSendShellCommands(-1)
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+        XCTAssertEqual(controller.shell, .nu)
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+    }
+
+    override func tearDown() {
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.window?.orderOut(nil)
+        controller = nil
+        terminal = nil
+        super.tearDown()
+    }
+
+    // What the installer typed after discovery.
+    private func textsAfterDiscovery() -> [String] {
+        return Array(terminal.sentTexts.dropFirst())
+    }
+
+    private func bundledScript() -> String {
+        let bundle = Bundle(for: iTermShellIntegrationWindowController.self)
+        guard let url = bundle.url(forResource: "iterm2_shell_integration", withExtension: "nu"),
+              let script = try? String(contentsOf: url, encoding: .utf8) else {
+            XCTFail("Missing bundled nushell script")
+            return ""
+        }
+        return script
+    }
+
+    func testWriteScriptWaitsForEachStepAndWritesTheScript() {
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        XCTAssertEqual(terminal.textLostToNushell, [])
+        let texts = textsAfterDiscovery()
+        XCTAssertEqual(texts.count, 5, "\(texts)")
+        if texts.count == 5 {
+            XCTAssertTrue(texts[0].hasPrefix("sh -c 'ENV=/dev/null"), texts[0])
+            XCTAssertTrue(texts[1].hasPrefix("IT2_NU_AUTOLOAD_DIR="), texts[1])
+            XCTAssertTrue(texts[1].contains("mkdir -p \"$IT2_NU_AUTOLOAD_DIR\""), texts[1])
+            XCTAssertEqual(texts[2], "cat <<'EOF' > \"$IT2_NU_AUTOLOAD_DIR/iterm2_shell_integration.nu\"\n")
+            XCTAssertTrue(texts[3].contains("\nEOF\nif test $? -eq 0 && test -s "), texts[3])
+            XCTAssertEqual(texts[4], "exit\n")
+        }
+        let script = terminal.files[FakeNushellTerminal.scriptPath] ?? ""
+        let bundled = bundledScript()
+        XCTAssertFalse(bundled.isEmpty)
+        XCTAssertTrue(script.hasPrefix(bundled), script)
+        XCTAssertFalse(script.contains("mkdir"), script)
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+        XCTAssertFalse(controller.sendShellCommandsWriteFailed)
+    }
+
+    func testWriteScriptReportsFailureWhenTheFileIsNotWritten() {
+        terminal.canCreateAutoloadDir = false
+
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        XCTAssertNil(terminal.files[FakeNushellTerminal.scriptPath])
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertTrue(controller.sendShellCommandsWriteFailed)
+        // The helper sh still exits, leaving the session in nushell.
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(terminal.sentTexts.last, "exit\n")
+    }
+
+    func testWriteScriptWaitsForTheHelperToStart() {
+        // The helper sh never prompts. Nothing more may be typed, since nushell would read it,
+        // and the echo of the typed command must not count as progress.
+        terminal.helperStarts = false
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        XCTAssertEqual(textsAfterDiscovery().count, 1)
+        XCTAssertEqual(terminal.textLostToNushell, [])
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertFalse(controller.sendShellCommandsWriteFailed)
+    }
+
+    func testInstallUtilitiesWaitsForTheHelperPrompt() {
+        controller.shellIntegrationInstallerSetInstallUtilities(true)
+        controller.shellIntegrationInstallerSkipStage()
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertEqual(terminal.textLostToNushell, [])
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }
 }

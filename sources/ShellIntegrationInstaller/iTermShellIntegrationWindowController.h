@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermShellIntegrationShell shell;
 @property (nullable, nonatomic, readonly, copy) NSString *dotdir;
 @property (nonatomic, readonly) int sendShellCommandsStage;
+@property (nonatomic, readonly) BOOL sendShellCommandsWriteFailed;
 @end
 
 NS_ASSUME_NONNULL_END
