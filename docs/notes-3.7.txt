@@ -1445,3 +1445,8 @@ Bug Fixes:
   matches the page you just loaded. Before, it
   showed the previous page’s background color
   until the next page loaded.
+- In the Cockpit’s composer, an @ followed by a
+  space no longer keeps the session picker open,
+  so Return inserts a newline instead of turning
+  the @ into a session chip. After Esc closes the
+  picker, it stays closed while you keep typing.

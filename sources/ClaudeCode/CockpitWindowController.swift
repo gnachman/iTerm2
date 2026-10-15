@@ -66,6 +66,9 @@ class CockpitWindowController: NSWindowController {
     // The document range of the @-run the picker is currently editing,
     // so a chosen session replaces exactly that text with a token.
     private var activeMentionRange: NSRange?
+    // The start of the @-run whose picker the user dismissed with Esc, so
+    // typing more of that run doesn't bring the picker straight back.
+    private var dismissedMentionLocation: Int?
 
     // Guards the two-way binding between composer @-mention chips and
     // outline row selection so an update in one doesn't bounce back.
@@ -1046,14 +1049,28 @@ class CockpitWindowController: NSWindowController {
 
     // MARK: - @-mention session picker (reuses ChatMentionPickerController)
 
-    // The composer supports multiple cursors, so several @-runs can be
-    // in flight at once. Per the routing rule, auto-completion is always
-    // aimed at the FIRST at-mention in the document: the earliest '@'
-    // that starts a word and is followed by a run of non-whitespace,
-    // non-token characters. Returns that run's range and the query typed
-    // after '@'. nil means there is no at-mention to complete.
+    // The at-mention being typed: the first '@' that starts a word, is
+    // followed by a run of non-whitespace, non-token characters, and has
+    // the caret inside that run (just after the '@' or anywhere up to the
+    // run's end). An '@' the caret has left (for example "email me @ noon")
+    // is literal text, so the picker closes and Return inserts a newline.
+    // A run whose picker was dismissed with Esc is skipped. Returns the
+    // run's range and the query typed after '@'; nil means there is
+    // nothing to complete.
     private func firstMentionContext() -> (range: NSRange, query: String)? {
-        let ns = composerVC.attributedStringValue.string as NSString
+        return Self.mentionContext(in: composerVC.attributedStringValue.string,
+                                   selectedRange: composerVC.composerSelectedRange,
+                                   dismissedLocation: dismissedMentionLocation)
+    }
+
+    static func mentionContext(in string: String,
+                               selectedRange: NSRange,
+                               dismissedLocation: Int?) -> (range: NSRange, query: String)? {
+        guard selectedRange.length == 0 else {
+            return nil
+        }
+        let caret = selectedRange.location
+        let ns = string as NSString
         let length = ns.length
         var i = 0
         while i < length {
@@ -1064,15 +1081,27 @@ class CockpitWindowController: NSWindowController {
                 while end < length && !isMentionBoundary(ns.character(at: end)) {
                     end += 1
                 }
-                let queryRange = NSRange(location: i + 1, length: end - (i + 1))
-                return (NSRange(location: i, length: end - i), ns.substring(with: queryRange))
+                if caret > i && caret <= end && i != dismissedLocation {
+                    let queryRange = NSRange(location: i + 1, length: end - (i + 1))
+                    return (NSRange(location: i, length: end - i), ns.substring(with: queryRange))
+                }
+                i = end
+                continue
             }
             i += 1
         }
         return nil
     }
 
-    private func isMentionBoundary(_ c: unichar) -> Bool {
+    // The start of the @-run the caret is in, ignoring any dismissal.
+    // Used to forget a dismissal once the caret leaves that run.
+    private func caretMentionLocation() -> Int? {
+        return Self.mentionContext(in: composerVC.attributedStringValue.string,
+                                   selectedRange: composerVC.composerSelectedRange,
+                                   dismissedLocation: nil)?.range.location
+    }
+
+    private static func isMentionBoundary(_ c: unichar) -> Bool {
         if c == 0xFFFC { return true }  // object replacement char: an existing token
         guard let scalar = UnicodeScalar(c) else { return false }
         return CharacterSet.whitespacesAndNewlines.contains(scalar)
@@ -1081,6 +1110,9 @@ class CockpitWindowController: NSWindowController {
     // Drive the shared picker for the first at-mention, or hide it when
     // there is none. Called on every composer text change.
     fileprivate func updateMentionPicker() {
+        if let dismissed = dismissedMentionLocation, caretMentionLocation() != dismissed {
+            dismissedMentionLocation = nil
+        }
         guard window != nil, let context = firstMentionContext() else {
             activeMentionRange = nil
             mentionPicker.hide()
@@ -3011,6 +3043,9 @@ extension CockpitWindowController: iTermMinimalComposerViewControllerDelegate {
                          dismiss: Bool) {
         switch Self.composerSendRequest(command: command, addNewline: addNewline, dismiss: dismiss) {
         case .cancel:
+            if mentionPicker.isVisible {
+                dismissedMentionLocation = activeMentionRange?.location
+            }
             mentionPicker.hide()
         case .wholeField:
             sendCommandFieldContents()
@@ -3030,6 +3065,14 @@ extension CockpitWindowController: iTermMinimalComposerViewControllerDelegate {
     // navigation drives the list instead of the text.
     func minimalComposerHandleKeyDown(_ event: NSEvent) -> Bool {
         guard mentionPicker.isVisible else { return false }
+        // The caret may have moved off the @-run (a click or an arrow key
+        // doesn't change the text), so the picker is stale: close it and
+        // let the key do what it normally does.
+        guard firstMentionContext() != nil else {
+            activeMentionRange = nil
+            mentionPicker.hide()
+            return false
+        }
         switch event.specialKey {
         case NSEvent.SpecialKey.upArrow:
             mentionPicker.moveSelectionUp()
