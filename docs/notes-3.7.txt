@@ -1701,3 +1701,6 @@ Bug Fixes:
 - Window > Arrangements > Change Profile in
   Arrangement now works for a floating pane
   restored from a saved arrangement.
+- Hidden floating panes no longer count toward
+  the number of panes that turns off the GPU
+  renderer in a tab.

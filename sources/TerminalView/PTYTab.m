@@ -8659,6 +8659,18 @@ typedef struct {
     }
 }
 
+// Hidden floats don't draw, so they don't count toward the limit on panes that use Metal. Only
+// persistent hides count, so a temporary hide (Find Cursor, a drag) doesn't flip the renderer.
+- (NSUInteger)numberOfPanesCountingTowardMetalLimit {
+    NSUInteger hiddenFloats = 0;
+    for (iTermFloatingPaneView *pane in _floatingPanes) {
+        if ([self floatingPaneIsPersistentlyHidden:pane]) {
+            hiddenFloats += 1;
+        }
+    }
+    return self.sessions.count - hiddenFloats;
+}
+
 // Note this is a notification handler
 - (void)updateUseMetal {
     DLog(@"begin");
@@ -8695,7 +8707,7 @@ typedef struct {
     // Limit the number of split panes using metal because each gets its own thread and I've seen
     // some crazy stuff where people have over 50 split panes.
     const NSInteger maxNumberOfSplitPanesForMetal = 6;
-    const BOOL numberOfSplitPanesIsReasonable = self.sessions.count < maxNumberOfSplitPanesForMetal;
+    const BOOL numberOfSplitPanesIsReasonable = self.numberOfPanesCountingTowardMetalLimit < maxNumberOfSplitPanesForMetal;
 
     iTermMetalUnavailableReason reason = iTermMetalUnavailableReasonNone;
     BOOL allowed = NO;

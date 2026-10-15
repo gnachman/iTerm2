@@ -455,6 +455,8 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 - (void)setPerTabSettings:(NSString *)setting;
 
 - (void)updateUseMetal;
+// Panes that count toward the limit on panes using the GPU renderer. Hidden floats don't.
+@property (nonatomic, readonly) NSUInteger numberOfPanesCountingTowardMetalLimit;
 - (ITMSplitTreeNode *)rootSplitTreeNode;
 // The tab's floating panes, back to front, for the API.
 - (NSArray<ITMFloatingPane *> *)floatingPaneMessages;
