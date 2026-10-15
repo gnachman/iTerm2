@@ -1458,3 +1458,6 @@ Bug Fixes:
 - The Cockpit no longer covers alerts attached
   to a terminal window, such as the Broadcast
   Input confirmation, hiding their buttons.
+- The Cockpit composer’s placeholder text is no
+  longer drawn twice when the panel is too
+  narrow to fit it on one line.

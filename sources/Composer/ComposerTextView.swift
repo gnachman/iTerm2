@@ -288,8 +288,11 @@ class ComposerTextView: MultiCursorTextView {
 
     // Opt-in (cockpit only). Placeholder text drawn when there is no
     // typed command (empty, or only @-mention chips). Default nil, so
-    // ordinary composer usage draws nothing extra.
-    @objc var placeholderString: String? {
+    // ordinary composer usage draws nothing extra. Not named
+    // placeholderString: that would override NSTextView's own placeholder
+    // property, and AppKit would draw a second, wrapped copy whenever the
+    // view is empty.
+    @objc var composerPlaceholderString: String? {
         didSet { needsDisplay = true }
     }
 
@@ -313,16 +316,22 @@ class ComposerTextView: MultiCursorTextView {
 
     open override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-        guard let placeholder = placeholderString,
+        guard let placeholder = composerPlaceholderString,
               !placeholder.isEmpty,
               shouldShowPlaceholder,
               let layoutManager,
               let textContainer else {
             return
         }
+        let placeholderFont = font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        // One line, ending in an ellipsis when it doesn't fit (a long
+        // translation in a narrow composer) rather than cut off mid-word.
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byTruncatingTail
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize),
-            .foregroundColor: NSColor.placeholderTextColor
+            .font: placeholderFont,
+            .foregroundColor: NSColor.placeholderTextColor,
+            .paragraphStyle: paragraphStyle
         ]
         let origin = textContainerOrigin
         // Draw after the last mention chip (so the placeholder follows
@@ -349,7 +358,13 @@ class ComposerTextView: MultiCursorTextView {
             point = NSPoint(x: origin.x + rect.maxX + textContainer.lineFragmentPadding,
                             y: origin.y + rect.minY)
         }
-        (placeholder as NSString).draw(at: point, withAttributes: attributes)
+        let rightEdge = min(bounds.maxX,
+                            origin.x + textContainer.size.width - textContainer.lineFragmentPadding)
+        let rect = NSRect(x: point.x,
+                          y: point.y,
+                          width: max(0, rightEdge - point.x),
+                          height: layoutManager.defaultLineHeight(for: placeholderFont))
+        (placeholder as NSString).draw(in: rect, withAttributes: attributes)
     }
 
     @objc

@@ -447,7 +447,7 @@ workingDirectory:(NSString *)pwd
 
 - (void)setComposerPlaceholder:(NSString *)placeholder {
     [self view];
-    _largeComposerViewController.textView.placeholderString = placeholder;
+    _largeComposerViewController.textView.composerPlaceholderString = placeholder;
 }
 
 - (void)setComposerRichTextEnabled:(BOOL)enabled {
