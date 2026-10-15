@@ -47,11 +47,24 @@ class InstanceLock: NSObject {
         conflictingPID = pid
     }
 
+    // Printed to stderr when -compare-rendering can't run because another instance holds the lock.
+    static func compareRenderingConflictMessage(pid: pid_t) -> String {
+        // Not localized: this is command-line tool output.
+        let suite = iTermUserDefaults.customSuiteName().map { " with suite \($0)" } ?? ""
+        return "RESULT: ERROR: another copy of iTerm2 (pid \(pid)) is running\(suite), so -compare-rendering cannot run. Use a different -suite.\n"
+    }
+
     // Call once NSApp exists. If another instance holds the lock, ask the user what to do. Quitting
     // activates the other instance and exits.
     @objc static func resolveConflictIfNeeded() {
         guard let pid = conflictingPID else {
             return
+        }
+        if iTermApplicationDelegate.isCompareRenderingMode() {
+            // Nobody is there to answer the alert, and quitting silently with status 0 would look
+            // like success to a script. Fail loudly instead.
+            FileHandle.standardError.write(Data(compareRenderingConflictMessage(pid: pid).utf8))
+            exit(1)
         }
         let message: String
         if let suiteName = iTermUserDefaults.customSuiteName() {
