@@ -2386,6 +2386,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.preferIntegratedGPU
                                        key:kPreferenceKeyPreferIntegratedGPU
                                       type:kPreferenceInfoTypeCheckbox];
+    // Without this the binding enables the checkbox, undoing the sheet's check, and it could be
+    // toggled on a Mac with only one GPU.
+    const BOOL canPreferIntegratedGPU = [iTermAdvancedGPUSettingsViewController canPreferIntegratedGPU];
+    info.shouldBeEnabled = ^BOOL{
+        return canPreferIntegratedGPU;
+    };
+    [self updateEnabledStateForInfo:info];
     info.observer = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
     };
