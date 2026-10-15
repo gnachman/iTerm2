@@ -1901,6 +1901,11 @@ Bug Fixes:
 - Changing your AI models in Settings when you
   used a single custom AI model no longer drops
   the custom headers you set up for it.
+- The AI Usage toolbar item’s problem report no
+  longer fills the screen with the output of a
+  usage command that printed too much, which
+  left its buttons out of reach.
+
 
 
 

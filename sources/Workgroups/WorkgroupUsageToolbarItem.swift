@@ -484,7 +484,7 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         runner.discardStandardError = true
         // Bound captured output so a runaway custom command can't grow
         // memory unbounded (1 MiB dwarfs any real usage JSON).
-        runner.maximumOutputSize = NSNumber(value: 1024 * 1024)
+        runner.maximumOutputSize = NSNumber(value: maximumOutputSize)
         // Output past the cap can't be valid JSON, so stop the command there instead of
         // reading until the timeout.
         runner.terminateWhenOutputExceedsMaximum = true
@@ -535,7 +535,49 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         activeRunnersLock.unlock()
     }
 
-    private static func decode(data: Data?) -> WorkgroupUsageReport {
+    static let maximumOutputSize = 1024 * 1024
+
+    // The most of the report the alert shows. A runaway command's diagnostic
+    // can be a megabyte, which made the sheet taller than the screen with its
+    // buttons out of reach. The clipboard still gets the whole report.
+    static let maximumDisplayedReportLength = 2000
+
+    // A character cap alone isn't enough: 2000 characters of `yes` output is
+    // a thousand lines. Also cap the rows the text takes up, counting a long
+    // line as the several rows it wraps to.
+    static let maximumDisplayedReportRows = 30
+    static let assumedCharactersPerRow = 80
+
+    static func displayedReport(_ report: String) -> String {
+        var rows = 0
+        var kept = [Substring]()
+        // Nothing past the character cap is shown, so don't split a megabyte into lines.
+        let head = report.prefix(maximumDisplayedReportLength)
+        var truncated = head.endIndex != report.endIndex
+        for line in head.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline) {
+            let lineRows = max(1, (line.count + assumedCharactersPerRow - 1) / assumedCharactersPerRow)
+            if rows + lineRows > maximumDisplayedReportRows {
+                let remainingRows = maximumDisplayedReportRows - rows
+                if remainingRows > 0 {
+                    kept.append(line.prefix(remainingRows * assumedCharactersPerRow))
+                }
+                truncated = true
+                break
+            }
+            rows += lineRows
+            kept.append(line)
+        }
+        guard truncated else {
+            return report
+        }
+        return kept.joined(separator: "\n")
+            + "\n\n"
+            + String(localized: "WorkgroupUsage.AlertReportTruncated",
+                     defaultValue: "…(truncated; click “Report a Bug” to copy the full report)",
+                     comment: "Appended to the AI usage problem report shown in an alert when it was shortened to fit; “Report a Bug” is the title of a button in the same alert")
+    }
+
+    static func decode(data: Data?) -> WorkgroupUsageReport {
         guard let data, !data.isEmpty else {
             // No output at all. Could be transient (command still warming
             // up, a slow claude launch), so don't nag the user to report.
@@ -553,7 +595,12 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
             // That's a real defect (our shipped script, or a user's custom
             // command) worth reporting, so surface the raw bytes.
             DLog("WorkgroupUsage: JSON decode failed: \(error)")
-            let raw = String(data: data, encoding: .utf8)
+            var raw = String(decoding: data, as: UTF8.self)
+            if data.count >= maximumOutputSize {
+                // The runner stopped the command at the cap, so say why the
+                // output is unusable. English only: this is for the developer.
+                raw = "(The command’s output was cut off at \(maximumOutputSize) bytes.)\n" + raw
+            }
             return WorkgroupUsageReport(bars: [],
                                         error: String(localized: "WorkgroupUsage.BadOutput",
                                                       defaultValue: "Unreadable usage data",
@@ -652,7 +699,7 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         warning.heading = summary
         warning.title = String(localized: "WorkgroupUsage.ReportGuidanceIntro",
                                defaultValue: "iTerm2 couldn’t read the AI usage report. Updating iTerm2 to the latest version may fix this. If you’re already up to date, click “Report a Bug” to open a pre-filled report. The full details below are also copied to your clipboard.",
-                               comment: "Guidance shown when the AI usage format couldn’t be parsed") + "\n\n" + report
+                               comment: "Guidance shown when the AI usage format couldn’t be parsed") + "\n\n" + Self.displayedReport(report)
         let reportBug = String(localized: "WorkgroupUsage.ReportBug",
                                defaultValue: "Report a Bug",
                                comment: "Button that opens a pre-filled bug report and copies the details to the clipboard")
