@@ -1583,3 +1583,8 @@ Bug Fixes:
   a program tries to clear scrollback, no
   longer loses the keys typed while the message
   slides away. Only the first key dismisses it.
+- With the Minimal theme, the git branch item in
+  a workgroup’s toolbar draws its ahead and
+  behind arrows in the toolbar’s text color
+  instead of black on a dark terminal
+  background.
