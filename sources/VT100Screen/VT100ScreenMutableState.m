@@ -7670,7 +7670,7 @@ lengthExcludingInBandSignaling:data.length
     if (count == 1) {
         preamble = @"ssh exited";
     } else if (count > 1) {
-        preamble = [NSString stringWithFormat:@"%@ ssh sessions ended.", @(count)];
+        preamble = [NSString stringWithFormat:@"%@ ssh sessions ended", @(count)];
     }
     if (sshLocation) {
         return [NSString stringWithFormat:@"%@ — now at %@.", preamble, sshLocation];

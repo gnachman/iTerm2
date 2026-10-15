@@ -1693,6 +1693,10 @@ Bug Fixes:
   Python API without changing any sizes no
   longer shrinks the tab’s panes and window by
   a cell each time.
+- The banner shown when several nested SSH
+  integration sessions end at once no longer
+  ends with two periods.
+
 
 
 

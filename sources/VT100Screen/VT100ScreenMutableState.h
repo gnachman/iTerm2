@@ -619,7 +619,7 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 
 #pragma mark - SSH
 
-- (NSString *)sshEndBannerTerminatingCount:(NSInteger)count newLocation:(NSString *)sshLocation;
+- (NSString *)sshEndBannerTerminatingCount:(NSInteger)count newLocation:(NSString * _Nullable)sshLocation;
 
 #pragma mark - DVR
 
