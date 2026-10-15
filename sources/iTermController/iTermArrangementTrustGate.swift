@@ -86,9 +86,8 @@ struct RiskSummary {
 enum RiskAnalyzer {
     static func analyze(windows: [[String: Any]]) -> RiskSummary {
         var sessionCount = 0
-        var customCommandCount = 0
+        var commandCount = 0
         var sshCount = 0
-        var programCount = 0
         var initialTextCount = 0
         var triggerCount = 0
         var smartRuleCount = 0
@@ -105,20 +104,27 @@ enum RiskAnalyzer {
                 for node in [root] + floatingNodes {
                     walk(node) { session in
                         sessionCount += 1
+                        var hasProgramCommand = false
                         if let program = session[SESSION_ARRANGEMENT_PROGRAM] as? [String: Any],
                            let type = program[kProgramType] as? String,
                            type == kProgramTypeCommand,
                            let command = program[kProgramCommand] as? String,
                            !command.isEmpty {
-                            programCount += 1
+                            hasProgramCommand = true
                         }
+                        var bookmarkCustomCommandCount = 0
                         if let bookmark = session[SESSION_ARRANGEMENT_BOOKMARK] as? [String: Any] {
                             analyze(bookmark: bookmark,
-                                    customCommandCount: &customCommandCount,
+                                    customCommandCount: &bookmarkCustomCommandCount,
                                     sshCount: &sshCount,
                                     initialTextCount: &initialTextCount,
                                     triggerCount: &triggerCount,
                                     smartRuleCount: &smartRuleCount)
+                        }
+                        // A session started with a command saves it both as its Program and in its
+                        // profile's Custom Command, but it runs one command, so count it once.
+                        if hasProgramCommand || bookmarkCustomCommandCount > 0 {
+                            commandCount += 1
                         }
                     }
                 }
@@ -131,9 +137,8 @@ enum RiskAnalyzer {
         if sessionCount > 0 {
             findings.append(String(localized: "TrustGate.EmbeddedSessionProfiles", defaultValue: "\(sessionCount) embedded session profiles", comment: "Arrangement risk finding; the count of embedded session profiles"))
         }
-        let commandTotal = customCommandCount + programCount
-        if commandTotal > 0 {
-            findings.append(String(localized: "TrustGate.CustomCommands", defaultValue: "\(commandTotal) custom commands that will run when the arrangement opens", comment: "Arrangement risk finding; the count of custom commands that run on open"))
+        if commandCount > 0 {
+            findings.append(String(localized: "TrustGate.CustomCommands", defaultValue: "\(commandCount) custom commands that will run when the arrangement opens", comment: "Arrangement risk finding; the count of custom commands that run on open"))
         }
         if sshCount > 0 {
             findings.append(String(localized: "TrustGate.SSHConnections", defaultValue: "\(sshCount) SSH connections that will be opened automatically", comment: "Arrangement risk finding; the count of SSH connections opened automatically"))
