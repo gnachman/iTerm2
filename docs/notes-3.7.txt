@@ -1440,3 +1440,7 @@ Bug Fixes:
   with several long arguments no longer
   occasionally fail because the request was
   split in two on the way to the remote host.
+- In the minimal theme, a browser tab’s tint now
+  matches the page you just loaded. Before, it
+  showed the previous page’s background color
+  until the next page loaded.

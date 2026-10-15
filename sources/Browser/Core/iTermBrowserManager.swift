@@ -106,6 +106,9 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     let historyController: iTermBrowserHistoryController
     private let navigationState: iTermBrowserNavigationState
     private var navigationCount = 0
+    // Decides when underPageBackgroundColor changes feed the minimal-theme tab tint.
+    private var pageColorTracker = iTermBrowserPageColorTracker()
+    private nonisolated static let underPageBackgroundColorKeyPath = "underPageBackgroundColor"
     private let readerModeManager = iTermBrowserReaderModeManager()
     let autofillHandler = iTermBrowserAutofillHandler()
     let user: iTermBrowserUser
@@ -177,6 +180,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         }
         // Remove KVO observer to prevent crashes
         webView?.removeObserver(self, forKeyPath: "title")
+        webView?.removeObserver(self, forKeyPath: Self.underPageBackgroundColorKeyPath)
         if let webView = self.webView {
             let userState = self.userState
             Task { @MainActor in
@@ -489,12 +493,15 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         // Observe title changes
         webView.addObserver(self, forKeyPath: "title", options: [.new], context: nil)
-        // We intentionally do NOT observe underPageBackgroundColor via KVO. WebKit
+        // Observe the page background color for the minimal-theme tab tint. WebKit
         // reports transient values during load (its light default before the page is
-        // parsed, then the page's real color), which would flip the minimal-theme tab
-        // tint and window appearance on every navigation. Instead the settled color is
-        // read once per load in webView(_:didFinish:), so the tint updates once the
-        // page has resolved a background.
+        // parsed), and it updates the color after didFinish, so reading it only at
+        // didFinish lags one page behind. pageColorTracker ignores changes during a
+        // load and forwards the ones that arrive once it has settled.
+        webView.addObserver(self,
+                            forKeyPath: Self.underPageBackgroundColorKeyPath,
+                            options: [.new],
+                            context: nil)
 
         // TODO: This is going to cause problems for extensions. If you open a link with target=_blank then the new webview won't have a content
         // manager. I don't know what will happen if we do not register a webview with the extension manager.
@@ -1248,6 +1255,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         navigationCount += 1
+        pageColorTracker.navigationDidStart()
         basicAuth.didStartProvisionalNavigation(navigation)
         readerModeManager.resetForNavigation()
         delegate?.browserManager(self, didStartNavigation: navigation)
@@ -1301,11 +1309,12 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         notifyDelegateOfUpdates()
 
-        // Emit the page background color once, now that the page has loaded and its
-        // background has settled. This is the single source for the minimal-theme tab
-        // tint; we deliberately don't observe underPageBackgroundColor via KVO to avoid
-        // flipping the appearance on each transient value reported during load.
-        delegate?.browserManager(self, didUpdateBackgroundColor: webView.underPageBackgroundColor)
+        // Emit the page background color now that the load has finished, unless it is
+        // unchanged. WebKit may not have updated it for the new page yet; if so, the new
+        // color arrives later through KVO (see observeValue) and is forwarded then.
+        if let color = pageColorTracker.navigationDidSettle(currentColor: webView.underPageBackgroundColor) {
+            delegate?.browserManager(self, didUpdateBackgroundColor: color)
+        }
 
         // Update permission states for geolocation
         if let url = webView.url {
@@ -1338,6 +1347,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         // precedes commit), so there is nothing to do for auth here.
 
         navigationState.didCompleteLoading(error: error)
+        pageColorTracker.navigationDidFail()
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
@@ -1365,6 +1375,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
         basicAuth.didFailProvisionalNavigation(navigation)
 
         navigationState.didCompleteLoading(error: error)
+        pageColorTracker.navigationDidFail()
 
         // Don't show error page for download-related cancellations
         if isDownloadRelatedError(error) {
@@ -1885,6 +1896,14 @@ extension iTermBrowserManager {
             // Update history with new title if we have a current URL
             if let url = webView.url {
                 historyController.titleDidChange(for: url, title: webView.title)
+            }
+        } else if keyPath == Self.underPageBackgroundColorKeyPath,
+                  let webView = object as? iTermBrowserWebView,
+                  webView == self.webView {
+            if let color = pageColorTracker.observedColorDidChange(webView.underPageBackgroundColor,
+                                                                  isLoading: webView.isLoading) {
+                DLog("Page background color changed to \(color)")
+                delegate?.browserManager(self, didUpdateBackgroundColor: color)
             }
         } else {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)

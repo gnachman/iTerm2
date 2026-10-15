@@ -822,7 +822,8 @@ extension iTermBrowserViewController {
         // Don't seed the page background color here: before any page has loaded, the web
         // view's underPageBackgroundColor is WebKit's (light) default, not the page's
         // real color. Seeding it would flip a dark-profile browser tab to light until a
-        // real page loads. The color is emitted once the page settles in didFinish.
+        // real page loads. The color is emitted once the page settles (at didFinish,
+        // or when WebKit reports the new page's color after that).
     }
 
     private func setupToolbar() {
