@@ -1522,3 +1522,6 @@ Bug Fixes:
   Saved Selection” no longer presses a button
   when you type a plain letter. Its shortcuts
   need Cmd, as they did the first time.
+- Cmd-H, Cmd-Q, Cmd-W, and Cmd-M no longer press
+  a button in an alert whose button happens to
+  start with that letter, such as Help.

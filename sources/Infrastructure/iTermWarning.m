@@ -618,7 +618,9 @@ static BOOL iTermWarningViewHasSelectableText(NSView *view) {
 // instead of pressing a button. An action's own keyEquivalent is never changed, so building the
 // alert again (for example, to show it a second time) gives the same result.
 - (void)assignAutomaticKeyEquivalentsForButtons:(NSArray<NSButton *> *)buttons {
-    NSMutableSet<NSString *> *assignedValues = [NSMutableSet set];
+    // Cmd-H, Cmd-Q, Cmd-W, and Cmd-M are Hide, Quit, Close, and Minimize everywhere in macOS, so
+    // pressing one must not press a button instead.
+    NSMutableSet<NSString *> *assignedValues = [NSMutableSet setWithArray:@[ @"h", @"q", @"w", @"m" ]];
     if (_accessory && iTermWarningViewHasSelectableText(_accessory)) {
         [assignedValues addObjectsFromArray:@[ @"a", @"c", @"v", @"x", @"z" ]];
     }
