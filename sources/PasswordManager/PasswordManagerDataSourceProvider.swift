@@ -67,9 +67,7 @@ class PasswordManagerDataSourceProvider: NSObject {
         _lastPass = LastPassDataSource(browser: browser)
 
         let keepassPath = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-keepassxc-adapter")!
-        _keePassXC = AdapterPasswordDataSource(browser: browser,
-                                               adapterPath: keepassPath,
-                                               identifier: "KeePassXC")
+        _keePassXC = Self.makeKeePassXCDataSource(browser: browser, adapterPath: keepassPath)
 
         let bitwardenPath = Bundle(for: Self.self).path(forAuxiliaryExecutable: "iterm2-bitwarden-adapter")!
         _bitwarden = AdapterPasswordDataSource(browser: browser,
@@ -97,6 +95,17 @@ class PasswordManagerDataSourceProvider: NSObject {
                                                  selector: #selector(screenDidLock(_:)),
                                                  name: NSNotification.Name("com.apple.screenIsLocked"),
                                                  object: nil)
+    }
+
+    // keepassxc-cli can’t store “/” in an entry title, so this data source maps it to a
+    // lookalike. See AdapterAccountNameCodec.keePassXC.
+    static func makeKeePassXCDataSource(browser: Bool,
+                                        adapterPath: String,
+                                        identifier: String = "KeePassXC") -> AdapterPasswordDataSource {
+        return AdapterPasswordDataSource(browser: browser,
+                                         adapterPath: adapterPath,
+                                         identifier: identifier,
+                                         accountNameCodec: .keePassXC)
     }
 
     @objc private func screenDidLock(_ notification: Notification) {

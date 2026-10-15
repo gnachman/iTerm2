@@ -8,6 +8,27 @@
 import Foundation
 import UniformTypeIdentifiers
 
+/// Translates account names between what iTerm2 uses and what an adapter's backend can store.
+/// Most backends store names verbatim, but some reserve characters that iTerm2's names can
+/// contain.
+struct AdapterAccountNameCodec {
+    /// iTerm2's account name to the name sent to the adapter.
+    var encode: (String) -> String
+    /// A name reported by the adapter back to iTerm2's account name.
+    var decode: (String) -> String
+
+    static let identity = AdapterAccountNameCodec(encode: { $0 }, decode: { $0 })
+
+    // keepassxc-cli treats every “/” in an entry path as a group separator and cannot escape
+    // one, so a title like “http://example.com (Realm)” (how the browser names remembered
+    // basic-auth credentials) can never be created. Store “/” as U+2215 DIVISION SLASH, which
+    // looks the same in KeePassXC, and map it back when listing so names still match.
+    private static let keePassXCSlash = "\u{2215}"
+    static let keePassXC = AdapterAccountNameCodec(
+        encode: { $0.replacingOccurrences(of: "/", with: keePassXCSlash) },
+        decode: { $0.replacingOccurrences(of: keePassXCSlash, with: "/") })
+}
+
 /// A password manager data source that communicates with an external adapter
 /// using the generic password manager protocol defined in pwmplugin/Docs/spec.md
 class AdapterPasswordDataSource: CommandLinePasswordDataSource {
@@ -114,10 +135,16 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     private var masterPassword: String?
     private let userAccountKey = "NoSyncAdapaterPasswordDataSource_"
 
-    init(browser: Bool, adapterPath: String, identifier: String) {
+    private let accountNameCodec: AdapterAccountNameCodec
+
+    init(browser: Bool,
+         adapterPath: String,
+         identifier: String,
+         accountNameCodec: AdapterAccountNameCodec = .identity) {
         self.browser = browser
         self.adapterPath = adapterPath
         self.identifier = identifier
+        self.accountNameCodec = accountNameCodec
         // Get iTerm2 version
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
             self.iTermVersion = version
@@ -794,7 +821,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 }
                 self.recover(from: error, completion: completion)
             },
-            outputTransformer: { [weak self] output, completion in
+            outputTransformer: { [weak self, accountNameCodec] output, completion in
                 let decoder = JSONDecoder()
 
                 // Check for error response
@@ -813,7 +840,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         identifier: CommandLinePasswordDataSource.AccountIdentifier(value: entry.identifier.accountID,
                                                                                     sourceLabel: entry.sourceLabel),
                         userName: entry.userName,
-                        accountName: entry.accountName,
+                        accountName: accountNameCodec.decode(entry.accountName),
                         hasOTP: entry.hasOTP,
                         sendOTP: entry.hasOTP,
                         sourceLabel: entry.sourceLabel)
@@ -915,7 +942,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         accountIdentifier: AccountIdentifierEntry(accountID: setPasswordRequest.accountIdentifier.value),
                         newPassword: setPasswordRequest.newPassword,
                         sourceLabel: setPasswordRequest.accountIdentifier.sourceLabel,
-                        newAccountName: setPasswordRequest.newAccountName,
+                        newAccountName: setPasswordRequest.newAccountName.map(self.accountNameCodec.encode),
                         newUserName: setPasswordRequest.newUserName)
 
                     self.makeCommand("set-password", request: request, generation: self.session.generation, completion: completion)
@@ -1017,7 +1044,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         userAccountID: self.userAccountID,
                         token: self.authToken,
                         userName: addRequest.userName,
-                        accountName: addRequest.accountName,
+                        accountName: self.accountNameCodec.encode(addRequest.accountName),
                         password: addRequest.password,
                         flags: addRequest.flags.isEmpty ? nil : addRequest.flags)
 

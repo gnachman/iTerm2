@@ -552,6 +552,11 @@ Improvements:
   check scripts that use it.
 
 Bug Fixes:
+- With KeePassXC as the browser password
+  manager, “Remember this password” for a
+  website’s sign-in dialog now saves the
+  password instead of failing with “Could not
+  save the password”.
 - On macOS 26, hiding a hotkey window when no
   other iTerm2 windows are open once again
   returns focus to the previous app right away,
