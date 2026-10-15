@@ -64984,6 +64984,48 @@
         }
       }
     },
+    "ConductorFileTransfer.UnknownUserName" : {
+      "comment" : "Shown in place of the user name in an SSH Integration file transfer description when the user name is not known",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(unbekannt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "(unknown)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（不明）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(desconhecido)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(неизвестно)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（未知）"
+          }
+        }
+      }
+    },
     "ConductorFileTransfer.ViaSSHIntegration" : {
       "comment" : "Label indicating a transfer uses SSH Integration. %@ is the host name.",
       "extractionState" : "extracted_with_value",
@@ -121994,7 +122036,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 のシェル統合は、ユーザ名、ホスト名、現在のディレクトリを OSC 7 を使って報告するようになりましたが、詳細設定「Accept OSC 7」がオフになっています。オンに戻すまで、シェル統合は正しく動作しません。"
+            "value" : "iTerm2 のシェル統合は、ユーザー名、ホスト名、現在のディレクトリを OSC 7 を使って報告するようになりましたが、詳細設定「Accept OSC 7」がオフになっています。オンに戻すまで、シェル統合は正しく動作しません。"
           }
         },
         "pt-BR" : {
@@ -141269,7 +141311,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザ"
+            "value" : "ユーザー"
           }
         },
         "pt-BR" : {
@@ -141395,7 +141437,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "オプションキーをMetaとして機能させることを選択しました。このオプションは古いシステムとの後方互換性のために便利です。ほとんどのユーザには「Esc+」オプションをお勧めします。"
+            "value" : "オプションキーをMetaとして機能させることを選択しました。このオプションは古いシステムとの後方互換性のために便利です。ほとんどのユーザーには「Esc+」オプションをお勧めします。"
           }
         },
         "pt-BR" : {
