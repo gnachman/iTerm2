@@ -7455,6 +7455,15 @@ typedef struct {
     session1.delegate = session2Tab;
     session2.delegate = session1Tab;
 
+    // Update the sessions maps before anything below asks a tab for its sessions. -sessions
+    // finds them through this map, so until it is updated each tab skips the session it just
+    // received and, for example, leaves its pane title bar as it was in the other tab.
+    [session1Tab.viewToSessionMap removeObjectForKey:session1.view];
+    [session2Tab.viewToSessionMap removeObjectForKey:session2.view];
+
+    [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
+    [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
+
     [session1Tab setActiveSession:session2];
     [session2Tab setActiveSession:session1];
 
@@ -7476,13 +7485,6 @@ typedef struct {
     DLog(@"After swap, %@ has superview %@ and %@ has superview %@",
          session1.view, session1.view.superview,
          session2.view, session2.view.superview);
-
-    // Update the sessions maps.
-    [session1Tab.viewToSessionMap removeObjectForKey:session1.view];
-    [session2Tab.viewToSessionMap removeObjectForKey:session2.view];
-
-    [session1Tab.viewToSessionMap setObject:session2 forKey:session2.view];
-    [session2Tab.viewToSessionMap setObject:session1 forKey:session1.view];
 
     if (float1) {
         [iTermFloatingPaneLayout fitFloatingPane:float1 session:session2 toOutlineFrame:float1Frame];
