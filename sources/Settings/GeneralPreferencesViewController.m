@@ -694,6 +694,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSButton *_testButton;
     NSButton *_fetchModelsButton;
     NSProgressIndicator *_testSpinner;
+    // For -layoutForTranslations: the right-aligned labels in the left column,
+    // the checkboxes in the right column, the buttons pinned to the right
+    // edge, and where the right column starts.
+    NSArray<NSTextField *> *_columnLabels;
+    NSArray<NSButton *> *_columnCheckboxes;
+    NSArray<NSButton *> *_rightAnchoredButtons;
+    CGFloat _fieldX;
     NSDictionary *_result;
     BOOL (^_nameIsTaken)(NSString *name);
     // The Model name typed before auto-discovery was toggled on. Stashed so
@@ -789,6 +796,64 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return height;
 }
 
+// The form is laid out for English: a 150-point label column and a right
+// column sized to the window. Translations can be longer, so widen the label
+// column to fit the longest label, and the right column to fit the longest
+// checkbox, growing the window to match. The Test Connection button grows to
+// fit its title too. English is unchanged. Safe to call again after a title
+// changes.
+- (void)layoutForTranslations {
+    NSView *content = _window.contentView;
+    CGFloat labelExtra = 0;
+    for (NSTextField *label in _columnLabels) {
+        labelExtra = MAX(labelExtra, ceil(label.cell.cellSize.width) - NSWidth(label.frame));
+    }
+    CGFloat fieldExtra = 0;
+    for (NSButton *checkbox in _columnCheckboxes) {
+        fieldExtra = MAX(fieldExtra, ceil(checkbox.cell.cellSize.width) - NSWidth(checkbox.frame));
+    }
+    labelExtra = MAX(0, labelExtra);
+    fieldExtra = MAX(0, fieldExtra);
+    const CGFloat extra = labelExtra + fieldExtra;
+    const CGFloat oldWidth = NSWidth(content.bounds);
+    // Everything that ends at the right margin, like the text fields, widens.
+    const CGFloat rightEdge = NSMaxX(_columnCheckboxes.firstObject.frame);
+    const CGFloat fieldX = _fieldX;
+
+    if (extra > 0) {
+        // Move the subviews by hand rather than letting autoresizing do it.
+        const BOOL autoresizes = content.autoresizesSubviews;
+        content.autoresizesSubviews = NO;
+        [_window setContentSize:NSMakeSize(oldWidth + extra, NSHeight(content.bounds))];
+        content.autoresizesSubviews = autoresizes;
+
+        for (NSView *view in content.subviews) {
+            NSRect frame = view.frame;
+            if ([_columnLabels containsObject:(NSTextField *)view]) {
+                frame.size.width += labelExtra;
+            } else if ([_rightAnchoredButtons containsObject:(NSButton *)view]) {
+                frame.origin.x += extra;
+            } else if (NSMinX(frame) >= fieldX - 0.5) {
+                frame.origin.x += labelExtra;
+                if (NSMaxX(view.frame) >= rightEdge - 0.5 || view == _nameField || view == _modelPopup) {
+                    frame.size.width += fieldExtra;
+                }
+            } else if (NSMaxX(frame) >= rightEdge - 0.5) {
+                // The title spans the window.
+                frame.size.width += extra;
+            }
+            view.frame = frame;
+        }
+    }
+
+    NSRect testFrame = _testButton.frame;
+    testFrame.size.width = MAX(NSWidth(testFrame), ceil(_testButton.cell.cellSize.width));
+    _testButton.frame = testFrame;
+    NSRect spinnerFrame = _testSpinner.frame;
+    spinnerFrame.origin.x = NSMaxX(testFrame) + 8;
+    _testSpinner.frame = spinnerFrame;
+}
+
 - (void)buildWindowWithAPIKeyHintStrings:(NSArray<NSString *> *)apiKeyHintStrings {
     // Wide enough for the API-key hint line under the API popup to fit longer
     // localizations (e.g. Russian) without truncating.
@@ -824,11 +889,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [content addSubview:title];
 
     __block CGFloat y = height - 66;
+    NSMutableArray<NSTextField *> *columnLabels = [NSMutableArray array];
     void (^addLabel)(NSString *) = ^(NSString *labelTitle) {
         NSTextField *label = [NSTextField labelWithString:labelTitle];
         label.alignment = NSTextAlignmentRight;
         label.frame = NSMakeRect(margin, y + 3, labelWidth, 20);
         [content addSubview:label];
+        [columnLabels addObject:label];
     };
     NSTextField *(^addTextField)(NSString *, NSString *) = ^NSTextField *(NSString *labelTitle, NSString *value) {
         addLabel(labelTitle);
@@ -1088,6 +1155,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     headersLabel.alignment = NSTextAlignmentRight;
     headersLabel.frame = NSMakeRect(margin, y - 17, labelWidth, 20);
     [content addSubview:headersLabel];
+    [columnLabels addObject:headersLabel];
 
     const CGFloat headersTableHeight = 120;
     NSScrollView *headersScroll =
@@ -1168,6 +1236,20 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     _window.initialFirstResponder = _nameField;
     _window.defaultButtonCell = save.cell;
+
+    _columnLabels = columnLabels;
+    NSMutableArray<NSButton *> *checkboxes = [_featureButtons.allValues mutableCopy];
+    for (NSButton *checkbox in @[ _dynamicModelsButton ?: [NSNull null],
+                                  _configurableThinkingButton ?: [NSNull null],
+                                  _supportsTemperatureButton ?: [NSNull null] ]) {
+        if ([checkbox isKindOfClass:NSButton.class]) {
+            [checkboxes addObject:checkbox];
+        }
+    }
+    _columnCheckboxes = checkboxes;
+    _rightAnchoredButtons = @[ save, cancel, _fetchModelsButton ];
+    _fieldX = fieldX;
+    [self layoutForTranslations];
 
     [self updateEditorAPIKeyHint];
     [self updateDynamicModelsEditorState];
