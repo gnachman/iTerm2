@@ -109,6 +109,13 @@ final class TestHostIsolationTests: XCTestCase {
         XCTAssertNil(readDomain(suite))
     }
 
+    // Sparkle's update-permission prompt is modal and blocks actions in later tests.
+    func testUpdaterDelegateNeverPromptsOrChecks() {
+        let delegate = TestHostIsolation.updaterDelegate
+        XCTAssertFalse(delegate.updaterShouldPromptForPermissionToCheckForUpdates(NSObject()))
+        XCTAssertFalse(delegate.updaterMayCheckForUpdates(NSObject()))
+    }
+
     func testRemovesStateOfDeadTestHostsOnly() throws {
         try makeState("iterm2-tests.111-1")
         try makeState("iterm2-tests.222-2")

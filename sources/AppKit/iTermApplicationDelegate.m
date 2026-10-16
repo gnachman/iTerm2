@@ -1394,6 +1394,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     // about another instance would stall each one after the first.
     if (![NSApp isRunningUnitTests]) {
         [iTermInstanceLock resolveConflictIfNeeded];
+    } else {
+        suUpdater.delegate = (id<SUUpdaterDelegate>)[iTermTestHostIsolation updaterDelegate];
     }
     [[iTermApplication sharedApplication] updateAppearance];
     [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle

@@ -43,6 +43,7 @@
 #import "PasteboardHistory.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
+#import "NSApplication+iTerm.h"
 #import "UKCrashReporter.h"
 #import "VT100Screen.h"
 #import "WindowArrangements.h"
@@ -137,7 +138,11 @@ static iTermController *gSharedInstance;
     self = [super init];
 
     if (self) {
-        UKCrashReporterCheckForCrash();
+        // A test host would offer to report any recent iTerm2 crash in a modal window, which
+        // blocks button and menu actions in the tests that follow.
+        if (![NSApp isRunningUnitTests]) {
+            UKCrashReporterCheckForCrash();
+        }
 
         // create the "~/Library/Application Support/iTerm2" directory if it does not exist
         [[NSFileManager defaultManager] applicationSupportDirectory];

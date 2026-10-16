@@ -40,6 +40,24 @@ class TestHostIsolation: NSObject {
         }
     }
 
+    // Sparkle's delegate in test hosts. Sparkle reads the suite from the -suite argument, so it
+    // uses the shared base suite rather than this host's copy, and when that lacks its settings it
+    // asks whether to check for updates in a modal window. The window blocks button and menu
+    // actions in the tests that follow. Sparkle holds its delegate unretained, hence the static.
+    @objc static let updaterDelegate = UpdaterDelegate()
+
+    class UpdaterDelegate: NSObject {
+        @objc(updaterShouldPromptForPermissionToCheckForUpdates:)
+        func updaterShouldPromptForPermissionToCheckForUpdates(_ updater: AnyObject) -> Bool {
+            return false
+        }
+
+        @objc(updaterMayCheckForUpdates:)
+        func updaterMayCheckForUpdates(_ updater: AnyObject) -> Bool {
+            return false
+        }
+    }
+
     // Same test as -[NSApplication isRunningUnitTests], which can't be used before NSApp exists.
     static func isTestHost(environment: [String: String]) -> Bool {
         return environment["XCInjectBundle"] != nil || environment["XCInjectBundleInto"] != nil
