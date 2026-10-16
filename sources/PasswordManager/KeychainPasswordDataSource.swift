@@ -15,6 +15,23 @@ private func keychainInPlaceEditUnsupportedError() -> NSError {
                    userInfo: [NSLocalizedDescriptionKey: "In-place edit is not supported."])
 }
 
+// SSKeychain treats an empty password as an error, but an entry may legitimately have one. Read the
+// data directly so an empty password is "".
+private func keychainPassword(service: String, account: String, label: String?) throws -> String {
+    let query = SSKeychainQuery()
+    query.service = service
+    query.account = account
+    if let label {
+        query.label = label
+    }
+    try query.fetch()
+    guard let password = String(data: query.passwordData ?? Data(), encoding: .utf8) else {
+        throw NSError(domain: "Keychain", code: -1,  // Localization unneeded
+                      userInfo: [NSLocalizedDescriptionKey: "The saved password is not valid UTF-8."])  // Localization unneeded
+    }
+    return password
+}
+
 // Used to store account name in label and username in account. That was a mistake.
 // Now it stores username and account name in accountName and account name in label (just for looks in keychain access)
 fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
@@ -103,9 +120,9 @@ fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
     }
 
     private func password() throws -> String {
-        return try SSKeychain.password(forService: serviceName,
-                                       account: keychainAccountName,
-                                       label: accountName)
+        return try keychainPassword(service: serviceName,
+                                    account: keychainAccountName,
+                                    label: accountName)
     }
 
     private func set(password: String) throws {
@@ -211,8 +228,9 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
     }
 
     private func password() throws -> String {
-        return try SSKeychain.password(forService: serviceName,
-                                       account: keychainAccountName)
+        return try keychainPassword(service: serviceName,
+                                    account: keychainAccountName,
+                                    label: nil)
     }
 
     private func set(password: String) throws {

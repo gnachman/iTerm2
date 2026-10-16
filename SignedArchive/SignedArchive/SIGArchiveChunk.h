@@ -44,6 +44,9 @@ extern NSString *const SIGArchiveHeaderMagicString;
 
 @interface SIGArchiveChunkWriter : SIGArchiveChunk
 
+// The tag and length that precede the payload, exactly as they are written.
+- (NSData *)chunkHeaderData;
+
 - (BOOL)writeData:(NSData *)data
          toStream:(NSOutputStream *)stream
             error:(out NSError **)error;

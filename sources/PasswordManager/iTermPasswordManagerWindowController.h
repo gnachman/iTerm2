@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 
 extern NSString *const iTermPasswordManagerDidLoadAccounts;
+// Post to make every open password manager window reload its accounts.
+extern NSString *const kPasswordManagersShouldReloadData;
 
 @protocol iTermPasswordManagerDelegate <NSObject>
 

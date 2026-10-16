@@ -130,6 +130,18 @@
                 <dict>
                         <key>CFBundleTypeExtensions</key>
                         <array>
+                                <string>iterm2passwords</string>
+                        </array>
+                        <key>CFBundleTypeIconFile</key>
+                        <string>iTerm2.icns</string>
+                        <key>CFBundleTypeName</key>
+                        <string>iTerm2 Passwords</string>
+                        <key>CFBundleTypeRole</key>
+                        <string>Editor</string>
+                </dict>
+                <dict>
+                        <key>CFBundleTypeExtensions</key>
+                        <array>
                                 <string>itermscript</string>
                         </array>
                         <key>CFBundleTypeIconFile</key>

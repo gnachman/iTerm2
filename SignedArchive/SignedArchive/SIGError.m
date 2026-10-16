@@ -93,6 +93,16 @@ NSString *const SIGErrorDomain = @"com.iterm2.sig";
             return @"Trust chain verification failed";
         case SIGErrorCodeSignatureDoesNotMatchPayload:
             return @"Signature does not match payload";
+        case SIGErrorCodeEncrypted:
+            return @"The archive is encrypted";
+        case SIGErrorCodeNotEncrypted:
+            return @"The archive is not encrypted";
+        case SIGErrorCodeBadEncryptionParameters:
+            return @"The archive’s encryption parameters are invalid";
+        case SIGErrorCodeDecryptionFailed:
+            return @"Decryption failed. The passphrase is wrong or the file is damaged";
+        case SIGErrorCodeEncryptionFailed:
+            return @"Encryption failed";
     }
     return @"Unknown error";
 }

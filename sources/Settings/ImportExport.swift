@@ -16,23 +16,46 @@ class ImportExport: NSObject {
         case failure(String)
     }
 
-    fileprivate static func performExportFlow() -> ExportOutcome {
+    fileprivate struct ExportDestination {
+        var url: URL
+        var includePasswords: Bool
+    }
+
+    // Returns nil if the user cancelled. Passwords are offered only when `offerPasswords` is set
+    // and some password manager scope uses the Keychain.
+    fileprivate static func chooseExportDestination(offerPasswords: Bool) -> ExportDestination? {
         DLog("Begin")
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = ["itermexport"].compactMap { UTType(filenameExtension: $0) }
         savePanel.nameFieldStringValue = String(localized: "ImportExport.DefaultExportFileName", defaultValue: "iTerm2 State.itermexport", comment: "Default file name suggested when exporting settings and data")
         savePanel.title = String(localized: "ImportExport.ExportPanelTitle", defaultValue: "Export iTerm2 Settings and Data", comment: "Title of the save panel for exporting settings and data")
+        let passwordsCheckbox = offerPasswords ? PasswordArchiveController.makeIncludePasswordsCheckbox() : nil
+        if let passwordsCheckbox {
+            passwordsCheckbox.sizeToFit()
+            let margin = CGFloat(8)
+            let accessory = NSView(frame: NSRect(x: 0,
+                                                 y: 0,
+                                                 width: passwordsCheckbox.frame.width + margin * 2,
+                                                 height: passwordsCheckbox.frame.height + margin * 2))
+            passwordsCheckbox.frame.origin = NSPoint(x: margin, y: margin)
+            accessory.addSubview(passwordsCheckbox)
+            savePanel.accessoryView = accessory
+        }
 
         let response = savePanel.runModal()
         guard response == NSApplication.ModalResponse.OK else {
-            return .cancelled
+            return nil
         }
         guard let url = savePanel.url else {
-            return .cancelled
+            return nil
         }
-        RLog("Export to \(url.path)")
+        return ExportDestination(url: url, includePasswords: passwordsCheckbox?.state == .on)
+    }
+
+    fileprivate static func performExport(to url: URL, passwords: PasswordsToExport?) -> ExportOutcome {
+        RLog("Export to \(url.path) passwords=\(passwords != nil)")
         do {
-            let exporter = Exporter()
+            let exporter = Exporter(passwords: passwords)
             try exporter.export(to: url)
             if iTermAdvancedSettingsModel.revealExportedSettingsAndData() {
                 NSWorkspace.shared.activateFileViewerSelecting([url])
@@ -67,13 +90,33 @@ class ImportExport: NSObject {
         }
     }
 
+    // The completion receives an error message, or nil on success or cancellation.
     @objc
-    static func exportAll() -> String? {
-        switch performExportFlow() {
-        case .success, .cancelled:
-            return nil
-        case .failure(let message):
-            return message
+    static func exportAll(window: NSWindow?, completion: @escaping (String?) -> ()) {
+        guard let destination = chooseExportDestination(offerPasswords: true) else {
+            completion(nil)
+            return
+        }
+        let finish = { (passwords: PasswordsToExport?) in
+            switch performExport(to: destination.url, passwords: passwords) {
+            case .success, .cancelled:
+                completion(nil)
+            case .failure(let message):
+                completion(message)
+            }
+        }
+        guard destination.includePasswords else {
+            finish(nil)
+            return
+        }
+        PasswordArchiveController.preparePasswordsForSettingsExport(window: window) { prepared in
+            guard let prepared else {
+                // Cancelled, or the failure was already reported. Export nothing rather than
+                // quietly leaving out the passwords the user asked for.
+                completion(nil)
+                return
+            }
+            finish(PasswordsToExport(entries: prepared.entries, passphrase: prepared.passphrase))
         }
     }
 
@@ -135,13 +178,17 @@ class ImportExport: NSObject {
 
         switch exportSelection {
         case .kiTermWarningSelection0:
-            switch performExportFlow() {
-            case .success:
-                break
-            case .cancelled:
+            // Passwords aren't offered because erasing leaves the keychain alone.
+            guard let destination = chooseExportDestination(offerPasswords: false) else {
                 // Cancelling the save panel during "Export First" cancels
                 // the whole erase flow rather than silently proceeding to
                 // the destructive confirmation with no backup made.
+                return nil
+            }
+            switch performExport(to: destination.url, passwords: nil) {
+            case .success:
+                break
+            case .cancelled:
                 return nil
             case .failure(let message):
                 // Show the export failure under its own heading rather
@@ -323,6 +370,9 @@ private struct Eraser {
             FolderImporterExporter().erase(path: path, action: action)
         case .scripts:
             ScriptsImporterExporter().erase(scriptsPath: scriptsPath, action: action)
+        case .keychainPasswords:
+            // Keychain items are not erased. The erase confirmation says so.
+            break
         }
     }
 }
@@ -383,6 +433,9 @@ private struct ImportExportConfig {
             // application support.
             case scripts
             case disableAutomationAuth  // a legacy secure settings before it was made general
+            // Saved passwords from the Keychain password manager, encrypted with a passphrase.
+            // Exported only when the user opts in.
+            case keychainPasswords
         }
 
         var key: String
@@ -399,6 +452,11 @@ private struct ImportExportConfig {
         Entity(key: "disable-automation-auth",
                displayName: String(localized: "ImportExport.EntityPythonAPIAuthorization", defaultValue: "Python API Authorization Setting", comment: "Name of the Python API authorization setting item in the import/export list"),
                flavor: .disableAutomationAuth),
+        // Before user-defaults, whose import relaunches the app, so the passphrase is asked for
+        // before the relaunch.
+        Entity(key: "keychain-passwords",
+               displayName: String(localized: "ImportExport.EntitySavedPasswords", defaultValue: "Saved Passwords", comment: "Name of the saved passwords item in the import/export list"),
+               flavor: .keychainPasswords),
         Entity(key: "user-defaults",
                displayName: String(localized: "ImportExport.EntityUserDefaults", defaultValue: "User Defaults", comment: "Name of the user defaults item in the import/export list"),
                flavor: .userDefaults),
@@ -532,6 +590,13 @@ private class Importer {
             try FolderImporterExporter().performImport(from: url, to: path)
         case .scripts:
             try ScriptsImporterExporter(setStatus: self.setStatus).performImport(from: url)
+        case .keychainPasswords:
+            switch phase {
+            case .initial:
+                KeychainPasswordsImporterExporter().performImport(from: url)
+            case .final:
+                break
+            }
         }
     }
 
@@ -548,6 +613,11 @@ private class Importer {
 
 private class Exporter {
     private let config = ImportExportConfig()
+    private let passwords: PasswordsToExport?
+
+    init(passwords: PasswordsToExport?) {
+        self.passwords = passwords
+    }
 
     func export(to url: URL) throws {
         let tempDir = try makeTempDir()
@@ -594,6 +664,10 @@ private class Exporter {
             try ScriptsImporterExporter().export(to: destination)
         case .disableAutomationAuth:
             try AutomationAuthImporterExporter().export(to: destination)
+        case .keychainPasswords:
+            if let passwords {
+                try KeychainPasswordsImporterExporter().export(passwords, to: destination)
+            }
         }
     }
 
@@ -1273,5 +1347,36 @@ extension String {
                 fnmatch(p, s, FNM_PATHNAME) == 0
             }
         }
+    }
+}
+
+// Collected (after authenticating) before the export starts.
+fileprivate struct PasswordsToExport {
+    var entries: [PasswordArchiveEntry]
+    var passphrase: String
+}
+
+// The entity's folder holds one .iterm2passwords file, which is encrypted on its own: the
+// .itermexport archive around it is not.
+private struct KeychainPasswordsImporterExporter {
+    private let filename = "Passwords." + PasswordArchive.fileExtension
+
+    func export(_ passwords: PasswordsToExport, to destination: URL) throws {
+        do {
+            try PasswordArchive.write(passwords.entries,
+                                      to: destination.appendingPathComponent(filename),
+                                      passphrase: passwords.passphrase)
+        } catch {
+            throw ImportExportError.failedToSaveFile(error.localizedDescription)
+        }
+    }
+
+    // Problems are reported to the user here and don't stop the rest of the import.
+    func performImport(from source: URL) {
+        let url = source.appendingPathComponent(filename)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            return
+        }
+        PasswordArchiveController.importPasswordsDuringSettingsImport(from: url)
     }
 }

@@ -4422,7 +4422,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (IBAction)exportAllSettingsAndData:(id)sender {
-    [self showMessage:[iTerm2ImportExport exportAll] title:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ProblemExporting", nil, [NSBundle mainBundle], @"Problem Exporting", @"Title of alert shown when exporting settings fails")];
+    __weak __typeof(self) weakSelf = self;
+    [iTerm2ImportExport exportAllWithWindow:self.view.window completion:^(NSString *message) {
+        [weakSelf showMessage:message title:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ProblemExporting", nil, [NSBundle mainBundle], @"Problem Exporting", @"Title of alert shown when exporting settings fails")];
+    }];
 }
 
 - (IBAction)importAllSettingsAndData:(id)sender {

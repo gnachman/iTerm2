@@ -12,10 +12,13 @@
 		53F5893E21C9AF38004A372B /* SIGPolicy.h in Headers */ = {isa = PBXBuildFile; fileRef = 53F5893C21C9AF38004A372B /* SIGPolicy.h */; };
 		53F5893F21C9AF38004A372B /* SIGPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 53F5893D21C9AF38004A372B /* SIGPolicy.m */; };
 		53F5895321C9B527004A372B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 53F5895221C9B527004A372B /* main.m */; };
+		5A1E5C102E9A3B1C00D1E7A1 /* SIGArchiveAESGCMCipher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1E5C0F2E9A3B1C00D1E7A1 /* SIGArchiveAESGCMCipher.swift */; };
 		53F5895721C9B564004A372B /* libSignedArchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6BC8B2321C8D80D00796BF3 /* libSignedArchive.a */; };
 		53F5895B21C9C1F2004A372B /* SIGVerificationAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = 53F5895A21C9C1F2004A372B /* SIGVerificationAlgorithm.m */; };
 		A665C1C9243A4D8E00F623F0 /* SIGArchiveCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = A665C1C8243A4D8E00F623F0 /* SIGArchiveCommon.h */; };
 		A665C1CD243A4DF000F623F0 /* SIGArchiveCommon.m in Sources */ = {isa = PBXBuildFile; fileRef = A665C1CC243A4DF000F623F0 /* SIGArchiveCommon.m */; };
+		079A6BCEF7CF8FD87ED80C24 /* SIGArchiveEncryption.m in Sources */ = {isa = PBXBuildFile; fileRef = 0284512D3078061FA512A97D /* SIGArchiveEncryption.m */; };
+		A14E88E6CEF5EC82387E388C /* SIGArchiveEncryption.h in Headers */ = {isa = PBXBuildFile; fileRef = 475EDAAAAFEDF527640A97E0 /* SIGArchiveEncryption.h */; };
 		A6BC8B1921C8D5B500796BF3 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8B1821C8D5B500796BF3 /* main.m */; };
 		A6BC8B2C21C8D81F00796BF3 /* SIGArchiveBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8AEB21C78A3000796BF3 /* SIGArchiveBuilder.m */; };
 		A6BC8B2D21C8D81F00796BF3 /* SIGArchiveChunk.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8B0321C8B65900796BF3 /* SIGArchiveChunk.m */; };
@@ -119,6 +122,10 @@
 		53F5895221C9B527004A372B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		53F5895A21C9C1F2004A372B /* SIGVerificationAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SIGVerificationAlgorithm.m; sourceTree = "<group>"; };
 		A665C1C8243A4D8E00F623F0 /* SIGArchiveCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SIGArchiveCommon.h; sourceTree = "<group>"; };
+		475EDAAAAFEDF527640A97E0 /* SIGArchiveEncryption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SIGArchiveEncryption.h; sourceTree = "<group>"; };
+		0284512D3078061FA512A97D /* SIGArchiveEncryption.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SIGArchiveEncryption.m; sourceTree = "<group>"; };
+		5A1E5C0F2E9A3B1C00D1E7A1 /* SIGArchiveAESGCMCipher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SIGArchiveAESGCMCipher.swift; sourceTree = "<group>"; };
+		5A1E5C112E9A3B1C00D1E7A1 /* extract-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "extract-Bridging-Header.h"; sourceTree = "<group>"; };
 		A665C1CC243A4DF000F623F0 /* SIGArchiveCommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SIGArchiveCommon.m; sourceTree = "<group>"; };
 		A6BC8ADF21C789DA00796BF3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6BC8AEA21C78A3000796BF3 /* SIGArchiveBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SIGArchiveBuilder.h; sourceTree = "<group>"; };
@@ -205,6 +212,7 @@
 			isa = PBXGroup;
 			children = (
 				53F5895221C9B527004A372B /* main.m */,
+				5A1E5C112E9A3B1C00D1E7A1 /* extract-Bridging-Header.h */,
 			);
 			path = extract;
 			sourceTree = "<group>";
@@ -243,6 +251,9 @@
 				A6BC8B0221C8B65900796BF3 /* SIGArchiveChunk.h */,
 				A6BC8B0321C8B65900796BF3 /* SIGArchiveChunk.m */,
 				A665C1C8243A4D8E00F623F0 /* SIGArchiveCommon.h */,
+				475EDAAAAFEDF527640A97E0 /* SIGArchiveEncryption.h */,
+				0284512D3078061FA512A97D /* SIGArchiveEncryption.m */,
+				5A1E5C0F2E9A3B1C00D1E7A1 /* SIGArchiveAESGCMCipher.swift */,
 				A665C1CC243A4DF000F623F0 /* SIGArchiveCommon.m */,
 				A6BC8AFE21C79A8000796BF3 /* SIGArchiveReader.h */,
 				A6BC8AFF21C79A8000796BF3 /* SIGArchiveReader.m */,
@@ -316,6 +327,7 @@
 				A6BC8B5621C96E0E00796BF3 /* SIGVerificationAlgorithm.h in Headers */,
 				53F5893E21C9AF38004A372B /* SIGPolicy.h in Headers */,
 				A665C1C9243A4D8E00F623F0 /* SIGArchiveCommon.h in Headers */,
+				A14E88E6CEF5EC82387E388C /* SIGArchiveEncryption.h in Headers */,
 				A6BC8B5A21C96E4200796BF3 /* SIGSHA2VerificationAlgorithm.h in Headers */,
 				A6BC8B5221C965C100796BF3 /* SIGSHA2SigningAlgorithm.h in Headers */,
 				A6BC8B4E21C9656100796BF3 /* SIGSigningAlgorithm.h in Headers */,
@@ -464,6 +476,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				53F5895321C9B527004A372B /* main.m in Sources */,
+				5A1E5C102E9A3B1C00D1E7A1 /* SIGArchiveAESGCMCipher.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -491,6 +504,7 @@
 				A6BC8B3221C8D81F00796BF3 /* SIGPartialInputStream.m in Sources */,
 				A6BC8B3321C8D81F00796BF3 /* SIGKey.m in Sources */,
 				A665C1CD243A4DF000F623F0 /* SIGArchiveCommon.m in Sources */,
+				079A6BCEF7CF8FD87ED80C24 /* SIGArchiveEncryption.m in Sources */,
 				A6BC8B5321C965C100796BF3 /* SIGSHA2SigningAlgorithm.m in Sources */,
 				A6BC8B5B21C96E4200796BF3 /* SIGSHA2VerificationAlgorithm.m in Sources */,
 				A6BC8B3521C8D81F00796BF3 /* SIGTrust.m in Sources */,
@@ -542,18 +556,24 @@
 		53F5895521C9B527004A372B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "extract/extract-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
 		53F5895621C9B527004A372B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "extract/extract-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};

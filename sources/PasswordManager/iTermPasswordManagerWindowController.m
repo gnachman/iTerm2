@@ -23,7 +23,7 @@
 #import "NSTextField+iTerm.h"
 #import "NSWindow+iTerm.h"
 
-static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
+NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
 // Looks nice and is unlikely to be used already
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
@@ -1560,6 +1560,26 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
     return [[RecipeExecutionContext alloc] initWithWindow:self.window];
 }
 
+- (BOOL)isBrowserPasswordManager {
+    return self.dataSourceProvider == [iTermPasswordManagerDataSourceProvider forBrowser];
+}
+
+- (IBAction)exportPasswords:(id)sender {
+    if (!self.isUnlocked || !self.dataSourceProvider.keychainEnabled) {
+        return;
+    }
+    [iTermPasswordArchiveController exportPasswordsForBrowser:[self isBrowserPasswordManager]
+                                                       window:self.window];
+}
+
+- (IBAction)importPasswords:(id)sender {
+    if (!self.isUnlocked || !self.dataSourceProvider.keychainEnabled) {
+        return;
+    }
+    // The import posts kPasswordManagersShouldReloadData, which reloads this window.
+    [iTermPasswordArchiveController importPasswordsWithWindow:self.window completion:nil];
+}
+
 - (IBAction)switchAccount:(id)sender {
     [[self currentDataSource] switchAccountWithCompletion:^{
         [self reloadItems:nil];
@@ -1809,6 +1829,11 @@ static NSInteger const kDynamicMenuItemTag = 9999;
         return YES;
     } else if (menuItem.action == @selector(switchAccount:)) {
         return self.isUnlocked && [[self currentDataSource] supportsMultipleAccounts];
+    } else if (menuItem.action == @selector(exportPasswords:) ||
+               menuItem.action == @selector(importPasswords:)) {
+        // Only Keychain passwords are exported and imported. Other password managers have their
+        // own export, and importing into a keychain this window isn't showing would be confusing.
+        return self.isUnlocked && self.dataSourceProvider.keychainEnabled;
     }
     return YES;
 }

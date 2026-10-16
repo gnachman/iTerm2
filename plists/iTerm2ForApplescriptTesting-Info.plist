@@ -82,6 +82,18 @@
 			<string>Editor</string>
 		</dict>
 		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>iterm2passwords</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>iTerm2.iconset</string>
+			<key>CFBundleTypeName</key>
+			<string>iTerm2 Passwords</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Shell</string>
 			<key>LSItemContentTypes</key>

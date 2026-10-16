@@ -309,6 +309,13 @@ install-hooks:
 	git config core.hooksPath tools/git-hooks
 	@echo "Git hooks enabled (core.hooksPath=tools/git-hooks)."
 
+# Every configuration but Development builds its intermediates in a folder of its own.
+# Xcode doesn't separate some of them (generated module maps and precompiled headers) by
+# configuration, so building one configuration leaves another's precompiled header stale
+# and its next build fails. Development keeps Xcode's default, which Xcode and the tests
+# also use.
+intermediates = $(BUILD_DIR)/Intermediates-$(1).noindex
+
 Development:
 	echo "Using PATH for build: $(PATH)"
 	cp plists/dev-iTerm2.plist plists/iTerm2.plist
@@ -317,18 +324,18 @@ Development:
 
 Beta:
 	cp plists/beta-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
+	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" OBJROOT="$(call intermediates,Beta)" ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX $(BUILD_DIR)/Beta
-	tools/extract_strings.sh Beta "$(BUILD_DIR)"
+	OBJROOT="$(call intermediates,Beta)" tools/extract_strings.sh Beta "$(BUILD_DIR)"
 
 Deployment:
-	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
+	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" OBJROOT="$(call intermediates,Deployment)" ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX $(BUILD_DIR)/Deployment
-	tools/extract_strings.sh Deployment "$(BUILD_DIR)"
+	OBJROOT="$(call intermediates,Deployment)" tools/extract_strings.sh Deployment "$(BUILD_DIR)"
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
-	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO
+	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" OBJROOT="$(call intermediates,Nightly)" ENABLE_ADDRESS_SANITIZER=NO
 	chmod -R go+rX $(BUILD_DIR)/Nightly
 
 companion-iphone: force
@@ -341,6 +348,18 @@ open: Development
 # -AppleLanguages '(pt)'. Leave it unset to use the system language.
 run: Development
 	$(MAKE) run-nobuild
+
+# Like `run`, but builds the Deployment configuration signed as a release is (Developer ID,
+# hardened runtime, release entitlements and provisioning profile). Use it to test things
+# that depend on the release signature, such as reading login keychain items that release
+# builds saved without macOS asking about each one. It uses the dev Info.plist, so it checks
+# the nightly appcast rather than the release one, and skips the string extraction the
+# Deployment target runs. A debugger can't attach. The signed app is launched with `open`,
+# since macOS kills a signed app that is exec'd directly.
+run-deployment: ingest-catalogs
+	cp plists/dev-iTerm2.plist plists/iTerm2.plist
+	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" OBJROOT="$(call intermediates,Deployment)" ENABLE_ADDRESS_SANITIZER=NO
+	open -W -n "$(BUILD_DIR)/Deployment/iTerm2.app" --args -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))')
 
 run-nobuild: force
 	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))') & \

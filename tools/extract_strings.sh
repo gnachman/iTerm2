@@ -76,9 +76,11 @@ find sources ThirdParty/UKCrashReporter -type f \( -name '*.m' -o -name '*.mm' \
 # The intermediates live under OBJROOT, which is not necessarily inside
 # BUILD_DIR: overriding SYMROOT (as the Makefile does) leaves OBJROOT wherever
 # the user's Xcode build-location preference puts it, e.g. DerivedData. Ask
-# xcodebuild with the same override the build used.
+# xcodebuild with the same overrides the build used. The Makefile builds every
+# configuration but Development with its own OBJROOT and passes it in the
+# environment.
 PROJECT_TEMP_DIR="$(xcodebuild -scheme iTerm2 -configuration "$CONFIG" -showBuildSettings \
-    -skipPackagePluginValidation SYMROOT="$BUILD_DIR" 2>/dev/null \
+    -skipPackagePluginValidation SYMROOT="$BUILD_DIR" ${OBJROOT:+OBJROOT="$OBJROOT"} 2>/dev/null \
     | sed -n 's/^ *PROJECT_TEMP_DIR = //p' | head -1)"
 if [[ -z "$PROJECT_TEMP_DIR" ]]; then
     echo "extract_strings: could not determine PROJECT_TEMP_DIR from xcodebuild" >&2

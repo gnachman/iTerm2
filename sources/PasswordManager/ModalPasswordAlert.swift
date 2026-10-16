@@ -31,6 +31,14 @@ class ModalPasswordAlert {
     // reports it via .passwordManager. Off by default so existing callers are unaffected.
     var showPasswordManagerButton = false
 
+    // When true, a second secure field asks the user to type the password again. Its value after
+    // OK is in `confirmation`; the caller decides what to do about a mismatch.
+    var showConfirmationField = false
+    private(set) var confirmation: String?
+
+    // Set to false for a secret that must be typed at this Mac, such as an encryption passphrase.
+    var remotelyAnswerable = true
+
     // How the user dismissed the alert when using runAsyncOutcome.
     enum Outcome: Equatable {
         case ok(password: String)
@@ -50,6 +58,7 @@ class ModalPasswordAlert {
     private struct Views {
         var warning: iTermWarning
         var newPassword: NSSecureTextField
+        var confirmationField: NSSecureTextField?
         var usernameField: NSTextField?
         var rememberCheckbox: NSButton?
     }
@@ -64,8 +73,7 @@ class ModalPasswordAlert {
             views.warning.window = window
         }
         if views.warning.runModal() == Self.okSelection {
-            username = views.usernameField?.stringValue
-            rememberChecked = (views.rememberCheckbox?.state == .on)
+            recordFieldsAfterOK(views)
             return views.newPassword.stringValue
         }
         return nil
@@ -99,8 +107,7 @@ class ModalPasswordAlert {
                                     completion: @escaping (Outcome) -> ()) {
         switch selection {
         case Self.okSelection:
-            username = views.usernameField?.stringValue
-            rememberChecked = (views.rememberCheckbox?.state == .on)
+            recordFieldsAfterOK(views)
             completion(.ok(password: views.newPassword.stringValue))
         case Self.passwordManagerSelection:
             // Preserve anything the user already typed so it can pre-fill the dialog if they
@@ -117,13 +124,19 @@ class ModalPasswordAlert {
                                        views: Views,
                                        completion: @escaping (String?) -> ()) {
         if selection == Self.okSelection {
-            username = views.usernameField?.stringValue
-            rememberChecked = (views.rememberCheckbox?.state == .on)
+            recordFieldsAfterOK(views)
             completion(views.newPassword.stringValue)
         } else {
             completion(nil)
         }
         keepalive = nil
+    }
+
+    // Every way of running the alert must record the same fields when OK is clicked.
+    private func recordFieldsAfterOK(_ views: Views) {
+        username = views.usernameField?.stringValue
+        rememberChecked = (views.rememberCheckbox?.state == .on)
+        confirmation = views.confirmationField?.stringValue
     }
 
     private func makeAlert() -> Views {
@@ -183,6 +196,20 @@ class ModalPasswordAlert {
 
         wrapper.addArrangedSubview(newPassword)
 
+        let confirmationField: NSSecureTextField?
+        if showConfirmationField {
+            let field = NSSecureTextField(frame: newPassword.frame)
+            field.isEditable = true
+            field.isSelectable = true
+            field.placeholderString = String(localized: "ModalPasswordAlert.ConfirmPlaceholder", defaultValue: "Confirm", comment: "Placeholder for a field where the user types a password a second time to confirm it")
+            wrapper.addArrangedSubview(field)
+            newPassword.nextKeyView = field
+            field.nextKeyView = usernameField ?? newPassword
+            confirmationField = field
+        } else {
+            confirmationField = nil
+        }
+
         let rememberCheckbox: NSButton?
         if showRememberCheckbox {
             let checkbox = NSButton(checkboxWithTitle: String(localized: "ModalPasswordAlert.RememberPassword", defaultValue: "Remember this password", comment: "Checkbox to remember the entered password"), target: nil, action: nil)
@@ -213,7 +240,13 @@ class ModalPasswordAlert {
         remoteInputs.append(.secretInput(withIdentifier: "password",  // Localization unneeded
                                          label: nil,
                                          textField: newPassword))
+        if let confirmationField {
+            remoteInputs.append(.secretInput(withIdentifier: "confirmation",  // Localization unneeded
+                                             label: confirmationField.placeholderString,
+                                             textField: confirmationField))
+        }
         warning.remoteInputs = remoteInputs
+        warning.remotelyAnswerable = remotelyAnswerable
         warning.remoteCheckbox = rememberCheckbox
         if let usernameField, (username ?? "").isEmpty {
             warning.initialFirstResponder = usernameField
@@ -222,6 +255,7 @@ class ModalPasswordAlert {
         }
         return Views(warning: warning,
                      newPassword: newPassword,
+                     confirmationField: confirmationField,
                      usernameField: usernameField,
                      rememberCheckbox: rememberCheckbox)
     }

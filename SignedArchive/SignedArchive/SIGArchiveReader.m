@@ -11,6 +11,7 @@
 #import "SIGArchiveBuilder.h"
 #import "SIGArchiveChunk.h"
 #import "SIGArchiveCommon.h"
+#import "SIGArchiveEncryption.h"
 #import "SIGError.h"
 #import "SIGPartialInputStream.h"
 
@@ -26,6 +27,7 @@
             return nil;
         }
         _url = url;
+        _minimumKDFIterations = SIGArchiveEncryptionMinimumIterations;
     }
     return self;
 }
@@ -85,6 +87,92 @@
     }
     
     return string;
+}
+
+- (NSDictionary<NSString *, NSString *> *)metadataDictionary:(out NSError **)error {
+    NSString *metadata = [self metadata:error];
+    if (!metadata) {
+        return nil;
+    }
+    return SIGArchiveParseMetadata(metadata, error);
+}
+
+- (BOOL)isEncrypted {
+    return [self metadataDictionary:nil][SIGArchiveMetadataKeyEncryption] != nil;
+}
+
+- (NSData *)decryptedPayloadWithPassphrase:(NSString *)passphrase
+                                    cipher:(id<SIGAuthenticatedCipher>)cipher
+                                     error:(out NSError **)error {
+    NSString *header = [self header:error];
+    if (!header) {
+        return nil;
+    }
+    if (![header isEqualToString:SIGArchiveHeaderMagicString]) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeMalformedHeader];
+        }
+        return nil;
+    }
+    NSDictionary<NSString *, NSString *> *metadata = [self metadataDictionary:error];
+    if (!metadata) {
+        return nil;
+    }
+    if (!metadata[SIGArchiveMetadataKeyEncryption]) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeNotEncrypted];
+        }
+        return nil;
+    }
+    if ([metadata[SIGArchiveMetadataKeyVersion] integerValue] > 2) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeVersionTooNew];
+        }
+        return nil;
+    }
+    SIGArchivePassphraseEncryption *encryption =
+        [[SIGArchivePassphraseEncryption alloc] initWithPassphrase:passphrase
+                                                            cipher:cipher
+                                                          metadata:metadata
+                                                 minimumIterations:_minimumKDFIterations
+                                                             error:error];
+    if (!encryption) {
+        return nil;
+    }
+    SIGArchiveChunk *chunk = [self chunkWithTag:SIGArchiveTagPayload];
+    if (!chunk) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeNoPayload];
+        }
+        return nil;
+    }
+    // The AAD is everything before the payload, so the metadata must be in it.
+    if ([self chunkWithTag:SIGArchiveTagMetadata].payloadOffset > chunk.payloadOffset) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeInputFileMalformed];
+        }
+        return nil;
+    }
+    NSData *sealedBox = [chunk data:error];
+    if (!sealedBox) {
+        return nil;
+    }
+    NSData *aad = [self dataInRange:NSMakeRange(0, chunk.payloadOffset) error:error];
+    if (!aad) {
+        return nil;
+    }
+    NSData *key = [encryption derivedKey:error];
+    if (!key) {
+        return nil;
+    }
+    NSData *plaintext = [cipher openSealedBox:sealedBox key:key aad:aad error:nil];
+    if (!plaintext) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeDecryptionFailed];
+        }
+        return nil;
+    }
+    return plaintext;
 }
 
 #if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
@@ -223,6 +311,34 @@
 }
 
 #pragma mark - Private
+
+- (NSData *)dataInRange:(NSRange)range error:(out NSError **)error {
+    NSError *openError = nil;
+    NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingFromURL:_url error:&openError];
+    if (!fileHandle) {
+        if (error) {
+            *error = [SIGError errorWrapping:openError code:SIGErrorCodeIORead detail:@"Error opening file"];
+        }
+        return nil;
+    }
+    NSData *data = nil;
+    @try {
+        [fileHandle seekToFileOffset:range.location];
+        data = [fileHandle readDataOfLength:range.length];
+    } @catch (NSException *exception) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeIORead detail:exception.reason];
+        }
+        return nil;
+    }
+    if (data.length != range.length) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeIORead detail:@"Short read"];
+        }
+        return nil;
+    }
+    return data;
+}
 
 - (SIGArchiveChunk *)lastChunk {
     return _chunks.lastObject;

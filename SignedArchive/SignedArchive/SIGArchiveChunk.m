@@ -178,6 +178,11 @@ NSString *const SIGArchiveHeaderMagicString = @"signed-archive";
 
 @implementation SIGArchiveChunkWriter
 
+- (NSData *)chunkHeaderData {
+    const long long values[] = { htonll(self.tag), htonll(self.payloadLength) };
+    return [NSData dataWithBytes:values length:sizeof(values)];
+}
+
 - (BOOL)writeData:(NSData *)data
          toStream:(NSOutputStream *)stream
             error:(out NSError * _Nullable __autoreleasing * _Nullable)error {

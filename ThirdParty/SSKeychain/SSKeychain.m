@@ -45,8 +45,17 @@ static BOOL SSKeychainSynchronized = NO;
     query.service = serviceName;
     query.account = account;
     [self updateQuery:query];
-    [query fetch:error];
-    return query.password;
+    if (![query fetch:error]) {
+        return nil;
+    }
+    NSString *password = query.password;
+    if (!password && error) {
+        // Callers (and Swift's error bridging) treat a nil return as failure, so explain it.
+        *error = [NSError errorWithDomain:kSSKeychainErrorDomain
+                                     code:SSKeychainErrorNoPassword
+                                 userInfo:@{ NSLocalizedDescriptionKey: @"The keychain item’s password is empty or is not valid text." }];
+    }
+    return password;
 }
 
 

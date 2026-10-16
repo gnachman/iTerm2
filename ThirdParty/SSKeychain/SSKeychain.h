@@ -16,6 +16,8 @@
 typedef NS_ENUM(OSStatus, SSKeychainErrorCode) {
 	/** Some of the arguments were invalid. */
 	SSKeychainErrorBadArguments = -1001,
+	/** The item was found but its password is empty or is not valid UTF-8. */
+	SSKeychainErrorNoPassword = -1002,
 };
 
 /** SSKeychain error domain */

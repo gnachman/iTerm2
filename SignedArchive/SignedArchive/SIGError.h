@@ -49,6 +49,13 @@ typedef NS_ENUM(NSUInteger, SIGErrorCode) {
 
     // Signature validation
     SIGErrorCodeSignatureDoesNotMatchPayload,
+
+    // Encryption
+    SIGErrorCodeEncrypted,
+    SIGErrorCodeNotEncrypted,
+    SIGErrorCodeBadEncryptionParameters,
+    SIGErrorCodeDecryptionFailed,
+    SIGErrorCodeEncryptionFailed,
 };
 
 @interface SIGError : NSError

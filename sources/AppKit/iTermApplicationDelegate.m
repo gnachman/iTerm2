@@ -850,6 +850,12 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         [TriggerController importTriggersFromFile:filename];
         return YES;
     }
+    if ([filename.pathExtension isEqualToString:@"iterm2passwords"]) {
+        [iTermPasswordArchiveController importPasswordsFromURL:[NSURL fileURLWithPath:filename]
+                                                        window:nil
+                                                    completion:nil];
+        return YES;
+    }
     NSLog(@"Quiet launch");
     quiet_ = YES;
     if ([filename isEqualToString:[[NSFileManager defaultManager] versionNumberFilename]]) {

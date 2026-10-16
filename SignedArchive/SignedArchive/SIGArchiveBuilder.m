@@ -10,6 +10,7 @@
 
 #import "SIGArchiveChunk.h"
 #import "SIGArchiveCommon.h"
+#import "SIGArchiveEncryption.h"
 #import "SIGArchiveVerifier.h"
 #import "SIGCertificate.h"
 #import "SIGError.h"
@@ -31,6 +32,18 @@
     return self;
 }
 
+- (instancetype)initWithPayloadData:(NSData *)payloadData
+                           identity:(SIGIdentity *)identity
+                         encryption:(SIGArchivePassphraseEncryption *)encryption {
+    self = [super init];
+    if (self) {
+        _payloadData = [payloadData copy];
+        _identity = identity;
+        _encryption = encryption;
+    }
+    return self;
+}
+
 #pragma mark - API
 
 - (BOOL)writeToURL:(NSURL *)url
@@ -41,8 +54,17 @@
         return NO;
     }
 #endif
+    // An unsigned archive must be encrypted so its integrity can still be checked. An encrypted one
+    // must not be signed, because SIGArchiveVerifier can't verify it.
+    if (_identity && _encryption) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeUnsupportedAlgorithm
+                                      detail:@"Encrypted archives can't be signed"];
+        }
+        return NO;
+    }
     NSData *certificate = _identity.signingCertificate.data;
-    if (!certificate) {
+    if (!certificate && (_identity || !_encryption)) {
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeNoCertificate];
         }
@@ -65,8 +87,24 @@
     if (![self writeMetadataToStream:combinedOutputStream error:error]) {
         return NO;
     }
-    if (![self writePayloadToStream:combinedOutputStream error:error]) {
+    if (_encryption) {
+        if (![self writeEncryptedPayloadToStream:combinedOutputStream error:error]) {
+            return NO;
+        }
+    } else if (![self writePayloadToStream:combinedOutputStream error:error]) {
         return NO;
+    }
+    if (!certificate) {
+        [combinedOutputStream close];
+        NSData *combinedData = [combinedOutputStream propertyForKey:NSStreamDataWrittenToMemoryStreamKey];
+        NSError *writeError = nil;
+        if (!combinedData || ![combinedData writeToURL:url options:NSDataWritingAtomic error:&writeError]) {
+            if (error) {
+                *error = [SIGError errorWrapping:writeError code:SIGErrorCodeIOWrite detail:nil];
+            }
+            return NO;
+        }
+        return YES;
     }
 #if ENABLE_SIGARCHIVE_MIGRATION_CREATION
     if (![self writeSignature:signature toStream:combinedOutputStream error:error]) {
@@ -134,7 +172,70 @@
     return ok;
 }
 
+- (NSData *)plaintextPayload:(out NSError **)errorOut {
+    if (_payloadData) {
+        return _payloadData;
+    }
+    NSError *error = nil;
+    NSData *data = [NSData dataWithContentsOfURL:_payloadFileURL options:0 error:&error];
+    if (!data && errorOut) {
+        *errorOut = [SIGError errorWrapping:error code:SIGErrorCodeIORead detail:@"Error reading payload"];
+    }
+    return data;
+}
+
+// The AAD is everything already written plus this chunk's tag and length. That is every byte that
+// precedes the sealed box, which is what SIGArchiveReader authenticates when decrypting.
+- (BOOL)writeEncryptedPayloadToStream:(NSOutputStream *)writeStream error:(out NSError **)error {
+    NSData *plaintext = [self plaintextPayload:error];
+    if (!plaintext) {
+        return NO;
+    }
+    NSData *key = [_encryption derivedKey:error];
+    if (!key) {
+        return NO;
+    }
+    NSData *prefix = [writeStream propertyForKey:NSStreamDataWrittenToMemoryStreamKey];
+    if (!prefix) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeConsistency detail:@"Could not read archive prefix"];
+        }
+        return NO;
+    }
+    const long long sealedLength = SIGAddNonnegativeInt64s(plaintext.length, SIGArchiveEncryptionOverhead);
+    SIGArchiveChunkWriter *chunkWriter = [[SIGArchiveChunkWriter alloc] initWithTag:SIGArchiveTagPayload
+                                                                             length:sealedLength
+                                                                             offset:_offset];
+    NSMutableData *aad = [prefix mutableCopy];
+    [aad appendData:[chunkWriter chunkHeaderData]];
+
+    NSData *sealed = [_encryption.cipher sealPlaintext:plaintext key:key aad:aad error:error];
+    if (!sealed) {
+        if (error && !*error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeEncryptionFailed];
+        }
+        return NO;
+    }
+    if (sealed.length != sealedLength) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeEncryptionFailed detail:@"Unexpected sealed box length"];
+        }
+        return NO;
+    }
+    const BOOL ok = [chunkWriter writeData:sealed toStream:writeStream error:error];
+    _offset += chunkWriter.chunkLength;
+    return ok;
+}
+
 - (BOOL)writePayloadToStream:(NSOutputStream *)writeStream error:(out NSError * _Nullable __autoreleasing *)errorOut {
+    if (_payloadData) {
+        SIGArchiveChunkWriter *chunkWriter = [[SIGArchiveChunkWriter alloc] initWithTag:SIGArchiveTagPayload
+                                                                                 length:_payloadData.length
+                                                                                 offset:_offset];
+        const BOOL ok = [chunkWriter writeData:_payloadData toStream:writeStream error:errorOut];
+        _offset += chunkWriter.chunkLength;
+        return ok;
+    }
     NSInputStream *readStream = [[NSInputStream alloc] initWithURL:_payloadFileURL];
     if (!readStream) {
         return NO;
@@ -183,8 +284,13 @@
 }
 
 - (BOOL)writeMetadataToStream:(NSOutputStream *)writeStream error:(out NSError * _Nullable __autoreleasing *)error {
-    NSDictionary *const fieldDict = @{ SIGArchiveMetadataKeyVersion: [self producedVersion],
-                                       SIGArchiveMetadataKeyDigestType: [self producedDigestType] };
+    NSMutableDictionary *const fieldDict = [@{ SIGArchiveMetadataKeyVersion: [self producedVersion] } mutableCopy];
+    if (_identity) {
+        fieldDict[SIGArchiveMetadataKeyDigestType] = [self producedDigestType];
+    }
+    if (_encryption) {
+        [fieldDict addEntriesFromDictionary:[_encryption metadataEntries]];
+    }
     NSString *metadata = [self keyValuePairsFromDictionary:fieldDict];
     NSData *data = [metadata dataUsingEncoding:NSUTF8StringEncoding];
     SIGArchiveChunkWriter *chunkWriter = [[SIGArchiveChunkWriter alloc] initWithTag:SIGArchiveTagMetadata
