@@ -265,6 +265,7 @@ Window > Window Style > Full Screen                                             
 Window > Window Style > Maximized                                                       `Window Style.Maximized`                                                      
 Window > Window Style > No Title Bar                                                    `Window Style.No Title Bar`                                                   
 Window > Window Style > Centered                                                        `Window Style.Centered`                                                       
+Window > Window Style > Centered, No Title Bar                                          `Window Style.Centered No Title Bar`                                          
 Window > Window Style > Full-Width Bottom of Screen                                     `Window Style.FullWidth Bottom of Screen`                                     
 Window > Window Style > Full-Width Top of Screen                                        `Window Style.FullWidth Top of Screen`                                        
 Window > Window Style > Full-Height Left of Screen                                      `Window Style..FullHeight Left of Screen`                                     
@@ -275,6 +276,7 @@ Window > Window Style > Left of Screen                                          
 Window > Window Style > Right of Screen                                                 `Window Style.Right of Screen`                                                
 Window > Lock Size                                                                      `Lock Size`                                                                   
 Window > Lock Layout                                                                    `Lock Layout`                                                                 
+Window > Lock Location                                                                  `Lock Location`                                                               
 Window > Notify on Status Change                                                        `Notify on Status Change`                                                     
 Window > Arrange Windows > Merge All Windows                                            `Merge All Windows`                                                           
 Window > Arrange Windows > Arrange Windows Horizontally                                 `Arrange Windows Horizontally`                                                

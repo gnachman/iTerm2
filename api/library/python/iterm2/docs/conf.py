@@ -45,7 +45,7 @@ extensions = [
     #    'sphinx_autodoc_typehints'
 ]
 
-intersphinx_mapping = {'http://docs.python.org/dev': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -70,7 +70,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [u'_build', '.venv', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
