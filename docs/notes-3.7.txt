@@ -1506,3 +1506,7 @@ Bug Fixes:
   beachball when GPU rendering was on and the
   system was under heavy load, for example from
   memory pressure. Issue 13139.
+- In the Claude Code Integration setup, clicking
+  Show on the Show Toolbelt step more than once
+  no longer darkens the window further with each
+  click.
