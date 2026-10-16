@@ -550,6 +550,8 @@ Improvements:
 - The Python API now has type annotations, so
   editors and type checkers such as mypy can
   check scripts that use it.
+- Drawing text uses less CPU when the GPU
+  renderer is off.
 
 Bug Fixes:
 - With KeePassXC as the browser password
