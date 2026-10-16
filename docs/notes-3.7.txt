@@ -1480,3 +1480,7 @@ Bug Fixes:
 - With debug logging on, a password typed into
   a password field (for example, in the password
   manager) no longer appears in the debug log.
+- Pressing an arrow key or Tab while composing
+  text with an input method now finishes the
+  character and performs the key in one press, as
+  Return already did.
