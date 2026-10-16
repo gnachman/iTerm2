@@ -336,10 +336,7 @@ class iTermProcessInfo: NSObject {
             return true
         }
         for child in children {
-            block(child, &stop)
-            if stop {
-                return true
-            }
+            // The recursive call visits the child itself.
             if child.enumerateTree(block) {
                 return true
             }
