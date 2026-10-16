@@ -23,7 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Serialization to/from a restorable-state dictionary. Exposed for testing (issue 12866).
 @interface iTermSavedProfile (Serialization)
-- (instancetype)initWithSavedState:(NSDictionary *)state;
+// Returns nil if the state has no usable original profile, since the entry couldn't be switched
+// back to.
+- (nullable instancetype)initWithSavedState:(NSDictionary *)state;
 - (NSDictionary *)savedState;
 @end
 

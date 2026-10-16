@@ -11,7 +11,6 @@
 #import "iTermTuple.h"
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
-#import "NSWorkspace+iTerm.h"
 
 static NSString *const kGridCoordXKey = @"x";
 static NSString *const kGridCoordYKey = @"y";
@@ -277,11 +276,14 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
 }
 
 - (NSData *)propertyListData {
-    NSString *filename = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"DictionaryPropertyList" suffix:@"iTerm2"];
-    [self writeToFile:filename atomically:NO];
-    NSData *data = [NSData dataWithContentsOfFile:filename];
-    [[NSFileManager defaultManager] removeItemAtPath:filename error:nil];
-    return data;
+    return [self it_propertyListDataWithError:nil];
+}
+
+- (NSData *)it_propertyListDataWithError:(NSError **)error {
+    return [NSPropertyListSerialization dataWithPropertyList:self
+                                                      format:NSPropertyListXMLFormat_v1_0
+                                                     options:0
+                                                       error:error];
 }
 
 - (NSString *)sizeInfo {

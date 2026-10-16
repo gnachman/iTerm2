@@ -63,7 +63,9 @@
 - (NSDictionary<KeyType, ObjectType> *)dictionaryKeepingOnlyKeys:(NSArray<KeyType> *)keys;
 - (NSDictionary<KeyType, ObjectType> *)filteredWithBlock:(BOOL (^NS_NOESCAPE)(KeyType key, ObjectType value))block;
 
+// XML property list data, or nil if the receiver isn't a valid property list.
 - (NSData *)propertyListData;
+- (NSData *)it_propertyListDataWithError:(NSError **)error;
 - (NSString *)sizeInfo;
 
 // Returns a dictionary with changed values. If the block returns nil the

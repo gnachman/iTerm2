@@ -393,9 +393,44 @@ class BidiDisplayInfoObjc: NSObject {
     @objc
     var dictionaryValue: [String: Any] {
         return [Keys.lut.rawValue: guts.lut.efficientlyEncodedForPlist(),
-                Keys.rtlIndexes.rawValue: rtlIndexes.rangeView.map { NSValue(range: NSRange($0)) },
-                Keys.mirroredIndexes.rawValue: guts.mirroredIndexes.rangeView.map { NSValue(range: NSRange($0)) },
+                Keys.rtlIndexes.rawValue: Self.encode(rtlIndexes),
+                Keys.mirroredIndexes.rawValue: Self.encode(guts.mirroredIndexes),
                 Keys.paragraphIsRTL.rawValue: guts.paragraphIsRTL ]
+    }
+
+    // Ranges are stored as [location, length] pairs because property lists, as used by session
+    // archives and arrangements saved to a file, can't hold NSValue.
+    private static func encode(_ indexSet: IndexSet) -> [[Int]] {
+        return indexSet.rangeView.map { [$0.lowerBound, $0.count] }
+    }
+
+    // Accepts [location, length] pairs and, from older saves, NSValue ranges. Malformed ranges,
+    // as in a corrupt or hand-edited file, are dropped.
+    private static func decodeIndexSet(_ obj: Any?) -> IndexSet? {
+        guard let array = obj as? [Any] else {
+            return nil
+        }
+        return IndexSet(ranges: array.compactMap { element -> Range<Int>? in
+            if let value = element as? NSValue, !(element is NSNumber) {
+                let range = value.rangeValue
+                return validRange(location: range.location, length: range.length)
+            }
+            guard let pair = element as? [Int], pair.count == 2 else {
+                return nil
+            }
+            return validRange(location: pair[0], length: pair[1])
+        })
+    }
+
+    private static func validRange(location: Int, length: Int) -> Range<Int>? {
+        guard location >= 0, length >= 0 else {
+            return nil
+        }
+        let (end, overflow) = location.addingReportingOverflow(length)
+        guard !overflow else {
+            return nil
+        }
+        return location..<end
     }
 
     @objc(initWithDeltaString:usedCount:)
@@ -417,16 +452,10 @@ class BidiDisplayInfoObjc: NSObject {
               let lut = Array<Int32>(efficientlyEncodedForPlist: encodedLUTArray) else {
             return nil
         }
-        guard let indexesObj = dictionary[Keys.rtlIndexes.rawValue], let indexesArray = indexesObj as? Array<NSValue> else {
+        guard let indexes = Self.decodeIndexSet(dictionary[Keys.rtlIndexes.rawValue]) else {
             return nil
         }
-        let indexes = IndexSet(ranges: indexesArray.compactMap { Range($0.rangeValue) })
-        let mirroredIndexes: IndexSet =
-            if let obj = dictionary[Keys.mirroredIndexes.rawValue], let arr = obj as? Array<NSValue> {
-                IndexSet(ranges: arr.compactMap { Range($0.rangeValue) })
-            } else {
-                IndexSet()
-            }
+        let mirroredIndexes = Self.decodeIndexSet(dictionary[Keys.mirroredIndexes.rawValue]) ?? IndexSet()
         let paragraphIsRTL: Bool =
             if let obj = dictionary[Keys.paragraphIsRTL.rawValue],
                let convertedParagraphIsRTL = obj as? Bool {

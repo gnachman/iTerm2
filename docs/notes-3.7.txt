@@ -1497,8 +1497,8 @@ Bug Fixes:
 - Fixed saving a window arrangement with “Save
   to File with Contents…” and archiving a
   session when the text contained hyperlinks,
-  underline colors, or similar styling. The
-  arrangement file was never written, and the
-  session archive was empty. If saving an
-  arrangement to a file fails, iTerm2 now shows
-  an error. Issue 13143.
+  underline colors, similar styling, or
+  right-to-left text. The arrangement file was
+  never written, and the session archive was
+  empty. If either kind of save fails, iTerm2
+  now reports an error. Issue 13143.

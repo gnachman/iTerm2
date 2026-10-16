@@ -60,7 +60,7 @@ final class iTermSessionRestorationTests: XCTestCase {
 
         // It round trips back to the original set.
         let restored = iTermSavedProfile(savedState: state)
-        XCTAssertEqual(restored.overriddenFields, NSMutableSet(array: ["Name", "Command"]))
+        XCTAssertEqual(restored?.overriddenFields, NSMutableSet(array: ["Name", "Command"]))
     }
 
     // Backward compatibility: state written by an older build still held an NSSet. It must still load.
@@ -71,6 +71,41 @@ final class iTermSessionRestorationTests: XCTestCase {
             "Overridden Fields": NSMutableSet(array: ["Name", "Command"])
         ]
         let restored = iTermSavedProfile(savedState: legacy)
-        XCTAssertEqual(restored.overriddenFields, NSMutableSet(array: ["Name", "Command"]))
+        XCTAssertEqual(restored?.overriddenFields, NSMutableSet(array: ["Name", "Command"]))
+    }
+
+    // Session archives and arrangements saved to a file are property lists, which can't hold
+    // NSNull. A saved profile missing optional values must not write one (issue 13143).
+    func testSavedProfileWithoutOptionalFieldsIsValidPropertyList() throws {
+        let saved = iTermSavedProfile()
+        saved.originalProfile = ["Name": "Work"]
+
+        let state = saved.savedState()
+        XCTAssertNoThrow(try PropertyListSerialization.data(fromPropertyList: state,
+                                                            format: .binary,
+                                                            options: 0))
+
+        let restored = try XCTUnwrap(iTermSavedProfile(savedState: state))
+        XCTAssertEqual(restored.originalProfile as NSDictionary, ["Name": "Work"] as NSDictionary)
+        XCTAssertNil(restored.profile)
+        XCTAssertNil(restored.overriddenFields)
+    }
+
+    // An entry can't be switched back to without an original profile, so corrupt or hand-edited
+    // state that lacks one, or has the wrong type, is dropped rather than restored.
+    func testSavedProfileWithoutUsableOriginalProfileIsDropped() {
+        XCTAssertNil(iTermSavedProfile(savedState: ["Profile": ["Name": "Work"]]))
+        XCTAssertNil(iTermSavedProfile(savedState: ["Profile": ["Name": "Work"],
+                                                    "Original Profile": NSNull()]))
+        XCTAssertNil(iTermSavedProfile(savedState: ["Profile": ["Name": "Work"],
+                                                    "Original Profile": "not a profile"]))
+    }
+
+    // A wrong-typed profile is ignored, keeping the rest of the entry.
+    func testSavedProfileIgnoresWrongTypedProfile() throws {
+        let restored = try XCTUnwrap(iTermSavedProfile(savedState: ["Profile": "not a profile",
+                                                                    "Original Profile": ["Name": "Work"]]))
+        XCTAssertNil(restored.profile)
+        XCTAssertEqual(restored.originalProfile as NSDictionary, ["Name": "Work"] as NSDictionary)
     }
 }

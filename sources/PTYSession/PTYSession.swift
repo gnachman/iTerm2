@@ -1720,6 +1720,11 @@ extension PTYSession {
         return url.path
     }
 
+    private func notifyArchivingFailed(_ location: iTermSavePanelItem, _ error: Error) {
+        iTermNotificationController.sharedInstance().notify(
+            String(localized: "PTYSession.ArchivingFailed", defaultValue: "Archiving to \(location.displayName) failed: \(error.localizedDescription)", comment: "Notification shown when archiving a session fails; first placeholder is the destination, second is the error"))
+    }
+
     // Returns true if the archive was written synchronously to a local file.
     @objc(saveArchiveTo:term:)
     @discardableResult
@@ -1731,8 +1736,17 @@ extension PTYSession {
         } else {
             arrangement = PseudoTerminal.arrangement(with: self)
         }
-        guard let data = (arrangement as? NSDictionary)?.propertyListData() else {
-            DLog("Invalid plist at \(((arrangement as? NSDictionary)?.it_invalidPathInPlist()).d)")
+        guard let arrangement = arrangement as? NSDictionary else {
+            DLog("No arrangement")
+            return false
+        }
+        let data: Data
+        do {
+            data = try arrangement.it_propertyListData()
+        } catch {
+            RLog("Can't serialize archive for \(location.description): \(error)")
+            DLog("Invalid plist at \(arrangement.it_invalidPathInPlist().d)")
+            notifyArchivingFailed(location, error)
             return false
         }
         if location.host.isLocalhost {
@@ -1743,8 +1757,7 @@ extension PTYSession {
                 return true
             } catch {
                 RLog("Saving to \(location.description) failed: \(error)")
-                iTermNotificationController.sharedInstance().notify(
-                    String(localized: "PTYSession.ArchivingFailed", defaultValue: "Archiving to \(location.displayName) failed: \(error.localizedDescription)", comment: "Notification shown when archiving a session fails; first placeholder is the destination, second is the error"))
+                notifyArchivingFailed(location, error)
             }
             return false
         }
@@ -1756,8 +1769,7 @@ extension PTYSession {
                 }
             } catch {
                 RLog("Saving to \(location.description) failed: \(error)")
-                iTermNotificationController.sharedInstance().notify(
-                    String(localized: "PTYSession.ArchivingFailed", defaultValue: "Archiving to \(location.displayName) failed: \(error.localizedDescription)", comment: "Notification shown when archiving a session fails; first placeholder is the destination, second is the error"))
+                notifyArchivingFailed(location, error)
             }
         }
         return false

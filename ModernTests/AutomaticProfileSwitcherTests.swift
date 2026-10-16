@@ -326,4 +326,31 @@ final class AutomaticProfileSwitcherTests: XCTestCase {
         update(hostname: "hostname.com", username: "user@example.com", path: "/", job: "whatever")
         assertCurrentProfile(is: hostnameWildcardProfile)
     }
+
+    // Corrupt or hand-edited saved state is dropped entry by entry instead of being restored. An
+    // entry without an original profile used to make switching back to it hang, or fail with a
+    // banner on every check.
+    func testCorruptStackEntriesAreDropped() {
+        // The current profile matches the one valid entry, so there is nothing to switch to.
+        delegate.profile = profileHostB
+        let valid: [String: Any] = ["Profile": profileHostB, "Original Profile": profileHostB]
+        let state: [String: Any] = ["Profile Stack": [
+            ["Profile": profileHostA],
+            ["Profile": profileHostA, "Original Profile": "not a profile"],
+            "not an entry",
+            valid
+        ] as [Any]]
+        let restored = iTermAutomaticProfileSwitcher(delegate: delegate, savedState: state)
+        XCTAssertEqual((restored.savedState()["Profile Stack"] as? [Any])?.count, 1)
+
+        update(restored, hostname: "a", username: "george", path: "/", job: "job")
+        XCTAssertEqual(delegate.callsToLoadProfile, 0)
+    }
+
+    func testSavedStateWithWrongTypesRestoresEmptyStack() {
+        for state in [["Profile Stack": "junk"], ["Profile Stack": [1, 2]]] as [[String: Any]] {
+            let restored = iTermAutomaticProfileSwitcher(delegate: delegate, savedState: state)
+            XCTAssertEqual((restored.savedState()["Profile Stack"] as? [Any])?.count, 0)
+        }
+    }
 }

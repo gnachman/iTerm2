@@ -44,12 +44,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermSavedProfile
 
-- (instancetype)initWithSavedState:(NSDictionary *)state {
+- (nullable instancetype)initWithSavedState:(NSDictionary *)state {
+    // Saved state may be corrupt or hand-edited. Without an original profile the entry can't be
+    // switched back to, so drop it.
+    NSDictionary *originalProfile = [NSDictionary castFrom:state[kOriginalProfileKey]];
+    if (!originalProfile) {
+        DLog(@"Dropping saved profile without a usable original profile: %@", state);
+        return nil;
+    }
     self = [super init];
     if (self) {
         state = [state dictionaryByRemovingNullValues];
-        self.profile = state[kProfileKey];
-        self.originalProfile = state[kOriginalProfileKey];
+        self.profile = [NSDictionary castFrom:state[kProfileKey]];
+        self.originalProfile = originalProfile;
         // Overridden fields are serialized as an array (see -savedState) because NSSet is neither
         // a property-list type nor in the basic-classes allowlist used to decode restorable state,
         // which would otherwise drop the entire session arrangement on restore (issue 12866). Older
@@ -65,10 +72,12 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSDictionary *)savedState {
-    return @{ kProfileKey: _profile,
-              kOriginalProfileKey: _originalProfile ?: [NSNull null],
-              // Serialize as a sorted array rather than an NSSet. See -initWithSavedState: (issue 12866).
-              kOverriddenFieldsKey: [[_overriddenFields allObjects] sortedArrayUsingSelector:@selector(compare:)] ?: [NSNull null] };
+    // Omit missing values rather than storing NSNull, which property lists (session archives and
+    // arrangements saved to a file) can't hold. -initWithSavedState: treats both the same.
+    return [@{ kProfileKey: _profile ?: [NSNull null],
+               kOriginalProfileKey: _originalProfile ?: [NSNull null],
+               // Serialize as a sorted array rather than an NSSet. See -initWithSavedState: (issue 12866).
+               kOverriddenFieldsKey: [[_overriddenFields allObjects] sortedArrayUsingSelector:@selector(compare:)] ?: [NSNull null] } dictionaryByRemovingNullValues];
 }
 
 @end
@@ -101,13 +110,19 @@ static NSString *const kStackKey = @"Profile Stack";
                       savedState:(NSDictionary *)savedState {
     self = [self initWithDelegate:delegate];
     if (self) {
-        for (NSDictionary *dict in savedState[kStackKey]) {
+        // Saved state may be corrupt or hand-edited, so check types and skip unusable entries.
+        NSArray *stack = [NSArray castFrom:[NSDictionary castFrom:savedState][kStackKey]];
+        for (id entry in stack) {
+            NSDictionary *dict = [NSDictionary castFrom:entry];
+            if (!dict) {
+                continue;
+            }
             iTermSavedProfile *savedProfile = [[iTermSavedProfile alloc] initWithSavedState:dict];
             if (savedProfile) {
                 [_profileStack addObject:savedProfile];
             }
-            DLog(@"Initialized automatic profile switcher %@", self);
         }
+        DLog(@"Initialized automatic profile switcher %@", self);
         [self commonInit];
     }
     return self;
@@ -191,7 +206,10 @@ expressionValueProvider:(id<iTermAutomaticProfileSwitchingExpressionValueProvide
         ![topmostMatchingSavedProfile.originalProfile isEqualToProfile:currentProfile] &&
         scoreForTopmostMatchingSavedProfile > scoreForCurrentProfile) {
         APSLog(@"Profile %@ is in the stack and outranks the current profile. Will switch, but first, remove it and subsequent entries from the stack.", topmostMatchingSavedProfile.profile[KEY_NAME]);
-        while (_profileStack.lastObject.originalProfile == topmostMatchingSavedProfile.originalProfile) {
+        // Check the count because an entry's original profile can be nil, and so is that of an empty
+        // stack's lastObject, which would otherwise loop forever.
+        while (_profileStack.count > 0 &&
+               _profileStack.lastObject.originalProfile == topmostMatchingSavedProfile.originalProfile) {
             APSLog(@"Pop");
             [_profileStack removeLastObject];
         }

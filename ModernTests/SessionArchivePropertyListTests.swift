@@ -1,5 +1,5 @@
 //
-//  SessionArchiveHyperlinkTests.swift
+//  SessionArchivePropertyListTests.swift
 //  iTerm2
 //
 //  Created by George Nachman on 10/15/26.
@@ -9,12 +9,12 @@ import XCTest
 @testable import iTerm2SharedARC
 
 // Session archives are written as property lists, which only allow string
-// dictionary keys. Hyperlinks used to be encoded in dictionaries keyed by
-// NSNumber, so archiving a session containing one silently wrote nothing,
-// both from Save Archive of Current Session and when a session with
-// archiving turned on was closed. Issue 13143.
+// dictionary keys and a few value types. Hyperlinks (NSNumber-keyed) and bidi
+// info (NSValue) used to break them, and the failure produced an empty archive
+// while reporting success, both from Save Archive of Current Session and when
+// a session with archiving turned on was closed. Issue 13143.
 @MainActor
-final class SessionArchiveHyperlinkTests: XCTestCase {
+final class SessionArchivePropertyListTests: XCTestCase {
     private let url = URL(string: "https://example.com/archived")!
     private var directory: URL!
     // Keeps the session's parent alive for the duration of a test.
@@ -22,7 +22,7 @@ final class SessionArchiveHyperlinkTests: XCTestCase {
 
     override func setUpWithError() throws {
         directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("SessionArchiveHyperlinkTests-\(UUID().uuidString)")
+            .appendingPathComponent("SessionArchivePropertyListTests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
@@ -31,10 +31,7 @@ final class SessionArchiveHyperlinkTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    // A session with a hyperlink on part of a line that has scrolled into
-    // the line buffer and another on the visible grid, so both encoders are
-    // exercised.
-    private func makeSessionWithHyperlinks() throws -> PTYSession {
+    private func makeSession() throws -> PTYSession {
         var profile = try XCTUnwrap(ProfileModel.sharedInstance()?.defaultBookmark())
         profile[KEY_ARCHIVEDIR] = directory.path
         let session = try XCTUnwrap(PTYSession(synthetic: true))
@@ -45,7 +42,14 @@ final class SessionArchiveHyperlinkTests: XCTestCase {
         session.setScreenSize(frameSize, parent: parent)
         session.setPreferencesFromAddressBookEntry(profile)
         session.setSize(VT100GridSizeMake(80, 25))
+        return session
+    }
 
+    // A session with a hyperlink on part of a line that has scrolled into
+    // the line buffer and another on the visible grid, so both encoders are
+    // exercised.
+    private func makeSessionWithHyperlinks() throws -> PTYSession {
+        let session = try makeSession()
         let link = "before \u{1b}]8;;\(url.absoluteString)\u{1b}\\LINK\u{1b}]8;;\u{1b}\\ after\r\n"
         let filler = String(repeating: "filler\r\n", count: 40)
         feed(session, link + filler + link)
@@ -123,5 +127,45 @@ final class SessionArchiveHyperlinkTests: XCTestCase {
         let path = try XCTUnwrap(session.saveArchive(), "No archive was written")
         XCTAssertTrue(path.hasPrefix(directory.path))
         try assertArchiveContainsHyperlinks(at: path)
+    }
+
+    // Right-to-left text, with bidi support on, scrolled into the line buffer
+    // and on the visible grid.
+    func testArchiveOfSessionWithRightToLeftTextWritesFile() throws {
+        let savedBidi = iTermPreferences.bool(forKey: kPreferenceKeyBidi)
+        setBidiPreference(true)
+        defer { setBidiPreference(savedBidi) }
+
+        let session = try makeSession()
+        let rtl = "abc (\u{05D0}\u{05D1}\u{05D2}) def\r\n"
+        feed(session, rtl + String(repeating: "filler\r\n", count: 40) + rtl)
+        XCTAssertGreaterThan(session.screen.numberOfScrollbackLines(), 0, "Precondition")
+        let path = directory.appendingPathComponent("rtl.itermarchive").path
+
+        XCTAssertTrue(session.saveArchive(to: iTermSavePanelItem(filename: path, host: .localhost),
+                                          term: nil))
+        XCTAssertNotNil(NSDictionary(contentsOfFile: path), "Archive is missing or unreadable")
+    }
+
+    // When the arrangement can't be serialized, saving must report failure
+    // and leave no file behind instead of writing an empty archive.
+    func testArchiveThatCannotBeSerializedReportsFailure() throws {
+        let session = try makeSession()
+        // A script can store any value in a user variable. A URL isn't a
+        // property-list type.
+        session.genericScope.setValue(NSURL(string: "https://example.com")!,
+                                        forVariableNamed: "user.notAPropertyList")
+        let path = directory.appendingPathComponent("bad.itermarchive").path
+
+        XCTAssertFalse(session.saveArchive(to: iTermSavePanelItem(filename: path, host: .localhost),
+                                           term: nil))
+        XCTAssertNil(session.saveArchive())
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: directory.path), [])
+    }
+
+    // Setting a preference refreshes its cached value synchronously.
+    private func setBidiPreference(_ enabled: Bool) {
+        iTermPreferences.setBool(enabled, forKey: kPreferenceKeyBidi)
+        XCTAssertEqual(iTermPreferences.bidiEnabled(), enabled, "Precondition")
     }
 }
