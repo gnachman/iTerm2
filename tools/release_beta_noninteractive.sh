@@ -84,7 +84,7 @@ fi
 
 [ -f "$NOTES_FILE" ] || die "Release notes $NOTES_FILE not found"
 git ls-files --error-unmatch "$NOTES_FILE" >/dev/null 2>&1 || die "$NOTES_FILE is not committed"
-head -1 "$NOTES_FILE" | grep -q "^Version $VERSION of iTerm2" || die "$NOTES_FILE does not start with “Version $VERSION of iTerm2”"
+grep -q "^Version $VERSION of iTerm2" <<< "$(head -1 "$NOTES_FILE")" || die "$NOTES_FILE does not start with “Version $VERSION of iTerm2”"
 
 # ---------------------------------------------------------------------------
 step "Preflight: website repo"
@@ -116,7 +116,7 @@ done
 # ---------------------------------------------------------------------------
 step "Preflight: secrets"
 
-security find-identity -v -p codesigning | grep -qF "$SIGNING_AUTHORITY" || die "Signing identity “$SIGNING_AUTHORITY” not found"
+grep -qF "$SIGNING_AUTHORITY" <<< "$(security find-identity -v -p codesigning)" || die "Signing identity “$SIGNING_AUTHORITY” not found"
 
 EDPRIVKEY=$(security find-generic-password -s "$EDDSA_KEYCHAIN_SERVICE" -w 2>/dev/null) || die "Could not read the EdDSA key from the keychain (service $EDDSA_KEYCHAIN_SERVICE)"
 [ -n "$EDPRIVKEY" ] || die "The EdDSA key in the keychain is empty"
@@ -137,7 +137,10 @@ make clean BUILD_DIR="$BUILD_DIR"
 make -j8 SIGNED=1 UNIVERSAL=1 BUILD_DIR="$BUILD_DIR" Beta
 
 codesign --verify --verbose "$APP_DIR/iTerm2.app" || die "Signature not verified"
-codesign -dv --verbose=4 "$APP_DIR/iTerm2.app" 2>&1 | grep -qF "Authority=$SIGNING_AUTHORITY" || die "Not signed with the right certificate"
+# Capture first: with pipefail, grep -q exiting early would SIGPIPE codesign
+# and fail the pipeline even on a match.
+SIGNATURE_INFO=$(codesign -dv --verbose=4 "$APP_DIR/iTerm2.app" 2>&1)
+grep -qF "Authority=$SIGNING_AUTHORITY" <<< "$SIGNATURE_INFO" || die "Not signed with the right certificate"
 
 # ---------------------------------------------------------------------------
 step "Notarize"
