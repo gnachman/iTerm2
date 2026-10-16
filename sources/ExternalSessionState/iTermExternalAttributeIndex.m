@@ -11,6 +11,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSMutableData+iTerm.h"
+#import "NSStringITerm.h"
 #import "ScreenChar.h"
 
 NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
@@ -43,8 +44,13 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     self = [self init];
     if (self) {
         [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-            NSNumber *x = [NSNumber castFrom:key];
-            if (!x) {
+            // Keys are strings, but saves from older versions have NSNumber keys.
+            NSInteger column;
+            if ([key isKindOfClass:[NSNumber class]]) {
+                column = [key integerValue];
+            } else if ([key isKindOfClass:[NSString class]] && [key isNumeric]) {
+                column = [key integerValue];
+            } else {
                 return;
             }
             NSDictionary *dict = [[NSDictionary castFrom:obj] dictionaryByRemovingNullValues];
@@ -52,7 +58,7 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
                 return;
             }
             iTermExternalAttribute *attr = [[iTermExternalAttribute alloc] initWithDictionary:dict];
-            [self setAttributes:attr at:x.intValue count:1];
+            [self setAttributes:attr at:(int)column count:1];
         }];
     }
     return self;
@@ -107,9 +113,13 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
 
 - (NSDictionary *)dictionaryValue {
     // TODO: Consider runlength encoding this to save space, e.g. for long hyperlinks
-    return [_attributes mapValuesWithBlock:^id(NSNumber *key, iTermExternalAttribute *attribute) {
-        return attribute.dictionaryValue;
+    // Use string keys because property lists, as used by window arrangements saved to a file,
+    // forbid NSNumber keys.
+    NSMutableDictionary<NSString *, NSDictionary *> *result = [NSMutableDictionary dictionary];
+    [_attributes enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, iTermExternalAttribute *attribute, BOOL *stop) {
+        result[key.stringValue] = attribute.dictionaryValue;
     }];
+    return result;
 }
 
 - (NSString *)description {

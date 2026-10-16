@@ -1486,3 +1486,11 @@ Bug Fixes:
 - With debug logging on, a password typed into
   a password field (for example, in the password
   manager) no longer appears in the debug log.
+- Fixed saving a window arrangement with “Save
+  to File with Contents…” and archiving a
+  session when the text contained hyperlinks,
+  underline colors, or similar styling. The
+  arrangement file was never written, and the
+  session archive was empty. If saving an
+  arrangement to a file fails, iTerm2 now shows
+  an error. Issue 13143.

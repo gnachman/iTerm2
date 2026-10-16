@@ -484,6 +484,26 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }];
 }
 
+- (void)writeArrangements:(NSArray *)terminalArrangements toSaveItem:(iTermSavePanelItem *)saveItem {
+    [terminalArrangements writeToSaveItem:saveItem completionHandler:^(NSError *error) {
+        if (!error) {
+            return;
+        }
+        // The handler of a bridged async method isn't guaranteed to run on the main thread.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"Failed to write arrangement to %@: %@", saveItem, error);
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"WindowArrangements.ExportSaveError", nil, [NSBundle mainBundle], @"Error saving to %1$@: %2$@", @"Error message when writing a window arrangement to a file fails; first arg is a filename, second is the error"),
+                                                saveItem.displayName, error.localizedDescription]
+                                       actions:@[ iTermLocalizedOK() ]
+                                     accessory:nil
+                                    identifier:@"NoSyncArrangementWritingError"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:NSLocalizedStringWithDefaultValue(@"WindowArrangements.ExportFailedHeading", nil, [NSBundle mainBundle], @"Couldn’t Save Window Arrangement", @"Heading of the warning shown when saving a window arrangement to a file fails")
+                                        window:[[self currentTerminal] window]];
+        });
+    }];
+}
+
 // Precondition: at least one of name,saveItem is nonnil.
 - (void)saveWindowArrangementForAllWindows:(BOOL)allWindows name:(NSString *)name saveItem:(iTermSavePanelItem *)saveItem {
     if (allWindows) {
@@ -503,7 +523,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             }
         }
         if (saveItem) {
-            [terminalArrangements writeToSaveItem:saveItem completionHandler:^(NSError *error){ }];
+            [self writeArrangements:terminalArrangements toSaveItem:saveItem];
         } else {
             [WindowArrangements setArrangement:terminalArrangements withName:name];
         }
@@ -526,7 +546,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }
     if (terminalArrangements.count) {
         if (saveItem) {
-            [terminalArrangements writeToSaveItem:saveItem completionHandler:^(NSError *error){ }];
+            [self writeArrangements:terminalArrangements toSaveItem:saveItem];
         } else {
             [WindowArrangements setArrangement:terminalArrangements withName:name];
         }
