@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "277AFE463D39A24B5D6A0ED4"
+               BlueprintIdentifier = "0401FD717CF6F841522EC0EB"
                BuildableName = "iTerm2Companion.app"
                BlueprintName = "iTerm2Companion"
                ReferencedContainer = "container:iTerm2Companion.xcodeproj">
@@ -30,7 +30,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "277AFE463D39A24B5D6A0ED4"
+            BlueprintIdentifier = "0401FD717CF6F841522EC0EB"
             BuildableName = "iTerm2Companion.app"
             BlueprintName = "iTerm2Companion"
             ReferencedContainer = "container:iTerm2Companion.xcodeproj">
@@ -41,7 +41,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "43A54A8C35D8CFEF13D7D5C2"
+               BlueprintIdentifier = "1C2BFC2FC3DAAC1E668C76CF"
                BuildableName = "iTerm2CompanionTests.xctest"
                BlueprintName = "iTerm2CompanionTests"
                ReferencedContainer = "container:iTerm2Companion.xcodeproj">
@@ -63,7 +63,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "277AFE463D39A24B5D6A0ED4"
+            BlueprintIdentifier = "0401FD717CF6F841522EC0EB"
             BuildableName = "iTerm2Companion.app"
             BlueprintName = "iTerm2Companion"
             ReferencedContainer = "container:iTerm2Companion.xcodeproj">
@@ -80,7 +80,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "277AFE463D39A24B5D6A0ED4"
+            BlueprintIdentifier = "0401FD717CF6F841522EC0EB"
             BuildableName = "iTerm2Companion.app"
             BlueprintName = "iTerm2Companion"
             ReferencedContainer = "container:iTerm2Companion.xcodeproj">
