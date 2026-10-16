@@ -170,20 +170,19 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         return;
     }
 
-    // An input method can finish a composition by committing it with
-    // -insertText:replacementRange: and then handing the keystroke back to us as a command
-    // selector. When that happens the key is ours to handle: the composition is already gone
-    // by the time we get here, so the delete would otherwise be dropped and the committed
-    // text left behind. _keyPressHandled distinguishes this from the case where the IME
-    // consumed the keystroke to edit its composition, in which case there is nothing to do.
-    // Issue 13030.
+    // An input method can commit its composition with -insertText:replacementRange: and then
+    // hand the keystroke back as a command selector. Unless we send it, the Return, arrow key,
+    // etc. that ended the composition is lost. Issue 13030. _keyPressHandled is set only when
+    // this keypress committed text, which rules out an IME that consumed the key to edit its
+    // composition.
+    //
+    // We send the event, not the selector, so any selector works. noop: (keys with no binding)
+    // is left out because nobody has checked what sending those would do.
     if (_keyPressHandled &&
         _hadMarkedTextBeforeHandlingKeypressEvent &&
         ![self hasMarkedText] &&
         _eventBeingHandled &&
-        (aSelector == @selector(deleteBackward:) ||
-         aSelector == @selector(deleteBackwardByDecomposingPreviousCharacter:) ||
-         aSelector == @selector(insertNewline:))) {
+        aSelector != NSSelectorFromString(@"noop:")) {
         DLog(@"IME committed and handed back %@; sending to delegate", NSStringFromSelector(aSelector));
         [self.delegate keyboardHandler:self sendEventToController:_eventBeingHandled];
         DLog(@"returning from doCommandBySelector:%@", NSStringFromSelector(aSelector));

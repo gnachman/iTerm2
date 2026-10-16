@@ -278,3 +278,120 @@ final class KeyboardHandlerPeriodSubstitutionTests: XCTestCase {
         XCTAssertEqual(delegate.actions, [.insert(". ")])
     }
 }
+
+// An input method can finish a composition by committing it with -insertText:replacementRange:
+// and then hand the keystroke back as a command selector. The key must then reach the terminal,
+// whatever the selector is. Issue 13030 covered Backspace and Return; arrow keys and Tab take the
+// same path.
+final class KeyboardHandlerCommittedCompositionTests: XCTestCase {
+    private var handler: iTermKeyboardHandler!
+    private var delegate: FakeKeyboardHandlerDelegate!
+    private var inputContext: NSTextInputContext!
+
+    override func setUp() {
+        super.setUp()
+        delegate = FakeKeyboardHandlerDelegate()
+        handler = iTermKeyboardHandler()
+        handler.keyMapper = iTermStandardKeyMapper()
+        handler.delegate = delegate
+        inputContext = NSTextInputContext(client: NSTextView())
+        // With either of these on, keypresses go to the real -[NSTextInputContext handleEvent:]
+        // instead of the delegate's interpretKeyEvents.
+        pinAdvancedSetting("ExperimentalKeyHandling", to: false)
+        pinAdvancedSetting("EnableCharacterAccentMenu", to: false)
+    }
+
+    private func keyEvent(_ characters: String, keyCode: Int) -> NSEvent {
+        return NSEvent.keyEvent(with: .keyDown,
+                                location: .zero,
+                                modifierFlags: [],
+                                timestamp: 0,
+                                windowNumber: 0,
+                                context: nil,
+                                characters: characters,
+                                charactersIgnoringModifiers: characters,
+                                isARepeat: false,
+                                keyCode: UInt16(keyCode))!
+    }
+
+    // Presses a key while one syllable is being composed. The input method commits `committed`
+    // (if any) and then hands back `selector`.
+    private func pressWhileComposing(_ characters: String,
+                                     keyCode: Int,
+                                     committing committed: String?,
+                                     handingBack selector: Selector) {
+        delegate.markedTextLength = 1
+        delegate.interpretKeyEvents = { [delegate] handler, _ in
+            if let committed {
+                delegate!.markedTextLength = 0
+                handler.insertText(committed, replacementRange: NSRange(location: NSNotFound, length: 0))
+            }
+            handler.doCommand(by: selector)
+        }
+        handler.keyDown(keyEvent(characters, keyCode: keyCode), inputContext: inputContext)
+    }
+
+    private func sent(_ characters: String, keyCode: Int) -> FakeKeyboardHandlerDelegate.Action {
+        return .sendEvent(keyCode: UInt16(keyCode), characters: characters)
+    }
+
+    private let leftArrow = String(UnicodeScalar(UInt16(NSLeftArrowFunctionKey))!)
+    private let upArrow = String(UnicodeScalar(UInt16(NSUpArrowFunctionKey))!)
+
+    func testReturnAfterCommitIsSent() {
+        pressWhileComposing("\r",
+                            keyCode: kVK_Return,
+                            committing: "가",
+                            handingBack: #selector(NSResponder.insertNewline(_:)))
+
+        XCTAssertEqual(delegate.actions, [.insert("가"), sent("\r", keyCode: kVK_Return)])
+    }
+
+    func testLeftArrowAfterCommitIsSent() {
+        pressWhileComposing(leftArrow,
+                            keyCode: kVK_LeftArrow,
+                            committing: "가",
+                            handingBack: #selector(NSResponder.moveLeft(_:)))
+
+        XCTAssertEqual(delegate.actions, [.insert("가"), sent(leftArrow, keyCode: kVK_LeftArrow)])
+    }
+
+    func testUpArrowAfterCommitIsSent() {
+        pressWhileComposing(upArrow,
+                            keyCode: kVK_UpArrow,
+                            committing: "가",
+                            handingBack: #selector(NSResponder.moveUp(_:)))
+
+        XCTAssertEqual(delegate.actions, [.insert("가"), sent(upArrow, keyCode: kVK_UpArrow)])
+    }
+
+    func testTabAfterCommitIsSent() {
+        pressWhileComposing("\t",
+                            keyCode: kVK_Tab,
+                            committing: "가",
+                            handingBack: #selector(NSResponder.insertTab(_:)))
+
+        XCTAssertEqual(delegate.actions, [.insert("가"), sent("\t", keyCode: kVK_Tab)])
+    }
+
+    // Cocoa reports keys without a binding as noop:. Those are not sent.
+    func testNoopAfterCommitIsNotSent() {
+        pressWhileComposing("a",
+                            keyCode: kVK_ANSI_A,
+                            committing: "가",
+                            handingBack: Selector(("noop:")))
+
+        XCTAssertEqual(delegate.actions, [.insert("가")])
+    }
+
+    // A Japanese IME moves between conversion segments with the arrow keys. The composition is
+    // still there, so the key belongs to the input method.
+    func testArrowConsumedByInputMethodIsNotSent() {
+        pressWhileComposing(leftArrow,
+                            keyCode: kVK_LeftArrow,
+                            committing: nil,
+                            handingBack: #selector(NSResponder.moveLeft(_:)))
+
+        XCTAssertEqual(delegate.actions, [])
+    }
+}
