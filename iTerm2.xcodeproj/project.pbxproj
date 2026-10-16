@@ -38,6 +38,7 @@
 		0C8691424C40627F505DDE94 /* PTYSessionPeerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8721B9515977EC8CB513CDAA /* PTYSessionPeerPort.swift */; };
 		0C9EC47197770F9F682B6F8D /* RemoteCommandToolProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7BADF8FB7DD7E1B851F797 /* RemoteCommandToolProvider.swift */; };
 		0CA1074480F384E60CA30B2F /* AILiveDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E07413F98A022F224813BE /* AILiveDriver.swift */; };
+		0DD879A387C515F3B5C0DA97 /* iTermTestHostIsolation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F970D2842EEBAA3FB7CA789 /* iTermTestHostIsolation.swift */; };
 		0E2A5ED423A079E312DF135B /* iTermLayoutMutator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89D3137ADD4526A5A2012D83 /* iTermLayoutMutator.swift */; };
 		0EBFA4D421C1D324DCE01133 /* ResilientCoordinateNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240C63271364D969B638DA6E /* ResilientCoordinateNotifications.swift */; };
 		1025FC686CC215C5276A1630 /* CompanionAlert+Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 915FC56D082AE9C9EF31D4D5 /* CompanionAlert+Database.swift */; };
@@ -5537,6 +5538,7 @@
 		2C9EF4B4D9DF2F4E3CA2A3F5 /* AIExplanationRequest+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AIExplanationRequest+Mac.swift"; sourceTree = "<group>"; };
 		2D87E8EB4F6B647368CED6F0 /* ChatMentionPickerController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatMentionPickerController.swift; sourceTree = "<group>"; };
 		2EC03AC4196A9AA446D5A176 /* AILiveOllamaTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveOllamaTests.swift; sourceTree = "<group>"; };
+		2F970D2842EEBAA3FB7CA789 /* iTermTestHostIsolation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermTestHostIsolation.swift; sourceTree = "<group>"; };
 		2FAA0491F10CEBBC4BA051B1 /* OrchestratorCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorCommand.swift; sourceTree = "<group>"; };
 		2FBEEBCEC29954CD954C38E3 /* AIReasoningTypes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIReasoningTypes.swift; sourceTree = "<group>"; };
 		30BDC3CFCE129E42150030AF /* iTermRosettaSupport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermRosettaSupport.swift; sourceTree = "<group>"; };
@@ -12900,6 +12902,7 @@
 				139B0F2464646FD17DF58221 /* iTermCorruptApplicationAlert.h */,
 				CB3DBDC4C23FFB1D11F2D994 /* iTermSettingsTruncationChecker.swift */,
 				9F69BF985533F5E16A871AC7 /* iTermBrowserScriptingPermissionsWindowController.swift */,
+				2F970D2842EEBAA3FB7CA789 /* iTermTestHostIsolation.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -20125,6 +20128,7 @@
 				C546D1C137A24629323C6102 /* SIGArchiveAESGCMCipher.swift in Sources */,
 				4AC9BC704041CFB559C88F06 /* PasswordArchive.swift in Sources */,
 				E5D1679B382CC51CBC944DC9 /* PasswordArchiveController.swift in Sources */,
+				0DD879A387C515F3B5C0DA97 /* iTermTestHostIsolation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

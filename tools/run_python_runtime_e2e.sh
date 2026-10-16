@@ -49,6 +49,10 @@ esac
 # TEST_RUNNER_ prefix makes it forward this into the test process, where the live
 # tests read ITERM2_UV_LIVE to opt in (they XCTSkip without it).
 export TEST_RUNNER_ITERM2_UV_LIVE=1
+# Live tests can wait minutes on a remote API, a local model, or a download, so
+# allow a longer quiet stretch than run_tests.expect's 300-second default before
+# it treats the run as hung.
+export RUN_TESTS_STALL_SECONDS="${RUN_TESTS_STALL_SECONDS:-1800}"
 
 echo "Running live uv runtime harness: $FILTER"
 exec "$SCRIPT_DIR/run_tests.expect" "$FILTER"

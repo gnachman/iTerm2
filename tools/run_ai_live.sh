@@ -161,6 +161,10 @@ cd "$PROJECT_DIR"
 # invocation marker for AILiveHarness's setUpWithError. Plain ModernTests
 # runs default to deleting stale configs, which is what we want for them.
 export ITERM2_AI_LIVE_KEEP_CONFIG=1
+# Live tests can wait minutes on a remote API, a local model, or a download, so
+# allow a longer quiet stretch than run_tests.expect's 300-second default before
+# it treats the run as hung.
+export RUN_TESTS_STALL_SECONDS="${RUN_TESTS_STALL_SECONDS:-1800}"
 # Don't `exec` here: bash needs to live long enough for the EXIT trap
 # above to fire and remove $CONFIG_FILE after the tests finish. An
 # `exec` would replace bash with run_tests.expect, dropping the trap

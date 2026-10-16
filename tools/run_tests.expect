@@ -32,7 +32,21 @@ set only_testing_flags {}
 foreach test_name $test_names {
     lappend only_testing_flags -only-testing:$test_name
 }
-set timeout -1
+# If xcodebuild prints nothing for this long, the run is treated as hung: what
+# each test host was doing is saved by report_test_stall.sh and the run is
+# killed. Override with RUN_TESTS_STALL_SECONDS (0 disables). The regular
+# suite's slowest tests take seconds; the live harness scripts (run_ai_live.sh
+# and friends) raise this because a single live test can wait minutes.
+set stall_seconds 300
+if {[info exists env(RUN_TESTS_STALL_SECONDS)]} {
+    set stall_seconds $env(RUN_TESTS_STALL_SECONDS)
+}
+if {$stall_seconds > 0} {
+    set timeout $stall_seconds
+} else {
+    set timeout -1
+}
+set script_dir [file dirname [file normalize [info script]]]
 
 if {[info exists env(SIGNED)] && $env(SIGNED) eq "1"} {
     set signing_flags {}
@@ -89,6 +103,21 @@ expect {
     "Program crashed" {
         send_user "\n\n*** Detected interactive debug prompt, killing process ***\n\n"
         wait
+        cleanup_and_exit 1
+    }
+    -re "\[^\n\]*\n" {
+        # Consume output a line at a time so the timeout measures time since the
+        # last line rather than since the run started.
+        exp_continue
+    }
+    timeout {
+        set report [file join [pwd] tmp "test-stall-[clock format [clock seconds] -format %Y%m%d-%H%M%S].txt"]
+        send_user "\n\n*** No test output for $stall_seconds seconds. The run looks hung. ***\n"
+        catch {exec [file join $script_dir report_test_stall.sh] $report} summary
+        send_user "$summary\n\n*** Killing the run. ***\n\n"
+        # Test hosts aren't children of xcodebuild, so kill_tree misses them. Only
+        # this checkout's, so a run in another worktree is left alone.
+        catch {exec pkill -9 -f "[pwd]/Build/.*/iTerm2.app/Contents/MacOS/iTerm2 -suite iterm2-tests"}
         cleanup_and_exit 1
     }
     eof {

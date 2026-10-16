@@ -73,4 +73,8 @@ cd "$PROJECT_DIR"
 # Tell run_tests.expect to leave the config file alone (it's the live
 # invocation marker for ShellIntegrationLiveHarness's setUpWithError).
 export ITERM2_SHELL_INTEGRATION_LIVE_KEEP_CONFIG=1
+# Live tests can wait minutes on a remote API, a local model, or a download, so
+# allow a longer quiet stretch than run_tests.expect's 300-second default before
+# it treats the run as hung.
+export RUN_TESTS_STALL_SECONDS="${RUN_TESTS_STALL_SECONDS:-1800}"
 tools/run_tests.expect "${only_testing_args[@]}"

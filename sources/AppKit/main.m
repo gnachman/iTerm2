@@ -24,6 +24,11 @@
 + (void)acquire;
 @end
 
+// Defined in iTermTestHostIsolation.swift.
+@interface iTermTestHostIsolation : NSObject
++ (NSString *)suiteNameForBase:(NSString *)base;
+@end
+
 int main(int argc, const char *argv[]) {
     if (argc >= 2 && !strcmp(argv[1], "--help")) {
         fprintf(stderr, "Usage: iTerm2 [--command=command] [-suite suite-name] [-compare-rendering string]\n");
@@ -51,7 +56,9 @@ int main(int argc, const char *argv[]) {
     // standard -key value pair and doesn't misparse subsequent arguments.
     for (int i = 1; i + 1 < argc; i++) {
         if (strcmp(argv[i], "-suite") == 0) {
-            NSString *suiteName = [NSString stringWithUTF8String:argv[i + 1]];
+            // A unit-test host gets its own copy of the suite so parallel workers and later runs
+            // don't see each other's settings.
+            NSString *suiteName = [iTermTestHostIsolation suiteNameForBase:[NSString stringWithUTF8String:argv[i + 1]]];
             [iTermUserDefaults setCustomSuiteName:suiteName];
             // Also set the custom socket prefix for file descriptor sockets
             NSString *prefix = [NSString stringWithFormat:@"%@.socket.", suiteName];
