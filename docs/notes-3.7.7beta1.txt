@@ -1,0 +1,372 @@
+Version 3.7.7beta1 of iTerm2 was built on October
+16, 2026.
+
+New Features:
+- Floating Panes: a pane that floats over a tab’s
+  split panes. Create one with Shell > New
+  Floating Pane with Current Profile, or with a
+  key binding or pointer action. Drag its title
+  bar to move it and its edges to resize it. Hold
+  Control while dragging to dock it into the split
+  panes or move it to another tab or window.
+  Window > Floating Panes can raise, dock, move,
+  and hide them. They are saved with window
+  arrangements. tmux integration shows tmux’s own
+  floating panes (tmux 3.7 and later; moving,
+  resizing, raising, and docking them needs tmux
+  3.8).
+- Support for the Program Status Protocol (OSC
+  7501), which lets a program report that it is
+  working, waiting on you, done, or failed. The
+  tab shows the most urgent status the program
+  reported, along with its message and progress. A
+  program reporting on several tasks at once gets
+  them listed under its session in the Session
+  Status tool, and each task that needs you can
+  post its own notification.
+- Session Status has new “done” and “error”
+  statuses for work that finished or failed while
+  you were away. They sort just below “waiting”
+  and above “working”, and “idle” now sorts last.
+  Pressing a key in the session marks the result
+  as seen and turns it idle. Claude Code and Codex
+  now report a finished turn as “done” and an API
+  error as “error”.
+- iTerm2 can now warn you while you are away from
+  your Mac without cutting off your paired iPhone.
+  The iTerm2 Buddy app stays connected, shows the
+  warning, and lets you answer it, including
+  “don’t ask again” and password prompts. Other
+  kinds of dialogs can’t be answered from the
+  phone, but it now says the Mac is waiting
+  instead of appearing disconnected. Requires an
+  up-to-date iTerm2 Buddy.
+- Each profile can now choose its bell sound in
+  Settings > Profiles > Terminal > Bell sound.
+  Pick a sound installed on your Mac or choose
+  “Other…” for any audio file.
+- If a profile archives sessions when they close
+  (Settings > Profiles > Session), Undo Close
+  keeps working after its time limit runs out.
+  Archived sessions come back in their original
+  split panes, tabs, and windows. The last 20 can
+  be undone even after restarting iTerm2.
+- New setting in Settings > Appearance > General
+  shows an iTerm2 icon in the menu bar, optionally
+  followed by an interpolated string such as
+  \(iterm2.workingSessionCount).
+- New variables iterm2.workingSessionCount and
+  iterm2.waitingSessionCount count the sessions
+  whose status is “working” or “waiting”. Use them
+  anywhere interpolated strings work, such as
+  badges, tab titles, and the status bar.
+- nushell is now supported by shell integration,
+  including automatic loading and SSH integration.
+- Apps can now control right-to-left text
+  reordering with the BDSM and SCP escape
+  sequences. CSI 8 l enters explicit mode, in
+  which text is drawn exactly as written, and CSI
+  8 h returns to implicit mode. CSI 1 SP k and CSI
+  2 SP k make reordered lines left-to-right or
+  right-to-left, and CSI 0 SP k restores the
+  default.
+- You can hide a browser session’s toolbar so the
+  page fills the pane with Web > Show Toolbar.
+- Right-clicking a tab now offers Rename Tab.
+- “it2 session list” takes a --format option: an
+  interpolated string evaluated in each session,
+  such as '\(session.path)'.
+
+Other Improvements:
+- The built-in AI model list is up to date. It
+  adds GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, GPT-6
+  Luna, GPT-5.4 Pro, GPT-5.4 mini, Gemini 3.8
+  Flash, DeepSeek Flash (V4.1), Claude Opus 5.5,
+  Claude Sonnet 5.5, Claude Fable 5.1, Claude Opus
+  5, and Claude Fable 5, and the recommended model
+  for each provider is now its newest flagship.
+  Newer Claude models also get their full 1
+  million token context window. o4-mini, which
+  OpenAI is shutting down, has been removed.
+- The manual AI model editor has a new API key
+  setting. It can send one provider’s stored key,
+  a key entered just for that model, or no key.
+  Automatic, the default, sends a provider’s key
+  only to that provider’s own servers, so a
+  gateway such as OpenRouter no longer gets your
+  OpenAI key unless you choose it. Models you
+  already set up keep sending the key they sent
+  before. Issue 13105.
+- Uploads over SSH Integration are about three
+  times faster.
+- “Upload and Paste Path” now works in tmux
+  integration windows reached through SSH
+  Integration, and before shell integration has
+  reported a directory, in which case the file
+  goes to your home directory. Pasted screenshots
+  are converted from TIFF to PNG and each one gets
+  a unique name.
+- Focus Follows Mouse no longer takes focus away
+  from the find bar, composer, or other fields in
+  a pane by accident. To have focus follow the
+  pointer onto those views, turn on “…even to
+  views like Search or Composer” under Settings >
+  Pointer.
+- “Support basic HTML tags in tab titles” now
+  applies to pane title bars too. The window title
+  shows the text without the tags.
+- Pausing a spinning progress indicator with OSC
+  9;4;4 now shows a paused spinner instead of a
+  yellow bar at 10%.
+- iTerm2 no longer applies macOS’s automatic
+  spelling correction, capitalization, smart
+  quotes and dashes, or “Add period with
+  double-space”. They could change what you type
+  in a terminal. Text replacements still work.
+  Issue 13123.
+- With the Minimal or Compact theme and no tab bar
+  at the top, the window buttons that appear when
+  you point at the window’s top-left corner no
+  longer cover a status bar, Workgroup toolbar, or
+  a web browser’s navigation buttons. A small
+  arrow appears in the corner instead; click it to
+  show or hide the window buttons. Issue 13100.
+- The Companion setup wizard no longer asks for an
+  API key when AI already works, or when you chose
+  a model manually in Settings > General > AI.
+- Pairing a companion iPhone no longer fails on
+  networks that can’t reach iterm2.com. iTerm2 now
+  falls back to a second copy of its list of relay
+  servers.
+- The Script Console now keeps only the 200 most
+  recent finished scripts and API connections.
+  Tools that connect for each command, like it2,
+  used to pile up enough of them to slow iTerm2
+  down over time.
+- The Bitwarden, KeePassXC, and Keeper password
+  manager integrations now find command-line tools
+  installed by Homebrew or npm by using your
+  shell’s search path. The Bitwarden integration
+  now reports the Bitwarden CLI’s own error
+  message, and says so when your vault has no
+  folder named “iTerm2”.
+- The AI Usage toolbar item now finds claude using
+  your shell’s search path and respects
+  CLAUDE_CONFIG_DIR set in your shell startup
+  files.
+- AI chat asks for approval less often when it
+  types a message you dictated into another
+  session.
+- When an AI chat’s Stop button or Disable
+  Orchestration cancels pending timers or watches,
+  the chat now says so.
+- Opening an Instant Replay recording now only
+  applies appearance settings like colors, fonts,
+  and cursor style from it. Settings that could
+  run commands, such as triggers, are ignored.
+  Issue 13128.
+- Installing or reinstalling the Claude Code
+  Integration no longer replaces a settings.json
+  that has a syntax error, keeps a symlinked
+  settings.json as a symlink, and keeps hook
+  commands you edited to use $HOME, ~, or a
+  wrapper script. Issue 13098.
+- Debug logs no longer include passwords, password
+  field contents, AI API keys, or custom AI HTTP
+  header values.
+- iTerm2 now warns you if another copy of it is
+  already running with the same settings, and
+  offers to switch to it.
+- Restorable session state is again saved with
+  SQLite’s write-ahead logging, reducing disk
+  syncing, and the restorable-state.sqlite-wal
+  file no longer grows as large as the saved state
+  itself.
+- Installing shell integration without internet
+  access now works on systems without bash, such
+  as FreeBSD and OpenBSD, and no longer gets stuck
+  at its first step for zsh users.
+
+Bug Fixes:
+- Fixed various crashes, including ones involving
+  the GPU renderer (when switching to or from
+  battery power, after changing the font size,
+  after closing a session, or after running for
+  several weeks), Smart Selection rules or
+  triggers with no regular expression, Dynamic
+  Profiles with values of an unexpected type,
+  quitting while still starting up, fonts that
+  could not be measured, accessibility apps like
+  VoiceOver, splitting a pane that moved, tab
+  groups, tmux integration windows left open after
+  detaching, exiting full screen in a window
+  without a title bar, Find, “Import All Settings
+  and Data”, Set Profile Setting triggers, profile
+  names starting with a combining mark, and
+  Cmd-hovering over a composer autosuggestion.
+  Issue 13103.
+- Fixed a crash that could recur every time iTerm2
+  saved window state after quitting while a save
+  was in progress.
+- Fixed saving a window arrangement with “Save to
+  File with Contents…” and archiving a session
+  when the text contained hyperlinks or similar
+  styling. Issue 13143.
+- Restarting or logging out of macOS while Claude
+  Code was running in iTerm2 could cause your
+  windows not to be restored at the next login.
+- Quitting iTerm2 no longer unlinks each AI chat
+  from its terminal session or cancels what the
+  chat was watching when window restoration brings
+  the session back.
+- A program that sets the window or tab title over
+  and over no longer makes iTerm2 fall far behind,
+  use full CPU for minutes, and grow to gigabytes
+  of memory.
+- When an SSH Integration connection dropped, the
+  session hung. It now ends the connection and
+  returns to the local shell. Long SSH Integration
+  requests also no longer occasionally fail.
+- In a session that ssh’ed to another machine
+  without SSH Integration, the current directory
+  no longer switches to the local Mac’s directory
+  after you run a command.
+- Fixed a rare race where a new session could lose
+  some of the first output it received.
+- Fixed restored sessions bringing lines that had
+  been erased by a clear screen back onto the
+  screen.
+- In “Require Authentication on Every Open” mode,
+  the password manager no longer shows your
+  accounts without asking you to authenticate when
+  reopened. In “Once per Launch and after Screen
+  Locks” mode, locking the screen now always
+  requires authenticating again.
+- An AI chat set to Llama (Local) no longer sends
+  its messages to your cloud AI provider when no
+  Ollama model is available.
+- Stopping an AI chat reply no longer cancels
+  another chat’s reply, really stops downloading,
+  and no longer shows the rest of the stopped
+  reply as the answer to your next message.
+- Editing or deleting an AI chat message now fully
+  removes the later conversation.
+- Fixed a memory leak where each AI request left
+  memory in use until iTerm2 quit.
+- AI command suggestions that use a file name now
+  insert the whole file name instead of only the
+  part you hadn’t typed yet.
+- Fixed “Export All Settings and Data” failing
+  with “Failed to copy file” after using SSH
+  Integration.
+- Archive Sessions on Closure failed with “the
+  volume is read only” when no archive folder was
+  chosen. It now uses ~/Library/Application
+  Support/iTerm2/Archives. Issue 12980.
+- Fixed archiving of split panes with the same
+  name, and of sessions closed shortly before
+  quitting.
+- Pasting or dropping a file into a local tab no
+  longer offers only to upload it when another
+  tool reports an outdated host name. Issue 13117.
+- Semantic History can once again open files in
+  Xcode when the active developer directory is the
+  Command Line Tools. Issue 13091.
+- Semantic History could open the wrong file in
+  TextMate, BBEdit, or MacVim when the path
+  contained special characters.
+- With “Report keys using CSI u” on and Option set
+  to Meta, Option with a letter now sends the meta
+  byte.
+- Old key bindings no longer hijack the A key when
+  “Interpret key bindings based on physical key”
+  is on. Issue 13110.
+- The “Animate large movements” cursor option no
+  longer streaks a trail across the screen when a
+  program redraws on its own. Issue 13034.
+- Find now matches text that spans a blank the
+  program created by moving the cursor, as in
+  output from Claude Code.
+- Copying part of a line that mixes left-to-right
+  and right-to-left text no longer drops the space
+  between them.
+- With the GPU renderer off, a right-to-left word
+  whose letters had different colors no longer
+  draws in a single color.
+- The Prevent Sleep checkbox in Settings >
+  Profiles > Session now takes effect, and Prevent
+  Sleep is honored again after Restart Session and
+  Undo Close.
+- In tmux integration, a new pane now picks up
+  user variables, host name, and directory that
+  its shell reported while opening. Issue 13006.
+- In tmux integration, a window created with “tmux
+  new-window -d” now opens as a background tab.
+  Issue 13112.
+- In tmux integration, iTerm2 could miss a window
+  switch made by another client and keep showing
+  the old tab.
+- Answering “Always” to “Close tmux windows after
+  detaching?” now closes only the tmux windows
+  left open by the detach instead of every
+  session.
+- Fixed Find > Filter interacting badly with tmux
+  layout changes.
+- Opening a file or link in a split pane while a
+  tmux integration tab is current now opens it in
+  a new tab.
+- On macOS 26, hiding a hotkey window when no
+  other iTerm2 windows are open once again returns
+  focus to the previous app right away.
+- Centered hotkey windows no longer return to
+  their original size each time they are shown.
+  Issue 13125.
+- Move Tab Left/Right no longer pins or unpins a
+  tab by moving it into a tab group.
+- Voice Control corrections now replace text that
+  ends at the cursor instead of appending.
+- Cancelling an upload over SSH Integration no
+  longer leaves a temporary file behind or gets
+  stuck.
+- In an alert with a text field, Cmd-A, Cmd-C,
+  Cmd-V, Cmd-X, and Cmd-Z now edit the text.
+- The SetWindowFrame escape sequence no longer
+  shrinks a window to nothing or moves it off
+  screen when given bad values.
+- With KeePassXC as the browser password manager,
+  “Remember this password” for a sign-in dialog
+  now works.
+- Fixed Tab.async_update_layout in the Python API
+  making a browser pane far too big.
+- Hiding a session note while typing in it no
+  longer leaves keystrokes going nowhere.
+- Fixed several Cockpit bugs: Opt-Return and
+  Opt-Shift-Return sent nothing, a selection sent
+  the whole field, the caret jumped while sessions
+  changed status, sending after closing a chosen
+  session sent nothing, and the panel could cover
+  alerts.
+- With multiple @-mentions and spaces in the
+  Cockpit composer, the session picker now closes
+  when it should.
+- When settings load from a custom folder,
+  quitting no longer asks to copy settings every
+  time.
+- Fixed a bug where turning on “Use AI to check
+  safety of commands before running them” on a Mac
+  without Apple Intelligence was turned back off.
+- Fixed Notify on Status Change reporting a change
+  from “none” or alerting when a program restated
+  its status.
+- The crash reporter’s message fills in your name
+  again.
+- Help popovers no longer cut off their last line.
+- Choosing Show Session Note from Open Quickly no
+  longer makes the note disappear.
+- Clicking the icon of the Current Directory,
+  Hostname, or Username status bar component opens
+  its menu again.
+- The API key field shown when AI features ask for
+  a key now hides what you type.
+- Closing the Companion setup wizard while it is
+  installing now cancels setup.
