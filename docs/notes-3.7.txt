@@ -678,6 +678,8 @@ Improvements:
   much CPU heavy output can use, set “Sessions
   processing output at once” in Settings >
   General > Magic.
+- Drawing text uses less CPU when the GPU
+  renderer is off.
 
 Bug Fixes:
 - The browser’s address field no longer runs

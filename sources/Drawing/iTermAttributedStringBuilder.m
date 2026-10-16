@@ -10,6 +10,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermCharacterSets.h"
@@ -19,6 +20,37 @@
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+
+// The per-cell precise timers cost two mach_absolute_time() calls per cell, which
+// showed up as ~17% of legacy-renderer drawRect time. Only pay for them when
+// drawing performance logging (the only consumer of these stats) is on.
+#define iTermASBTimerStart(stats) do { if (unlikely(_timersEnabled)) { iTermPreciseTimerStatsStartTimer(stats); } } while (0)
+#define iTermASBTimerAccumulate(stats) do { if (unlikely(_timersEnabled)) { iTermPreciseTimerStatsMeasureAndAccumulate(stats); } } while (0)
+
+// Lowest code point in any box- or block-drawing character set (U+2500 today).
+// Cells below it skip the NSCharacterSet lookups that otherwise run for nearly
+// every cell. Computed from the sets themselves so it stays right if they change.
+static UTF32Char iTermBoxDrawingLowerBound(void) {
+    static UTF32Char bound;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSArray<NSCharacterSet *> *sets = @[
+            [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:YES],
+            [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:NO],
+            [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters],
+        ];
+        bound = 0x2500;
+        for (UTF32Char c = 0; c < bound; c++) {
+            for (NSCharacterSet *set in sets) {
+                if ([set longCharacterIsMember:c]) {
+                    bound = c;
+                    break;
+                }
+            }
+        }
+    });
+    return bound;
+}
 
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
@@ -339,6 +371,7 @@ enum {
     NSInteger _dictCacheLookups;
     NSInteger _dictCacheHits;
     BOOL _dictCacheDisabled;  // Set when the hit rate is too low to be worth the overhead.
+    BOOL _timersEnabled;  // Snapshot of logDrawingPerformance, taken per line.
 }
 
 - (instancetype)initWithStats:(iTermAttributedStringBuilderStatsPointers)stats {
@@ -434,6 +467,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                                      findMatches:(NSData *)findMatches
                                                  underlinedRange:(NSRange)underlinedRange
                                                        positions:(CTVector(CGFloat) *)positions {
+    _timersEnabled = [iTermAdvancedSettingsModel logDrawingPerformance];
     NSMutableArray<id<iTermAttributedString>> *attributedStrings = [NSMutableArray array];
     iTermColorMap *colorMap = self.colorMap;
     iTermTextColorContext textColorContext = {
@@ -483,7 +517,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     const BOOL nonAsciiLigatures = _nonAsciiLigatures;
 
     for (int i = indexRange.location; i < NSMaxRange(indexRange); i++) {
-        iTermPreciseTimerStatsStartTimer(_stats.attrsForChar);
+        iTermASBTimerStart(_stats.attrsForChar);
         screen_char_t c = line[i];
         if (ScreenCharIsDWL_SPACER(c)) {
             // DWL_SPACERs are structural placeholders on double-width lines.
@@ -624,7 +658,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             [self character:&c withExtendedAttributes:ea isEquivalentToCharacter:&line[i-1] withExtendedAttributes:prevEa] &&
             iTermTextColorContextCellsHaveSameHighlight(&textColorContext, i, attributesIndex)) {
             ++segmentLength;
-            iTermPreciseTimerStatsMeasureAndAccumulate(_stats.attrsForChar);
+            iTermASBTimerAccumulate(_stats.attrsForChar);
             if (drawable ||
                 ((characterAttributes.underlineType ||
                   characterAttributes.strikethrough ||
@@ -664,9 +698,9 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 charAsString = [NSString stringWithLongCharacter:remapped];
             }
         }
-        iTermPreciseTimerStatsMeasureAndAccumulate(_stats.attrsForChar);
+        iTermASBTimerAccumulate(_stats.attrsForChar);
 
-        iTermPreciseTimerStatsStartTimer(_stats.shouldSegment);
+        iTermASBTimerStart(_stats.shouldSegment);
 
         NSDictionary *imageAttributes = [self imageAttributesForCharacter:&c
                                                        externalAttributes:ea
@@ -684,7 +718,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                       previousImageAttributes:previousImageAttributes
                         mergeColorOnlyChanges:(bidiInfo != nil)
                      combinedAttributesChanged:&combinedAttributesChanged]) {
-            iTermPreciseTimerStatsStartTimer(_stats.buildMutableAttributedString);
+            iTermASBTimerStart(_stats.buildMutableAttributedString);
             builder.endColumn = i;
             id<iTermAttributedString> builtString = builder.attributedString;
             if (previousCharacterAttributes.underlineType ||
@@ -694,7 +728,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                     value:@(segmentLength)];
             }
             segmentLength = 0;
-            iTermPreciseTimerStatsMeasureAndAccumulate(_stats.buildMutableAttributedString);
+            iTermASBTimerAccumulate(_stats.buildMutableAttributedString);
 
             if (builtString.length > 0) {
                 [attributedStrings addObject:builtString];
@@ -709,9 +743,9 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         ++segmentLength;
         previousCharacterAttributes = characterAttributes;
         previousImageAttributes = [imageAttributes copy];
-        iTermPreciseTimerStatsMeasureAndAccumulate(_stats.shouldSegment);
+        iTermASBTimerAccumulate(_stats.shouldSegment);
 
-        iTermPreciseTimerStatsStartTimer(_stats.combineAttributes);
+        iTermASBTimerStart(_stats.combineAttributes);
         if (combinedAttributesChanged) {  // This implies that we segmented
             NSDictionary *combinedAttributes = [self dictionaryForCharacterAttributes:&characterAttributes];
             if (imageAttributes) {
@@ -731,7 +765,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 }
             }
         }
-        iTermPreciseTimerStatsMeasureAndAccumulate(_stats.combineAttributes);
+        iTermASBTimerAccumulate(_stats.combineAttributes);
 
         if (drawable || ((characterAttributes.underlineType ||
                           characterAttributes.strikethrough ||
@@ -750,7 +784,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         }
     }
     if (builder.length) {
-        iTermPreciseTimerStatsStartTimer(_stats.buildMutableAttributedString);
+        iTermASBTimerStart(_stats.buildMutableAttributedString);
         builder.endColumn = NSMaxRange(indexRange);
         id<iTermAttributedString> builtString = builder.attributedString;
         if (previousCharacterAttributes.underlineType ||
@@ -759,7 +793,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             [builtString addAttribute:iTermUnderlineLengthAttribute
                                             value:@(segmentLength)];
         }
-        iTermPreciseTimerStatsMeasureAndAccumulate(_stats.buildMutableAttributedString);
+        iTermASBTimerAccumulate(_stats.buildMutableAttributedString);
 
         if (builtString.length > 0) {
             [attributedStrings addObject:builtString];
@@ -777,7 +811,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                offset:(CGFloat)offset
            sourceCell:(int)sourceCell
            drawInCell:(int)drawInCell {
-    iTermPreciseTimerStatsStartTimer(_stats.updateBuilder);
+    iTermASBTimerStart(_stats.updateBuilder);
     NSUInteger length;
     if (string) {
         [builder appendString:string rtl:rtl sourceCell:sourceCell drawInCell:drawInCell];
@@ -786,14 +820,14 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         [builder appendCharacter:code rtl:rtl sourceCell:sourceCell drawInCell:drawInCell];
         length = 1;
     }
-    iTermPreciseTimerStatsMeasureAndAccumulate(_stats.updateBuilder);
+    iTermASBTimerAccumulate(_stats.updateBuilder);
 
-    iTermPreciseTimerStatsStartTimer(_stats.advances);
+    iTermASBTimerStart(_stats.advances);
     // Append to positions.
     for (NSUInteger j = 0; j < length; j++) {
         CTVectorAppend(positions, offset);
     }
-    iTermPreciseTimerStatsMeasureAndAccumulate(_stats.advances);
+    iTermASBTimerAccumulate(_stats.advances);
 }
 
 - (void)getAttributesForCharacter:(screen_char_t *)c
@@ -817,9 +851,13 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     const unichar code = c->code;
 
     const UTF32Char longCode = isComplex ? BaseCharacterForComplexChar(code) : code;
-    attributes->boxDrawing = [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] longCharacterIsMember:longCode];
+    const UTF32Char boxDrawingLowerBound = iTermBoxDrawingLowerBound();
+    attributes->boxDrawing = (longCode >= boxDrawingLowerBound &&
+                              [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] longCharacterIsMember:longCode]);
 
-    attributes->contrastIneligible = !isComplex && [[iTermBoxDrawingBezierCurveFactory blockDrawingCharacters] characterIsMember:code];
+    attributes->contrastIneligible = (!isComplex &&
+                                      code >= boxDrawingLowerBound &&
+                                      [[iTermBoxDrawingBezierCurveFactory blockDrawingCharacters] characterIsMember:code]);
 
     if (forceTextColor) {
         attributes->foregroundColor = forceTextColor;
@@ -1168,8 +1206,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         dispatch_once(&onceToken, ^{
             boxSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs];
         });
-        BOOL box = [boxSet characterIsMember:c->code];
-        BOOL pcBox = [boxSet characterIsMember:pc->code];
+        const UTF32Char boxDrawingLowerBound = iTermBoxDrawingLowerBound();
+        BOOL box = c->code >= boxDrawingLowerBound && [boxSet characterIsMember:c->code];
+        BOOL pcBox = pc->code >= boxDrawingLowerBound && [boxSet characterIsMember:pc->code];
         if (box != pcBox) {
             return NO;
         }
