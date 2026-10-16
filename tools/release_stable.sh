@@ -12,12 +12,6 @@ if [ $# -ne 1 ]; then
    exit 1
 fi
 
-echo Enter the EdDSA private key
-read -s EDPRIVKEY
-
-echo Enter the notarization password
-read -s NOTPASS
-
 # Usage: SparkleSign final.xml final_template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
@@ -125,6 +119,40 @@ function Build {
   popd
 }
 
+APP_SHELL_INTEGRATION=submodules/iTerm2-shell-integration
+WEB_SHELL_INTEGRATION=~/iterm2-website/submodules/iTerm2-shell-integration
+
+# Runs before building so problems surface early. Only reads state (plus a
+# fetch); the website is not modified until the build succeeds.
+function CheckWebsiteShellIntegration {
+  test -z "$(git -C $APP_SHELL_INTEGRATION status --porcelain)" || die "$APP_SHELL_INTEGRATION has uncommitted changes"
+  SHELL_INTEGRATION_SHA=$(git rev-parse HEAD:$APP_SHELL_INTEGRATION) || die "Could not read the commit recorded for $APP_SHELL_INTEGRATION"
+  local CHECKED_OUT_SHA
+  CHECKED_OUT_SHA=$(git -C $APP_SHELL_INTEGRATION rev-parse HEAD) || die "Could not read $APP_SHELL_INTEGRATION HEAD"
+  test "$CHECKED_OUT_SHA" = "$SHELL_INTEGRATION_SHA" || die "$APP_SHELL_INTEGRATION is at $CHECKED_OUT_SHA but HEAD records $SHELL_INTEGRATION_SHA. Run git submodule update or commit the new pointer."
+  git -C $WEB_SHELL_INTEGRATION fetch origin || die "Could not fetch $WEB_SHELL_INTEGRATION"
+  test -n "$(git -C $WEB_SHELL_INTEGRATION branch -r --contains $SHELL_INTEGRATION_SHA 2>/dev/null)" || die "Shell integration commit $SHELL_INTEGRATION_SHA is not pushed to origin"
+}
+
+# Point the website's shell integration submodule at the same commit this
+# release ships, then republish the scripts it serves. Without this the
+# website drifts from the app (it once fell a year behind).
+function SyncWebsiteShellIntegration {
+  git -C $WEB_SHELL_INTEGRATION checkout --detach $SHELL_INTEGRATION_SHA || die "Could not check out $SHELL_INTEGRATION_SHA in $WEB_SHELL_INTEGRATION"
+  pushd $SVNDIR
+  ./copy-shell-integration.sh || die "copy-shell-integration.sh failed"
+  git add -A submodules/iTerm2-shell-integration source/shell_integration source/utilities || die "Could not stage shell integration in website"
+  popd
+}
+
+CheckWebsiteShellIntegration
+
+echo Enter the EdDSA private key
+read -s EDPRIVKEY
+
+echo Enter the notarization password
+read -s NOTPASS
+
 echo "$1" > version.txt
 echo Set version to
 cat version.txt
@@ -134,7 +162,6 @@ VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 
-
 echo "Build deployment release"
 make clean
 make SIGNED=1 UNIVERSAL=1 release
@@ -142,6 +169,8 @@ make SIGNED=1 UNIVERSAL=1 release
 BUILDTYPE=Deployment
 
 Build $BUILDTYPE "" "macOS 13+" "This is the recommended build for most users." "" "--deep"
+
+SyncWebsiteShellIntegration
 
 git checkout -- version.txt
 #set -x
