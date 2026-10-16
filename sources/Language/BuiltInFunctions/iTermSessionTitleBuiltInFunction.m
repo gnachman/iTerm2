@@ -264,6 +264,7 @@ static NSString *iTermTitleIconWindowShellFallback(NSString *iconName, NSString 
                     isWindowTitle:(BOOL)isWindowTitle {
     NSString *sessionName = isWindowTitle ? rawSessionName.removingHTMLFromTabTitleIfNeeded : rawSessionName;
     if (isWindowTitle) {
+        profileName = profileName.removingHTMLFromTabTitleIfNeeded;
         tmuxPaneVariable = tmuxPaneVariable.removingHTMLFromTabTitleIfNeeded;
         iconName = iconName.removingHTMLFromTabTitleIfNeeded;
         windowName = windowName.removingHTMLFromTabTitleIfNeeded;

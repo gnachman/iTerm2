@@ -2287,16 +2287,18 @@ final class WindowTitleHTMLTests: XCTestCase {
     private func title(isWindow: Bool,
                        windowName: String?,
                        tmuxPane: String? = nil,
-                       tmuxWindowTitle: String? = nil) -> String {
+                       tmuxWindowTitle: String? = nil,
+                       profileName: String = "Prof",
+                       components: iTermTitleComponents = .sessionName) -> String {
         return iTermSessionTitleBuiltInFunction.title(
             forSessionName: "the-session-name",
-            profileName: "Prof",
+            profileName: profileName,
             job: "", commandLine: "", pwd: "", tty: "", user: "", host: "",
             aiTitle: nil, homeDirectory: nil, tmuxPane: tmuxPane,
             iconName: nil, windowName: windowName,
             tmuxWindowName: nil, tmuxWindowTitle: tmuxWindowTitle,
             rows: 0, columns: 0,
-            components: .sessionName, isWindowTitle: isWindow)
+            components: components, isWindowTitle: isWindow)
     }
 
     func testOSCWindowNameIsStrippedForWindowTitle() {
@@ -2313,5 +2315,29 @@ final class WindowTitleHTMLTests: XCTestCase {
 
     func testTabTitleKeepsTagsForTheTabBarToRender() {
         XCTAssertEqual(title(isWindow: false, windowName: nil, tmuxPane: "<b>pane</b>"), "<b>pane</b>")
+    }
+
+    func testProfileNameIsStrippedForWindowTitle() {
+        XCTAssertEqual(title(isWindow: true,
+                             windowName: nil,
+                             profileName: "<b>Work</b>",
+                             components: .profileName),
+                       "Work")
+    }
+
+    func testProfileAndSessionNameIsStrippedForWindowTitle() {
+        XCTAssertEqual(title(isWindow: true,
+                             windowName: nil,
+                             profileName: "<b>Work</b>",
+                             components: .profileAndSessionName),
+                       "Work: the-session-name")
+    }
+
+    func testProfileNameKeepsTagsForTabTitle() {
+        XCTAssertEqual(title(isWindow: false,
+                             windowName: nil,
+                             profileName: "<b>Work</b>",
+                             components: .profileName),
+                       "<b>Work</b>")
     }
 }
