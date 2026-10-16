@@ -88702,6 +88702,18 @@
         }
       }
     },
+    "ImportExport.EntitySavedPasswords" : {
+      "comment" : "Name of the saved passwords item in the import/export list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved Passwords"
+          }
+        }
+      }
+    },
     "ImportExport.EntitySecureSettings" : {
       "comment" : "Name of the secure settings item in the import/export list",
       "extractionState" : "extracted_with_value",
@@ -105992,6 +106004,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "筛选"
+          }
+        }
+      }
+    },
+    "ModalPasswordAlert.ConfirmPlaceholder" : {
+      "comment" : "Placeholder for a field where the user types a password a second time to confirm it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Confirm"
           }
         }
       }
@@ -127127,6 +127151,486 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知错误"
+          }
+        }
+      }
+    },
+    "PasswordArchive.AlwaysReplaceAction" : {
+      "comment" : "Button that replaces this and every later conflicting password during an import",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always Replace"
+          }
+        }
+      }
+    },
+    "PasswordArchive.AuthFailedHeading" : {
+      "comment" : "Heading of the alert shown when the user can't be authenticated before a password import or export",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Authentication Failed"
+          }
+        }
+      }
+    },
+    "PasswordArchive.AuthUnavailable" : {
+      "comment" : "Shown when macOS can't authenticate the user before a password import or export. The placeholder is the system's reason.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 can’t export or import passwords because macOS couldn’t confirm your identity. %@"
+          }
+        }
+      }
+    },
+    "PasswordArchive.Conflict" : {
+      "comment" : "Asked when an imported password matches a saved one; the placeholders are the account name and the user name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A saved password for “%1$@” with user name “%2$@” already exists. Replace it with the imported one?"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ConflictHeading" : {
+      "comment" : "Heading of the dialog asked when an imported password matches a saved one",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Password Already Saved"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ConflictNoUser" : {
+      "comment" : "Asked when an imported password matches a saved one that has no user name; the placeholder is the account name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A saved password for “%@” already exists. Replace it with the imported one?"
+          }
+        }
+      }
+    },
+    "PasswordArchive.DefaultFileName" : {
+      "comment" : "Default file name when exporting passwords. Keep the .iterm2passwords extension.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 Passwords.iterm2passwords"
+          }
+        }
+      }
+    },
+    "PasswordArchive.DontReplaceAction" : {
+      "comment" : "Button that keeps a saved password instead of the imported one",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Don’t Replace"
+          }
+        }
+      }
+    },
+    "PasswordArchive.EmptyPassphrase" : {
+      "comment" : "Shown when the user enters an empty passphrase for exported passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passphrase can’t be empty."
+          }
+        }
+      }
+    },
+    "PasswordArchive.ExportAuthReason" : {
+      "comment" : "Completes the system prompt “iTerm2 is trying to …” shown before exporting passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "export saved passwords"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ExportHeading" : {
+      "comment" : "Heading of dialogs about exporting passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Passwords"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ExportPanelTitle" : {
+      "comment" : "Title of the save panel for exporting passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Passwords"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ExportProblemHeading" : {
+      "comment" : "Heading of the alert shown when exporting passwords fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Problem Exporting Passwords"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ImportAuthReason" : {
+      "comment" : "Completes the system prompt “iTerm2 is trying to …” shown before importing passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "import saved passwords"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ImportCompleteHeading" : {
+      "comment" : "Heading of the alert shown after importing passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Passwords Imported"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ImportProblemHeading" : {
+      "comment" : "Heading of the alert shown when importing passwords fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Problem Importing Passwords"
+          }
+        }
+      }
+    },
+    "PasswordArchive.IncludePasswordsCheckbox" : {
+      "comment" : "Checkbox in the Export All Settings and Data save panel",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Include saved passwords (encrypted with a passphrase)"
+          }
+        }
+      }
+    },
+    "PasswordArchive.KeychainFailed" : {
+      "comment" : "Error accessing the keychain during password import or export; the placeholder is the system's reason",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The keychain reported an error: %@"
+          }
+        }
+      }
+    },
+    "PasswordArchive.Malformed" : {
+      "comment" : "Error shown when a decrypted password export can't be parsed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passwords file is damaged."
+          }
+        }
+      }
+    },
+    "PasswordArchive.NeverReplaceAction" : {
+      "comment" : "Button that keeps this and every later conflicting saved password during an import",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Never Replace"
+          }
+        }
+      }
+    },
+    "PasswordArchive.NewPassphraseDetail" : {
+      "comment" : "Explanation under the prompt for a passphrase when exporting passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The exported passwords will be encrypted. You will need this passphrase to import them."
+          }
+        }
+      }
+    },
+    "PasswordArchive.NewPassphrasePrompt" : {
+      "comment" : "Prompt for the passphrase that will encrypt exported passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a passphrase"
+          }
+        }
+      }
+    },
+    "PasswordArchive.NoKeychainScope" : {
+      "comment" : "Shown when the user opens a passwords file while neither the terminal nor the browser password manager uses the Keychain",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Passwords can be imported only into the macOS Keychain password manager. To import them, open the password manager, choose macOS Keychain from its gear menu, and then open this file again."
+          }
+        }
+      }
+    },
+    "PasswordArchive.NotAnArchive" : {
+      "comment" : "Error shown when importing a file that is not a password export",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This is not an iTerm2 passwords file."
+          }
+        }
+      }
+    },
+    "PasswordArchive.NothingToExport" : {
+      "comment" : "Shown when the user exports passwords but none are saved",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "There are no saved passwords to export."
+          }
+        }
+      }
+    },
+    "PasswordArchive.PassphraseMismatch" : {
+      "comment" : "Shown when the two passphrases typed for exported passwords differ",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passphrases don’t match. Try again."
+          }
+        }
+      }
+    },
+    "PasswordArchive.PassphrasePrompt" : {
+      "comment" : "Prompt for the passphrase when importing exported passwords",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter the passphrase for the passwords file"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ReadFailed" : {
+      "comment" : "Error reading a password export; the placeholder is the system's reason",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passwords file could not be read: %@"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ReadPasswordFailed" : {
+      "comment" : "Error exporting passwords. The placeholders are the account name, the user name, and a sentence giving the reason.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The saved password for “%1$@” with user name “%2$@” could not be read. %3$@"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ReadPasswordFailedNoUser" : {
+      "comment" : "Error exporting passwords. The first placeholder is the account name; the second is a sentence giving the reason.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The saved password for “%1$@” could not be read. %2$@"
+          }
+        }
+      }
+    },
+    "PasswordArchive.ReplaceAction" : {
+      "comment" : "Button that replaces a saved password with an imported one",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Replace"
+          }
+        }
+      }
+    },
+    "PasswordArchive.SettingsImportDetail" : {
+      "comment" : "Shown when importing settings that contain an encrypted password export",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This export includes saved passwords. Enter the passphrase that was used to export them, or cancel to import everything else without them."
+          }
+        }
+      }
+    },
+    "PasswordArchive.Summary" : {
+      "comment" : "Summary after importing passwords. Each line is a label and a count.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Added: %1$lld\nReplaced: %2$lld\nKept existing: %3$lld"
+          }
+        }
+      }
+    },
+    "PasswordArchive.SummaryCancelled" : {
+      "comment" : "Shown above the import summary when the user canceled partway through",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The import was canceled. Passwords imported before canceling were kept."
+          }
+        }
+      }
+    },
+    "PasswordArchive.SummaryFailed" : {
+      "comment" : "Shown above the import summary when importing passwords failed partway through. The placeholder is the error message.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The import stopped because of an error. Passwords imported before the error were kept.\n\n%@"
+          }
+        }
+      }
+    },
+    "PasswordArchive.SummaryNotImported" : {
+      "comment" : "Line in the password import summary: a label and the number of entries skipped because the terminal or browser password manager is set to something other than the Keychain",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not imported because that password manager doesn’t use the Keychain: %lld"
+          }
+        }
+      }
+    },
+    "PasswordArchive.SummaryUnchanged" : {
+      "comment" : "Line in the password import summary: a label and the number of imported entries whose password was already saved unchanged",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Already saved: %lld"
+          }
+        }
+      }
+    },
+    "PasswordArchive.UnsupportedVersion" : {
+      "comment" : "Error shown when importing a password export from a newer version",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This passwords file was made by a newer version of iTerm2. Upgrade iTerm2 and try again."
+          }
+        }
+      }
+    },
+    "PasswordArchive.WriteFailed" : {
+      "comment" : "Error writing a password export; the placeholder is the system's reason",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passwords file could not be saved: %@"
+          }
+        }
+      }
+    },
+    "PasswordArchive.WrongPassphrase" : {
+      "comment" : "Error shown when an encrypted password export can't be decrypted",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passphrase is incorrect, or the file is damaged."
           }
         }
       }
@@ -206823,16 +207327,16 @@
       "comment" : "Heading of the warning shown when saving a window arrangement to a file fails",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Couldn’t Save Window Arrangement"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fensteranordnung konnte nicht gespeichert werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t Save Window Arrangement"
           }
         },
         "ja" : {
@@ -206865,16 +207369,16 @@
       "comment" : "Error message when writing a window arrangement to a file fails; first arg is a filename, second is the error",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Error saving to %1$@: %2$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fehler beim Speichern in %1$@: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Error saving to %1$@: %2$@"
           }
         },
         "ja" : {
