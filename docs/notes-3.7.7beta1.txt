@@ -41,6 +41,14 @@ New Features:
   phone, but it now says the Mac is waiting
   instead of appearing disconnected. Requires an
   up-to-date iTerm2 Buddy.
+- Passwords saved in the Password Manager’s
+  Keychain storage can now be exported to a
+  passphrase-encrypted .iterm2passwords file and
+  imported on another Mac. Use Export Passwords…
+  and Import Passwords… in the Password Manager’s
+  settings menu, or double-click the file.
+  Settings > General > Export All Settings and
+  Data can also include them.
 - Each profile can now choose its bell sound in
   Settings > Profiles > Terminal > Bell sound.
   Pick a sound installed on your Mac or choose
