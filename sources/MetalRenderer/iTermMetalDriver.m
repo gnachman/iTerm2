@@ -940,7 +940,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 
 // Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(iTermMetalView *)view {
-    const NSTimeInterval timeout = 1.0 / 60.0;
+    const NSTimeInterval timeout = iTermMetalView.drawableTimeout;
 
     if (_captureNextFrame) {
         // Render to an offscreen texture only — no drawable or presentation needed.

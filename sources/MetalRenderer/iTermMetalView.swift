@@ -385,48 +385,74 @@ extension iTermMetalView {
 
 @MainActor
 extension iTermMetalView {
+    // How long the main thread waits for a drawable before skipping the frame.
+    @objc nonisolated static let drawableTimeout: TimeInterval = 1.0 / 60.0
+
     private func fetchDrawable(timeout: TimeInterval) -> CAMetalDrawable? {
         dispatchPrecondition(condition: .onQueue(.main))
         guard let metalLayerBox else {
             return nil
         }
-        // A zero-dimension drawable size makes QuartzCore's nextDrawable divide by
-        // a drawable dimension and crash with EXC_ARITHMETIC. There's nothing to
-        // draw at that size, so skip the frame.
-        let drawableSize = metalLayerBox.drawableSize
-        guard drawableSize.width >= 1, drawableSize.height >= 1 else {
+        // Until the layer has the view's drawable size, any drawable would be the
+        // wrong size. If our own fetch is still running, it holds the layer lock, so
+        // wait for it (bounded by timeout) instead of waiting on the lock. Once it
+        // finishes the lock is free and the resize won't wait. If it's still running,
+        // there's no drawable to be had anyway. Issue 13139.
+        if sizeDirty, let pendingDrawablePromise, !pendingDrawablePromise.hasValue {
+            _ = pendingDrawablePromise.wait(withTimeout: timeout)
+        }
+        resizeMetalLayerDrawable()
+        if sizeDirty {
+            DLog("Return nil because the drawable size could not be updated")
             return nil
         }
+        // Apart from the timed resize above, don't touch metalLayerBox properties other
+        // than layerContext here: they take the layer lock, which a fetch left over from
+        // an earlier frame may hold for up to a second while it waits in nextDrawable. Issue 13139.
         let context = metalLayerBox.layerContext
-        var timedOut = false
-        while !timedOut {
+        var failed = false
+        while !failed {
             let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
                 Self.getDrawableQueue.async {
-                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawable()))
+                    do {
+                        seal.fulfill(PendingDrawable(context, drawable: try metalLayerBox.nextDrawable()))
+                    } catch {
+                        // Invalid drawable size. There's nothing to draw, so skip the frame.
+                        seal.reject(error)
+                    }
                 }
             }
             var result: CAMetalDrawable?
             DLog("Will wait for promise")
             promise.wait(withTimeout: timeout).whenFirst { pending in
                 DLog("Promise fulfilled")
-                if pending.context == context {
+                pendingDrawablePromise = nil
+                if pending.drawable == nil {
+                    // The layer's timeout expired (or it couldn't make a drawable).
+                    // Don't retry here: an immediate nil would make this loop spin.
+                    failed = true
+                } else if pending.context == context {
                     result = pending.drawable
                 }
-                pendingDrawablePromise = nil
             } second: { err in
-                DLog("Promise rejected")
-                precondition(err.code == iTermPromiseErrorCode.timeout.rawValue)
-                pendingDrawablePromise = promise
-                timedOut = true
+                DLog("Promise rejected: \(err)")
+                if err.domain == iTermPromiseErrorDomain && err.code == iTermPromiseErrorCode.timeout.rawValue {
+                    // The fetch is still in flight. Reuse it on the next call.
+                    pendingDrawablePromise = promise
+                } else {
+                    // The fetch failed. Don't reuse it or every later call would get the same error.
+                    pendingDrawablePromise = nil
+                }
+                failed = true
             }
             // If result is not nil, then it is valid and should be returned.
-            // If result is nil then either there was a timeout or the drawable was not usable (e.g., wrong size).
+            // If result is nil then the fetch failed (timeout or error) or the drawable was not usable (e.g., wrong size).
             if let result {
                 DLog("Returning valid drawable")
                 return result
             }
         }
-        DLog("Return nil because of timeout")
+        DLog("Return nil because of timeout or error")
         return nil
     }
 
@@ -517,15 +543,15 @@ extension iTermMetalView {
         drawableScaleFactor = CGSize(width: 1.0, height: 1.0)
         wantsLayer = true
         let layer = CAMetalLayer()
-        // Disable the drawable timeout once, here on the main thread. We wait
-        // for drawables on a background queue and impose our own timeout at the
-        // promise level (see fetchDrawable), so the layer itself should block
-        // indefinitely rather than return nil after ~1s. Setting this property
-        // pushes an implicit CATransaction, which aborts if done off the main
-        // thread (CA_ABORT_ON_NON_MAIN_THREAD_TRANSACTION_PUSH on macOS 26), so
-        // it must never be touched from the get-drawable queue. It persists for
-        // the life of the layer, so once here is enough.
-        layer.allowsNextDrawableTimeout = false
+        // Keep the layer's drawable timeout so nextDrawable returns nil after ~1s
+        // instead of blocking forever. iTermMetalLayerBox holds its lock across
+        // nextDrawable, so without the timeout a stuck fetch would block every
+        // main-thread access to the layer indefinitely. Issue 13139. YES is the
+        // default; set it explicitly to document the dependency. Setting this
+        // property pushes an implicit CATransaction, which aborts if done off the
+        // main thread (CA_ABORT_ON_NON_MAIN_THREAD_TRANSACTION_PUSH on macOS 26),
+        // so it must never be touched from the get-drawable queue.
+        layer.allowsNextDrawableTimeout = true
         metalLayerBox = iTermMetalLayerBox(metalLayer: layer)
         self.layer = layer
         layerContentsRedrawPolicy = .duringViewResize
@@ -604,8 +630,26 @@ extension iTermMetalView {
         guard sizeDirty else {
             return
         }
+        if let pendingDrawablePromise, !pendingDrawablePromise.hasValue {
+            // Our own fetch is still running and holds (or is about to take) the layer
+            // lock. Don't wait for it here; fetchDrawable waits on the fetch itself and
+            // retries the resize once it finishes. Issue 13139.
+            DLog("Defer setting the drawable size because a fetch is outstanding")
+            return
+        }
 
-        metalLayerBox?.drawableSize = drawableSize
+        do {
+            // No fetch of ours is outstanding, so this normally doesn't wait. The timeout
+            // guards against other holders, such as the synchronized drawing path's
+            // fetch on the render queue, which can hold it for up to a second.
+            // Leave sizeDirty set on failure so a later frame retries. fetchDrawable
+            // won't return a drawable until this succeeds.
+            try metalLayerBox?.setDrawableSize(drawableSize,
+                                               timeout: 2 * Self.drawableTimeout)
+        } catch {
+            DLog("Timed out setting the drawable size to \(drawableSize). Will retry.")
+            return
+        }
         renderAttachmentDirtyState.insert(.colorTexturesDirty)
 
         sizeDirty = false

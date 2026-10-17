@@ -36,7 +36,34 @@ class iTermMetalLayerBox {
         var size: CGSize
     }
 
-    private let metalLayer: MutableAtomicObject<CAMetalLayer>
+    // Guards a CAMetalLayer with a TimedMutex so the main thread can give up
+    // instead of waiting up to a second while nextDrawable() holds the lock.
+    private final class LockedLayer {
+        private let mutex = TimedMutex()
+        private let layer: CAMetalLayer
+
+        init(_ layer: CAMetalLayer) {
+            self.layer = layer
+        }
+
+        @discardableResult
+        func access<Result>(_ block: (CAMetalLayer) throws -> Result) rethrows -> Result {
+            return try mutex.sync {
+                return try block(layer)
+            }
+        }
+
+        // Throws TimedMutex.Timeout if the lock can't be acquired in time.
+        @discardableResult
+        func access<Result>(timeout: TimeInterval,
+                            _ block: (CAMetalLayer) throws -> Result) throws -> Result {
+            return try mutex.sync(timeout: timeout) {
+                return try block(layer)
+            }
+        }
+    }
+
+    private let metalLayer: LockedLayer
     private let _layerContext: MutableAtomicObject<LayerContext>
 
     init(metalLayer: CAMetalLayer) {
@@ -88,6 +115,12 @@ extension iTermMetalLayerBox {
             return metalLayer.access { $0.presentsWithTransaction }
         }
         set {
+            // This is assigned on every frame but almost never changes. Check the
+            // cached value first so the main thread doesn't wait on the layer lock,
+            // which nextDrawable() can hold for up to a second. Issue 13139.
+            if _layerContext.value.presentsWithTransaction == newValue {
+                return
+            }
             metalLayer.access {
                 $0.presentsWithTransaction = newValue
                 _layerContext.value = .init($0)
@@ -131,14 +164,15 @@ extension iTermMetalLayerBox {
     }
 
     var drawableSize: CGSize {
-        get {
-            return metalLayer.access { $0.drawableSize }
-        }
-        set {
-            metalLayer.access {
-                $0.drawableSize = newValue
-                _layerContext.value = .init($0)
-            }
+        return metalLayer.access { $0.drawableSize }
+    }
+
+    // Throws TimedMutex.Timeout if the layer lock can't be acquired within
+    // `timeout`, which happens when nextDrawable() is stuck holding it. Issue 13139.
+    func setDrawableSize(_ size: CGSize, timeout: TimeInterval) throws {
+        try metalLayer.access(timeout: timeout) {
+            $0.drawableSize = size
+            _layerContext.value = .init($0)
         }
     }
 
@@ -155,19 +189,21 @@ extension iTermMetalLayerBox {
         }
     }
 
-    // Callers acquire drawables on a background queue and rely on the layer's
-    // allowsNextDrawableTimeout having been set to false once at layer creation
-    // (see iTermMetalView.initCommon). That property must not be set here: it
-    // pushes an implicit CATransaction that aborts off the main thread.
-    func nextDrawable() -> CAMetalDrawable? {
-        return metalLayer.access { layer in
-            return layer.nextDrawable()
+    // Holds the layer lock until nextDrawable returns, which is bounded only by
+    // the layer's allowsNextDrawableTimeout (set at layer creation in
+    // iTermMetalView.initCommon). That property must not be set here: it pushes
+    // an implicit CATransaction that aborts off the main thread.
+    //
+    // Throws if the drawable size is invalid.
+    func nextDrawable() throws -> CAMetalDrawable? {
+        return try metalLayer.access { layer in
+            return try Self.nextDrawable(layer)
         }
     }
 
     func nextContextualizedDrawable() -> (CAMetalDrawable, LayerContext)? {
         return metalLayer.access { layer in
-            if let drawable = layer.nextDrawable() {
+            if let drawable = try? Self.nextDrawable(layer) {
                 // The access to layerContext is not a data race because it is only mutated while
                 // both metalLayer and layerContext are locked.
                 return (drawable, layerContext)
@@ -175,6 +211,22 @@ extension iTermMetalLayerBox {
             return nil
         }
     }
+
+    // Must be called with metalLayer locked so the size can't change between
+    // the check and the call to nextDrawable.
+    private static func nextDrawable(_ layer: CAMetalLayer) throws -> CAMetalDrawable? {
+        // A zero-dimension drawable size makes QuartzCore's nextDrawable divide by
+        // a drawable dimension and crash with EXC_ARITHMETIC.
+        let size = layer.drawableSize
+        guard size.width >= 1, size.height >= 1 else {
+            throw iTermMetalLayerBoxError.invalidDrawableSize(size)
+        }
+        return layer.nextDrawable()
+    }
+}
+
+enum iTermMetalLayerBoxError: Error {
+    case invalidDrawableSize(CGSize)
 }
 
 /// Helper class for acquiring Metal drawables with context validation.

@@ -1502,3 +1502,7 @@ Bug Fixes:
   never written, and the session archive was
   empty. If either kind of save fails, iTerm2
   now reports an error. Issue 13143.
+- Fixed a hang that could freeze iTerm2 with a
+  beachball when GPU rendering was on and the
+  system was under heavy load, for example from
+  memory pressure. Issue 13139.

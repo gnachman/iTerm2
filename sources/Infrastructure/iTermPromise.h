@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const iTermPromiseErrorDomain;
+
 typedef NS_ENUM(NSUInteger, iTermPromiseErrorCode) {
     iTermPromiseErrorCodeGeneric,
     iTermPromiseErrorCodeTimeout

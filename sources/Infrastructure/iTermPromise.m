@@ -11,6 +11,8 @@
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
+NSString *const iTermPromiseErrorDomain = @"com.iterm2.promise";
+
 @implementation iTermOr {
     id _first;
     id _second;
@@ -147,7 +149,7 @@ NS_DESIGNATED_INITIALIZER;
 }
 
 - (void)rejectWithDefaultError {
-    [self reject:[NSError errorWithDomain:@"com.iterm2.promise" code:iTermPromiseErrorCodeGeneric userInfo:nil]];
+    [self reject:[NSError errorWithDomain:iTermPromiseErrorDomain code:iTermPromiseErrorCodeGeneric userInfo:nil]];
 }
 
 @end
@@ -405,7 +407,7 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
     } else {
         if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)))) {
             // timed out
-            return [iTermOr second:[NSError errorWithDomain:@"com.iterm2.promise" code:iTermPromiseErrorCodeTimeout userInfo:nil]];
+            return [iTermOr second:[NSError errorWithDomain:iTermPromiseErrorDomain code:iTermPromiseErrorCodeTimeout userInfo:nil]];
         }
     }
     @synchronized (_lock) {
