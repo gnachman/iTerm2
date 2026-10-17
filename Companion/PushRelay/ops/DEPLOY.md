@@ -140,6 +140,131 @@ Reading the failures (both observed while bringing this up):
 The `baseURL` in `sources/Companion/Shared/CompanionPushRelay.swift` then becomes
 `https://push.iterm2.com`.
 
+## Redundancy (two instances)
+
+The apps list several relay hostnames (`baseURLs` in
+`sources/Companion/Shared/CompanionPushRelay.swift`, currently `push.iterm2.com`
+then `push2.iterm2.com`). The phone registers with the first that answers; the
+Mac pushes through the first that delivers. Both move on to the next host for
+any failure except a 400 (the request itself is bad) whose body is the relay's
+own `{"error": ...}` JSON, because anything else may come from that host alone
+(an unknown device, a misrouted proxy or vhost, a WAF, an outage). The Mac also
+stops on the relay's 429 (its per-device push limit, which failing over would
+dodge); the phone's registration doesn't, since that 429 is each instance's own
+per-IP limit. After a push had to fail over, the Mac tries
+the host that worked first for 5 minutes, so a dead primary doesn't delay every
+push by its timeout. An APNs rejection that any relay would get too (410
+Unregistered, 400 BadDeviceToken, 429 TooManyRequests) is answered as a 422
+rather than the worker's 502, because Cloudflare replaces an origin 502 with
+its own page and the Mac couldn't tell; on a 422 it stops instead of retrying
+on the other relay. APNs reasons that come from a relay's own `APNS_TOPIC`
+(BadTopic, TopicDisallowed, MissingTopic, DeviceTokenNotForTopic) stay 502 and
+fail over, since the other relay may be configured correctly.
+
+A relay's 403 "bad secret" is final on the Mac: it means the phone re-paired,
+and failing over would let the revoked Mac push through a relay the new secret
+hasn't reached yet. The cost is the mirror case: if the phone re-paired via
+`push2` while `push.iterm2.com` was down, the new Mac's pushes fail on
+`push.iterm2.com` until `push2` delivers the new secret, which it does as soon
+as it hears from `push.iterm2.com` again. (A 403 "unknown device token" fails
+over: the registration may just not have arrived yet.) The one exception is
+the relay the Mac tried first only because of its 5-minute failover
+preference: right after a re-pair that's the relay most likely to be behind
+(the phone registers with the primary first), so there "bad secret" moves on
+to the primary, and the preference is dropped. No load balancer is involved, so nothing is billed per
+request.
+
+Run the instances on different providers. Both hostnames are proxied by the same
+Cloudflare zone, so Cloudflare itself (and any WAF or Bot Fight rule there)
+remains a shared dependency. A challenge on `/peer/register` shows up as a
+stalled outbox with 403s in the log.
+
+Each instance passes every registration it handles on to its peer
+(`host/peer.js`), so both can authorize every device:
+
+- Forwarded to `https://<peer>/peer/register`, authenticated with a shared secret
+  of at least 32 characters (peering is refused with a shorter one, since the
+  endpoint is public; the relay won't start with a non-https `PUSH_PEER_URL`
+  other than loopback). A forward counts as delivered only when the answer is
+  the peer's own (it carries `x-push-peer: 1` and `{"ok":true}`), so a
+  misrouted URL whose site answers 200 keeps the rows queued. A skipped (unchanged) registration is forwarded too
+  unless the peer is known to hold that exact record (it acknowledged it, or
+  sent it here, since this relay started), so a peer that missed one catches up
+  on the phone's next connection, while an in-sync peer costs nothing on a
+  reconnect storm.
+- Each forward is first written to the SQLite file (`peer_outbox`, one row per
+  device) before the phone gets its reply. A single drain loop then sends
+  queued rows one at a time and deletes each once the peer accepts it. It runs
+  after each queued registration and every minute, and picks the next row by
+  query after each send: live registrations first, then the startup backlog.
+  A row that fails is retried with backoff (1, 2, 4... minutes, up to 15), so
+  it moves behind the others. A pass gives up after 3 failures in a row, and
+  no new pass starts for 5 seconds after one gives up, so against a dead peer
+  a registration storm costs at most about 3 sends (and 3 small writes) every
+  5 seconds, and an idle relay about 3 a minute. A row the peer is up and
+  refusing (its 409 for a stamp in its future) is retried later but doesn't
+  count toward giving up. A 500 from the peer means its database is failing:
+  20 in a row end the pass (so a few rows it can't handle don't block the
+  rest), but the peer is still counted as up. When the peer answers again after a pass gave up or a hello
+  failed, rows that were backing off are retried right away. Failures are
+  logged as one summary line per pass, not one per row. A row the peer's own code
+  refuses as malformed (a 400 carrying `x-push-peer: 1`) is dropped
+  (`pushrelay_peer_forward_dropped_total`); a 400 from anything in between
+  (wrong scheme or port in `PUSH_PEER_URL`, a WAF) keeps the row. The database
+  runs `synchronous = FULL`, so a registration the phone was told succeeded
+  survives a power loss too.
+- At startup every live registration is queued, which repairs anything both
+  relays missed while each had an outage. The cost: one request per live device
+  to the peer, sent one at a time, so draining takes about devices x round-trip
+  time (e.g. 1,000 devices at 100ms is under 2 minutes). New registrations go
+  ahead of that backlog. The backlog includes records received from the peer,
+  so each restart echoes those back once. An echo carries the same stamp the
+  peer already has, so the peer doesn't rewrite it: it costs a request but no
+  write.
+- Seeding: each database has a random instance id, and each process a boot
+  id, returned on every authenticated `/peer/*` response. When a relay sees
+  either change (the peer was rebuilt, restarted, or restored from a backup),
+  it forgets what it thought the peer held and queues everything for it again
+  at low priority (`pushrelay_peer_rebuilt_total` counts rebuilds). An idle
+  relay sends a `/peer/hello` once a minute, so this happens within a minute
+  or two. To force a full resend anyway:
+  `sudo systemctl kill -s USR2 iterm2-push-relay` (or restart it).
+- The receiver keeps the record with the later `registeredAt`, compared as
+  stamped, so **both hosts must run NTP** (their clocks then agree to within
+  milliseconds). A phone registration is stamped at least a second after any
+  record the relay already held, in the same transaction, which covers a
+  peer's clock being slightly ahead. Clocks that disagree by more than the time
+  between a user's unpair and re-pair can order those two registrations
+  wrongly, so alert on `pushrelay_peer_clock_skew_ms` (the fleet monitor warns
+  at 2s and is critical at 30s). That gauge is the peer's clock minus ours,
+  estimated NTP-style from each round trip (error at most half the round
+  trip) on both relays. A stamp more than a minute in the receiver's future
+  is refused with a 409 and retried until the clock catches up; that also
+  happens after a burst of changed registrations for one device faster than
+  one per second (a client bug, or someone who knows the token), since each
+  moves its stamp a second ahead. A peer whose clock is more than an hour off
+  is refused the same way.
+- A forwarded record keeps the sender's expiry (its `registeredAt` plus the
+  sender's `REGISTRATION_TTL_SECONDS`, sent with the record), capped at the
+  receiver's own TTL. Keep that setting the same on both instances.
+
+Setup, on BOTH instances, each naming the other, with the same secret
+(`openssl rand -hex 32`, generated once). Add to `/etc/iterm2-push-relay.env`:
+
+```sh
+PUSH_PEER_URL=https://<the other instance's hostname>
+PUSH_PEER_SECRET=<the shared secret>
+```
+
+then `sudo systemctl restart iterm2-push-relay`. The startup log line names the
+peer (`peer=https://...`). `/peer/register` goes through the public vhost like
+`/register`; without peer config it 404s. Watch
+`pushrelay_peer_last_ok_timestamp_seconds` (when the peer last answered an
+authenticated request; with the minutely hello, more than a few minutes old
+means it's down or misconfigured), `pushrelay_peer_outbox` (rows still to
+send; a large startup backlog drains in minutes), and
+`pushrelay_peer_forward_failed_total`.
+
 ## Metrics
 
 The Node host exposes aggregate, zero-PII metrics in Prometheus text on a

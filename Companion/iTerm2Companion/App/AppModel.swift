@@ -3984,25 +3984,46 @@ final class AppModel {
             companionLog("Push relay registration skipped: no secret")
             return
         }
-        var request = URLRequest(url: CompanionPushRelay.registerURL)
+        let secretHash = SHA256.hash(data: secret).map { String(format: "%02x", $0) }.joined()
+        let body: Data
+        do {
+            body = try JSONEncoder().encode(
+                Registration(token: token.map { String(format: "%02x", $0) }.joined(),
+                             secretHash: secretHash,
+                             sandbox: Self.pushSandbox))
+        } catch {
+            companionLog("Push relay registration failed: \(String(describing: error))")
+            return
+        }
+        // Register with the first relay instance that answers; it passes the
+        // registration on to the others. If none does, this runs again on the
+        // next connection to the Mac.
+        // A 429 here is one instance's per-IP limit, so try the next on it too.
+        _ = await CompanionPushRelay.tryInOrder(CompanionPushRelay.registerURLs, finalStatuses: [400]) { url in
+            await Self.register(body: body, url: url)
+        }
+    }
+
+    private static func register(body: Data, url: URL) async -> CompanionPushRelay.AttemptResult {
+        let host = url.host ?? url.absoluteString
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(CompanionUserAgent.value, forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
-        let secretHash = SHA256.hash(data: secret).map { String(format: "%02x", $0) }.joined()
+        request.httpBody = body
         do {
-            request.httpBody = try JSONEncoder().encode(
-                Registration(token: token.map { String(format: "%02x", $0) }.joined(),
-                             secretHash: secretHash,
-                             sandbox: Self.pushSandbox))
             let (data, response) = try await CompanionURLSession.shared.data(for: request)
-            if let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) {
-                companionLog("Registered with push relay")
-            } else {
-                companionLog("Push relay registration rejected: \(String(data: data, encoding: .utf8) ?? "")")
+            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+            if (200..<300).contains(status) {
+                companionLog("Registered with push relay \(host)")
+                return .succeeded
             }
+            companionLog("Push relay \(host) registration rejected (HTTP \(status)): \(String(data: data, encoding: .utf8) ?? "")")
+            return .failed(status: status, relayAnswered: CompanionPushRelay.isRelayError(data))
         } catch {
-            companionLog("Push relay registration failed: \(String(describing: error))")
+            companionLog("Push relay \(host) registration failed: \(String(describing: error))")
+            return .failed(status: nil, relayAnswered: false)
         }
     }
 

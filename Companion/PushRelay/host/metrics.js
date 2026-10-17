@@ -30,12 +30,24 @@ const COUNTER_HELP = {
   apns_discarded_idle_total: "APNs sessions replaced because they sat idle too long.",
   apns_discarded_timeout_total: "APNs sessions thrown away after a request timed out.",
   apns_request_timeouts_total: "APNs requests that got no answer within the timeout.",
+  peer_forward_ok_total: "Registrations passed on to the peer relay.",
+  peer_forward_failed_total: "Forwards to the peer relay that failed (queued for retry).",
+  peer_forward_dropped_total: "Records the peer refused as malformed (400), dropped.",
+  peer_received_total: "Valid registrations received from the peer relay.",
+  peer_applied_total: "Peer registrations stored (newer than what we had).",
+  peer_ignored_total: "Peer registrations ignored (not newer, or already expired).",
+  peer_rejected_total: "Peer requests rejected (bad secret, malformed, or clock too far off).",
+  peer_self_total: "Responses showing PUSH_PEER_URL points at this relay itself (misconfiguration).",
+  peer_rebuilt_total: "Times the peer's database changed (it was rebuilt) and everything was resent.",
 };
 const GAUGE_HELP = {
   devices: "Registered devices currently in KV (live, non-expired).",
   apns_sessions: "Open HTTP/2 sessions to APNs right now.",
   apns_oldest_session_age_seconds: "Age of the oldest open APNs session.",
   last_delivery_timestamp_seconds: "Unix time of the last push APNs accepted; 0 if none since process start.",
+  peer_outbox: "Registrations waiting to be passed on to the peer relay.",
+  peer_clock_skew_ms: "Peer's clock minus ours, estimated from the last round trip to it.",
+  peer_last_ok_timestamp_seconds: "Unix time the peer last answered an authenticated request; 0 if never.",
 };
 
 // Apple's rejection reasons are a small closed set, so labeling by reason is

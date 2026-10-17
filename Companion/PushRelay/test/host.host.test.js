@@ -4,7 +4,7 @@
 // write survives the whole stack (the fix that motivated the migration).
 
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
-import { createPushRelay } from "../host/server.js";
+import { createPushRelay, clientStatus } from "../host/server.js";
 
 // Throwaway P-256 key so the worker's APNs-JWT signer succeeds; never verified
 // here (Apple is stubbed). Same key the Workers test config uses.
@@ -147,7 +147,7 @@ describe("push relay logs APNs delivery failures", () => {
   });
   afterAll(async () => { await relay.close(); });
 
-  it("returns 502 and logs Apple's status + reason", async () => {
+  it("logs Apple's status + reason (and answers a shared APNs 4xx as 422)", async () => {
     const token = freshToken();
     const { secret, secretHash } = await makeCreds();
     await fetch(base + "/register", {
@@ -163,7 +163,8 @@ describe("push relay logs APNs delivery failures", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ token, secret, title: "hi", body: "there" }),
       });
-      expect(push.status).toBe(502);
+      // The worker's 502 for APNs 400 goes out as 422 (see clientStatus).
+      expect(push.status).toBe(422);
       expect(errSpy).toHaveBeenCalledTimes(1);
       const line = errSpy.mock.calls[0].join(" ");
       expect(line).toContain("/push");
@@ -172,5 +173,28 @@ describe("push relay logs APNs delivery failures", () => {
     } finally {
       errSpy.mockRestore();
     }
+  });
+});
+
+describe("clientStatus", () => {
+  const apns = (status, reason) => JSON.stringify({ error: `APNs ${status}: {"reason":"${reason}"}` });
+  it("turns a shared APNs 4xx rejection into 422", () => {
+    expect(clientStatus("/push", 502, apns(410, "Unregistered"))).toBe(422);
+    expect(clientStatus("/push/mutable", 502, apns(400, "BadDeviceToken"))).toBe(422);
+    expect(clientStatus("/push", 502, apns(429, "TooManyRequests"))).toBe(422);
+  });
+  it("keeps 502 for reasons that come from this relay's topic config", () => {
+    for (const reason of ["BadTopic", "TopicDisallowed", "MissingTopic", "DeviceTokenNotForTopic"]) {
+      expect(clientStatus("/push", 502, apns(400, reason))).toBe(502);
+    }
+  });
+  it("keeps 502 for this relay's key problems and APNs server errors", () => {
+    expect(clientStatus("/push", 502, apns(403, "InvalidProviderToken"))).toBe(502);
+    expect(clientStatus("/push", 502, apns(503, "ServiceUnavailable"))).toBe(502);
+    expect(clientStatus("/push", 502, "not json")).toBe(502);
+  });
+  it("leaves everything else alone", () => {
+    expect(clientStatus("/register", 502, apns(410, "Unregistered"))).toBe(502);
+    expect(clientStatus("/push", 200, "{}")).toBe(200);
   });
 });

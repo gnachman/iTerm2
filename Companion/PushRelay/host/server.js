@@ -14,12 +14,20 @@ import worker from "../src/worker.js";
 import { SqliteKV } from "./kv.js";
 import { createApnsClient } from "./apns.js";
 import { Metrics, COUNTER_NAMES, apnsEventSink } from "./metrics.js";
+import { createPeerSync, stampingKV } from "./peer.js";
 
 // Read at most this many bytes before rejecting: the worker enforces the real
 // 4 KiB payload cap, this is just a coarse guard so a huge upload can't buffer.
 const MAX_REQUEST_BYTES = 64 * 1024;
 // Sweep expired KV rows (registrations, rate-limit buckets) on this cadence.
 const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+
+// Same rule as registrationTtlSeconds() in src/worker.js (default 90 days, min
+// 60s). The peer path needs it to carry a forwarded record's expiry over.
+function registrationTtlSeconds(env) {
+  const v = parseInt(env.REGISTRATION_TTL_SECONDS, 10);
+  return Number.isFinite(v) && v >= 60 ? v : 90 * 24 * 60 * 60;
+}
 
 // An in-memory stand-in for Cloudflare's rate-limit binding: the same
 // `.limit({ key }) -> { success }` shape the worker calls. A fixed window per
@@ -116,6 +124,40 @@ function countRequest(metrics, path, status, text, onDelivered) {
   }
 }
 
+// The status to send the client for a worker response. The worker reports every
+// APNs rejection as a 502 with body {"error":"APNs <status>: <reason>"}, but
+// Cloudflare replaces an origin 502 with its own page, so the Mac can't see
+// why. An APNs 4xx other than 403 (410 Unregistered, 400 BadDeviceToken, 429
+// TooManyRequests) would be the same from any relay (they share the key and
+// topic), so it goes out as a 422, which Cloudflare passes through, and the Mac
+// stops instead of retrying on the other relay. These stay 502, so the Mac
+// fails over: a 403 (this relay's key or provider token), APNs 5xx, and the
+// 400 reasons that come from this relay's APNS_TOPIC rather than the device
+// (another relay may be configured correctly). Metrics are counted from the
+// worker's status, before this. Mirrors CompanionPushSender.isSharedAPNsRejection.
+const RELAY_CONFIG_APNS_REASONS = new Set([
+  "BadTopic", "TopicDisallowed", "MissingTopic", "DeviceTokenNotForTopic",
+]);
+
+export function isSharedApnsRejection(error) {
+  const m = /^APNs (4\d\d)\b:?\s*(.*)$/s.exec(error);
+  if (!m || m[1] === "403") return false;
+  let reason = null;
+  try { reason = JSON.parse(m[2]).reason; } catch { /* no JSON reason */ }
+  return !RELAY_CONFIG_APNS_REASONS.has(reason);
+}
+
+export function clientStatus(path, status, text) {
+  if ((path === "/push" || path === "/push/mutable") && status === 502) {
+    let error = null;
+    try { error = JSON.parse(text).error; } catch { /* not the worker's JSON */ }
+    if (typeof error === "string" && isSharedApnsRejection(error)) {
+      return 422;
+    }
+  }
+  return status;
+}
+
 export function createPushRelay(options = {}) {
   const {
     dbPath = ":memory:",
@@ -127,6 +169,13 @@ export function createPushRelay(options = {}) {
     // disable, matching a deployment without the Cloudflare binding.
     registerLimit,
     registerWindowSeconds = 60,
+    // Peer replication (see host/peer.js). Off unless both are set.
+    peerUrl,
+    peerSecret,
+    peerFetch,
+    peerRetryIntervalMs,
+    peerRetryBackoffMs,
+    peerGiveUpCooldownMs,
   } = options;
 
   const kv = new SqliteKV(dbPath, { now });
@@ -143,6 +192,7 @@ export function createPushRelay(options = {}) {
       devices: kv.countPrefix("device:"),
       ...(st && { apns_sessions: st.sessions, apns_oldest_session_age_seconds: st.oldestSessionAgeSeconds }),
       last_delivery_timestamp_seconds: Math.floor(lastDeliveryMs / 1000),
+      ...peer?.gauges(),
     };
   };
 
@@ -158,6 +208,28 @@ export function createPushRelay(options = {}) {
     APNS_P8: sourceEnv.APNS_P8,
     REGISTRATION_TTL_SECONDS: sourceEnv.REGISTRATION_TTL_SECONDS,
   };
+  // Peering is off unless both are set, and refused (loudly) with a weak secret.
+  let peer = null;
+  if (peerUrl && peerSecret) {
+    try {
+      peer = createPeerSync({
+        kv,
+        metrics,
+        peerUrl,
+        peerSecret,
+        ttlSeconds: registrationTtlSeconds(sourceEnv),
+        fetchImpl: peerFetch,
+        now,
+        retryIntervalMs: peerRetryIntervalMs,
+        retryBackoffMs: peerRetryBackoffMs,
+        giveUpCooldownMs: peerGiveUpCooldownMs,
+      });
+      workerEnv.PUSH_KV = stampingKV(kv);
+    } catch (e) {
+      console.error(`push-relay: peer replication disabled: ${e.message}`);
+    }
+  }
+
   if (registerLimit) {
     workerEnv.REGISTER_RATE_LIMITER = makeRegisterLimiter({
       limit: registerLimit,
@@ -166,7 +238,10 @@ export function createPushRelay(options = {}) {
   }
 
   async function handleRequest(req, res) {
-    const path = (req.url || "").split("?")[0];
+    // Normalized the way the worker routes (new URL(...).pathname), so e.g.
+    // "/./register" is treated as /register here too.
+    let path;
+    try { path = new URL(req.url || "/", "http://push.local").pathname; } catch { path = "/"; }
 
     // Localhost-only aggregate metrics, handled before anything else. Like the
     // companion relay, a scrape must come from loopback with no proxy headers,
@@ -190,6 +265,41 @@ export function createPushRelay(options = {}) {
       res.writeHead(413, { "content-type": "application/json" });
       res.end(JSON.stringify({ error: "request too large" }));
       return;
+    }
+
+    // Peer endpoints: /peer/register (a registration forwarded by the peer
+    // relay) and /peer/hello (its liveness check). Handled here, not by the
+    // worker: a forwarded record carries the original registeredAt and must
+    // not be forwarded back. Every answer carries peer.responseHeaders(): a
+    // marker so the sender can tell this code's 400 from a proxy's, plus (for
+    // an authenticated caller only) our instance and boot ids and our clock.
+    // Without peer config these fall through to the worker's 404.
+    if (peer && req.method === "POST" && (path === "/peer/register" || path === "/peer/hello")) {
+      metrics.inc("http_requests_total");
+      let result;
+      try {
+        result = path === "/peer/hello"
+          ? peer.hello(req.headers.authorization)
+          : await peer.receive(req.headers.authorization, bodyBuf.toString("utf8"));
+      } catch (e) {
+        console.error(`push-relay: ${path} failed: ${e?.stack || e}`);
+        metrics.inc("http_errors_total");
+        result = { status: 500, body: { error: String(e?.message || e) } };
+      }
+      res.writeHead(result.status, {
+        "content-type": "application/json",
+        ...peer.responseHeaders(req.headers.authorization),
+      });
+      res.end(JSON.stringify(result.body));
+      return;
+    }
+
+    let registerToken = null;
+    if (peer && req.method === "POST" && path === "/register") {
+      try {
+        const { token } = JSON.parse(bodyBuf.toString("utf8"));
+        if (typeof token === "string") registerToken = token;
+      } catch { /* malformed: the worker rejects it */ }
     }
 
     // Adapt the Node request into the Web Request the worker expects. The worker
@@ -233,8 +343,30 @@ export function createPushRelay(options = {}) {
     if ((path === "/push" || path === "/push/mutable") && response.status >= 500) {
       console.error(`push-relay: push failed: ${path} -> ${response.status} ${text}`);
     }
-    res.writeHead(response.status, headers);
+    // Pass every successful registration on to the peer. A skipped (unchanged)
+    // one is passed on too unless the peer already acknowledged that record, so
+    // a peer that missed it catches up on the phone's next connection. It is
+    // queued on disk before the phone gets its reply, so a crash can't lose it;
+    // the send happens after the reply, so the phone doesn't wait on the peer.
+    let queued = false;
+    if (registerToken && response.status === 200) {
+      try {
+        let skipped = false;
+        try { skipped = !!JSON.parse(text).skipped; } catch { /* treat as written */ }
+        queued = await peer.enqueue(registerToken, { unlessAcked: skipped });
+      } catch (e) {
+        // The registration itself succeeded; the startup backfill or the
+        // phone's next connection will pass it on.
+        console.error(`push-relay: queueing for peer failed: ${e?.stack || e}`);
+      }
+    }
+
+    res.writeHead(clientStatus(path, response.status, text), headers);
     res.end(text);
+
+    if (queued) {
+      peer.flush().catch((e) => console.error(`push-relay: peer send threw: ${e?.message || e}`));
+    }
   }
 
   const httpServer = http.createServer(handleRequest);
@@ -244,6 +376,7 @@ export function createPushRelay(options = {}) {
     httpServer,
     kv,
     metrics,
+    peer,
     // Exposed for tests / diagnostics.
     _env: workerEnv,
     listen(port, host) {
@@ -255,6 +388,14 @@ export function createPushRelay(options = {}) {
             try { kv.sweepExpired(); } catch { /* best-effort */ }
           }, SWEEP_INTERVAL_MS);
           sweepTimer.unref?.();
+          // Queue every registration for the peer at startup: seeds a newly
+          // added peer and repairs anything both relays missed while one was
+          // down. The peer ignores records it already has.
+          if (peer) {
+            peer.backfill();
+            peer.start();
+            peer.flush().catch(() => {});
+          }
           resolve();
         });
       });
@@ -264,6 +405,7 @@ export function createPushRelay(options = {}) {
     },
     async close() {
       if (sweepTimer) clearInterval(sweepTimer);
+      peer?.stop();
       apnsFetch.close?.();
       await new Promise((resolve) => httpServer.close(() => resolve()));
       kv.close();

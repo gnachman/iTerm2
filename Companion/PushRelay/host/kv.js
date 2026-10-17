@@ -26,7 +26,13 @@ export class SqliteKV {
     this.now = now;
     this.db = new Database(path);
     this.db.pragma("journal_mode = WAL");
-    this.db.pragma("synchronous = NORMAL");
+    // FULL, not NORMAL: in WAL mode NORMAL can lose the last commits on a power
+    // loss or OS crash, which would drop a registration (or a queued peer send)
+    // after the phone was told it succeeded. The cost is one fsync per write: a
+    // push writes one rate-limit counter, a changed registration writes its
+    // record (plus, with a peer, an outbox row and its later delete), and an
+    // unchanged one writes nothing once the peer has it. Cheap at this volume.
+    this.db.pragma("synchronous = FULL");
     this.db.exec(
       `CREATE TABLE IF NOT EXISTS kv (
          key        TEXT PRIMARY KEY,
@@ -49,6 +55,18 @@ export class SqliteKV {
 
   // eslint-disable-next-line require-await -- async to match the KV interface
   async get(key, type = "text") {
+    const value = this.getSync(key);
+    return value != null && type === "json" ? JSON.parse(value) : value;
+  }
+
+  // eslint-disable-next-line require-await
+  async put(key, value, options) {
+    this.putSync(key, value, options);
+  }
+
+  // Synchronous forms, for read-modify-write inside a db.transaction() (the
+  // async methods above would let other work run between the read and write).
+  getSync(key) {
     const row = this._get.get(key);
     if (!row) return null;
     if (row.expires_at != null && row.expires_at <= this.now()) {
@@ -57,11 +75,10 @@ export class SqliteKV {
       this._del.run(key);
       return null;
     }
-    return type === "json" ? JSON.parse(row.value) : row.value;
+    return row.value;
   }
 
-  // eslint-disable-next-line require-await
-  async put(key, value, { expirationTtl } = {}) {
+  putSync(key, value, { expirationTtl } = {}) {
     if (typeof value !== "string") {
       // KV also accepts ArrayBuffer/stream, but worker.js only ever puts strings.
       throw new TypeError("SqliteKV.put expects a string value");

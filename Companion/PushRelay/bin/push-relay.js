@@ -42,6 +42,18 @@ function numEnv(name) {
   return Number.isFinite(v) && v > 0 ? v : undefined;
 }
 
+// The shared secret goes in a header, so it must not travel in cleartext.
+function peerUrlProblem(raw) {
+  let url;
+  try { url = new URL(raw); } catch { return "is not a URL"; }
+  const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  if (url.protocol !== "https:" && !loopback) return "must be https";
+  return null;
+}
+if (process.env.PUSH_PEER_URL && peerUrlProblem(process.env.PUSH_PEER_URL)) {
+  console.error(`push-relay: PUSH_PEER_URL ${peerUrlProblem(process.env.PUSH_PEER_URL)}; refusing to start`);
+  process.exit(1);
+}
 const relay = createPushRelay({
   dbPath: DB_PATH,
   env: process.env,
@@ -49,7 +61,14 @@ const relay = createPushRelay({
   // CF-Connecting-IP or the worker falls back to "unknown"). Off unless set.
   registerLimit: numEnv("PUSH_REGISTER_LIMIT"),
   registerWindowSeconds: numEnv("PUSH_REGISTER_WINDOW_SECONDS") || 60,
+  // Pass registrations on to another relay instance (see host/peer.js). Off
+  // unless both are set.
+  peerUrl: process.env.PUSH_PEER_URL || undefined,
+  peerSecret: process.env.PUSH_PEER_SECRET || undefined,
 });
+if (!!process.env.PUSH_PEER_URL !== !!process.env.PUSH_PEER_SECRET) {
+  console.error("push-relay: WARNING PUSH_PEER_URL and PUSH_PEER_SECRET must both be set; peer replication is off");
+}
 
 // Last-resort net: a stray throw must not take push delivery down for everyone.
 // Log and keep serving; bound the rate so a wedged process still restarts.
@@ -81,12 +100,25 @@ async function shutdown(signal) {
     process.exit(0);
   }
 }
+// Re-send every registration to the peer, e.g. after the peer's database was
+// lost and it was rebuilt: `systemctl kill -s USR2 iterm2-push-relay`. (A
+// restart does the same.)
+process.on("SIGUSR2", () => {
+  if (!relay.peer) {
+    console.log("push-relay: SIGUSR2 ignored (no peer configured)");
+    return;
+  }
+  const queued = relay.peer.backfill();
+  console.log(`push-relay: SIGUSR2: queued ${queued} registration(s) for the peer`);
+  relay.peer.flush().catch((e) => console.error(`push-relay: peer flush failed: ${e?.message || e}`));
+});
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
 relay.listen(PORT, HOST).then(() => {
   const { port } = relay.address();
-  console.log(`push-relay: listening on ${HOST}:${port} (db=${DB_PATH}, topic=${process.env.APNS_TOPIC})`);
+  console.log(`push-relay: listening on ${HOST}:${port} (db=${DB_PATH}, topic=${process.env.APNS_TOPIC}, ` +
+    `peer=${relay.peer ? process.env.PUSH_PEER_URL : "none"})`);
 }).catch((err) => {
   console.error("push-relay: failed to start:", err.message);
   process.exit(1);
