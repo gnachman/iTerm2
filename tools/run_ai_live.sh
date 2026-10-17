@@ -23,11 +23,13 @@
 # skipped unless ITERM2_AI_LIVE_TAB_TITLE_CORPUS=1. With a large corpus
 # each one can run for hours.
 #
-# Refusal scenarios write captured responses to
-# ModernTests/Resources/SafetyRefusalFixtures/ only when explicitly
-# requested. Set ITERM2_AI_LIVE_REFRESH_REFUSAL_FIXTURES=1 to refresh.
-# Without it, refusal runs exercise the API path but leave the on-disk
-# fixtures untouched so casual sweeps don't dirty the working tree.
+# Refusal scenarios are skipped unless ITERM2_AI_LIVE_REFUSAL is set. They
+# send a prompt designed to be refused, which vendors' abuse monitoring
+# counts against the key (OpenAI has flagged it as suspected fraud), so run
+# them rarely, typically only after adding a model:
+#   ITERM2_AI_LIVE_REFUSAL=missing  send only for models with no fixture in
+#                                   ModernTests/Resources/SafetyRefusalFixtures/
+#   ITERM2_AI_LIVE_REFUSAL=all      send for every model, overwriting fixtures
 #
 # Why a JSON file: xcodebuild's test runner does not inherit shell env
 # vars, so this script writes a JSON config to a temp file and the
@@ -101,7 +103,7 @@ json_quote() {
     emit GEMINI_INTERVAL    "${ITERM2_AI_LIVE_GEMINI_INTERVAL:-}"
     emit DEEPSEEK_INTERVAL  "${ITERM2_AI_LIVE_DEEPSEEK_INTERVAL:-}"
     emit PROJECT_ROOT       "$PROJECT_DIR"
-    emit REFRESH_REFUSAL_FIXTURES "${ITERM2_AI_LIVE_REFRESH_REFUSAL_FIXTURES:-}"
+    emit REFUSAL            "${ITERM2_AI_LIVE_REFUSAL:-}"
     # Cassette record/playback. Unset means pure-live (the historical
     # behavior). See AICassette.swift for the mode semantics.
     #   off     no interception (default when unset)

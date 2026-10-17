@@ -64,7 +64,7 @@ would go green by recording whatever the vendor now returns, laundering a
 behavior change into a new fixture that nobody reviewed. `replay` mode
 forbids that: misses are loud and offline. Refreshing a cassette is always
 an explicit `auto`/`record` step a human reviews, mirroring how the
-existing `SafetyRefusalFixtures` are opt-in (`REFRESH_REFUSAL_FIXTURES=1`).
+existing `SafetyRefusalFixtures` are opt-in (`ITERM2_AI_LIVE_REFUSAL`).
 
 ## Telling cached from live in the logs
 

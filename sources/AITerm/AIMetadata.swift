@@ -36,14 +36,17 @@
 //  3. Unless the model is `fixtureExempt`, capture a refusal fixture so the
 //     live-harness regression suite covers this model's response shape:
 //
+//        # every model that lacks a fixture:
+//        ITERM2_AI_LIVE_REFUSAL=missing tools/run_ai_live.sh refusal
+//
 //        # one model:
-//        ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> \
+//        ITERM2_AI_LIVE_REFUSAL=missing ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> \
 //            tools/run_ai_live.sh test_<vendor>_refusal
 //
-//        # all models for a vendor:
-//        tools/run_ai_live.sh test_<vendor>_refusal
-//
-//     <vendor> is openai / anthropic / gemini / deepseek (lowercase).
+//     <vendor> is openai / anthropic / gemini / deepseek (lowercase). The
+//     refusal prompt is a request vendors flag as abuse, so the scenario is
+//     opt-in and "missing" skips models already fixtured. Don't run it more
+//     than needed.
 //
 //  4. `git add OtherResources/ai-models.json
 //     ModernTests/Resources/SafetyRefusalFixtures/*` and commit together.

@@ -7,8 +7,7 @@
 //
 //  When this test fails after you add a model, capture the missing fixture:
 //
-//      ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> \
-//          tools/run_ai_live.sh test_<vendor>_refusal
+//      ITERM2_AI_LIVE_REFUSAL=missing tools/run_ai_live.sh refusal
 //
 //  Then `git add ModernTests/Resources/SafetyRefusalFixtures/*` and commit.
 //  The full instructions live in the header of AIMetadata.swift.
@@ -85,10 +84,10 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
             print("""
 
                 Capture them by running:
-                  tools/run_ai_live.sh refusal
+                  ITERM2_AI_LIVE_REFUSAL=missing tools/run_ai_live.sh refusal
 
                 Or for a specific vendor / model:
-                  ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> tools/run_ai_live.sh test_<vendor>_refusal
+                  ITERM2_AI_LIVE_REFUSAL=missing ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> tools/run_ai_live.sh test_<vendor>_refusal
 
                 Then commit the new files in
                   ModernTests/Resources/SafetyRefusalFixtures/

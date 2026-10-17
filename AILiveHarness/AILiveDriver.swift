@@ -446,17 +446,19 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         // input for offline parser tests. Filename is keyed by vendor + model +
         // mode (no sequence) since a refusal is always a single round-trip;
         // re-running for the same model overwrites the existing fixture.
-        // Opt-in: every refusal run otherwise leaves the fixtures dirty in git
-        // (model wording, request IDs, latency, and token counts all drift run
-        // to run), which pollutes diffs. Set REFRESH_REFUSAL_FIXTURES=1 in the
-        // config to intentionally refresh.
+        // Only when ITERM2_AI_LIVE_REFUSAL is set (see
+        // AILiveHarness.refusalMode); cassette replay runs the scenario without
+        // it and must not rewrite fixtures. In "missing" mode the prompt only
+        // goes to models that lack a fixture, so this adds new files rather
+        // than churning committed ones.
         if scenarioTag.hasPrefix("refusal"),
-           AILiveDriver.configFlag("REFRESH_REFUSAL_FIXTURES"),
-           let projectRoot = AILiveDriver.projectRoot() {
+           !(AILiveDriver.configValue("REFUSAL") ?? "").isEmpty,
+           let fixtureURL = AILiveDriver.refusalFixtureURL(modelName: modelName,
+                                                           streaming: streamingRequested) {
             // Only persist an actual refusal response. A request that failed
             // at the transport layer (timeout, connection reset), returned an
-            // HTTP error (e.g. gpt-5.5-pro 400s the phishing prompt under
-            // OpenAI's cyber_policy block), or has an empty body is not a
+            // HTTP error (e.g. a model that 400s the refusal prompt under a
+            // vendor policy block), or has an empty body is not a
             // refusal to parse; writing it would poison the offline parser
             // test (AISafetyRefusalParserTests) with a fixture that can never
             // produce a message. Skip it so a refresh leaves the prior good
@@ -469,15 +471,9 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                 print("[live] skipping refusal fixture for \(modelName): "
                       + "request failed (\(reason))")
             } else {
-                let fixturesDir = (projectRoot as NSString)
-                    .appendingPathComponent("ModernTests")
-                    + "/Resources/SafetyRefusalFixtures"
                 try? FileManager.default.createDirectory(
-                    atPath: fixturesDir, withIntermediateDirectories: true)
-                let vendor = AILiveDriver.guessVendor(modelName: modelName) ?? "unknown"
-                let fixtureName = "\(vendor)_\(safeModel)_\(safeScenario)_\(mode).json"
-                let fixtureURL = URL(fileURLWithPath: fixturesDir)
-                    .appendingPathComponent(fixtureName)
+                    at: fixtureURL.deletingLastPathComponent(),
+                    withIntermediateDirectories: true)
                 do {
                     try data.write(to: fixtureURL, options: .atomic)
                     print("[live] saved refusal fixture: \(fixtureURL.path)")
@@ -486,6 +482,19 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
                 }
             }
         }
+    }
+
+    /// Where the committed refusal fixture for this model and mode lives, or
+    /// nil if the project root isn't known. Shared with AILiveHarness so the
+    /// "missing" refusal mode can skip models that already have one.
+    static func refusalFixtureURL(modelName: String, streaming: Bool) -> URL? {
+        guard let projectRoot = AILiveDriver.projectRoot() else { return nil }
+        let vendor = AILiveDriver.guessVendor(modelName: modelName) ?? "unknown"
+        let mode = streaming ? "stream" : "noStream"
+        let fixtureName = "\(vendor)_\(AILiveDriver.sanitize(modelName))_refusal_\(mode).json"
+        return URL(fileURLWithPath: projectRoot)
+            .appendingPathComponent("ModernTests/Resources/SafetyRefusalFixtures")
+            .appendingPathComponent(fixtureName)
     }
 
     private static func projectRoot() -> String? {
@@ -501,10 +510,6 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
             return nil
         }
         return json[key]
-    }
-
-    private static func configFlag(_ key: String) -> Bool {
-        return configValue(key) == "1"
     }
 
     private static func guessVendor(modelName: String) -> String? {
