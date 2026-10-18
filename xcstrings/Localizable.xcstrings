@@ -98525,6 +98525,48 @@
         }
       }
     },
+    "LLMMetadata.ManualModelUnavailable" : {
+      "comment" : "Error shown in an AI chat that uses a model the user configured manually (for example, one on a local server) after that model was removed or renamed in Settings, instead of sending the message to a different AI provider. The placeholder is the model's name.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Modell „%@“ ist nicht mehr unter Einstellungen > Allgemein > KI konfiguriert. Fügen Sie es mit demselben Namen wieder hinzu, oder beginnen Sie einen neuen Chat mit einem anderen Modell."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The model “%@” is no longer configured in Settings > General > AI. Add it again with the same name, or start a new chat with a different model."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデル「%@」は「設定 > 一般 > AI」で構成されなくなりました。同じ名前で再度追加するか、別のモデルで新しいチャットを開始してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O modelo “%@” não está mais configurado em Ajustes > Geral > IA. Adicione-o novamente com o mesmo nome ou inicie um novo chat com outro modelo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модель «%@» больше не настроена в разделе «Настройки > Основные > ИИ». Добавьте её снова с тем же именем или начните новый чат с другой моделью."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型“%@”已不再在“设置 > 通用 > AI”中配置。请使用相同名称重新添加，或使用其他模型开始新的聊天。"
+          }
+        }
+      }
+    },
     "LLMMetadata.ModelUnavailable" : {
       "comment" : "Error shown in an AI chat whose Llama-family model is no longer available, instead of sending the message to a different AI provider. The placeholder is the model's name.",
       "extractionState" : "extracted_with_value",

@@ -499,14 +499,40 @@ class ChatListModel: ChatListDataSource {
         postMetadataChange()
     }
 
+    // Moves a chat stamped with a cloud vendor, or with none, to
+    // manualModelPinVendor when its pinned name is now a manual model that is not
+    // at its vendor's public API host (for example, its URL was moved from
+    // api.openai.com to a local server, or a manual model was added with the name
+    // of a chat's unresolved pin).
+    // Called before each turn, so once a turn may have gone to that server, a later
+    // removal of the model fails instead of sending the history to the old vendor.
+    // It never changes any other stamp: an Ollama or manual-model stamp stays as
+    // it is, so editing a model back and forth can't strand a chat on a vendor it
+    // no longer resolves within.
+    func refreshModelVendor(chatID: String) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        let manual = Int(LLMMetadata.manualModelPinVendor.rawValue)
+        guard temp.modelVendor != manual,
+              temp.modelVendor != Int(iTermAIVendor.llama.rawValue),
+              LLMMetadata.inferredVendor(forPinnedModelNamed: temp.modelName) == LLMMetadata.manualModelPinVendor else {
+            return
+        }
+        temp.modelVendor = manual
+        try chatStorage.set(at: i, temp)
+        postMetadataChange()
+    }
+
     // The vendor to store with a chat's new model pin. Re-pinning the same name
     // keeps a local (Ollama) vendor, so a local pin whose tag is gone, or whose
-    // name a cloud model now shares, stays local. Otherwise the new name's vendor
-    // when it can be told (which also picks up an edit to a manual model's API or
-    // URL). A name that resolves but is deliberately left unstamped (a manual model
-    // on a non-Ollama API, see LLMMetadata.inferredVendor) gets no vendor rather
-    // than inheriting the previous pin's. A name that doesn't resolve right now
-    // keeps the previous vendor when it is the same pin or the chat was local.
+    // name a cloud model now shares, stays local. Likewise a manual-model pin
+    // (LLMMetadata.manualModelPinVendor) whose manual model is no longer
+    // configured. Otherwise the new name's vendor when it can be told (which also
+    // picks up an edit to a manual model's API or URL). A name that doesn't
+    // resolve right now keeps the previous vendor when it is the same pin or the
+    // chat was local.
     static func vendorForNewPin(modelName: String?,
                                 previousName: String?,
                                 previousVendor: Int?) -> Int? {
@@ -516,6 +542,11 @@ class ChatListModel: ChatListDataSource {
         let llama = Int(iTermAIVendor.llama.rawValue)
         if modelName == previousName, previousVendor == llama {
             return llama
+        }
+        let manual = Int(LLMMetadata.manualModelPinVendor.rawValue)
+        if modelName == previousName, previousVendor == manual,
+           !LLMMetadata.manualModels().contains(where: { $0.name == modelName }) {
+            return manual
         }
         if let vendor = LLMMetadata.inferredVendor(forPinnedModelNamed: modelName) {
             return Int(vendor.rawValue)
@@ -540,13 +571,15 @@ class ChatListModel: ChatListDataSource {
     // keep the legacy behavior. A stored cloud vendor that disagrees with what the
     // name now says (an older build changed the chat's model without updating the
     // vendor) is corrected, or cleared when the name now resolves to a model that
-    // is deliberately left unstamped; a stored Ollama vendor is never moved off
-    // Ollama.
+    // is deliberately left unstamped; a stored Ollama or manual-model vendor is
+    // never changed, so a pin whose model is gone keeps failing rather than
+    // moving to a same-named model elsewhere.
     private func backfillModelVendors() {
-        let llama = Int(iTermAIVendor.llama.rawValue)
+        let failsClosed = [Int(iTermAIVendor.llama.rawValue),
+                           Int(LLMMetadata.manualModelPinVendor.rawValue)]
         for i in 0..<chatStorage.count {
             var chat = chatStorage[i]
-            guard chat.modelVendor != llama, let name = chat.modelName else {
+            guard !failsClosed.contains(where: { $0 == chat.modelVendor }), let name = chat.modelName else {
                 continue
             }
             let newVendor: Int?
