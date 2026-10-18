@@ -71,8 +71,8 @@ extension Profile {
                 var guid = ""
                 var name = ""
                 for prop in props {
-                    if prop.key == "Guid" { guid = prop.jsonValue?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) ?? "" }
-                    if prop.key == "Name" { name = prop.jsonValue?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) ?? "" }
+                    if prop.key == "Guid" { guid = jsonStringValue(prop.jsonValue) }
+                    if prop.key == "Name" { name = jsonStringValue(prop.jsonValue) }
                 }
                 profilesData.append(["guid": guid, "name": name])
             }
@@ -136,12 +136,12 @@ extension Profile {
 
             if json {
                 // Output curated schema matching the Python tool.
-                let font = trimJSONQuotes(propDict["Normal Font"])
+                let font = jsonStringValue(propDict["Normal Font"])
                 let fontParts = font.split(separator: " ")
                 let fontSize = fontParts.last.flatMap { Double($0) } ?? 0.0
                 var curatedData: [String: Any] = [
                     "guid": guid,
-                    "name": trimJSONQuotes(propDict["Name"]),
+                    "name": jsonStringValue(propDict["Name"]),
                     "font": font,
                     "font_size": fontSize,
                     "background_color": propDict["Background Color"] ?? "null",
@@ -151,16 +151,16 @@ extension Profile {
                     "cursor_color": propDict["Cursor Color"] ?? "null",
                     "selection_color": propDict["Selection Color"] ?? "null",
                 ]
-                let badgeText = trimJSONQuotes(propDict["Badge Text"])
+                let badgeText = jsonStringValue(propDict["Badge Text"])
                 if !badgeText.isEmpty {
                     curatedData["badge_text"] = badgeText
                 }
                 ctx.printJSON(curatedData)
             } else {
-                let profileName = trimJSONQuotes(propDict["Name"]).isEmpty ? name : trimJSONQuotes(propDict["Name"])
+                let profileName = jsonStringValue(propDict["Name"]).isEmpty ? name : jsonStringValue(propDict["Name"])
                 ctx.out("Profile: \(profileName)")
                 ctx.out("GUID: \(guid)")
-                let font = trimJSONQuotes(propDict["Normal Font"])
+                let font = jsonStringValue(propDict["Normal Font"])
                 let fontParts = font.split(separator: " ")
                 if fontParts.count >= 2, let size = Double(fontParts.last!) {
                     let family = fontParts.dropLast().joined(separator: " ")
@@ -174,7 +174,7 @@ extension Profile {
                 ctx.out("Blur: \(propDict["Blur"] ?? "false")")
                 ctx.out("Cursor Color: \(formatColor(propDict["Cursor Color"]))")
                 ctx.out("Selection Color: \(formatColor(propDict["Selection Color"]))")
-                let badge = trimJSONQuotes(propDict["Badge Text"])
+                let badge = jsonStringValue(propDict["Badge Text"])
                 if !badge.isEmpty {
                     ctx.out("Badge Text: \(badge)")
                 }
@@ -361,10 +361,10 @@ extension Profile {
             }
             for prop in props {
                 if prop.key == "Normal Font" {
-                    guard let fontStr = prop.jsonValue?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) else {
+                    guard let json = prop.jsonValue else {
                         throw IT2Error.apiError("Font value is missing")
                     }
-                    return fontStr
+                    return jsonStringValue(json)
                 }
             }
             throw IT2Error.apiError("Could not determine current font for profile")
@@ -396,8 +396,8 @@ func findProfileGuid(client: APIClient, name: String) throws -> String {
         var guid: String?
         var profileName: String?
         for prop in props {
-            if prop.key == "Guid" { guid = prop.jsonValue?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) }
-            if prop.key == "Name" { profileName = prop.jsonValue?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) }
+            if prop.key == "Guid" { guid = jsonStringValue(prop.jsonValue) }
+            if prop.key == "Name" { profileName = jsonStringValue(prop.jsonValue) }
         }
         if profileName == name, let guid = guid {
             return guid

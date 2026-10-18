@@ -1846,6 +1846,10 @@ Bug Fixes:
   an Arabic or Persian word, or a find match
   inside one, no longer breaks the letters’
   joining at the edge of the highlight.
+- it2 app get-focus, it2 profile list and it2
+  profile show no longer print names, fonts and
+  badge text with backslash escapes, such as a
+  profile named a/b shown as a\/b.
 
 
 

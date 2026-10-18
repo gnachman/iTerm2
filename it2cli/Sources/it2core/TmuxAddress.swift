@@ -226,7 +226,7 @@ extension APIClient {
             let reason = invokeResp.error?.errorReason ?? "unknown"
             throw IT2Error.apiError("Tmux pane lookup failed: \(reason)")
         }
-        let guid = trimJSONQuotes(invokeResp.success?.jsonResult)
+        let guid = jsonStringValue(invokeResp.success?.jsonResult)
         return guid.isEmpty ? nil : guid
     }
 
