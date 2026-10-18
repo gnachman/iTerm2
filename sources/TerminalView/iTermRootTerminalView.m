@@ -1789,7 +1789,11 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
     if (!_tabBarControlOnLoan) {
         self.tabBarControl.insets = [self.delegate tabBarInsets];
-        [self setTabBarFrame:outputs.tabBarFrame];
+        NSRect tabBarFrame = outputs.tabBarFrame;
+        if (!topTabBarVisible) {
+            tabBarFrame.size.width = NSWidth(self.bounds);
+        }
+        [self setTabBarFrame:tabBarFrame];
         [self setTabBarControlAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
     }
 }
