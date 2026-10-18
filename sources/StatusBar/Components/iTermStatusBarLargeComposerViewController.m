@@ -770,12 +770,16 @@
     }] longestCommonStringPrefix];
     if (suggestion.length > 0) {
         self.textView.suggestion = suggestion;
+        // The suggestion is built from already-escaped filenames (and history), so mark it
+        // final. With AI suggestions on, it comes back to -didFindCompletions:... as a file
+        // completion, which must not escape it a second time.
         return [[iTermCompletionItem alloc] initWithValue:suggestion
                                                    detail:[prefix stringByAppendingString:suggestion]
-                                                     kind:iTermCompletionItemKindFile];
+                                                     kind:iTermCompletionItemKindFile
+                                             valueIsFinal:YES];
     } else if (historySuggestions.count > 0) {
         self.textView.suggestion = historySuggestions.lastObject.value;
-        return historySuggestions.lastObject;
+        return [historySuggestions.lastObject withFinalValue];
     }
     return nil;
 }
@@ -789,16 +793,8 @@
     DLog(@"didFindCompletions");
     // Escape filename completions.
     NSArray<iTermCompletionItem *> *completions =
-    [[filenameCompletions mapWithBlock:^id _Nullable(iTermCompletionItem *item) {
-        if (item.kind == iTermCompletionItemKindAiSuggestion ||
-            item.kind == iTermCompletionItemKindAiReplacement) {
-            // AI generally escapes for us. Don't double escape.
-            return item;
-        }
-        return [item mapValue:^NSString * _Nonnull(NSString *filename) {
-            return [filename stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
-        }];
-    }] arrayByAddingObjectsFromArray:historySuggestions];
+    [[iTermCompletionItem shellEscapingFilenameCompletions:filenameCompletions]
+     arrayByAddingObjectsFromArray:historySuggestions];
     if ([_historyWindowController.window isVisible]) {
         DLog(@"History window is visible so return");
         [self.textView setCompletions:@[] prefix:@""];

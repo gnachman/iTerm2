@@ -319,6 +319,11 @@ class CompletionItem: NSObject {
     @objc let value: String
     @objc let detail: String?
     @objc let kind: Kind
+    // True when `value` is already the exact text to insert, so it must not be
+    // shell-escaped again. The composer's early result is built from escaped
+    // filenames (or a history entry) and then comes back alongside the raw file
+    // completions when AI suggestions are on.
+    @objc let valueIsFinal: Bool
 
     @objc(iTermCompletionItemKind) enum Kind: Int {
         case file
@@ -336,17 +341,44 @@ class CompletionItem: NSObject {
     }
 
     @objc(initWithValue:detail:kind:)
-    init(value: String, detail: String?, kind: Kind) {
+    convenience init(value: String, detail: String?, kind: Kind) {
+        self.init(value: value, detail: detail, kind: kind, valueIsFinal: false)
+    }
+
+    @objc(initWithValue:detail:kind:valueIsFinal:)
+    init(value: String, detail: String?, kind: Kind, valueIsFinal: Bool) {
         #if DEBUG
         it_assert(!(detail ?? "").contains("<iTermCompletionItem"))
         #endif
         self.value = value
         self.detail = detail
         self.kind = kind
+        self.valueIsFinal = valueIsFinal
     }
 
     @objc
     func mapValue(_ closure: (String) -> (String)) -> CompletionItem {
-        return CompletionItem(value: closure(value), detail: detail, kind: kind)
+        return CompletionItem(value: closure(value), detail: detail, kind: kind, valueIsFinal: valueIsFinal)
+    }
+
+    // Returns a copy whose value will not be escaped again.
+    @objc
+    func withFinalValue() -> CompletionItem {
+        return CompletionItem(value: value, detail: detail, kind: kind, valueIsFinal: true)
+    }
+
+    // Shell-escapes the values of filename completions. AI items arrive already
+    // escaped by the model and items marked valueIsFinal were escaped earlier, so
+    // both are left alone to avoid doubling their backslashes.
+    @objc(shellEscapingFilenameCompletions:)
+    static func shellEscapingFilenameCompletions(_ items: [CompletionItem]) -> [CompletionItem] {
+        return items.map { item in
+            if item.valueIsFinal || item.kind == .aiSuggestion || item.kind == .aiReplacement {
+                return item
+            }
+            return item.mapValue { filename in
+                (filename as NSString).withBackslashEscapedShellCharacters(includingNewlines: true)
+            }
+        }
     }
 }
