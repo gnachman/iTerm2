@@ -1797,3 +1797,7 @@ Bug Fixes:
   until the shell showed its second prompt.
 - Searching in the AI Chats window no longer
   crashes iTerm2 when the search finds a match.
+- The setting and menu item pickers in the key
+  binding editor now say “Select Setting…” or
+  “Select Menu Item…” until you choose one.
+  Before, they were blank.

@@ -91,10 +91,14 @@ class SettingPopupView: NSView {
     @objc func reloadData() {
         let identifier = selectedIdentifier
         comboView?.removeFromSuperview()
+        let defaultTitle = String(localized: "SettingPopup.SelectSetting",
+                                  defaultValue: "Select Setting…",
+                                  comment: "Placeholder of the setting picker in the key binding editor’s Toggle Setting action before a setting is chosen")
         let newComboView = SearchableComboView(SearchableComboViewGroup.fromSettings(),
-                                               defaultTitle: String(localized: "SettingPopup.SelectSetting",
-                                                                    defaultValue: "Select Setting…",
-                                                                    comment: "Placeholder of the setting picker in the key binding editor’s Toggle Setting action before a setting is chosen"))
+                                               defaultTitle: defaultTitle)
+        // SearchableComboView only shows its default title after a failed selection, so a
+        // freshly made one is blank. Show the placeholder until something is selected.
+        newComboView.setTitle(defaultTitle)
         newComboView.frame = self.bounds
         newComboView.delegate = comboView?.delegate
         addSubview(newComboView)
