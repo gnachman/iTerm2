@@ -28,6 +28,18 @@ class ChatSplitViewController: NSSplitViewController {
         return button
     }()
 
+    // Narrower than this and the find bar's search field is unreadable. The
+    // window can't shrink the chat below it, so at the window's minimum width
+    // the sidebar collapses (or, where a window resize can't collapse it, the
+    // window stops shrinking) instead.
+    static var minimumContentWidth: CGFloat {
+        return ChatFindBarView.minimumUsableWidth + ChatViewController.findBarSideMargin * 2
+    }
+
+    static func configureContentItem(_ item: NSSplitViewItem) {
+        item.minimumThickness = minimumContentWidth
+    }
+
     init(chatListViewController: ChatListViewController, chatViewController: ChatViewController) {
         self.chatListViewController = chatListViewController
         self.chatViewController = chatViewController
@@ -74,6 +86,7 @@ class ChatSplitViewController: NSSplitViewController {
         // Create content item
         contentItem = NSSplitViewItem(viewController: chatViewController)
         if let contentItem = contentItem {
+            Self.configureContentItem(contentItem)
             addSplitViewItem(contentItem)
         }
 
@@ -166,6 +179,13 @@ class ChatSplitViewController: NSSplitViewController {
                                            y: contentBounds.height - topInset - buttonSize.height - 10,
                                            width: buttonSize.width,
                                            height: buttonSize.height)
+    }
+
+    // The sidebar also collapses when the window gets too narrow for it and
+    // the chat's minimum width, or when its divider is dragged shut.
+    override func splitViewDidResizeSubviews(_ notification: Notification) {
+        super.splitViewDidResizeSubviews(notification)
+        updateSidebarToggleButton()
     }
 
     private func updateSidebarToggleButton() {

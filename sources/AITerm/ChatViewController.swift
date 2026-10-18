@@ -278,6 +278,7 @@ class ChatViewController: NSViewController {
     // In-conversation find (Cmd-F). The bar is created lazily and hosted
     // as an overlay at the top of the conversation in performLayoutNow().
     private var findBar: ChatFindBarView?
+    static let findBarSideMargin: CGFloat = 16
     private lazy var findController: ChatFindController = {
         let controller = ChatFindController()
         controller.segmentsProvider = { [weak self] message in
@@ -365,7 +366,7 @@ class ChatViewController: NSViewController {
             let barHeight = ChatFindBarView.barHeight
             let gap: CGFloat = 8
             let topReference = (floatingFrame?.minY ?? (bounds.height - toolbarHeight)) - gap
-            let sideMargin: CGFloat = 16
+            let sideMargin = Self.findBarSideMargin
             let maxWidth: CGFloat = 640
             let width = min(maxWidth, max(0, bounds.width - sideMargin * 2))
             let x = floor((bounds.width - width) / 2)
