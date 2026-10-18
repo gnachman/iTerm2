@@ -1787,3 +1787,6 @@ Bug Fixes:
 - The browser’s View Source command now shows
   the page’s source. Before, it always said
   “No source available.”
+- Changing your AI models in Settings when you
+  used a single custom AI model no longer drops
+  the custom headers you set up for it.

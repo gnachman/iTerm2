@@ -4112,7 +4112,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         kAIManualModelHostedWebSearchKey: @([self boolForKey:kPreferenceKeyAIFeatureHostedWebSearch]),
         kAIManualModelFunctionCallingKey: @([self boolForKey:kPreferenceKeyAIFeatureFunctionCalling]),
         kAIManualModelStreamingKey: @([self boolForKey:kPreferenceKeyAIFeatureStreamingResponses]),
-        kAIManualModelVectorStoreKey: @([self integerForKey:kPreferenceKeyAIVectorStore])
+        kAIManualModelVectorStoreKey: @([self integerForKey:kPreferenceKeyAIVectorStore]),
+        // The legacy model sends the former global headers. Saving this
+        // configuration retires them, so they must come along.
+        kAIManualModelCustomHeadersKey: [iTermMigrationHelper legacyGlobalCustomHeaders]
     };
 }
 
@@ -4460,12 +4463,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [self selectProviderAsDefaultForNewChats:(iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor]];
 }
 
-// Legacy single-model users (no saved configurations) keep their former global
-// custom headers only through LLMMetadata.legacyManualModel(). Editing anything
-// in the models panel materializes a configuration, after which the legacy path
-// is never consulted and the headers stop being sent. There is no config to seed
-// during migration, so warn the (small, beta-only) affected population once
-// before they can lose the headers.
+// Legacy single-model users (no saved configurations) get their former global
+// custom headers through LLMMetadata.legacyManualModel(). Editing anything in the
+// models panel materializes a configuration; the legacy model's configuration
+// carries the headers over (see legacyManualAIModelConfiguration), but models
+// added afterward start without them, so warn the affected users once.
 - (void)warnAboutLegacyGlobalHeadersIfNeeded {
     NSUserDefaults *ud = [iTermUserDefaults userDefaults];
     if ([ud boolForKey:@"NoSyncAILegacyGlobalHeadersWarningShown"]) {
@@ -4484,9 +4486,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     [ud setBool:YES forKey:@"NoSyncAILegacyGlobalHeadersWarningShown"];
     [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.LegacyHeadersText", nil, [NSBundle mainBundle], @"Your AI custom HTTP headers used to be a single global "
-                                       @"setting. They still apply to your current model, but adding "
-                                       @"or editing models here does not carry them over. Re-add the "
-                                       @"headers you need in each model’s “Custom headers” section.", @"Body of alert explaining custom headers moved to per-model settings")
+                                       @"setting. Your current model keeps them, but models you add "
+                                       @"here start without them. Add the headers you need in each "
+                                       @"new model’s “Custom headers” section.", @"Body of alert explaining custom headers moved to per-model settings")
                                actions:@[ iTermLocalizedOK() ]
                              accessory:nil
                             identifier:nil

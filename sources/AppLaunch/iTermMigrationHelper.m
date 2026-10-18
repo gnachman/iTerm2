@@ -473,25 +473,8 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     NSUserDefaults *headersDefaults = [iTermUserDefaults userDefaults];
     if (![headersDefaults boolForKey:@"NoSyncAICustomHeadersPerModelMigrationDone"]) {
         if ([iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
-            id rawHeaders = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
             id rawConfigs = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
-            // The header pref is non-NoSync and can round-trip through synced or
-            // hand-edited plists, so keep only well-formed {name,value} string
-            // entries. A malformed value would otherwise be stamped verbatim and
-            // then silently dropped at request time.
-            NSMutableArray *sanitizedHeaders = [NSMutableArray array];
-            if ([rawHeaders isKindOfClass:[NSArray class]]) {
-                for (id header in (NSArray *)rawHeaders) {
-                    if ([header isKindOfClass:[NSDictionary class]] &&
-                        [((NSDictionary *)header)[@"name"] isKindOfClass:[NSString class]]) {
-                        id value = ((NSDictionary *)header)[@"value"];
-                        [sanitizedHeaders addObject:@{
-                            @"name": ((NSDictionary *)header)[@"name"],
-                            @"value": [value isKindOfClass:[NSString class]] ? value : @"",
-                        }];
-                    }
-                }
-            }
+            NSArray<NSDictionary *> *sanitizedHeaders = [self legacyGlobalCustomHeaders];
             if (sanitizedHeaders.count > 0 &&
                 [rawConfigs isKindOfClass:[NSArray class]] &&
                 [(NSArray *)rawConfigs count] > 0) {
@@ -530,6 +513,31 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
     // the user has since removed. This runs even when the flag was already set,
     // since an earlier build ran the migration without retiring the list.
     [self retireLegacyGlobalCustomHeadersIfModelsAreConfigured];
+}
+
++ (NSArray<NSDictionary<NSString *, NSString *> *> *)legacyGlobalCustomHeaders {
+    if (![iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
+        return @[];
+    }
+    // The header pref is non-NoSync and can round-trip through synced or
+    // hand-edited plists, so keep only well-formed {name,value} string
+    // entries. A malformed value would otherwise be stamped verbatim and
+    // then silently dropped at request time.
+    id rawHeaders = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+    NSMutableArray<NSDictionary<NSString *, NSString *> *> *sanitizedHeaders = [NSMutableArray array];
+    if ([rawHeaders isKindOfClass:[NSArray class]]) {
+        for (id header in (NSArray *)rawHeaders) {
+            if ([header isKindOfClass:[NSDictionary class]] &&
+                [((NSDictionary *)header)[@"name"] isKindOfClass:[NSString class]]) {
+                id value = ((NSDictionary *)header)[@"value"];
+                [sanitizedHeaders addObject:@{
+                    @"name": ((NSDictionary *)header)[@"name"],
+                    @"value": [value isKindOfClass:[NSString class]] ? value : @"",
+                }];
+            }
+        }
+    }
+    return sanitizedHeaders;
 }
 
 + (void)retireLegacyGlobalCustomHeadersIfModelsAreConfigured {
