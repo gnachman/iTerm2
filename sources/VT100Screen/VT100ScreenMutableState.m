@@ -6907,18 +6907,17 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)appendRestoredBanner:(NSString *)message {
-    // Record the cursor position and append the message.
-    const int yBefore = self.currentGrid.cursor.y;
-
     [self appendBannerMessage:message];
 
-    const int delta = self.currentGrid.cursor.y - yBefore;
-    // Update the preferred cursor position if needed.
-    if (self.currentGrid.preferredCursorPosition.y >= 0 && self.currentGrid.preferredCursorPosition.y + 1 < self.currentGrid.size.height) {
-        VT100GridCoord coord = self.currentGrid.preferredCursorPosition;
-        coord.y = MAX(0, MIN(self.currentGrid.size.height - 1, coord.y + delta));
-        self.currentGrid.preferredCursorPosition = coord;
-    }
+    // The banner leaves the preferred cursor position on its own last row and
+    // the cursor at the start of the row after it, which is where the restored
+    // session's output belongs. Adding the banner's height to the preferred
+    // position instead would count the rows above it twice, leaving a blank row
+    // when the cursor had been mid-line or the banner wrapped.
+    DLog(@"Banner appended. Preferred cursor position %@ -> cursor %@",
+         VT100GridCoordDescription(self.currentGrid.preferredCursorPosition),
+         VT100GridCoordDescription(self.currentGrid.cursor));
+    self.currentGrid.preferredCursorPosition = self.currentGrid.cursor;
 }
 
 - (void)appendBannerMessage:(NSString *)message {
