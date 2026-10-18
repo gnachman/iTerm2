@@ -1480,6 +1480,11 @@ Bug Fixes:
 - The folder icon in the Current Directory
   status bar component can no longer be dragged
   after its directory has been deleted.
+- Dragging the folder icon in the Current
+  Directory status bar component when its
+  directory can’t be dragged (for example, on a
+  remote host) no longer opens the component’s
+  menu when you release the mouse.
 - With debug logging on, a password typed into
   a password field (for example, in the password
   manager) no longer appears in the debug log.

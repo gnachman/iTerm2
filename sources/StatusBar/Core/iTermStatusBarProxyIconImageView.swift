@@ -69,13 +69,16 @@ class iTermStatusBarProxyIconImageView: NSImageView, NSDraggingSource {
         guard Self.movementIsDrag(from: mouseDownPoint, to: point) else {
             return
         }
+        // The gesture is a drag from here on, even if there's nothing to drag, so releasing
+        // the mouse must not count as a click.
+        didDrag = true
+        isMouseDown = false
         // Check now rather than when the path last changed: the directory may have been
         // deleted since.
         guard let url = urlForDrag() else {
+            DLog("Proxy icon drag refused: no URL")
             return
         }
-        didDrag = true
-        isMouseDown = false
 
         let pbItem = NSPasteboardItem()
         pbItem.setString(url.absoluteString, forType: .fileURL)
