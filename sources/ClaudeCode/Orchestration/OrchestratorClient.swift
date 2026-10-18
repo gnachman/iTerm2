@@ -172,6 +172,29 @@ final class OrchestratorClient {
                                                               cause: .disableOrchestration)
     }
 
+    // Turn orchestration on for a chat (ChatViewController's Enable
+    // Orchestration, after it drops the agent). Tears down the dispatcher
+    // BEFORE the list-model write, for the reason given in
+    // ChatViewController.setOrchestrationEnabled. Enabling keeps the chat's
+    // timers and watches, and the torn-down dispatcher was what ran them, so
+    // if any are pending build a fresh dispatcher right away; it reconciles
+    // the persisted set and re-arms each one. Without this a pending timer
+    // would not fire until the next orchestration tool call or relaunch.
+    // Reconciling now rather than at that tool call means a watch whose
+    // session is already gone is dropped (with its status_update) while the
+    // user is toggling the chat, which is when they'd expect to hear of it.
+    func enableOrchestration(forChatID chatID: String) throws {
+        dropDispatcher(forChatID: chatID)
+        try broker.listModel.setOrchestrationEnabled(true, forChatID: chatID)
+        if !broker.listModel.watchers(forChatID: chatID).isEmpty {
+            _ = dispatcher(forChatID: chatID)
+        }
+    }
+
+    func existingDispatcherForTesting(chatID: String) -> OrchestratorDispatcher? {
+        dispatchers[chatID]
+    }
+
     // MARK: - Broker handler
 
     private func handle(update: ChatBroker.Update) {

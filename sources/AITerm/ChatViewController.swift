@@ -4190,15 +4190,19 @@ extension ChatViewController {
                 try OrchestratorClient.instance?.disableOrchestration(forChatID: chatID,
                                                                       disabledNotice: notice)
             } else {
-                // Also drop the client-side orchestrator dispatcher (and its
-                // persisted-watcher and broker-subscription state) so it
-                // rebuilds fresh on the next orchestration tool call. Mirrors
-                // dropAgent: order matters, dispatcher tear-down before the
-                // listModel write so a tab-status notification that fires
-                // between the two doesn't get the dispatcher persisting stale
-                // claim / watcher state back to disk after the model clear.
-                OrchestratorClient.instance?.dropDispatcher(forChatID: chatID)
-                try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
+                // Also rebuild the client-side orchestrator dispatcher (and
+                // its persisted-watcher and broker-subscription state).
+                // Mirrors dropAgent: order matters, dispatcher tear-down
+                // before the listModel write so a tab-status notification
+                // that fires between the two doesn't get the dispatcher
+                // persisting stale claim / watcher state back to disk after
+                // the model clear. A fresh dispatcher is built at once if the
+                // chat has pending timers or watches.
+                if let orchestratorClient = OrchestratorClient.instance {
+                    try orchestratorClient.enableOrchestration(forChatID: chatID)
+                } else {
+                    try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
+                }
                 try? client.publishNotice(chatID: chatID, notice: notice)
             }
         } catch {
