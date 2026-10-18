@@ -1804,3 +1804,7 @@ Bug Fixes:
 - Advanced Paste’s chunk size and delay
   values and the sizes in Paste History now use
   units in your language instead of English.
+- In some languages, the shell integration
+  installer no longer cuts off the option to
+  install the iTerm2 Utilities or its
+  description.
