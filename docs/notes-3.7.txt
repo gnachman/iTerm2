@@ -1925,6 +1925,15 @@ Bug Fixes:
   tab now switches pages that have light and
   dark versions to the matching one instead of
   keeping the old look until you open a new tab.
+- In some languages, the shell integration
+  installer no longer cuts off the titles of
+  its install choice buttons or its Skip,
+  Cancel, and Continue buttons.
+- In Russian, the shell integration installer
+  no longer cuts off its Preview Command
+  button.
+
+
 
 
 

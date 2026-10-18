@@ -30,6 +30,93 @@
     CGFloat _minimumStepListHeight;
 }
 
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [self fitBottomButtonsToTitles];
+    [self fitPreviewCommandButtonsToTitles:@[ self.previewCommandTitle, self.sendAgainTitle ]];
+}
+
+- (NSString *)previewCommandTitle {
+    return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.PreviewCommand", nil, [NSBundle mainBundle], @"Preview Command", @"Button to preview the command that will be sent");
+}
+
+- (NSString *)sendAgainTitle {
+    return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.SendAgain", nil, [NSBundle mainBundle], @"Send Again", @"Button to send the preview command again");
+}
+
+// The preview buttons beside the step list get their titles in -update, and a translation can be
+// wider than the English. Widen them to fit the widest title they can show, keeping their right
+// edge, and narrow the step list beside them if they would otherwise overlap it.
+- (void)fitPreviewCommandButtonsToTitles:(NSArray<NSString *> *)titles {
+    NSTextField *field = self.textField;
+    CGFloat neededWidth = 0;
+    for (NSButton *button in self.previewCommandButtons) {
+        NSString *savedTitle = button.title;
+        for (NSString *title in titles) {
+            button.title = title;
+            neededWidth = MAX(neededWidth, ceil(button.cell.cellSize.width));
+        }
+        button.title = savedTitle;
+    }
+    for (NSButton *button in self.previewCommandButtons) {
+        NSRect frame = button.frame;
+        if (neededWidth <= NSWidth(frame)) {
+            continue;
+        }
+        DLog(@"Widen preview command button from %@ to %@", @(NSWidth(frame)), @(neededWidth));
+        // Keep the nib's spacing between the step list and the buttons.
+        const CGFloat gap = field ? NSMinX(frame) - NSMaxX(field.frame) : 0;
+        frame.origin.x = NSMaxX(frame) - neededWidth;
+        frame.size.width = neededWidth;
+        button.frame = frame;
+        if (field && NSMaxX(field.frame) > NSMinX(frame) - gap) {
+            NSRect fieldFrame = field.frame;
+            fieldFrame.size.width = NSMinX(frame) - gap - NSMinX(fieldFrame);
+            field.frame = fieldFrame;
+        }
+    }
+}
+
+// A translation of Cancel, Skip or Continue can be wider than the English. Widen any that need it
+// and lay the row out again from the right edge, keeping the spacing from the nib.
+- (void)fitBottomButtonsToTitles {
+    NSButton *continueButton = self.continueButton;
+    NSView *view = self.view;
+    if (!continueButton || !view) {
+        return;
+    }
+    NSMutableArray<NSButton *> *row = [NSMutableArray array];
+    for (NSView *subview in view.subviews) {
+        if ([subview isKindOfClass:[NSButton class]] &&
+            NSMinY(subview.frame) == NSMinY(continueButton.frame) &&
+            NSMinX(subview.frame) > NSWidth(view.bounds) / 3) {
+            [row addObject:(NSButton *)subview];
+        }
+    }
+    [row sortUsingComparator:^NSComparisonResult(NSButton *lhs, NSButton *rhs) {
+        return [@(NSMinX(rhs.frame)) compare:@(NSMinX(lhs.frame))];
+    }];
+    if (row.count == 0) {
+        return;
+    }
+    // Spacing between adjacent buttons in the nib, right to left.
+    NSMutableArray<NSNumber *> *gaps = [NSMutableArray array];
+    for (NSUInteger i = 1; i < row.count; i++) {
+        [gaps addObject:@(NSMinX(row[i - 1].frame) - NSMaxX(row[i].frame))];
+    }
+    CGFloat maxX = NSMaxX(row.firstObject.frame);
+    for (NSUInteger i = 0; i < row.count; i++) {
+        NSButton *button = row[i];
+        NSRect frame = button.frame;
+        frame.size.width = MAX(NSWidth(frame), ceil(button.cell.cellSize.width));
+        frame.origin.x = maxX - NSWidth(frame);
+        button.frame = frame;
+        if (i < gaps.count) {
+            maxX = NSMinX(frame) - gaps[i].doubleValue;
+        }
+    }
+}
+
 - (void)setShell:(iTermShellIntegrationShell)shell {
     _shell = shell;
     if (shell == iTermShellIntegrationShellUnknown) {
@@ -203,9 +290,9 @@
     for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
         buttons[i].hidden = unavailable || (i != stage) || preview == nil;
         if (_busy && i == stage) {
-            [buttons[i] setTitle:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.SendAgain", nil, [NSBundle mainBundle], @"Send Again", @"Button to send the preview command again")];
+            [buttons[i] setTitle:self.sendAgainTitle];
         } else {
-            [buttons[i] setTitle:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.PreviewCommand", nil, [NSBundle mainBundle], @"Preview Command", @"Button to preview the command that will be sent")];
+            [buttons[i] setTitle:self.previewCommandTitle];
         }
     }
     self.previewTextView.string = preview ?: @"";
