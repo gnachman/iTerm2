@@ -1808,3 +1808,7 @@ Bug Fixes:
   installer no longer cuts off the option to
   install the iTerm2 Utilities or its
   description.
+- In some languages, the shell integration
+  installer no longer cuts off the titles of
+  its install choice buttons or its Skip,
+  Cancel, and Continue buttons.

@@ -30,6 +30,51 @@
     CGFloat _minimumStepListHeight;
 }
 
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [self fitBottomButtonsToTitles];
+}
+
+// A translation of Cancel, Skip or Continue can be wider than the English. Widen any that need it
+// and lay the row out again from the right edge, keeping the spacing from the nib.
+- (void)fitBottomButtonsToTitles {
+    NSButton *continueButton = self.continueButton;
+    NSView *view = self.view;
+    if (!continueButton || !view) {
+        return;
+    }
+    NSMutableArray<NSButton *> *row = [NSMutableArray array];
+    for (NSView *subview in view.subviews) {
+        if ([subview isKindOfClass:[NSButton class]] &&
+            NSMinY(subview.frame) == NSMinY(continueButton.frame) &&
+            NSMinX(subview.frame) > NSWidth(view.bounds) / 3) {
+            [row addObject:(NSButton *)subview];
+        }
+    }
+    [row sortUsingComparator:^NSComparisonResult(NSButton *lhs, NSButton *rhs) {
+        return [@(NSMinX(rhs.frame)) compare:@(NSMinX(lhs.frame))];
+    }];
+    if (row.count == 0) {
+        return;
+    }
+    // Spacing between adjacent buttons in the nib, right to left.
+    NSMutableArray<NSNumber *> *gaps = [NSMutableArray array];
+    for (NSUInteger i = 1; i < row.count; i++) {
+        [gaps addObject:@(NSMinX(row[i - 1].frame) - NSMaxX(row[i].frame))];
+    }
+    CGFloat maxX = NSMaxX(row.firstObject.frame);
+    for (NSUInteger i = 0; i < row.count; i++) {
+        NSButton *button = row[i];
+        NSRect frame = button.frame;
+        frame.size.width = MAX(NSWidth(frame), ceil(button.cell.cellSize.width));
+        frame.origin.x = maxX - NSWidth(frame);
+        button.frame = frame;
+        if (i < gaps.count) {
+            maxX = NSMinX(frame) - gaps[i].doubleValue;
+        }
+    }
+}
+
 - (void)setShell:(iTermShellIntegrationShell)shell {
     _shell = shell;
     if (shell == iTermShellIntegrationShellUnknown) {
