@@ -627,6 +627,7 @@
 		1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */; };
 		1DC2AF5319521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */; };
 		1DC38818148E840700B89F7C /* SolidColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC38816148E840600B89F7C /* SolidColorView.h */; };
+		1DC3E5F22C6F34EFAF515C7F /* iTermBrowserWebViewAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEAEB898AB7C1AF48B59E6CA /* iTermBrowserWebViewAppearance.swift */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
 		1DCA5ECF13EE507800B7725E /* WindowArrangements.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCA5ECD13EE507800B7725E /* WindowArrangements.h */; };
 		1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */; };
@@ -8912,6 +8913,7 @@
 		ED4D6F76FD82DD8AA45E812B /* iTermMultiServerSocketNumbers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermMultiServerSocketNumbers.swift; sourceTree = "<group>"; };
 		ED63994A76FF089D4670153E /* PaneFocusFollowsMouseAppEnvironment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PaneFocusFollowsMouseAppEnvironment.swift; sourceTree = "<group>"; };
 		EDC183FBA34E8F9843DD6AA6 /* AIProviderPreset.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIProviderPreset.swift; sourceTree = "<group>"; };
+		EEAEB898AB7C1AF48B59E6CA /* iTermBrowserWebViewAppearance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBrowserWebViewAppearance.swift; sourceTree = "<group>"; };
 		EF5FA15853801D38481C3199 /* MessagesSinceResponder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MessagesSinceResponder.swift; sourceTree = "<group>"; };
 		EFD271D19F3C474BB5B313C9 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/SplitPanel.xcstrings; sourceTree = "<group>"; };
 		EFF831B875F22773855E32DA /* MoveSessionBuiltInFunctions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MoveSessionBuiltInFunctions.swift; sourceTree = "<group>"; };
@@ -13810,6 +13812,7 @@
 				0D8A276DFCBA67052E410A14 /* iTermBrowserSessionTitle.swift */,
 				9AA65340D38786CCA1EC2CAE /* iTermBrowserViewController+APIScripting.swift */,
 				28D5075BE24C51CC802DB7EC /* iTermBrowserPageColorTracker.swift */,
+				EEAEB898AB7C1AF48B59E6CA /* iTermBrowserWebViewAppearance.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -20151,6 +20154,7 @@
 				3DD6A45D19B84289CD37A82F /* TmuxDividerMover.swift in Sources */,
 				40B5A3E6804AF3C70E1FA488 /* CompanionBrowserFrameSource.swift in Sources */,
 				B4AAD71A16DB897F464287A0 /* CompanionBrowserInput.swift in Sources */,
+				1DC3E5F22C6F34EFAF515C7F /* iTermBrowserWebViewAppearance.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

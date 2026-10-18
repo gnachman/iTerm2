@@ -14780,6 +14780,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _view.appearance = nil;
         self.statusBarViewController.view.appearance = nil;
     }
+    [self updateBrowserWebViewAppearance];
+}
+
+- (void)updateBrowserWebViewAppearance {
+    iTermBrowserViewController *browserViewController = _view.browserViewController;
+    if (!browserViewController) {
+        return;
+    }
+    const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
+    [iTermBrowserWebViewAppearance updateWebView:browserViewController.webView
+                                    minimalTheme:minimal
+                                   appAppearance:[NSApp effectiveAppearance]];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -14788,6 +14800,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                        context:(void *)context {
     if (context == &iTermEffectiveAppearanceKey) {
         DLog(@"System appearance changed to %@", [NSApp effectiveAppearance]);
+        [self updateBrowserWebViewAppearance];
         const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
         if (minimal && _screen.colorMap.useSeparateColorsForLightAndDarkMode) {
             DLog(@"Manually update view appearance");

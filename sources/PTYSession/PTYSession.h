@@ -806,6 +806,10 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // limited internally because propagation triggers a relayout.
 @property(nonatomic, strong, nullable) NSColor *browserBackgroundColor;
 
+// Keeps a browser session's web view from inheriting the Minimal theme's
+// page-derived appearance (see iTermBrowserWebViewAppearance).
+- (void)updateBrowserWebViewAppearance;
+
 // The page background color to use for the minimal-theme browser tint, or nil to use
 // the profile color. Non-nil only for a browser session that has reported a page color
 // while the minimal tab style is active. Single source of the minimal-browser tint

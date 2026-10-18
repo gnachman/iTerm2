@@ -1622,6 +1622,7 @@ extension PTYSession {
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
                                                            inProfile: justProfile),
             restorableState: restorableState as? [AnyHashable: Any])
+        updateBrowserWebViewAppearance()
         // Seed the session name only when there isn't one already, so it is non-empty
         // before the first page-title callback for a fresh session, WITHOUT clobbering a
         // name restored from a saved arrangement (the last page title). The latter must
