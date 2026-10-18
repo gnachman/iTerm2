@@ -1868,6 +1868,12 @@ Bug Fixes:
   moves a chat to the top of the list, the
   highlight now moves with it instead of
   staying on a different chat.
+- An AI chat using a model you added in
+  Settings > General > AI (for example, one on
+  a local server) no longer sends its messages
+  to OpenAI after you remove or rename that
+  model. It now shows an error.
+
 
 
 

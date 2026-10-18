@@ -614,14 +614,14 @@ extension ChatViewController {
     }
 
     // Resolves `name` for a chat pinned to `vendor` the way request routing does
-    // (LLMMetadata.resolvePinnedModel): a chat on a local (Ollama) model never
-    // resolves to a same-named model of another vendor.
+    // (LLMMetadata.resolvePinnedModel): a chat on a local (Ollama) model or a
+    // manual model never resolves to a same-named model of another vendor.
     private func pinnedModel(named name: String?, vendor: iTermAIVendor?) -> AIMetadata.Model? {
         guard let name else {
             return nil
         }
-        if vendor == .llama {
-            return LLMMetadata.resolvePinnedModel(named: name, vendor: .llama).successValue ?? nil
+        if LLMMetadata.pinnedVendorFailsClosed(vendor) {
+            return LLMMetadata.resolvePinnedModel(named: name, vendor: vendor).successValue ?? nil
         }
         return model(named: name)
     }
@@ -639,10 +639,11 @@ extension ChatViewController {
             return nil
         }
         let vendor = storedChatVendor
-        if vendor == .llama, listModel.chat(id: chatID)?.modelName != nil {
-            // The chat's Ollama pin didn't resolve (else storedChatModel would have
-            // answered). It fails clearly (see fallbackModel) rather than quietly
-            // moving to a different model an older message used.
+        if LLMMetadata.pinnedVendorFailsClosed(vendor), listModel.chat(id: chatID)?.modelName != nil {
+            // The chat's Ollama or manual-model pin didn't resolve (else
+            // storedChatModel would have answered). It fails clearly (see
+            // fallbackModel) rather than quietly moving to a different model an
+            // older message used.
             return nil
         }
         // Walk from the newest message backward, stopping at the first one that
@@ -703,11 +704,15 @@ extension ChatViewController {
     // A chat pinned to an Ollama model that is gone keeps showing that model on
     // Ollama, so a turn sent with it fails with an error (see
     // LLMMetadata.resolvePinnedModel) instead of quietly going to a different
-    // model, local or not.
+    // model, local or not. Likewise a chat pinned to a manual model that was
+    // removed or renamed in Settings keeps showing that model.
     static func fallbackModel(forUnresolvedPinNamed name: String,
                               vendor storedVendor: iTermAIVendor?) -> AIMetadata.Model? {
         if storedVendor == .llama {
             return LLMMetadata.unavailablePinnedOllamaModel(named: name)
+        }
+        if storedVendor == LLMMetadata.manualModelPinVendor {
+            return LLMMetadata.unavailablePinnedManualModel(named: name)
         }
         let vendor = storedVendor ?? LLMMetadata.vendor(forModelName: name) ?? .openAI
         return LLMMetadata.recommendedModel(for: vendor) ?? LLMMetadata.alternateModels(for: vendor).first
@@ -726,6 +731,18 @@ extension ChatViewController {
 
     private var manualConfiguredModels: [AIMetadata.Model] {
         return LLMMetadata.manualModels()
+    }
+
+    // The chat's manual model when it is no longer configured (removed or renamed
+    // in Settings), nil otherwise. The chat keeps showing it as its manual model
+    // so a send fails clearly instead of the chat appearing to be on a vendor.
+    private var missingManualPinName: String? {
+        guard let chatID,
+              storedChatVendor == LLMMetadata.manualModelPinVendor,
+              storedChatModel == nil else {
+            return nil
+        }
+        return listModel.chat(id: chatID)?.modelName
     }
 
     private var defaultManualConfiguredModel: AIMetadata.Model? {
@@ -758,7 +775,7 @@ extension ChatViewController {
         // request time), so a name present as a manual config is a manual
         // selection. Only a name that exists solely in the built-in catalog
         // belongs to that catalog model's vendor.
-        if manualConfiguredModels.contains(where: { $0.name == name }) {
+        if manualConfiguredModels.contains(where: { $0.name == name }) || name == missingManualPinName {
             return ChatProviderOption.manualModel(name: name).identifier
         }
         if let builtInVendor = builtInModels.first(where: { $0.name == name })?.vendor {
@@ -3375,14 +3392,19 @@ extension ChatViewController: ChatToolbarDataSource {
             options.append(ChatProviderOption.vendor(vendor))
         }
 
-        // Then a separator followed by each manually-configured model.
-        let manualModels = manualConfiguredModels
-        if !manualModels.isEmpty {
+        // Then a separator followed by each manually-configured model, plus the
+        // chat's own manual model if it is no longer configured, so its selection
+        // can still be shown.
+        var manualNames = manualConfiguredModels.map { $0.name }
+        if let missingManualPinName, !manualNames.contains(missingManualPinName) {
+            manualNames.append(missingManualPinName)
+        }
+        if !manualNames.isEmpty {
             if !options.isEmpty {
                 options.append(ChatProviderOption.separator())
             }
-            for model in manualModels {
-                options.append(ChatProviderOption.manualModel(name: model.name))
+            for name in manualNames {
+                options.append(ChatProviderOption.manualModel(name: name))
             }
         }
         return options

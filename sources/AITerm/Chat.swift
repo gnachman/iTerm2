@@ -40,7 +40,9 @@ struct Chat: Codable {
     // modelName is set. A pinned name that later stops resolving (e.g. an Ollama
     // tag that was removed) is resolved only within this vendor, so the chat is
     // never sent to a different vendor. nil for a chat pinned before this was
-    // stored whose vendor could not be inferred. Stored as a raw Int, not
+    // stored whose vendor could not be inferred. It may also be
+    // LLMMetadata.manualModelPinVendor (1000), which is not a real vendor: the
+    // pin is a manual model on a non-Ollama API. Stored as a raw Int, not
     // iTermAIVendor, so this struct stays Foundation-only (see blobProtocol).
     var modelVendor: Int?
 

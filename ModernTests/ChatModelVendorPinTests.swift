@@ -185,7 +185,7 @@ final class ChatModelVendorPinTests: XCTestCase {
         // removed, a stamped .openAI would send the chat to OpenAI's cloud.
         XCTAssertEqual(LLMMetadata.model(named: "my-local-f380")?.vendor, .openAI, "precondition")
         let pinnedVendor = LLMMetadata.inferredVendor(forPinnedModelNamed: "my-local-f380")
-        XCTAssertNil(pinnedVendor)
+        XCTAssertEqual(pinnedVendor, LLMMetadata.manualModelPinVendor)
         installManualModel(name: "my-local-f380", url: url, api: .llama)
         XCTAssertEqual(LLMMetadata.model(named: "my-local-f380")?.vendor, .llama,
                        "precondition: the edit changed the model's vendor")
@@ -210,11 +210,11 @@ final class ChatModelVendorPinTests: XCTestCase {
     }
 
     // Switching a chat from an Ollama or cloud pin to a manual model on a local
-    // OpenAI-compatible server leaves the vendor unstamped rather than inheriting
-    // the previous pin's: .llama would fail every turn, and .openAI would send the
-    // chat to OpenAI's cloud if the manual model were later removed.
+    // OpenAI-compatible server stamps the manual-model vendor rather than
+    // inheriting the previous pin's: .llama would fail every turn, and .openAI
+    // would send the chat to OpenAI's cloud if the manual model were later removed.
     @MainActor
-    func test_setModel_toUnstampedManualModel_clearsVendor() throws {
+    func test_setModel_toManualModel_stampsManualVendor() throws {
         installOllamaTags(["qwen-fake:1b"])
         let url = "http://localhost:1234/v1/chat/completions"
         installManualModel(name: "my-local-f380", url: url, api: .chatCompletions)
@@ -225,7 +225,7 @@ final class ChatModelVendorPinTests: XCTestCase {
             try listModel.setModel(chatID: id, modelName: first)
             XCTAssertNotNil(listModel.modelVendor(forChatID: id), "precondition")
             try listModel.setModel(chatID: id, modelName: "my-local-f380")
-            XCTAssertNil(listModel.modelVendor(forChatID: id), id)
+            XCTAssertEqual(listModel.modelVendor(forChatID: id), LLMMetadata.manualModelPinVendor, id)
             guard case .success(let provider) = AIConversation.pinnedProviderOverride(
                 modelName: "my-local-f380", vendor: listModel.modelVendor(forChatID: id)) else {
                 XCTFail("the manual model must resolve")
@@ -421,5 +421,293 @@ final class ChatModelVendorPinTests: XCTestCase {
         let chat = try XCTUnwrap(relaunched.chats?.first { $0.id == "ollama" })
         XCTAssertEqual(chat.modelVendor, Int(iTermAIVendor.llama.rawValue))
         XCTAssertEqual(chat.modelName, "qwen-fake:1b")
+    }
+
+    // MARK: - Manual models on a non-Ollama API (F-382)
+
+    private var localServerURL: String { "http://127.0.0.1:8080/v1/chat/completions" }
+    private var manualVendor: iTermAIVendor { LLMMetadata.manualModelPinVendor }
+    private var manualVendorRaw: Int { Int(LLMMetadata.manualModelPinVendor.rawValue) }
+
+    @MainActor
+    private func assertFailsClosed(_ name: String, vendor: iTermAIVendor?,
+                                   file: StaticString = #filePath, line: UInt = #line) {
+        switch AIConversation.pinnedProviderOverride(modelName: name, vendor: vendor) {
+        case .success(let provider):
+            XCTFail("a gone manual model must not be sent; got \(String(describing: provider?.model.name)) at \(String(describing: provider?.model.url)) (nil means the global default)",
+                    file: file, line: line)
+        case .failure(let error):
+            XCTAssertTrue(error.message.contains(name), error.message, file: file, line: line)
+        }
+        XCTAssertNil(ChatAgent.resolvedModel(named: name, vendor: vendor), file: file, line: line)
+    }
+
+    // The reported bug: a chat pinned to a manual model on a local
+    // OpenAI-compatible server is stamped so that, once the manual model is
+    // removed, the turn fails instead of going to OpenAI.
+    @MainActor
+    func test_removedManualLocalModel_neverRoutesToCloud() throws {
+        installManualModel(name: "mylocal", url: localServerURL, api: .chatCompletions)
+        let (db, _) = try makeTempDB()
+        let listModel = try XCTUnwrap(ChatListModel(database: db))
+        try listModel.add(chat: makeChat(id: "A", modelName: nil))
+        try listModel.setModel(chatID: "A", modelName: "mylocal")
+        let vendor = listModel.modelVendor(forChatID: "A")
+        XCTAssertEqual(vendor, manualVendor)
+        XCTAssertEqual(try storedVendorColumn(db, chatID: "A"), String(manualVendorRaw))
+        guard case .success(let provider) = AIConversation.pinnedProviderOverride(modelName: "mylocal", vendor: vendor) else {
+            XCTFail("the configured manual model must resolve")
+            return
+        }
+        XCTAssertEqual(provider?.model.url, localServerURL)
+
+        // Removed in Settings.
+        iTermPreferences.setObject(nil, forKey: kPreferenceKeyAIManualModelConfigurations)
+        assertFailsClosed("mylocal", vendor: vendor)
+    }
+
+    // Renaming the manual model is the same as removing it.
+    @MainActor
+    func test_renamedManualLocalModel_neverRoutesToCloud() {
+        installManualModel(name: "mylocal-renamed", url: localServerURL, api: .chatCompletions)
+        assertFailsClosed("mylocal", vendor: manualVendor)
+    }
+
+    // A removed manual model that shares a catalog model's name must not resolve
+    // to the catalog model.
+    @MainActor
+    func test_removedManualModel_doesNotResolveToSameNamedCatalogModel() {
+        installManualModel(name: cloudName, url: localServerURL, api: .chatCompletions)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: cloudName), manualVendor)
+        iTermPreferences.setObject(nil, forKey: kPreferenceKeyAIManualModelConfigurations)
+        XCTAssertEqual(LLMMetadata.model(named: cloudName)?.vendor, .openAI, "precondition")
+        assertFailsClosed(cloudName, vendor: manualVendor)
+    }
+
+    // The chat UI keeps showing the missing manual model rather than OpenAI's
+    // recommended model, so a send uses it and fails clearly.
+    @MainActor
+    func test_uiFallback_goneManualPin_isNotACloudModel() {
+        let model = ChatViewController.fallbackModel(forUnresolvedPinNamed: "mylocal", vendor: manualVendor)
+        XCTAssertEqual(model?.name, "mylocal")
+        XCTAssertNil(model?.vendor)
+        XCTAssertFalse(model?.url.contains("openai.com") ?? false)
+        XCTAssertNil(LLMMetadata.model(named: "mylocal"), "the placeholder is not a resolvable model")
+    }
+
+    // A chat bound to a manual model can't take a turn on a cloud model, whether
+    // or not the manual model is still configured.
+    func test_binding_manualPin_rejectsCloudTurn() {
+        installManualModel(name: "mylocal", url: localServerURL, api: .chatCompletions)
+        for configured in [true, false] {
+            if !configured {
+                iTermPreferences.setObject(nil, forKey: kPreferenceKeyAIManualModelConfigurations)
+            }
+            let verdict = ChatProviderBinding.evaluate(
+                boundModelName: "mylocal",
+                turnModelName: cloudName,
+                defaultModelName: cloudName,
+                vendor: ChatProviderBinding.vendorResolver(boundModelName: "mylocal", boundVendor: manualVendor))
+            guard case .reject = verdict else {
+                XCTFail("expected reject (configured=\(configured)), got \(verdict)")
+                continue
+            }
+        }
+    }
+
+    // A Llama-named manual model on a non-Ollama server (llama.cpp) is a manual
+    // pin, not an Ollama one, so its error points at Settings.
+    @MainActor
+    func test_llamaNamedManualModel_isAManualPin() {
+        installManualModel(name: "llama-3-8b", url: localServerURL, api: .chatCompletions)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: "llama-3-8b"), manualVendor)
+        iTermPreferences.setObject(nil, forKey: kPreferenceKeyAIManualModelConfigurations)
+        assertFailsClosed("llama-3-8b", vendor: manualVendor)
+        guard case .failure(let error) = AIConversation.pinnedProviderOverride(modelName: "llama-3-8b",
+                                                                               vendor: manualVendor) else {
+            return
+        }
+        XCTAssertFalse(error.message.contains("Ollama"), error.message)
+    }
+
+    // A manual model at its vendor's own public API host is stamped with that
+    // vendor, so once removed the chat stays with that vendor (as before) rather
+    // than failing. A gateway or an Azure deployment speaking that vendor's API
+    // is not its public host.
+    func test_manualModelAtVendorsPublicHost_stampsThatVendor() {
+        installManualModel(name: "my-claude", url: "https://api.anthropic.com/v1/messages", api: .anthropic)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: "my-claude"), .anthropic)
+        installManualModel(name: "my-gpt", url: "https://api.openai.com/v1/responses", api: .responses)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: "my-gpt"), .openAI)
+        installManualModel(name: "my-azure", url: "https://corp.openai.azure.com/openai/deployments/x/chat/completions",
+                           api: .chatCompletions)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: "my-azure"), manualVendor)
+        installManualModel(name: "my-claude-gw", url: "https://gateway.example.com/v1/messages", api: .anthropic)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: "my-claude-gw"), manualVendor)
+        iTermPreferences.setObject(nil, forKey: kPreferenceKeyAIManualModelConfigurations)
+        guard case .success(let provider) = AIConversation.pinnedProviderOverride(modelName: "my-claude",
+                                                                                  vendor: .anthropic) else {
+            XCTFail("a removed manual model at Anthropic's own host stays on Anthropic")
+            return
+        }
+        XCTAssertEqual(provider?.model.vendor, .anthropic)
+    }
+
+    func test_manualModelAtGeminiOrDeepSeekPublicHost_stampsThatVendor() {
+        installManualModel(name: "my-gemini",
+                           url: "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}:generateContent",
+                           api: .gemini)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: "my-gemini"), .gemini)
+        installManualModel(name: "my-deepseek", url: "https://api.deepseek.com/chat/completions", api: .deepSeek)
+        XCTAssertEqual(LLMMetadata.inferredVendor(forPinnedModelNamed: "my-deepseek"), .deepSeek)
+    }
+
+    // A chat stamped with a cloud vendor whose manual model is then moved to a
+    // local server is restamped before its next turn, so removing the model
+    // afterwards fails instead of sending the history to that vendor.
+    @MainActor
+    func test_refreshModelVendor_manualModelMovedToLocalServer() throws {
+        installManualModel(name: "my-gpt", url: "https://api.openai.com/v1/responses", api: .responses)
+        let (db, _) = try makeTempDB()
+        let listModel = try XCTUnwrap(ChatListModel(database: db))
+        try listModel.add(chat: makeChat(id: "A", modelName: nil))
+        try listModel.setModel(chatID: "A", modelName: "my-gpt")
+        XCTAssertEqual(listModel.modelVendor(forChatID: "A"), .openAI, "precondition")
+
+        installManualModel(name: "my-gpt", url: localServerURL, api: .chatCompletions)
+        try listModel.refreshModelVendor(chatID: "A")
+        XCTAssertEqual(listModel.modelVendor(forChatID: "A"), manualVendor)
+        XCTAssertEqual(try storedVendorColumn(db, chatID: "A"), String(manualVendorRaw))
+
+        iTermPreferences.setObject(nil, forKey: kPreferenceKeyAIManualModelConfigurations)
+        try listModel.refreshModelVendor(chatID: "A")
+        XCTAssertEqual(listModel.modelVendor(forChatID: "A"), manualVendor, "stays manual once the model is gone")
+        assertFailsClosed("my-gpt", vendor: listModel.modelVendor(forChatID: "A"))
+    }
+
+    // An unstamped chat whose pinned name becomes a local manual model is stamped
+    // before its next turn, so removing the model then fails closed.
+    @MainActor
+    func test_refreshModelVendor_unstampedPinBecomesManualModel() throws {
+        let (db, _) = try makeTempDB()
+        let listModel = try XCTUnwrap(ChatListModel(database: db))
+        try listModel.add(chat: makeChat(id: "A", modelName: "mylocal"))
+        try listModel.refreshModelVendor(chatID: "A")
+        XCTAssertNil(listModel.modelVendor(forChatID: "A"), "precondition: nothing to infer yet")
+        installManualModel(name: "mylocal", url: localServerURL, api: .chatCompletions)
+        try listModel.refreshModelVendor(chatID: "A")
+        XCTAssertEqual(listModel.modelVendor(forChatID: "A"), manualVendor)
+        iTermPreferences.setObject(nil, forKey: kPreferenceKeyAIManualModelConfigurations)
+        assertFailsClosed("mylocal", vendor: listModel.modelVendor(forChatID: "A"))
+    }
+
+    // Refreshing never changes an Ollama stamp, a retired cloud pin's stamp, or
+    // an unknown legacy pin.
+    @MainActor
+    func test_refreshModelVendor_leavesOtherPinsAlone() throws {
+        let (db, _) = try makeTempDB()
+        let listModel = try XCTUnwrap(ChatListModel(database: db))
+        try listModel.add(chat: makeChat(id: "ollama", modelName: "qwen-gone:1b",
+                                         modelVendor: Int(iTermAIVendor.llama.rawValue)))
+        try listModel.add(chat: makeChat(id: "retired", modelName: "retired-model-f380",
+                                         modelVendor: Int(iTermAIVendor.anthropic.rawValue)))
+        try listModel.add(chat: makeChat(id: "legacy", modelName: "some-retired-model"))
+        for id in ["ollama", "retired", "legacy"] {
+            try listModel.refreshModelVendor(chatID: id)
+        }
+        XCTAssertEqual(listModel.modelVendor(forChatID: "ollama"), .llama)
+        XCTAssertEqual(listModel.modelVendor(forChatID: "retired"), .anthropic)
+        XCTAssertNil(listModel.modelVendor(forChatID: "legacy"))
+    }
+
+    // Switching a manual model's API to Ollama's and back never strands its chat
+    // on the Ollama vendor (which resolves only Ollama models).
+    @MainActor
+    func test_refreshModelVendor_apiRoundTripThroughOllama() throws {
+        installManualModel(name: "mylocal", url: localServerURL, api: .chatCompletions)
+        installManualModel(name: "my-gpt", url: "https://api.openai.com/v1/responses", api: .responses)
+        let (db, _) = try makeTempDB()
+        let listModel = try XCTUnwrap(ChatListModel(database: db))
+        try listModel.add(chat: makeChat(id: "manual", modelName: "mylocal", modelVendor: manualVendorRaw))
+        try listModel.add(chat: makeChat(id: "cloud", modelName: "my-gpt",
+                                         modelVendor: Int(iTermAIVendor.openAI.rawValue)))
+        for api in [iTermAIAPI.llama, .chatCompletions] {
+            iTermPreferences.setObject([["id": "1", "name": "mylocal", "url": localServerURL, "api": Int(api.rawValue)],
+                                        ["id": "2", "name": "my-gpt", "url": "https://api.openai.com/v1/responses",
+                                         "api": Int(api.rawValue)]],
+                                       forKey: kPreferenceKeyAIManualModelConfigurations)
+            try listModel.refreshModelVendor(chatID: "manual")
+            try listModel.refreshModelVendor(chatID: "cloud")
+            XCTAssertEqual(listModel.modelVendor(forChatID: "manual"), manualVendor, "api \(api.rawValue)")
+            XCTAssertNotEqual(listModel.modelVendor(forChatID: "cloud"), .llama, "api \(api.rawValue)")
+            guard case .success(let provider) = AIConversation.pinnedProviderOverride(
+                modelName: "mylocal", vendor: listModel.modelVendor(forChatID: "manual")) else {
+                XCTFail("the configured manual model must resolve (api \(api.rawValue))")
+                continue
+            }
+            XCTAssertEqual(provider?.model.url, localServerURL)
+        }
+    }
+
+    // A chat bound to one manual model can't take a turn naming a different
+    // manual model: each manual model is its own provider in the chat UI.
+    func test_binding_manualPin_rejectsOtherManualModel() {
+        iTermPreferences.setObject([["id": UUID().uuidString, "name": "mylocal", "url": localServerURL,
+                                     "api": Int(iTermAIAPI.chatCompletions.rawValue)],
+                                    ["id": UUID().uuidString, "name": "otherlocal",
+                                     "url": "http://127.0.0.1:9090/v1/chat/completions",
+                                     "api": Int(iTermAIAPI.chatCompletions.rawValue)]],
+                                   forKey: kPreferenceKeyAIManualModelConfigurations)
+        let verdict = ChatProviderBinding.evaluate(
+            boundModelName: "mylocal",
+            turnModelName: "otherlocal",
+            defaultModelName: cloudName,
+            vendor: ChatProviderBinding.vendorResolver(boundModelName: "mylocal", boundVendor: manualVendor))
+        guard case .reject = verdict else {
+            XCTFail("expected reject, got \(verdict)")
+            return
+        }
+    }
+
+    // Re-pinning the same name after the manual model is gone keeps the manual
+    // stamp, even when a catalog model now has that name.
+    func test_vendorForNewPin_goneManualModelKeepsManualStamp() {
+        XCTAssertEqual(ChatListModel.vendorForNewPin(modelName: cloudName,
+                                                     previousName: cloudName,
+                                                     previousVendor: manualVendorRaw),
+                       manualVendorRaw)
+        XCTAssertEqual(ChatListModel.vendorForNewPin(modelName: "mylocal",
+                                                     previousName: "mylocal",
+                                                     previousVendor: manualVendorRaw),
+                       manualVendorRaw)
+        // Switching to a catalog model restamps.
+        XCTAssertEqual(ChatListModel.vendorForNewPin(modelName: cloudName,
+                                                     previousName: "mylocal",
+                                                     previousVendor: manualVendorRaw),
+                       Int(iTermAIVendor.openAI.rawValue))
+    }
+
+    // Chats pinned to a manual model before this fix are stamped at launch while
+    // the manual model is configured; a stamped chat whose manual model is gone
+    // is never moved to a catalog model of the same name.
+    @MainActor
+    func test_backfill_manualModels() throws {
+        installManualModel(name: "mylocal", url: localServerURL, api: .chatCompletions)
+        let (db, url) = try makeTempDB()
+        do {
+            let listModel = try XCTUnwrap(ChatListModel(database: db))
+            try listModel.add(chat: makeChat(id: "legacy", modelName: "mylocal"))
+            try listModel.add(chat: makeChat(id: "staleCloud", modelName: "mylocal",
+                                             modelVendor: Int(iTermAIVendor.openAI.rawValue)))
+            try listModel.add(chat: makeChat(id: "goneManual", modelName: cloudName,
+                                             modelVendor: manualVendorRaw))
+        }
+        let reopened = try reopen(db, url: url)
+        let listModel = try XCTUnwrap(ChatListModel(database: reopened))
+        XCTAssertEqual(listModel.modelVendor(forChatID: "legacy"), manualVendor)
+        XCTAssertEqual(listModel.modelVendor(forChatID: "staleCloud"), manualVendor)
+        XCTAssertEqual(listModel.modelVendor(forChatID: "goneManual"), manualVendor,
+                       "a manual stamp is not replaced by a same-named catalog model's vendor")
+        XCTAssertEqual(try storedVendorColumn(reopened, chatID: "legacy"), String(manualVendorRaw))
     }
 }

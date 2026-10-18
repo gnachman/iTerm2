@@ -1460,6 +1460,15 @@ class ChatAgent {
         // so the binding is enforced here on every turn, BEFORE any
         // conversation state is touched. A rejected turn becomes an ordinary
         // agent reply and never reaches the API.
+        //
+        // First bring the stored vendor up to date with the pin's model as
+        // configured now (see ChatListModel.refreshModelVendor), so the binding
+        // and routing below both see it.
+        do {
+            try ChatListModel.instance?.refreshModelVendor(chatID: chatID)
+        } catch {
+            DLog("Failed to refresh the model vendor of chat \(chatID): \(error)")
+        }
         let boundModelName = ChatListModel.instance?.modelName(forChatID: chatID)
         let verdict = ChatProviderBinding.evaluate(
             boundModelName: boundModelName,
@@ -1503,10 +1512,12 @@ class ChatAgent {
         // With the provider lock, a configuration-less turn runs on the
         // chat's bound model, which can differ from the default; gating on
         // the default could attach code_interpreter to a model that 400s it.
-        // A turn for an Ollama model that is gone resolves to nothing and will fail
-        // without being sent; don't size it for the (possibly cloud) global default.
+        // A turn for an Ollama or manual model that is gone resolves to nothing and
+        // will fail without being sent; don't size it for the (possibly cloud)
+        // global default.
         let effectiveModel = Self.resolvedModel(named: turnModelName, vendor: turnModelVendor)
-            ?? (turnModelVendor == .llama && turnModelName != nil ? nil : LLMMetadata.model())
+            ?? (LLMMetadata.pinnedVendorFailsClosed(turnModelVendor) && turnModelName != nil
+                ? nil : LLMMetadata.model())
         conversation.hostedTools = Self.hostedTools(features: effectiveModel?.features ?? [],
                                                     configuration: userMessage.configuration)
         // Snapshot the turn's protocol / model / hosted-tools for blob capture at
