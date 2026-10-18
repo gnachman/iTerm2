@@ -1753,3 +1753,7 @@ Bug Fixes:
   an Arabic or Persian word, or a find match
   inside one, no longer breaks the letters’
   joining at the edge of the highlight.
+- In AI Chat, a session mention in the message
+  field now changes size along with the text
+  when you change the font size from the Font
+  menu or Font panel.

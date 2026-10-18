@@ -106,6 +106,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.placeholder = String(localized: "ChatInputView.Placeholder", defaultValue: "Type a message…", comment: "Placeholder in the chat input field")
         inputTextFieldContainer.isEnabled = false
         inputTextFieldContainer.textView.delegate = self
+        inputTextFieldContainer.textView.textStorage?.delegate = self
         inputTextFieldContainer.textView.onDropFileURLs = { [weak self] urls in
             self?.handleTextViewFileDrop(urls) ?? false
         }
@@ -856,7 +857,6 @@ extension ChatInputView {
         guard let storage = textView.textStorage, storage.length > 0 else {
             return
         }
-        let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
         let color = resolvedMentionColor()
         let fullRange = NSRange(location: 0, length: storage.length)
         var ranges: [NSRange] = []
@@ -864,7 +864,8 @@ extension ChatInputView {
             guard let mention = value as? ChatSessionMentionAttachment else {
                 return
             }
-            mention.renderImage(font: font, color: color)
+            mention.renderImage(font: mentionFont(in: storage, at: range.location),
+                                color: color)
             ranges.append(range)
         }
         guard !ranges.isEmpty else {
@@ -877,6 +878,18 @@ extension ChatInputView {
         }
     }
 
+    // The font a token is drawn in: the font of its own character, which the
+    // Font menu and Font panel change along with the text around it.
+    private func mentionFont(in storage: NSTextStorage, at location: Int) -> NSFont {
+        return storage.attribute(.font, at: location, effectiveRange: nil) as? NSFont
+            ?? inputTextFieldContainer.textView.font
+            ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+    }
+
+    var textViewForTesting: ChatInputTextView {
+        inputTextFieldContainer.textView
+    }
+
     // The session-link color baked into the token image, resolved for the text
     // view's current appearance so the frozen image matches light/dark.
     private func resolvedMentionColor() -> NSColor {
@@ -885,5 +898,37 @@ extension ChatInputView {
             color = NSColor.linkColor.usingColorSpace(.sRGB) ?? NSColor.linkColor
         }
         return color
+    }
+}
+
+// The token images bake in a font, so when the font of a token's character
+// changes (e.g. Format > Font > Bigger, or a size picked in the Font panel)
+// re-render the token so it stays the size of the text around it. Runs before
+// the layout manager is told about the edit, so the new image bounds are laid
+// out with it.
+extension ChatInputView: NSTextStorageDelegate {
+    func textStorage(_ textStorage: NSTextStorage,
+                     didProcessEditing editedMask: NSTextStorageEditActions,
+                     range editedRange: NSRange,
+                     changeInLength delta: Int) {
+        guard editedMask.contains(.editedAttributes),
+              editedRange.location != NSNotFound,
+              NSMaxRange(editedRange) <= textStorage.length else {
+            return
+        }
+        var color: NSColor?
+        textStorage.enumerateAttribute(.attachment, in: editedRange) { value, range, _ in
+            guard let mention = value as? ChatSessionMentionAttachment else {
+                return
+            }
+            let font = mentionFont(in: textStorage, at: range.location)
+            guard mention.renderedFont != font else {
+                return
+            }
+            if color == nil {
+                color = resolvedMentionColor()
+            }
+            mention.renderImage(font: font, color: color ?? NSColor.linkColor)
+        }
     }
 }

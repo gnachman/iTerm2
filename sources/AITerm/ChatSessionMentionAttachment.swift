@@ -26,6 +26,9 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     // a different symbol so the three kinds are visually distinct.
     let symbolName: String
 
+    // The font the current image was rendered for.
+    private(set) var renderedFont: NSFont?
+
     init(guid: String, displayName: String, symbolName: String = SFSymbol.terminal.rawValue) {
         self.guid = guid
         self.displayName = displayName
@@ -63,6 +66,7 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     // token is a rasterized image, so callers must invoke this again when the
     // effective appearance changes or the baked link color goes stale.
     func renderImage(font: NSFont, color: NSColor) {
+        renderedFont = font
         let metrics = VerticalMetrics(font: font, displayName: displayName)
         let image = Self.tokenImage(displayName: displayName,
                                     font: font,
