@@ -29,7 +29,8 @@
 // is known to be 1.9 or later; see VT100TmuxParser. Thread-safe.
 - (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
 
-- (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree;
+// clientUniqueID is the unique ID of the it2ssh that hooked this parser, or nil if unknown.
+- (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree clientUniqueID:(NSString *)clientUniqueID;
 - (void)cancelConductorRecoveryMode;
 
 // CVector was created for this method. Because so many VT100Token*s are created and destroyed,

@@ -1855,6 +1855,11 @@ Bug Fixes:
   Before, a crop could draw nothing, or a strip
   of the neighboring part of the image could
   appear at its edge.
+- An SSH Integration session restored after
+  relaunching iTerm2 no longer hangs when its
+  connection drops while the remote command is
+  printing output. It returns to the local
+  shell.
 
 
 

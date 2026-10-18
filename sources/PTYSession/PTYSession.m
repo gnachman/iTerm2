@@ -2368,12 +2368,20 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             if (aSession->_conductor) {
                 [aSession updateVariablesFromConductor];
+                // The outermost conductor's it2ssh runs locally and hooked the top-level parser.
+                // Its unique ID lets the parser recognize that it2ssh's EndSSH even mid-frame.
+                iTermConductor *rootConductor = aSession->_conductor;
+                while (rootConductor.parent) {
+                    rootConductor = rootConductor.parent;
+                }
+                NSString *clientUniqueID = rootConductor.clientUniqueID.length ? rootConductor.clientUniqueID : nil;
                 [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                     NSData *data = [NSData castFrom:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_TREE]];
                     NSDictionary *dict = [NSDictionary it_fromKeyValueCodedData:data];
                     if (dict) {
                         [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]
-                                                                     tree:dict];
+                                                                     tree:dict
+                                                           clientUniqueID:clientUniqueID];
                     }
                 }];
             }
