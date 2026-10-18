@@ -1911,6 +1911,10 @@ Bug Fixes:
   binding editor now say “Select Setting…” or
   “Select Menu Item…” until you choose one.
   Before, they were blank.
+- Advanced Paste’s chunk size and delay
+  values and the sizes in Paste History now use
+  units in your language instead of English.
+
 
 
 

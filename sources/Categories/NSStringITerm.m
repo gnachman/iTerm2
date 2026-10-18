@@ -36,6 +36,7 @@
 #import "iTermPreferences.h"
 #import "iTermSwiftyStringParser.h"
 #import "iTermTuple.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermVariableScope.h"
 #import "PorterStemmer/objc/PorterStemmer.h"
 #import "NSArray+iTerm.h"
@@ -2274,6 +2275,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 + (NSString *)it_formatBytes:(double)bytes {
+    return [self it_formatBytes:bytes nonEnglishLanguage:iTermLocalizedUnitFormatter.nonEnglishUILanguage];
+}
+
++ (NSString *)it_formatBytes:(double)bytes nonEnglishLanguage:(NSString *)language {
     const double k = 1000.0;
     const double mb = k * k;
     const double gb = mb * k;
@@ -2283,24 +2288,35 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         double limit;
         double divisor;
         NSString *format;
+        int exponent;
+        int fractionDigits;
     } units[] = {
-        { 1,        1, @"%.0f bytes" }, // 0 bytes
-        { k,        1, @"%.0f bytes" }, // 999 bytes
-        { 10 * k,   k, @"%.1f kB" },  // 9.9 KB
-        { mb,       k, @"%.0f kB" },  // 999 KB
-        { 10 * mb, mb, @"%.1f MB" },  // 9.9 MB
-        { gb,      mb, @"%.0f MB" },  // 999 MB
-        { 10 * gb, gb, @"%.1f GB" },  // 9.9 GB
-        { tb,      gb, @"%.0f GB" },  // 999 GB
-        { 10 * tb, tb, @"%.1f TB" },  // 9.9 TB
-        { pb,      tb, @"%.0f TB" },  // 999 TB
-        { 10 * pb, pb, @"%.1f PB" },  // 9.9 PB
-        { k * pb,  pb, @"%.0f PB" },  // 999 PB
+        { 1,        1, @"%.0f bytes", 0, 0 }, // 0 bytes
+        { k,        1, @"%.0f bytes", 0, 0 }, // 999 bytes
+        { 10 * k,   k, @"%.1f kB",    1, 1 },  // 9.9 KB
+        { mb,       k, @"%.0f kB",    1, 0 },  // 999 KB
+        { 10 * mb, mb, @"%.1f MB",    2, 1 },  // 9.9 MB
+        { gb,      mb, @"%.0f MB",    2, 0 },  // 999 MB
+        { 10 * gb, gb, @"%.1f GB",    3, 1 },  // 9.9 GB
+        { tb,      gb, @"%.0f GB",    3, 0 },  // 999 GB
+        { 10 * tb, tb, @"%.1f TB",    4, 1 },  // 9.9 TB
+        { pb,      tb, @"%.0f TB",    4, 0 },  // 999 TB
+        { 10 * pb, pb, @"%.1f PB",    5, 1 },  // 9.9 PB
+        { k * pb,  pb, @"%.0f PB",    5, 0 },  // 999 PB
     };
 
     for (int i = 0; i < sizeof(units) / sizeof(*units); i++) {
         if (bytes < units[i].limit) {
-            return [NSString stringWithFormat:units[i].format, bytes / units[i].divisor];
+            const double value = bytes / units[i].divisor;
+            if (language) {
+                // Round like the English format does so both show the same number.
+                return [iTermLocalizedUnitFormatter stringForValue:value
+                                                              unit:[iTermLocalizedUnitFormatter informationStorageUnitForExponent:units[i].exponent]
+                                             minimumFractionDigits:units[i].fractionDigits
+                                             maximumFractionDigits:units[i].fractionDigits
+                                                          language:language];
+            }
+            return [NSString stringWithFormat:units[i].format, value];
         }
     }
     return @"∞";
