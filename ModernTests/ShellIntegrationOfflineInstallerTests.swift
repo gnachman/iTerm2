@@ -190,7 +190,7 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
     private func handleInNushell(_ line: String) -> [String] {
         let echo = "~> " + line
         if line == ShellIntegrationOfflineInstallerTests.shellCommand.trimmingCharacters(in: .newlines) {
-            return [echo, "My shell is \(Self.nuPath) or \(shellVariable), end", "~> "]
+            return [echo, "My shell is nu \(Self.nuPath) or \(shellVariable), end", "~> "]
         }
         if line.hasPrefix("sh -c 'ENV=/dev/null") {
             state = .helperStarting
@@ -310,7 +310,7 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
 }
 
 final class ShellIntegrationOfflineInstallerTests: XCTestCase {
-    static let shellCommand = "sh -c 'echo My shell is $(ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n"
+    static let shellCommand = "sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n"
     private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"
 
     private var controller: iTermShellIntegrationWindowController!
@@ -335,10 +335,12 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         super.tearDown()
     }
 
-    // parentProcess is what ps prints for the shell the commands are typed into: by default the
-    // same shell as $SHELL, as a login shell (macOS ps prints its argv[0]).
+    // parentProcess is what ps prints for the shell the commands are typed into, its executable
+    // name (ucomm) followed by its argv[0] (comm): by default the same shell as $SHELL, as a
+    // login shell.
     private func discover(shellPath: String, parentProcess: String? = nil, dotdirOutput: String?) {
-        let parentProcess = parentProcess ?? "-" + (shellPath as NSString).lastPathComponent
+        let name = (shellPath as NSString).lastPathComponent
+        let parentProcess = parentProcess ?? name + " -" + name
         terminal.responses[Self.shellCommand] = "My shell is \(parentProcess) or \(shellPath), end"
         if let dotdirOutput {
             terminal.responses[Self.zshDotdirCommand] = dotdirOutput
@@ -380,7 +382,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     // F-325: on a slow link “My dotfiles go in” can arrive before the path. That partial line
     // must not be read as an empty ZDOTDIR, which would fall back to $HOME.
     func testZshDiscoveryIgnoresAPartialDotdirLine() {
-        terminal.responses[Self.shellCommand] = "My shell is -zsh or /bin/zsh, end"
+        terminal.responses[Self.shellCommand] = "My shell is zsh -zsh or /bin/zsh, end"
         terminal.responseLines[Self.zshDotdirCommand] = [
             "My dotfiles go in",
             "My dotfiles go in /Users/qa/qa-zd",
@@ -406,7 +408,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     // F-260: tcsh started from a zsh login shell. The commands are typed into tcsh, so the
     // installer must target tcsh and must not type zsh-only syntax.
     func testDiscoveryUsesTheShellReadingTheCommandsOverSHELL() {
-        discover(shellPath: "/bin/zsh", parentProcess: "/bin/tcsh", dotdirOutput: nil)
+        discover(shellPath: "/bin/zsh", parentProcess: "tcsh /bin/tcsh", dotdirOutput: nil)
 
         XCTAssertEqual(terminal.sentTexts, [Self.shellCommand])
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
@@ -414,9 +416,29 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         XCTAssertEqual(controller.dotdir, "~")
     }
 
-    // F-451: macOS /bin/csh is tcsh, and ps shows a tcsh login shell as “-csh”.
+    // F-451: tcsh overwrites the first character of its argv[0] with “-”, so comm is “-csh” for
+    // a tcsh started as `tcsh`. The executable name (ucomm) is still tcsh.
+    func testDiscoveryUsesTheExecutableNameOfATcshParent() {
+        discover(shellPath: "/bin/zsh", parentProcess: "tcsh -csh", dotdirOutput: nil)
+
+        XCTAssertEqual(terminal.sentTexts, [Self.shellCommand])
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .tcsh)
+        XCTAssertEqual(controller.dotdir, "~")
+    }
+
+    // F-451: started as `/bin/tcsh`, comm is “-bin/tcsh”.
+    func testDiscoveryUsesTheExecutableNameOfATcshParentStartedByPath() {
+        discover(shellPath: "/bin/zsh", parentProcess: "tcsh -bin/tcsh", dotdirOutput: nil)
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .tcsh)
+    }
+
+    // F-451: macOS /bin/csh is tcsh. Started as `csh`, its comm is “-sh”, but its executable
+    // name is csh.
     func testDiscoveryTreatsACshParentAsTcsh() {
-        discover(shellPath: "/bin/zsh", parentProcess: "-csh", dotdirOutput: nil)
+        discover(shellPath: "/bin/zsh", parentProcess: "csh -sh", dotdirOutput: nil)
 
         XCTAssertEqual(terminal.sentTexts, [Self.shellCommand])
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
@@ -424,24 +446,41 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         XCTAssertEqual(controller.dotdir, "~")
     }
 
-    func testDiscoveryTreatsACshPathParentAsTcsh() {
-        discover(shellPath: "/bin/bash", parentProcess: "/bin/csh", dotdirOutput: nil)
+    // A ps without ucomm (busybox, say) falls back to printing comm alone.
+    func testDiscoveryUsesCommAloneWhenUcommIsUnavailable() {
+        discover(shellPath: "/bin/bash", parentProcess: "-csh", dotdirOutput: nil)
 
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
         XCTAssertEqual(controller.shell, .tcsh)
     }
 
     func testDiscoveryUsesALoginShellParent() {
-        discover(shellPath: "/bin/zsh", parentProcess: "-fish", dotdirOutput: nil)
+        discover(shellPath: "/bin/zsh", parentProcess: "fish -fish", dotdirOutput: nil)
 
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
         XCTAssertEqual(controller.shell, .fish)
     }
 
-    // xonsh runs under python, and ps may be missing on a remote host: an unknown or empty
-    // parent falls back to $SHELL.
+    func testDiscoveryUsesABashParent() {
+        discover(shellPath: "/bin/zsh", parentProcess: "bash -bash", dotdirOutput: nil)
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .bash)
+    }
+
+    // xonsh runs under python, so its executable name is “Python”, but it sets its process title
+    // (comm) to xonsh followed by its arguments.
+    func testDiscoveryUsesCommWhenTheExecutableNameIsAnInterpreter() {
+        discover(shellPath: "/bin/zsh", parentProcess: "Python xonsh --no-rc -i", dotdirOutput: nil)
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .xonsh)
+    }
+
+    // Without a process title xonsh is just python, and ps may be missing on a remote host: an
+    // unknown or empty parent falls back to $SHELL.
     func testDiscoveryFallsBackToSHELLForAnUnknownParent() {
-        discover(shellPath: "/Users/someone/venv/bin/xonsh", parentProcess: "/usr/bin/python3", dotdirOutput: nil)
+        discover(shellPath: "/Users/someone/venv/bin/xonsh", parentProcess: "python3 /usr/bin/python3", dotdirOutput: nil)
 
         XCTAssertEqual(controller.sendShellCommandsStage, 1)
         XCTAssertEqual(controller.shell, .xonsh)
@@ -456,7 +495,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
 
     // A line that has arrived only in part must not be taken for the answer.
     func testDiscoveryIgnoresAPartialLine() {
-        terminal.responseLines[Self.shellCommand] = ["My shell is /bin/tc", "My shell is /bin/tcsh or /bin/zsh, end"]
+        terminal.responseLines[Self.shellCommand] = ["My shell is tcsh /bin/tc", "My shell is tcsh /bin/tcsh or /bin/zsh, end"]
         controller.shellIntegrationInstallerSendShellCommands(0)
         terminal.run()
 

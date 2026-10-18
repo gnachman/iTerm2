@@ -436,20 +436,42 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
               @"nu": @(iTermShellIntegrationShellNu) };
 }
 
+// A process name as ps prints it, or nil if it isn't a shell the installer supports.
++ (NSString *)supportedShellNameForProcessName:(NSString *)processName {
+    NSString *name = [[processName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lastPathComponent];
+    if ([name hasPrefix:@"-"]) {
+        // A login shell's argv[0] starts with "-".
+        name = [name substringFromIndex:1];
+    }
+    if ([name isEqualToString:@"csh"]) {
+        // macOS's /bin/csh is tcsh.
+        name = @"tcsh";
+    }
+    if (name.length > 0 && self.shellsByName[name]) {
+        return name;
+    }
+    return nil;
+}
+
 // The parent process is the shell actually reading the installer's commands, so it wins when
-// it is one the installer supports. Otherwise (ps is unavailable, or the shell runs under an
-// interpreter, as xonsh does under python) fall back to $SHELL.
+// it is one the installer supports. parentProcess is its executable name (ucomm) followed by its
+// argv[0] (comm), or comm alone where ps lacks ucomm. ucomm comes first because tcsh overwrites
+// the first character of its argv[0] with "-", so `tcsh` shows up as "-csh" and `csh` as "-sh".
+// comm is next because xonsh runs under python but names itself in its process title, which
+// also carries its arguments, so comm's first word is tried too. Otherwise (ps is unavailable,
+// or the shell is an interpreter without a title) fall back to $SHELL.
 + (NSString *)shellNameForParentProcess:(NSString *)parentProcess shell:(NSString *)shell {
-    NSString *parent = [[parentProcess stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lastPathComponent];
-    if ([parent hasPrefix:@"-"]) {
-        parent = [parent substringFromIndex:1];
-    }
-    if ([parent isEqualToString:@"csh"]) {
-        // macOS's /bin/csh is tcsh, and ps shows tcsh as "-csh" there.
-        parent = @"tcsh";
-    }
-    if (parent.length > 0 && self.shellsByName[parent]) {
-        return parent;
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceCharacterSet];
+    NSString *trimmed = [parentProcess stringByTrimmingCharactersInSet:whitespace];
+    const NSRange space = [trimmed rangeOfCharacterFromSet:whitespace];
+    NSString *ucomm = space.location == NSNotFound ? trimmed : [trimmed substringToIndex:space.location];
+    NSString *comm = space.location == NSNotFound ? @"" : [trimmed substringFromIndex:NSMaxRange(space)];
+    NSString *commFirstWord = [comm componentsSeparatedByCharactersInSet:whitespace].firstObject ?: @"";
+    NSString *name = ([self supportedShellNameForProcessName:ucomm] ?:
+                      [self supportedShellNameForProcessName:comm] ?:
+                      [self supportedShellNameForProcessName:commFirstWord]);
+    if (name) {
+        return name;
     }
     return [[shell stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lastPathComponent];
 }
@@ -460,9 +482,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // $SHELL, so echo would be a parse error there, while sh is what the rest of the installer
     // runs its commands in anyway.
     // The shell the commands are typed into is sh's parent, which need not be $SHELL (say, tcsh
-    // started from a zsh login shell), so report its name too. A login shell's name starts with
-    // "-". The line ends in a marker so a partially received line can't match.
-    NSString *result = @"sh -c 'echo My shell is $(ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n";
+    // started from a zsh login shell), so report its executable name and argv[0] too, or just
+    // argv[0] where ps lacks ucomm. The line ends in a marker so a partially received line can't
+    // match.
+    NSString *result = @"sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n";
     [self sendText:result
         reallySend:reallySend
         afterRegex:@"^My shell is (.*) or (.*), end$"
