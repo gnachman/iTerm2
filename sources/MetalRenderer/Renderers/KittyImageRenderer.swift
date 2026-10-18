@@ -130,10 +130,16 @@ class KittyImageRendererTransientState: iTermMetalCellRendererTransientState {
                 draw.imageID,
                 draw.placementID,
                 0)
+            guard instructions.valid.boolValue else {
+                continue
+            }
             let quadTextureFrame = instructions.sourceRect.flipped(in: draw.image.scaledSize.height) / draw.image.scaledSize
-            var dest = instructions.destRect
-            dest += instructions.translation
-            dest -= NSPoint(x: 0, y: instructions.destRect.height)
+            // destRect's origin is at the bottom of the cell, while dest's y grows downward from
+            // the top of the view, and translation.y is the bottom of the cell.
+            var dest = NSRect(x: instructions.translation.x + instructions.destRect.minX,
+                              y: instructions.translation.y - instructions.destRect.maxY,
+                              width: instructions.destRect.width,
+                              height: instructions.destRect.height)
             dest *= configuration.scale
             dest.shiftY(by: margins.bottom)
             let quad = cellRenderer.newQuad(

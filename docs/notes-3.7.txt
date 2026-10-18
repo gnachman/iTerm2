@@ -1123,6 +1123,11 @@ Bug Fixes:
   optional diacritic that carries the high
   byte. Other terminals render these, and now
   iTerm2 does too.
+- Kitty graphics placeholder cells that show a
+  cropped part of an image now draw that part.
+  Before, a crop could draw nothing, or a strip
+  of the neighboring part of the image could
+  appear at its edge.
 - Fixed a crash when asking for notification
   permission. The reply block could be called
   after it had gone out of scope, which could

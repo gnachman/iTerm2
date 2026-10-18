@@ -74,6 +74,14 @@ iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreat
                                                                                   unsigned int imageID,
                                                                                   unsigned int placementID,
                                                                                   CGFloat virtualOffset);
+// sourceFrame is the part of the image the placement shows, in points with the origin at the
+// bottom. Invalid when the cell falls entirely in the letterbox padding around the image.
+iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreateForSourceFrame(NSRect sourceFrame,
+                                                                                                VT100GridSize placementSize,
+                                                                                                NSSize cellSize,
+                                                                                                VT100GridCoord sourceCoord,
+                                                                                                NSPoint point,
+                                                                                                CGFloat virtualOffset);
 iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermKittyImageDraw *> *draws,
                                                                   unsigned int placementID,
                                                                   unsigned int imageID);

@@ -3358,28 +3358,60 @@ iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreat
     DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: imageID=%u (0x%x) placementID=%u sourceCoord=(%d,%d) destCoord=(%d,%d) point=%@ placementSize=%dx%d",
          imageID, imageID, placementID, sourceCoord.x, sourceCoord.y, destCoord.x, destCoord.y, NSStringFromPoint(point),
          draw.placementSize.width, draw.placementSize.height);
+    return iTermKittyPlaceholderDrawInstructionsCreateForSourceFrame(draw.sourceFrame,
+                                                                     draw.placementSize,
+                                                                     cellSize,
+                                                                     sourceCoord,
+                                                                     point,
+                                                                     virtualOffset);
+}
+
+iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreateForSourceFrame(NSRect sourceFrame,
+                                                                                                VT100GridSize placementSize,
+                                                                                                NSSize cellSize,
+                                                                                                VT100GridCoord sourceCoord,
+                                                                                                NSPoint point,
+                                                                                                CGFloat virtualOffset) {
     iTermKittyPlaceholderDrawInstructions result = { 0 };
     result.valid = NO;
 
-    if (draw.placementSize.width <= 0 || draw.placementSize.height <= 0) {
+    if (placementSize.width <= 0 || placementSize.height <= 0) {
         DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: returning invalid - placementSize is %dx%d",
-             draw.placementSize.width, draw.placementSize.height);
+             placementSize.width, placementSize.height);
         return result;
     }
-    const NSSize sourceCellSize = [iTermTextDrawingHelper sizeForKittyImageCellInPlacementOfSize:draw.placementSize
+    if (sourceFrame.size.width <= 0 || sourceFrame.size.height <= 0) {
+        DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: returning invalid - sourceFrame is %@",
+             NSStringFromRect(sourceFrame));
+        return result;
+    }
+    const NSSize sourceCellSize = [iTermTextDrawingHelper sizeForKittyImageCellInPlacementOfSize:placementSize
                                                                                         cellSize:cellSize
-                                                                                 sourceImageSize:draw.sourceFrame.size];
-    const NSRect destRect = NSMakeRect(0, 0, cellSize.width, cellSize.height);
+                                                                                 sourceImageSize:sourceFrame.size];
     const NSRect sourceRect = [iTermTextDrawingHelper sourceRectangleForKittyPlaceholderAtSourceCoord:sourceCoord
                                                                                        sourceCellSize:sourceCellSize
-                                                                                        placementSize:draw.placementSize
+                                                                                        placementSize:placementSize
                                                                                              cellSize:cellSize
-                                                                                          sourceFrame:draw.sourceFrame];
+                                                                                          sourceFrame:sourceFrame];
+    // A cell in the letterbox padding around the image maps to a source rect that extends past the
+    // source frame. Clip it, or a cropped placement draws the neighboring part of the image there.
+    // The dest rect shrinks in proportion. Both rects have their origin at the bottom.
+    const NSRect clippedSourceRect = NSIntersectionRect(sourceRect, sourceFrame);
+    if (clippedSourceRect.size.width <= 0 || clippedSourceRect.size.height <= 0) {
+        DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: returning invalid - cell is entirely padding");
+        return result;
+    }
+    const CGFloat xScale = cellSize.width / sourceRect.size.width;
+    const CGFloat yScale = cellSize.height / sourceRect.size.height;
+    const NSRect destRect = NSMakeRect((NSMinX(clippedSourceRect) - NSMinX(sourceRect)) * xScale,
+                                       (NSMinY(clippedSourceRect) - NSMinY(sourceRect)) * yScale,
+                                       clippedSourceRect.size.width * xScale,
+                                       clippedSourceRect.size.height * yScale);
 
     result.valid = YES;
     result.translation = NSMakePoint(point.x, point.y + cellSize.height - virtualOffset);
     result.destRect = destRect;
-    result.sourceRect = sourceRect;
+    result.sourceRect = clippedSourceRect;
     return result;
 }
 
@@ -3450,6 +3482,9 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                                     imageID,
                                                     placementID,
                                                     virtualOffset);
+    if (!instructions.valid) {
+        return;
+    }
     DLog(@"drawKittyImageInPlaceholderWithCoord: instructions sourceRect=%@ destRect=%@ translation=%@",
          NSStringFromRect(instructions.sourceRect), NSStringFromRect(instructions.destRect), NSStringFromPoint(instructions.translation));
     [NSGraphicsContext saveGraphicsState];
@@ -3499,8 +3534,10 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     CGFloat adjustedSourceX = sourceCoord.x * sourceCellSize.width - horizontalPadding * (sourceCellSize.width / cellSize.width);
     CGFloat adjustedSourceY = sourceCoord.y * sourceCellSize.height - verticalPadding * (sourceCellSize.height / cellSize.height);
 
+    // sourceFrame has its origin at the bottom of the image, while adjustedSourceY counts down from
+    // the top of the source frame.
     const NSRect sourceRect = NSMakeRect(adjustedSourceX + sourceFrame.origin.x,
-                                         imageSize.height - (adjustedSourceY + sourceFrame.origin.y) - sourceCellSize.height,
+                                         sourceFrame.origin.y + imageSize.height - adjustedSourceY - sourceCellSize.height,
                                          sourceCellSize.width,
                                          sourceCellSize.height);
     return sourceRect;
