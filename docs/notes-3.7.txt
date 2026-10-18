@@ -1820,6 +1820,11 @@ Bug Fixes:
 - In tmux integration, the ReportCellSize,
   ReportWindowFrame, and ReportScreenFrames
   escape sequences now get a reply.
+- With AI command suggestions on, a filename
+  row in the composer’s suggestion list no
+  longer shows extra backslashes before
+  spaces and other special characters.
+
 
 
 
