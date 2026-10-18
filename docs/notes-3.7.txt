@@ -1725,3 +1725,8 @@ Bug Fixes:
 - With Archive On Closure on, closing a pane in
   a tmux integration window no longer saves an
   archive of it that could not be restored.
+- When a session is restored with the “Session
+  Contents Restored” banner, the shell’s output
+  now starts right below the banner instead of
+  after a blank row when the cursor had been in
+  the middle of a line.

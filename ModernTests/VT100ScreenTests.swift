@@ -507,6 +507,55 @@ class VT100ScreenTests: XCTestCase {
         }
     }
 
+    // QA finding F-324: after restoring with the “Session Contents Restored” banner, the cursor
+    // goes at the start of the row right after the banner, even if it was mid-line when the
+    // state was saved. Returns the cursor and the number of non-blank rows on the screen.
+    private func cursorAfterBannerRestoration(width: Int32,
+                                              output: String) -> (cursor: VT100GridCoord, usedRows: Int) {
+        var screen = self.screen(width: width, height: 24)
+        feed(screen, "\u{1b}[2J\u{1b}[H" + output)
+        let encoder = iTermMutableDictionaryEncoderAdapter.encoder()
+        var linesDropped = Int32(0)
+        screen.encodeContents(encoder, linesDropped: &linesDropped, unlimited: true)
+        let state = (encoder.mutableDictionary as? [AnyHashable : Any])!
+
+        screen = self.screen(width: width, height: 24)
+        screen.restore(from: state,
+                       includeRestorationBanner: true,
+                       reattached: false,
+                       isArchive: false,
+                       largeContentProvider: nil)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.restorePreferredCursorPositionIfPossible()
+        })
+        let rows = screen.compactLineDump().components(separatedBy: "\n")
+        let usedRows = (rows.lastIndex(where: { $0.contains { $0 != "." } }) ?? -1) + 1
+        return (VT100GridCoordMake(screen.cursorX() - 1, screen.cursorY() - 1), usedRows)
+    }
+
+    func testCursorFollowsBannerWhenRestoredMidLine() {
+        // Rows: 1, 2, abc, banner. The cursor belongs on the row after the banner.
+        let (cursor, usedRows) = cursorAfterBannerRestoration(width: 80, output: "1\r\n2\r\nabc")
+        XCTAssertEqual(cursor.x, 0)
+        XCTAssertEqual(Int(cursor.y), usedRows)
+    }
+
+    func testCursorFollowsBannerWhenRestoredAtStartOfLine() {
+        // Rows: 1, 2, banner. The cursor belongs on the row after the banner.
+        let (cursor, usedRows) = cursorAfterBannerRestoration(width: 80, output: "1\r\n2\r\n")
+        XCTAssertEqual(cursor.x, 0)
+        XCTAssertEqual(Int(cursor.y), usedRows)
+    }
+
+    // In a narrow window the banner wraps; the cursor still goes right after its last row.
+    func testCursorFollowsWrappedBanner() {
+        for output in ["1\r\n2\r\nabc", "1\r\n2\r\n"] {
+            let (cursor, usedRows) = cursorAfterBannerRestoration(width: 20, output: output)
+            XCTAssertEqual(cursor.x, 0, output)
+            XCTAssertEqual(Int(cursor.y), usedRows, output)
+        }
+    }
+
     // If output moved the cursor after the state was restored, the cursor is lower than its
     // preferred row because of that output and not because a resize pulled history onto the
     // screen, so nothing may be scrolled into history.
