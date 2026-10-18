@@ -39,6 +39,29 @@ class iTermBrowserSSHPageManager {
         }
     }
 
+    // The page shown for an ssh: URL whose host has no ssh integration connection.
+    nonisolated static func noConductorPageHTML(host: String) -> String {
+        let messageFormat = String(localized: "BrowserSSHPage.NoConnectionMessage",
+                                   defaultValue: "No connection to %@ using ssh integration could be found. Please connect to it in a terminal window and try again.",
+                                   comment: "Browser page shown when opening an ssh: URL for a host with no ssh integration connection. %@ is the host name, shown in bold.")
+        let message = String(format: messageFormat.escapedForHTML,
+                             "<strong>\(host.escapedForHTML)</strong>")
+        let substitutions = [
+            "PAGE_TITLE": String(localized: "BrowserSSHPage.PageTitle",
+                                 defaultValue: "Problem viewing file",
+                                 comment: "Browser tab title of the page shown when opening an ssh: URL for a host with no ssh integration connection").escapedForHTML,
+            "HEADING": String(localized: "BrowserSSHPage.Heading",
+                              defaultValue: "Could not display file",
+                              comment: "Heading of the browser page shown when opening an ssh: URL for a host with no ssh integration connection").escapedForHTML,
+            "MESSAGE": message,
+            "TRY_AGAIN": String(localized: "BrowserSSHPage.TryAgain",
+                                defaultValue: "Try Again",
+                                comment: "Button on the browser page shown when opening an ssh: URL for a host with no ssh integration connection; reloads the page").escapedForHTML
+        ]
+        return iTermBrowserTemplateLoader.load(template: "ssh-page-no-conductor.html",
+                                               substitutions: substitutions)
+    }
+
     func handleURLSchemeTask(_ urlSchemeTask: WKURLSchemeTask, url: URL) -> Bool {
         let oid = ObjectIdentifier(urlSchemeTask)
         RLog("\(oid): handleURLSchemeTask called with \(redacted: url, or: url.it_redactedDescription)")
@@ -47,9 +70,7 @@ class iTermBrowserSSHPageManager {
         }
 
         guard let conductor = ConductorRegistry.instance.conductors(for: url).first else {
-            let html = iTermBrowserTemplateLoader.load(
-                template: "ssh-page-no-conductor.html",
-                substitutions: ["HOST": url.host ?? "(nil)"]).lossyData
+            let html = Self.noConductorPageHTML(host: url.host ?? "(nil)").lossyData
             let response = URLResponse(
                 url: url,
                 mimeType: "text/html",
