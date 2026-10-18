@@ -3754,8 +3754,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         return;
     }
     if ([iTermAPIHelper splitTree:before hasSameGridSizesAs:requested]) {
-        // Converting grid sizes to view sizes and back can lose a cell, so applying an
-        // unchanged layout would shrink the panes (and the window) on every call.
+        // Nothing to change, so don't disturb the panes or the window.
         DLog(@"Requested layout matches the current one; leaving it alone");
         response.status = ITMSetTabLayoutResponse_Status_Ok;
         handler(response);
