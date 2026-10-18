@@ -313,6 +313,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         gateway_ = gateway;
         _paneIDs = [[NSMutableSet alloc] init];
         _droppedOutputTracker = [[iTermTmuxDroppedOutputTracker alloc] init];
+        [_droppedOutputTracker initialWindowsWillOpen];
         windowPanes_ = [[NSMutableDictionary alloc] init];
         _windowStates = [[NSMutableDictionary alloc] init];
         windowPositions_ = [[NSMutableDictionary alloc] init];
@@ -696,6 +697,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields] workAroundTabBug:_shouldWorkAroundTabBug];
     if (!doc) {
         RLog(@"Failed to parse %@", response);
+        [_droppedOutputTracker initialWindowsDidOpen];
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TmuxController.BadInitialListWindowsResponse", nil, [NSBundle mainBundle], @"Bad response for initial list windows request: %@", @"Error shown when tmux returns an unparseable response to the initial list-windows request; %@ is the raw response"), response]];
         return;
     }
@@ -773,10 +775,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [self sendInitialWindowsOpenedNotificationIfNeeded];
     }
     _allInitialWindowsAdded = YES;
+    // The openers have registered the panes they will open, so output for the rest is no longer
+    // worth scanning.
+    [_droppedOutputTracker initialWindowsDidOpen];
 }
 
 - (void)openWindowsInitial {
     _allInitialWindowsAdded = NO;
+    [_droppedOutputTracker initialWindowsWillOpen];
     DLog(@"openWindowsInitial\n%@", [NSThread callStackSymbols]);
     if (!_versionKnown) {
         DLog(@"Don't know version yet");

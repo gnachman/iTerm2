@@ -260,10 +260,27 @@ static NSString *kCommandTimestamp = @"timestamp";
     TmuxLog(@"Run tmux command: \"%%extended-output \"%%%d\" %@ %.*s",
             windowPane, ms, (int)[decodedData length], (const char *)[decodedData bytes]);
 
-    [delegate_ tmuxReadTask:decodedData windowPane:windowPane latency:ms];
+    [self deliverOutput:decodedData windowPane:windowPane latency:ms];
+}
+
+- (void)deliverOutput:(NSData *)data windowPane:(int)windowPane latency:(NSNumber *)latency {
+    if (acceptNotifications_) {
+        [delegate_ tmuxReadTask:data windowPane:windowPane latency:latency];
+        return;
+    }
+    // On a brand-new session the shell's first prompt can arrive now. See F-345.
+    if ([delegate_ respondsToSelector:@selector(tmuxDidDropOutputBeforeAcceptingNotifications:windowPane:)]) {
+        [delegate_ tmuxDidDropOutputBeforeAcceptingNotifications:data windowPane:windowPane];
+    }
 }
 
 - (void)parsingFailedForCommand:(const char *)command {
+    if (!acceptNotifications_) {
+        // Output that arrives before notifications are accepted is only scanned, and malformed
+        // output was always ignored then.
+        TmuxLog(@"Ignoring malformed output before accepting notifications: %s", command);
+        return;
+    }
     [self abortWithErrorMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TmuxGateway.MalformedOutputCommand", nil, [NSBundle mainBundle], @"Malformed command (expected %%num data): \"%s\"", @"Error shown when tmux sends a malformed output command"), command]];
 }
 
@@ -311,7 +328,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     TmuxLog(@"Run tmux command: \"%%output \"%%%d\" %.*s",
             windowPane, (int)[decodedData length], (const char *)[decodedData bytes]);
 
-    [delegate_ tmuxReadTask:decodedData windowPane:windowPane latency:nil];
+    [self deliverOutput:decodedData windowPane:windowPane latency:nil];
 }
 
 - (NSNumber *)layoutIsZoomedInLayoutChange:(NSString *)args {
@@ -854,9 +871,11 @@ static NSString *kCommandTimestamp = @"timestamp";
         [currentCommandData_ appendData:data];
         [currentCommandData_ appendBytes:"\n" length:1];
     } else if ([command hasPrefix:@"%output "]) {
-        if (acceptNotifications_) [self parseOutputCommandData:data];
+        // Parsed even before notifications are accepted so state it carries isn't lost. See
+        // -deliverOutput:windowPane:latency:.
+        [self parseOutputCommandData:data];
     } else if ([command hasPrefix:@"%extended-output "]) {
-        if (acceptNotifications_) [self parseExtendedOutputCommandData:data];
+        [self parseExtendedOutputCommandData:data];
     } else if ([command hasPrefix:@"%layout-change "]) {
         if (acceptNotifications_) [self parseLayoutChangeCommand:command];
     } else if ([command hasPrefix:@"%window-add"]) {

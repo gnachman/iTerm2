@@ -11223,6 +11223,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)tmuxDidDropOutputBeforeAcceptingNotifications:(NSData *)data windowPane:(int)wp {
+    [_tmuxController didDropOutput:data forPane:wp];
+}
+
 - (void)handleTmuxData:(NSData *)data {
     if (_exited) {
         return;

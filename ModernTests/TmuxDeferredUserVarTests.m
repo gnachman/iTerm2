@@ -113,6 +113,19 @@
     XCTAssertTrue([write containsString:@"set -p -t %3 @uservars"], @"%@", write);
 }
 
+// On a brand-new session the shell's first prompt can arrive before the initial windows are
+// listed, so no pane is being opened yet. Its user variable must still be kept. QA finding F-345.
+- (void)testUserVarSetBeforeInitialWindowsAreListedIsKept {
+    NSData *output = [@"\e]1337;SetUserVar=foo=YmFy\a" dataUsingEncoding:NSUTF8StringEncoding];
+    [_controller didDropOutput:output forPane:0];
+    [_controller setEncodedUserVars:@"" forPane:0];
+
+    NSArray *tokens = [_controller takeDeferredTokensForPane:0];
+
+    XCTAssertEqual(tokens.count, 1);
+    XCTAssertEqualObjects([_controller userVarsForPane:0][@"user.foo"], @"bar");
+}
+
 - (void)testDeferredUnsetRemovesStaleUserVar {
     [_controller setEncodedUserVars:@"user.host_name=old" forPane:3];
     [_controller willOpenPane:3];

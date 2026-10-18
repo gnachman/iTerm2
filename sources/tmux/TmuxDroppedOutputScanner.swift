@@ -99,6 +99,10 @@ class TmuxDroppedOutputTracker: NSObject {
     private var windowsAwaitingLayout = [Int32: Int]()
     // The largest pane ID in any layout seen so far, excluding windows awaiting layout.
     private var maxKnownPane: Int32 = -1
+    // Until the windows that exist when the client attaches have been listed and their openers
+    // have registered the panes they will open, any pane may be about to get a session. On a
+    // brand-new session the shell's first prompt often arrives in this interval. See F-345.
+    private var awaitingInitialWindows = false
 
     @objc(didDropOutput:pane:)
     func didDropOutput(_ data: Data, pane: Int32) {
@@ -182,7 +186,20 @@ class TmuxDroppedOutputTracker: NSObject {
     }
 
     @objc
+    func initialWindowsWillOpen() {
+        awaitingInitialWindows = true
+    }
+
+    // Call after the openers for the initial windows have registered their panes.
+    @objc
+    func initialWindowsDidOpen() {
+        awaitingInitialWindows = false
+        discardUnneededScanners()
+    }
+
+    @objc
     func reset() {
+        awaitingInitialWindows = false
         scanners.removeAll()
         panesBeingOpened.removeAll()
         windowsAwaitingLayout.removeAll()
@@ -190,7 +207,7 @@ class TmuxDroppedOutputTracker: NSObject {
     }
 
     private func shouldScan(_ pane: Int32) -> Bool {
-        if panesBeingOpened[pane] != nil {
+        if awaitingInitialWindows || panesBeingOpened[pane] != nil {
             return true
         }
         // A window was just added and its panes aren't known yet. tmux never reuses pane IDs, so

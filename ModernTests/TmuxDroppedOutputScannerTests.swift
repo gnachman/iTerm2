@@ -194,6 +194,41 @@ final class TmuxDroppedOutputTrackerTests: XCTestCase {
         XCTAssertEqual(kvps(tracker.takeTokens(pane: 1)), [])
     }
 
+    // On a brand-new session the first pane's shell can set a user variable before the initial
+    // windows are listed, so no pane is known to be opening yet. QA finding F-345.
+    func testAwaitingInitialWindowsCapturesAnyPane() {
+        let tracker = TmuxDroppedOutputTracker()
+        tracker.initialWindowsWillOpen()
+        tracker.didDropOutput(userVar, pane: 0)
+        tracker.didLearnPanes([0], window: 0)
+        tracker.willOpenPane(0)
+        tracker.initialWindowsDidOpen()
+        XCTAssertEqual(kvps(tracker.takeTokens(pane: 0)), ["SetUserVar=x=MQ=="])
+    }
+
+    // Panes of initial windows that aren't opened (e.g., hidden ones) stop being scanned.
+    func testInitialWindowsDidOpenDiscardsPanesNotBeingOpened() {
+        let tracker = TmuxDroppedOutputTracker()
+        tracker.initialWindowsWillOpen()
+        tracker.didDropOutput(userVar, pane: 0)
+        tracker.didDropOutput(userVar, pane: 1)
+        tracker.didLearnPanes([0], window: 0)
+        tracker.didLearnPanes([1], window: 1)
+        tracker.willOpenPane(0)
+        tracker.initialWindowsDidOpen()
+        XCTAssertEqual(kvps(tracker.takeTokens(pane: 1)), [])
+        tracker.didDropOutput(userVar, pane: 1)
+        XCTAssertEqual(kvps(tracker.takeTokens(pane: 1)), [])
+    }
+
+    func testResetStopsAwaitingInitialWindows() {
+        let tracker = TmuxDroppedOutputTracker()
+        tracker.initialWindowsWillOpen()
+        tracker.reset()
+        tracker.didDropOutput(userVar, pane: 0)
+        XCTAssertEqual(kvps(tracker.takeTokens(pane: 0)), [])
+    }
+
     func testResetForgetsEverything() {
         let tracker = TmuxDroppedOutputTracker()
         tracker.willOpenPane(1)

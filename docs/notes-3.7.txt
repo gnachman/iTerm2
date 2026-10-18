@@ -1790,3 +1790,8 @@ Bug Fixes:
 - Changing your AI models in Settings when you
   used a single custom AI model no longer drops
   the custom headers you set up for it.
+- In tmux integration, the first pane of a new
+  session now picks up a user variable its
+  shell sets at the first prompt. Before, a
+  badge such as \(user.foo) could stay empty
+  until the shell showed its second prompt.

@@ -93,6 +93,12 @@ extern NSString * const kTmuxGatewayErrorDomain;
 // %exit inside a %begin/%end block; the delegate forwards it to the parser so a %exit line inside
 // a block from a newer server is treated as response data. See VT100TmuxParser.
 - (void)tmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
+
+@optional
+// Output for a pane that arrived before notifications were accepted, while the initial windows
+// are being opened. It isn't displayed (capture-pane recovers the screen) but may carry state,
+// such as user variables, worth remembering.
+- (void)tmuxDidDropOutputBeforeAcceptingNotifications:(NSData *)data windowPane:(int)wp;
 @end
 
 typedef NS_ENUM(NSInteger, ControlCommand) {
