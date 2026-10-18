@@ -405,6 +405,12 @@ workingDirectory:(NSString *)pwd
     return _largeComposerViewController.textView.selectedRange;
 }
 
+- (void)setComposerSelectedRange:(NSRange)range {
+    NSTextView *tv = _largeComposerViewController.textView;
+    tv.selectedRange = range;
+    [tv scrollRangeToVisible:range];
+}
+
 - (NSView *)completionAnchorView {
     return _largeComposerViewController.textView;
 }
