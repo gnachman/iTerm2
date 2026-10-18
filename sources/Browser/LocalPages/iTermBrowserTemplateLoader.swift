@@ -64,12 +64,32 @@ class iTermBrowserTemplateLoader: NSObject {
             }
         }
         
-        // Replace all other {{KEY}} substitutions
-        for (key, value) in substitutions {
-            let placeholder = "{{\(key)}}"
-            result = result.replacingOccurrences(of: placeholder, with: value)
+        return substitutePlaceholders(in: result, substitutions: substitutions)
+    }
+
+    private static let placeholderRegex = try! NSRegularExpression(pattern: "\\{\\{([A-Za-z0-9_]+)\\}\\}")
+
+    // Replaces each {{KEY}} that has a substitution in a single pass, so a value that
+    // itself contains {{OTHER_KEY}} is inserted verbatim and never expanded. Placeholders
+    // without a substitution are left as-is.
+    static func substitutePlaceholders(in template: String, substitutions: [String: String]) -> String {
+        if substitutions.isEmpty {
+            return template
         }
-        
+        let regex = placeholderRegex
+        let nsTemplate = template as NSString
+        var result = ""
+        var location = 0
+        for match in regex.matches(in: template, range: NSRange(location: 0, length: nsTemplate.length)) {
+            guard let value = substitutions[nsTemplate.substring(with: match.range(at: 1))] else {
+                continue
+            }
+            result += nsTemplate.substring(with: NSRange(location: location,
+                                                         length: match.range.location - location))
+            result += value
+            location = NSMaxRange(match.range)
+        }
+        result += nsTemplate.substring(from: location)
         return result
     }
 }

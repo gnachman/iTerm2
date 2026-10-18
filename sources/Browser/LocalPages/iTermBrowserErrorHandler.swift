@@ -74,20 +74,20 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
     // Every other substitution is escaped here, including ORIGINAL_URL, which the page's
     // script reads from an attribute rather than having it pasted into JavaScript.
     private func generateErrorHTML(title: String, message: String, originalURL: String?) -> String {
-        let escapedURL = (originalURL ?? "").escapedForErrorPage
+        let escapedURL = (originalURL ?? "").escapedForHTML
         let urlDisplayHTML = escapedURL.isEmpty ? "" : "<div class=\"error-url\">\(escapedURL)</div>"
 
         let substitutions = [
-            "TITLE": title.escapedForErrorPage,
+            "TITLE": title.escapedForHTML,
             "MESSAGE": message,
             "URL_DISPLAY": urlDisplayHTML,
             "ORIGINAL_URL": escapedURL,
             "TRY_AGAIN": String(localized: "BrowserErrorPage.TryAgain",
                                 defaultValue: "Try Again",
-                                comment: "Button on the browser’s page-load error page that reloads the page").escapedForErrorPage,
+                                comment: "Button on the browser’s page-load error page that reloads the page").escapedForHTML,
             "DETAILS": String(localized: "BrowserErrorPage.Details",
                               defaultValue: "Check your internet connection and try reloading the page.",
-                              comment: "Footer text on the browser’s page-load error page").escapedForErrorPage
+                              comment: "Footer text on the browser’s page-load error page").escapedForHTML
         ]
         
         return iTermBrowserTemplateLoader.loadTemplate(named: "error-page",
@@ -139,17 +139,7 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
         }()
         // tuple.2 (from sslErrorDetails) is already HTML with its untrusted parts escaped.
         return (title: tuple.0,
-                message: "<strong>" + tuple.1.escapedForErrorPage + "</strong><br/><br/>" + (tuple.2 ?? error.localizedDescription.escapedForErrorPage))
-    }
-}
-
-private extension String {
-    // HTML-escaped, with braces also escaped so a value containing a {{PLACEHOLDER}} can't be
-    // expanded by iTermBrowserTemplateLoader's later substitution passes.
-    var escapedForErrorPage: String {
-        return escapedForHTML
-            .replacingOccurrences(of: "{", with: "&#123;")
-            .replacingOccurrences(of: "}", with: "&#125;")
+                message: "<strong>" + tuple.1.escapedForHTML + "</strong><br/><br/>" + (tuple.2 ?? error.localizedDescription.escapedForHTML))
     }
 }
 
@@ -176,7 +166,7 @@ func sslErrorDetails(from error: Error) -> String? {
 
     if let os = ns.userInfo["_kCFStreamErrorCodeKey"] as? Int,
        let description = sslErrorDescription(for: os) {
-        lines.append(description.escapedForErrorPage)
+        lines.append(description.escapedForHTML)
     }
 
     // Extract SecTrust safely from userInfo (NSURLErrorFailingURLPeerTrustErrorKey)
@@ -184,9 +174,9 @@ func sslErrorDetails(from error: Error) -> String? {
         // Certificate chain subjects
         let subjects = certificateSubjects(from: trust)
         if !subjects.isEmpty {
-            lines.append(String(localized: "BrowserErrorHandler.CertificateChain", defaultValue: "Certificate chain:", comment: "Label preceding the list of certificates in the chain").escapedForErrorPage)
+            lines.append(String(localized: "BrowserErrorHandler.CertificateChain", defaultValue: "Certificate chain:", comment: "Label preceding the list of certificates in the chain").escapedForHTML)
             for (idx, s) in subjects.enumerated() {
-                lines.append("  [\(idx)] \(s.escapedForErrorPage)")
+                lines.append("  [\(idx)] \(s.escapedForHTML)")
             }
         }
     }
