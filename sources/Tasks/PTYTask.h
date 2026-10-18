@@ -12,6 +12,7 @@
 
 @class Coprocess;
 @class iTermIOBuffer;
+@class iTermFramerPaneJobManager;
 @class iTermProcessInfo;
 @protocol iTermTask;
 @class iTermWinSizeController;
@@ -190,6 +191,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 // This is used by channels. It takes care of handling IO and this is the one strong reference to the ioBuffer.
 @property(nonatomic, strong) iTermIOBuffer *ioBuffer;
+
+// Set when the program is a pane of another session's framer, with no local process.
+@property(nonatomic, strong) iTermFramerPaneJobManager *framerPaneJobManager;
 
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 

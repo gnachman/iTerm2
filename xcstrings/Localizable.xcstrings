@@ -85114,6 +85114,54 @@
         }
       }
     },
+    "FramerPane.Stranded.Open" : {
+      "comment" : "Button that opens each program left running on the remote host in a new tab",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open in Tabs"
+          }
+        }
+      }
+    },
+    "FramerPane.Stranded.Stop" : {
+      "comment" : "Button that stops the programs left running on the remote host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Them"
+          }
+        }
+      }
+    },
+    "FramerPane.Stranded.Title" : {
+      "comment" : "Announcement shown when programs that iTerm2 ran on a remote host for a workgroup are still running there after a restart, but their sessions were not restored. The count is the number of programs.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "A program started as a workgroup peer is still running on this host but has no session."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld programs started as workgroup peers are still running on this host but have no session."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "GPURenderer.Enabled" : {
       "comment" : "Message that GPU rendering is enabled",
       "extractionState" : "extracted_with_value",
@@ -200317,6 +200365,78 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在独立窗口中打开"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroup.HiddenPanes.Ended" : {
+      "comment" : "Announcement shown when a tmux session has programs left in hidden windows by a workgroup that no longer exists. The count is the number of programs.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "A program from a workgroup that has ended is still running in a hidden tmux window."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld programs from a workgroup that has ended are still running in hidden tmux windows."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TmuxWorkgroup.HiddenPanes.InUse" : {
+      "comment" : "Announcement shown when a tmux session has programs in hidden windows that belong to a workgroup none of this Mac’s workgroups match. Another Mac may be using them. The count is the number of programs.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "A program from a workgroup this Mac doesn’t use is in a hidden tmux window. Macs using that workgroup will lose it if you open or stop it here."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld programs from a workgroup this Mac doesn’t use are in hidden tmux windows. Macs using that workgroup will lose them if you open or stop them here."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TmuxWorkgroup.HiddenPanes.Open" : {
+      "comment" : "Button that shows each program found in a hidden tmux window in a tab of its own",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open in Tabs"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroup.HiddenPanes.Stop" : {
+      "comment" : "Button that stops the programs found in hidden tmux windows",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Them"
           }
         }
       }

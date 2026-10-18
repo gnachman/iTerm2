@@ -1244,7 +1244,59 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
     }];
     [self openBuriedSessionsForParkedWindow:windowId layout:layout];
+    // A pane may have left it by ending.
+    [self endBuriedSessionsWhosePanesAreGone];
     return YES;
+}
+
+- (void)parkedWindowDidClose:(int)windowId {
+    DLog(@"Parked window %d closed", windowId);
+    [self endBuriedSessionsWhosePanesAreGone];
+}
+
+// tmux says nothing about panes in parked windows, which have no tab, ending: those the user
+// stopped, or that exited. Ends the buried sessions of those that are gone from the server. Only
+// sessions outside any workgroup: a workgroup's parked peer is left to its workgroup.
+- (void)endBuriedSessionsWhosePanesAreGone {
+    if (detached_ || _detaching || !gateway_) {
+        return;
+    }
+    NSMutableArray<NSNumber *> *candidates = [NSMutableArray array];
+    [_buriedSessions enumerateKeysAndObjectsUsingBlock:^(NSNumber *pane, PTYSession<iTermTmuxControllerSession> *session, BOOL *stop) {
+        if (!((PTYSession *)session).workgroupInstance) {
+            [candidates addObject:pane];
+        }
+    }];
+    if (!candidates.count) {
+        return;
+    }
+    // A pane buried before this is sent existed then, so if tmux doesn't list it, it has ended.
+    [gateway_ sendCommand:@"list-panes -a -F '#{pane_id}'"
+           responseTarget:self
+         responseSelector:@selector(didListPanes:forBuriedPanes:)
+           responseObject:candidates
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)didListPanes:(NSString *)response forBuriedPanes:(NSArray<NSNumber *> *)candidates {
+    if (!response) {
+        return;
+    }
+    NSMutableSet<NSNumber *> *existing = [NSMutableSet set];
+    for (NSString *line in [response componentsSeparatedByString:@"\n"]) {
+        if ([line hasPrefix:@"%"]) {
+            [existing addObject:@([[line substringFromIndex:1] intValue])];
+        }
+    }
+    for (NSNumber *pane in candidates) {
+        PTYSession<iTermTmuxControllerSession> *session = _buriedSessions[pane];
+        if (!session || [existing containsObject:pane] || ((PTYSession *)session).workgroupInstance) {
+            continue;
+        }
+        RLog(@"Pane %@ of buried session %@ is gone; ending the session", pane, session);
+        [_buriedSessions removeObjectForKey:pane];
+        [session terminate];
+    }
 }
 
 - (void)enumerateLeavesOfParseTree:(NSDictionary *)node block:(void (^)(NSDictionary *leaf))block {

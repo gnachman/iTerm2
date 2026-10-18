@@ -299,6 +299,12 @@ final class WorkgroupRestorationCoordinator: NSObject {
             return
         }
 
+        // Before adopt, which spawns the peers not started at save time from the anchor.
+        iTermWorkgroupRestoration.restoreRemoteHosts(from: descriptor,
+                                                     sessionsByConfigID: sessionsByConfigID,
+                                                     leader: leaderSession,
+                                                     spawner: anchor)
+
         // Peers passed to adopt = every member except the leader.
         var peerSessions: [String: PTYSession] = [:]
         for (id, s) in sessionsByConfigID where id != leaderID {

@@ -631,6 +631,9 @@ private class SSHOutputTokenBuilder {
     let depth: Int
     let string: String
     let flavor: Flavor
+    /// Under flow control: the framer's clock when it sent the frame, and its flow flags.
+    private(set) var sendMilliseconds: Int64?
+    private(set) var flowFlags: Int32 = 0
 
     enum Flavor: String {
         case output = "%output"
@@ -657,6 +660,11 @@ private class SSHOutputTokenBuilder {
             self.pid = pid
             self.channel = channel
             self.depth = depth
+            // A framer with flow control on adds `<send-ms> <flags>`; older ones do not.
+            if parts.count >= 7, let sendMilliseconds = Int64(parts[5]), let flags = Int32(parts[6]) {
+                self.sendMilliseconds = sendMilliseconds
+                self.flowFlags = flags
+            }
         case .autopoll:
             guard parts.count >= 2 else {
                 return nil
@@ -698,6 +706,11 @@ private class SSHOutputTokenBuilder {
         token.csi.pointee.count = 2
         token.savedData = data
         token.type = SSH_OUTPUT
+        if let sendMilliseconds {
+            token.sshFlowControlled = true
+            token.sshSendMilliseconds = sendMilliseconds
+            token.sshFlowFlags = flowFlags
+        }
         return true
     }
 }

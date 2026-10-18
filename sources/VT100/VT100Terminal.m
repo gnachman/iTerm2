@@ -3275,6 +3275,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case SSH_OUTPUT:
             DLog(@"executing an ssh output token");
+            if (token.sshFlowControlled) {
+                // A frame's decoded contents run before its SSH_OUTPUT token (see
+                // VT100Parser), so they have all executed by now.
+                [self.delegate terminalDidExecuteFlowControlledSSHOutputOfLength:token.savedData.length
+                                                                sendMilliseconds:token.sshSendMilliseconds
+                                                                           flags:token.sshFlowFlags];
+            }
             if (token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL) {
                 [self.delegate terminalDidReadSSHPaneOutput:token.savedData
                                                         pid:token.csi->p[0]

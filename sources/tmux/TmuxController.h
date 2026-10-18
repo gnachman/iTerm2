@@ -348,6 +348,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (NSArray<PTYSession<iTermTmuxControllerSession> *> *)buriedSessions;
 // Keeps a parked window's buried sessions the size of their panes. NO if the window is not parked.
 - (BOOL)parkedWindow:(int)windowId layoutDidChange:(NSString *)layout;
+// A parked window closed: ends the buried sessions whose panes went with it.
+- (void)parkedWindowDidClose:(int)windowId;
 // Re-reads one window's layout and applies it as a %layout-change would. tmux 3.2 sends no
 // %layout-change when swap-pane moves a pane between windows.
 - (void)refreshLayoutOfWindow:(int)windowId;

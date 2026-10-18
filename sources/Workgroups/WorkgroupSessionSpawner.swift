@@ -58,7 +58,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         guard let windowController =
                 parent.delegate?.realParentWindow() as? PseudoTerminal
             else { return nil }
-        let remoteHost = MainActor.assumeIsolated { WorkgroupRemoteHost.forLeader(parent) }
+        let remoteHost = MainActor.assumeIsolated { parent.remoteHostForNewWorkgroupPeer }
         guard let profile = Self.resolveProfile(config: config, remoteHost: remoteHost) else { return nil }
         let factory = windowController.sessionFactory!
         let newSession = factory.newSession(withProfile: profile, parent: parent)
@@ -87,7 +87,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
         guard let windowController =
                 parent.delegate?.realParentWindow() as? PseudoTerminal
             else { return nil }
-        let remoteHost = MainActor.assumeIsolated { WorkgroupRemoteHost.forLeader(parent) }
+        let remoteHost = MainActor.assumeIsolated { parent.remoteHostForNewWorkgroupPeer }
         guard let profile = Self.resolveProfile(config: config, remoteHost: remoteHost) else { return nil }
         let factory = windowController.sessionFactory!
         let newSession = factory.newSession(withProfile: profile, parent: parent)

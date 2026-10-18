@@ -4079,6 +4079,12 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     } name:@"read raw ssh"];
 }
 
+- (void)terminalDidExecuteFlowControlledSSHOutputOfLength:(NSUInteger)length
+                                         sendMilliseconds:(int64_t)sendMilliseconds
+                                                    flags:(int)flags {
+    [self.flowLedger frameDidExecuteWithLength:length];
+}
+
 - (void)terminalDidReadSSHPaneOutput:(NSData *)data
                                  pid:(int)pid
                                depth:(int)depth {
@@ -4274,6 +4280,8 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
                                                                                                            tree:recovery.tree
                                                                                                  clientUniqueID:clientUniqueID.length ? clientUniqueID : nil];
             [delegate screenFramerRecoveryDidFinish];
+            // Resynchronizing should not wait for the host to print something.
+            [weakSelf flushParserAsynchronously];
             dispatch_async(queue, ^{
                 [weakSelf appendBanner:@"ssh connection recovered!" andUnpause:unpauser];
             });

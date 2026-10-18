@@ -630,6 +630,14 @@ Improvements:
   processes, and triggers that watch for a
   program, such as entering the Claude Code
   workgroup, work there.
+- SSH Integration now paces output from the
+  remote host, so a program that prints a lot no
+  longer fills the connection’s buffers. Control-C
+  takes effect at once instead of after minutes
+  of buffered output on a slow link, and typing
+  stays responsive while output streams. Turn it
+  off with the advanced setting “Pace output from
+  remote hosts.”
 
 Bug Fixes:
 - In an AI chat with an empty message field, the
@@ -2219,3 +2227,13 @@ Bug Fixes:
   iTerm2 reads from the remote host, such as a
   remote PATH containing accented letters, is no
   longer garbled.
+- With SSH Integration, after iTerm2 restarts
+  or recovers a connection, it no longer waits
+  for the remote host to print something before
+  remote features start working again.
+- Answering Always to “Close tmux windows after
+  detaching?” no longer closes sessions that did
+  not ask, such as the tmux session itself.
+- Announcements in narrow panes are legible: when
+  there is no room beside the buttons, the
+  buttons go on a row below the text.

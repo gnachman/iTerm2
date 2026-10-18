@@ -50,6 +50,33 @@ final class iTermWorkgroupRestoration: NSObject {
         // arrangement, which would otherwise spawn a stray shell with no
         // overlay.
         static let pending = "pending"
+        // configID -> WorkgroupRemoteHost.dictionaryValue, for each member (the anchor too)
+        // whose programs run on its leader's host. Without it a restored peer's reload would
+        // run its command on this Mac.
+        static let remoteHosts = "remoteHosts"
+    }
+
+    /// Gives restored members back the remote host they ran on, and gives `spawner` (the
+    /// session that spawns peers not started at save time) one for its new peers, since the
+    /// leader's connection may not have recovered yet when they are spawned.
+    static func restoreRemoteHosts(from descriptor: [AnyHashable: Any],
+                                   sessionsByConfigID: [String: PTYSession],
+                                   leader: PTYSession,
+                                   spawner: PTYSession) {
+        guard let saved = descriptor[Key.remoteHosts] as? [String: [AnyHashable: Any]] else {
+            return
+        }
+        for (configID, dictionary) in saved {
+            guard let session = sessionsByConfigID[configID],
+                  session.workgroupRemoteHost == nil,
+                  let host = WorkgroupRemoteHost(dictionary: dictionary, leader: leader) else {
+                continue
+            }
+            session.workgroupRemoteHost = host
+        }
+        if let any = saved.values.first {
+            spawner.restoredRemoteHostForNewPeers = WorkgroupRemoteHost(dictionary: any, leader: leader)
+        }
     }
 
     // A deferred peer that hasn't been started yet is sitting on its
@@ -87,6 +114,12 @@ final class iTermWorkgroupRestoration: NSObject {
 
         var members: [[AnyHashable: Any]] = []
         var memberGUIDs: [String] = []
+        var remoteHosts: [String: [String: Any]] = [:]
+        for member in port.realizedMembers {
+            if let host = member.session.workgroupRemoteHost?.dictionaryValue {
+                remoteHosts[member.id] = host
+            }
+        }
         for member in port.realizedMembers where member.id != anchorID {
             let dict = NSMutableDictionary()
             let encoder = iTermMutableDictionaryEncoderAdapter(mutableDictionary: dict)
@@ -116,6 +149,9 @@ final class iTermWorkgroupRestoration: NSObject {
             Key.memberGUIDs: memberGUIDs,
             Key.anchorPending: Self.isShowingPreLaunchOverlay(session)
         ]
+        if !remoteHosts.isEmpty {
+            result[Key.remoteHosts] = remoteHosts
+        }
 
         // Only the instance's primary (top-level) peer group records the
         // instance-wide non-peer split/tab children, so a nested peer

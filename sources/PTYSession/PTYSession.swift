@@ -88,6 +88,16 @@ class PTYSessionSwiftState: NSObject {
     // Set on a workgroup peer whose leader is on a host reached through SSH Integration: the
     // peer's programs run there. See WorkgroupRemoteHost.
     var workgroupRemoteHost: WorkgroupRemoteHost?
+    // Set during restoration on the session that spawns peers not started at save time: where
+    // they run if the leader's connection has not recovered yet when they are spawned.
+    var restoredRemoteHostForNewPeers: WorkgroupRemoteHost?
+    // The last launch command workgroupPeerLaunchCommand made for a remote peer, and the shell
+    // command it runs. Starting that launch command runs the shell command as a pane of the
+    // leader's framer instead, when it can.
+    var framerPaneLaunch: (launchCommand: String, shellCommand: String)?
+    // Set on a session adopted to show a stranded framer pane: the session whose connection the
+    // pane runs over. Not a workgroup member, so it has no workgroupRemoteHost.
+    var framerPaneOwnerGUID: String?
 
     // A remote review peer's input files are being written; a second Start (auto-request calls it
     // directly) must not launch twice.
@@ -2128,7 +2138,24 @@ extension PTYSession {
 
     var workgroupRemoteHost: WorkgroupRemoteHost? {
         get { swiftState.workgroupRemoteHost }
-        set { swiftState.workgroupRemoteHost = newValue }
+        set {
+            swiftState.workgroupRemoteHost = newValue
+            MainActor.assumeIsolated {
+                framerPaneLeaderDidChange()
+            }
+        }
+    }
+
+    var restoredRemoteHostForNewPeers: WorkgroupRemoteHost? {
+        get { swiftState.restoredRemoteHostForNewPeers }
+        set { swiftState.restoredRemoteHostForNewPeers = newValue }
+    }
+
+    /// Where a peer this session spawns runs: on this session's host if it is on one now, else
+    /// where restoration said the workgroup's peers ran, else on this Mac.
+    @MainActor
+    var remoteHostForNewWorkgroupPeer: WorkgroupRemoteHost? {
+        return WorkgroupRemoteHost.forLeader(self) ?? restoredRemoteHostForNewPeers
     }
 
     /// What a workgroup peer runs to execute `shellCommand`: through the user's login shell on
@@ -2148,7 +2175,9 @@ extension PTYSession {
         DLog("Workgroup peer \(guid) launches on its leader's host in \(plan.jumps.last?.initialDirectory ?? "(no directory: the host's default)")")
         setPendingJumpsForNextLaunch(plan.jumps.map { SSHReconnectionInfoObjC($0) })
         RLog("PTYSession[\(guid)]: workgroup peer runs on its leader's host")
-        return remote.localCommand(for: plan)
+        let launch = remote.localCommand(for: plan)
+        swiftState.framerPaneLaunch = (launch, shellCommand)
+        return launch
     }
 
     /// Replaces what this workgroup member runs with the shell command `command`: in its pane on
@@ -2440,7 +2469,7 @@ extension PTYSession {
                     // A leader on a host reached through SSH Integration: the peer runs there,
                     // where the files are. Its connection must set up it2 so an agent in it can
                     // report, whatever the leader's profile says about shell integration.
-                    let remoteHost = WorkgroupRemoteHost.forLeader(self)
+                    let remoteHost = self.remoteHostForNewWorkgroupPeer
                     if let remoteHost {
                         profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = true
                         profile[KEY_SSH_CONFIG] = remoteHost.sshConfig ?? [:]

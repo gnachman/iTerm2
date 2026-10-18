@@ -274,7 +274,7 @@ final class ConductorIT2CommandTests: XCTestCase {
         // handleRecovery reads the shim's fields into ConductorRecovery; init(recovery:)
         // copies them into the post-recovery conductor.
         let recovery = ConductorRecovery(pid: 123, dcsID: "dcs", tree: [:], sshargs: "localhost",
-                                         boolArgs: "", clientUniqueID: "cid", version: 2, parent: nil,
+                                         boolArgs: "", clientUniqueID: "cid", version: 2, flow: nil, parent: nil,
                                          it2Proxy: shim.it2Proxy)
         let recovered = Conductor(recovery: recovery)
         XCTAssertEqual(recovered.it2Nonce, "the-nonce")

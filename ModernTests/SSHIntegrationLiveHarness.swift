@@ -62,6 +62,18 @@ final class SSHIntegrationLiveHarness: XCTestCase {
     private let connectTimeout: TimeInterval = 90
     private let commandTimeout: TimeInterval = 30
 
+    /// Workgroups this harness adds are saved like any others. A run killed before its tear-down
+    /// leaves them behind, where a later run (or the tmux harness) could adopt with them.
+    private static let workgroupIDPrefix = "ssh-live-"
+
+    @MainActor
+    private static func removeLeftoverWorkgroups() {
+        for workgroup in iTermWorkgroupModel.instance.workgroups
+        where workgroup.uniqueIdentifier.hasPrefix(workgroupIDPrefix) {
+            iTermWorkgroupModel.instance.remove(uniqueIdentifier: workgroup.uniqueIdentifier)
+        }
+    }
+
     override func setUpWithError() throws {
         try super.setUpWithError()
         guard ProcessInfo.processInfo.environment["ITERM2_SSH_LIVE"] != nil else {
@@ -69,6 +81,9 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         }
         // It launches real sessions, in windows.
         try OnscreenTestGate.skipUnlessEnabled()
+        MainActor.assumeIsolated {
+            Self.removeLeftoverWorkgroups()
+        }
         MainActor.assumeIsolated {
             savedGrantFile = FileManager.default.contents(atPath: grantFilePath)
             store = IT2HostGrantStore(backing: LiveGrantBacking())
@@ -135,11 +150,12 @@ final class SSHIntegrationLiveHarness: XCTestCase {
     /// which a second hop needs: the remote shell has no agent of its own.
     private func connect(forwardAgent: Bool = false,
                          loadShellIntegration: Bool = true,
+                         sshOptions: String = "",
                          command: String? = nil,
                          file: StaticString = #filePath, line: UInt = #line) -> PTYSession? {
         var profile = baseProfile()
         profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue
-        profile[KEY_COMMAND_LINE] = (forwardAgent ? "-A localhost" : "localhost") + (command.map { " " + $0 } ?? "")
+        profile[KEY_COMMAND_LINE] = sshOptions + (forwardAgent ? "-A localhost" : "localhost") + (command.map { " " + $0 } ?? "")
         profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = loadShellIntegration
         guard let session = launch(profile: profile) else {
             XCTFail("could not launch", file: file, line: line)
@@ -158,8 +174,10 @@ final class SSHIntegrationLiveHarness: XCTestCase {
     }
 
     private func close(_ session: PTYSession) {
+        // Find the window first: a terminated session no longer knows it.
+        let window = session.delegate?.realParentWindow()?.window
         session.terminate()
-        session.delegate?.realParentWindow()?.window?.close()
+        window?.close()
     }
 
     private func screenText(_ session: PTYSession) -> String {
@@ -377,6 +395,171 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         }
     }
 
+    // MARK: - Flow control
+
+    // A flood over a slow link, then Ctrl-C. Without flow control the output already in ssh's
+    // buffers (its 2 MB channel window, at 20 KB/s about 100 s of it) must arrive before the
+    // prompt can. With it, the framer holds the flood in the remote pty, where Ctrl-C discards
+    // it, so only about a round trip and twice the target delay of output is in flight.
+    func testCtrlCAfterAFloodOnASlowLinkIsPrompt() throws {
+        Conductor.flowControlAvailableForTesting = true
+        addTeardownBlock { @MainActor in Conductor.flowControlAvailableForTesting = nil }
+        let proxy = URL(fileURLWithPath: "\(#filePath)")
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("tests/throttle_proxy.py").path
+        let session = try XCTUnwrap(connect(
+            sshOptions: "-o 'ProxyCommand=/usr/bin/env python3 \(proxy) %h %p 20480' "))
+        let conductor = try XCTUnwrap(session.conductor)
+        waitUntil("flow control to start", timeout: commandTimeout) {
+            conductor.flowController != nil
+        }
+        XCTAssertEqual(conductor.flowVersion, 2, "the framer gives each flow credit of its own")
+        session.writeTask("yes flood\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        // Long enough for the flood to fill whatever buffers it can: 100 KB is 5 s at 20 KB/s.
+        waitUntil("the flood to get going", timeout: 60) {
+            (conductor.flowController?.consumed ?? 0) > 100_000
+        }
+        let interrupted = Date()
+        session.writeTask("\u{3}")
+        session.writeTask("echo after-$((6*7))\r")
+        waitUntil("the prompt after Ctrl-C", timeout: 120) {
+            screenText(session).contains("after-42")
+        }
+        let elapsed = Date().timeIntervalSince(interrupted)
+        XCTAssertLessThan(elapsed, 10, "Ctrl-C took \(elapsed) s to take effect")
+        let stats = try XCTUnwrap(conductor.flowController?.statistics)
+        NSLog("Flow control live test: Ctrl-C took %.2f s; statistics %@", elapsed, "\(stats)")
+    }
+
+    private func throttledOptions(bytesPerSecond: Int) -> String {
+        let proxy = URL(fileURLWithPath: "\(#filePath)")
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("tests/throttle_proxy.py").path
+        return "-o 'ProxyCommand=/usr/bin/env python3 \(proxy) %h %p \(bytesPerSecond)' "
+    }
+
+    /// Presses Ctrl-C in `session` and returns how long its prompt took to come back.
+    private func interrupt(_ session: PTYSession) -> TimeInterval {
+        let interrupted = Date()
+        session.writeTask("\u{3}")
+        session.writeTask("echo after-$((6*7))\r")
+        waitUntil("the prompt after Ctrl-C", timeout: 120) {
+            screenText(session).contains("after-42")
+        }
+        return Date().timeIntervalSince(interrupted)
+    }
+
+    // A workgroup peer flooding the same slow link does not hold up the leader: each has credit
+    // of its own, so Ctrl-C after the leader's own flood still brings its prompt back promptly,
+    // and the peer's output keeps flowing meanwhile.
+    func testAFloodingPeerLeavesCtrlCInTheLeaderPrompt() throws {
+        Conductor.flowControlAvailableForTesting = true
+        addTeardownBlock { @MainActor in Conductor.flowControlAvailableForTesting = nil }
+        let session = try XCTUnwrap(connect(sshOptions: throttledOptions(bytesPerSecond: 20480)))
+        let conductor = try XCTUnwrap(session.conductor)
+        waitUntil("flow control to start", timeout: commandTimeout) {
+            conductor.flowController != nil
+        }
+        XCTAssertEqual(conductor.flowVersion, 2)
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier, command: "exec yes pane-flood")
+        let workgroup = WGFix.wrap(name: "flooding peer", sessions: [root, peer], uniqueIdentifier: Self.workgroupIDPrefix + UUID().uuidString)
+        iTermWorkgroupModel.instance.add(workgroup)
+        addTeardownBlock { @MainActor in
+            iTermWorkgroupController.instance.exit(on: session)
+            iTermWorkgroupModel.instance.remove(uniqueIdentifier: workgroup.uniqueIdentifier)
+        }
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: session,
+                                                              mechanism: .menu))
+        let port = try XCTUnwrap(session.peerPort as? iTermWorkgroupPeerPort)
+        var pid: Int32?
+        waitUntil("the peer to start as a pane", timeout: connectTimeout) {
+            pid = port.session(forIdentifier: peer.uniqueIdentifier)?.shell.framerPaneJobManager?.remotePID
+            return pid != nil
+        }
+        let pane = FramerFlowController.Flow.pane(try XCTUnwrap(pid))
+        let peerSession = try XCTUnwrap(port.session(forIdentifier: peer.uniqueIdentifier))
+        let controller = try XCTUnwrap(conductor.flowController)
+        waitUntil("the peer's flood to get going", timeout: 60) {
+            (controller.granted(to: pane) ?? 0) > 30_000
+        }
+
+        let leaderBefore = controller.granted(to: .leader) ?? 0
+        session.writeTask("yes leader-flood\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        waitUntil("the leader's flood to get going beside it", timeout: 60) {
+            (controller.granted(to: .leader) ?? 0) > leaderBefore + 30_000
+        }
+        let elapsed = interrupt(session)
+        XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s to take effect")
+        let paneAfter = controller.granted(to: pane) ?? 0
+        func state() -> String {
+            let now = conductor.flowClock()
+            return "granted \(controller.granted(to: pane) ?? -1) backlog \(controller.backlog(of: pane) ?? -1) " +
+                "window \(controller.window(of: pane) ?? -1) of \(controller.window) " +
+                "waited \(controller.consumptionDelay(of: pane, now: now) ?? -1) " +
+                "peer lines \(Int64(peerSession.screen.numberOfLines()) + peerSession.screen.totalScrollbackOverflow())"
+        }
+        // Long enough that output stuck unconsumed (a byte its session ran but did not report)
+        // would show: the pane's credit would stop coming back.
+        waitUntil("the peer's output to keep flowing", timeout: 60) {
+            (controller.granted(to: pane) ?? 0) > paneAfter + 30_000
+        }
+        let waited = controller.consumptionDelay(of: pane, now: conductor.flowClock()) ?? 0
+        XCTAssertLessThan(waited, 2, "the peer's output is waiting to be consumed: \(state())")
+        NSLog("Flow control live test with a flooding peer: Ctrl-C took %.2f s; statistics %@",
+              elapsed, "\(controller.statistics)")
+    }
+
+    /// Takes a pane's output and never lets its session consume it, like a peer whose session
+    /// has stopped reading.
+    private final class StalledPaneClient: NSObject, ConductorPaneClient {
+        private(set) var received = 0
+        func conductorPaneDidOutput(_ data: Data) { received += data.count }
+        func conductorPaneDidExit(code: Int32) {}
+        func conductorPaneDidLoseConnection() {}
+    }
+
+    // A pane whose session stops consuming holds back only itself: the framer stops at the
+    // pane's window, so nothing piles up in iTerm2, while the leader keeps the connection.
+    func testAStalledPaneHoldsBackOnlyItself() throws {
+        Conductor.flowControlAvailableForTesting = true
+        addTeardownBlock { @MainActor in Conductor.flowControlAvailableForTesting = nil }
+        let session = try XCTUnwrap(connect())
+        let conductor = try XCTUnwrap(session.conductor)
+        waitUntil("flow control to start", timeout: commandTimeout) {
+            conductor.flowController != nil
+        }
+        XCTAssertEqual(conductor.flowVersion, 2)
+        let client = StalledPaneClient()
+        var started: Int32?
+        conductor.startPane(rows: 24, cols: 80, directory: "~", command: "exec yes stalled-pane",
+                            client: client) { started = $0 }
+        waitUntil("the pane to start", timeout: commandTimeout) { started != nil }
+        let pid = try XCTUnwrap(started)
+        addTeardownBlock { @MainActor in conductor.killPane(pid) }
+        let controller = try XCTUnwrap(conductor.flowController)
+        waitUntil("the pane to use up its credit", timeout: commandTimeout) {
+            client.received > 0 && client.received >= (controller.granted(to: .pane(pid)) ?? 0)
+        }
+
+        let leaderBefore = controller.granted(to: .leader) ?? 0
+        session.writeTask("yes leader-flood\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        waitUntil("the leader to flood well past anything the pane could take", timeout: 60) {
+            (controller.granted(to: .leader) ?? 0) > leaderBefore + 4 * 1024 * 1024
+        }
+        XCTAssertLessThan(client.received, 512 * 1024,
+                          "the pane's output stopped at its window instead of piling up")
+        XCTAssertEqual(client.received, controller.backlog(of: .pane(pid)), "none of it was consumed")
+        let elapsed = interrupt(session)
+        XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s to take effect")
+        NSLog("Flow control live test with a stalled pane: it holds %d bytes; Ctrl-C took %.2f s",
+              client.received, elapsed)
+    }
+
     // MARK: - Without injection
 
     // it2's socket used to come only with shell-integration injection. With "Load shell
@@ -591,13 +774,13 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         let root = WGFix.makeRoot()
         let peer = WGFix.makePeer(
             parentID: root.uniqueIdentifier,
-            command: #"printf '%s\n%s\n' "$PWD" "$IT2_SOCK" > "# + shellQuote(output) + "; sleep 60")
+            command: #"printf '%s\n%s\n%s\n' "$PWD" "$IT2_SOCK" "$TERM_SESSION_ID" > "# + shellQuote(output) + "; sleep 60")
         let diffOutput = directory + "/diff-report"
         let diffPeer = WGFix.makePeer(parentID: root.uniqueIdentifier,
                                       displayName: "Diff",
                                       command: "pwd > " + shellQuote(diffOutput) + "; sleep 60",
                                       mode: .diff)
-        let workgroup = WGFix.wrap(name: "remote peer", sessions: [root, peer, diffPeer])
+        let workgroup = WGFix.wrap(name: "remote peer", sessions: [root, peer, diffPeer], uniqueIdentifier: Self.workgroupIDPrefix + UUID().uuidString)
         iTermWorkgroupModel.instance.add(workgroup)
         addTeardownBlock { @MainActor in
             iTermWorkgroupController.instance.exit(on: session)
@@ -607,21 +790,236 @@ final class SSHIntegrationLiveHarness: XCTestCase {
                                                               on: session,
                                                               mechanism: .menu))
         waitUntil("the peer to report", timeout: connectTimeout) {
-            ((try? String(contentsOfFile: output, encoding: .utf8)) ?? "").split(separator: "\n").count == 2
+            ((try? String(contentsOfFile: output, encoding: .utf8)) ?? "").split(separator: "\n").count == 3
         }
         let lines = try XCTUnwrap(try? String(contentsOfFile: output, encoding: .utf8))
             .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         XCTAssertEqual((lines[0] as NSString).resolvingSymlinksInPath, realDirectory, "the leader's directory")
         XCTAssertFalse(lines[1].isEmpty, "started over SSH Integration, so it has it2")
+        let port = try XCTUnwrap(session.peerPort as? iTermWorkgroupPeerPort)
+        // The program can report before the pane's reply reaches iTerm2 and the workgroup
+        // gets its session.
+        waitUntil("the workgroup to get the peer's session", timeout: commandTimeout) {
+            port.session(forIdentifier: peer.uniqueIdentifier) != nil
+        }
+        let peerSession = try XCTUnwrap(port.session(forIdentifier: peer.uniqueIdentifier))
+        XCTAssertNotNil(peerSession.shell.framerPaneJobManager,
+                        "a pane of the leader's framer, not a connection of its own")
+        XCTAssertNil(peerSession.conductor)
+        XCTAssertTrue(lines[2].hasSuffix(peerSession.guid), "the peer's own session id: \(lines[2])")
         // A diff peer starts when it is shown and the poller has seen a change, so its diff is of
         // the tree as it is then.
-        let port = try XCTUnwrap(session.peerPort as? iTermWorkgroupPeerPort)
         XCTAssertTrue(port.activate(identifier: diffPeer.uniqueIdentifier))
         waitUntil("the diff peer to launch once shown", timeout: connectTimeout) {
             let reported = (try? String(contentsOfFile: diffOutput, encoding: .utf8))?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             return reported.map { ($0 as NSString).resolvingSymlinksInPath } == realDirectory
         }
+    }
+
+    // A pane peer takes input, ends when its program does, and relaunches as a new pane.
+    func testAPanePeerTakesInputEndsAndRelaunches() throws {
+        let session = try XCTUnwrap(connect())
+        let directory = (NSTemporaryDirectory() as NSString).appendingPathComponent("wg-pane-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: directory) }
+        let typed = directory + "/typed"
+        let relaunched = directory + "/relaunched"
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier,
+                                  command: "IFS= read -r line; printf '%s' \"$line\" > " + shellQuote(typed))
+        let workgroup = WGFix.wrap(name: "pane peer", sessions: [root, peer], uniqueIdentifier: Self.workgroupIDPrefix + UUID().uuidString)
+        iTermWorkgroupModel.instance.add(workgroup)
+        addTeardownBlock { @MainActor in
+            iTermWorkgroupController.instance.exit(on: session)
+            iTermWorkgroupModel.instance.remove(uniqueIdentifier: workgroup.uniqueIdentifier)
+        }
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: session,
+                                                              mechanism: .menu))
+        let port = try XCTUnwrap(session.peerPort as? iTermWorkgroupPeerPort)
+        var peerSession: PTYSession?
+        waitUntil("the peer to start as a pane", timeout: connectTimeout) {
+            peerSession = port.session(forIdentifier: peer.uniqueIdentifier)
+            return peerSession?.shell.framerPaneJobManager?.remotePID != nil
+        }
+        let pane = try XCTUnwrap(peerSession)
+        pane.writeTask("typed into the pane\r")
+        waitUntil("the pane to read the input", timeout: commandTimeout) {
+            (try? String(contentsOfFile: typed, encoding: .utf8)) == "typed into the pane"
+        }
+        waitUntil("the session to end with its program", timeout: commandTimeout) {
+            pane.exited
+        }
+        pane.relaunchWorkgroupMember(command: "echo again > " + shellQuote(relaunched) + "; sleep 60")
+        waitUntil("the relaunched pane to run", timeout: commandTimeout) {
+            (try? String(contentsOfFile: relaunched, encoding: .utf8)) == "again\n"
+        }
+        XCTAssertNotNil(pane.shell.framerPaneJobManager, "still a pane after relaunching")
+    }
+
+    // When the leader's connection is recovered in place, its conductor is replaced while the
+    // pane keeps running on the host. The peer reattaches to the new conductor and keeps
+    // working. Recovery starts here the way it does when the parser loses the conductor's
+    // hook (a terminal reset, say): framer's next output arrives unframed.
+    func testAPanePeerSurvivesRecoveringTheLeadersConnection() throws {
+        let session = try XCTUnwrap(connect())
+        let directory = (NSTemporaryDirectory() as NSString).appendingPathComponent("wg-recover-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: directory) }
+        let heard = directory + "/heard"
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(
+            parentID: root.uniqueIdentifier,
+            command: "while IFS= read -r line; do printf '%s\\n' \"$line\" >> " + shellQuote(heard)
+                + "; echo \"pane-said-$line\"; done")
+        let workgroup = WGFix.wrap(name: "recovered pane peer", sessions: [root, peer], uniqueIdentifier: Self.workgroupIDPrefix + UUID().uuidString)
+        iTermWorkgroupModel.instance.add(workgroup)
+        addTeardownBlock { @MainActor in
+            iTermWorkgroupController.instance.exit(on: session)
+            iTermWorkgroupModel.instance.remove(uniqueIdentifier: workgroup.uniqueIdentifier)
+        }
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: session,
+                                                              mechanism: .menu))
+        let port = try XCTUnwrap(session.peerPort as? iTermWorkgroupPeerPort)
+        var peerSession: PTYSession?
+        waitUntil("the peer to start as a pane", timeout: connectTimeout) {
+            peerSession = port.session(forIdentifier: peer.uniqueIdentifier)
+            return peerSession?.shell.framerPaneJobManager?.remotePID != nil
+        }
+        let pane = try XCTUnwrap(peerSession)
+        let panePID = try XCTUnwrap(pane.shell.framerPaneJobManager?.remotePID)
+        pane.writeTask("before\r")
+        waitUntil("the pane to answer", timeout: commandTimeout) {
+            self.screenText(pane).contains("pane-said-before")
+        }
+
+        // The pane's echo of this is framer output, which starts recovery. Its own echo may be
+        // lost to recovery, but whatever the pane prints after is not.
+        try recoverConnection(of: session) {
+            pane.writeTask("during\r")
+        }
+        pane.writeTask("after\r")
+        waitUntil("the reattached pane to take input", timeout: commandTimeout) {
+            ((try? String(contentsOfFile: heard, encoding: .utf8)) ?? "").contains("after\n")
+        }
+        waitUntil("its output to reach the session", timeout: commandTimeout) {
+            self.screenText(pane).contains("pane-said-after")
+        }
+        XCTAssertFalse(pane.exited)
+        XCTAssertEqual(pane.shell.framerPaneJobManager?.remotePID, panePID, "the same pane")
+        // What a restart restores it from.
+        XCTAssertEqual((pane.framerPaneArrangement?["pid"] as? NSNumber)?.int32Value, panePID)
+    }
+
+    /// Recovers `session`'s connection in place, the way it happens when the parser loses the
+    /// conductor's hook (a terminal reset, say): framer's next output, which `provokeOutput`
+    /// causes, arrives unframed.
+    private func recoverConnection(of session: PTYSession, provokeOutput: () -> Void,
+                                   file: StaticString = #filePath, line: UInt = #line) throws {
+        let original = try XCTUnwrap(session.conductor, file: file, line: line)
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            terminal?.parser.forceUnhookDCS(nil)
+        })
+        provokeOutput()
+        waitUntil("the connection to be recovered", timeout: connectTimeout, file: file, line: line) {
+            guard let conductor = session.conductor else {
+                return false
+            }
+            return conductor !== original && conductor.framing && !conductor.awaitingResynchronization
+        }
+    }
+
+    // MARK: - Stranded panes
+
+    private final class HarnessPaneClient: NSObject, ConductorPaneClient {
+        func conductorPaneDidOutput(_ data: Data) {}
+        func conductorPaneDidExit(code: Int32) {}
+        func conductorPaneDidLoseConnection() {}
+    }
+
+    /// A pane on `session`'s connection with no session for it, as when iTerm2 restarts without
+    /// restoring a peer's session. It has written "early-go", which the conductor keeps. The
+    /// connection is then recovered, after which iTerm2 looks for such panes.
+    private func strandPane(on session: PTYSession) throws -> Int32 {
+        FramerPaneStrandedFinder.shared.restorationDidSettle()
+        let conductor = try XCTUnwrap(session.conductor)
+        let client = HarnessPaneClient()
+        var started: Int32?
+        conductor.startPane(rows: 24, cols: 80, directory: "~",
+                            command: "IFS= read -r x; echo \"early-$x\"; while IFS= read -r line; do echo \"pane-said-$line\"; done",
+                            client: client) { started = $0 }
+        waitUntil("the pane to start", timeout: commandTimeout) { started != nil }
+        let pid = try XCTUnwrap(started)
+        conductor.panes[pid] = nil
+        conductor.sendToPane(pid, data: Data("go\n".utf8))
+        waitUntil("the conductor to keep the pane's output", timeout: commandTimeout) {
+            String(decoding: conductor.unclaimedPanes[pid]?.output ?? Data(), as: UTF8.self).contains("early-go")
+        }
+        try recoverConnection(of: session) {
+            session.writeTask("\r")
+        }
+        return pid
+    }
+
+    private func strandedAnnouncementIdentifier(_ session: PTYSession) -> String? {
+        return StrandedFramerPaneAnnouncer.announcementIdentifier(for: session)
+    }
+
+    private func sessionShowingPane(_ pid: Int32) -> PTYSession? {
+        return iTermController.sharedInstance()?.allSessions().first {
+            $0.shell.framerPaneJobManager?.remotePID == pid
+        }
+    }
+
+    // The user is told, and opening it puts it in a tab with what it wrote meanwhile. It works
+    // like any pane session, and after a restart it reattaches through the leader's session.
+    func testAStrandedPaneOpensInATab() throws {
+        let session = try XCTUnwrap(connect())
+        let pid = try strandPane(on: session)
+        waitUntil("the user to be told", timeout: commandTimeout) {
+            strandedAnnouncementIdentifier(session).map { session.hasAnnouncement(withIdentifier: $0) } ?? false
+        }
+        XCTAssertNil(sessionShowingPane(pid), "nothing is opened before the user decides")
+        XCTAssertTrue(session.debugSelectAction(0, ofAnnouncementWithIdentifier: try XCTUnwrap(strandedAnnouncementIdentifier(session))))
+        var adopted: PTYSession?
+        waitUntil("the pane to open in a tab", timeout: commandTimeout) {
+            adopted = sessionShowingPane(pid)
+            return adopted?.delegate?.realParentWindow() != nil
+        }
+        let tab = try XCTUnwrap(adopted)
+        addTeardownBlock { @MainActor in
+            self.close(tab)
+        }
+        waitUntil("what it wrote without a session to be shown", timeout: commandTimeout) {
+            self.screenText(tab).contains("early-go")
+        }
+        tab.writeTask("later\r")
+        waitUntil("it to take input", timeout: commandTimeout) {
+            self.screenText(tab).contains("pane-said-later")
+        }
+        XCTAssertEqual(tab.framerPaneArrangement?["owner"] as? String, session.guid)
+        XCTAssertNil(session.conductor?.unclaimedPanes[pid], "claimed, so nothing is kept for it")
+    }
+
+    // Stopping kills it on the host, and no session is opened for it.
+    func testAStrandedPaneCanBeStopped() throws {
+        let session = try XCTUnwrap(connect())
+        let pid = try strandPane(on: session)
+        waitUntil("the user to be told", timeout: commandTimeout) {
+            strandedAnnouncementIdentifier(session).map { session.hasAnnouncement(withIdentifier: $0) } ?? false
+        }
+        XCTAssertTrue(session.debugSelectAction(1, ofAnnouncementWithIdentifier: try XCTUnwrap(strandedAnnouncementIdentifier(session))))
+        // The host is this Mac.
+        waitUntil("the pane to be stopped", timeout: commandTimeout) {
+            kill(pid, 0) != 0 && errno == ESRCH
+        }
+        waitUntil("its exit to be heard", timeout: commandTimeout) {
+            session.conductor?.stoppingPanes.isEmpty == true
+        }
+        XCTAssertNil(sessionShowingPane(pid))
+        XCTAssertNil(session.conductor?.unclaimedPanes[pid])
     }
 
     // MARK: - Default target

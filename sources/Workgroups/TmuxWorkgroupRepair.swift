@@ -17,7 +17,15 @@
 
 import Foundation
 
-struct TmuxWorkgroupRepair {
+/// Work done on the server while holding the session's workgroup lock (TmuxWorkgroupRepairer): a
+/// snapshot, then one command list, and again until nothing is left.
+protocol TmuxWorkgroupLockedRepair {
+    mutating func start() -> TmuxWorkgroupRepair.Action?
+    mutating func didSnapshot(_ replies: [String?]) -> TmuxWorkgroupRepair.Action?
+    mutating func didRepair() -> TmuxWorkgroupRepair.Action?
+}
+
+struct TmuxWorkgroupRepair: TmuxWorkgroupLockedRepair {
     enum Action: Equatable {
         /// Send as one list; report with didSnapshot(_:).
         case snapshot([String])

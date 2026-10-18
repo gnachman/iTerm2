@@ -221,9 +221,10 @@ final class TmuxWorkgroupPeerCreator {
     }
 }
 
-/// Holds the session's workgroup lock while repairing an instance (TmuxWorkgroupRepair), then
-/// releases it. Like TmuxWorkgroupPeerCreator, each step is one command or one atomic list, so a
-/// client that vanishes between steps leaves only a stale lock and whatever is still to repair.
+/// Holds the session's workgroup lock while repairing an instance (TmuxWorkgroupRepair), or doing
+/// other locked work such as TmuxWorkgroupHiddenPaneRelease, then releases it. Like
+/// TmuxWorkgroupPeerCreator, each step is one command or one atomic list, so a client that vanishes
+/// between steps leaves only a stale lock and whatever is still to repair.
 final class TmuxWorkgroupRepairer {
     enum Outcome: Equatable {
         case finished(repairs: Int)
@@ -236,16 +237,26 @@ final class TmuxWorkgroupRepairer {
 
     private let gatewayProvider: () -> TmuxGateway?
     private let lockDriver: TmuxWorkgroupLockDriver
-    private var repair: TmuxWorkgroupRepair
+    private var repair: any TmuxWorkgroupLockedRepair
     private var completion: ((Outcome) -> Void)?
+
+    convenience init(gatewayProvider: @escaping () -> TmuxGateway?,
+                     sessionID: Int,
+                     instanceID: String,
+                     identity: TmuxWorkgroupCommands.ClientIdentity) {
+        self.init(gatewayProvider: gatewayProvider,
+                  sessionID: sessionID,
+                  identity: identity,
+                  repair: TmuxWorkgroupRepair(sessionID: sessionID, instanceID: instanceID))
+    }
 
     init(gatewayProvider: @escaping () -> TmuxGateway?,
          sessionID: Int,
-         instanceID: String,
-         identity: TmuxWorkgroupCommands.ClientIdentity) {
+         identity: TmuxWorkgroupCommands.ClientIdentity,
+         repair: any TmuxWorkgroupLockedRepair) {
         self.gatewayProvider = gatewayProvider
         lockDriver = TmuxWorkgroupLockDriver(gatewayProvider: gatewayProvider, sessionID: sessionID, identity: identity)
-        repair = TmuxWorkgroupRepair(sessionID: sessionID, instanceID: instanceID)
+        self.repair = repair
     }
 
     func run(completion: @escaping (Outcome) -> Void) {

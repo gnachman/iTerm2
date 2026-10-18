@@ -345,6 +345,7 @@ static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archi
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
 static NSString *const SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE = @"Auto Send Clippings When Idle";  // BOOL. Code-review peer's toolbar toggle state.
 static NSString *const SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE = @"Auto Request Review When Idle";  // BOOL. Main session's toolbar toggle state.
+static NSString *const SESSION_ARRANGEMENT_FRAMER_PANE = @"Framer Pane";  // NSDictionary from -framerPaneArrangement: a workgroup peer running as a pane of its leader's framer, which it reattaches to after a restart.
 static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
 static NSString *const SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT = @"Code Review Last Prompt";  // NSString. The prompt text the user last submitted in a code-review session, so a reload after restore defaults to their edited prompt.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
@@ -457,8 +458,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // A tmux pane on a host reached through SSH Integration: the pane's pid on that host, from
     // #{pane_pid}. Its jobs are read from the gateway conductor's view of the host's processes
     // (see remoteTmuxPaneProcessInfoProvider). nil for a pane on this Mac, which uses
-    // _shell.tmuxClientProcessID instead.
+    // _shell.tmuxClientProcessID instead. Also set for a framer pane (a workgroup peer running
+    // as a pane of its leader's framer): the pane's pid on the leader's host.
     NSNumber *_remoteTmuxPanePID;
+    // Set while restarting a program through the fallback of a framer pane that could not
+    // start, so the next -startProgram:... runs it as a local process.
+    BOOL _startNextProgramLocally;
+
+    // Where the screen records flow-controlled frames from the framer as it parses and
+    // executes them, for the conductor's flow controller. See iTermFramerFlowLedger.
+    iTermFramerFlowLedger *_flowLedger;
 
     NSString *_termVariable;
 
@@ -951,6 +960,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
         _screen = [[VT100Screen alloc] init];
         NSParameterAssert(_shell != nil && _screen != nil);
+        _flowLedger = [[iTermFramerFlowLedger alloc] init];
+        iTermFramerFlowLedger *flowLedger = _flowLedger;
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                 VT100ScreenMutableState *mutableState,
+                                                 id<VT100ScreenDelegate> delegate) {
+            mutableState.flowLedger = flowLedger;
+        }];
 
         _overriddenFields = [[NSMutableSet alloc] init];
 
@@ -1213,6 +1229,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
+    [_flowLedger release];
     [_restoreSavedForegroundJobAncestors release];
     [_slowlySentPasteEvents release];
     [_restoredArchivePath release];
@@ -2462,6 +2479,13 @@ ITERM_WEAKLY_REFERENCEABLE
             if (didAttach) {
                 runCommand = NO;
                 attachedToServer = YES;
+                if (aSession->_conductor) {
+                    // Resynchronizing with the framer should not wait for the host to print
+                    // something.
+                    [aSession.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                        [mutableState flushParserAsynchronously];
+                    }];
+                }
                 shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
@@ -2510,6 +2534,14 @@ ITERM_WEAKLY_REFERENCEABLE
         // paths all require isRestartable, i.e. a non-nil _program). If the
         // arrangement carried no restartable program, fall through to the
         // normal path rather than stranding a dead, unrestartable pane.
+        NSDictionary *framerPane = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_FRAMER_PANE]];
+        if (runCommand && framerPane && [aSession restoreFramerPaneFromArrangement:framerPane launchCommand:aSession.program]) {
+            // A workgroup peer whose pane may still be running on its leader's host: reattach
+            // to it instead of launching anything. A code-review or diff peer too, whose
+            // program would otherwise be left exited.
+            DLog(@"Restored a framer pane; it reattaches instead of relaunching");
+            runCommand = NO;
+        }
         if (runCommand && aSession.isRestartable) {
             if ([options[PTYSessionArrangementOptionsInhibitRelaunch] boolValue] ||
                 (workgroupState &&
@@ -3148,6 +3180,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id<ProcessInfoProvider>)processInfoProvider {
+    if (_shell.framerPaneJobManager) {
+        id<ProcessInfoProvider> provider = self.hostConductor.processInfoProvider;
+        if (provider) {
+            return provider;
+        }
+        return [iTermProcessCache sharedInstance];
+    }
     PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
     if (tmuxGatewaySession && self.isTmuxClient && !_conductor) {
         return [tmuxGatewaySession processInfoProvider];
@@ -3159,6 +3198,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id<SessionProcessInfoProvider>)sessionProcessInfoProvider {
+    if (_shell.framerPaneJobManager) {
+        return [self remoteTmuxPaneProcessInfoProvider] ?: _shell;
+    }
     PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
     if (tmuxGatewaySession && self.isTmuxClient && !_conductor && !_tmuxController.serverIsLocal) {
         id<SessionProcessInfoProvider> pane = [self remoteTmuxPaneProcessInfoProvider];
@@ -3677,6 +3719,36 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
          arrangementName,
          @(fromArrangement),
          self);
+    if (_startNextProgramLocally) {
+        _startNextProgramLocally = NO;
+    } else if (!browser) {
+        // A workgroup peer of a leader on a remote host runs its program as a pane of the
+        // leader's framer when it can. If the pane cannot start, start it as before.
+        __weak __typeof(self) weakSelf = self;
+        void (^fallback)(void) = ^{
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            strongSelf->_startNextProgramLocally = YES;
+            [strongSelf startProgram:command
+                                 ssh:ssh
+                             browser:browser
+                         environment:environment
+                         customShell:customShell
+                              isUTF8:isUTF8
+                       substitutions:substitutions
+                         arrangement:arrangementName
+                     fromArrangement:fromArrangement
+                webViewConfiguration:webViewConfiguration
+                          completion:completion];
+        };
+        if ([self startWorkgroupProgramInFramerPaneIfPossible:command
+                                                   completion:completion
+                                                     fallback:fallback]) {
+            return;
+        }
+    }
     _temporarilySuspendOffscreenMarkAlerts = fromArrangement;
     self.program = command;
     self.customShell = customShell;
@@ -4112,6 +4184,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
         [self uninstallTmuxTitleMonitor];
         [self uninstallTmuxForegroundJobMonitor];
+        [self stopTrackingRemoteTmuxPane];
+    } else if (_shell.framerPaneJobManager) {
         [self stopTrackingRemoteTmuxPane];
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
@@ -7724,6 +7798,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_WORKGROUP] = workgroupState;
     }
 
+    // Only with contents, as when restoring windows after a restart: the pane is still running
+    // then. A saved arrangement opened later starts its program anew.
+    NSDictionary *framerPane = includeContents ? self.framerPaneArrangement : nil;
+    if (framerPane) {
+        result[SESSION_ARRANGEMENT_FRAMER_PANE] = framerPane;
+    }
+
     // The prompt the user last submitted in a code-review session. Not
     // derivable from the workgroup config (which only has the raw command
     // template), so persist it here; on restore a reload defaults to the
@@ -10656,6 +10737,40 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 // The pane's own jobs on the remote host, once its pid is known and the connection is framing.
+- (void)framerPaneDidStartWithCommand:(NSString *)command remotePID:(pid_t)pid {
+    if (command) {
+        // As -startProgram:... would record it, so a restart relaunches the same thing.
+        self.program = command;
+    }
+    _sshState = iTermSSHStateNone;
+    [self stopTrackingRemoteTmuxPane];
+    _remoteTmuxPanePID = [@(pid) retain];
+    // Registers the pid with the leader's framer so its jobs are tracked. The session's root
+    // pid variable follows on the next foreground job update.
+    [self remoteTmuxPaneProcessInfoProvider];
+}
+
+// The terminal identity a local program would get, for a framer pane's program on the remote
+// host. Nothing else from this Mac's environment applies there.
+- (NSDictionary<NSString *, NSString *> *)framerPaneEnvironment {
+    NSDictionary *env = [self environmentForNewJobFromEnvironment:@{}
+                                                    substitutions:@{}
+                                                      arrangement:nil
+                                                  fromArrangement:NO
+                                                 sshConfiguration:nil];
+    NSArray<NSString *> *keys = @[ @"TERM", @"COLORTERM", @"TERM_PROGRAM", @"TERM_PROGRAM_VERSION",
+                                   @"LC_TERMINAL", @"LC_TERMINAL_VERSION", @"TERM_FEATURES",
+                                   @"TERM_SESSION_ID", @"ITERM_SESSION_ID", @"ITERM_PROFILE" ];
+    NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
+    for (NSString *key in keys) {
+        NSString *value = [NSString castFrom:env[key]];
+        if (value) {
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
 - (id<SessionProcessInfoProvider>)remoteTmuxPaneProcessInfoProvider {
     if (!_remoteTmuxPanePID) {
         return nil;
@@ -10675,6 +10790,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (iTermConductor *)hostConductor {
     if (_conductor) {
         return _conductor;
+    }
+    if (_shell.framerPaneJobManager) {
+        return self.framerPaneHostConductor;
     }
     if (self.isTmuxClient) {
         return self.tmuxGatewaySession.conductor;
@@ -11189,6 +11307,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     PTYTab *tab = [_tmuxController window:windowId];
     if (tab) {
         [[tab realParentWindow] removeTab:tab];
+    } else if ([_tmuxController isParkedWindow:windowId]) {
+        [_tmuxController parkedWindowDidClose:windowId];
     }
     [_tmuxController windowsChanged];
 }
@@ -21456,10 +21576,12 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
                  shouldInjectShellIntegration:NO
                                        parent:previousConductor];
     [_conductor adoptIT2RecoveryStateFrom:recovering];
-    [recovering release];
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
+    // The framer's panes keep running: keep what was kept for those without a session.
+    [_conductor adoptUnclaimedPanesFrom:recovering];
+    [recovering release];
     _shell.sshIntegrationActive = _conductor != nil;
     return YES;
 }
@@ -26961,6 +27083,10 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 - (void)conductorDismissIT2AuthorizationPromptWithGUID:(NSString *)guid {
     [self dismissIT2AuthorizationAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+}
+
+- (iTermFramerFlowLedger *)conductorFlowLedger {
+    return _flowLedger;
 }
 
 - (void)conductorSendInitialText {

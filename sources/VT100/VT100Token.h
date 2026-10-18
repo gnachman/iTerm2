@@ -493,6 +493,12 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 
 @property(nonatomic) VT100TerminalTokenType type;
 @property(nonatomic) SSHInfo sshInfo;
+// For SSH_OUTPUT under flow control: whether the frame carried the fields below, the framer's
+// clock in milliseconds when it sent the frame, and its flow flags (1: the framer ran out of
+// credit before sending it; 2: sent from the echo allowance, outside credit).
+@property(nonatomic) BOOL sshFlowControlled;
+@property(nonatomic) int64_t sshSendMilliseconds;
+@property(nonatomic) int sshFlowFlags;
 @property(nonatomic, strong, nullable) NSArray<VT100Token *> *subtokens;
 
 + (instancetype)token;

@@ -138,7 +138,7 @@ class DispatchTests(CommandTestCase):
     def test_every_handler_is_registered(self):
         self.assertEqual(sorted(self.framer.HANDLERS), sorted(
             "run login pane panesize send kill quit register deregister poll reset reset2 "
-            "autopoll recover save file eval getenv runpy it2listen it2send it2close flow "
+            "autopoll recover save file eval getenv runpy it2listen it2send it2close flow panes "
             "drain ping".split()))
 
     def test_identifiers_are_unique_and_alphanumeric(self):
@@ -861,8 +861,13 @@ class CommandReaderTests(H.FramerTestCase):
     def test_parse_grant(self):
         parse = self.framer._parse_grant
         grant = H.b64("grant")
-        self.assertEqual(parse([grant, H.b64("100"), ""]), 100)
-        self.assertEqual(parse([grant[:3] + "\\", grant[3:], H.b64("7"), ""]), 7)
+        self.assertEqual(parse([grant, H.b64("100"), ""]), ("leader", 100))
+        self.assertEqual(parse([grant[:3] + "\\", grant[3:], H.b64("7"), ""]), ("leader", 7))
+        self.assertEqual(parse([grant, H.b64("it2"), H.b64("9"), ""]), ("it2", 9))
+        self.assertEqual(parse([grant, H.b64("leader"), H.b64("0"), ""]), ("leader", 0))
+        self.assertEqual(parse([grant, H.b64("4321"), H.b64("50"), ""]), (4321, 50))
+        self.assertIsNone(parse([grant, H.b64("-5"), H.b64("50"), ""]))
+        self.assertIsNone(parse([grant, H.b64("nobody"), H.b64("50"), ""]))
         self.assertIsNone(parse([grant, H.b64("-1"), ""]))
         self.assertIsNone(parse([grant, H.b64("lots"), ""]))
         self.assertIsNone(parse([grant, ""]))
@@ -974,6 +979,7 @@ class FlowGapTests(H.FramerTestCase):
             source.ready = True
             framer.SOURCES.append(source)
             try:
+                framer._flow_tick()  # Output begins waiting.
                 clock[0] += 6
                 framer.FLOW.note_command()
                 framer._flow_tick()

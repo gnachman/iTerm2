@@ -874,6 +874,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         return *boolPtr;
     }
     NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.CloseTmuxWindowsAfterDetach", nil, [NSBundle mainBundle], @"Close tmux windows after detaching?", @"Prompt asking whether to close tmux windows after detaching");
+    _askedWhetherTmuxWindowsShouldCloseAfterDetach = YES;
     [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:YES

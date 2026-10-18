@@ -331,6 +331,16 @@ static void HandleSigChld(int n) {
     return [[iTermChannelJobManager castFrom:_jobManager] ioBuffer];
 }
 
+- (void)setFramerPaneJobManager:(iTermFramerPaneJobManager *)jobManager {
+    RLog(@"Configure %@ as a framer pane with %@", self, jobManager);
+    _jobManager = jobManager;
+    [[TaskNotifier sharedInstance] registerTask:self];
+}
+
+- (iTermFramerPaneJobManager *)framerPaneJobManager {
+    return [iTermFramerPaneJobManager castFrom:_jobManager];
+}
+
 - (int)readOnlyFileDescriptor {
     if (![_jobManager isKindOfClass:[iTermTmuxJobManager class]]) {
         return -1;
@@ -364,6 +374,11 @@ static void HandleSigChld(int n) {
     iTermIOBuffer *ioBuffer = self.ioBuffer;
     if (ioBuffer) {
         [ioBuffer write:data];
+        return;
+    }
+    iTermFramerPaneJobManager *framerPane = self.framerPaneJobManager;
+    if (framerPane) {
+        [framerPane forwardData:data];
         return;
     }
     // Write as much as we can now through the non-blocking pipe
@@ -435,6 +450,12 @@ static void HandleSigChld(int n) {
     for (int i = 0; i < iterations; ++i) {
         // Only read up to MAXRW*iterations bytes, then release control
         ssize_t n = read(self.fd, buffer + bytesRead, MAXRW);
+        if (n == 0 && bytesRead == 0 && self.framerPaneJobManager) {
+            // A framer pane's output comes through a pipe, which reads end of file rather than
+            // failing as a pty does when its program is gone.
+            [self brokenPipe];
+            return;
+        }
         if (n < 0) {
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
@@ -950,7 +971,12 @@ static void HandleSigChld(int n) {
         .pixelSize = iTermTTYPixelSizeMake(pointSize.width * scaleFactor,
                                            pointSize.height * scaleFactor)
     };
-    iTermSetTerminalSize(self.fd, desiredSize);
+    iTermFramerPaneJobManager *framerPane = self.framerPaneJobManager;
+    if (framerPane) {
+        [framerPane setGridSize:gridSize];
+    } else {
+        iTermSetTerminalSize(self.fd, desiredSize);
+    }
     [self.delegate taskDidResizeToGridSize:gridSize pixelSize:NSMakeSize(desiredSize.pixelSize.width,
                                                                          desiredSize.pixelSize.height)];
 }

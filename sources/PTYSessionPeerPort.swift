@@ -429,17 +429,42 @@ class PTYSessionPeerPort: NSObject {
         return nil
     }
 
-    // Terminate inactive session and release references.
+    // End the non-leader members and release references.
     func invalidate() {
         RLog("PTYSessionPeerPort.invalidate: port=\(debugDescription) peerIDs=\(peers.keys.sorted())")
         invalidated = true
         for identifier in peers.keys where identifier != leader {
             peers[identifier]?.then {
-                RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\($0.guid) exited=\($0.exited)")
-                $0.terminate()
+                Self.end(peer: $0, identifier: identifier)
             }
         }
         peers = [:]
+    }
+
+    /// A buried peer is terminated. One in a tab is closed through the tab, which closes the
+    /// tab (and its window) if it was the tab's only session. That happens when the teardown
+    /// could not swap the leader back in because the leader itself is what ended, as when
+    /// detaching from tmux while a peer is in view. Terminating it in place would leave its
+    /// tab, and maybe its window, with no session.
+    private static func end(peer session: PTYSession, identifier: String) {
+        guard session.delegate != nil else {
+            RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\(session.guid) exited=\(session.exited)")
+            session.terminate()
+            return
+        }
+        RLog("PTYSessionPeerPort.invalidate: closing peer \(identifier) guid=\(session.guid) in its tab")
+        // On a later pass: the teardown runs while the leader is still terminating.
+        DispatchQueue.main.async { [weak session] in
+            guard let session else {
+                return
+            }
+            if let delegate = session.delegate {
+                // Soft: a tmux pane on the server is left alone.
+                delegate.softClose(session)
+            } else {
+                session.terminate()
+            }
+        }
     }
 }
 

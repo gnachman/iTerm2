@@ -340,8 +340,9 @@ enum WGFix {
     }
 
     static func wrap(name: String,
-                     sessions: [iTermWorkgroupSessionConfig]) -> iTermWorkgroup {
-        return iTermWorkgroup(uniqueIdentifier: newID(),
+                     sessions: [iTermWorkgroupSessionConfig],
+                     uniqueIdentifier: String = newID()) -> iTermWorkgroup {
+        return iTermWorkgroup(uniqueIdentifier: uniqueIdentifier,
                               name: name,
                               sessions: sessions)
     }

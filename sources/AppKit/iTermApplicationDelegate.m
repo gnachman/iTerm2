@@ -1772,6 +1772,8 @@ void TurnOnDebugLoggingAutomatically(void) {
                 [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
                 _postRestorationStepsFinished = YES;
                 [self maybeReportSessionRestorationComplete];
+                // Like orphaned job servers, remote panes no restored session claims.
+                [[iTermFramerPaneStrandedFinder sharedInstance] restorationDidSettle];
             } else {
                 [[NSNotificationCenter defaultCenter] addObserver:self
                                                          selector:@selector(itermDidDecodeWindowRestorableState:)
@@ -1782,6 +1784,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     } else {
         [self restoreBuriedSessionsState];
         [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
+        [[iTermFramerPaneStrandedFinder sharedInstance] restorationDidSettle];
         if (_restorableStateController) {
             [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
                 _postRestorationStepsFinished = YES;
@@ -2005,6 +2008,7 @@ static iTermKeyEventReplayer *gReplayer;
         [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
         _postRestorationStepsFinished = YES;
         [self maybeReportSessionRestorationComplete];
+        [[iTermFramerPaneStrandedFinder sharedInstance] restorationDidSettle];
     }
 }
 

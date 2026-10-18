@@ -392,4 +392,67 @@ final class WorkgroupRestorationTests: WorkgroupEntryTestBase {
                          "Embedded member arrangement must not nest a workgroup descriptor")
         }
     }
+
+    // MARK: - Peers on a remote host
+
+    private func remoteHost() -> WorkgroupRemoteHost {
+        return WorkgroupRemoteHost(hops: [SSHReconnectionInfo(sshargs: "host", initialDirectory: nil, boolargs: "")],
+                                   directory: "/srv/repo", sshConfig: nil)
+    }
+
+    // A restored remote peer must still run on the host: without its remote host, a reload ran
+    // the peer's command on this Mac.
+    func test_encodeState_recordsEachRemotePeersHost() {
+        let wg = WGFix.wgRootWithPeers(n: 2)
+        let peers = makePeerSessions(wg)
+        for s in peers.values {
+            s.workgroupRemoteHost = remoteHost()
+        }
+        let anchorID = peers.keys.sorted().first!
+        let inst = iTermWorkgroupController.instance.adopt(
+            workgroup: wg, leader: leader, instanceUniqueIdentifier: "wg-test",
+            activeIdentifier: anchorID,
+            gitBase: CCGitBaseSelectorItem.defaultBase,
+            peerSessionsByConfigID: peers, nonPeerSessionsByConfigID: [:])
+        defer { iTermWorkgroupController.instance.exit(on: leader) }
+        XCTAssertNotNil(inst)
+
+        let state = iTermWorkgroupRestoration.encodeState(forSession: peers[anchorID]!,
+                                                          includeContents: false)!
+        let saved = state[iTermWorkgroupRestoration.Key.remoteHosts] as? [String: [String: Any]]
+        XCTAssertEqual(Set(saved?.keys ?? [:].keys), Set(peers.keys),
+                       "every remote peer, the anchor included")
+    }
+
+    func test_restoreRemoteHosts_givesMembersAndNewPeersTheirHost() throws {
+        let saved = try XCTUnwrap(remoteHost().dictionaryValue)
+        let restoredPeer = PTYSession(synthetic: false)!
+        let anchor = PTYSession(synthetic: false)!
+        let descriptor: [AnyHashable: Any] = [
+            iTermWorkgroupRestoration.Key.remoteHosts: ["peer": saved, "anchor": saved]
+        ]
+        iTermWorkgroupRestoration.restoreRemoteHosts(
+            from: descriptor,
+            sessionsByConfigID: ["peer": restoredPeer, "anchor": anchor, "leader": leader],
+            leader: leader,
+            spawner: anchor)
+        XCTAssertEqual(restoredPeer.workgroupRemoteHost?.directory, "/srv/repo")
+        XCTAssertEqual(anchor.workgroupRemoteHost?.directory, "/srv/repo")
+        XCTAssertNil(leader.workgroupRemoteHost, "the leader is not a peer")
+        // A peer spawned before the leader's connection recovers still goes to the host.
+        XCTAssertEqual(MainActor.assumeIsolated { anchor.remoteHostForNewWorkgroupPeer?.directory }, "/srv/repo")
+        let launch = try XCTUnwrap(restoredPeer.workgroupPeerLaunchCommand("git diff"))
+        XCTAssertTrue(launch.contains("host"), launch)
+        XCTAssertFalse(launch.hasSuffix("git diff"), "not run on this Mac: \(launch)")
+    }
+
+    func test_restoreRemoteHosts_leavesLocalWorkgroupsAlone() {
+        let peer = PTYSession(synthetic: false)!
+        iTermWorkgroupRestoration.restoreRemoteHosts(from: [:],
+                                                     sessionsByConfigID: ["peer": peer],
+                                                     leader: leader,
+                                                     spawner: peer)
+        XCTAssertNil(peer.workgroupRemoteHost)
+        XCTAssertNil(MainActor.assumeIsolated { peer.remoteHostForNewWorkgroupPeer })
+    }
 }

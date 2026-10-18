@@ -9,7 +9,8 @@
 //
 //  Behavior always comes from a local workgroup whose shape matches. When none matches, the
 //  instance's panes stay ordinary panes and nothing on the server changes, so another Mac that does
-//  have a matching workgroup can still adopt it; the user is told once per connection.
+//  have a matching workgroup can still adopt it; the user is told once per connection. Its parked
+//  peers, which no tab here can show, are offered to the user (TmuxWorkgroupHiddenPaneOffer).
 //
 
 import Foundation
@@ -31,6 +32,7 @@ final class TmuxWorkgroupAttacher: NSObject {
     private var endedHere = Set<String>()
     /// This connection's client, as tmux reports it; names it as a lock holder. Nil until known.
     private(set) var identity: TmuxWorkgroupCommands.ClientIdentity?
+    private var hiddenPaneOffer: TmuxWorkgroupHiddenPaneOffer?
 
     /// For TmuxController, which lists windows with this option to recognize parked ones.
     @objc static var parkedOptionName: String {
@@ -44,6 +46,8 @@ final class TmuxWorkgroupAttacher: NSObject {
     @objc init(controller: TmuxController) {
         self.controller = controller
         super.init()
+        hiddenPaneOffer = TmuxWorkgroupHiddenPaneOffer(controller: controller) { [weak self] in self?.identity }
+        hiddenPaneOffer?.didRelease = { [weak self] in self?.refresh() }
     }
 
     /// Call once the initial windows are open.
@@ -87,6 +91,7 @@ final class TmuxWorkgroupAttacher: NSObject {
         guard let gateway = controller?.gateway else {
             return
         }
+        hiddenPaneOffer?.wake()
         for instance in iTermWorkgroupController.instance.allInstances {
             if let binding = instance.tmuxBinding, binding.uses(gateway: gateway) {
                 binding.wakeLockWaiters()
@@ -153,10 +158,12 @@ final class TmuxWorkgroupAttacher: NSObject {
                 return
             }
             self.refreshing = false
-            if replies.count == 3, let options = replies[0], let panes = replies[1], let windows = replies[2] {
+            if replies.count == 3, let options = replies[0], let paneReply = replies[1], let windowReply = replies[2] {
+                let panes = TmuxWorkgroupAdoption.panes(listPanesReply: paneReply)
+                let windows = TmuxWorkgroupAdoption.windows(listWindowsReply: windowReply)
                 let derivation = TmuxWorkgroupState.derive(
-                    panes: TmuxWorkgroupAdoption.panes(listPanesReply: panes),
-                    windows: TmuxWorkgroupAdoption.windows(listWindowsReply: windows),
+                    panes: panes,
+                    windows: windows,
                     instanceOptions: TmuxWorkgroupAdoption.instanceOptions(showReply: options))
                 for id in derivation.undecodableInstanceIDs {
                     RLog("TmuxWorkgroupAttacher: instance \(id) has a record this version cannot read; leaving it alone")
@@ -172,6 +179,13 @@ final class TmuxWorkgroupAttacher: NSObject {
                         .first { $0.instanceUniqueIdentifier == derived.instanceID }?
                         .tmuxBinding?.update(from: derived)
                 }
+                // What adoption left unreachable here. Instances ended here are on their way out.
+                let adopted = self.adoptedInstanceIDs(gateway: gateway).union(self.endedHere)
+                self.hiddenPaneOffer?.update(TmuxWorkgroupHiddenPanes.find(panes: panes,
+                                                                          windows: windows,
+                                                                          derivation: derivation,
+                                                                          adoptedHere: adopted),
+                                             adoptedHere: adopted)
             } else {
                 RLog("TmuxWorkgroupAttacher: could not read workgroup state from tmux")
             }

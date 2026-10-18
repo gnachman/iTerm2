@@ -623,6 +623,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)terminalDidReadRawSSHData:(nullable NSData *)data
                               pid:(int)pid
                           channel:(int)channel;
+// The contents of a flow-controlled frame have executed: `length` bytes the framer sent at
+// `sendMilliseconds` on its clock, with flow `flags`. Called before the frame's own handling.
+- (void)terminalDidExecuteFlowControlledSSHOutputOfLength:(NSUInteger)length
+                                         sendMilliseconds:(int64_t)sendMilliseconds
+                                                    flags:(int)flags;
 // Output of a pane process (SSH_OUTPUT_PANE_CHANNEL) started by the conductor at `depth`.
 - (void)terminalDidReadSSHPaneOutput:(nullable NSData *)data
                                  pid:(int)pid

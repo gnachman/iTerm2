@@ -151,7 +151,9 @@ def unlock(writes):
 # measured with the timestamps on %output frames. Off until iTerm2 sends `flow on`; until then
 # the framer reads and frames output exactly as before.
 
-FLOW_VERSION = 1
+# The newest version this framer speaks. iTerm2 asks for one with `flow on [version]`.
+# Version 1 has a single flow; version 2 gives the leader, each pane and it2 credit of their own.
+FLOW_VERSION = 2
 FLOW_READ_SIZE = 4096
 FLOW_INITIAL_CREDIT = 8192
 # A drain with no grant for this long ends itself, so a controller that dies mid-drain cannot
@@ -169,6 +171,9 @@ FLOW_ECHO_REFILL = 2560
 FLOW_TICK = 0.25
 FLOW_FLAG_LIMITED = 1
 FLOW_FLAG_EXEMPT = 2
+# Flows. A pane's flow is its pid.
+FLOW_LEADER = 'leader'
+FLOW_IT2 = 'it2'
 
 def _flow_clock():
     """A clock that never jumps and counts time asleep, so its offset from iTerm2's stays put."""
@@ -197,30 +202,41 @@ def flow_send_ms():
 
 class FlowControl:
     """The framer's side of flow control: credit, drains, the valve and the echo allowance.
-    Takes its clock so tests can run it on fake time."""
+    Takes its clock so tests can run it on fake time.
+
+    Credit belongs to a flow: FLOW_LEADER (the login shell and side commands), a pane's pid, or
+    FLOW_IT2. In version 1 every source spends the leader's credit and it2 data is not
+    controlled; in version 2 each flow has credit of its own, granted separately, so a peer
+    whose session reads slowly holds back only itself."""
 
     def __init__(self, clock):
         self.clock = clock
         self.enabled = False
-        self.credit = 0
+        self.version = 0
+        self.credits = {}
+        # Flows that ran out of credit since their last frame.
+        self.limited_flows = set()
         self.draining = False
         self.drain_started = 0
         self.valve_open = False
         self.valve_at = 0
         self.last_grant = 0
+        # When output last started waiting for credit, or None while nothing waits.
+        self.waiting_since = None
         self.last_command = None
-        self.limited = False
         self.bucket = 0
         self.bucket_at = 0
 
-    def enable(self):
+    def enable(self, version=1):
         now = self.clock()
         self.enabled = True
-        self.credit = FLOW_INITIAL_CREDIT
+        self.version = version
+        # The leader starts with the initial credit; iTerm2 grants other flows theirs.
+        self.credits = {FLOW_LEADER: FLOW_INITIAL_CREDIT}
+        self.limited_flows = set()
         self.draining = False
         self.valve_open = False
         self.last_grant = now
-        self.limited = False
         self.bucket = FLOW_ECHO_ALLOWANCE
         self.bucket_at = now
 
@@ -229,41 +245,70 @@ class FlowControl:
         self.draining = False
         self.valve_open = False
 
-    def budget(self):
-        """How many bytes may be read from a source now."""
-        if not self.enabled:
+    def _key(self, flow):
+        return flow if self.version >= 2 else FLOW_LEADER
+
+    def controls(self, flow):
+        """Whether reading from `flow` needs credit."""
+        return self.enabled and (self.version >= 2 or flow != FLOW_IT2)
+
+    @property
+    def credit(self):
+        """The leader's credit."""
+        return self.credits.get(FLOW_LEADER, 0)
+
+    def credit_of(self, flow):
+        return self.credits.get(self._key(flow), 0)
+
+    def budget(self, flow=FLOW_LEADER):
+        """How many bytes may be read from a source of `flow` now."""
+        if not self.controls(flow):
             return FLOW_READ_SIZE
-        return max(0, min(self.credit, FLOW_READ_SIZE))
+        return max(0, min(self.credit_of(flow), FLOW_READ_SIZE))
 
-    def spend(self, n):
-        if not self.enabled:
+    def has_credit(self):
+        return not self.enabled or any(c > 0 for c in self.credits.values())
+
+    def spend(self, n, flow=FLOW_LEADER):
+        if not self.controls(flow):
             return
-        self.credit -= n
-        if self.credit <= 0:
-            self.credit = 0
-            self.limited = True
+        key = self._key(flow)
+        credit = self.credits.get(key, 0) - n
+        if credit <= 0:
+            credit = 0
+            self.limited_flows.add(key)
+        self.credits[key] = credit
 
-    def take_flags(self, exempt=False):
-        """Flags for the frame about to be sent. LIMITED marks the frame that used up the
-        credit, which tells iTerm2 its rate samples were limited by the window."""
-        flags = FLOW_FLAG_LIMITED if self.limited else 0
-        self.limited = False
+    def take_flags(self, exempt=False, flow=FLOW_LEADER):
+        """Flags for the flow's frame about to be sent. LIMITED marks the frame that used up the
+        flow's credit, which tells iTerm2 its rate samples were limited by the window."""
+        key = self._key(flow)
+        flags = FLOW_FLAG_LIMITED if key in self.limited_flows else 0
+        self.limited_flows.discard(key)
         if exempt:
             flags |= FLOW_FLAG_EXEMPT
         return flags
 
-    def grant(self, n):
+    def grant(self, n, flow=FLOW_LEADER):
         if not self.enabled:
             return
-        self.credit += n
+        key = self._key(flow)
+        self.credits[key] = self.credits.get(key, 0) + n
         self.last_grant = self.clock()
         self.draining = False
         self.valve_open = False
 
+    def forget(self, flow):
+        """A pane ended; its credit goes with it."""
+        if self.version >= 2 and flow != FLOW_LEADER:
+            self.credits.pop(flow, None)
+            self.limited_flows.discard(flow)
+
     def drain(self):
         if not self.enabled:
             return
-        self.credit = 0
+        for key in self.credits:
+            self.credits[key] = 0
         self.draining = True
         self.drain_started = self.clock()
         self.valve_open = False
@@ -300,28 +345,51 @@ class FlowControl:
         return max(0.0, (waiting - self.bucket) / FLOW_ECHO_REFILL)
 
     def tick(self, waiting):
-        """Called every FLOW_TICK. `waiting` says whether output is held for lack of credit.
-        Returns True when the valve opens, so the caller can report it."""
+        """Called every FLOW_TICK. `waiting` is the set of flows with output held for lack of
+        credit (True means the leader's). Returns True when the valve opens, so the caller can
+        report it."""
         if not self.enabled:
             return False
+        if waiting is True:
+            waiting = {FLOW_LEADER}
+        elif not waiting:
+            waiting = set()
+        waiting = {self._key(flow) for flow in waiting}
         now = self.clock()
         if self.draining:
             if now - self.drain_started >= FLOW_DRAIN_TIMEOUT:
                 self.draining = False
-                self.credit = max(self.credit, FLOW_DRAIN_FLOOR)
+                for key in self.credits:
+                    self.credits[key] = max(self.credits[key], FLOW_DRAIN_FLOOR)
             return False
         if self.valve_open:
             bytes_due = int((now - self.valve_at) * FLOW_VALVE_RATE)
-            self.credit += bytes_due
+            self._add_to(waiting, bytes_due)
             self.valve_at += bytes_due / FLOW_VALVE_RATE
             return False
-        if (waiting and now - self.last_grant >= FLOW_VALVE_SILENCE and
+        if not waiting:
+            self.waiting_since = None
+            return False
+        if self.waiting_since is None:
+            self.waiting_since = now
+        # Silence counts from when output began waiting: an idle iTerm2 has no reason to
+        # grant, so the last grant can be long past when a flood starts.
+        silence = now - max(self.last_grant, self.waiting_since)
+        if (silence >= FLOW_VALVE_SILENCE and
                 self.last_command is not None and now - self.last_command < FLOW_VALVE_SILENCE):
             self.valve_open = True
             self.valve_at = now
-            self.credit += int(FLOW_VALVE_RATE * FLOW_TICK)
+            self._add_to(waiting, int(FLOW_VALVE_RATE * FLOW_TICK))
             return True
         return False
+
+    def _add_to(self, flows, n):
+        """The valve's trickle, shared by the flows that are waiting."""
+        if not flows:
+            flows = {FLOW_LEADER}
+        share = n // len(flows)
+        for key in flows:
+            self.credits[key] = self.credits.get(key, 0) + share
 
 FLOW = FlowControl(flow_now)
 
@@ -345,6 +413,13 @@ class FlowSource:
     @property
     def is_login(self):
         return self.proc is not None and self.proc.login
+
+    @property
+    def flow(self):
+        """Whose credit reads from this source spend."""
+        if self.proc is not None and self.proc.pane:
+            return self.proc.pid
+        return FLOW_LEADER
 
     @property
     def blocked(self):
@@ -421,7 +496,8 @@ def _read(source, size):
         return b''
 
 def _service(source):
-    budget = FLOW.budget()
+    flow = source.flow
+    budget = FLOW.budget(flow)
     exempt = False
     if budget == 0:
         if source.pending is None:
@@ -453,7 +529,7 @@ def _service(source):
     if source.pending is None:
         source.ready = False
     if not exempt:
-        FLOW.spend(len(data))
+        FLOW.spend(len(data), flow)
     result = source.callback(source.channel, data, exempt)
     if not data:
         remove_source(source)
@@ -491,16 +567,21 @@ def _retry_echo_after(delay):
 def flow_changed():
     """Call after anything that can add credit or start or end a drain."""
     if IT2_GATE is not None:
-        if FLOW.draining:
-            IT2_GATE.clear()
-        else:
+        if it2_may_read():
             IT2_GATE.set()
+        else:
+            IT2_GATE.clear()
     _schedule_flow_tick()
-    if FLOW.budget() > 0:
+    if FLOW.has_credit():
         _schedule_pump()
 
-def flow_grant(n):
-    FLOW.grant(n)
+def flow_grant(n, flow=FLOW_LEADER):
+    if isinstance(flow, int):
+        proc = PROCESSES.get(flow)
+        if proc is None or not proc.pane:
+            # The pane ended, or never was one: nothing may spend this.
+            return
+    FLOW.grant(n, flow)
     flow_changed()
 
 def _schedule_flow_tick():
@@ -512,25 +593,40 @@ def _schedule_flow_tick():
 def _flow_tick():
     global FLOW_TICK_HANDLE
     FLOW_TICK_HANDLE = None
-    waiting = any(s.ready for s in SOURCES)
+    waiting = {s.flow for s in SOURCES if s.ready}
     if FLOW.tick(waiting):
         q = lock()
         send_esc(q, '%notif valve')
         unlock(q)
     flow_changed()
 
+def it2_may_read():
+    """In version 1, it2 data is not under credit, but it must not fill the path while a drain
+    is measuring it empty. In version 2 it reads only with credit of its own."""
+    if FLOW.draining:
+        return False
+    return FLOW.budget(FLOW_IT2) > 0
+
 async def it2_gate():
-    """Waits while a drain is in progress. it2 data is not under credit in version 1, but it
-    must not fill the path while a drain is measuring it empty."""
+    """Waits until it2 data may be read."""
     global IT2_GATE
     if IT2_GATE is None:
         IT2_GATE = asyncio.Event()
-        if not FLOW.draining:
+        if it2_may_read():
             IT2_GATE.set()
     await IT2_GATE.wait()
 
+def _parse_flow(token):
+    if token in (FLOW_LEADER, FLOW_IT2):
+        return token
+    pid = int(token)
+    if pid <= 0:
+        raise ValueError(token)
+    return pid
+
 def _parse_grant(lines):
-    """The byte count if lines (ending in a blank line) are a grant command, else None."""
+    """(flow, byte count) if lines (ending in a blank line) are a grant command, else None.
+    `grant <bytes>` is the leader's; `grant <flow> <bytes>` names the flow."""
     args = []
     for line in lines:
         if not line:
@@ -540,12 +636,14 @@ def _parse_grant(lines):
         else:
             args.append(line)
     try:
-        if len(args) != 2 or base64.b64decode(args[0]) != b'grant':
+        if len(args) not in (2, 3) or base64.b64decode(args[0]) != b'grant':
             return None
-        n = int(base64.b64decode(args[1]).decode('utf-8'))
+        decoded = [base64.b64decode(arg).decode('utf-8') for arg in args[1:]]
+        flow = _parse_flow(decoded[0]) if len(decoded) == 2 else FLOW_LEADER
+        n = int(decoded[-1])
     except Exception:
         return None
-    return n if n >= 0 else None
+    return (flow, n) if n >= 0 else None
 
 def command_reader(stream, loop, queue):
     """Reads commands on a thread of its own. A grant takes effect as soon as it is read, even
@@ -566,7 +664,8 @@ def command_reader(stream, loop, queue):
             continue
         grant = _parse_grant(pending)
         if grant is not None:
-            loop.call_soon_threadsafe(flow_grant, grant)
+            flow, n = grant
+            loop.call_soon_threadsafe(flow_grant, n, flow)
         else:
             if len(pending) > 1:
                 loop.call_soon_threadsafe(FLOW.note_command)
@@ -774,6 +873,14 @@ class Process:
         except ProcessLookupError:
             # It has exited and been reaped, which now happens before its output ends.
             log(f'send_signal {self.__descr}: already exited')
+
+    def hang_up(self):
+        """What closing a terminal does to the session on it: SIGHUP, then SIGCONT so a stopped
+        job sees it, to the process group the program leads. An interactive shell ignores
+        SIGTERM but not SIGHUP, and passes the hangup on to its jobs."""
+        for sig in (signal.SIGHUP, signal.SIGCONT):
+            if not self._signal_group(sig):
+                self.send_signal(sig)
 
     def _signal_group(self, sig):
         """Returns whether the group got the signal. macOS fails with EPERM when only an
@@ -1215,33 +1322,39 @@ def pack_window_size(rows, cols):
     return struct.pack('HHHH', rows, cols, 0, 0)
 
 async def handle_pane(identifier, args):
-    """pane <rows> <cols> <cwd> <command...>
-    Runs command with the login shell on a new pty of its own, as a workgroup peer's program.
-    Unlike `run` it gets a controlling terminal and the framer's environment unchanged; unlike
-    `login` its output goes out on PANE_CHANNEL, it keeps its own window size, and it is never
-    treated as the login shell. Answers with the pid."""
+    """pane <rows> <cols> <cwd> <command> [NAME=value ...]
+    Runs command with the login shell on a new pty of its own, as a workgroup peer's program;
+    an empty command runs an interactive login shell. Unlike `run` it gets a controlling
+    terminal and the framer's environment, plus the variables given (the peer's own
+    TERM_SESSION_ID and terminal identity); unlike `login` its output goes out on PANE_CHANNEL,
+    it keeps its own window size, and it is never treated as the login shell. Answers with
+    the pid."""
     log(f'handle_pane {args}')
     try:
         rows = int(args[0])
         cols = int(args[1])
         cwd = os.path.expandvars(os.path.expanduser(args[2]))
-        command = " ".join(args[3:])
+        command = args[3]
+        variables = dict(arg.split("=", 1) for arg in args[4:])
     except Exception as e:
         log(f'handle_pane: {e}')
         fail(identifier, "bad arguments")
         return False
     window_size = pack_window_size(rows, cols)
-    if window_size is None or not command:
+    if window_size is None:
         fail(identifier, "bad arguments")
         return False
     login_shell = guess_login_shell()
     _, shell_name = os.path.split(login_shell)
+    argv = ["-" + shell_name] + (["-c", command] if command else [])
+    environment = dict(os.environ)
+    environment.update(variables)
     try:
         proc = await Process.run_tty(
             login_shell,
-            ["-" + shell_name, "-c", command],
+            argv,
             cwd,
-            os.environ,
+            environment,
             window_size)
     except Exception as e:
         log(f'handle_pane: {e}')
@@ -1255,6 +1368,14 @@ async def handle_pane(identifier, args):
     send_esc(q, proc.pid)
     end(q, identifier, 0)
     await proc.handle_read(make_monitor_process(proc, False))
+    return False
+
+async def handle_panes(identifier, args):
+    """panes: the pids of the running panes, on one line separated by spaces. A restarted or
+    recovered iTerm2 reattaches their sessions with this, and finds any no session claims."""
+    q = begin(identifier)
+    send_esc(q, " ".join(str(pid) for pid, proc in PROCESSES.items() if proc.pane))
+    end(q, identifier, 0)
     return False
 
 async def handle_panesize(identifier, args):
@@ -1277,6 +1398,12 @@ async def handle_panesize(identifier, args):
         log(f'handle_panesize: {e}')
         fail(identifier, "resize failed")
         return False
+    # The kernel signals only a change of size. A session that reattached sends its size
+    # whether or not it changed, so its program redraws what that session missed.
+    try:
+        os.killpg(os.tcgetpgrp(proc.master), signal.SIGWINCH)
+    except OSError as e:
+        log(f'handle_panesize: {e}')
     q = begin(identifier)
     end(q, identifier, 0)
     return False
@@ -1911,13 +2038,15 @@ async def handle_recover(identifier, args):
     send_esc(q, f'recovery: version 2')
     if FLOW.enabled:
         # The end of this block doubles as a drain's reply: everything before it is backlog.
-        send_esc(q, f'recovery: flow {FLOW_VERSION} {FLOW_CLOCK_NAME}')
+        send_esc(q, f'recovery: flow {FLOW.version} {FLOW_CLOCK_NAME}')
     for pid in PROCESSES:
         proc = PROCESSES[pid]
         if proc.login:
             send_esc(q, f'recovery: login {pid}')
             for key in RECOVERY_STATE:
                 send_esc(q, f'recovery: {key} {RECOVERY_STATE[key]}')
+        elif proc.pane:
+            send_esc(q, f'recovery: pane {pid}')
         else:
             send_esc(q, f'recovery: process {pid}')
     send_esc(q, f'end-recovery')
@@ -2015,23 +2144,32 @@ async def handle_kill(identifier, args):
         end(q,identifier, 1)
         return
     proc = PROCESSES[int(args[0])]
-    proc.send_signal(signal.SIGTERM)
+    if proc.pane:
+        proc.hang_up()
+    else:
+        proc.send_signal(signal.SIGTERM)
     q = begin(identifier)
     end(q,identifier, 0)
     return False
 
 async def handle_flow(identifier, args):
-    """flow on: turn flow control on with the initial credit. Answers with the protocol
-    version and the clock that %output timestamps use. iTerm2 must not grant until it has the
-    answer. (A grant is a command too, but command_reader applies it as soon as it is read and
-    it gets no reply.)"""
-    if args != ["on"]:
+    """flow on [version]: turn flow control on with the initial credit, speaking `version`
+    (1 if omitted). Answers with that version and the clock that %output timestamps use.
+    iTerm2 must not grant until it has the answer. (A grant is a command too, but
+    command_reader applies it as soon as it is read and it gets no reply.)"""
+    try:
+        if not args or args[0] != "on" or len(args) > 2:
+            raise ValueError(args)
+        version = int(args[1]) if len(args) == 2 else 1
+        if not 1 <= version <= FLOW_VERSION:
+            raise ValueError(version)
+    except ValueError:
         fail(identifier, "bad arguments")
         return False
-    FLOW.enable()
+    FLOW.enable(version)
     flow_changed()
     q = begin(identifier)
-    send_esc(q, f'{FLOW_VERSION} {FLOW_CLOCK_NAME}')
+    send_esc(q, f'{version} {FLOW_CLOCK_NAME}')
     end(q, identifier, 0)
     return False
 
@@ -2091,7 +2229,7 @@ def make_monitor_process(proc, islogin):
         if proc.pane:
             # iTerm2 reads a pane's terminal modes from the pane's own session, and the
             # %notif tty report names no process, so it would be taken as the leader's.
-            print_output(makeid(), proc.pid, PANE_CHANNEL, False, value, exempt)
+            print_output(makeid(), proc.pid, PANE_CHANNEL, False, value, exempt, flow=proc.pid)
             return None
         print_output(makeid(), proc.pid, channel, islogin, value, exempt)
         log("make_monitor_process: poll")
@@ -2102,13 +2240,17 @@ def make_monitor_process(proc, islogin):
         return None
     return monitor_process
 
-def print_output(identifier, pid, channel, islogin, data, exempt=False):
+def flow_suffix(flow, exempt=False):
+    """Under flow control, the framer's clock (for iTerm2's one-way delay) and the flags."""
+    if not FLOW.controls(flow):
+        return ''
+    return f' {flow_send_ms()} {FLOW.take_flags(exempt, flow)}'
+
+def print_output(identifier, pid, channel, islogin, data, exempt=False, flow=FLOW_LEADER):
     q = lock()
     if islogin:
         channel = -1
-    # Under flow control, the framer's clock (for iTerm2's one-way delay) and the flags.
-    flow = f' {flow_send_ms()} {FLOW.take_flags(exempt)}' if FLOW.enabled else ''
-    send_esc(q, f'%output {identifier} {pid} {channel} {DEPTH}{flow}')
+    send_esc(q, f'%output {identifier} {pid} {channel} {DEPTH}{flow_suffix(flow, exempt)}')
     send(q, data)
     send_esc(q, f'%end {identifier}')
     unlock(q)
@@ -2152,6 +2294,8 @@ async def cleanup():
         log(f'clean up pid {pid}')
         proc = PROCESSES[pid]
         del PROCESSES[pid]
+        if proc.pane:
+            FLOW.forget(proc.pid)
         await proc.cleanup()
         q = lock()
         send_esc(q, f'%terminate {proc.pid} {proc.return_code}')
@@ -2465,14 +2609,30 @@ async def handle_it2_connection(reader, writer):
         q = lock()
         send_esc(q, f'%it2 {connid} open')
         unlock(q)
+        # A byte read while there was no credit, held until there is. Reading it is how the
+        # end of the connection is noticed without credit, as with a pty's peek.
+        held = b''
         while True:
+            if not held and FLOW.controls(FLOW_IT2) and not it2_may_read():
+                held = await reader.read(1)
+                if not held:
+                    break
             await it2_gate()
-            data = await reader.read(IT2_READ_CHUNK)
-            if not data:
-                break
+            if held:
+                data, held = held, b''
+            else:
+                size = IT2_READ_CHUNK
+                if FLOW.controls(FLOW_IT2):
+                    size = min(size, max(1, FLOW.budget(FLOW_IT2)))
+                data = await reader.read(size)
+                if not data:
+                    break
+            FLOW.spend(len(data), FLOW_IT2)
             q = lock()
-            send_esc(q, f'%it2 {connid} data {base64.b64encode(data).decode("ascii")}')
+            send_esc(q, f'%it2 {connid} data {base64.b64encode(data).decode("ascii")}{flow_suffix(FLOW_IT2)}')
             unlock(q)
+            if FLOW.controls(FLOW_IT2):
+                flow_changed()
     except Exception as e:
         log(f'it2 connection {connid}: {e}')
     finally:
@@ -2572,6 +2732,7 @@ HANDLERS = {
     "login": handle_login,
     "pane": handle_pane,
     "panesize": handle_panesize,
+    "panes": handle_panes,
     "send": handle_send,
     "kill": handle_kill,
     "quit": handle_quit,

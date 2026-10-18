@@ -814,9 +814,12 @@ private class TokenExecutorImpl {
                     }
                 }
             }
-            if isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
+            if vectorHasNext && isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
                 // Avoid blocking the active session. If there were multiple mutation threads this
                 // would be unnecessary. Reschedule to resume processing once active sessions drain.
+                // Not after the group's last token: it is done, and returning here would skip
+                // counting its bytes (see the accumulation below), which flow control for a
+                // hidden workgroup peer depends on.
                 DLog("Stop processing early because active session has tokens")
                 queue.async { [weak self] in
                     self?.execute()

@@ -108,4 +108,25 @@ final class VT100ConductorPaneParserTests: XCTestCase {
         XCTAssertTrue(info.contains("depth=1"), "inner framer's depth: \(info)")
         XCTAssertEqual(leaked(tokens).map { $0.type }, [])
     }
+
+    // A framer with flow control on adds the time it sent the frame and its flow flags.
+    func testFlowFieldsReachTheToken() {
+        let parser = makeHookedParser()
+        let tokens = parse(osc134("%output out1 100 -1 0 123456789012 3") + Array("hi".utf8) +
+                           osc134("%end out1"), parser: parser)
+        let output = tokens.filter { $0.type == SSH_OUTPUT }
+        XCTAssertEqual(output.count, 1)
+        XCTAssertTrue(output[0].sshFlowControlled)
+        XCTAssertEqual(output[0].sshSendMilliseconds, 123456789012)
+        XCTAssertEqual(output[0].sshFlowFlags, 3)
+    }
+
+    func testFramesWithoutFlowFieldsAreUncontrolled() {
+        let parser = makeHookedParser()
+        let tokens = parse(osc134("%output out1 100 -1 0") + Array("hi".utf8) + osc134("%end out1"),
+                           parser: parser)
+        let output = tokens.filter { $0.type == SSH_OUTPUT }
+        XCTAssertEqual(output.count, 1)
+        XCTAssertFalse(output[0].sshFlowControlled)
+    }
 }

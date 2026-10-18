@@ -37,6 +37,8 @@ protocol ConductorDelegate: Any {
     @objc(conductorDismissIT2AuthorizationPromptWithGUID:)
     func conductorDismissIT2AuthorizationPrompt(guid: String)
     var guid: String { get }
+    // Where the session records the flow-controlled frames it parses and executes.
+    @objc optional func conductorFlowLedger() -> FramerFlowLedger?
 }
 
 @objc(iTermConductor)
@@ -242,6 +244,31 @@ class Conductor: NSObject, SSHIdentityProvider {
         case v2 = 2
     }
     private(set) var framerVersion: FramerVersion?
+
+    // Flow control; see Conductor+Flow.swift. In version 1 only the outermost conductor
+    // turns it on.
+    static var flowControlAvailable: Bool {
+        flowControlAvailableForTesting ?? iTermAdvancedSettingsModel.sshFlowControl()
+    }
+    static var flowControlAvailableForTesting: Bool?
+    var flowController: FramerFlowController?
+    /// The status a completion gets when its command was aborted or canceled rather than
+    /// answered.
+    static let abortedStatus: Int32 = -2
+    /// The framer's clock (boottime, monotonic or uptime), from its reply to `flow on`.
+    var flowClockName: String?
+    /// The flow control version the framer speaks: 1 has one flow, 2 a flow per source.
+    var flowVersion = 1
+    /// Flow control is being turned back on after iTerm2 restarted, while the framer may still
+    /// be spending credit granted before then.
+    var flowRestartingAfterRestore = false
+    var flowClock: () -> TimeInterval = Conductor.monotonicNow
+    /// Tests drive ticks themselves.
+    var flowTicksAutomatically = true
+    var flowTimer: Timer?
+    /// The delegate's ledger, once the controller is listening to it.
+    var activeFlowLedger: FramerFlowLedger?
+
     @objc var sshargs: String {
         restorableState.sshargs
     }
@@ -486,8 +513,24 @@ class Conductor: NSObject, SSHIdentityProvider {
         return provider
     }()
     var backgroundJobs = [Int32: State]()
+    /// Output received from each background job so far, in bytes.
+    private var backgroundJobOutputBytes = [Int32: Int]()
+    /// A command iTerm2 runs on the remote host, such as `man` or one an AI chat asked for, is
+    /// killed past this much output. Its output is held in memory, and flow control shares
+    /// credit with it, so one that never ends must not run forever.
+    var sideCommandOutputCap = 1024 * 1024
     // Pane processes this conductor's framer runs for workgroup peers. See Conductor+Panes.
     var panes = [Int32: WeakBox<ConductorPaneClient>]()
+    /// Output and exits of panes whose sessions have not reattached yet, after a restart or a
+    /// recovery. Kept until a session claims them, never dropped. See Conductor+Panes.swift.
+    var unclaimedPanes = [Int32: UnclaimedPane]()
+    /// Pids known to be panes of this framer: from recovery, or the last `panes` answer.
+    var knownPanePIDs = Set<Int32>()
+    /// Unclaimed panes the user chose to stop. What they write until they exit is not kept.
+    var stoppingPanes = Set<Int32>()
+    /// Set for a conductor restored from saved state or recovery until it has resynchronized
+    /// with its framer: commands sent before then can be lost, so panes wait to reattach.
+    private(set) var awaitingResynchronization = false
 
     @objc weak var delegate: ConductorDelegate? {
         didSet {
@@ -610,6 +653,12 @@ class Conductor: NSObject, SSHIdentityProvider {
         _parent = recovery.parent
         framerVersion = .init(rawValue: recovery.version)
         waitingToResynchronize = true
+        awaitingResynchronization = true
+        knownPanePIDs = Set(recovery.panes)
+        unclaimedPanes = recovery.unclaimedPanes
+        if let flow = recovery.flow {
+            resumeFlowControl(afterRecoveryWith: flow)
+        }
     }
 
     deinit {
@@ -995,8 +1044,19 @@ extension Conductor {
         case framerIT2Close(connid: String)
 
         // A workgroup peer's program on its own pty (framer.py handle_pane), and its size.
-        case framerPane(rows: Int, cols: Int, cwd: String, command: String)
+        case framerPane(rows: Int, cols: Int, cwd: String, command: String, environment: [String: String])
         case framerPaneSize(pid: Int32, rows: Int, cols: Int)
+
+        // Flow control (see FramerFlowController). Grants have no reply, so they are written
+        // directly instead of being queued.
+        /// Asks for flow control version 2, with credit per flow.
+        case framerFlowOn
+        /// What a framer that predates version 2 understands.
+        case framerFlowOnVersion1
+        case framerDrain
+        case framerPing
+        /// The pids of the framer's running panes.
+        case framerPanes
 
         /// The lines sent for this command, each base64-encoded on its own. A command whose
         /// arguments are free text lists them, so an argument containing a newline (a multi-line
@@ -1007,8 +1067,10 @@ extension Conductor {
                 return ["login", cwd] + args
             case .framerRun(let command):
                 return ["run", command]
-            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command):
-                return ["pane", String(rows), String(cols), cwd, command]
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command,
+                             environment: let environment):
+                return ["pane", String(rows), String(cols), cwd, command] +
+                    environment.keys.sorted().map { "\($0)=\(environment[$0]!)" }
             default:
                 return stringValue.components(separatedBy: "\n")
             }
@@ -1023,7 +1085,8 @@ extension Conductor {
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
                     .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements,
-                    .framerIT2Listen, .framerIT2Send, .framerIT2Close, .framerPane, .framerPaneSize:
+                    .framerIT2Listen, .framerIT2Send, .framerIT2Close, .framerPane, .framerPaneSize,
+                    .framerFlowOn, .framerFlowOnVersion1, .framerDrain, .framerPing, .framerPanes:
                 return true
             }
         }
@@ -1092,10 +1155,22 @@ extension Conductor {
                 return ["it2send", connid, data.base64EncodedString()].joined(separator: "\n")
             case .framerIT2Close(connid: let connid):
                 return ["it2close", connid].joined(separator: "\n")
-            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command):
-                return ["pane", String(rows), String(cols), cwd, command].joined(separator: "\n")
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command,
+                             environment: let environment):
+                return (["pane", String(rows), String(cols), cwd, command] +
+                    environment.keys.sorted().map { "\($0)=\(environment[$0]!)" }).joined(separator: "\n")
             case .framerPaneSize(pid: let pid, rows: let rows, cols: let cols):
                 return ["panesize", String(pid), String(rows), String(cols)].joined(separator: "\n")
+            case .framerFlowOn:
+                return ["flow", "on", "2"].joined(separator: "\n")
+            case .framerFlowOnVersion1:
+                return ["flow", "on"].joined(separator: "\n")
+            case .framerDrain:
+                return "drain"
+            case .framerPing:
+                return "ping"
+            case .framerPanes:
+                return "panes"
             }
         }
 
@@ -1161,10 +1236,20 @@ extension Conductor {
                 return "it2send \(connid) \(data.semiVerboseDescription)"
             case .framerIT2Close(connid: let connid):
                 return "it2close \(connid)"
-            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command):
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command, environment: _):
                 return "pane \(rows)x\(cols) cwd=\(cwd) “\(command)”"
             case .framerPaneSize(pid: let pid, rows: let rows, cols: let cols):
                 return "panesize \(pid) \(rows)x\(cols)"
+            case .framerFlowOn:
+                return "flow on 2"
+            case .framerFlowOnVersion1:
+                return "flow on"
+            case .framerDrain:
+                return "drain"
+            case .framerPing:
+                return "ping"
+            case .framerPanes:
+                return "panes"
             }
         }
     }
@@ -1425,6 +1510,10 @@ extension Conductor {
         }
         let handler: Handler
         var canceled = false
+        /// Queued in the priority lane, ahead of ordinary commands.
+        var isHighPriority: Bool?
+        /// When it was written, on Conductor.monotonicNow's clock, to time its round trip.
+        var writtenAt: TimeInterval?
 
         mutating func cancel() {
             if canceled {
@@ -1498,6 +1587,9 @@ extension Conductor {
         var boolArgs: String
         var clientUniqueID: String
         var version: Int
+        /// "1 <clock>" when the framer has flow control on.
+        var flow: String?
+        var panes: [Int32] = []
 
         var tree: NSDictionary {
             return (parentage + [Nesting(pid: login, dcsID: dcsID)]).tree
@@ -1516,6 +1608,8 @@ extension Conductor {
         var boolArgs: String?
         var clientUniqueID: String?
         var version: Int?
+        var flow: String?
+        var panes: [Int32] = []
 
         var finished: FinishedRecoveryInfo? {
             guard let login = login,
@@ -1532,7 +1626,9 @@ extension Conductor {
                 sshargs: sshargs,
                 boolArgs: boolArgs,
                 clientUniqueID: clientUniqueID,
-                version: version ?? 1)
+                version: version ?? 1,
+                flow: flow,
+                panes: panes)
         }
     }
 
@@ -1595,6 +1691,7 @@ extension Conductor {
             return nil
         }
         let leaf = Conductor(restorableState: leafState, restored: true)
+        leaf.awaitingResynchronization = true
         var current: Conductor? = leaf
         while current != nil {
             current?.delegate = delegate
@@ -1856,6 +1953,9 @@ extension Conductor {
     }
 
     @objc func startRecovery() {
+        // The conductor made from the recovery takes flow control over.
+        stopFlowControl()
+        abandonPanes()
         write("\n\("recover".base64Encoded)\n\n")
         waitingToResynchronize = true
         state = .recovery(.ground)
@@ -1878,9 +1978,14 @@ extension Conductor {
     func didResynchronize() {
         DLog("didResynchronize")
         waitingToResynchronize = false
+        awaitingResynchronization = false
         forceReturnToGroundState()
         resetTransitively()
         exfiltrateUsefulFramerInfo()
+        flowRecoveryDidFinish()
+        restartFlowControlAfterResynchronizing()
+        // Pane sessions reattach now that commands are safe.
+        NotificationCenter.default.post(name: Self.didResynchronizeNotification, object: self)
         // it2 proxy state (nonce/socket/authorization) is carried across recovery in
         // process from the pre-recovery conductor (see init(recovery:)), not re-read
         // from the framer: a fresh $SHELL -c getenv cannot see the one-time-injected
@@ -1889,6 +1994,8 @@ extension Conductor {
     }
 
     @objc func quit() {
+        stopFlowControl()
+        abandonPanes()
         cancelAllRequests()
         send(.quit, .fireAndForget)
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
@@ -1903,6 +2010,8 @@ extension Conductor {
         log("abandon")
         // First, so nothing that canceling requests triggers can write.
         abandoned = true
+        stopFlowControl()
+        abandonPanes()
         cancelAllRequests()
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
@@ -1935,7 +2044,12 @@ extension Conductor {
         return self.clientUniqueID == clientUniqueID || (parent?.ancestryContains(clientUniqueID: clientUniqueID) ?? false)
     }
 
+    /// Typed input, which takes the priority lane.
     @objc func sendKeys(_ data: Data) {
+        sendKeys(data, highPriority: true)
+    }
+
+    func sendKeys(_ data: Data, highPriority: Bool) {
         guard !abandoned else {
             log("Abandoned. Not sending keys.")
             return
@@ -1945,7 +2059,7 @@ extension Conductor {
             delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)
             return
         }
-        framerSend(data: data, pid: pid)
+        framerSend(data: data, pid: pid, highPriority: highPriority)
     }
 
     @objc
@@ -1989,6 +2103,7 @@ extension Conductor {
     private func doFraming() {
         activatePendingIT2()
         execFramer()
+        startFlowControlIfPossible()
         framerSave(["dcsID": dcsID,
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
@@ -2074,8 +2189,8 @@ extension Conductor {
         send(.framerEval(jumpScript), .handleJump(StringArray()))
     }
 
-    private func framerSend(data: Data, pid: Int32) {
-        send(.framerSend(data, pid: pid), .fireAndForget)
+    private func framerSend(data: Data, pid: Int32, highPriority: Bool) {
+        send(.framerSend(data, pid: pid), highPriority: highPriority, .fireAndForget)
     }
 
     // it2 CLI proxy senders. The demux (see Conductor+IT2) drives these to open a
@@ -2628,8 +2743,12 @@ extension Conductor {
             switch result {
             case .line(let line):
                 lines.strings.append(line)
-            case .sideChannelLine(_, _, _), .abort, .canceled:
+            case .sideChannelLine(_, _, _):
                 break
+            case .abort, .canceled:
+                // As other handlers do, so a caller waiting on the reply is not left hanging
+                // when the connection ends or the queue is reset.
+                completion.call("", Self.abortedStatus)
             case .end(let status):
                 completion.call(lines.strings.joined(separator: ""), Int32(status))
             }
@@ -2676,21 +2795,15 @@ extension Conductor {
 
     @objc func handleUnhook() {
         log("unhook")
+        stopFlowControl()
+        abandonPanes()
         // Settle the state before notifying anyone, the way forceReturnToGroundState does.
         // These handlers can call back into send() -- handleCheckForPython's abort arm calls
         // execLoginShell() -- and a re-entrant send() that saw the pipeline still in `state`
         // would extend it and write to a conductor being torn down, on a connection whose
         // framer is gone, after which `state = .unhooked` drops the contexts so those
         // handlers never fire.
-        var aborted: [ExecutionContext] = []
-        switch state {
-        case .executingPipeline(let context, _):
-            aborted.append(context)
-        case .willExecutePipeline(let contexts):
-            aborted.append(contexts.first!)
-        case .ground, .recovered, .unhooked, .recovery:
-            break
-        }
+        var aborted = contextsInFlight
         log("Abort pending commands")
         aborted.append(contentsOf: queue)
         queue = []
@@ -2746,6 +2859,10 @@ extension Conductor {
             do {
                 try withPipelineTransition {
                     try update(executionContext: contexts.first!, result: .end(status))
+                    // After the handler accepted the end (reset2 ignores stale ones), and
+                    // inside the transition, so a ping it sends waits until this command has
+                    // left the pipeline.
+                    flowCommandDidEnd(contexts.first!)
                 }
                 if contexts.count == 1 {
                     DLog("Command ended. Return to ground state.")
@@ -2765,6 +2882,7 @@ extension Conductor {
             do {
                 try withPipelineTransition {
                     try update(executionContext: context, result: .end(status))
+                    flowCommandDidEnd(context)
                 }
                 DLog("Command ended. Return to ground state.")
                 if pending.isEmpty {
@@ -2806,10 +2924,12 @@ extension Conductor {
                 try? update(executionContext: contexts.first!, result: .end(UInt8(code)))
                 log("Remove background job \(pid) after handling termination while in willExecutePipeline job state")
                 backgroundJobs.removeValue(forKey: pid)
+                backgroundJobOutputBytes.removeValue(forKey: pid)
             case let .executingPipeline(context, _):
                 do {
                     try update(executionContext: context, result: .end(UInt8(code)))
                     backgroundJobs.removeValue(forKey: pid)
+                    backgroundJobOutputBytes.removeValue(forKey: pid)
                     log("Remove background job \(pid) after handling termination while in executingPipeline job state")
                 } catch {
                     log("Got \(error) so not updating state")
@@ -2831,6 +2951,14 @@ extension Conductor {
             return
         }
         DLog("handleIT2 \(string.semiVerboseDescription) depth=\(depth)")
+        // Under flow control version 2, data carries the framer's clock and flags, which the
+        // screen recorded on arrival.
+        let parts = string.split(separator: " ", omittingEmptySubsequences: false)
+        if parts.count == 5, parts[1] == "data" {
+            it2DemuxForHandling().handle(parts[0...2].joined(separator: " "))
+            flowIT2DidConsume(bytes: Data(base64Encoded: String(parts[2]))?.count ?? 0)
+            return
+        }
         it2DemuxForHandling().handle(string)
     }
 
@@ -2861,6 +2989,9 @@ extension Conductor {
             log("No background job with pid \(pid)")
             return
         }
+        guard acceptBackgroundJobOutput(string, pid: pid) else {
+            return
+        }
 //        DLog("pid \(pid) channel \(channel) produced: \(string)")
         switch jobState {
         case .ground, .unhooked, .recovery, .recovered:
@@ -2880,6 +3011,22 @@ extension Conductor {
         }
     }
 
+    /// Counts a background job's output against sideCommandOutputCap. Past it, the job is
+    /// killed and the rest of its output dropped; it still ends when the framer reports it.
+    private func acceptBackgroundJobOutput(_ string: String, pid: Int32) -> Bool {
+        let before = backgroundJobOutputBytes[pid, default: 0]
+        let after = before + string.utf8.count
+        backgroundJobOutputBytes[pid] = after
+        guard after > sideCommandOutputCap else {
+            return true
+        }
+        if before <= sideCommandOutputCap {
+            RLog("Background job \(pid) produced more than \(sideCommandOutputCap) bytes. Kill it.")
+            send(.framerKill(pid: Int(pid)), .fireAndForget)
+        }
+        return false
+    }
+
     private func handleNotif(_ message: String) {
         let notifTTY = "%notif tty "
         if message.hasPrefix(notifTTY) {
@@ -2889,6 +3036,10 @@ extension Conductor {
         let notifSearch = "%notif search "
         if message.hasPrefix(notifSearch) {
             handleSearchNotif(String(message.dropFirst(notifSearch.count)))
+        }
+
+        if message.trimmingCharacters(in: .whitespacesAndNewlines) == "%notif valve" {
+            flowValveDidOpen()
         }
     }
 
@@ -2991,15 +3142,19 @@ extension Conductor {
                         state = .ground
 
                         delegate?.conductorStateDidChange()
-                        return ConductorRecovery(pid: finished.login,
+                        let recovery = ConductorRecovery(pid: finished.login,
                                                  dcsID: finished.dcsID,
                                                  tree: finished.tree,
                                                  sshargs: finished.sshargs,
                                                  boolArgs: finished.boolArgs,
                                                  clientUniqueID: finished.clientUniqueID,
                                                  version: finished.version,
+                                                 flow: finished.flow,
+                                                 panes: finished.panes,
                                                  parent: parent,
                                                  it2Proxy: it2Proxy)
+                        recovery.unclaimedPanes = unclaimedPanes
+                        return recovery
                     }
                     return nil
                 }
@@ -3033,6 +3188,13 @@ extension Conductor {
                     temp.boolArgs = String(value)
                 case "clientUniqueID":
                     temp.clientUniqueID = String(value)
+                case "flow":
+                    temp.flow = String(value)
+                case "pane":
+                    guard let pid = Int32(value) else {
+                        return nil
+                    }
+                    temp.panes.append(pid)
                 default:
                     return nil
                 }
@@ -3051,7 +3213,12 @@ extension Conductor {
         let context = ExecutionContext(command: command, handler: handler)
         DLog("Enqueue: \(command)")
         if highPriority {
-            queue.insert(context, at: 0)
+            // First in, first out among high-priority commands, so typed keys stay in order,
+            // and ahead of everything else, such as upload chunks.
+            var context = context
+            context.isHighPriority = true
+            let index = queue.firstIndex { $0.isHighPriority != true } ?? queue.count
+            queue.insert(context, at: index)
         } else {
             // A possible optimization is to merge search acks here. Rather than appending a new
             // ack to the queue, just increment the count.
@@ -3199,10 +3366,14 @@ extension Conductor {
                 try? update(executionContext: context, result: result)
             }
         }
-        let contexts = takeNextContextPipeline(existing, dropped: &dropped)
+        var contexts = takeNextContextPipeline(existing, dropped: &dropped)
         guard contexts.count > existing.count else {
             log("Nothing to take")
             return
+        }
+        let now = flowClock()
+        for i in existing.count..<contexts.count {
+            contexts[i].writtenAt = now
         }
         // The writes are a mutation window as well. State is already consistent here, so a
         // re-entrant send() would legitimately extend the pipeline and write immediately,
@@ -3215,7 +3386,7 @@ extension Conductor {
             for pending in contexts[existing.count...] {
                 willSend(pending)
                 let chunked = encode(pending)
-                write(chunked)
+                write(chunked, highPriority: pending.isHighPriority == true)
             }
         }
     }
@@ -3302,7 +3473,10 @@ extension Conductor {
         return pending
     }
 
-    private func write(_ string: String, end: String = "\n") {
+    /// A nested conductor's writes become its parent's keystrokes. `highPriority` carries the
+    /// priority lane through, so a key typed in a nested session is not held behind the
+    /// parent's own queued commands, while relayed bulk such as upload chunks is.
+    func write(_ string: String, end: String = "\n", highPriority: Bool = false) {
         log("write: \(string)")
         guard !abandoned else {
             log("Abandoned. Not writing.")
@@ -3313,7 +3487,7 @@ extension Conductor {
         if let parent = parent {
             if let data = (string + end).data(using: .utf8) {
                 log("ask parent to send: \(string)")
-                parent.sendKeys(data)
+                parent.sendKeys(data, highPriority: highPriority)
             } else {
                 log("can't utf-8 encode string to send: \(string)")
             }
@@ -3352,18 +3526,36 @@ extension Conductor {
         }
     }
 
+    /// Every command written and not yet answered, oldest first.
+    private var contextsInFlight: [ExecutionContext] {
+        switch state {
+        case .executingPipeline(let context, let pending):
+            return [context] + pending
+        case .willExecutePipeline(let contexts):
+            return contexts
+        case .ground, .recovered, .unhooked, .recovery:
+            return []
+        }
+    }
+
     func forceReturnToGroundState() {
         log("forceReturnToGroundState")
+        // Commands in flight are abandoned as well as queued ones. Each handler hears of it,
+        // or a caller waiting on its reply (a pane's start, say) would wait forever. State is
+        // settled first, since handlers can send again.
+        let aborted = contextsInFlight + queue
         state = .ground
-        for context in queue {
+        queue = []
+        for context in aborted {
             try? update(executionContext: context, result: .abort)
         }
-        queue = []
         parent?.forceReturnToGroundState()
     }
 
     private func fail(_ reason: String) {
         DLog("FAIL: \(reason)")
+        stopFlowControl()
+        abandonPanes()
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)

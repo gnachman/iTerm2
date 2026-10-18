@@ -101,6 +101,21 @@ def end_status(identifier):
     return None
 
 
+def reply_lines(identifier):
+    """The lines between begin and end for identifier."""
+    lines = []
+    inside = False
+    for p, _ in payloads():
+        parts = p.split()
+        if parts[:2] == ["begin", identifier]:
+            inside = True
+        elif parts[:2] == ["end", identifier]:
+            return lines
+        elif inside:
+            lines.append(p)
+    return lines
+
+
 async def wait_for(predicate, timeout=10.0):
     deadline = asyncio.get_event_loop().time() + timeout
     while asyncio.get_event_loop().time() < deadline:
@@ -110,8 +125,9 @@ async def wait_for(predicate, timeout=10.0):
     return predicate()
 
 
-async def start_pane(identifier, command, rows=24, cols=80, cwd=None):
-    await framer.handle_pane(identifier, [str(rows), str(cols), cwd or os.getcwd(), command])
+async def start_pane(identifier, command, rows=24, cols=80, cwd=None, env=None):
+    await framer.handle_pane(identifier, [str(rows), str(cols), cwd or os.getcwd(), command] +
+                             ["%s=%s" % kv for kv in (env or {}).items()])
     return begun_pid(identifier)
 
 
@@ -181,6 +197,66 @@ async def test_pane_has_a_controlling_terminal_and_the_framers_environment():
         check("var=inherited" in out, "inherits the framer's environment: %r" % out)
     finally:
         del os.environ["FRAMER_PANE_TEST"]
+    return check.result()
+
+
+async def test_pane_gets_the_variables_it_is_given():
+    # iTerm2 sends the peer's own TERM_SESSION_ID and terminal identity; everything else comes
+    # from the framer's environment.
+    check = Checker("test_pane_gets_the_variables_it_is_given")
+    _frames.clear()
+    os.environ["FRAMER_PANE_TEST"] = "inherited"
+    try:
+        pid = await start_pane(
+            "id-vars",
+            "echo id=$TERM_SESSION_ID term=$TERM var=$FRAMER_PANE_TEST odd=$ODD",
+            env={"TERM_SESSION_ID": "w0t1p2:ABC", "TERM": "xterm-256color",
+                 "ODD": "a=b c"})
+        if pid is None:
+            check(False, "no pid: %r" % payloads())
+            return check.result()
+        await run_to_exit(pid)
+        out = pane_output(pid)
+        check("id=w0t1p2:ABC" in out, "the peer's session id: %r" % out)
+        check("term=xterm-256color" in out, "TERM: %r" % out)
+        check("var=inherited" in out, "the framer's environment otherwise: %r" % out)
+        check("odd=a=b c" in out, "a value with = and spaces: %r" % out)
+        check(os.environ.get("TERM_SESSION_ID") != "w0t1p2:ABC", "the framer's own is untouched")
+    finally:
+        del os.environ["FRAMER_PANE_TEST"]
+    return check.result()
+
+
+async def test_an_empty_command_is_an_interactive_login_shell():
+    check = Checker("test_an_empty_command_is_an_interactive_login_shell")
+    _frames.clear()
+    pid = await start_pane("id-shell", "")
+    if pid is None:
+        check(False, "no pid: %r" % payloads())
+        return check.result()
+    await framer.handle_send("id-shell-send", [str(pid), base64.b64encode(b"echo inter$((6*7))\nexit\n").decode()])
+    await run_to_exit(pid)
+    check("inter42" in pane_output(pid), "ran what was typed: %r" % pane_output(pid))
+    return check.result()
+
+
+async def test_killing_an_interactive_pane_ends_it():
+    # Closing a peer's session kills its pane. An interactive shell ignores SIGTERM, so the
+    # framer hangs up on the pane instead, as closing a terminal does.
+    check = Checker("test_killing_an_interactive_pane_ends_it")
+    _frames.clear()
+    pid = await start_pane("id-kill-shell", "")
+    if pid is None:
+        check(False, "no pid: %r" % payloads())
+        return check.result()
+    # Let the shell start and install its signal handling.
+    await framer.handle_send("id-kill-ready", [str(pid), base64.b64encode(b"echo rea$((1+1))dy\n").decode()])
+    deadline = asyncio.get_event_loop().time() + 10
+    while "rea2dy" not in pane_output(pid) and asyncio.get_event_loop().time() < deadline:
+        await asyncio.sleep(0.01)
+    await framer.handle_kill("id-kill", [str(pid)])
+    check(end_status("id-kill") == 0, "kill answered")
+    check(await run_to_exit(pid) is not None, "the shell ended")
     return check.result()
 
 
@@ -259,11 +335,59 @@ async def test_pane_is_not_the_login_shell():
     _frames.clear()
     await framer.handle_recover("id-recover", [])
     recovery = [p for p, _ in payloads() if p.startswith("recovery: ")]
-    check("recovery: process %d" % pid in recovery, "recovered as a process: %r" % recovery)
+    check("recovery: pane %d" % pid in recovery, "recovered as a pane, not the login shell: %r" % recovery)
     check("recovery: login %d" % pid not in recovery, "not recovered as the login shell")
 
     await framer.handle_send("id-send", [str(pid), base64.b64encode(b"\n").decode()])
     check(await run_to_exit(pid) == 0, "exited")
+    return check.result()
+
+
+async def test_panes_lists_the_running_panes():
+    # A restarted or recovered iTerm2 asks which panes survived, to reattach their sessions and
+    # to find any no session claims.
+    check = Checker("test_panes_lists_the_running_panes")
+    _frames.clear()
+    pane = await start_pane("id-listed", "exec sleep 30")
+    await framer.handle_run("id-run", ["exec sleep 30"])
+    run_pid = begun_pid("id-run")
+    if pane is None or run_pid is None:
+        check(False, "no pids: %r" % payloads())
+        return check.result()
+    await framer.handle_panes("id-panes", [])
+    check(end_status("id-panes") == 0, "answers")
+    check(reply_lines("id-panes") == [str(pane)], "only panes: %r" % reply_lines("id-panes"))
+    second = await start_pane("id-second", "exec sleep 30")
+    await framer.handle_panes("id-panes2", [])
+    check(sorted(reply_lines("id-panes2")[0].split()) == sorted([str(pane), str(second)]),
+          "on one line: %r" % reply_lines("id-panes2"))
+    _frames.clear()
+    await framer.handle_recover("id-recover", [])
+    texts = [p for p, _ in payloads()]
+    check("recovery: pane %d" % pane in texts, "recovery marks the pane: %r" % texts)
+    check("recovery: process %d" % run_pid in texts, "and the run job as before")
+    for pid in (pane, second, run_pid):
+        framer.PROCESSES[pid].send_signal(9)
+        await run_to_exit(pid)
+    return check.result()
+
+
+async def test_resizing_to_the_same_size_still_signals_the_program():
+    # A session that reattached sends its size so its program redraws what it missed, even when
+    # the size has not changed, which the kernel would not signal by itself.
+    check = Checker("test_resizing_to_the_same_size_still_signals_the_program")
+    _frames.clear()
+    pid = await start_pane("id-winch", "trap 'echo got-winch' WINCH; echo ready; "
+                                       "while :; do sleep 0.1; done", rows=24, cols=80)
+    if pid is None:
+        check(False, "no pid: %r" % payloads())
+        return check.result()
+    check(await wait_for(lambda: "ready" in pane_output(pid)), "started")
+    await framer.handle_panesize("id-same", [str(pid), "24", "80"])
+    check(end_status("id-same") == 0, "resized")
+    check(await wait_for(lambda: "got-winch" in pane_output(pid)), "signaled: %r" % pane_output(pid))
+    framer.PROCESSES[pid].send_signal(9)
+    await run_to_exit(pid)
     return check.result()
 
 
@@ -274,6 +398,8 @@ async def test_bad_arguments_fail():
     check(end_status("id-short") == 1, "too few arguments")
     await framer.handle_pane("id-nan", ["x", "80", "/", "true"])
     check(end_status("id-nan") == 1, "rows not a number")
+    await framer.handle_pane("id-badenv", ["24", "80", "/", "true", "NOEQUALS"])
+    check(end_status("id-badenv") == 1, "a variable without =")
     await framer.handle_panesize("id-size-nan", ["1", "x", "80"])
     check(end_status("id-size-nan") == 1, "resize rows not a number")
     check(framer.PROCESSES == {}, "nothing started: %r" % framer.PROCESSES)
@@ -286,10 +412,15 @@ async def run():
     for test in (
         test_output_goes_out_on_the_pane_channel,
         test_pane_has_a_controlling_terminal_and_the_framers_environment,
+        test_pane_gets_the_variables_it_is_given,
+        test_an_empty_command_is_an_interactive_login_shell,
+        test_killing_an_interactive_pane_ends_it,
         test_pane_starts_in_the_directory_given,
         test_pane_has_its_own_size_and_can_be_resized,
         test_control_c_interrupts_the_pane,
         test_pane_is_not_the_login_shell,
+        test_panes_lists_the_running_panes,
+        test_resizing_to_the_same_size_still_signals_the_program,
         test_bad_arguments_fail,
     ):
         results.append(await test())

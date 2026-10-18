@@ -806,6 +806,13 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // The conductor for the host this session's shell runs on: its own, or for a tmux pane, the
 // gateway's, since a pane never owns one. nil for a session on this Mac.
 @property(nonatomic, readonly, nullable) iTermConductor *hostConductor;
+
+// A framer pane (a workgroup peer running as a pane of its leader's framer) started running
+// `command` (its launch command, which a restart reuses) as `pid` on the leader's host. A pane
+// adopted after it was stranded has no launch command.
+- (void)framerPaneDidStartWithCommand:(nullable NSString *)command remotePID:(pid_t)pid;
+// The terminal identity variables a framer pane's program gets on the remote host.
+- (NSDictionary<NSString *, NSString *> *)framerPaneEnvironment;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 @property(nonatomic, readonly) iTermSessionModeHandler *modeHandler;

@@ -612,6 +612,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)userNotificationTriggerRateLimit;
 + (BOOL)openProfilesInNewWindow;
 + (NSString *)validCharactersInSSHUserNames;
++ (BOOL)sshFlowControl;
 + (BOOL)vs16Supported;
 + (BOOL)vs16SupportedInPrimaryScreen;
 

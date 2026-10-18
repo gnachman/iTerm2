@@ -105,6 +105,9 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     // $HOST, and must not override the verified host. Atomic because the main
     // thread reads it to skip notifying us on every write. See issue 13117.
     atomic_bool _verifiedOSC7WindowOpen;
+    // Held while parsing and queueing tokens, so they are queued in the order they were parsed
+    // when something besides the pty's thread parses (see -flushParserAsynchronously).
+    NSLock *_parseLock;
 }
 
 // Implemented by the superclass (VT100ScreenState), which owns the backing
@@ -182,6 +185,7 @@ static BOOL sOSC7DisabledWarningShown;
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithQueue:queue];
         _postTriggerActions = [NSMutableArray array];
+        _parseLock = [[NSLock alloc] init];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
         const int defaultWidth = 80;
@@ -6136,6 +6140,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // WARNING: This is called on PTYTask's thread.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    [_parseLock lock];
     // Pass the input stream to the parser.
     [self.terminal.parser putStreamData:buffer length:length];
 
@@ -6145,14 +6150,126 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     int nonSignalingLength = [self.terminal.parser addParsedTokensToVector:&vector];
 
     if (CVectorCount(&vector) == 0) {
+        // The parser holds all of it, such as the start of an escape sequence. The executor
+        // will never hear of these bytes, so count them now: a pane's flow control waits for
+        // every byte it sent to be consumed. The parser holds only a few bytes at a time.
+        [self.consumptionLedger frameDidExecuteWithLength:length];
         CVectorDestroy(&vector);
+        [_parseLock unlock];
         return;
     }
+    [self handleFramesOnArrivalIn:&vector];
 
     [self addTokens:vector
         lengthTotal:length
 lengthExcludingInBandSignaling:nonSignalingLength
        highPriority:NO];
+    [_parseLock unlock];
+}
+
+// Queues what the parser has to say without new input. After it enters conductor recovery mode
+// that is the boundary token that ends recovery, which otherwise waits for the host to print
+// something, which an idle host may not do for a long time. Off the mutation queue because
+// queueing can wait for the mutation queue to make room.
+- (void)flushParserAsynchronously {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        [weakSelf flushParser];
+    });
+}
+
+- (void)flushParser {
+    [_parseLock lock];
+    CVector vector;
+    CVectorCreate(&vector, 1);
+    [self.terminal.parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        [_parseLock unlock];
+        return;
+    }
+    [self handleFramesOnArrivalIn:&vector];
+    // No bytes were read, but the executor ignores an empty batch.
+    [self addTokens:vector
+        lengthTotal:1
+lengthExcludingInBandSignaling:0
+       highPriority:NO];
+    [_parseLock unlock];
+}
+
+// WARNING: This is called on PTYTask's thread, before addTokens can block on a full queue.
+// Flow control counts a frame as arrived here. A workgroup peer's pane output leaves here too,
+// for the pane's own session, rather than waiting its turn behind this session's output; its
+// token is then skipped when executed.
+- (void)handleFramesOnArrivalIn:(CVector *)vector {
+    iTermFramerFlowLedger *ledger = self.flowLedger;
+    const BOOL recording = ledger.isActive;
+    const int count = CVectorCount(vector);
+    NSMutableArray<VT100Token *> *paneTokens = nil;
+    for (int i = 0; i < count; i++) {
+        VT100Token *token = CVectorGetObject(vector, i);
+        if (token.type == SSH_OUTPUT) {
+            const BOOL isPane = token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL;
+            if (recording && token.sshFlowControlled) {
+                [ledger frameDidArriveWithLength:token.savedData.length
+                                sendMilliseconds:token.sshSendMilliseconds
+                                           flags:token.sshFlowFlags
+                                            flow:isPane ? token.csi->p[0] : 0];
+            }
+            if (isPane && token.savedData) {
+                if (!paneTokens) {
+                    paneTokens = [NSMutableArray array];
+                }
+                [paneTokens addObject:token];
+            }
+        } else if (token.type == SSH_IT2 && recording) {
+            [self recordArrivalOfIT2Data:token.string ledger:ledger];
+        }
+    }
+    if (!paneTokens) {
+        return;
+    }
+    NSMutableArray<NSArray *> *outputs = [NSMutableArray arrayWithCapacity:paneTokens.count];
+    for (VT100Token *token in paneTokens) {
+        [outputs addObject:@[ token.savedData,
+                              @(token.csi->p[0]),
+                              @(token.sshInfo.valid ? token.sshInfo.depth : 0) ]];
+        token.type = VT100_SKIP;
+    }
+    DLog(@"Hand %@ pane frames to their sessions on arrival", @(outputs.count));
+    // Urgent: it is another session's output, and that session is on screen exactly when this
+    // one (its workgroup's leader) is not.
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        for (NSArray *output in outputs) {
+            [delegate screenDidReadSSHPaneOutput:output[0]
+                                             pid:[output[1] intValue]
+                                           depth:[output[2] intValue]];
+        }
+    } name:@"read pane output"];
+}
+
+// "<connid> data <base64> <send-ms> <flags>": it2 data under flow control (version 2). Credit
+// counts the decoded bytes.
+- (void)recordArrivalOfIT2Data:(NSString *)payload ledger:(iTermFramerFlowLedger *)ledger {
+    NSArray<NSString *> *parts = [payload componentsSeparatedByString:@" "];
+    if (parts.count != 5 || ![parts[1] isEqualToString:@"data"]) {
+        return;
+    }
+    NSString *base64 = parts[2];
+    NSUInteger padding = 0;
+    if ([base64 hasSuffix:@"=="]) {
+        padding = 2;
+    } else if ([base64 hasSuffix:@"="]) {
+        padding = 1;
+    }
+    const NSInteger length = (NSInteger)(base64.length / 4 * 3) - (NSInteger)padding;
+    if (length < 0) {
+        return;
+    }
+    [ledger frameDidArriveWithLength:length
+                    sendMilliseconds:parts[3].longLongValue
+                               flags:parts[4].intValue
+                                flow:iTermFramerFlowLedger.it2Flow];
 }
 
 // WARNING: This is called on PTYTask's thread.
@@ -8543,6 +8660,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)tokenExecutorDidExecuteWithLengthTotal:(NSInteger)lengthTotal
                 lengthExcludingInBandSignaling:(NSInteger)lengthExcludingInBandSignaling
                                     throughput:(NSInteger)throughput {
+    [self.consumptionLedger frameDidExecuteWithLength:lengthTotal];
     [_executorUpdate addBytesExecutedTotal:lengthTotal
                   excludingInBandSignaling:lengthExcludingInBandSignaling];
     _executorUpdate.estimatedThroughput = throughput;

@@ -743,6 +743,7 @@ DEFINE_BOOL(tmuxWindowsOpenInBackground, NO, SECTION_TMUX, NSLocalizedStringWith
 #define SECTION_SSH @"SSH Integration"
 
 DEFINE_STRING(unameCommand, @"uname -s", SECTION_SSH, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.unameCommand", nil, [NSBundle mainBundle], @"Command used to set the `uname` variable.\nThe main use of this is to use in the AI prompt so the language model knows the operating system.", @"Advanced setting: unameCommand"));
+DEFINE_BOOL(sshFlowControl, YES, SECTION_SSH, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.sshFlowControl", nil, [NSBundle mainBundle], @"Pace output from remote hosts.\nWith SSH Integration, iTerm2 tells the remote host how much output to send, so a program that prints a lot cannot fill the connection’s buffers, and Control-C takes effect at once instead of after the buffered output. Takes effect for new connections.", @"Advanced setting: sshFlowControl"));
 DEFINE_STRING(validCharactersInSSHUserNames, @"_-+.", SECTION_SSH, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.validCharactersInSSHUserNames", nil, [NSBundle mainBundle], @"Valid characters in SSH user names\nAlphanumerics are always valid. This specifies other valid characters.", @"Advanced setting: validCharactersInSSHUserNames"));
 
 #pragma mark Warnings

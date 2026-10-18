@@ -17,6 +17,8 @@
 #import "NSWindow+iTerm.h"
 
 static const CGFloat kMargin = 8;
+// Narrower than this beside the buttons, the text gets a row of its own with the buttons beneath.
+static const CGFloat kMinimumTextWidthBesideButtons = 160;
 const CGFloat iTermAnnouncementViewHeightPadding = 29;
 
 @interface iTermAnnouncementView ()
@@ -24,7 +26,10 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
 @end
 
 @implementation iTermAnnouncementView {
+    // The close button and the action buttons, with their margins.
     CGFloat _buttonWidth;
+    // The close button and its margin.
+    CGFloat _closeButtonWidth;
     iTermAutoResizingTextView *_textView;
     NSImageView *_icon;
     NSButton *_closeButton;
@@ -110,6 +115,7 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
         NSImage *closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
         NSSize closeSize = closeImage.size;
         _buttonWidth = ceil(closeSize.width + kMargin);
+        _closeButtonWidth = _buttonWidth;
         NSButton *closeButton = [[NSButton alloc] initWithFrame:NSMakeRect(frameRect.size.width - _buttonWidth,
                                                                            floor((frameRect.size.height - closeSize.height) / 2),
                                                                            closeSize.width,
@@ -363,29 +369,38 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
     return [@"x" heightWithAttributes:attributes constrainedToWidth:width];
 }
 
-- (void)updateTextViewFrame {
-    NSRect rect = _internalView.frame;
-    rect.origin.x += kMargin + _icon.frame.size.width + _icon.frame.origin.x;
-    rect.size.width -= rect.origin.x;
-    rect.size.width -= _buttonWidth;
-
-    CGFloat height = [_textView.originalAttributedString heightForWidth:rect.size.width];
-    CGFloat maxHeight = [self maximumHeightForWidth:rect.size.width];
-    CGFloat minHeight = [self minimumHeightForWidth:rect.size.width];
-    height = MAX(minHeight, MIN(height, maxHeight));
-
-    NSRect textRect = NSMakeRect(rect.origin.x,
-                                 floor((_internalView.frame.size.height - height) / 2),
-                                 _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin,
-                                 height);
-    _textView.frame = textRect;
-    _textView.maxSize = textRect.size;
-    _textView.minSize = textRect.size;
+// Whether the buttons go on a row beneath the text, for the current width.
+- (BOOL)stacked {
+    if (_actionButtons.count == 0) {
+        return NO;
+    }
+    const CGFloat besideButtons = NSWidth(self.bounds) - NSMaxX(_icon.frame) - kMargin - _buttonWidth;
+    return besideButtons < kMinimumTextWidthBesideButtons;
 }
 
-- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
-    [super resizeSubviewsWithOldSize:oldSize];
+- (CGFloat)textWidthStacked:(BOOL)stacked {
+    const CGFloat right = stacked ? _closeButtonWidth : _buttonWidth;
+    return MAX(0, NSWidth(self.bounds) - NSMaxX(_icon.frame) - kMargin - right);
+}
 
+- (CGFloat)textHeightForWidth:(CGFloat)width {
+    CGFloat height = [_textView.originalAttributedString heightForWidth:width];
+    CGFloat maxHeight = [self maximumHeightForWidth:width];
+    CGFloat minHeight = [self minimumHeightForWidth:width];
+    return MAX(minHeight, MIN(height, maxHeight));
+}
+
+- (CGFloat)buttonRowHeight {
+    CGFloat height = 0;
+    for (NSView *button in _actionButtons) {
+        height = MAX(height, NSHeight(button.frame));
+    }
+    return height;
+}
+
+// Lays out everything for the current size. Beside the buttons when there is room, otherwise the
+// text on top and the buttons on a row of their own beneath it.
+- (void)layOutContents {
     NSRect frameRect = self.bounds;
     frameRect.size.height -= 10;
     frameRect.origin.y = 10;
@@ -395,34 +410,68 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
     _lineView.frame = NSMakeRect(0, NSMinY(frameRect), NSWidth(frameRect), 1);
     _shadowView.frame = frameRect;
 
-    [self updateTextViewFrame];
-    NSSize closeSize = [_closeButton frame].size;
-    _closeButton.frame = NSMakeRect(self.frame.size.width - closeSize.width - kMargin,
-                                    floor((_internalView.frame.size.height - closeSize.height) / 2),
+    const CGFloat width = NSWidth(frameRect);
+    const CGFloat height = NSHeight(frameRect);
+    const BOOL stacked = [self stacked];
+    const CGFloat textWidth = [self textWidthStacked:stacked];
+    const CGFloat textHeight = [self textHeightForWidth:textWidth];
+    const CGFloat rowHeight = [self buttonRowHeight];
+
+    // The text's row, and below it the buttons' row when stacked.
+    CGFloat textY;
+    CGFloat buttonsMidY;
+    if (stacked) {
+        const CGFloat inset = floor((height - (textHeight + kMargin + rowHeight)) / 2);
+        textY = height - inset - textHeight;
+        buttonsMidY = inset + rowHeight / 2;
+    } else {
+        textY = floor((height - textHeight) / 2);
+        buttonsMidY = height / 2;
+    }
+    const CGFloat textMidY = textY + textHeight / 2;
+
+    NSRect textRect = NSMakeRect(NSMaxX(_icon.frame) + kMargin, textY, textWidth, textHeight);
+    _textView.frame = textRect;
+    _textView.maxSize = textRect.size;
+    _textView.minSize = textRect.size;
+
+    const NSSize closeSize = _closeButton.frame.size;
+    _closeButton.frame = NSMakeRect(width - closeSize.width - kMargin,
+                                    floor(textMidY - closeSize.height / 2),
                                     closeSize.width,
                                     closeSize.height);
 
-    for (NSButton *button in _actionButtons) {
-        NSRect buttonFrame = button.frame;
-        button.frame = NSMakeRect(buttonFrame.origin.x,
-                                  floor((_internalView.frame.size.height - buttonFrame.size.height) / 2),
-                                  buttonFrame.size.width,
-                                  buttonFrame.size.height);
+    // Right to left, as createButtonsFromActions:block: made them.
+    CGFloat right = stacked ? width : width - _closeButtonWidth;
+    for (NSView *button in _actionButtons) {
+        const NSSize size = button.frame.size;
+        right -= kMargin + size.width;
+        button.frame = NSMakeRect(right, floor(buttonsMidY - size.height / 2), size.width, size.height);
     }
 
-    CGRect iconFrame = _icon.frame;
-    CGFloat y = floor((_internalView.frame.size.height - iconFrame.size.height) / 2);
-    _icon.frame = NSMakeRect(kMargin,
-                             y,
-                             iconFrame.size.width,
-                             iconFrame.size.height);
+    const NSSize iconSize = _icon.frame.size;
+    _icon.frame = NSMakeRect(kMargin, floor(textMidY - iconSize.height / 2), iconSize.width, iconSize.height);
+}
+
+- (void)updateTextViewFrame {
+    [self layOutContents];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    [self layOutContents];
 }
 
 - (void)sizeToFit {
-    [self updateTextViewFrame];
+    const BOOL stacked = [self stacked];
+    CGFloat height = [self textHeightForWidth:[self textWidthStacked:stacked]] + iTermAnnouncementViewHeightPadding;
+    if (stacked) {
+        height += kMargin + [self buttonRowHeight];
+    }
     NSRect frame = self.frame;
-    frame.size.height = _textView.frame.size.height + iTermAnnouncementViewHeightPadding;
+    frame.size.height = height;
     self.frame = frame;
+    [self layOutContents];
 }
 
 - (void)resetCursorRects {

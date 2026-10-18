@@ -39,6 +39,64 @@ final class WorkgroupRemoteHost: NSObject {
         super.init()
     }
 
+    private enum Key {
+        static let hops = "hops"
+        static let directory = "directory"
+        static let sshConfig = "sshConfig"
+    }
+
+    /// For saving with a workgroup, so a restored peer still runs on the host.
+    var dictionaryValue: [String: Any]? {
+        guard let data = try? JSONEncoder().encode(hops),
+              let json = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        var result: [String: Any] = [Key.hops: json]
+        result[Key.directory] = directory
+        result[Key.sshConfig] = sshConfig
+        return result
+    }
+
+    /// The inverse of dictionaryValue. `leader` is the restored leader, if known.
+    convenience init?(dictionary: [AnyHashable: Any], leader: PTYSession?) {
+        guard let json = dictionary[Key.hops] as? String,
+              let data = json.data(using: .utf8),
+              let hops = try? JSONDecoder().decode([SSHReconnectionInfo].self, from: data),
+              !hops.isEmpty else {
+            return nil
+        }
+        self.init(hops: hops,
+                  directory: dictionary[Key.directory] as? String,
+                  sshConfig: dictionary[Key.sshConfig] as? [AnyHashable: Any],
+                  leader: leader)
+    }
+
+    /// The leader's connection to the host, when it is up: a peer's program can run as a pane
+    /// of its framer instead of over a connection of its own.
+    @MainActor
+    var leaderHostConductor: Conductor? {
+        guard let conductor = leader?.hostConductor, conductor.framing else {
+            return nil
+        }
+        return conductor
+    }
+
+    /// The leader's connection, if a new pane can start on it now. A conductor restored after
+    /// iTerm2 restarts takes commands only once it has resynchronized with its framer; one sent
+    /// before then is aborted, so the peer connects on its own instead.
+    @MainActor
+    var conductorForNewPane: Conductor? {
+        guard let conductor = leaderHostConductor, Self.canStartPanes(on: conductor) else {
+            return nil
+        }
+        return conductor
+    }
+
+    @MainActor
+    static func canStartPanes(on conductor: Conductor) -> Bool {
+        return conductor.framing && !conductor.awaitingResynchronization
+    }
+
     /// The leader's directory on the host: as of entry, or, if that was unknown, as of now.
     @MainActor
     var currentDirectory: String? {

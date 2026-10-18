@@ -46,6 +46,28 @@ final class WorkgroupRemoteHostTests: XCTestCase {
         XCTAssertEqual(parsed.commandLine, "claude 'review; this'")
     }
 
+    // MARK: - Saving with a workgroup
+
+    func testSavedHostRoundTrips() throws {
+        let original = WorkgroupRemoteHost(hops: [hop("bastion", "/home/me"), hop("-p 2200 internal claude")],
+                                           directory: "/srv/repo",
+                                           sshConfig: ["key": "value"])
+        let saved = try XCTUnwrap(original.dictionaryValue)
+        let restored = try XCTUnwrap(WorkgroupRemoteHost(dictionary: saved, leader: nil))
+        XCTAssertEqual(restored.hops.map(\.sshargs), ["bastion", "-p 2200 internal claude"])
+        XCTAssertEqual(restored.hops.map(\.initialDirectory), ["/home/me", nil])
+        XCTAssertEqual(restored.directory, "/srv/repo")
+        XCTAssertEqual(restored.sshConfig?["key"] as? String, "value")
+        // The restored host launches the same way.
+        XCTAssertEqual(restored.launchPlan(remoteCommand: "git diff").firstHopArguments,
+                       original.launchPlan(remoteCommand: "git diff").firstHopArguments)
+    }
+
+    func testASavedHostWithoutHopsIsRejected() {
+        XCTAssertNil(WorkgroupRemoteHost(dictionary: [:], leader: nil))
+        XCTAssertNil(WorkgroupRemoteHost(dictionary: ["hops": "[]"], leader: nil))
+    }
+
     // MARK: - Building a peer's launch
 
     func testSingleHop() throws {
