@@ -67,7 +67,11 @@ class ProfileBoolSettingPickerView: NSView, SearchableComboViewDelegate {
     }
 
     private func layoutControls() {
-        let onOffWidth: CGFloat = 70
+        // At least 70pt, and wide enough for the longest item (a popup's cellSize accounts for all
+        // of its items) so translations such as pt-BR “Inativo” are not clipped. Never take more
+        // than half the room from the setting picker.
+        let fittingWidth = ceil(onOffButton.cell?.cellSize.width ?? 0)
+        let onOffWidth = min(max(70, fittingWidth), max(70, bounds.width / 2))
         let gap: CGFloat = 6
         let comboWidth = max(0, bounds.width - onOffWidth - gap)
         comboView.frame = NSRect(x: 0, y: 0, width: comboWidth, height: bounds.height)
