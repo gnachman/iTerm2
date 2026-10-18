@@ -40,6 +40,11 @@ typedef NS_ENUM(NSUInteger, iTermDynamicProfileFileType) {
 // Immediately examine the dynamic profiles files to see if they've changed and update the model
 // if needed.
 - (void)reloadDynamicProfiles;
+
+// Runs `block`, which examines every dynamic profiles file, as one reload. A reload's errors
+// replace those of an earlier reload whose alert has not been shown yet, since it found the same
+// problems again. Exposed for tests.
+- (void)performReloadPass:(void (^)(void))block;
 - (void)revealProfileWithGUID:(NSString *)guid;
 - (NSArray *)profilesByRemovingDynamicProfiles:(NSArray *)source;
 - (void)markProfileRewritableWithGuid:(NSString *)guid;

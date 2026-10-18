@@ -99,4 +99,44 @@
     XCTAssertEqual(profiles.count, 0);
 }
 
+// The folder watcher can reload twice before the alert is shown, such as when two bad files
+// appear at once. Each reload re-examines every file, so the second reload's errors replace the
+// first's instead of adding to them (QA finding F-421).
+- (void)testBackToBackReloadsDoNotDoubleCountErrors {
+    NSArray<NSString *> *paths = @[ [self writeFile:@"x.json" contents:@"{"],
+                                    [self writeFile:@"y.json" contents:@"[]"] ];
+    iTermDynamicProfileManager *manager = [iTermDynamicProfileManager sharedInstance];
+    for (int i = 0; i < 2; i++) {
+        [manager performReloadPass:^{
+            NSMutableArray *profiles = [NSMutableArray array];
+            NSMutableSet *guids = [NSMutableSet set];
+            for (NSString *path in paths) {
+                [manager loadDynamicProfilesFromFileLoggingFailure:path intoArray:profiles guids:guids];
+            }
+        }];
+    }
+    [self drainMainQueue];
+
+    XCTAssertEqual(_handler.messages.count, 1, @"%@", _handler.messages);
+    NSString *message = _handler.messages.firstObject;
+    XCTAssertTrue([message containsString:@"1 additional error"], @"%@", message);
+    XCTAssertFalse([message containsString:@"3 additional errors"], @"%@", message);
+}
+
+// If a later reload finds nothing wrong (the files were fixed) before the alert is shown, there is
+// nothing to report.
+- (void)testReloadWithoutErrorsCancelsThePendingAlert {
+    NSString *bad = [self writeFile:@"z.json" contents:@"{"];
+    iTermDynamicProfileManager *manager = [iTermDynamicProfileManager sharedInstance];
+    [manager performReloadPass:^{
+        [manager loadDynamicProfilesFromFileLoggingFailure:bad
+                                                 intoArray:[NSMutableArray array]
+                                                     guids:[NSMutableSet set]];
+    }];
+    [manager performReloadPass:^{}];
+    [self drainMainQueue];
+
+    XCTAssertEqual(_handler.messages.count, 0, @"%@", _handler.messages);
+}
+
 @end
