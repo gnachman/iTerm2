@@ -186,4 +186,78 @@ final class BrowserViewSourceTests: XCTestCase {
         XCTAssertFalse(shownHTML.contains("<h1>"), shownHTML)
         XCTAssertNil(evaluate("document.querySelector('.source-code h1') ? 'found' : null", in: webView))
     }
+
+    private struct ShownSource {
+        var text: String
+        // [href, text] for each link, in document order.
+        var links: [[String]]
+        var injected: Bool
+    }
+
+    private func show(source: String, pageURL: String) throws -> ShownSource {
+        let manager = try makeManager()
+        let webView = try XCTUnwrap(manager.webView)
+        manager.showSourceInBrowser(htmlSource: source,
+                                    url: try XCTUnwrap(URL(string: pageURL)))
+        waitForLoad(of: iTermBrowserSourceHandler.sourceURL, in: webView)
+        // Newlines are shown as <br> elements, which textContent omits.
+        let text = try XCTUnwrap(
+            evaluate("document.querySelector('.source-code').textContent", in: webView))
+        let linksJSON = try XCTUnwrap(evaluate(
+            "JSON.stringify(Array.from(document.querySelectorAll('.source-code a')).map(a => [a.getAttribute('href'), a.textContent]))",
+            in: webView))
+        let links = try JSONDecoder().decode([[String]].self, from: Data(linksJSON.utf8))
+        let injected = evaluate(
+            "document.querySelector('.source-code img, .source-code b, .source-code script') ? 'yes' : 'no'",
+            in: webView) == "yes"
+        return ShownSource(text: text, links: links, injected: injected)
+    }
+
+    // A linkified URL with an ampersand must stay a working link and must not
+    // spill markup into the displayed source.
+    func testLinksContainingAmpersandsWork() throws {
+        let source = """
+            <html><head><link href="style.css" rel="stylesheet"></head>
+            <body><a href="rel.html">r</a><img src="img/p.png">
+            <a href="http://example.invalid/white.html?a=1&b=2">abs</a>
+            <a href="q?c=3&amp;d=4">ent</a>
+            <a href="r?a=1&region=us&param=2&copy=3">legacy</a></body></html>
+            """
+        let shown = try show(source: source, pageURL: "http://example.invalid/a&b/?x=1&y=2")
+        XCTAssertEqual(shown.text, source.replacingOccurrences(of: "\n", with: ""))
+        XCTAssertEqual(shown.links, [
+            ["http://example.invalid/a&b/style.css", "style.css"],
+            ["http://example.invalid/a&b/rel.html", "rel.html"],
+            ["http://example.invalid/a&b/img/p.png", "img/p.png"],
+            ["http://example.invalid/white.html?a=1&b=2", "http://example.invalid/white.html?a=1&b=2"],
+            ["http://example.invalid/a&b/q?c=3&d=4", "q?c=3&amp;d=4"],
+            ["http://example.invalid/a&b/r?a=1&region=us&param=2&copy=3", "r?a=1&region=us&param=2&copy=3"],
+        ])
+        XCTAssertFalse(shown.injected)
+    }
+
+    // A local file's relative links become file links.
+    func testFilePageLinksToFiles() throws {
+        let source = "<a href=\"y.html\">y</a>"
+        let shown = try show(source: source, pageURL: "file:///tmp/a&b/x.html")
+        XCTAssertEqual(shown.links, [["file:///tmp/a&b/y.html", "y.html"]])
+    }
+
+    // URLs in the source stay text, and script URLs don't become links.
+    func testLinkifyingDoesNotInjectMarkupOrScriptLinks() throws {
+        let source = """
+            <a href="JavaScript:alert(1)">j</a>
+            <a href=" javascript:alert(2)">k</a>
+            <a href="x&lt;img src=y onerror=alert(3)&gt;">l</a>
+            <a href="&lt;b&gt;bold&lt;/b&gt;">m</a>
+            <a href="file:///etc/passwd">f</a>
+            """
+        let shown = try show(source: source, pageURL: "http://example.invalid/")
+        XCTAssertEqual(shown.text, source.replacingOccurrences(of: "\n", with: ""))
+        XCTAssertFalse(shown.injected)
+        XCTAssertEqual(shown.links.count, 2, "\(shown.links)")
+        for link in shown.links {
+            XCTAssertTrue(link[0].hasPrefix("http://example.invalid/"), "\(link)")
+        }
+    }
 }
