@@ -8,6 +8,7 @@
 //  F-304).
 //
 
+import AppKit
 import XCTest
 
 final class MenuBarIconSettingsLocalizationTests: XCTestCase {
@@ -38,6 +39,22 @@ final class MenuBarIconSettingsLocalizationTests: XCTestCase {
         let catalog = try strings("sources/Settings/mul.lproj/PreferencePanel.xcstrings")
         for key in ["uzZ-ah-yKW.title", "7MO-8Z-Pic.title", "MtC-QF-N2i.placeholderString"] {
             XCTAssertEqual(untranslatedLanguages(key, in: catalog), [], key)
+        }
+    }
+
+    // F-401: the German and Russian placeholders were wider than the 432pt text field, which
+    // shows about 400pt of placeholder in the system font, so they were clipped. The English
+    // one is 327pt.
+    func testMenuBarIconPlaceholderFitsTheField() throws {
+        let catalog = try strings("sources/Settings/mul.lproj/PreferencePanel.xcstrings")
+        let entry = try XCTUnwrap(catalog["MtC-QF-N2i.placeholderString"] as? [String: Any])
+        let localizations = try XCTUnwrap(entry["localizations"] as? [String: Any])
+        let font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        for language in languages {
+            let unit = (localizations[language] as? [String: Any])?["stringUnit"] as? [String: Any]
+            let value = try XCTUnwrap(unit?["value"] as? String, language)
+            let width = (value as NSString).size(withAttributes: [.font: font]).width
+            XCTAssertLessThanOrEqual(width, 390, "\(language): \(value)")
         }
     }
 }

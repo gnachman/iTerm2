@@ -34220,7 +34220,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interpolierte Zeichenfolge für die Menüleiste (globaler Geltungsbereich)"
+            "value" : "Interpolierte Zeichenfolge für die Menüleiste (global)"
           }
         },
         "en" : {
@@ -34244,7 +34244,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Интерполированная строка для отображения в строке меню (глобальная область)"
+            "value" : "Интерполированный текст в строке меню (глобально)"
           }
         },
         "zh-Hans" : {
