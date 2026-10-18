@@ -70,6 +70,27 @@ final class WindowStyleChangeFocusTests: XCTestCase {
                       "First responder is \(String(describing: newWindow.firstResponder))")
     }
 
+    /// Moving focus back to a text field selects all of its text, so the next keystroke would
+    /// replace the query instead of continuing it. The caret and selection survive (F-422).
+    func testFocusedTextFieldKeepsItsSelection() throws {
+        let terminal = fixture.terminal
+        let contentView = try XCTUnwrap(fixture.window.contentView)
+        let field = NSSearchField(frame: NSRect(x: 10, y: 10, width: 100, height: 22))
+        field.stringValue = "ECHO"
+        contentView.addSubview(field)
+        defer { field.removeFromSuperview() }
+        XCTAssertTrue(fixture.window.makeFirstResponder(field))
+        let oldEditor = try XCTUnwrap(fixture.window.firstResponder as? NSTextView)
+        oldEditor.setSelectedRange(NSRange(location: 2, length: 1))
+
+        terminal.change(to: .WINDOW_TYPE_NO_TITLE_BAR)
+
+        let editor = try XCTUnwrap(fixture.window.firstResponder as? NSTextView)
+        XCTAssertTrue(editor.delegate === field)
+        XCTAssertEqual(editor.string, "ECHO")
+        XCTAssertEqual(editor.selectedRange(), NSRange(location: 2, length: 1))
+    }
+
     func testRestoringTheTitleBarKeepsFocusInTheSession() {
         change(to: .WINDOW_TYPE_NO_TITLE_BAR)
         change(to: .WINDOW_TYPE_NORMAL)
