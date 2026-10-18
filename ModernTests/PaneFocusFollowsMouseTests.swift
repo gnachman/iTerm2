@@ -53,6 +53,9 @@ private final class FakeEnvironment: PaneFocusFollowsMouseEnvironment {
     var steals = 0
     var releases = 0
     var pendingRebaselines = [() -> Void]()
+    // While true, focus() changes nothing, the way a window with a sheet open can't become key.
+    var sheetIsOpen = false
+    var sheetDidEnd: (((PaneFocusFollowsMousePane) -> Bool) -> Void)?
 
     func pane(at screenPoint: NSPoint) -> PaneFocusFollowsMousePane? {
         return paneAtX[screenPoint.x]
@@ -75,6 +78,9 @@ private final class FakeEnvironment: PaneFocusFollowsMouseEnvironment {
     }
 
     func focus(_ pane: PaneFocusFollowsMousePane, responder: NSResponder, evenIfInactive: Bool) {
+        guard !sheetIsOpen else {
+            return
+        }
         let fake = pane as! FakePane
         focuses.append(Focus(pane: fake.name, responder: responder, evenIfInactive: evenIfInactive))
         focused = fake
@@ -94,6 +100,16 @@ private final class FakeEnvironment: PaneFocusFollowsMouseEnvironment {
 
     func scheduleRebaseline(_ block: @escaping () -> Void) {
         pendingRebaselines.append(block)
+    }
+
+    func observeSheetDidEnd(_ block: @escaping ((PaneFocusFollowsMousePane) -> Bool) -> Void) {
+        sheetDidEnd = block
+    }
+
+    // A sheet on the window holding panesInWindow ends.
+    func endSheet(panesInWindow: [FakePane]) {
+        sheetIsOpen = false
+        sheetDidEnd? { pane in panesInWindow.contains { $0 === pane } }
     }
 
     func runPendingRebaselines() {
@@ -504,5 +520,88 @@ final class PaneFocusFollowsMouseTests: XCTestCase {
         env.appIsActive = false
         ffm.focusPaneUnderPointer()
         XCTAssertEqual(env.focuses.last, focus(a, a.terminal, evenIfInactive: true))
+    }
+
+    // MARK: - Focus that couldn't move
+
+    // The sheet ends and its window's first responder goes back to A's terminal, as when it opened.
+    private func endSheet() {
+        externallyFocus(a.terminal, in: a)
+        env.endSheet(panesInWindow: [a, b])
+    }
+
+    func testSheetOnAnotherWindowEndingChangesNothing() {
+        move(to: 1)
+        env.sheetIsOpen = true
+        move(to: 3)
+        env.endSheet(panesInWindow: [])
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal)])
+    }
+
+    // A pane focus can't move to for some other reason, such as a modal window, isn't focused when
+    // a sheet ends later.
+    func testPaneThatCouldNotTakeFocusIsNotFocusedWhenASheetEnds() {
+        move(to: 1)
+        env.unfocusable = ["B"]
+        move(to: 3)
+        env.unfocusable = []
+        endSheet()
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal)])
+    }
+
+    // The pointer entered B while a sheet kept focus from moving. When the sheet ends, focus goes
+    // to B, which the pointer is still in, rather than staying in A until the pointer leaves B and
+    // comes back (QA finding F-403).
+    func testPaneEnteredWhileASheetWasOpenIsFocusedWhenItEnds() {
+        move(to: 1)
+        env.sheetIsOpen = true
+        move(to: 3)
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal)])
+        endSheet()
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal), focus(b, b.terminal)])
+        XCTAssertTrue(env.focused === b)
+    }
+
+    func testWithoutSubviewsPaneEnteredWhileASheetWasOpenIsFocusedWhenItEnds() {
+        env.includesSubviews = false
+        move(to: 1)
+        env.sheetIsOpen = true
+        move(to: 3)
+        endSheet()
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal), focus(b, b.terminal)])
+    }
+
+    func testPointerBackInTheFocusedPaneWhenTheSheetEndsChangesNothing() {
+        move(to: 1)
+        env.sheetIsOpen = true
+        move(to: 3)
+        move(to: 1.5)
+        endSheet()
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal)])
+    }
+
+    func testPointerOutsideAnyPaneWhenTheSheetEndsChangesNothing() {
+        move(to: 1)
+        env.sheetIsOpen = true
+        move(to: 3)
+        move(to: 0)
+        endSheet()
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal)])
+    }
+
+    func testSheetEndingWithoutABlockedMoveChangesNothing() {
+        move(to: 1)
+        env.sheetIsOpen = true
+        endSheet()
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal)])
+    }
+
+    // Focus did move, so a later focus change made by something else is not undone.
+    func testSheetEndingAfterFocusMovedDoesNotUndoALaterChange() {
+        move(to: 1)
+        move(to: 3)
+        externallyFocus(a.terminal, in: a)
+        endSheet()
+        XCTAssertEqual(env.focuses, [focus(a, a.terminal), focus(b, b.terminal)])
     }
 }
