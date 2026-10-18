@@ -70,6 +70,26 @@ final class ChatFindBarViewLayoutTests: XCTestCase {
         assertVisibleControlsFitWithoutOverlap(bar)
     }
 
+    // The chat window's content pane can't get narrower than this, so the find
+    // bar it holds (inset by its side margins) keeps a readable search field
+    // and both chevrons even with the sidebar shown at the window's minimum.
+    func testMinimumChatContentWidthKeepsSearchFieldReadable() throws {
+        let width = ChatSplitViewController.minimumContentWidth - ChatViewController.findBarSideMargin * 2
+        let bar = layOut(width: width)
+        XCTAssertGreaterThanOrEqual(try searchField(bar).frame.width, ChatFindBarView.minimumSearchFieldWidth)
+        let buttons = bar.subviews.compactMap { $0 as? NSButton }.filter { !($0 is NSPopUpButton) }
+        XCTAssertEqual(buttons.count, 3)
+        for button in buttons {
+            XCTAssertFalse(button.isHidden)
+            XCTAssertGreaterThan(button.frame.width, 0)
+        }
+        assertVisibleControlsFitWithoutOverlap(bar)
+
+        let item = NSSplitViewItem(viewController: NSViewController())
+        ChatSplitViewController.configureContentItem(item)
+        XCTAssertEqual(item.minimumThickness, ChatSplitViewController.minimumContentWidth)
+    }
+
     // The popup must not come and go as the counter text changes while typing,
     // even when the counter is long (as in some languages).
     func testModePopupVisibilityDoesNotDependOnCounterText() throws {

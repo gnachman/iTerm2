@@ -59,6 +59,12 @@ class ChatFindBarView: NSView {
     // Narrower than this and the query is unreadable.
     static let minimumSearchFieldWidth: CGFloat = 120
     private static let maximumCounterWidth: CGFloat = 120
+    // The narrowest bar that still fits the search field at its minimum width
+    // beside the chevrons and the close button.
+    static var minimumUsableWidth: CGFloat {
+        return horizontalPadding * 2 + minimumSearchFieldWidth + controlSpacing +
+            controlHeight * 2 + controlSpacing + controlHeight
+    }
 
     // Wide enough for the longest mode title, which in some languages is
     // much longer than in English (“Ignorar maiúsculas/minúsculas”).
