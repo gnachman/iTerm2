@@ -98,7 +98,8 @@ class ChatSearchResultsViewController: NSViewController {
         ])
     }
 
-    private func iterate() {
+    // Internal so tests can drain the iterator synchronously.
+    func iterate() {
         guard let iterator else {
             return
         }
@@ -148,26 +149,47 @@ extension ChatSearchResultsViewController: NSTableViewDataSource {
     }
 
     private func configure(cell: ChatSearchResultCell, row: Int) {
-        cell.configure(with: messageRendition(snippet: searchResults[row].snippet,
-                                              fromUser: searchResults[row].result.message.author == .user),
-                       maxBubbleWidth: tableView.tableColumns[0].width - 8)
+        cell.configure(with: messageRendition(row: row),
+                       maxBubbleWidth: maxBubbleWidth)
         cell.textSelectable = false
+    }
+
+    private var maxBubbleWidth: CGFloat {
+        return tableView.tableColumns[0].width - 8
+    }
+
+    private func messageRendition(row: Int) -> MessageRendition {
+        return messageRendition(snippet: searchResults[row].snippet,
+                                fromUser: searchResults[row].result.message.author == .user)
     }
 }
 
 // MARK: - NSTableViewDelegate
 extension ChatSearchResultsViewController: NSTableViewDelegate {
     func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
-        // I simply cannot get cell reuse to work. Fuck autolayout.
-        let measuringCell = ChatSearchResultCell()
-        configure(cell: measuringCell, row: row)
-        // Set the width to the table's width for proper auto layout measurement.
-        measuringCell.frame = NSRect(x: 0, y: 0, width: tableView.bounds.width, height: 0)
-        measuringCell.layoutSubtreeIfNeeded()
-        let height = measuringCell.fittingSize.height
-        it_assert(height >= 0)
+        // The cell lays out its subviews by frame and has no constraints, so
+        // its fittingSize is zero. Compute the height the same way its
+        // layout() does instead.
+        let height = ChatSearchResultCell.cellHeight(for: messageRendition(row: row),
+                                                     maxBubbleWidth: maxBubbleWidth)
+        // NSTableView raises if the delegate returns a non-positive or
+        // non-finite row height.
+        guard height.isFinite, height > 0 else {
+            let fallback = Self.minimumRowHeight
+            DLog("Invalid search result row height \(height) for row \(row); using \(fallback)")
+            return fallback
+        }
         return height
     }
+
+    // The height of a bubble holding a single line of text.
+    private static let minimumRowHeight: CGFloat = {
+        let lineHeight = NSLayoutManager().defaultLineHeight(for: NSFont.systemFont(ofSize: NSFont.systemFontSize))
+        return MessageCellView.topInset +
+            MessageCellView.bottomInset +
+            RegularMessageCellView.textVerticalPadding * 2 +
+            ceil(lineHeight)
+    }()
 
     func tableViewSelectionDidChange(_ notification: Notification) {
         let selectedRow = tableView.selectedRow

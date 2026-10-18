@@ -1795,3 +1795,5 @@ Bug Fixes:
   shell sets at the first prompt. Before, a
   badge such as \(user.foo) could stay empty
   until the shell showed its second prompt.
+- Searching in the AI Chats window no longer
+  crashes iTerm2 when the search finds a match.
