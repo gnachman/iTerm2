@@ -1609,3 +1609,6 @@ Bug Fixes:
 - The donation link in the Settings and Edit
   Session title bars no longer truncates the
   window title.
+- In Settings > Keys > Hotkey, the “App
+  Hotkey:” and “Open Quickly Hotkey:” labels no
+  longer run under the controls beside them.
