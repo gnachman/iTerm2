@@ -195,6 +195,9 @@ typedef enum {
     [horizontalPaneButton_ setImagePosition:NSImageOnly];
     [verticalPaneButton_ setImagePosition:NSImageOnly];
     [self updateSplitButtonLabelsForOptionPressed:NO];
+    // The floating pane button is icon-only too. Its localized xib tooltip says what it does;
+    // without a label VoiceOver reads the symbol name.
+    floatingPaneButton_.accessibilityLabel = floatingPaneButton_.toolTip;
 }
 
 // The split buttons are icon-only, so give them a tooltip and an accessibility
