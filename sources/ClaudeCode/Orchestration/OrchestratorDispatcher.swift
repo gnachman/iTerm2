@@ -765,6 +765,15 @@ final class OrchestratorDispatcher {
         }
     }
 
+    // The name a re-bound tmux watcher takes from its reattached pane, unless
+    // the pane doesn't have a real name yet.
+    nonisolated static func reboundName(_ name: String, previous: String) -> String {
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return previous
+        }
+        return name
+    }
+
     @MainActor
     private func pendingTmuxWatchers() -> [WorkgroupWatcher] {
         return watchers.filter { pendingTmuxWatcherIDs.contains($0.watcherID) }
@@ -785,12 +794,16 @@ final class OrchestratorDispatcher {
             // workgroup and role names derive from the old session, so they
             // name a workgroup the snapshot no longer lists. Take them from the
             // new session, as list_workgroups does, so list_watches and
-            // status_update match what the model sees.
+            // status_update match what the model sees. The pane's window
+            // opens before the pane has its name (it is a blank " " until
+            // tmux reports the title), so keep the old names over a blank one.
             if let context = WorkgroupIntrospection.context(for: session) {
                 watchers[i].workgroupID = context.workgroupID
-                watchers[i].workgroupName = context.workgroupName
+                watchers[i].workgroupName = Self.reboundName(context.workgroupName,
+                                                             previous: watchers[i].workgroupName)
                 watchers[i].roleID = context.roleID
-                watchers[i].roleName = context.roleName
+                watchers[i].roleName = Self.reboundName(context.roleName,
+                                                        previous: watchers[i].roleName)
             }
             // Seed from the session itself rather than a lookup by its new
             // stableID, so the first status it posts is never a transition. A
