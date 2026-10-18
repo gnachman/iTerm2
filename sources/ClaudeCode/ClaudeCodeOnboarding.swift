@@ -313,8 +313,31 @@ class ClaudeCodeOnboarding: NSObject {
             }
         } catch {
             try? FileManager.default.removeItem(at: tempURL)
-            throw error
+            throw errorNamingSettingsFile(error, writeURL: writeURL)
         }
+    }
+
+    // The temporary file's name is an implementation detail the user never
+    // sees, so a failure to write it is reported against settings.json, as an
+    // atomic write would report it.
+    private static func errorNamingSettingsFile(_ error: Error, writeURL: URL) -> Error {
+        let nsError = error as NSError
+        let code: Int
+        if nsError.domain == NSCocoaErrorDomain {
+            code = nsError.code
+        } else if nsError.domain == NSPOSIXErrorDomain,
+                  nsError.code == Int(EACCES) || nsError.code == Int(EPERM) {
+            code = CocoaError.fileWriteNoPermission.rawValue
+        } else {
+            code = CocoaError.fileWriteUnknown.rawValue
+        }
+        var userInfo = nsError.domain == NSCocoaErrorDomain ? nsError.userInfo : [:]
+        userInfo[NSFilePathErrorKey] = writeURL.path
+        userInfo[NSURLErrorKey] = writeURL
+        if nsError.domain != NSCocoaErrorDomain {
+            userInfo[NSUnderlyingErrorKey] = nsError
+        }
+        return NSError(domain: NSCocoaErrorDomain, code: code, userInfo: userInfo)
     }
 
     // True iff the Claude Code workgroup (identified by the stable

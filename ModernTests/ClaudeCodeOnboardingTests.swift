@@ -328,6 +328,32 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
                        ["reference", "settings.json"])
     }
 
+    // When the dangling link's directory isn't writable, the error shown to
+    // the user must name settings.json, not the hidden temporary file the
+    // write goes through.
+    func testMergeThroughDanglingSymlinkInReadOnlyDirectoryNamesSettingsFile() throws {
+        try XCTSkipIf(geteuid() == 0, "root can write to a mode 500 directory")
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cc-merge-dangling-ro-\(UUID().uuidString)")
+        let claudeDir = dir.appendingPathComponent(".claude")
+        try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
+        addTeardownBlock {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: claudeDir.path)
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let link = claudeDir.appendingPathComponent("settings.json")
+        try FileManager.default.createSymbolicLink(atPath: link.path,
+                                                   withDestinationPath: "../nowhere/settings.json")
+        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: claudeDir.path)
+
+        guard case .writeFailed(let description) = merge(link) else {
+            XCTFail("Expected writeFailed")
+            return
+        }
+        XCTAssertTrue(description.contains("\u{201C}settings.json\u{201D}"), description)
+        XCTAssertFalse(description.contains(".settings.json."), description)
+    }
+
     func testMergeLeavesUnreadableFileUntouched() throws {
         try XCTSkipIf(geteuid() == 0, "root can read a mode 000 file")
         let original = "{\"model\": \"opus\"}"
