@@ -139,6 +139,24 @@ useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs
                                                  underlinedRange:(NSRange)underlinedRange
                                                        positions:(CTVector(CGFloat) *)positions;
 
+// selectedIndexes holds selected logical columns. When it is non-nil, selection
+// and find-match text colors are decided per cell (hasSelectedText still marks
+// every cell selected, so pass NO for a partly selected range). The range may
+// then span a selection or find-match boundary. On a bidi line that keeps an
+// Arabic word partly covered by the selection in one shaped string.
+- (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
+                                                        bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
+                                              externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
+                                                           range:(NSRange)indexRange
+                                                 hasSelectedText:(BOOL)hasSelectedText
+                                                 selectedIndexes:(NSIndexSet *)selectedIndexes
+                                                 backgroundColor:(NSColor *)backgroundColor
+                                                  forceTextColor:(NSColor *)forceTextColor
+                                                        colorRun:(const iTermBackgroundColorRun *)colorRun
+                                                     findMatches:(NSData *)findMatches
+                                                 underlinedRange:(NSRange)underlinedRange
+                                                       positions:(CTVector(CGFloat) *)positions;
+
 - (void)copySettingsFrom:(iTermAttributedStringBuilder *)other
                 colorMap:(iTermColorMap *)colorMap
                 delegate:(id<iTermAttributedStringBuilderDelegate>)delegate;
