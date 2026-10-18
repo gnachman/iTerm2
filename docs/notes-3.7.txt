@@ -1860,6 +1860,11 @@ Bug Fixes:
   connection drops while the remote command is
   printing output. It returns to the local
   shell.
+- In AI Chat, a session mention in the message
+  field now changes size along with the text
+  when you change the font size from the Font
+  menu or Font panel.
+
 
 
 
