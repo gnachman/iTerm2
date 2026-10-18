@@ -4215,9 +4215,17 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
         iTermConductorRecovery *recovery = [delegate screenHandleFramerRecoveryString:string];
         if (recovery) {
             weakSelf.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeSyncing;
+            // The outermost conductor's it2ssh hooked the top-level parser. Its unique ID
+            // lets the parser recognize that it2ssh's EndSSH even mid-frame.
+            iTermConductor *rootConductor = recovery.parent;
+            while (rootConductor.parent) {
+                rootConductor = rootConductor.parent;
+            }
+            NSString *clientUniqueID = rootConductor ? rootConductor.clientUniqueID : recovery.clientUniqueID;
             // Drop tokens until we get a SSH_RECOVERY_BOUNDARY with the right boundary number.
             weakSelf.terminal.framerBoundaryNumber = [weakSelf.terminal.parser startConductorRecoveryModeWithID:recovery.dcsID
-                                                                                                           tree:recovery.tree];
+                                                                                                           tree:recovery.tree
+                                                                                                 clientUniqueID:clientUniqueID.length ? clientUniqueID : nil];
             [delegate screenFramerRecoveryDidFinish];
             dispatch_async(queue, ^{
                 [weakSelf appendBanner:@"ssh connection recovered!" andUnpause:unpauser];

@@ -708,7 +708,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID clientUniqueID:(NSString *)clientUniqueID {
     // Put the state machine in the passthrough mode.
     char *fakeControlSequence = "\eP2000p";
     for (int i = 0; fakeControlSequence[i]; i++) {
@@ -716,7 +716,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 
     // Replace the hook with one in recovery mode.
-    _hook = [VT100ConductorParser newRecoveryModeInstanceWithUniqueID:dcsID];
+    _hook = [VT100ConductorParser newRecoveryModeInstanceWithUniqueID:dcsID clientUniqueID:clientUniqueID];
     _uniqueID = [dcsID copy];
     DLog(@"dcs parser code injected and parser hooked.");
 }

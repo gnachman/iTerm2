@@ -13,7 +13,8 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     private var line = Data()
     private let uniqueID: String
     // The it2ssh client's unique ID, from the SSH_INIT line. it2ssh prints
-    // OSC 1337;EndSSH=<this ID> after its ssh process exits. Nil in recovery mode.
+    // OSC 1337;EndSSH=<this ID> after its ssh process exits. In recovery mode it
+    // comes from the restored conductor, and is nil when that is unknown.
     private var clientUniqueID: String?
     private enum State {
         case initial
@@ -46,9 +47,11 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         self.uniqueID = uniqueID
     }
 
-    @objc static func newRecoveryModeInstance(uniqueID: String) -> VT100ConductorParser {
+    @objc static func newRecoveryModeInstance(uniqueID: String,
+                                              clientUniqueID: String?) -> VT100ConductorParser {
         let instance = VT100ConductorParser(uniqueID: uniqueID)
         instance.recoveryMode = true
+        instance.clientUniqueID = clientUniqueID
         instance.state = .ground
         return instance
     }
@@ -466,7 +469,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
 
     // Outside a frame any EndSSH would do, since the remote end only writes framed
     // output, but checking the ID guards against stray bytes on the remote tty. In
-    // recovery mode the ID is unknown, so any EndSSH is accepted there.
+    // recovery mode the ID may be unknown, and then any EndSSH is accepted there.
     private func isEndSSHForThisConnection(_ id: String) -> Bool {
         guard let clientUniqueID else {
             return true
@@ -547,7 +550,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         case .endSSH(let id, let start) where id == clientUniqueID:
             // Output is relayed from the remote, so only an EndSSH for this very
             // connection's it2ssh counts: the frame was cut off by the connection dying.
-            // In recovery mode clientUniqueID is nil, so this never matches.
+            // In recovery mode without a known clientUniqueID, this never matches.
             DLog("it2ssh ended (\(id)) while hooked in output state. Unhook.")
             return unhookForEndSSH(context, start: start, token: token)
         case .notOSC, .osc(_, _), .endSSH(_, _):

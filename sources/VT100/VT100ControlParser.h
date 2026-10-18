@@ -41,7 +41,7 @@ NS_INLINE BOOL isc1(int c) {
 - (void)cancelTmuxRecoveryMode;
 - (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
 
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID;
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID clientUniqueID:(NSString *)clientUniqueID;
 - (void)cancelConductorRecoveryMode;
 
 - (BOOL)dcsHookIsSSH;

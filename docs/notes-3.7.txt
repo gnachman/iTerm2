@@ -1398,6 +1398,11 @@ Bug Fixes:
   nothing you typed afterward appeared. It now
   ends the connection and returns to the local
   shell.
+- An SSH Integration session restored after
+  relaunching iTerm2 no longer hangs when its
+  connection drops while the remote command is
+  printing output. It returns to the local
+  shell.
 - In an alert with a text field, such as the
   one asking how many spaces to use when you
   paste text with tabs, Cmd-A, Cmd-C, Cmd-V,

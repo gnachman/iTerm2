@@ -491,10 +491,14 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 }
 
 // tree: [child pid: [dcs ID, tree]]
-- (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree {
-    DLog(@"%@: startConductorRecoveryModeWithID:%@ tree:%@", self, dcsID, tree);
+- (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID
+                                         tree:(NSDictionary *)tree
+                               clientUniqueID:(NSString *)clientUniqueID {
+    DLog(@"%@: startConductorRecoveryModeWithID:%@ tree:%@ clientUniqueID:%@", self, dcsID, tree, clientUniqueID);
     [_sshParsers removeAllObjects];
-    const NSInteger boundary = [self reallyStartConductorRecoveryModeWithID:dcsID tree:tree];
+    const NSInteger boundary = [self reallyStartConductorRecoveryModeWithID:dcsID
+                                                                       tree:tree
+                                                             clientUniqueID:clientUniqueID];
     DLog(@"After recovery:");
     [self printParsers:@""];
     return boundary;
@@ -507,7 +511,9 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
     }];
 }
 
-- (NSInteger)reallyStartConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree {
+- (NSInteger)reallyStartConductorRecoveryModeWithID:(NSString *)dcsID
+                                               tree:(NSDictionary *)tree
+                                     clientUniqueID:(NSString *)clientUniqueID {
     DLog(@"%@: reallyStartConductorRecoveryModeWithID:%@ tree:%@", self, dcsID, tree);
     @synchronized (self) {
         if (tree.count == 0) {
@@ -518,10 +524,12 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
             NSArray *tuple = tree[@0];
             NSString *childDcsId = tuple[0];
             NSDictionary *childTree = tuple[1];
-            [self startConductorRecoveryModeWithID:childDcsId tree:childTree];
+            // The child's it2ssh hooks this parser, so clientUniqueID, which belongs to this
+            // node, doesn't apply. The tree doesn't carry the child's ID.
+            [self startConductorRecoveryModeWithID:childDcsId tree:childTree clientUniqueID:nil];
             return _nextBoundaryNumber++;
         }
-        [_controlParser startConductorRecoveryModeWithID:dcsID];
+        [_controlParser startConductorRecoveryModeWithID:dcsID clientUniqueID:clientUniqueID];
         _dcsHooked = YES;
         [self recoverWithConductorTree:tree];
         _emitRecoveryToken = YES;
@@ -539,7 +547,8 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
         childParser.encoding = self.encoding;
         childParser.depth = self.depth + 1;
         _sshParsers[childPID] = childParser;
-        [childParser reallyStartConductorRecoveryModeWithID:childDcsId tree:childTree];
+        // The tree doesn't carry a nested it2ssh's unique ID, so its parser doesn't know it.
+        [childParser reallyStartConductorRecoveryModeWithID:childDcsId tree:childTree clientUniqueID:nil];
         DLog(@"%@: add recovered child parser with pid %@: %@", self, childPID, childParser);
     }
 }
