@@ -294,7 +294,7 @@
 <body>
     <div class="header">
         <h1>💻 Page Source</h1>
-        <p class="url">{{URL}}</p>
+        <p class="url" id="source-url" data-url="{{URL}}">{{URL}}</p>
     </div>
 
     <div class="source-content">
@@ -349,7 +349,7 @@
             if (!codeElement) return;
             
             // Get the current page URL to resolve relative URLs
-            const currentURL = '{{URL}}';
+            const currentURL = document.getElementById('source-url').dataset.url;
             let html = codeElement.innerHTML;
             
             // Helper function to resolve relative URLs

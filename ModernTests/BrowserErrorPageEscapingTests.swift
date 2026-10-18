@@ -76,7 +76,7 @@ final class BrowserErrorPageEscapingTests: XCTestCase {
                             code: NSURLErrorCannotConnectToHost,
                             userInfo: [NSLocalizedDescriptionKey: "{{URL_DISPLAY}}{{ORIGINAL_URL}}"])
         let html = errorPage(error: error, failedURL: try XCTUnwrap(URL(string: "http://example.invalid/")))
-        XCTAssertTrue(html.contains("<br/><br/>&#123;&#123;URL_DISPLAY&#125;&#125;&#123;&#123;ORIGINAL_URL&#125;&#125;</p>"), html)
+        XCTAssertTrue(html.contains("<br/><br/>{{URL_DISPLAY}}{{ORIGINAL_URL}}</p>"), html)
         XCTAssertEqual(html.components(separatedBy: "class=\"error-url\"").count, 2, html)
     }
 
