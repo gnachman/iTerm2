@@ -75,8 +75,52 @@ final class WorkgroupUsageTests: XCTestCase {
         let huge = String(repeating: "y\n", count: 500_000)
         let shown = WorkgroupUsageToolbarItem.displayedReport(huge)
         XCTAssertLessThan(shown.count, WorkgroupUsageToolbarItem.maximumDisplayedReportLength + 200)
-        XCTAssertTrue(shown.hasPrefix(String(huge.prefix(100))))
+        XCTAssertTrue(shown.hasPrefix(String(huge.prefix(40))))
         XCTAssertEqual(WorkgroupUsageToolbarItem.displayedReport("short"), "short")
+    }
+
+    // 2000 characters of `yes` output is about 1000 lines, which still made
+    // the alert taller than the screen. QA finding F-388.
+    func test_displayedReport_capsManyShortLines() {
+        let huge = String(repeating: "y\n", count: 500_000)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(huge)
+        let lineCount = shown.split(separator: "\n", omittingEmptySubsequences: false).count
+        // Allow for the blank line and truncation note appended after the cap.
+        XCTAssertLessThanOrEqual(lineCount, WorkgroupUsageToolbarItem.maximumDisplayedReportRows + 2)
+        XCTAssertTrue(shown.hasPrefix("y\ny\ny\n"))
+        XCTAssertNotEqual(shown, huge)
+    }
+
+    // In Swift "\r\n" is one Character, so it must still count as a line break.
+    func test_displayedReport_capsManyCRLFLines() {
+        let huge = String(repeating: "y\r\n", count: 500_000)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(huge)
+        let lineCount = shown.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline).count
+        XCTAssertLessThanOrEqual(lineCount, WorkgroupUsageToolbarItem.maximumDisplayedReportRows + 2)
+    }
+
+    // A long line counts as the rows it wraps to.
+    func test_displayedReport_countsWrappedRows() {
+        let perRow = WorkgroupUsageToolbarItem.assumedCharactersPerRow
+        let maxRows = WorkgroupUsageToolbarItem.maximumDisplayedReportRows
+        // Well under the character cap, but 20 + 10 * 2 = 40 rows.
+        let shortLines = Array(repeating: "a", count: 20)
+        let longLines = Array(repeating: String(repeating: "x", count: perRow * 2), count: 10)
+        let report = (shortLines + longLines).joined(separator: "\n")
+        XCTAssertLessThan(report.count, WorkgroupUsageToolbarItem.maximumDisplayedReportLength)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(report)
+        let rows = shown.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { max(1, ($0.count + perRow - 1) / perRow) }
+            .reduce(0, +)
+        // Allow for the blank line and truncation note appended after the cap.
+        XCTAssertLessThanOrEqual(rows, maxRows + 2)
+        XCTAssertTrue(shown.hasPrefix(shortLines.joined(separator: "\n") + "\n" + longLines[0]))
+    }
+
+    func test_displayedReport_keepsReportThatFits() {
+        let lines = (0..<WorkgroupUsageToolbarItem.maximumDisplayedReportRows).map { "line \($0)" }
+        let report = lines.joined(separator: "\n")
+        XCTAssertEqual(WorkgroupUsageToolbarItem.displayedReport(report), report)
     }
 
     // MARK: - Bundled parser script

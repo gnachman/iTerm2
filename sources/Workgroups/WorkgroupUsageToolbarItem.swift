@@ -542,11 +542,35 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
     // buttons out of reach. The clipboard still gets the whole report.
     static let maximumDisplayedReportLength = 2000
 
+    // A character cap alone isn't enough: 2000 characters of `yes` output is
+    // a thousand lines. Also cap the rows the text takes up, counting a long
+    // line as the several rows it wraps to.
+    static let maximumDisplayedReportRows = 30
+    static let assumedCharactersPerRow = 80
+
     static func displayedReport(_ report: String) -> String {
-        guard report.count > maximumDisplayedReportLength else {
+        var rows = 0
+        var kept = [Substring]()
+        // Nothing past the character cap is shown, so don't split a megabyte into lines.
+        let head = report.prefix(maximumDisplayedReportLength)
+        var truncated = head.endIndex != report.endIndex
+        for line in head.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline) {
+            let lineRows = max(1, (line.count + assumedCharactersPerRow - 1) / assumedCharactersPerRow)
+            if rows + lineRows > maximumDisplayedReportRows {
+                let remainingRows = maximumDisplayedReportRows - rows
+                if remainingRows > 0 {
+                    kept.append(line.prefix(remainingRows * assumedCharactersPerRow))
+                }
+                truncated = true
+                break
+            }
+            rows += lineRows
+            kept.append(line)
+        }
+        guard truncated else {
             return report
         }
-        return String(report.prefix(maximumDisplayedReportLength))
+        return kept.joined(separator: "\n")
             + "\n\n"
             + String(localized: "WorkgroupUsage.AlertReportTruncated",
                      defaultValue: "…(truncated; click “Report a Bug” to copy the full report)",
