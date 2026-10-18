@@ -1774,3 +1774,7 @@ Bug Fixes:
   footer were in English), as is the page shown
   for an ssh: link with no ssh integration
   connection.
+- A web address containing a quote or other
+  special characters can no longer inject script
+  or markup into the browser’s page-load error
+  page.

@@ -96,7 +96,7 @@
         <h1 class="error-title">{{TITLE}}</h1>
         <p class="error-message">{{MESSAGE}}</p>
         {{URL_DISPLAY}}
-        <button class="button retry-button" onclick="retryLoad()">{{TRY_AGAIN}}</button>
+        <button class="button retry-button" id="retry-button" data-original-url="{{ORIGINAL_URL}}" onclick="retryLoad()">{{TRY_AGAIN}}</button>
         <div class="details">
             {{DETAILS}}
         </div>
@@ -104,7 +104,7 @@
     
     <script>
         function retryLoad() {
-            const originalURL = '{{ORIGINAL_URL}}';
+            const originalURL = document.getElementById('retry-button').dataset.originalUrl;
             if (originalURL) {
                 window.location.href = originalURL;
             } else {
