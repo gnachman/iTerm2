@@ -414,6 +414,23 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         XCTAssertEqual(controller.dotdir, "~")
     }
 
+    // F-451: macOS /bin/csh is tcsh, and ps shows a tcsh login shell as “-csh”.
+    func testDiscoveryTreatsACshParentAsTcsh() {
+        discover(shellPath: "/bin/zsh", parentProcess: "-csh", dotdirOutput: nil)
+
+        XCTAssertEqual(terminal.sentTexts, [Self.shellCommand])
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .tcsh)
+        XCTAssertEqual(controller.dotdir, "~")
+    }
+
+    func testDiscoveryTreatsACshPathParentAsTcsh() {
+        discover(shellPath: "/bin/bash", parentProcess: "/bin/csh", dotdirOutput: nil)
+
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertEqual(controller.shell, .tcsh)
+    }
+
     func testDiscoveryUsesALoginShellParent() {
         discover(shellPath: "/bin/zsh", parentProcess: "-fish", dotdirOutput: nil)
 
