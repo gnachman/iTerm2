@@ -1837,6 +1837,12 @@ Bug Fixes:
   now starts right below the banner instead of
   after a blank row when the cursor had been in
   the middle of a line.
+- Resizing panes with Tab.async_update_layout()
+  in the Python API now gives each pane the size
+  you asked for. A pane used to come up a column
+  or row short and the window shrank a little
+  each time.
+
 
 
 

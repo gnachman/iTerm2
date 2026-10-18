@@ -6164,6 +6164,9 @@ typedef struct {
     if (!self.realParentWindow.anyFullScreen) {
         [self setNativeRootFrameSize:newRootSize];
         [self recursiveAdjustSubviews:root_];
+        // Moving space between panes leaves the root's size alone, and then nothing fits the
+        // sessions to their new frames. Fit them here so the window is sized from the new grids.
+        [self _splitViewDidResizeSubviews:root_];
         [self.parentWindow fitWindowToTab:self];
     } else {
         [self recursiveAdjustSubviews:root_];
@@ -6181,10 +6184,10 @@ typedef struct {
         NSView *subview = splitView.subviews[i];
         ITMSplitTreeNode_SplitTreeLink *link = node.linksArray[i];
         CGSize newSubviewSize;
-        NSSplitView *splitView = [NSSplitView castFrom:subview];
+        NSSplitView *childSplitView = [NSSplitView castFrom:subview];
         SessionView *sessionView = [SessionView castFrom:subview];
-        if (splitView) {
-            newSubviewSize = [self setSizesFromSplitTreeNode:link.node splitView:splitView];
+        if (childSplitView) {
+            newSubviewSize = [self setSizesFromSplitTreeNode:link.node splitView:childSplitView];
         } else if (sessionView) {
             PTYSession *session = (PTYSession *)sessionView.delegate;
             // A browser session's grid is measured in points (its cells are 1x1), not in
