@@ -78,7 +78,13 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
             "TITLE": title,
             "MESSAGE": message,
             "URL_DISPLAY": urlDisplayHTML,
-            "ORIGINAL_URL": originalURL ?? ""
+            "ORIGINAL_URL": originalURL ?? "",
+            "TRY_AGAIN": String(localized: "BrowserErrorPage.TryAgain",
+                                defaultValue: "Try Again",
+                                comment: "Button on the browser’s page-load error page that reloads the page").escapedForHTML,
+            "DETAILS": String(localized: "BrowserErrorPage.Details",
+                              defaultValue: "Check your internet connection and try reloading the page.",
+                              comment: "Footer text on the browser’s page-load error page").escapedForHTML
         ]
         
         return iTermBrowserTemplateLoader.loadTemplate(named: "error-page",

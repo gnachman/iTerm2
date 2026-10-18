@@ -1876,6 +1876,12 @@ Bug Fixes:
 - VoiceOver now reads the Profiles window’s
   New Floating Pane button as “New Floating
   Pane” instead of the name of its icon.
+- The browser’s page-load error page is now
+  fully translated (its “Try Again” button and
+  footer were in English), as is the page shown
+  for an ssh: link with no ssh integration
+  connection.
+
 
 
 

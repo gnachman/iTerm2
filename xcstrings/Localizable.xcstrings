@@ -38203,6 +38203,90 @@
         }
       }
     },
+    "BrowserErrorPage.Details" : {
+      "comment" : "Footer text on the browser’s page-load error page",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überprüfen Sie Ihre Internetverbindung und laden Sie die Seite neu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Check your internet connection and try reloading the page."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネット接続を確認して、ページを再読み込みしてください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifique sua conexão com a internet e tente recarregar a página."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверьте подключение к интернету и попробуйте перезагрузить страницу."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请检查你的互联网连接，然后尝试重新载入页面。"
+          }
+        }
+      }
+    },
+    "BrowserErrorPage.TryAgain" : {
+      "comment" : "Button on the browser’s page-load error page that reloads the page",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut versuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Try Again"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再試行"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar novamente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
+          }
+        }
+      }
+    },
     "BrowserEvalJS.Denied" : {
       "comment" : "Error returned to a script when the user declined to let it run JavaScript on a website",
       "extractionState" : "extracted_with_value",
@@ -41000,6 +41084,174 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择 %@"
+          }
+        }
+      }
+    },
+    "BrowserSSHPage.Heading" : {
+      "comment" : "Heading of the browser page shown when opening an ssh: URL for a host with no ssh integration connection",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datei konnte nicht angezeigt werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not display file"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルを表示できませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível exibir o arquivo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось отобразить файл"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法显示文件"
+          }
+        }
+      }
+    },
+    "BrowserSSHPage.NoConnectionMessage" : {
+      "comment" : "Browser page shown when opening an ssh: URL for a host with no ssh integration connection. %@ is the host name, shown in bold.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wurde keine Verbindung zu %@ über die SSH-Integration gefunden. Stellen Sie in einem Terminalfenster eine Verbindung her und versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No connection to %@ using ssh integration could be found. Please connect to it in a terminal window and try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH統合を使用した %@ への接続が見つかりませんでした。ターミナルウインドウで接続してから、もう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma conexão com %@ pela integração SSH foi encontrada. Conecte-se a ele em uma janela de terminal e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не найдено подключение к %@ через интеграцию SSH. Подключитесь к нему в окне терминала и повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到通过 SSH 集成与 %@ 的连接。请在终端窗口中连接到它，然后重试。"
+          }
+        }
+      }
+    },
+    "BrowserSSHPage.PageTitle" : {
+      "comment" : "Browser tab title of the page shown when opening an ssh: URL for a host with no ssh integration connection",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problem beim Anzeigen der Datei"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Problem viewing file"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルの表示に問題があります"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problema ao exibir o arquivo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось просмотреть файл"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看文件时出现问题"
+          }
+        }
+      }
+    },
+    "BrowserSSHPage.TryAgain" : {
+      "comment" : "Button on the browser page shown when opening an ssh: URL for a host with no ssh integration connection; reloads the page",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut versuchen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Try Again"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再試行"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tentar novamente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
           }
         }
       }
