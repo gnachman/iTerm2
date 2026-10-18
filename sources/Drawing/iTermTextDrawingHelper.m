@@ -1843,40 +1843,65 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     return NSMaxRange(lhs) == rhs.location || NSMaxRange(rhs) == lhs.location;
 }
 
+NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocessedForeground(NSArray<iTermBoxedBackgroundColorRun *> *runs,
+                                                                                            BOOL bidi) {
+    NSMutableArray<iTermBoxedBackgroundColorRun *> *combinedRuns = [NSMutableArray array];
+    iTermBackgroundColorRun previousRun = { {0} };
+    BOOL havePreviousRun = NO;
+    for (iTermBoxedBackgroundColorRun *run in runs) {
+        if (!havePreviousRun) {
+            havePreviousRun = YES;
+            previousRun = *run.valuePointer;
+        } else if ((bidi || (run.valuePointer->selected == previousRun.selected &&
+                             run.valuePointer->isMatch == previousRun.isMatch)) &&
+                   !run.valuePointer->beneathFaintText &&
+                   !previousRun.beneathFaintText &&
+                   NSRangesAdjacent(previousRun.modelRange, run.valuePointer->modelRange)) {
+            // Combine with preceding run. On a bidi line this may cross a
+            // selection or find-match edge so an Arabic word is shaped as a
+            // whole; the text colors are then chosen per cell.
+            previousRun.visualRange = NSUnionRange(previousRun.visualRange, run.valuePointer->visualRange);
+            previousRun.modelRange = NSUnionRange(previousRun.modelRange, run.valuePointer->modelRange);
+            previousRun.selected = previousRun.selected && run.valuePointer->selected;
+            previousRun.isMatch = previousRun.isMatch && run.valuePointer->isMatch;
+        } else {
+            // Allow this run to remain.
+            [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
+            previousRun = *run.valuePointer;
+        }
+    }
+    if (havePreviousRun) {
+        [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
+    }
+    return combinedRuns;
+}
+
 // Draw assuming no foreground color processing. Keeps glyphs together in a single background color run across different background colors.
 - (void)drawUnprocessedForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                                drawOffscreenCommandLine:(BOOL)drawOffscreenCommandLine
                                                     ctx:(CGContextRef)ctx
                                           virtualOffset:(CGFloat)virtualOffset {
     // Combine runs on each line, except those with different values of
-    // `selected` or `match`, or when faint text is present.
+    // `selected` or `match` (outside bidi lines), or when faint text is present.
     // Those properties affect foreground color and must split ligatures up and process foreground
     // color separately.
     NSArray<iTermBackgroundColorRunsInLine *> *fakeRunArrays = [backgroundRunArrays mapWithBlock:^id(iTermBackgroundColorRunsInLine *runs) {
-        NSMutableArray<iTermBoxedBackgroundColorRun *> *combinedRuns = [NSMutableArray array];
-        iTermBackgroundColorRun previousRun = { {0} };
-        BOOL havePreviousRun = NO;
-        for (iTermBoxedBackgroundColorRun *run in runs.array) {
-            if (!havePreviousRun) {
-                havePreviousRun = YES;
-                previousRun = *run.valuePointer;
-            } else if (run.valuePointer->selected == previousRun.selected &&
-                       run.valuePointer->isMatch == previousRun.isMatch &&
-                       !run.valuePointer->beneathFaintText &&
-                       !previousRun.beneathFaintText &&
-                       NSRangesAdjacent(previousRun.modelRange, run.valuePointer->modelRange)) {
-                // Combine with preceding run.
-                previousRun.visualRange = NSUnionRange(previousRun.visualRange, run.valuePointer->visualRange);
-                previousRun.modelRange = NSUnionRange(previousRun.modelRange, run.valuePointer->modelRange);
-            } else {
-                // Allow this run to remain.
-                [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
-                previousRun = *run.valuePointer;
+        // Only a line with a selection or find-match edge can combine
+        // differently on a bidi line, so skip the metadata lookup otherwise.
+        BOOL hasHighlightEdge = NO;
+        for (NSUInteger i = 1; i < runs.array.count; i++) {
+            const iTermBackgroundColorRun *lhs = runs.array[i - 1].valuePointer;
+            const iTermBackgroundColorRun *rhs = runs.array[i].valuePointer;
+            if (lhs->selected != rhs->selected || lhs->isMatch != rhs->isMatch) {
+                hasHighlightEdge = YES;
+                break;
             }
         }
-        if (havePreviousRun) {
-            [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
-        }
+        const BOOL bidi = (hasHighlightEdge &&
+                           [self canDrawLine:runs.line] &&
+                           [self.delegate drawingHelperMetadataOnLine:runs.sourceLine].rtlFound);
+        NSArray<iTermBoxedBackgroundColorRun *> *combinedRuns =
+            iTermCombineBackgroundRunsForUnprocessedForeground(runs.array, bidi);
 
         iTermBackgroundColorRunsInLine *fakeRuns = [[iTermBackgroundColorRunsInLine alloc] init];
         fakeRuns.line = runs.line;
@@ -1968,8 +1993,18 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
     const BOOL rtlFound = metadata.rtlFound;
     NSData *matches = [_delegate drawingHelperMatchesOnLine:sourceLine];
+    // On a bidi line a run may span a selection or find-match edge (see
+    // iTermCombineBackgroundRunsForUnprocessedForeground), so the attributed
+    // string builder decides those colors per cell from these.
+    NSIndexSet *selectedIndexes = nil;
+    if (rtlFound) {
+        selectedIndexes = [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:sourceLine + _totalScrollbackOverflow] ?: [NSIndexSet indexSet];
+    }
     if (sourceLine != displayLine) {
         matches = nil;
+        if (selectedIndexes) {
+            selectedIndexes = [NSIndexSet indexSet];
+        }
     }
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
@@ -1983,6 +2018,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                   inRange:run->modelRange
                           startingAtPoint:textOrigin
                                bgselected:run->selected
+                          selectedIndexes:selectedIndexes
                                   bgColor:box.unprocessedBackgroundColor
                  processedBackgroundColor:box.backgroundColor
                                  colorRun:box.valuePointer
@@ -2002,6 +2038,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                             inRange:(NSRange)indexRange
                     startingAtPoint:(NSPoint)initialPoint
                          bgselected:(BOOL)bgselected
+                    selectedIndexes:(NSIndexSet *)selectedIndexes
                             bgColor:(NSColor *)bgColor
            processedBackgroundColor:(NSColor *)processedBackgroundColor
                            colorRun:(iTermBackgroundColorRun *)colorRun
@@ -2032,6 +2069,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                     externalAttributes:eaIndex
                                                  range:indexRange
                                        hasSelectedText:bgselected
+                                       selectedIndexes:selectedIndexes
                                        backgroundColor:bgColor
                                         forceTextColor:forceTextColor
                                               colorRun:colorRun
@@ -3714,6 +3752,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                       inRange:NSMakeRange(i, charsInLine)
                               startingAtPoint:NSMakePoint(x, y)
                                    bgselected:NO
+                              selectedIndexes:nil
                                       bgColor:nil
                      processedBackgroundColor:[self defaultBackgroundColor]
                                      colorRun:nil
@@ -4638,6 +4677,7 @@ typedef struct {
                               inRange:NSMakeRange(0, _gridSize.width)
                       startingAtPoint:NSMakePoint([iTermPreferences sideMargins], row * _cellSize.height)
                            bgselected:NO
+                      selectedIndexes:nil
                               bgColor:backgroundColor
              processedBackgroundColor:backgroundColor
                              colorRun:nil

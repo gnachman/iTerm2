@@ -1842,6 +1842,11 @@ Bug Fixes:
   you asked for. A pane used to come up a column
   or row short and the window shrank a little
   each time.
+- With the GPU renderer off, selecting part of
+  an Arabic or Persian word, or a find match
+  inside one, no longer breaks the letters’
+  joining at the edge of the highlight.
+
 
 
 

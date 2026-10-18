@@ -25,6 +25,10 @@ typedef struct iTermTextColorContext {
     CGFloat dimmingAmount;
     CGFloat mutingAmount;
     BOOL hasSelectedText;
+    // Logical columns that are selected. When non-nil, selection and find-match
+    // highlighting are decided per cell rather than for the whole range, so one
+    // call can span a selection boundary (see -attributedStringsForLine:).
+    NSIndexSet *selectedIndexes;
     iTermColorMap *colorMap;
     id<iTermAttributedStringBuilderDelegate> delegate;
     NSData *findMatches;
@@ -157,6 +161,40 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
            a->blueDark == b->blueDark;
 }
 
+static inline BOOL iTermTextColorContextCellIsSelected(const iTermTextColorContext *context, int index) {
+    return context->hasSelectedText || (context->selectedIndexes != nil && index >= 0 && [context->selectedIndexes containsIndex:index]);
+}
+
+static inline BOOL iTermTextColorContextCellIsMatch(const iTermTextColorContext *context, int index) {
+    if (!context->findMatches || index < 0) {
+        return NO;
+    }
+    // Test if this is a highlighted match from a find.
+    const int theIndex = index / 8;
+    const int mask = 1 << (index & 7);
+    const char *matchBytes = context->findMatches.bytes;
+    return theIndex < [context->findMatches length] && (matchBytes[theIndex] & mask);
+}
+
+// Selection and find-match highlighting change a cell's text color without
+// changing its screen_char_t, so two cells that are otherwise equivalent can
+// still need different attributes. This is only possible when highlighting is
+// decided per cell.
+static inline BOOL iTermTextColorContextCellsHaveSameHighlight(const iTermTextColorContext *context, int i, int j) {
+    if (!context->selectedIndexes) {
+        return YES;
+    }
+    if (j < 0) {
+        // No cell's attributes have been computed yet.
+        return NO;
+    }
+    const BOOL iSelected = iTermTextColorContextCellIsSelected(context, i);
+    if (iSelected != iTermTextColorContextCellIsSelected(context, j)) {
+        return NO;
+    }
+    return iSelected || iTermTextColorContextCellIsMatch(context, i) == iTermTextColorContextCellIsMatch(context, j);
+}
+
 static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
                                                    iTermExternalAttribute *ea,
                                                    BOOL inUnderlinedRange,
@@ -166,6 +204,7 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
                                                    BOOL disableMinimumContrast) {
     NSColor *rawColor = nil;
     BOOL isMatch = NO;
+    const BOOL selected = iTermTextColorContextCellIsSelected(context, index);
     if (c->faint && colorRun && !context->backgroundColor) {
         context->backgroundColor = [context->delegate unprocessedColorForBackgroundRun:colorRun
                                                            enableBlending:YES];
@@ -175,14 +214,8 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
                                                               context->mutingAmount > 0.001 ||
                                                               c->faint);  // faint implies alpha<1 and is faster than getting the alpha component
 
-    if (context->findMatches && !context->hasSelectedText) {
-        // Test if this is a highlighted match from a find.
-        int theIndex = index / 8;
-        int mask = 1 << (index & 7);
-        const char *matchBytes = context->findMatches.bytes;
-        if (theIndex < [context->findMatches length] && (matchBytes[theIndex] & mask)) {
-            isMatch = YES;
-        }
+    if (!selected) {
+        isMatch = iTermTextColorContextCellIsMatch(context, index);
     }
 
     if (isMatch) {
@@ -196,7 +229,7 @@ static NSColor *iTermTextDrawingHelperGetTextColor(screen_char_t *c,
         rawColor = [context->colorMap colorForKey:kColorMapLink];
         assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
-    } else if (context->hasSelectedText && context->delegate.useSelectedTextColor) {
+    } else if (selected && context->delegate.useSelectedTextColor) {
         // Selected text.
         rawColor = [context->colorMap colorForKey:kColorMapSelectedText];
         assert(rawColor);
@@ -375,6 +408,32 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                                      findMatches:(NSData *)findMatches
                                                  underlinedRange:(NSRange)underlinedRange
                                                        positions:(CTVector(CGFloat) *)positions {
+    return [self attributedStringsForLine:line
+                                 bidiInfo:bidiInfo
+                       externalAttributes:eaIndex
+                                    range:indexRange
+                          hasSelectedText:hasSelectedText
+                          selectedIndexes:nil
+                          backgroundColor:backgroundColor
+                           forceTextColor:forceTextColor
+                                 colorRun:colorRun
+                              findMatches:findMatches
+                          underlinedRange:underlinedRange
+                                positions:positions];
+}
+
+- (NSArray<id<iTermAttributedString>> *)attributedStringsForLine:(const screen_char_t *)line
+                                                        bidiInfo:(iTermBidiDisplayInfo *)bidiInfo
+                                              externalAttributes:(id<iTermExternalAttributeIndexReading>)eaIndex
+                                                           range:(NSRange)indexRange
+                                                 hasSelectedText:(BOOL)hasSelectedText
+                                                 selectedIndexes:(NSIndexSet *)selectedIndexes
+                                                 backgroundColor:(NSColor *)backgroundColor
+                                                  forceTextColor:(NSColor *)forceTextColor
+                                                        colorRun:(const iTermBackgroundColorRun *)colorRun
+                                                     findMatches:(NSData *)findMatches
+                                                 underlinedRange:(NSRange)underlinedRange
+                                                       positions:(CTVector(CGFloat) *)positions {
     NSMutableArray<id<iTermAttributedString>> *attributedStrings = [NSMutableArray array];
     iTermColorMap *colorMap = self.colorMap;
     iTermTextColorContext textColorContext = {
@@ -382,6 +441,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         .dimmingAmount = colorMap.dimmingAmount,
         .mutingAmount = colorMap.mutingAmount,
         .hasSelectedText = hasSelectedText,
+        .selectedIndexes = selectedIndexes,
         .colorMap = self.colorMap,
         .delegate = _delegate,
         .findMatches = findMatches,
@@ -408,6 +468,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     screen_char_t predecessor = { 0 };
     BOOL lastCharacterImpartsEmojiPresentation = NO;
     iTermExternalAttribute *prevEa = nil;
+    // The cell whose attributes are in characterAttributes.
+    int attributesIndex = -1;
     iTermKittyUnicodePlaceholderState kittyPlaceholderState;
     iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
 
@@ -559,7 +621,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         if (likely(underlinedRange.length == 0) &&
             likely(drawable == previousDrawable) &&
             likely(i > indexRange.location) &&
-            [self character:&c withExtendedAttributes:ea isEquivalentToCharacter:&line[i-1] withExtendedAttributes:prevEa]) {
+            [self character:&c withExtendedAttributes:ea isEquivalentToCharacter:&line[i-1] withExtendedAttributes:prevEa] &&
+            iTermTextColorContextCellsHaveSameHighlight(&textColorContext, i, attributesIndex)) {
             ++segmentLength;
             iTermPreciseTimerStatsMeasureAndAccumulate(_stats.attrsForChar);
             if (drawable ||
@@ -590,6 +653,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                        textColorContext:&textColorContext
                              attributes:&characterAttributes
                                remapped:&remapped];
+        attributesIndex = i;
         prevEa = ea;
         if (!c.image && remapped) {
             if (c.complexChar) {

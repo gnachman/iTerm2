@@ -17,6 +17,7 @@
 #import "VT100GridTypes.h"
 
 @class iTermAttributedStringBuilder;
+@class iTermBoxedBackgroundColorRun;
 @class iTermButtonPillInfo;
 @class iTermColorMap;
 @class iTermExternalAttribute;
@@ -98,6 +99,17 @@ BOOL iTermScreenCharCanHostSpacingMark(const screen_char_t *base, BOOL useNative
 // strikethroughs start here. On a bidi line positions are visual, so for a
 // right-to-left run the range's first character is drawn rightmost.
 CGFloat iTermLeftmostStringPosition(const CGFloat *positions, NSRange range);
+
+// Combines adjacent background runs whose text can be drawn together when the
+// text color does not depend on the background color. Runs that differ in
+// `selected` or `isMatch` are normally kept apart because those change the
+// text color. On a bidi line (`bidi` YES) they are combined too, because
+// shaping each part separately breaks an Arabic word's joining at a selection
+// edge; the caller must then decide selection and match colors per cell. The
+// combined run is marked selected (or a match) only if all its parts are.
+// Runs beneath faint text are never combined.
+NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocessedForeground(NSArray<iTermBoxedBackgroundColorRun *> *runs,
+                                                                                            BOOL bidi);
 NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
 
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
