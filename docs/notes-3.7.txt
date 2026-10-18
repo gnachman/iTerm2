@@ -1921,6 +1921,11 @@ Bug Fixes:
 - The browser’s View Source command now shows
   the page’s source. Before, it always said
   “No source available.”
+- When you change the theme, an open browser
+  tab now switches pages that have light and
+  dark versions to the matching one instead of
+  keeping the old look until you open a new tab.
+
 
 
 
