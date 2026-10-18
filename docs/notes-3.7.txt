@@ -1757,3 +1757,7 @@ Bug Fixes:
   field now changes size along with the text
   when you change the font size from the Font
   menu or Font panel.
+- In the AI Chats window, when sending a message
+  moves a chat to the top of the list, the
+  highlight now moves with it instead of
+  staying on a different chat.
