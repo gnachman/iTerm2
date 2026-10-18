@@ -498,7 +498,7 @@ extension Monitor {
                            nr.valuesArray_Count > 0,
                            let name = nr.valuesArray.object(at: 0) as? String,
                            name != "null" {
-                            displayName = trimJSONQuotes(name)
+                            displayName = jsonStringValue(name)
                         }
 
                         if isActive {

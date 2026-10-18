@@ -87,10 +87,19 @@ func colorToJSON(_ hex: String) throws -> String {
 
 // MARK: - JSON String Helpers
 
-/// Trim surrounding quote characters from a JSON-encoded string value.
-func trimJSONQuotes(_ s: String?) -> String {
+/// The text of a JSON-encoded value, as the API returns profile properties,
+/// variable values and function results. A JSON string is decoded, so escapes
+/// like `\/` and `\"` don't leak into the output. JSON null (or a missing
+/// value) gives the empty string, and any other value comes back as written.
+func jsonStringValue(_ s: String?) -> String {
     guard let s = s else { return "" }
-    return s.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+    if let decoded = decodeJSONString(s) {
+        return decoded
+    }
+    if s == "null" {
+        return ""
+    }
+    return s
 }
 
 /// Wrap a string as a JSON string value.

@@ -1497,6 +1497,10 @@ Bug Fixes:
 - it2 session list no longer shows a session’s
   tty as \/dev\/ttys000 or its name with
   backslash escapes. It prints the plain values.
+- it2 app get-focus, it2 profile list and it2
+  profile show no longer print names, fonts and
+  badge text with backslash escapes, such as a
+  profile named a/b shown as a\/b.
 - it2 session set-var now sets a plain value
   such as hello. Before, it reported success
   but set nothing unless the value was quoted
