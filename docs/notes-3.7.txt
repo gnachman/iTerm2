@@ -1785,6 +1785,12 @@ Bug Fixes:
   line is now drawn on the character it is on,
   instead of in the blank area on the other side
   of the line.
+- A scroll region set by a program that is
+  still running when iTerm2 quits unexpectedly
+  is kept when the session is restored, so the
+  program’s output no longer scrolls the whole
+  screen.
+
 
 
 

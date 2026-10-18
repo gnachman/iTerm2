@@ -6767,6 +6767,11 @@ lengthExcludingInBandSignaling:data.length
         }
         lineBuffer.delegate = self;
         self.linebuffer = lineBuffer;
+        if (!reattached) {
+            // Only a program that is still running expects its scroll region back.
+            [self.primaryGrid discardSavedScrollRegion];
+            [self.altGrid discardSavedScrollRegion];
+        }
     }
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
         if (isArchive) {
