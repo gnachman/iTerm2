@@ -1730,6 +1730,10 @@ Bug Fixes:
 - In the Add/Edit Manual AI Model sheet, the
   API key menu is no longer too narrow to show
   “Automatic (none for a local endpoint)”.
+- In Settings > Keys > Hotkey, the “App
+  Hotkey:” and “Open Quickly Hotkey:” labels no
+  longer run under the controls beside them.
+
 
 
 

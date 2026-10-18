@@ -9844,7 +9844,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5106">
-                                                <rect key="frame" x="-2" y="103" width="263" height="16"/>
+                                                <rect key="frame" x="-2" y="103" width="251" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="App Hotkey:" id="5113">
                                                     <font key="font" metaFont="system"/>
@@ -9853,7 +9853,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="v4W-f1-neV">
-                                                <rect key="frame" x="-2" y="45" width="263" height="16"/>
+                                                <rect key="frame" x="-2" y="45" width="251" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Open Quickly Hotkey:" id="BAw-ed-Of1">
                                                     <font key="font" metaFont="system"/>
@@ -9871,7 +9871,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="32c-Yw-C1S">
-                                                <rect key="frame" x="-2" y="137" width="263" height="16"/>
+                                                <rect key="frame" x="-2" y="137" width="251" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Hotkey Window:" id="IKL-nD-a5S">
                                                     <font key="font" metaFont="system"/>
