@@ -306,6 +306,9 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     // MARK: - NSView
 
     override func viewDidChangeEffectiveAppearance() {
+        // WKWebView tells the page about the new appearance here. Without this
+        // a page keeps the color scheme it had when the web view was created.
+        super.viewDidChangeEffectiveAppearance()
         browserDelegate?.webViewDidChangeEffectiveAppearance(self)
     }
 
