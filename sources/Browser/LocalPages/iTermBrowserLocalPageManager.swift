@@ -216,6 +216,11 @@ class iTermBrowserLocalPageManager: NSObject {
         webView.load(URLRequest(url: iTermBrowserSourceHandler.sourceURL))
     }
     
+    /// Forget source stored by showSourcePage that hasn't been served yet.
+    func clearPendingSource() {
+        sourceHandler.clearPendingSource()
+    }
+
     /// Notify settings page of adblock update
     func notifySettingsPageOfAdblockUpdate(success: Bool, error: String?, webView: iTermBrowserWebView) {
         let urlString = iTermBrowserSettingsHandler.settingsURL.absoluteString

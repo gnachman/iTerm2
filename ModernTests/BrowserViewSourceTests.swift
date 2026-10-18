@@ -77,6 +77,74 @@ final class BrowserViewSourceTests: XCTestCase {
         return value
     }
 
+    private static var fakesKeptAlive = [WKNavigationAction]()
+
+    private final class FakeFrameInfo: WKFrameInfo {
+        private let fakeIsMainFrame: Bool
+        init(mainFrame: Bool) {
+            self.fakeIsMainFrame = mainFrame
+            super.init()
+        }
+        override var isMainFrame: Bool { fakeIsMainFrame }
+    }
+
+    private final class FakeNavigationAction: WKNavigationAction {
+        private let fakeRequest: URLRequest
+        private let fakeTargetFrame: WKFrameInfo
+        init(url: URL, mainFrame: Bool) {
+            fakeRequest = URLRequest(url: url)
+            fakeTargetFrame = FakeFrameInfo(mainFrame: mainFrame)
+            super.init()
+        }
+        override var request: URLRequest { fakeRequest }
+        override var targetFrame: WKFrameInfo? { fakeTargetFrame }
+        override var navigationType: WKNavigationType { .other }
+        override var modifierFlags: NSEvent.ModifierFlags { [] }
+    }
+
+    // Starts showing `source` and, before WebKit asks for iterm2-about:source,
+    // reports another navigation to the manager. Returns the text the source
+    // page ends up showing.
+    private func sourceShown(afterInterveningNavigationInMainFrame mainFrame: Bool,
+                             source: String) throws -> String {
+        let manager = try makeManager()
+        let webView = try XCTUnwrap(manager.webView)
+        manager.showSourceInBrowser(htmlSource: source,
+                                    url: try XCTUnwrap(URL(string: "http://example.invalid/old")))
+        // WebKit can't call back until the run loop turns, so this always
+        // happens before the source page is requested.
+        var decision: WKNavigationActionPolicy?
+        let action = FakeNavigationAction(
+            url: try XCTUnwrap(URL(string: "http://example.invalid/new")),
+            mainFrame: mainFrame)
+        // WebKit's API objects crash in dealloc when they have no backing
+        // object, so the fakes are never freed.
+        Self.fakesKeptAlive.append(action)
+        manager.webView(webView,
+                        decidePolicyFor: action,
+                        decisionHandler: { policy in decision = policy })
+        XCTAssertEqual(decision, .allow)
+        waitForLoad(of: iTermBrowserSourceHandler.sourceURL, in: webView)
+        return try XCTUnwrap(
+            evaluate("document.querySelector('.source-code').textContent", in: webView))
+    }
+
+    // A View Source that another main-frame navigation superseded must not leave
+    // its source behind to be served by a later visit to iterm2-about:source.
+    func testSupersededViewSourceDoesNotLeaveStaleSource() throws {
+        let shown = try sourceShown(afterInterveningNavigationInMainFrame: true,
+                                    source: "<p>STALE_SOURCE_387</p>")
+        XCTAssertFalse(shown.contains("STALE_SOURCE_387"), shown)
+        XCTAssertTrue(shown.contains("No source available"), shown)
+    }
+
+    // A subframe navigation in the current page doesn't supersede View Source.
+    func testSubframeNavigationKeepsPendingSource() throws {
+        let shown = try sourceShown(afterInterveningNavigationInMainFrame: false,
+                                    source: "<p>KEPT_SOURCE_387</p>")
+        XCTAssertTrue(shown.contains("<p>KEPT_SOURCE_387</p>"), shown)
+    }
+
     func testViewSourceShowsThePageSourceEscaped() throws {
         let manager = try makeManager()
         let webView = try XCTUnwrap(manager.webView)

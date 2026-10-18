@@ -1437,6 +1437,14 @@ extension iTermBrowserManager: WKNavigationDelegate {
             }
         }
 
+        // Any other main-frame navigation that stays in this tab (cmd-clicks
+        // returned above) supersedes a View Source that hasn't been served yet,
+        // so its stored source must not be shown later.
+        if navigationAction.targetFrame?.isMainFrame == true,
+           navigationAction.request.url != iTermBrowserSourceHandler.sourceURL {
+            localPageManager.clearPendingSource()
+        }
+
         // Store the target URL for this navigation so we can use it in error handlers
         // But don't overwrite if this is our error page or file page navigation
         if let targetURL = navigationAction.request.url,
@@ -1685,35 +1693,39 @@ extension iTermBrowserManager: WKUIDelegate {
             return
         }
         
-        // Try to fetch the original source from the network first
+        // Try to fetch the original source from the network first. The completion
+        // may run on a URLSession queue, so hop to the main queue before touching
+        // the web view.
         fetchOriginalSource(url: url) { [weak self] originalSource in
+            DispatchQueue.main.async {
+                self?.showSource(originalSource: originalSource, url: url)
+            }
+        }
+    }
+
+    private func showSource(originalSource: String?, url: URL) {
+        if let originalSource {
+            // Got original source from network
+            showSourceInBrowser(htmlSource: originalSource, url: url)
+            return
+        }
+        // Fallback to DOM source if network fetch fails
+        webView.safelyEvaluateJavaScript(iife("return document.documentElement.outerHTML"),
+                                         contentWorld: .page) { [weak self] result, error in
             guard let self = self else { return }
-            
-            if let originalSource = originalSource {
-                // Got original source from network
-                DispatchQueue.main.async {
-                    self.showSourceInBrowser(htmlSource: originalSource, url: url)
-                }
-            } else {
-                // Fallback to DOM source if network fetch fails
-                self.webView.safelyEvaluateJavaScript(iife("return document.documentElement.outerHTML"),
-                                                      contentWorld: .page) { [weak self] result, error in
-                    guard let self = self else { return }
-                    
-                    if let error = error {
-                        DLog("Error getting page source: \(error)")
-                        return
-                    }
-                    
-                    guard let htmlSource = result as? String else {
-                        DLog("Failed to get HTML source")
-                        return
-                    }
-                    
-                    DispatchQueue.main.async {
-                        self.showSourceInBrowser(htmlSource: htmlSource, url: url)
-                    }
-                }
+
+            if let error = error {
+                DLog("Error getting page source: \(error)")
+                return
+            }
+
+            guard let htmlSource = result as? String else {
+                DLog("Failed to get HTML source")
+                return
+            }
+
+            DispatchQueue.main.async {
+                self.showSourceInBrowser(htmlSource: htmlSource, url: url)
             }
         }
     }
@@ -1760,7 +1772,8 @@ extension iTermBrowserManager: WKUIDelegate {
         task.resume()
     }
     
-    private func showSourceInBrowser(htmlSource: String, url: URL) {
+    // Internal rather than private so tests can drive it.
+    func showSourceInBrowser(htmlSource: String, url: URL) {
         localPageManager.showSourcePage(htmlSource: htmlSource, url: url, webView: webView)
     }
     
