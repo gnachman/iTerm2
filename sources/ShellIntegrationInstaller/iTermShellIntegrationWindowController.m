@@ -444,6 +444,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     if ([parent hasPrefix:@"-"]) {
         parent = [parent substringFromIndex:1];
     }
+    if ([parent isEqualToString:@"csh"]) {
+        // macOS's /bin/csh is tcsh, and ps shows tcsh as "-csh" there.
+        parent = @"tcsh";
+    }
     if (parent.length > 0 && self.shellsByName[parent]) {
         return parent;
     }
