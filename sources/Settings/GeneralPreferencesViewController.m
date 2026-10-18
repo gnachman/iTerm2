@@ -4149,6 +4149,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (NSMutableArray<NSMutableDictionary *> *)mutableManualAIModelConfigurations {
+    // Copy the former global headers into the models first. The editor saves
+    // an empty header list for a model with none, which the migration treats
+    // as the user's choice.
+    [iTermMigrationHelper migrateCustomHeadersToPerModelIfNeeded];
     NSMutableArray<NSMutableDictionary *> *result = [NSMutableArray array];
     id raw = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
     if ([raw isKindOfClass:NSArray.class]) {

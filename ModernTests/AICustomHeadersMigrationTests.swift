@@ -73,6 +73,23 @@ final class AICustomHeadersMigrationTests: XCTestCase {
         XCTAssertEqual(headers(ofModelAt: 0), [])
     }
 
+    // Shared prefs last written by a build that migrated but didn't retire
+    // the global list, on a Mac that has never run the migration: a model
+    // whose headers the user removed (an empty list) must stay empty.
+    func testEmptyHeaderListIsNotRemigrated() {
+        setLegacyGlobalHeaders()
+        iTermPreferences.setObject([["name": "m", "url": "http://x/", "customHeaders": []],
+                                    ["name": "n", "url": "http://y/"]],
+                                   forKey: kPreferenceKeyAIManualModelConfigurations)
+        iTermUserDefaults.userDefaults().removeObject(forKey: doneKey)
+
+        iTermMigrationHelper.migrateCustomHeadersToPerModelIfNeeded()
+
+        XCTAssertEqual(headers(ofModelAt: 0), [])
+        XCTAssertEqual(headers(ofModelAt: 1), [["name": "X-Old", "value": "v"]])
+        XCTAssertFalse(iTermPreferences.bool(forKey: kPreferenceKeyAICustomHeadersEnabled))
+    }
+
     // An earlier build ran the migration without retiring the global list.
     func testGlobalHeadersRetiredEvenWhenMigrationAlreadyDone() {
         setLegacyGlobalHeaders()

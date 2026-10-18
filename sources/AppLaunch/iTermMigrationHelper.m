@@ -499,13 +499,14 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
                 for (id entry in (NSArray *)rawConfigs) {
                     id existing = [entry isKindOfClass:[NSDictionary class]]
                         ? ((NSDictionary *)entry)[@"customHeaders"] : nil;
-                    // Treat missing OR empty headers as not-yet-migrated: opening
-                    // the editor before this migration runs stamps an empty array
-                    // into a config, which must not shadow the global headers the
-                    // user was relying on.
-                    const BOOL needsHeaders =
-                        (existing == nil) ||
-                        ([existing isKindOfClass:[NSArray class]] && [(NSArray *)existing count] == 0);
+                    // Only a config with no header list at all predates per-model
+                    // headers. An empty list is one the user saved in the model
+                    // editor, possibly after removing every header on another Mac
+                    // sharing these prefs, so it must not get the global list back.
+                    // The models panel runs this migration before it reads the
+                    // configs, so its editor never stamps an empty list over an
+                    // unmigrated model.
+                    const BOOL needsHeaders = (existing == nil);
                     if ([entry isKindOfClass:[NSDictionary class]] && needsHeaders) {
                         NSMutableDictionary *updated = [entry mutableCopy];
                         updated[@"customHeaders"] = sanitizedHeaders;
