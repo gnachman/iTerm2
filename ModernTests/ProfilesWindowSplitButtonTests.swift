@@ -40,6 +40,22 @@ final class ProfilesWindowSplitButtonTests: XCTestCase {
         XCTAssertEqual(vertical.accessibilityLabel(), "Split Vertically")
     }
 
+    // F-399: the icon-only New Floating Pane button had only a tooltip, so VoiceOver read the
+    // SF Symbol name. Its accessibility label is the xib's localized tooltip.
+    func testFloatingPaneButtonHasAnAccessibilityLabel() throws {
+        let controllerClass = try XCTUnwrap(NSClassFromString("iTermProfilesWindowController") as? NSWindowController.Type)
+        let controller = controllerClass.init(windowNibName: "ProfilesWindow")
+        defer {
+            controller.close()
+        }
+        let contentView = try XCTUnwrap(controller.window?.contentView)
+
+        let floating = try XCTUnwrap(button(withAction: "openBookmarkInFloatingPane:", in: contentView))
+
+        XCTAssertEqual(floating.toolTip, "New Floating Pane")
+        XCTAssertEqual(floating.accessibilityLabel(), "New Floating Pane")
+    }
+
     func testSplitButtonStringsAreTranslated() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

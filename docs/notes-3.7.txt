@@ -1873,6 +1873,10 @@ Bug Fixes:
   a local server) no longer sends its messages
   to OpenAI after you remove or rename that
   model. It now shows an error.
+- VoiceOver now reads the Profiles window’s
+  New Floating Pane button as “New Floating
+  Pane” instead of the name of its icon.
+
 
 
 
