@@ -167,6 +167,29 @@ final class StatusBarProxyIconTests: XCTestCase, iTermObject {
         XCTAssertEqual(component.clickCount, 1)
     }
 
+    // F-398: a drag that can't start (no directory to vend: deleted, nonexistent, or remote)
+    // used to leave the gesture classified as a click, so releasing the mouse opened the menu.
+    func testRefusedDragIsNotAClick() throws {
+        let icon = try XCTUnwrap(container.iconImageView as? iTermStatusBarProxyIconImageView)
+        XCTAssertNil(icon.urlForDrag())
+        icon.mouseDown(with: mouseEvent(.leftMouseDown, at: iconCenter))
+        let far = NSPoint(x: iconCenter.x + 40, y: iconCenter.y)
+        icon.mouseDragged(with: mouseEvent(.leftMouseDragged, at: far))
+        icon.mouseUp(with: mouseEvent(.leftMouseUp, at: far))
+        XCTAssertEqual(component.clickCount, 0)
+    }
+
+    func testClickAfterRefusedDragStillWorks() throws {
+        let icon = try XCTUnwrap(container.iconImageView as? iTermStatusBarProxyIconImageView)
+        icon.mouseDown(with: mouseEvent(.leftMouseDown, at: iconCenter))
+        let far = NSPoint(x: iconCenter.x + 40, y: iconCenter.y)
+        icon.mouseDragged(with: mouseEvent(.leftMouseDragged, at: far))
+        icon.mouseUp(with: mouseEvent(.leftMouseUp, at: far))
+        icon.mouseDown(with: mouseEvent(.leftMouseDown, at: iconCenter))
+        icon.mouseUp(with: mouseEvent(.leftMouseUp, at: iconCenter))
+        XCTAssertEqual(component.clickCount, 1)
+    }
+
     // MARK: - Click vs. drag classification
 
     func testMovementBelowThresholdIsClick() {

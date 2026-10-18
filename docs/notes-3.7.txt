@@ -1827,6 +1827,11 @@ Bug Fixes:
 - With Archive On Closure on, closing a pane in
   a tmux integration window no longer saves an
   archive of it that could not be restored.
+- Dragging the folder icon in the Current
+  Directory status bar component when its
+  directory can’t be dragged (for example, on a
+  remote host) no longer opens the component’s
+  menu when you release the mouse.
 
 
 
