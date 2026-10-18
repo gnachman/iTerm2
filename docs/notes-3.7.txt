@@ -1460,9 +1460,9 @@ Bug Fixes:
   picker, it stays closed while you keep typing.
 - Sending from the Cockpit after closing the tab
   of one of its chosen sessions now sends to the
-  sessions that remain and names the closed one,
-  instead of sending nothing and showing an
-  internal identifier.
+  sessions that remain, names the closed one,
+  and removes its chip, instead of sending
+  nothing and showing an internal identifier.
 - The Cockpit no longer covers alerts attached
   to a terminal window, such as the Broadcast
   Input confirmation, hiding their buttons.

@@ -56592,6 +56592,179 @@
         }
       }
     },
+    "Cockpit.SentToSessionsSkippingGoneTargets" : {
+      "comment" : "Cockpit status after a send that skipped @mention targets that were closed; the number is how many sessions got the command and the second placeholder is a comma-separated list of session, tab, or window names",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@sessions@"
+          },
+          "substitutions" : {
+            "sessions" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "An %1$lld Sitzung gesendet. Übersprungene Ziele, die nicht mehr existieren: %2$@"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "An %1$lld Sitzungen gesendet. Übersprungene Ziele, die nicht mehr existieren: %2$@"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$#@sessions@"
+          },
+          "substitutions" : {
+            "sessions" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "new",
+                      "value" : "Sent to %1$lld session. Skipped targets that no longer exist: %2$@"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "new",
+                      "value" : "Sent to %1$lld sessions. Skipped targets that no longer exist: %2$@"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@sessions@"
+          },
+          "substitutions" : {
+            "sessions" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%1$lld個のセッションに送信しました。存在しなくなったターゲットをスキップしました: %2$@"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@sessions@"
+          },
+          "substitutions" : {
+            "sessions" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Enviado para %1$lld sessão. Destinos que não existem mais foram ignorados: %2$@"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Enviado para %1$lld sessões. Destinos que não existem mais foram ignorados: %2$@"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@sessions@"
+          },
+          "substitutions" : {
+            "sessions" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено в %1$lld сессии. Пропущены цели, которых больше нет: %2$@"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено в %1$lld сессий. Пропущены цели, которых больше нет: %2$@"
+                    }
+                  },
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено в %1$lld сессию. Пропущены цели, которых больше нет: %2$@"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Отправлено в %1$lld сессий. Пропущены цели, которых больше нет: %2$@"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@sessions@"
+          },
+          "substitutions" : {
+            "sessions" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "已发送至 %1$lld 个会话。已跳过不再存在的目标：%2$@"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Cockpit.SettingsAccessibility" : {
       "comment" : "Accessibility description for the settings toolbar button",
       "extractionState" : "extracted_with_value",
@@ -56630,48 +56803,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置"
-          }
-        }
-      }
-    },
-    "Cockpit.SkippedGoneTargets" : {
-      "comment" : "Cockpit status appended after the sent count when some @mention targets were closed; the placeholder is a comma-separated list of session, tab, or window names",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Übersprungene Ziele, die nicht mehr existieren: %@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Skipped targets that no longer exist: %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "存在しなくなったターゲットをスキップしました: %@"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Destinos que não existem mais foram ignorados: %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Пропущены цели, которых больше нет: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已跳过不再存在的目标：%@"
           }
         }
       }
