@@ -75,6 +75,10 @@ class iTermBrowserLocalPageManager: NSObject {
     private lazy var onboardingHandler: iTermBrowserOnboardingHandler? = {
         iTermBrowserOnboardingHandler(user: user)
     }()
+    // Kept for the manager's lifetime rather than per page context: the source
+    // HTML is stored here before navigating to iterm2-about:source, and
+    // decidePolicyFor drops all page contexts before the scheme handler runs.
+    private let sourceHandler = iTermBrowserSourceHandler()
 
     init(user: iTermBrowserUser,
          historyController: iTermBrowserHistoryController) {
@@ -167,6 +171,8 @@ class iTermBrowserLocalPageManager: NSObject {
         for context in activePageContexts.values {
             context.handler.resetState()
         }
+        // The source handler may not be in activePageContexts.
+        sourceHandler.resetState()
     }
     
     /// Show error page
@@ -200,14 +206,6 @@ class iTermBrowserLocalPageManager: NSObject {
 
     /// Show source page
     func showSourcePage(htmlSource: String, url: URL, webView: iTermBrowserWebView) {
-        let urlString = iTermBrowserSourceHandler.sourceURL.absoluteString
-        setupPageContext(for: urlString)
-        
-        guard let context = activePageContexts[urlString],
-              let sourceHandler = context.handler as? iTermBrowserSourceHandler else {
-            return
-        }
-        
         // Generate the formatted source page HTML
         let sourceHTML = sourceHandler.generateSourcePageHTML(for: htmlSource, url: url)
         
@@ -218,6 +216,11 @@ class iTermBrowserLocalPageManager: NSObject {
         webView.load(URLRequest(url: iTermBrowserSourceHandler.sourceURL))
     }
     
+    /// Forget source stored by showSourcePage that hasn't been served yet.
+    func clearPendingSource() {
+        sourceHandler.clearPendingSource()
+    }
+
     /// Notify settings page of adblock update
     func notifySettingsPageOfAdblockUpdate(success: Bool, error: String?, webView: iTermBrowserWebView) {
         let urlString = iTermBrowserSettingsHandler.settingsURL.absoluteString
@@ -311,7 +314,7 @@ private extension iTermBrowserLocalPageManager {
             context = iTermBrowserPageContext(handler: iTermBrowserErrorHandler(), requiresMessageHandler: false)
             
         case iTermBrowserSourceHandler.sourceURL.absoluteString:
-            context = iTermBrowserPageContext(handler: iTermBrowserSourceHandler(), requiresMessageHandler: false)
+            context = iTermBrowserPageContext(handler: sourceHandler, requiresMessageHandler: false)
             
         case iTermBrowserOnboardingHandler.setupURL.absoluteString,
              iTermBrowserOnboardingHandler.profileURL.absoluteString:

@@ -304,100 +304,135 @@
     <script>
         // Simple HTML syntax highlighter - no external dependencies
         document.addEventListener('DOMContentLoaded', function() {
-            makeUrlsClickable(); // First make URLs clickable
-            applySyntaxHighlighting(); // Then apply syntax highlighting
-        });
-        
-        function applySyntaxHighlighting() {
             const codeElement = document.querySelector('.source-code');
             if (!codeElement) return;
-            
-            let html = codeElement.innerHTML;
-            
+
+            // innerHTML serializes the source text with &, < and > escaped. The
+            // highlighter's regexes work on that escaped text, so the links are
+            // swapped out for placeholders while it runs; otherwise it would
+            // rewrite entities inside the links' href attributes.
+            // U+0001 marks a placeholder, so escape any already in the source.
+            const links = [];
+            let html = codeElement.innerHTML.replace(/\u0001/g, '&#1;');
+            html = makeUrlsClickable(html, links); // First make URLs clickable
+            html = applySyntaxHighlighting(html); // Then apply syntax highlighting
+            codeElement.innerHTML = html.replace(/\u0001(\d+)\u0002/g, (match, index) => links[Number(index)]);
+        });
+
+        function applySyntaxHighlighting(html) {
             // Highlight comments first (to avoid interfering with tag highlighting)
             html = html.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="token comment">$1</span>');
-            
+
             // Highlight DOCTYPE
             html = html.replace(/(&lt;!DOCTYPE[^&]*&gt;)/gi, '<span class="token doctype">$1</span>');
-            
+
             // Highlight CDATA sections
             html = html.replace(/(&lt;!\[CDATA\[[\s\S]*?\]\]&gt;)/g, '<span class="token cdata">$1</span>');
-            
+
             // Highlight complete HTML tags in one pass
             html = html.replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9]*)((?:\s[^&]*?)?)\s*(&gt;)/g, function(match, openBracket, tagName, attributes, closeBracket) {
                 let result = '<span class="token tag">' + openBracket + tagName + '</span>';
-                
+
                 if (attributes) {
                     // Highlight attributes within the tag
-                    let processedAttrs = attributes.replace(/\s([a-zA-Z][a-zA-Z0-9-]*)(=)(&quot;[^&]*&quot;|&#39;[^&]*&#39;)/g, 
+                    let processedAttrs = attributes.replace(/\s([a-zA-Z][a-zA-Z0-9-]*)(=)(&quot;[^&]*&quot;|&#39;[^&]*&#39;)/g,
                         ' <span class="token attr-name">$1</span><span class="token punctuation">$2</span><span class="token attr-value">$3</span>');
                     result += processedAttrs;
                 }
-                
+
                 result += '<span class="token tag">' + closeBracket + '</span>';
                 return result;
             });
-            
+
             // Highlight entities
             html = html.replace(/(&[a-zA-Z][a-zA-Z0-9]*;|&#[0-9]+;|&#x[0-9a-fA-F]+;)/g, '<span class="token entity">$1</span>');
-            
-            codeElement.innerHTML = html;
+
+            return html;
         }
-        
-        function makeUrlsClickable() {
-            const codeElement = document.querySelector('.source-code');
-            if (!codeElement) return;
-            
+
+        // Decodes HTML character references. A textarea parses its content as
+        // text, so no markup in `text` is ever created or run.
+        function decodeHTML(text) {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = text;
+            return textarea.value;
+        }
+
+        // Decodes character references the way an attribute value does, which
+        // differs from text: in an attribute, “&region=” stays as is rather than
+        // becoming “®ion=”. The parsed document is inert, and escaping quotes
+        // keeps `text` inside the attribute.
+        function decodeAttributeValue(text) {
+            const doc = new DOMParser().parseFromString(`<a title="${text.replace(/"/g, '&quot;')}"></a>`, 'text/html');
+            const anchor = doc.querySelector('a');
+            return anchor ? anchor.getAttribute('title') : text;
+        }
+
+        function escapeHTML(text) {
+            return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // Replaces each URL in `html` (serialized source text) with a placeholder
+        // and appends the link for it to `links`.
+        function makeUrlsClickable(html, links) {
             // Get the current page URL to resolve relative URLs
             const currentURL = document.getElementById('source-url').dataset.url;
-            let html = codeElement.innerHTML;
-            
-            // Helper function to resolve relative URLs
-            function resolveURL(url) {
-                try {
-                    return new URL(url, currentURL).href;
-                } catch (e) {
-                    return url;
+            // Only a local file's source links to files.
+            const allowedProtocols = ['http:', 'https:'];
+            try {
+                if (new URL(currentURL).protocol === 'file:') {
+                    allowedProtocols.push('file:');
                 }
+            } catch (e) {
             }
-            
+
+            // `url` is the serialized text of an attribute value. Returns a
+            // placeholder for its link, or null if it should not be a link.
+            function placeholderForLink(url) {
+                // Undo innerHTML's escaping to get the source text, then decode the
+                // source's own character references as the browser would.
+                const target = decodeAttributeValue(decodeHTML(url)).trim();
+                if (!target || target === '#') {
+                    return null;
+                }
+                let resolved;
+                try {
+                    resolved = new URL(target, currentURL);
+                } catch (e) {
+                    return null;
+                }
+                if (!allowedProtocols.includes(resolved.protocol)) {
+                    return null;
+                }
+                links.push(`<a href="${escapeHTML(resolved.href)}" target="_blank" rel="noopener noreferrer" class="source-link">${url}</a>`);
+                return '\u0001' + (links.length - 1) + '\u0002';
+            }
+
             // Simple approach: find URL-like patterns in the displayed text and make them clickable
             // This preserves the exact HTML structure while making URLs clickable
-            
+
             // Handle escaped quotes: attr=&quot;url&quot;
-            html = html.replace(/(\s(?:src|href|action|data|poster|background)=&quot;)([^&"]+?)(&quot;)/gi, 
+            html = html.replace(/(\s(?:src|href|action|data|poster|background)=&quot;)([^&"]+?)(&quot;)/gi,
                 (match, before, url, after) => {
-                    if (!url || url.trim() === '' || url === '#' || url.startsWith('javascript:') || url.startsWith('data:')) {
-                        return match;
-                    }
-                    
-                    const linkURL = url.startsWith('http') ? url : resolveURL(url);
-                    return `${before}<a href="${linkURL}" target="_blank" rel="noopener noreferrer" class="source-link">${url}</a>${after}`;
+                    const placeholder = placeholderForLink(url);
+                    return placeholder === null ? match : `${before}${placeholder}${after}`;
                 });
-            
+
             // Handle regular quotes: attr="url"
-            html = html.replace(/(\s(?:src|href|action|data|poster|background)=")([^"]+?)(")/gi, 
+            html = html.replace(/(\s(?:src|href|action|data|poster|background)=")([^"]+?)(")/gi,
                 (match, before, url, after) => {
-                    if (!url || url.trim() === '' || url === '#' || url.startsWith('javascript:') || url.startsWith('data:')) {
-                        return match;
-                    }
-                    
-                    const linkURL = url.startsWith('http') ? url : resolveURL(url);
-                    return `${before}<a href="${linkURL}" target="_blank" rel="noopener noreferrer" class="source-link">${url}</a>${after}`;
+                    const placeholder = placeholderForLink(url);
+                    return placeholder === null ? match : `${before}${placeholder}${after}`;
                 });
-            
+
             // Handle CSS url() patterns
-            html = html.replace(/(url\()(&quot;|&#39;|")([^&'"]+?)(\2)(\))/gi, 
+            html = html.replace(/(url\()(&quot;|&#39;|")([^&'"]+?)(\2)(\))/gi,
                 (match, before, quote1, url, quote2, after) => {
-                    if (!url || url.trim() === '') {
-                        return match;
-                    }
-                    
-                    const linkURL = url.startsWith('http') ? url : resolveURL(url);
-                    return `${before}${quote1}<a href="${linkURL}" target="_blank" rel="noopener noreferrer" class="source-link">${url}</a>${quote2}${after}`;
+                    const placeholder = placeholderForLink(url);
+                    return placeholder === null ? match : `${before}${quote1}${placeholder}${quote2}${after}`;
                 });
-            
-            codeElement.innerHTML = html;
+
+            return html;
         }
     </script>
 </body>

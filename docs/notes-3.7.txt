@@ -1918,6 +1918,10 @@ Bug Fixes:
   installer no longer cuts off the option to
   install the iTerm2 Utilities or its
   description.
+- The browser’s View Source command now shows
+  the page’s source. Before, it always said
+  “No source available.”
+
 
 
 
