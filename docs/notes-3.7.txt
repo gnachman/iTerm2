@@ -1905,6 +1905,9 @@ Bug Fixes:
   longer fills the screen with the output of a
   usage command that printed too much, which
   left its buttons out of reach.
+- Searching in the AI Chats window no longer
+  crashes iTerm2 when the search finds a match.
+
 
 
 
