@@ -1889,6 +1889,13 @@ Bug Fixes:
   errors, the alert now gives the right number
   of additional errors in the log. It counted
   each bad file twice.
+- With Focus Follows Mouse on, if you move the
+  pointer into another split pane while a sheet
+  such as Edit Tab Title is open, that pane now
+  gets focus when the sheet closes. Before, it
+  stayed with the original pane until the
+  pointer left and came back.
+
 
 
 

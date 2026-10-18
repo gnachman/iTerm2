@@ -42,6 +42,8 @@ extension NSView {
 // key focus.
 @MainActor
 final class PaneFocusFollowsMouseAppEnvironment: PaneFocusFollowsMouseEnvironment {
+    private var sheetObserver: NSObjectProtocol?
+
     var isEnabled: Bool {
         return iTermPreferences.bool(forKey: kPreferenceKeyFocusFollowsMouse)
     }
@@ -287,6 +289,23 @@ final class PaneFocusFollowsMouseAppEnvironment: PaneFocusFollowsMouseEnvironmen
     func scheduleRebaseline(_ block: @escaping () -> Void) {
         DispatchQueue.main.async {
             block()
+        }
+    }
+
+    // The window's first responder is restored after the sheet ends, so wait for that.
+    func observeSheetDidEnd(_ block: @escaping (_ isInWindowOfSheet: (PaneFocusFollowsMousePane) -> Bool) -> Void) {
+        sheetObserver = NotificationCenter.default.addObserver(forName: NSWindow.didEndSheetNotification,
+                                                               object: nil,
+                                                               queue: nil) { notification in
+            // The notification's object is the window the sheet was attached to.
+            guard let window = notification.object as? NSWindow else {
+                return
+            }
+            DispatchQueue.main.async {
+                block { pane in
+                    (pane as? SessionView)?.window === window
+                }
+            }
         }
     }
 

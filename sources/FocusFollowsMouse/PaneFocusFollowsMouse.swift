@@ -61,6 +61,9 @@ protocol PaneFocusFollowsMouseEnvironment: AnyObject {
     func stolenKeyFocusDidChange(for pane: PaneFocusFollowsMousePane)
     // Run block after the current layout pass settles.
     func scheduleRebaseline(_ block: @escaping () -> Void)
+    // Run block whenever a sheet ends, which may have been what kept focus from moving into a pane.
+    // Its argument tells whether a pane is in the window the sheet was on.
+    func observeSheetDidEnd(_ block: @escaping (_ isInWindowOfSheet: (PaneFocusFollowsMousePane) -> Bool) -> Void)
 }
 
 // Focus goes to whatever the pointer moves onto. Without includesSubviews, the only things are
@@ -102,9 +105,17 @@ class PaneFocusFollowsMouse: NSObject {
     private weak var stolenPane: PaneFocusFollowsMousePane?
     private var haveStolenKeyFocus = false
     private var isFocusing = false
+    // A pane the pointer entered without focus following it, e.g., because a sheet was open on its
+    // window. Nothing else marks the pointer entering it, so when the sheet ends it is focused if
+    // the pointer is still in it.
+    private weak var blockedPane: PaneFocusFollowsMousePane?
 
     init(environment: PaneFocusFollowsMouseEnvironment) {
         self.environment = environment
+        super.init()
+        environment.observeSheetDidEnd { [weak self] isInWindowOfSheet in
+            self?.sheetDidEnd(isInWindowOfSheet: isInWindowOfSheet)
+        }
     }
 
     // Call whenever the pointer may have moved onto something else.
@@ -136,6 +147,7 @@ class PaneFocusFollowsMouse: NSObject {
         }
         guard let pane else {
             releaseStolenKeyFocus()
+            blockedPane = nil
             lastTarget = nil
             if let lastPane, lastPane !== environment.focusedPane {
                 // Coming back to an unfocused pane should focus it.
@@ -161,6 +173,14 @@ class PaneFocusFollowsMouse: NSObject {
             lastPane = pane
             lastTarget = target
             focus(pane, responder: target ?? validLastFocused(in: pane) ?? pane.focusFollowsMouseMainResponder)
+            if stealing || environment.focusedPane === pane || !environment.canFocus(pane) {
+                // Only a sheet ending can let focus move without the pointer moving again, and a
+                // sheet doesn't make canFocus false.
+                blockedPane = nil
+            } else {
+                DLog("Focus did not follow the pointer into \(pane)")
+                blockedPane = pane
+            }
             return
         }
         guard target !== lastTarget else {
@@ -221,6 +241,28 @@ class PaneFocusFollowsMouse: NSObject {
             self.lastTarget = self.focusTarget(at: point, in: pane)
             DLog("After layout, last pane is \(self.lastPane.d)")
         }
+    }
+
+    // A sheet that kept focus from following the pointer into blockedPane may have ended. The
+    // pointer won't enter the pane again while it is still inside, so focus it now.
+    private func sheetDidEnd(isInWindowOfSheet: (PaneFocusFollowsMousePane) -> Bool) {
+        guard let blocked = blockedPane, isInWindowOfSheet(blocked) else {
+            return
+        }
+        blockedPane = nil
+        guard environment.isEnabled, environment.appIsActive, !environment.mouseButtonIsDown else {
+            return
+        }
+        let point = environment.pointerLocation
+        guard let pane = environment.pane(at: point), pane === blocked, environment.focusedPane !== pane else {
+            return
+        }
+        DLog("Focus \(pane), which the pointer entered while focus could not move")
+        let target = focusTarget(at: point, in: pane)
+        frozenLocation = nil
+        lastPane = pane
+        lastTarget = target
+        focus(pane, responder: target ?? validLastFocused(in: pane) ?? pane.focusFollowsMouseMainResponder)
     }
 
     @objc func appDidBecomeActive() {
