@@ -601,6 +601,53 @@ final class ChatModelVendorPinTests: XCTestCase {
         assertFailsClosed("mylocal", vendor: listModel.modelVendor(forChatID: "A"))
     }
 
+    // F-384: a new chat is pinned to the default model when it is created. With a
+    // manual model on a local server as the default, the pin is stamped right
+    // away, so an empty chat whose model is then renamed or removed fails its
+    // first send instead of sending it to OpenAI.
+    @MainActor
+    func test_newChat_pinnedToDefaultManualModel_isStamped() throws {
+        let savedModel = iTermPreferences.object(forKey: kPreferenceKeyAIModel)
+        addTeardownBlock {
+            iTermPreferences.setObject(savedModel, forKey: kPreferenceKeyAIModel)
+        }
+        installManualModel(name: "mylocal", url: localServerURL, api: .chatCompletions)
+        iTermPreferences.setBool(false, forKey: kPreferenceKeyUseRecommendedAIModel)
+        iTermPreferences.setObject("mylocal", forKey: kPreferenceKeyAIModel)
+        let defaultName = AITermController.provider?.model.name
+        XCTAssertEqual(defaultName, "mylocal", "precondition: the default is the manual model")
+
+        let chat = ChatBroker.makeChat(title: "New Chat", terminalSessionGuid: nil, browserSessionGuid: nil,
+                                       permissions: "", modelName: defaultName)
+        XCTAssertEqual(chat.modelName, "mylocal")
+        XCTAssertEqual(chat.modelVendor, manualVendorRaw)
+
+        let (db, url) = try makeTempDB()
+        do {
+            let listModel = try XCTUnwrap(ChatListModel(database: db))
+            try listModel.add(chat: chat)
+        }
+        // Renamed in Settings, then relaunched.
+        installManualModel(name: "mylocal2", url: localServerURL, api: .chatCompletions)
+        iTermPreferences.setObject("mylocal2", forKey: kPreferenceKeyAIModel)
+        let listModel = try XCTUnwrap(ChatListModel(database: try reopen(db, url: url)))
+        XCTAssertEqual(listModel.modelVendor(forChatID: chat.id), manualVendor)
+        assertFailsClosed("mylocal", vendor: listModel.modelVendor(forChatID: chat.id))
+    }
+
+    // A new chat pinned to a catalog model is stamped with its vendor, and one
+    // with no default model has no pin and no vendor.
+    @MainActor
+    func test_newChat_cloudAndNoDefault() {
+        XCTAssertEqual(ChatBroker.makeChat(title: "t", terminalSessionGuid: nil, browserSessionGuid: nil,
+                                           permissions: "", modelName: cloudName).modelVendor,
+                       Int(iTermAIVendor.openAI.rawValue))
+        let none = ChatBroker.makeChat(title: "t", terminalSessionGuid: nil, browserSessionGuid: nil,
+                                       permissions: "", modelName: nil)
+        XCTAssertNil(none.modelName)
+        XCTAssertNil(none.modelVendor)
+    }
+
     // Refreshing never changes an Ollama stamp, a retired cloud pin's stamp, or
     // an unknown legacy pin.
     @MainActor
