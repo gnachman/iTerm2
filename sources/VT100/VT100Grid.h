@@ -461,6 +461,13 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 
 // If there is a preferred cursor position that is legal, restore it.
 - (void)restorePreferredCursorPositionIfPossible;
+// A grid made from a saved state keeps that state's scroll region until this
+// is called, after the restored session has been fit to its window. If the
+// grid is back at the saved size and nothing has set a scroll region since,
+// the saved one is put back (resizing in between had reset it).
+- (void)restoreSavedScrollRegionIfPossible;
+// Forget the saved scroll region, for a restored session whose program is gone.
+- (void)discardSavedScrollRegion;
 
 - (void)mutateCharactersInRange:(VT100GridCoordRange)range
                         dwcFree:(BOOL)dwcFree

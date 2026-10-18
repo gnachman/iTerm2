@@ -102,6 +102,15 @@ static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
     // See gVT100GridNextContentGeneration. Identifies this grid's encoded content
     // for restorable-state delta encoding.
     int64_t _contentGeneration;
+    // Scroll region read from a saved state, kept until the restored grid has
+    // been fit to its window. Resizing resets the scroll region, and a restored
+    // grid is created at the wrong size first. See
+    // -restoreSavedScrollRegionIfPossible.
+    BOOL _haveSavedScrollRegion;
+    VT100GridSize _savedScrollRegionGridSize;
+    VT100GridRange _savedScrollRegionRows;
+    VT100GridRange _savedScrollRegionCols;
+    BOOL _savedUseScrollRegionCols;
 }
 
 @synthesize size = size_;
@@ -201,6 +210,11 @@ static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
             memmove(&savedDefaultChar_, data.bytes, sizeof(savedDefaultChar_));
         }
         _preferredCursorPosition = cursor_;
+        _haveSavedScrollRegion = YES;
+        _savedScrollRegionGridSize = size_;
+        _savedScrollRegionRows = scrollRegionRows_;
+        _savedScrollRegionCols = scrollRegionCols_;
+        _savedUseScrollRegionCols = useScrollRegionCols_;
         [self markAllCharsDirty:YES updateTimestamps:NO];
         // Restore the content generation from the POD (the value -encode: wrote), and
         // bump the global minimum so future allocations stay above it and the delta
@@ -3559,6 +3573,37 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     return result;
+}
+
+- (void)discardSavedScrollRegion {
+    _haveSavedScrollRegion = NO;
+}
+
+- (void)restoreSavedScrollRegionIfPossible {
+    if (!_haveSavedScrollRegion) {
+        return;
+    }
+    _haveSavedScrollRegion = NO;
+    if (!VT100GridSizeEquals(size_, _savedScrollRegionGridSize)) {
+        // A different size resets the scroll region, as any resize does.
+        return;
+    }
+    const BOOL isDefault = (scrollRegionRows_.location == 0 &&
+                            scrollRegionRows_.length == size_.height &&
+                            scrollRegionCols_.location == 0 &&
+                            scrollRegionCols_.length == size_.width);
+    if (!isDefault) {
+        // Something set a scroll region since the state was restored. Keep it.
+        // (A program that explicitly reset the region to the full screen in the
+        // meantime can't be told apart from one that did nothing.)
+        return;
+    }
+    DLog(@"Restore saved scroll region rows=%@ cols=%@",
+         VT100GridRangeDescription(_savedScrollRegionRows),
+         VT100GridRangeDescription(_savedScrollRegionCols));
+    self.scrollRegionRows = _savedScrollRegionRows;
+    self.scrollRegionCols = _savedScrollRegionCols;
+    self.useScrollRegionCols = _savedUseScrollRegionCols;
 }
 
 - (void)resetScrollRegions {

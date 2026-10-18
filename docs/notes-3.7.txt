@@ -1678,3 +1678,8 @@ Bug Fixes:
 - A pane brought back by Undo Close from its
   archive now starts in your home directory
   after the next relaunch, instead of in “/”.
+- A scroll region set by a program that is
+  still running when iTerm2 quits unexpectedly
+  is kept when the session is restored, so the
+  program’s output no longer scrolls the whole
+  screen.
