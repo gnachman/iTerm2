@@ -339,6 +339,21 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical {
     VT100GridWindowedRange visual = logical;
     visual.coordRange = [self visualRangeForLogical:logical.coordRange];
+    if (_supportBidi && logical.columnWindow.length > 0) {
+        // The column window is in logical columns. On a reordered row the
+        // range can be drawn outside it (for example, across a tmux pane
+        // divider), so widen it to cover where the range is drawn. Otherwise
+        // a hit test against the visual range misses its own cells.
+        int left = logical.columnWindow.location;
+        int right = left + logical.columnWindow.length;
+        left = MIN(left, visual.coordRange.start.x);
+        right = MAX(right, visual.coordRange.start.x + 1);
+        if (visual.coordRange.end.x > 0) {
+            left = MIN(left, visual.coordRange.end.x - 1);
+            right = MAX(right, visual.coordRange.end.x);
+        }
+        visual.columnWindow = VT100GridRangeMake(left, right - left);
+    }
     return visual;
 }
 

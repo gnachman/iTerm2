@@ -1162,7 +1162,8 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     if (action && [[ContextMenuActionPrefsController parameterInActionDict:actionDict] length] == 0) {
         // Preserve the historical cmd-click behavior of copying the matched
         // range so that the user's copy-with-styles preference is honored.
-        [self.delegate contextMenu:self copyRangeAccordingToUserPreferences:action.visualRange];
+        // Selections are logical, so copy the logical range.
+        [self.delegate contextMenu:self copyRangeAccordingToUserPreferences:action.logicalRange];
         return;
     }
     [self evaluateCustomActionDictionary:[sender representedObject] completion:^(NSString *value) {

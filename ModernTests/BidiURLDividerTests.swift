@@ -121,4 +121,58 @@ class BidiURLDividerTests: XCTestCase {
         XCTAssertEqual(found?.absoluteString, url)
         withExtendedLifetime(delegate) {}
     }
+
+    // Cmd-hover only underlines a URL whose visual range contains the pointer.
+    // The visual range kept the logical column window, so on a reordered row
+    // where the URL is logically right of the divider but drawn left of it,
+    // the pointer was never "in" the URL. QA finding F-456.
+    func testVisualRangeOfURLDrawnAcrossDividerContainsItsCells() {
+        let width = 60
+        let leftWidth = 20
+        let rightWidth = width - leftWidth - 1
+        let url = "https://example.com/abc1"
+        let rightText = "دنیا " + url + " سلام"
+        var scas = [ScreenCharArray]()
+        for i in 0..<10 {
+            let row: String
+            if i == 4 {
+                // The QA rows: RTL text touching the divider on the left and an
+                // RTL-led line containing a URL on the right.
+                row = String(repeating: " ", count: leftWidth - 9) + "سلام دنیا" + "│" + pad(rightText, rightWidth)
+            } else {
+                row = pad("left \(i)", leftWidth) + "│" + pad("right \(i)", rightWidth)
+            }
+            XCTAssertEqual(row.count, width)
+            let base = screenCharArrayWithDefaultStyle(row, eol: EOL_HARD)
+            if let bidi = BidiDisplayInfoObjc(base) {
+                scas.append(ScreenCharArray(copyOfLine: base.line, length: base.length,
+                                            continuation: base.continuation, bidiInfo: bidi))
+            } else {
+                scas.append(base)
+            }
+        }
+        guard let bidi = scas[4].bidiInfo else { return XCTFail("row 4 is not reordered") }
+        let urlStart = leftWidth + 1 + 5
+        let urlCells = urlStart..<(urlStart + url.count)
+        let outside = urlCells.filter { bidi.visualForLogical(Int32($0)) <= Int32(leftWidth) }
+        XCTAssertFalse(outside.isEmpty, "no URL cell drawn outside the right pane; test is meaningless")
+
+        // The extractor holds its data source weakly.
+        let dataSource = DividerLinesDataSource(scas, width: Int32(width))
+        let extractor = iTermTextExtractor(dataSource: dataSource)
+        extractor.supportBidi = true
+        extractor.restrictToLogicalWindow(including: VT100GridCoordMake(Int32(urlStart), 4))
+        XCTAssertEqual(extractor.logicalWindow.location, Int32(leftWidth + 1))
+        let logical = VT100GridWindowedRangeMake(
+            VT100GridCoordRangeMake(Int32(urlStart), 4, Int32(urlCells.upperBound), 4),
+            extractor.logicalWindow.location,
+            extractor.logicalWindow.length)
+        let visual = extractor.visualWindowedRange(forLogical: logical)
+        for x in urlCells {
+            let visualCoord = VT100GridCoordMake(bidi.visualForLogical(Int32(x)), 4)
+            XCTAssertTrue(VT100GridWindowedRangeContainsCoord(visual, visualCoord),
+                          "URL cell at logical x=\(x), visual x=\(visualCoord.x) not in \(VT100GridWindowedRangeDescription(visual) ?? "")")
+        }
+        withExtendedLifetime(dataSource) {}
+    }
 }
