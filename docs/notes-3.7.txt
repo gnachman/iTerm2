@@ -1784,3 +1784,6 @@ Bug Fixes:
   gets focus when the sheet closes. Before, it
   stayed with the original pane until the
   pointer left and came back.
+- The browser’s View Source command now shows
+  the page’s source. Before, it always said
+  “No source available.”
