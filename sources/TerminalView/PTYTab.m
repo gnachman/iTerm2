@@ -4931,13 +4931,49 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
     return record[FLOATING_PANE_SAVED_FRAME] ? [PTYTab dictToFrame:record[FLOATING_PANE_SAVED_FRAME]] : NSZeroRect;
 }
 
-// Undo close or disinter of a float: put it back where the arrangement says it was, in front, with
-// no rebuild of the tiled layout.
+// Puts a float that comes back from `arrangement` at its place in the floats' z-order: just behind
+// the nearest float in front of it in the arrangement that is still in the tab, or in front if
+// there is none. A maximized float, for example, goes back behind the other floats.
+- (void)restoreZOrderOfFloatingPane:(iTermFloatingPaneView *)pane
+                  fromRecordForGUID:(NSString *)guid
+                      inArrangement:(NSDictionary *)arrangement {
+    if (self.isTmuxTab || ![_floatingPanes containsObject:pane]) {
+        return;
+    }
+    NSArray *records = [NSArray castFrom:arrangement[TAB_ARRANGEMENT_FLOATING_PANES]];
+    NSDictionary *record = [PTYTab floatingPaneRecordForSessionWithGUID:guid inArrangement:arrangement];
+    const NSUInteger index = record ? [records indexOfObjectIdenticalTo:record] : NSNotFound;
+    if (index == NSNotFound) {
+        return;
+    }
+    for (NSUInteger i = index + 1; i < records.count; i++) {
+        NSDictionary *node = [NSDictionary castFrom:[NSDictionary castFrom:records[i]][FLOATING_PANE_NODE]];
+        NSString *frontGUID = [PTYSession guidInArrangement:node[TAB_ARRANGEMENT_SESSION]];
+        if (frontGUID.length == 0) {
+            continue;
+        }
+        for (iTermFloatingPaneView *front in _floatingPanes) {
+            if (front == pane || ![[self sessionForSessionView:front.sessionView].guid isEqualToString:frontGUID]) {
+                continue;
+            }
+            DLog(@"Put revived float %@ behind %@", pane, front);
+            [_floatingPanes removeObject:pane];
+            [_floatingPanes insertObject:pane atIndex:[_floatingPanes indexOfObject:front]];
+            [_containerView addSubview:pane positioned:NSWindowBelow relativeTo:front];
+            [self floatingPanesDidChange];
+            return;
+        }
+    }
+}
+
+// Undo close or disinter of a float: put it back where the arrangement says it was, at its old
+// place in the floats' z-order, with no rebuild of the tiled layout.
 - (void)addRevivedFloatingSession:(PTYSession *)session fromArrangement:(NSDictionary *)arrangement {
     NSDictionary *record = [PTYTab floatingPaneRecordForSessionWithGUID:session.guid inArrangement:arrangement];
     const NSRect frame = [PTYTab dictToFrame:record[FLOATING_PANE_FRAME]];
     const NSSize containerSize = [PTYTab dictToFrame:record[FLOATING_PANE_CONTAINER_SIZE]].size;
     iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
+    [self restoreZOrderOfFloatingPane:pane fromRecordForGUID:session.guid inArrangement:arrangement];
     NSDictionary *node = [NSDictionary castFrom:record[FLOATING_PANE_NODE]];
     [iTermFloatingPaneLayout setRestoredPlacementOfFloatingPane:pane
                                                     visualFrame:frame
@@ -5046,6 +5082,10 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
     if (!session) {
         RLog(@"Could not restore the archived float %@", guid);
         return nil;
+    }
+    iTermFloatingPaneView *pane = [self floatingPaneForSession:session];
+    if (pane) {
+        [self restoreZOrderOfFloatingPane:pane fromRecordForGUID:guid inArrangement:arrangement];
     }
     [session didFinishRestoration];
     [self setActiveSession:session];

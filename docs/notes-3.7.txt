@@ -1851,3 +1851,7 @@ Bug Fixes:
 - Importing a script archive whose signing
   certificate is damaged now shows an error
   instead of crashing iTerm2.
+- Undo Close of a floating pane now puts it
+  back at its old place among the other floating
+  panes, so a maximized one no longer comes back
+  in front of and hiding the others.
