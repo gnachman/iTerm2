@@ -11,6 +11,7 @@
 
 #import <XCTest/XCTest.h>
 #import <AppKit/AppKit.h>
+#import <objc/message.h>
 
 @interface ShellIntegrationButtonNibOwnerForTesting : NSObject
 @end
@@ -161,6 +162,52 @@ static NSString *ControlText(NSView *view) {
                                              @"Go Back": @"cmu-UF-19Z" }
                                  language:language];
         [self assertControlsFitAndDontOverlap:view language:language];
+    }
+}
+
+// A translation from the main string catalog, read from the source tree.
+- (NSString *)catalogString:(NSString *)key language:(NSString *)language {
+    NSString *source = [NSString stringWithUTF8String:__FILE__];
+    NSString *path = [[[source stringByDeletingLastPathComponent] stringByDeletingLastPathComponent]
+                      stringByAppendingPathComponent:@"xcstrings/Localizable.xcstrings"];
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    XCTAssertNotNil(data, @"%@", path);
+    NSDictionary *catalog = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    NSString *value = catalog[@"strings"][key][@"localizations"][language][@"stringUnit"][@"value"];
+    XCTAssertNotNil(value, @"No %@ for %@", key, language);
+    return value ?: @"";
+}
+
+// QA finding F-411:the small Preview Command button beside the step list read
+// “Предпросмотр коман…” in Russian. Its title is set in code (Preview Command, or Send Again
+// while a command runs), so it comes from the main string catalog rather than the nib’s strings.
+- (void)testInternetFreePagePreviewCommandButtonsFit {
+    for (NSString *language in self.languages) {
+        NSViewController *vc = [self loadViewControllerOfClass:@"iTermShellIntegrationPasteShellCommandsViewController"];
+        NSView *view = vc.view;
+        NSArray<NSString *> *titles = @[ [self catalogString:@"ShellIntegrationInstaller.PreviewCommand" language:language],
+                                         [self catalogString:@"ShellIntegrationInstaller.SendAgain" language:language] ];
+        XCTAssertGreaterThan(titles[0].length, 0u, @"%@", language);
+        XCTAssertGreaterThan(titles[1].length, 0u, @"%@", language);
+        SEL fit = NSSelectorFromString(@"fitPreviewCommandButtonsToTitles:");
+        XCTAssertTrue([vc respondsToSelector:fit]);
+        if (![vc respondsToSelector:fit]) {
+            return;
+        }
+        ((void (*)(id, SEL, NSArray *))objc_msgSend)(vc, fit, titles);
+        NSTextField *stepList = [vc valueForKey:@"stepListField"];
+        NSArray<NSButton *> *buttons = [vc valueForKey:@"previewCommandButtons"];
+        XCTAssertEqual(buttons.count, 4u);
+        for (NSButton *button in buttons) {
+            for (NSString *title in titles) {
+                button.title = title;
+                XCTAssertLessThanOrEqual(ceil(button.cell.cellSize.width), NSWidth(button.frame),
+                                         @"%@: “%@” clipped", language, title);
+            }
+            XCTAssertLessThanOrEqual(NSMaxX(button.frame), NSWidth(view.bounds), @"%@", language);
+            XCTAssertLessThanOrEqual(NSMaxX(stepList.frame), NSMinX(button.frame),
+                                     @"%@: preview button overlaps the step list", language);
+        }
     }
 }
 
