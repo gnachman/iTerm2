@@ -73,6 +73,18 @@ class UserDefaultsUnsavedView: NSView {
 @objc(iTermUserDefaultsUnsavedController)
 class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
     private var observer: AnyObject?
+    private var savedPrefsObserver: AnyObject?
+    // Whether local settings differ from those last saved to the custom folder. Replaceable for tests.
+    var localPrefsDiffer: () -> Bool = {
+        iTermRemotePreferences.sharedInstance().localPrefsDifferFromSavedRemotePrefsRespectingDefaults()
+    }
+    // Whether changes are saved to the custom folder automatically. Replaceable for tests.
+    var savesAutomatically: () -> Bool = {
+        iTermRemotePreferences.sharedInstance().shouldSaveAutomatically()
+    }
+    var isShowingIndicator: Bool {
+        return !innerVC.disabled
+    }
     private static let hideKey = "NoSyncHideUnsavedSettingsNotification"
 
     @objc static var allowed: Bool {
@@ -91,6 +103,9 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
     deinit {
         if let observer {
             NotificationCenter.default.removeObserver(observer)
+        }
+        if let savedPrefsObserver {
+            NotificationCenter.default.removeObserver(savedPrefsObserver)
         }
     }
 
@@ -122,6 +137,14 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
                 self?.userDefaultsDidChange(nil)
             }
         }
+        // Save Now writes the folder without changing a local default, so the observer above does
+        // not fire for it.
+        savedPrefsObserver = NotificationCenter.default.addObserver(
+            forName: .iTermRemotePreferencesSavedPrefsDidChange,
+            object: nil,
+            queue: nil) { [weak self] _ in
+                self?.savedPrefsDidChange()
+            }
         innerVC.onClick = { [weak self] in
             self?.handleClick()
         }
@@ -195,6 +218,19 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
         checkAsynchronously()
     }
 
+    private func savedPrefsDidChange() {
+        // An automatic save snapshots the defaults on a background queue, so a setting changed
+        // since then would briefly show the indicator until the next save. In that mode only let
+        // a save clear an indicator that is already showing.
+        if savesAutomatically() && !isShowingIndicator {
+            return
+        }
+        if checking {
+            return
+        }
+        checkAsynchronously()
+    }
+
     private func checkAsynchronously() {
         checking = true
         DispatchQueue.main.async { [weak self] in
@@ -204,7 +240,7 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
 
     private func check() {
         checking = false
-        let differs = iTermRemotePreferences.sharedInstance().localPrefsDifferFromSavedRemotePrefsRespectingDefaults()
+        let differs = localPrefsDiffer()
         innerVC.disabled = !differs
     }
 }
