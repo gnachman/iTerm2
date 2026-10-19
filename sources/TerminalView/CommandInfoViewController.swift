@@ -453,11 +453,14 @@ class CommandInfoViewController: NSViewController {
 
 extension TimeInterval {
     var formattedHMS: String {
-        let intfloor = Int(floor(self))
-        let hours = Int(floor(self / 3600))
+        // A negative interval (e.g., the clock was set back) has no sensible
+        // display; floor() would turn -0.001 into “0:-1.999”.
+        let value = Swift.max(0, self)
+        let intfloor = Int(floor(value))
+        let hours = Int(floor(value / 3600))
         let minutes = (intfloor % 3600) / 60
         let seconds = intfloor % 60
-        let millis = Int(floor((self - floor(self)) * 1000))
+        let millis = Int(floor((value - floor(value)) * 1000))
         if hours > 0 {
             return String(format: "%d:%02d:%02d", hours, minutes, seconds)
         } else {

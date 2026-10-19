@@ -1975,6 +1975,10 @@ Bug Fixes:
   right-to-left text wherever the pointer is on
   it, instead of leaving the previous URL
   underlined.
+- Command Info no longer shows a negative
+  running time such as “0:-1.999” for a command
+  that finishes quickly.
+
 
 
 

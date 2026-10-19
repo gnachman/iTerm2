@@ -684,7 +684,9 @@ static BOOL IT_RC_STATUS_IS_USABLE(iTermResilientCoordinate *rc) {
         [self.delegate markDidBecomeCommandMark:self];
     }
     _firstLineOfCommand = [command copy];
-    self.startDate = [NSDate date];
+    // Callers set startDate explicitly. Stamping [NSDate date] here would give
+    // the doppelganger a later date than the progenitor, since mutations are
+    // replayed onto it when the threads next sync.
 }
 
 - (void)setFullCommand:(NSString *)command {
