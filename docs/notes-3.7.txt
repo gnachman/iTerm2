@@ -1986,6 +1986,12 @@ Bug Fixes:
   in a title are now shown as “&” and “<” even
   when the title has no bold, italic, or
   underline tags.
+- In Settings > Pointer, “…even to views like
+  Search or Composer” is now dimmed when Focus
+  Follows Mouse is off from the moment the pane
+  opens, not only after toggling Focus Follows
+  Mouse.
+
 
 
 

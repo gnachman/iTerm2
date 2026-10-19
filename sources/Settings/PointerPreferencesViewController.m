@@ -90,6 +90,8 @@ NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPoin
     };
     [info addShouldBeEnabledDependencyOnSetting:kPreferenceKeyFocusFollowsMouse
                                      controller:self];
+    // defineControl: already updated the enabled state, before shouldBeEnabled existed.
+    [self updateEnabledStateForInfo:info];
     [self defineControl:_focusOnRightOrMiddleClick
                     key:kPreferenceKeyFocusOnRightOrMiddleClick
             relatedView:nil
