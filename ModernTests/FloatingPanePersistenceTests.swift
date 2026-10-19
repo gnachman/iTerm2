@@ -375,6 +375,51 @@ final class FloatingPanePersistenceTests: XCTestCase {
         XCTAssertEqual(pane.outlineFrame, frame, "unmaximizing goes back to the frame from before maximizing")
     }
 
+    /// QA finding F-428: maximizing a float sends it behind the other floats. Undo Close put it
+    /// back in front of them, so the tab-sized float hid them all.
+    func testUndoClosingAMaximizedFloatPutsItBackBehindTheOtherFloats() {
+        let other = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let maximized = fixture.addFloat(frame: NSRect(x: 200, y: 150, width: 300, height: 200))
+        tab.setActiveSession(maximized)
+        fixture.terminal.toggleMaximizeActivePane()
+        XCTAssertEqual(tab.floatingSessions(), [maximized, other], "maximizing sends it to the back")
+        guard let arrangement = tab.arrangement() else {
+            XCTFail("No arrangement")
+            return
+        }
+        tab.remove(maximized)
+
+        fixture.terminal.recreateTab(tab, withArrangement: arrangement, sessions: [maximized], archives: nil, revive: false)
+
+        XCTAssertEqual(tab.floatingSessions(), [maximized, other], "it goes back behind the other float")
+        XCTAssertEqual(tab.floatingPane(for: maximized)?.isMaximized, true)
+        XCTAssertTrue(tab.activeSession === maximized)
+        guard let pane = tab.floatingPane(for: maximized), let otherPane = tab.floatingPane(for: other),
+              let subviews = pane.superview?.subviews,
+              let paneIndex = subviews.firstIndex(of: pane),
+              let otherIndex = subviews.firstIndex(of: otherPane) else {
+            XCTFail("Floats are not in the container")
+            return
+        }
+        XCTAssertLessThan(paneIndex, otherIndex, "it is drawn behind the other float")
+    }
+
+    /// QA finding F-428: a float closed from the middle of the stack comes back to the middle.
+    func testUndoClosingAFloatRestoresItsPlaceInTheZOrder() {
+        let back = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let middle = fixture.addFloat(frame: NSRect(x: 120, y: 90, width: 300, height: 200))
+        let front = fixture.addFloat(frame: NSRect(x: 200, y: 150, width: 300, height: 200))
+        guard let arrangement = tab.arrangement() else {
+            XCTFail("No arrangement")
+            return
+        }
+        tab.remove(middle)
+
+        fixture.terminal.recreateTab(tab, withArrangement: arrangement, sessions: [middle], archives: nil, revive: false)
+
+        XCTAssertEqual(tab.floatingSessions(), [back, middle, front])
+    }
+
     func testUndoClosingATiledPaneLeavesLiveFloatsAlone() {
         guard let tiled = tab.tiledSessions()?.first else {
             XCTFail("No tiled session")
@@ -433,6 +478,34 @@ final class FloatingPanePersistenceTests: XCTestCase {
         XCTAssertTrue(restored.isArchive)
         XCTAssertEqual(target.floatingPane(for: restored)?.outlineFrame, frame)
         XCTAssertTrue(target.activeSession === restored)
+    }
+
+    /// QA finding F-428: an archived maximized float comes back behind the other floats, where
+    /// maximizing put it.
+    func testUndoClosingAnArchivedMaximizedFloatPutsItBackBehindTheOtherFloats() throws {
+        let target = tab
+        let other = fixture.addFloat(frame: NSRect(x: 40, y: 40, width: 300, height: 200))
+        let maximized = fixture.addFloat(frame: NSRect(x: 200, y: 150, width: 300, height: 200))
+        target.setActiveSession(maximized)
+        fixture.terminal.toggleMaximizeActivePane()
+        let arrangement = try XCTUnwrap(target.arrangement())
+        let archives = try closeAndArchive(maximized, in: target)
+
+        fixture.terminal.recreateTab(target, withArrangement: arrangement, sessions: [], archives: archives, revive: true)
+
+        let floats = try XCTUnwrap(target.floatingSessions())
+        XCTAssertEqual(floats.count, 2)
+        XCTAssertTrue(floats.first?.isArchive == true, "the archive comes back behind")
+        XCTAssertTrue(floats.last === other)
+        XCTAssertEqual(target.floatingPane(for: floats[0])?.isMaximized, true)
+        guard let pane = target.floatingPane(for: floats[0]), let otherPane = target.floatingPane(for: other),
+              let subviews = pane.superview?.subviews,
+              let paneIndex = subviews.firstIndex(of: pane),
+              let otherIndex = subviews.firstIndex(of: otherPane) else {
+            XCTFail("Floats are not in the container")
+            return
+        }
+        XCTAssertLessThan(paneIndex, otherIndex, "it is drawn behind the other float")
     }
 
     /// Tiled panes added after the float closed are left alone, and the archive is not also given a
