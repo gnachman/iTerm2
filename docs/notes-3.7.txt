@@ -1932,6 +1932,16 @@ Bug Fixes:
 - In Russian, the shell integration installer
   no longer cuts off its Preview Command
   button.
+- Right-clicking in a browser tab that a page
+  opened from a link now shows the context
+  menu.
+- In a browser tab that a page opened from a
+  link, find, copy on select, hovered links,
+  autofill, the password manager, and named
+  marks now work on that tab instead of the
+  tab that opened it.
+
+
 
 
 

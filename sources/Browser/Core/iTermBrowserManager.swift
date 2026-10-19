@@ -202,20 +202,26 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         case copyModeHandler
     }
 
+    // `inheritedFromOpener` is true for a web view opened from another tab (a target=_blank
+    // link or window.open). Its configuration already has the opener's data store, which it
+    // must share, and the opener's URL scheme handlers, which can't be replaced.
     private func configure(_ configuration: WKWebViewConfiguration,
-                           contentManager: BrowserExtensionUserContentManager) {
-        switch user {
-        case .regular(id: let userID):
-            if #available(macOS 14, *) {
-                let profileStore = WKWebsiteDataStore(forIdentifier: userID)
-                configuration.websiteDataStore = profileStore
+                           contentManager: BrowserExtensionUserContentManager,
+                           inheritedFromOpener: Bool) {
+        if !inheritedFromOpener {
+            switch user {
+            case .regular(id: let userID):
+                if #available(macOS 14, *) {
+                    let profileStore = WKWebsiteDataStore(forIdentifier: userID)
+                    configuration.websiteDataStore = profileStore
+                }
+            case .devNull:
+                configuration.websiteDataStore = .nonPersistent()
             }
-        case .devNull:
-            configuration.websiteDataStore = .nonPersistent()
-        }
 
-        // Configure proxy if enabled
-        applyProxyConfiguration(to: configuration.websiteDataStore)
+            // Configure proxy if enabled
+            applyProxyConfiguration(to: configuration.websiteDataStore)
+        }
 
         var logErrors = ""
 #if ITERM_DEBUG
@@ -423,10 +429,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                                                     contentWorld: .defaultClient,
                                                     name: iTermBrowserNamedMarkManager.layoutUpdateHandlerName)
         }
-        // Register custom URL scheme handlers
-        configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.about)
-        configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.ssh)
-        configuration.setURLSchemeHandler(handlerProxy, forURLScheme: iTermBrowserSchemes.file)
+        // Register custom URL scheme handlers. An inherited configuration keeps the opener's,
+        // which hand each task to the manager of the web view that asked for it.
+        for scheme in [iTermBrowserSchemes.about, iTermBrowserSchemes.ssh, iTermBrowserSchemes.file]
+        where configuration.urlSchemeHandler(forURLScheme: scheme) == nil {
+            configuration.setURLSchemeHandler(handlerProxy, forURLScheme: scheme)
+        }
     }
 
     private func setupWebView(configuration preferredConfiguration: WKWebViewConfiguration?,
@@ -441,9 +449,16 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let configuration: WKWebViewConfiguration
         let contentManager: BrowserExtensionUserContentManager?
         if let preferredConfiguration {
-
+            // A web view opened from another tab. Its configuration is a copy of the opener's,
+            // but it must not share the opener's user content controller: the scripts there
+            // carry the opener's secrets and post their messages to the opener's handlers,
+            // which act on the opener's page. Give it its own, set up like any other tab's.
             configuration = preferredConfiguration
-            contentManager = nil
+            configuration.userContentController = WKUserContentController()
+            contentManager = BrowserExtensionUserContentManager(
+                userContentController: configuration.userContentController,
+                userScriptFactory: BrowserExtensionUserScriptFactory())
+            configure(configuration, contentManager: contentManager!, inheritedFromOpener: true)
         } else {
             let prefs = WKPreferences()
             
@@ -455,7 +470,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                 userContentController: configuration.userContentController,
                 userScriptFactory: BrowserExtensionUserScriptFactory())
 
-            configure(configuration, contentManager: contentManager!)
+            configure(configuration, contentManager: contentManager!, inheritedFromOpener: false)
         }
         audioHandler?.delegate = self
         // Setup reader mode
@@ -503,10 +518,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
                             options: [.new],
                             context: nil)
 
-        // TODO: This is going to cause problems for extensions. If you open a link with target=_blank then the new webview won't have a content
-        // manager. I don't know what will happen if we do not register a webview with the extension manager.
         if let contentManager {
             userState.registerWebView(webView, contentManager: contentManager)
+        }
+        if preferredConfiguration != nil {
+            // The new user content controller lacks the opener's ad block rules.
+            updateWebViewContentRules()
         }
         copyModeHandler?.webView = webView
 
@@ -1069,6 +1086,12 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
 
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        // Every handler below acts on this manager's web view, so ignore a message from any
+        // other (such as one opened from this tab), lest it act on the wrong page.
+        guard message.webView === webView else {
+            DLog("Ignore \(message.name) from a web view other than mine")
+            return
+        }
         // Handle console.{log,debug,error} messages separately since they come as String
         switch message.name {
         case "iTerm2ConsoleLog":
@@ -1156,7 +1179,7 @@ extension iTermBrowserManager {
             selectionMonitor?.handleMessage(message, webView: webView)
 
         case iTermBrowserContextMenuMonitor.messageHandlerName:
-            contextMenuMonitor?.handleMessage(message, webView: webView)
+            contextMenuMonitor?.handleMessage(message)
             
         case iTermBrowserNamedMarkManager.messageHandlerName:
             if namedMarkManager?.handleMessage(webView: webView, message: message) == true {

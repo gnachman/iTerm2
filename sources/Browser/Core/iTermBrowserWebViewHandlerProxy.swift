@@ -15,9 +15,26 @@ class iTermBrowserWebViewHandlerProxy: NSObject, WKScriptMessageHandler, WKURLSc
         delegate?.userContentController(userContentController, didReceive: message)
     }
     func webView(_ webView: WKWebView, start urlSchemeTask: any WKURLSchemeTask) {
-        delegate?.webView(webView, start: urlSchemeTask)
+        guard let handler = schemeHandler(for: webView) else {
+            urlSchemeTask.didFailWithError(NSError(domain: "iTermBrowserWebViewHandlerProxy",
+                                                   code: -1,
+                                                   userInfo: [NSLocalizedDescriptionKey: "No handler for this web view"]))
+            return
+        }
+        handler.webView(webView, start: urlSchemeTask)
     }
     func webView(_ webView: WKWebView, stop urlSchemeTask: any WKURLSchemeTask) {
-        delegate?.webView(webView, stop: urlSchemeTask)
+        schemeHandler(for: webView)?.webView(webView, stop: urlSchemeTask)
+    }
+
+    // A web view opened from another tab inherits its opener's URL scheme handlers, which can't
+    // be replaced. Hand its tasks to its own manager, which serves its pages and outlives the
+    // opener.
+    // A browser web view with no manager (one being torn down) gets nothing rather than its
+    // opener's manager, which would answer from its own pages.
+    private func schemeHandler(for webView: WKWebView) -> WKURLSchemeHandler? {
+        if let browserWebView = webView as? iTermBrowserWebView {
+            return browserWebView.browserDelegate as? WKURLSchemeHandler        }
+        return delegate
     }
 }
