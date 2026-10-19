@@ -667,29 +667,37 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)ensureSessionNameVisible {
     // Unless a custom title function is in use, ensure session name is visible in the title.
-    NSUInteger components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
-
-    // The AI title occupies the name slot too, so an AI profile already shows a
-    // name-group component: leave it alone rather than force-adding SessionName,
-    // which would render AI | SessionName and break the name-group mutual exclusion
-    // the popup toggle maintains. The name group EXCEPT ProfileName, which is not
-    // yet in the session-name slot and is handled by the promotion branch below.
-    if (components & (iTermTitleComponentsNameGroup & ~iTermTitleComponentsProfileName)) {
-        return;
+    const NSUInteger components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+    const NSUInteger updated = [ProfilesGeneralPreferencesViewController titleComponentsShowingSessionName:components];
+    if (updated != components) {
+        [self setUnsignedInteger:updated forKey:KEY_TITLE_COMPONENTS];
     }
+}
+
++ (NSUInteger)titleComponentsShowingSessionName:(NSUInteger)components {
     if (components == iTermTitleComponentsCustom) {
-        return;
+        return components;
+    }
+    // The AI title occupies the name slot, so don't add SessionName, which would render
+    // AI | SessionName and break the name-group mutual exclusion the popup toggle maintains.
+    // But a session name typed here is a deliberate choice that must out-rank both the AI
+    // title and the program's OSC icon name that stands in for it, so turn on
+    // TemporarySessionName, as a manual rename or Set Title trigger does.
+    if (components & iTermTitleComponentsAI) {
+        return components | iTermTitleComponentsTemporarySessionName;
+    }
+    // The name group EXCEPT ProfileName, which is not yet in the session-name slot and is
+    // handled by the promotion branch below.
+    if (components & (iTermTitleComponentsNameGroup & ~iTermTitleComponentsProfileName)) {
+        return components;
     }
     if (components & iTermTitleComponentsProfileName) {
         NSUInteger updated = components;
         updated &= ~iTermTitleComponentsProfileName;
         updated |= iTermTitleComponentsProfileAndSessionName;
-        [self setUnsignedInteger:updated
-                          forKey:KEY_TITLE_COMPONENTS];
-        return;
+        return updated;
     }
-    [self setUnsignedInteger:(components | iTermTitleComponentsSessionName)
-                      forKey:KEY_TITLE_COMPONENTS];
+    return components | iTermTitleComponentsSessionName;
 }
 
 - (void)updateTitleSettingsMenu {

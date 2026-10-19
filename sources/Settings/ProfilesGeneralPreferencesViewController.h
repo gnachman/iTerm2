@@ -41,4 +41,8 @@
 + (BOOL)shouldOfferAITitleComponentWithSettingEnabled:(BOOL)enabled
                                     profileComponents:(NSUInteger)components;
 
+// The title components to use after the user edits the session name in Edit Session, so that
+// the name shows in the title. Exposed for testing.
++ (NSUInteger)titleComponentsShowingSessionName:(NSUInteger)components;
+
 @end
