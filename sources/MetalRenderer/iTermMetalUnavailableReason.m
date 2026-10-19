@@ -7,76 +7,76 @@
 
 #import "iTermMetalUnavailableReason.h"
 
+// Each reason is a complete sentence so translations can word it freely.
 NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason reason) {
     switch (reason) {
         case iTermMetalUnavailableReasonNone:
             return nil;
         case iTermMetalUnavailableReasonNoGPU:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.NoGPU", nil, [NSBundle mainBundle], @"no usable GPU found on this machine.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.NoGPU", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because no usable GPU was found on this machine.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonDisabled:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Disabled", nil, [NSBundle mainBundle], @"GPU Renderer is disabled in Settings > General.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Disabled", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the GPU Renderer is disabled in Settings > General.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonNotATerminal:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.NotATerminal", nil, [NSBundle mainBundle], @"the current session is not a terminal.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.NotATerminal", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the current session is not a terminal.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonLigatures:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Ligatures", nil, [NSBundle mainBundle], @"ligatures are enabled. You can disable them in Settings > Profiles > Text > Use ligatures.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Ligatures", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because ligatures are enabled. You can disable them in Settings > Profiles > Text > Use ligatures.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonInitializing:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Initializing", nil, [NSBundle mainBundle], @"the GPU renderer is initializing. It should be ready soon.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Initializing", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the GPU renderer is initializing. It should be ready soon.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonInvalidSize:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.InvalidSize", nil, [NSBundle mainBundle], @"the session is too large or too small.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.InvalidSize", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the session is too large or too small.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonSessionInitializing:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.SessionInitializing", nil, [NSBundle mainBundle], @"the session is initializing.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.SessionInitializing", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the session is initializing.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonTransparency:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Transparency", nil, [NSBundle mainBundle], @"transparent windows are not supported. They can be disabled in Settings > Profiles > Window > Transparency.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Transparency", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because transparent windows are not supported. They can be disabled in Settings > Profiles > Window > Transparency.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonVerticalSpacing:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.VerticalSpacing", nil, [NSBundle mainBundle], @"the font's vertical spacing set to less than 100%. You can change it in Settings > Profiles > Text > Change Font.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.VerticalSpacing", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the font’s vertical spacing is set to less than 100%. You can change it in Settings > Profiles > Text > Change Font.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonMarginSize:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.MarginSize", nil, [NSBundle mainBundle], @"terminal window margins are too small. You can edit them in Settings > Advanced.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.MarginSize", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because terminal window margins are too small. You can edit them in Settings > Advanced.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonAnnotations:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Annotations", nil, [NSBundle mainBundle], @"annotations or URL shortcuts are open.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Annotations", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because annotations or URL shortcuts are open.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonPortholes:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Portholes", nil, [NSBundle mainBundle], @"this session has natively rendered items.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Portholes", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because this session has natively rendered items.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonFindPanel:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.FindPanel", nil, [NSBundle mainBundle], @"the find panel is open.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.FindPanel", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the find panel is open.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonPasteIndicator:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.PasteIndicator", nil, [NSBundle mainBundle], @"the paste progress indicator is open.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.PasteIndicator", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the paste progress indicator is open.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonAnnouncement:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Announcement", nil, [NSBundle mainBundle], @"an announcement (yellow bar) is visible.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Announcement", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because an announcement (yellow bar) is visible.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonURLPreview:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.URLPreview", nil, [NSBundle mainBundle], @"a URL preview is visible.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.URLPreview", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because a URL preview is visible.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonWindowResizing:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.WindowResizing", nil, [NSBundle mainBundle], @"the window is being resized.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.WindowResizing", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the window is being resized.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonDisconnectedFromPower:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.DisconnectedFromPower", nil, [NSBundle mainBundle], @"the computer is not connected to power. You can enable GPU rendering while disconnected from "
-            @"power in Settings > General > Advanced GPU Settings.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.DisconnectedFromPower", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the computer is not connected to power. You can enable GPU rendering while disconnected from power in Settings > General > Advanced GPU Settings.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonIdle:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.Idle", nil, [NSBundle mainBundle], @"the session is idle. You can enable Metal while idle in Settings > Advanced.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.Idle", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the session is idle. You can enable Metal while idle in Settings > Advanced.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonTooManyPanesReason:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.TooManyPanes", nil, [NSBundle mainBundle], @"This tab has too many split panes", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.TooManyPanes", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because this tab has too many split panes.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonNoFocus:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.NoFocus", nil, [NSBundle mainBundle], @"the window does not have keyboard focus.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.NoFocus", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the window does not have keyboard focus.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonTabInactive:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.TabInactive", nil, [NSBundle mainBundle], @"this tab is not active.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.TabInactive", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because this tab is not active.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonTabBarTemporarilyVisible:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.TabBarVisible", nil, [NSBundle mainBundle], @"the tab bar is temporarily visible.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.TabBarVisible", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the tab bar is temporarily visible.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonScreensChanging:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.ScreensChanging", nil, [NSBundle mainBundle], @"the screen configuration has just changed.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.ScreensChanging", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the screen configuration has just changed.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonContextAllocationFailure:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.ContextAllocationFailure", nil, [NSBundle mainBundle], @"of a temporary failure to allocate a graphics context.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.ContextAllocationFailure", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because of a temporary failure to allocate a graphics context.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonTabDragInProgress:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.TabDragInProgress", nil, [NSBundle mainBundle], @"a tab is being dragged.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.TabDragInProgress", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because a tab is being dragged.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonSessionHasNoWindow:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.SessionHasNoWindow", nil, [NSBundle mainBundle], @"the current session has no window (this shouldn't happen).", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.SessionHasNoWindow", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the current session has no window (this shouldn’t happen).", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonDropTargetsVisible:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.DropTargetsVisible", nil, [NSBundle mainBundle], @"secure copy drop targets are visible.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.DropTargetsVisible", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because secure copy drop targets are visible.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonSwipingBetweenTabs:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.SwipingBetweenTabs", nil, [NSBundle mainBundle], @"swiping between tabs", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.SwipingBetweenTabs", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because you are swiping between tabs.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonSplitPaneBeingDragged:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.SplitPaneBeingDragged", nil, [NSBundle mainBundle], @"a split pane is being dragged.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.SplitPaneBeingDragged", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because a split pane is being dragged.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonWindowObscured:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.WindowObscured", nil, [NSBundle mainBundle], @"the window is mostly under another window.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.WindowObscured", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because the window is mostly under another window.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
         case iTermMetalUnavailableReasonLowerPowerMode:
-            return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.LowPowerMode", nil, [NSBundle mainBundle], @"macOS is in low power mode.", @"GPU renderer unavailable reason");
+            return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.LowPowerMode", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because macOS is in low power mode.", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
     }
 
-    return NSLocalizedStringWithDefaultValue(@"MetalUnavailable.InternalError", nil, [NSBundle mainBundle], @"of an internal error. Please file a bug report!", @"GPU renderer unavailable reason");
+    return NSLocalizedStringWithDefaultValue(@"GPURenderer.Off.InternalError", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because of an internal error. Please file a bug report!", @"Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session");
 }
