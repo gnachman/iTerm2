@@ -1848,3 +1848,6 @@ Bug Fixes:
   are saved manually, the red “!” in the
   Settings title bar now goes away after you
   click Save Now.
+- Importing a script archive whose signing
+  certificate is damaged now shows an error
+  instead of crashing iTerm2.

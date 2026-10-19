@@ -16,6 +16,9 @@
 }
 
 - (instancetype)initWithSecCertificate:(SecCertificateRef)secCertificate {
+    if (!secCertificate) {
+        return nil;
+    }
     self = [super init];
     if (self) {
         _secCertificate = secCertificate;
@@ -36,7 +39,11 @@
 }
 
 - (void)dealloc {
-    CFRelease(_secCertificate);
+    // initWithData: returns nil without a certificate when the data is malformed, and
+    // CFRelease(NULL) crashes.
+    if (_secCertificate) {
+        CFRelease(_secCertificate);
+    }
 }
 
 - (SIGKey *)publicKey {
@@ -60,7 +67,7 @@
 }
 
 - (NSString *)name {
-    CFStringRef value;
+    CFStringRef value = NULL;
     const OSStatus status = SecCertificateCopyCommonName(_secCertificate,
                                                          &value);
     NSString *string = (__bridge_transfer NSString *)value;
@@ -119,11 +126,11 @@
     SecCertificateRef secCertificate = (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
 
     CFDataRef subjectContent = SecCertificateCopyNormalizedSubjectSequence(secCertificate);
-
-    const BOOL result = CFEqual(subjectContent, name);
-    if (subjectContent) {
-        CFRelease(subjectContent);
+    if (!subjectContent) {
+        return NO;
     }
+    const BOOL result = CFEqual(subjectContent, name);
+    CFRelease(subjectContent);
     return result;
 }
 
