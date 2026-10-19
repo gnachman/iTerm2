@@ -351,7 +351,12 @@ class ModernKeyMapper: NSObject, iTermKeyMapper {
     }
 
     func transformedText(toInsert text: String) -> String {
-        return impl.transformedText(toInsert: text)
+        return impl.transformedText(toInsert: text, currentEvent: NSApp.currentEvent)
+    }
+
+    // Exposed for tests, which have no current event.
+    func transformedText(toInsert text: String, currentEvent: NSEvent?) -> String {
+        return impl.transformedText(toInsert: text, currentEvent: currentEvent)
     }
 
     func wouldReportControlReturn() -> Bool {
@@ -401,6 +406,14 @@ fileprivate class ModernKeyMapperImpl {
                                                      functionKey: .regular)
     var event: KeyEventInfo?
     private var lastDeadKey: KeyEventInfo?
+    // The most recent dead key press, kept until the next key down. Unlike
+    // lastDeadKey it survives the dead key's key-up.
+    private var pendingDeadKey: KeyEventInfo?
+    // The dead key pressed just before the key being handled, until the first
+    // text it inserts. See transformedText(toInsert:currentEvent:).
+    private var deadKeyBeforeCurrentEvent: KeyEventInfo?
+    // The key code of the key down that followed deadKeyBeforeCurrentEvent.
+    private var keyCodeAfterDeadKey: UInt16?
 
     var keyMapperWantsKeyUp: Bool {
         return flags.contains(.reportAllEventTypes)
@@ -411,8 +424,14 @@ fileprivate class ModernKeyMapperImpl {
         if let report = keyReport(for: event), report.isDeadKey {
             DLog("is dead key")
             lastDeadKey = event
+            pendingDeadKey = event
+            deadKeyBeforeCurrentEvent = nil
+            keyCodeAfterDeadKey = nil
         } else {
             lastDeadKey = nil
+            deadKeyBeforeCurrentEvent = pendingDeadKey
+            keyCodeAfterDeadKey = pendingDeadKey == nil ? nil : event.virtualKeyCode
+            pendingDeadKey = nil
         }
     }
 
@@ -538,12 +557,19 @@ fileprivate class ModernKeyMapperImpl {
         return ["flags": NSNumber(value: flags.rawValue)]
     }
 
-    func transformedText(toInsert text: String) -> String {
+    func transformedText(toInsert text: String, currentEvent: NSEvent?) -> String {
+        // Only the first text inserted for the key press that followed the
+        // dead key can be the dead key's leftover character. Text inserted
+        // without that key press (dictation, for example) can't.
+        let precedingDeadKey = (currentEvent?.type == .keyDown &&
+                                currentEvent?.keyCode == keyCodeAfterDeadKey) ? deadKeyBeforeCurrentEvent : nil
+        deadKeyBeforeCurrentEvent = nil
+        keyCodeAfterDeadKey = nil
         if !flags.contains(.reportAllKeysAsEscapeCodes) {
             return text
         }
         let currentKeyCode: UInt16 = {
-            guard let currentEvent = NSApp.currentEvent,
+            guard let currentEvent,
                   currentEvent.type == .keyDown || currentEvent.type == .keyUp else {
                 return 0
             }
@@ -551,7 +577,7 @@ fileprivate class ModernKeyMapperImpl {
         }()
         let phonyEvent = NSEvent.keyEvent(with: .keyDown,
                                           location: .zero,
-                                          modifierFlags: NSApp.currentEvent?.modifierFlags ?? [],
+                                          modifierFlags: currentEvent?.modifierFlags ?? [],
                                           timestamp: Date.timeIntervalSinceReferenceDate,
                                           windowNumber: 0,
                                           context: nil,
@@ -563,6 +589,20 @@ fileprivate class ModernKeyMapperImpl {
             return text
         }
         var event = KeyEventInfo(event: phonyEvent, configuration: configuration, flags: flags)
+
+        // A dead key followed by a key it doesn't compose with (German ^ then
+        // <) inserts the dead key's own character and then the second key's
+        // text, both while handling the second key. Report the first as the
+        // dead key's press; otherwise both would be reported as the second key.
+        // Space after a dead key composes to the accent in a single insertion,
+        // like any other composition, so it is still reported as space.
+        if let precedingDeadKey,
+           Self.spacingTexts(ofDeadKey: precedingDeadKey).contains(text),
+           text.it_ucs4CodePoints != event.textAsCodepoints,
+           event.textAsCodepoints != [UInt32(UnicodeScalar(" ").value)] {
+            DLog("Text \(text) is the uncomposed character of dead key \(precedingDeadKey)")
+            event = precedingDeadKey
+        }
 
         // A dead-key composition (for example US International apostrophe then e,
         // producing é) generates text the physical key cannot produce on its own.
@@ -595,6 +635,23 @@ fileprivate class ModernKeyMapperImpl {
             DLog("Unexpected result from csiU: \(encoded)")
             return text
         }
+    }
+
+    // What a dead key types on its own when the next key doesn't compose with
+    // it: the key translated without dead-key processing (^ for the German
+    // dead circumflex). charactersIgnoringModifiers is usually empty for a
+    // dead key but is checked too.
+    private static func spacingTexts(ofDeadKey deadKey: KeyEventInfo) -> Set<String> {
+        var result = Set<String>()
+        if let nsevent = deadKey.nsevent,
+           let translated = nsevent.characters(byApplyingModifiers: nsevent.modifierFlags),
+           !translated.isEmpty {
+            result.insert(translated)
+        }
+        if let ignoring = deadKey.charactersIgnoringModifiers, !ignoring.isEmpty {
+            result.insert(ignoring)
+        }
+        return result
     }
 
     func keyMapperData(forKeyUp event: KeyEventInfo) -> Data? {
