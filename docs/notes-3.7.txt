@@ -1944,6 +1944,12 @@ Bug Fixes:
   of answering a request to run a command, the
   AI is no longer told that iTerm2 restarted and
   invited to run the command again.
+- With the kitty keyboard protocol reporting
+  all keys, a dead key followed by a key it does
+  not combine with now reports the dead key and
+  then the second key, instead of the second key
+  twice.
+
 
 
 
