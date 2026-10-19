@@ -1861,3 +1861,7 @@ Bug Fixes:
 - Command Info no longer shows a negative
   running time such as “0:-1.999” for a command
   that finishes quickly.
+- With HTML tab titles on, “&amp;” and “&lt;”
+  in a title are now shown as “&” and “<” even
+  when the title has no bold, italic, or
+  underline tags.

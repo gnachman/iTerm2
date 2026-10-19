@@ -48,7 +48,10 @@
     BOOL isHTML = NO;
     NSArray<NSString *> *openTags = @[ @"<b>", @"<i>", @"<u>" ];
     NSArray<NSString *> *closeTags = @[ @"</b>", @"</i>", @"</u>" ];
-    for (NSString *tag in openTags) {
+    // A title with no tags may still escape “<” or “&”, and those entities
+    // must be decoded the same way as in a title that has tags.
+    NSArray<NSString *> *markers = [openTags arrayByAddingObjectsFromArray:@[ @"&lt;", @"&amp;" ]];
+    for (NSString *tag in markers) {
         if ([html containsString:tag]) {
             isHTML = YES;
             break;
