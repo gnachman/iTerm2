@@ -3888,11 +3888,9 @@ static iTermKeyEventReplayer *gReplayer;
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [term currentSession];
     PTYTab *tab = [term tabForSession:session];
-    NSString *reason = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
-    NSString *message;
-    if (reason) {
-        message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GPURenderer.OffBecause", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because %@", @"Explanation that GPU rendering is off; %@ is the reason"), reason];
-    } else {
+    // The reason is a complete sentence that says GPU rendering is off and why.
+    NSString *message = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
+    if (!message) {
         message = NSLocalizedStringWithDefaultValue(@"GPURenderer.Enabled", nil, [NSBundle mainBundle], @"GPU rendering is enabled for the current session.", @"Message that GPU rendering is enabled");
     }
     [iTermWarning showWarningWithTitle:message

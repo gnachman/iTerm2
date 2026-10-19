@@ -84688,9 +84688,1395 @@
         }
       }
     },
+    "GPURenderer.Off.Annotations" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil Anmerkungen oder URL-Verknüpfungen geöffnet sind."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because annotations or URL shortcuts are open."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注釈またはURLショートカットが開いているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque há anotações ou atalhos de URL abertos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что открыты аннотации или ярлыки URL."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为有注释或 URL 快捷键处于打开状态。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.Announcement" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil eine Ankündigung (gelber Balken) sichtbar ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because an announcement (yellow bar) is visible."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アナウンス(黄色いバー)が表示されているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque há um comunicado (barra amarela) visível."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что отображается объявление (жёлтая полоса)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为有通告（黄色横幅）可见。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.ContextAllocationFailure" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil vorübergehend kein Grafikkontext zugewiesen werden konnte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because of a temporary failure to allocate a graphics context."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "グラフィックスコンテキストの割り当てに一時的に失敗したため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual por causa de uma falha temporária ao alocar um contexto gráfico."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что произошёл временный сбой при выделении графического контекста."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为临时分配图形上下文失败。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.Disabled" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil der GPU-Renderer in Einstellungen > Allgemein deaktiviert ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the GPU Renderer is disabled in Settings > General."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定 > 一般」でGPUレンダラーが無効になっているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque o renderizador de GPU está desativado em Ajustes > Geral."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что рендерер GPU отключён в Настройках > Общие."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为已在“设置 > 通用”中停用 GPU 渲染器。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.DisconnectedFromPower" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil der Computer nicht mit dem Stromnetz verbunden ist. Sie können GPU-Rendering im getrennten Zustand in Einstellungen > Allgemein > Erweiterte GPU-Einstellungen aktivieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the computer is not connected to power. You can enable GPU rendering while disconnected from power in Settings > General > Advanced GPU Settings."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンピュータが電源に接続されていないため、現在のセッションではGPUレンダリングがオフになっています。電源に接続していないときのGPUレンダリングは「設定 > 一般 > GPU詳細設定」で有効にできます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque o computador não está conectado à energia. Você pode ativar a renderização por GPU enquanto desconectado da energia em Ajustes > Geral > Ajustes avançados de GPU."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что компьютер не подключён к питанию. Вы можете включить рендеринг GPU при отключении от питания в Настройках > Общие > Расширенные настройки GPU."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为电脑未连接电源。你可以在“设置 > 通用 > 高级 GPU 设置”中启用电脑未连接电源时的 GPU 渲染。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.DropTargetsVisible" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil Drop-Ziele für sicheres Kopieren sichtbar sind."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because secure copy drop targets are visible."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セキュアコピーのドロップターゲットが表示されているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque as áreas de soltar da cópia segura estão visíveis."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что видны области для перетаскивания при защищённом копировании."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为安全拷贝拖放目标可见。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.FindPanel" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil das Suchfeld geöffnet ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the find panel is open."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "検索パネルが開いているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque o painel de busca está aberto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что открыта панель поиска."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为查找面板处于打开状态。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.Idle" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die Sitzung inaktiv ist. Sie können Metal im inaktiven Zustand in Einstellungen > Erweitert aktivieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the session is idle. You can enable Metal while idle in Settings > Advanced."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションがアイドル状態のため、現在のセッションではGPUレンダリングがオフになっています。アイドル時のMetalは「設定 > 詳細」で有効にできます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a sessão está ociosa. Você pode ativar o Metal durante a ociosidade em Ajustes > Avançado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что сеанс неактивен. Вы можете включить Metal в неактивном состоянии в Настройках > Дополнительно."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为会话处于空闲状态。你可以在“设置 > 高级”中启用空闲时使用 Metal。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.Initializing" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil der GPU-Renderer initialisiert wird. Er sollte bald bereit sein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the GPU renderer is initializing. It should be ready soon."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPUレンダラーが初期化中のため、現在のセッションではGPUレンダリングがオフになっています。まもなく準備が完了します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque o renderizador de GPU está inicializando. Deve estar pronto em breve."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что GPU-рендерер инициализируется. Скоро он будет готов."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为 GPU 渲染器正在初始化，应该很快就可以就绪。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.InternalError" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil ein interner Fehler aufgetreten ist. Bitte reichen Sie einen Fehlerbericht ein!"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because of an internal error. Please file a bug report!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内部エラーが発生したため、現在のセッションではGPUレンダリングがオフになっています。バグレポートを送信してください！"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual por causa de um erro interno. Registre um relatório de bug!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что произошла внутренняя ошибка. Пожалуйста, отправьте отчёт об ошибке!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为发生内部错误。请提交错误报告！"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.InvalidSize" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die Sitzung zu groß oder zu klein ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the session is too large or too small."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションが大きすぎるか小さすぎるため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a sessão é muito grande ou muito pequena."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что сеанс слишком большой или слишком маленький."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为会话太大或太小。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.Ligatures" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil Ligaturen aktiviert sind. Sie können sie in Einstellungen > Profile > Text > „Ligaturen verwenden“ deaktivieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because ligatures are enabled. You can disable them in Settings > Profiles > Text > Use ligatures."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合字が有効になっているため、現在のセッションではGPUレンダリングがオフになっています。「設定 > プロファイル > テキスト > 合字を使用」で無効にできます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque as ligaduras estão ativadas. Você pode desativá-las em Ajustes > Perfis > Texto > Usar ligaduras."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что включены лигатуры. Их можно отключить в Настройках > Профили > Текст > Использовать лигатуры."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为已启用连字。你可以在“设置 > 配置文件 > 文本 > 使用连字”中将其停用。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.LowPowerMode" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil macOS sich im Energiesparmodus befindet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because macOS is in low power mode."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSが低電力モードになっているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque o macOS está no modo de baixo consumo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что macOS находится в режиме энергосбережения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为 macOS 处于低功耗模式。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.MarginSize" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die Ränder des Terminalfensters zu klein sind. Sie können sie in Einstellungen > Erweitert bearbeiten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because terminal window margins are too small. You can edit them in Settings > Advanced."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ターミナルウィンドウの余白が小さすぎるため、現在のセッションではGPUレンダリングがオフになっています。「設定 > 詳細」で編集できます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque as margens da janela do terminal são muito pequenas. Você pode editá-las em Ajustes > Avançado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что поля окна терминала слишком малы. Их можно изменить в Настройках > Дополнительно."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为终端窗口边距太小。你可以在“设置 > 高级”中进行编辑。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.NoFocus" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil das Fenster nicht den Tastaturfokus hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the window does not have keyboard focus."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウィンドウにキーボードフォーカスがないため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a janela não tem foco de teclado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что окно не имеет фокуса клавиатуры."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为窗口没有键盘焦点。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.NoGPU" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil auf diesem Computer keine nutzbare GPU gefunden wurde."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because no usable GPU was found on this machine."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このマシンで使用可能なGPUが見つからないため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque nenhuma GPU utilizável foi encontrada nesta máquina."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что на этом компьютере не найден пригодный GPU."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为未在此电脑上找到可用的 GPU。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.NotATerminal" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die aktuelle Sitzung kein Terminal ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the current session is not a terminal."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のセッションがターミナルではないため、GPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a sessão atual não é um terminal."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что текущий сеанс не является терминалом."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为当前会话不是终端。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.PasteIndicator" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die Fortschrittsanzeige zum Einfügen geöffnet ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the paste progress indicator is open."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ペースト進捗インジケータが表示されているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque o indicador de progresso de colagem está aberto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что открыт индикатор хода вставки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为粘贴进度指示器处于打开状态。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.Portholes" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil diese Sitzung nativ gerenderte Elemente enthält."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because this session has natively rendered items."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このセッションにはネイティブにレンダリングされた項目があるため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque esta sessão tem itens renderizados nativamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что в этом сеансе есть нативно отображаемые элементы."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为此会话包含原生渲染的项目。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.ScreensChanging" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil sich die Bildschirmkonfiguration gerade geändert hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the screen configuration has just changed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画面構成が変更された直後のため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a configuração da tela acabou de mudar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что конфигурация экрана только что изменилась."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为屏幕配置刚刚发生了变化。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.SessionHasNoWindow" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die aktuelle Sitzung kein Fenster hat (das sollte nicht passieren)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the current session has no window (this shouldn’t happen)."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のセッションにウィンドウがないため、GPUレンダリングがオフになっています(通常は発生しません)。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a sessão atual não tem janela (isto não deveria acontecer)."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что у текущего сеанса нет окна (это не должно происходить)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为当前会话没有窗口（本不应出现此情况）。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.SessionInitializing" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die Sitzung initialisiert wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the session is initializing."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションが初期化中のため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a sessão está sendo inicializada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что сеанс инициализируется."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为会话正在初始化。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.SplitPaneBeingDragged" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil ein geteilter Bereich gezogen wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because a split pane is being dragged."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分割ペインがドラッグされているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque um painel dividido está sendo arrastado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что разделённая панель перетаскивается."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为正在拖移拆分窗格。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.SwipingBetweenTabs" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil zwischen Tabs gewischt wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because you are swiping between tabs."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブ間をスワイプ中のため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque você está deslizando entre abas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что выполняется переключение между вкладками свайпом."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为正在标签页之间轻扫。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.TabBarVisible" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die Tableiste vorübergehend sichtbar ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the tab bar is temporarily visible."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブバーが一時的に表示されているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a barra de abas está temporariamente visível."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что панель вкладок временно видима."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为标签栏暂时可见。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.TabDragInProgress" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil ein Tab gezogen wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because a tab is being dragged."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブがドラッグされているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque uma aba está sendo arrastada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что вкладка перетаскивается."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为正在拖移标签页。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.TabInactive" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil dieser Tab nicht aktiv ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because this tab is not active."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このタブがアクティブでないため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque esta aba não está ativa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что эта вкладка не активна."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为此标签页未激活。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.TooManyPanes" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil dieser Tab zu viele geteilte Bereiche hat."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because this tab has too many split panes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このタブの分割ペインが多すぎるため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque esta aba tem painéis divididos em excesso."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что в этой вкладке слишком много разделённых панелей."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为此标签页有太多拆分窗格。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.Transparency" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil transparente Fenster nicht unterstützt werden. Sie können sie in Einstellungen > Profile > Fenster > Transparenz deaktivieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because transparent windows are not supported. They can be disabled in Settings > Profiles > Window > Transparency."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透明ウィンドウはサポートされていないため、現在のセッションではGPUレンダリングがオフになっています。「設定 > プロファイル > ウィンドウ > 透明度」で無効にできます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque janelas transparentes não são compatíveis. É possível desativá-las em Ajustes > Perfis > Janela > Transparência."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что прозрачные окна не поддерживаются. Их можно отключить в Настройках > Профили > Окно > Прозрачность."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为不支持透明窗口。你可以在“设置 > 配置文件 > 窗口 > 透明度”中将其停用。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.URLPreview" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil eine URL-Vorschau sichtbar ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because a URL preview is visible."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLプレビューが表示されているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque uma pré-visualização de URL está visível."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что виден предпросмотр URL."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为有 URL 预览可见。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.VerticalSpacing" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil der vertikale Zeilenabstand der Schrift auf weniger als 100 % eingestellt ist. Sie können dies in Einstellungen > Profile > Text > „Schrift ändern“ anpassen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the font’s vertical spacing is set to less than 100%. You can change it in Settings > Profiles > Text > Change Font."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォントの垂直方向の間隔が100%未満に設定されているため、現在のセッションではGPUレンダリングがオフになっています。「設定 > プロファイル > テキスト > フォントを変更」で変更できます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque o espaçamento vertical da fonte está definido como menos de 100%. Você pode alterá-lo em Ajustes > Perfis > Texto > Alterar fonte."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что вертикальный интервал шрифта установлен менее 100%. Это можно изменить в Настройках > Профили > Текст > Изменить шрифт."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为字体垂直间距设置为小于 100%。你可以在“设置 > 配置文件 > 文本 > 更改字体”中更改此设置。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.WindowObscured" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil das Fenster größtenteils von einem anderen Fenster verdeckt ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the window is mostly under another window."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウィンドウの大部分が別のウィンドウの下に隠れているため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a janela está majoritariamente sob outra janela."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что окно почти полностью перекрыто другим окном."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为窗口大部分位于另一个窗口之下。"
+          }
+        }
+      }
+    },
+    "GPURenderer.Off.WindowResizing" : {
+      "comment" : "Shown in Help > GPU Renderer Availability: why GPU rendering is off in the current session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das GPU-Rendering ist in der aktuellen Sitzung deaktiviert, weil die Größe des Fensters gerade geändert wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GPU rendering is off in the current session because the window is being resized."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウィンドウのサイズ変更中のため、現在のセッションではGPUレンダリングがオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A renderização por GPU está desativada na sessão atual porque a janela está sendo redimensionada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рендеринг на GPU отключён в текущем сеансе, потому что выполняется изменение размера окна."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前会话中的 GPU 渲染已关闭，因为窗口正在调整大小。"
+          }
+        }
+      }
+    },
     "GPURenderer.OffBecause" : {
       "comment" : "Explanation that GPU rendering is off; %@ is the reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104713,7 +106099,7 @@
     },
     "MetalUnavailable.Annotations" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104755,7 +106141,7 @@
     },
     "MetalUnavailable.Announcement" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104797,7 +106183,7 @@
     },
     "MetalUnavailable.ContextAllocationFailure" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104839,7 +106225,7 @@
     },
     "MetalUnavailable.Disabled" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104881,7 +106267,7 @@
     },
     "MetalUnavailable.DisconnectedFromPower" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104923,7 +106309,7 @@
     },
     "MetalUnavailable.DropTargetsVisible" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104965,7 +106351,7 @@
     },
     "MetalUnavailable.FindPanel" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105007,7 +106393,7 @@
     },
     "MetalUnavailable.Idle" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105049,7 +106435,7 @@
     },
     "MetalUnavailable.Initializing" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105091,7 +106477,7 @@
     },
     "MetalUnavailable.InternalError" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105133,7 +106519,7 @@
     },
     "MetalUnavailable.InvalidSize" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105175,7 +106561,7 @@
     },
     "MetalUnavailable.Ligatures" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105217,7 +106603,7 @@
     },
     "MetalUnavailable.LowPowerMode" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105259,7 +106645,7 @@
     },
     "MetalUnavailable.MarginSize" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105301,7 +106687,7 @@
     },
     "MetalUnavailable.NoFocus" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105343,7 +106729,7 @@
     },
     "MetalUnavailable.NoGPU" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105385,7 +106771,7 @@
     },
     "MetalUnavailable.NotATerminal" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105427,7 +106813,7 @@
     },
     "MetalUnavailable.PasteIndicator" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105469,7 +106855,7 @@
     },
     "MetalUnavailable.Portholes" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105511,7 +106897,7 @@
     },
     "MetalUnavailable.ScreensChanging" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105553,7 +106939,7 @@
     },
     "MetalUnavailable.SessionHasNoWindow" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105595,7 +106981,7 @@
     },
     "MetalUnavailable.SessionInitializing" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105637,7 +107023,7 @@
     },
     "MetalUnavailable.SplitPaneBeingDragged" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105679,7 +107065,7 @@
     },
     "MetalUnavailable.SwipingBetweenTabs" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105721,7 +107107,7 @@
     },
     "MetalUnavailable.TabBarVisible" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105763,7 +107149,7 @@
     },
     "MetalUnavailable.TabDragInProgress" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105805,7 +107191,7 @@
     },
     "MetalUnavailable.TabInactive" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105847,7 +107233,7 @@
     },
     "MetalUnavailable.TooManyPanes" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105889,7 +107275,7 @@
     },
     "MetalUnavailable.Transparency" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105931,7 +107317,7 @@
     },
     "MetalUnavailable.URLPreview" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105973,7 +107359,7 @@
     },
     "MetalUnavailable.VerticalSpacing" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -106015,7 +107401,7 @@
     },
     "MetalUnavailable.WindowObscured" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -106057,7 +107443,7 @@
     },
     "MetalUnavailable.WindowResizing" : {
       "comment" : "GPU renderer unavailable reason",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

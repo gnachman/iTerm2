@@ -1964,6 +1964,10 @@ Bug Fixes:
   back at its old place among the other floating
   panes, so a maximized one no longer comes back
   in front of and hiding the others.
+- Help > GPU Renderer Availability now explains
+  why GPU rendering is off in a complete
+  sentence.
+
 
 
 
