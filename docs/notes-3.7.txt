@@ -1827,3 +1827,7 @@ Bug Fixes:
   autofill, the password manager, and named
   marks now work on that tab instead of the
   tab that opened it.
+- Cmd-hover now underlines a URL that ends in
+  right-to-left text wherever the pointer is on
+  it, instead of leaving the previous URL
+  underlined.

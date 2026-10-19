@@ -175,4 +175,36 @@ class BidiURLDividerTests: XCTestCase {
         }
         withExtendedLifetime(dataSource) {}
     }
+
+    // A URL ending in right-to-left text is not drawn in one run: its logical
+    // first and last cells are not its visual left and right edges. The
+    // visual range was built from those two endpoints only, so it missed the
+    // middle of the URL, and Cmd-hover there kept the previous URL
+    // underlined. QA finding F-427.
+    func testVisualRangeOfURLEndingInRTLTextContainsAllItsCells() {
+        let width = 40
+        let url = "https://example.com/پ"
+        let row = pad("سلام " + url + " دنیا", width)
+        let base = screenCharArrayWithDefaultStyle(row, eol: EOL_HARD)
+        guard let bidi = BidiDisplayInfoObjc(base) else { return XCTFail("row is not reordered") }
+        let sca = ScreenCharArray(copyOfLine: base.line, length: base.length,
+                                  continuation: base.continuation, bidiInfo: bidi)
+        let dataSource = DividerLinesDataSource([sca], width: Int32(width))
+        let extractor = iTermTextExtractor(dataSource: dataSource)
+        extractor.supportBidi = true
+        let urlStart = 5
+        let urlCells = urlStart..<(urlStart + url.count)
+        extractor.restrictToLogicalWindow(including: VT100GridCoordMake(Int32(urlStart), 0))
+        let logical = VT100GridWindowedRangeMake(
+            VT100GridCoordRangeMake(Int32(urlStart), 0, Int32(urlCells.upperBound), 0),
+            extractor.logicalWindow.location,
+            extractor.logicalWindow.length)
+        let visual = extractor.visualWindowedRange(forLogical: logical)
+        for x in urlCells {
+            let visualCoord = VT100GridCoordMake(bidi.visualForLogical(Int32(x)), 0)
+            XCTAssertTrue(VT100GridWindowedRangeContainsCoord(visual, visualCoord),
+                          "URL cell at logical x=\(x), visual x=\(visualCoord.x) not in \(VT100GridWindowedRangeDescription(visual) ?? "")")
+        }
+        withExtendedLifetime(dataSource) {}
+    }
 }

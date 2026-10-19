@@ -320,8 +320,32 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical {
     VT100GridCoordRange visual;
 
+    const VT100GridCoord last = [self predecessorOfCoord:logical.end];
+    if (_supportBidi && VT100GridCoordCompare(logical.start, last) != NSOrderedDescending) {
+        // A reordered range need not be drawn in one run (for example, a URL
+        // ending in right-to-left text), so its logical first and last cells
+        // are not necessarily its visual edges. Bound every cell on the first
+        // and last rows instead.
+        if (last.y == logical.start.y) {
+            const VT100GridRange columns = [self visualColumnSpanOnLine:last.y
+                                                            fromLogical:logical.start.x
+                                                                through:last.x];
+            return VT100GridCoordRangeMake(columns.location, last.y,
+                                           VT100GridRangeMax(columns) + 1, last.y);
+        }
+        // Rows wrap within the column window, like predecessorOfCoord:.
+        const VT100GridRange first = [self visualColumnSpanOnLine:logical.start.y
+                                                      fromLogical:logical.start.x
+                                                          through:[self xLimit] - 1];
+        const VT100GridRange lastColumns = [self visualColumnSpanOnLine:last.y
+                                                            fromLogical:_logicalWindow.location
+                                                                through:last.x];
+        return VT100GridCoordRangeMake(first.location, logical.start.y,
+                                       VT100GridRangeMax(lastColumns) + 1, last.y);
+    }
+
     VT100GridCoord a = [self visualCoordForLogical:logical.start];
-    VT100GridCoord b = [self visualCoordForLogical:[self predecessorOfCoord:logical.end]];
+    VT100GridCoord b = [self visualCoordForLogical:last];
 
     // Convert back to half-open range with start <= end.
     if (VT100GridCoordCompare(a, b) == NSOrderedDescending) {
@@ -367,6 +391,17 @@ const NSInteger kLongMaximumWordLength = 100000;
         return logical;
     }
     return VT100GridCoordMake([bidi visualForLogical:logical.x], logical.y);
+}
+
+// The smallest range of visual columns containing logical columns
+// [firstX, lastX] on line y.
+- (VT100GridRange)visualColumnSpanOnLine:(int)y
+                             fromLogical:(int)firstX
+                                 through:(int)lastX {
+    iTermBidiDisplayInfo *bidi = [_dataSource screenCharArrayForLine:y].bidiInfo;
+    return [iTermBidiDisplayInfo visualColumnSpanForLogicalStartX:firstX
+                                                             endX:MAX(firstX, lastX + 1)
+                                                             info:bidi];
 }
 
 // Make characterAt: much faster when called with the same line number over and over again. Assumes
