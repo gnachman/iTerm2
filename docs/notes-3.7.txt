@@ -1874,3 +1874,7 @@ Bug Fixes:
   Follows Mouse is off from the moment the pane
   opens, not only after toggling Focus Follows
   Mouse.
+- With the Settings window in front of a
+  terminal window, Edit > Find > Find… now
+  focuses the Settings search field instead of
+  opening the find bar in the terminal behind it.
