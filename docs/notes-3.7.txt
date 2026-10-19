@@ -1858,3 +1858,6 @@ Bug Fixes:
 - Help > GPU Renderer Availability now explains
   why GPU rendering is off in a complete
   sentence.
+- Command Info no longer shows a negative
+  running time such as “0:-1.999” for a command
+  that finishes quickly.

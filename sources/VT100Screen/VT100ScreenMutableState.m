@@ -3456,9 +3456,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                      self.lastPromptLine - self.cumulativeScrollbackOverflow,
                      RLogRedact(mark, mark.redactedDescription),
                      RLogRedact(command, @(command.length)));
+                // Capture the date outside the block: the block is replayed on the
+                // main-thread doppelganger later, and both must agree.
+                NSDate *startDate = [NSDate date];
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
                     VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                     mark.firstLineOfCommand = firstLine;
+                    mark.startDate = startDate;
                     mark.fullCommand = command;
                     mark.commandRange = commandRange;
                     mark.outputStart = outputStart;
@@ -5054,12 +5058,16 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
         return;
     }
     __weak __typeof(self) weakSelf = self;
+    // Captured outside the block so the doppelganger, which replays the block
+    // later, gets the same start date as the progenitor.
+    NSDate *startDate = [NSDate date];
     [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
         if (!screenMark) {
             return;
         }
         [weakSelf setCommand:command startingAt:startAbsCoord inMark:screenMark];
+        screenMark.startDate = startDate;
     }];
 }
 
