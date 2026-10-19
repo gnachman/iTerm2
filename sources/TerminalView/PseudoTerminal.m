@@ -8368,15 +8368,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab;
 }
 
-- (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem {
-    NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
+// The appearance for context menus in the tab bar, which should match the
+// window rather than the system when the two differ.
+- (NSAppearance *)tabBarContextMenuAppearance {
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         NSColor *bgColor = [self.window.ptyWindow it_terminalWindowDecorationBackgroundColor];
         NSAppearanceName appearanceName = bgColor.perceivedBrightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua;
-        rootMenu.appearance = [NSAppearance appearanceNamed:appearanceName];
-    } else {
-        rootMenu.appearance = self.window.appearance;
+        return [NSAppearance appearanceNamed:appearanceName];
     }
+    return self.window.appearance;
+}
+
+- (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem {
+    NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
+    rootMenu.appearance = [self tabBarContextMenuAppearance];
 
     BOOL (^addSelect)(void) = ^{
         NSMenuItem *item;
@@ -9575,6 +9580,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
     menu.autoenablesItems = NO;  // contextual actions are always applicable
+    menu.appearance = [self tabBarContextMenuAppearance];
     const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
     NSString *closeAfterTitle = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelow", nil, [NSBundle mainBundle], @"Close Tabs Below", @"Menu item that closes tabs below the current one")
                                                         : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsToTheRight", nil, [NSBundle mainBundle], @"Close Tabs to the Right", @"Menu item that closes tabs to the right");

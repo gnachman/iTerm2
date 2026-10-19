@@ -28,14 +28,14 @@ final class TabGroupMenuAppearanceTests: XCTestCase {
         let terminal = fixture.terminal
         fixture.window.appearance = NSAppearance(named: windowAppearance)
         guard let tab = terminal.currentTab(),
-              let tabView = terminal.tabView,
-              let item = tab.tabViewItem else {
+              let item = tab.tabViewItem,
+              let tabView = item.tabView else {
             XCTFail("No tab")
             return
         }
         tab.tabGroupID = "group"
 
-        let tabMenu = terminal.tabView(tabView, menuForTabViewItem: item)
+        let tabMenu = terminal.tabView(tabView, menuFor: item)
         let groupMenu = terminal.tabView(tabView, menuForTabGroup: "group")
         XCTAssertNotNil(groupMenu)
         XCTAssertNotNil(tabMenu?.appearance)

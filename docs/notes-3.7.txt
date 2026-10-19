@@ -1978,6 +1978,11 @@ Bug Fixes:
 - Command Info no longer shows a negative
   running time such as “0:-1.999” for a command
   that finishes quickly.
+- The context menu of a tab group’s label now
+  matches the window’s light or dark appearance,
+  like a tab’s context menu, when it differs
+  from the system’s.
+
 
 
 
