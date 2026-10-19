@@ -1953,6 +1953,11 @@ Bug Fixes:
   iTerm2 is running now shows the profile’s
   subtitle in its title bar instead of only
   after the window is resized.
+- When settings load from a custom folder and
+  are saved manually, the red “!” in the
+  Settings title bar now goes away after you
+  click Save Now.
+
 
 
 

@@ -6,6 +6,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Posted on the main thread after the saved copy of the custom folder's prefs (what local prefs are
+// compared against to decide whether there are unsaved changes) is replaced, as by Save Now.
+extern NSString *const iTermRemotePreferencesSavedPrefsDidChangeNotification;
+
 @interface iTermRemotePreferences : NSObject
 
 // These properties are backed to user defaults.
