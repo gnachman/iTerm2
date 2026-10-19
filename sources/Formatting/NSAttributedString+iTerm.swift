@@ -340,15 +340,23 @@ class iTermTableCellView: NSTableCellView {
 }
 
 // A table cell with an optional icon and a text field next to it.
+// Lays out by hand rather than with Auto Layout: these cells live in the toolbelt, and any
+// constraint there engages the layout engine for the whole terminal window. The engine then turns
+// every manually laid-out view's autoresizing mask into constraints, and a stale frame on a hidden
+// view becomes a minimum window size. Issue 13118.
 @objc(iTermIconTableCellView)
 class IconTableCellView: iTermTableCellView {
     @objc var iconView = NSImageView()
     @objc var icon: NSImage? {
         get { iconView.image }
-        set { iconView.image = newValue }
+        set {
+            iconView.image = newValue
+            needsLayout = true
+        }
     }
 
-    private var didSetupConstraints = false
+    private static let iconSize: CGFloat = 10
+    private static let iconTextSpacing: CGFloat = 2
 
     @objc(initWithIcon:color:)
     init(icon: NSImage, iconColor: NSColor) {
@@ -369,26 +377,28 @@ class IconTableCellView: iTermTableCellView {
     }
 
     private func commonInit() {
-        iconView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(iconView)
     }
 
-    override func updateConstraints() {
-        if !didSetupConstraints, let textField = self.textField {
-            didSetupConstraints = true
-            NSLayoutConstraint.activate([
-                // Icon view constraints
-                iconView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 0),
-                iconView.centerYAnchor.constraint(equalTo: self.centerYAnchor, constant: 0),
-                iconView.heightAnchor.constraint(equalToConstant: 10),
-                iconView.widthAnchor.constraint(equalToConstant: 10),
+    override func layout() {
+        super.layout()
 
-                // Text field constraints
-                textField.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 2),
-                textField.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: 0),
-                textField.centerYAnchor.constraint(equalTo: self.centerYAnchor)
-            ])
+        let bounds = self.bounds
+        var textX = CGFloat(0)
+        iconView.isHidden = (icon == nil)
+        if icon != nil {
+            iconView.frame = NSRect(x: 0,
+                                    y: bounds.midY - Self.iconSize / 2,
+                                    width: Self.iconSize,
+                                    height: Self.iconSize)
+            textX = Self.iconSize + Self.iconTextSpacing
         }
-        super.updateConstraints()
+        if let textField {
+            let height = ceil(textField.intrinsicContentSize.height)
+            textField.frame = NSRect(x: textX,
+                                     y: bounds.midY - height / 2,
+                                     width: max(0, bounds.width - textX),
+                                     height: height)
+        }
     }
 }

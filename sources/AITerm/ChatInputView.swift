@@ -147,17 +147,14 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         hintLabel.textColor = .tertiaryLabelColor
         hintLabel.alignment = .right
 
-        // Disable autoresizing on every manually-laid-out subview so AppKit's
-        // implicit autoresizingMask logic doesn't fight our layout() pass on
-        // window resize.
-        addAttachmentButton.translatesAutoresizingMaskIntoConstraints = false
-        sendButton.translatesAutoresizingMaskIntoConstraints = false
-        attachmentsView.translatesAutoresizingMaskIntoConstraints = false
-        inputTextFieldContainer.translatesAutoresizingMaskIntoConstraints = false
-        hintLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Every subview is laid out by hand in layout(). Leave
+        // translatesAutoresizingMaskIntoConstraints alone: turning it off gives
+        // controls with an intrinsic size content-size constraints, which
+        // engages the layout engine for the whole terminal window when this
+        // view is in the inline chat panel. The engine then turns hidden views'
+        // stale frames into a minimum window size. Issue 13118.
 
         vev.wantsLayer = true
-        vev.translatesAutoresizingMaskIntoConstraints = false
         vev.blendingMode = .withinWindow
         // .windowBackground blends with the host window's chrome — subtle
         // in both light and dark mode (matches the window's own
@@ -174,7 +171,6 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputRow = ChatManualStackView(orientation: .horizontal,
                                        spacing: Self.buttonGap,
                                        alignment: .center)
-        inputRow.translatesAutoresizingMaskIntoConstraints = false
         inputRow.addArrangedSubview(addAttachmentButton)
         inputRow.addArrangedSubview(inputTextFieldContainer)
         inputRow.addArrangedSubview(sendButton)
@@ -183,7 +179,6 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         outerColumn = ChatManualStackView(orientation: .vertical,
                                           spacing: 0,
                                           alignment: .fill)
-        outerColumn.translatesAutoresizingMaskIntoConstraints = false
         outerColumn.addArrangedSubview(inputRow)
         outerColumn.addArrangedSubview(attachmentsView)
 

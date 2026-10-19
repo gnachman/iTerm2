@@ -1511,3 +1511,7 @@ Bug Fixes:
   top and bottom panes no longer covers the end
   of that pane’s lines and leaves an empty strip
   at the right edge of the window.
+- With the Minimal or Compact theme and the
+  Snippets tool enabled in the toolbelt, a window
+  could be made wider but not narrower. Issue
+  13118.
