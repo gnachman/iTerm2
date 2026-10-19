@@ -1156,7 +1156,7 @@ extension iTermBrowserManager {
             selectionMonitor?.handleMessage(message, webView: webView)
 
         case iTermBrowserContextMenuMonitor.messageHandlerName:
-            contextMenuMonitor?.handleMessage(message, webView: webView)
+            contextMenuMonitor?.handleMessage(message)
             
         case iTermBrowserNamedMarkManager.messageHandlerName:
             if namedMarkManager?.handleMessage(webView: webView, message: message) == true {

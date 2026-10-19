@@ -1819,3 +1819,6 @@ Bug Fixes:
 - In Russian, the shell integration installer
   no longer cuts off its Preview Command
   button.
+- Right-clicking in a browser tab that a page
+  opened from a link now shows the context
+  menu.
