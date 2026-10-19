@@ -171,7 +171,7 @@ class BidiURLDividerTests: XCTestCase {
         for x in urlCells {
             let visualCoord = VT100GridCoordMake(bidi.visualForLogical(Int32(x)), 4)
             XCTAssertTrue(VT100GridWindowedRangeContainsCoord(visual, visualCoord),
-                          "URL cell at logical x=\(x), visual x=\(visualCoord.x) not in \(VT100GridWindowedRangeDescription(visual) ?? "")")
+                          "URL cell at logical x=\(x), visual x=\(visualCoord.x) not in \(VT100GridWindowedRangeDescription(visual))")
         }
         withExtendedLifetime(dataSource) {}
     }
@@ -203,7 +203,7 @@ class BidiURLDividerTests: XCTestCase {
         for x in urlCells {
             let visualCoord = VT100GridCoordMake(bidi.visualForLogical(Int32(x)), 0)
             XCTAssertTrue(VT100GridWindowedRangeContainsCoord(visual, visualCoord),
-                          "URL cell at logical x=\(x), visual x=\(visualCoord.x) not in \(VT100GridWindowedRangeDescription(visual) ?? "")")
+                          "URL cell at logical x=\(x), visual x=\(visualCoord.x) not in \(VT100GridWindowedRangeDescription(visual))")
         }
         withExtendedLifetime(dataSource) {}
     }
