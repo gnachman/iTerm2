@@ -1982,6 +1982,11 @@ Bug Fixes:
   matches the window’s light or dark appearance,
   like a tab’s context menu, when it differs
   from the system’s.
+- With HTML tab titles on, “&amp;” and “&lt;”
+  in a title are now shown as “&” and “<” even
+  when the title has no bold, italic, or
+  underline tags.
+
 
 
 

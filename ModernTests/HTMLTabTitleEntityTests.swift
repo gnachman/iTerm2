@@ -10,16 +10,16 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class HTMLTabTitleEntityTests: XCTestCase {
-    private var saved = false
+    private var saved: Any?
 
     override func setUp() {
         super.setUp()
-        saved = iTermPreferences.bool(forKey: kPreferenceKeyHTMLTabTitles)
+        saved = iTermPreferences.object(forKey: kPreferenceKeyHTMLTabTitles)
         iTermPreferences.setBool(true, forKey: kPreferenceKeyHTMLTabTitles)
     }
 
     override func tearDown() {
-        iTermPreferences.setBool(saved, forKey: kPreferenceKeyHTMLTabTitles)
+        iTermPreferences.setObject(saved, forKey: kPreferenceKeyHTMLTabTitles)
         super.tearDown()
     }
 
