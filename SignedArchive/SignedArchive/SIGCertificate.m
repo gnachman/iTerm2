@@ -82,7 +82,11 @@
     NSString *value = (__bridge_transfer NSString *)SecCertificateCopyLongDescription(NULL,
                                                                                       _secCertificate,
                                                                                       &error);
-    if (value == NULL || error != NULL) {
+    if (error) {
+        CFRelease(error);
+        return nil;
+    }
+    if (value == NULL) {
         return nil;
     }
     return value;
@@ -109,7 +113,11 @@
     CFErrorRef error = NULL;
     NSData *value = (__bridge_transfer NSData *)SecCertificateCopySerialNumberData(_secCertificate,
                                                                                    &error);
-    if (value == NULL || error != NULL) {
+    if (error) {
+        CFRelease(error);
+        return nil;
+    }
+    if (value == NULL) {
         return nil;
     }
     return value;
@@ -142,15 +150,19 @@
               (__bridge_transfer NSString *)SecCopyErrorMessageString(err, NULL));
         return NO;
     }
+    BOOL found = NO;
     for (NSInteger i = 0; i < CFArrayGetCount(array); i++) {
         if ([self certificateInArray:array atIndex:i hasName:name]) {
-            return YES;
+            found = YES;
+            break;
         }
     }
-    return NO;
+    CFRelease(array);
+    return found;
 }
 
-+ (SecCertificateRef)secCertificateWithName:(CFDataRef)name {
+// Returns a +1 reference that the caller must release, or NULL.
++ (SecCertificateRef)copySecCertificateWithName:(CFDataRef)name {
     if (name == NULL) {
         return NULL;
     }
@@ -166,13 +178,16 @@
     }
 
     CFArrayRef array = (CFArrayRef)result;
+    SecCertificateRef found = NULL;
     for (NSInteger i = 0; i < CFArrayGetCount(array); i++) {
         if ([SIGCertificate certificateInArray:array atIndex:i hasName:name]) {
-            return (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
+            found = (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
+            CFRetain(found);
+            break;
         }
     }
-
-    return NULL;
+    CFRelease(array);
+    return found;
 }
 
 - (SIGCertificate *)issuer {
@@ -183,12 +198,14 @@
     if (!issuerName) {
         return nil;
     }
-    SecCertificateRef secCertificate = [SIGCertificate secCertificateWithName:issuerName];
+    SecCertificateRef secCertificate = [SIGCertificate copySecCertificateWithName:issuerName];
     CFRelease(issuerName);
     if (secCertificate == NULL) {
         return nil;
     }
-    return [[SIGCertificate alloc] initWithSecCertificate:secCertificate];
+    SIGCertificate *issuer = [[SIGCertificate alloc] initWithSecCertificate:secCertificate];
+    CFRelease(secCertificate);
+    return issuer;
 }
 
 - (BOOL)isEqual:(id)object {

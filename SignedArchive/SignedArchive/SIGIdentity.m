@@ -62,6 +62,7 @@
         }];
     }
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    CFRelease(array);
     @synchronized(identities) {
         return identities;
     }
@@ -74,6 +75,8 @@
 
     self = [super init];
     if (self) {
+        // dealloc releases it.
+        CFRetain(secIdentity);
         _secIdentity = secIdentity;
     }
     return self;
@@ -109,7 +112,9 @@
         return nil;
     }
 
+    // initWithSecCertificate: retains its argument, so balance the copy.
     _signingCertificate = [[SIGCertificate alloc] initWithSecCertificate:secCertificate];
+    CFRelease(secCertificate);
     return _signingCertificate;
 }
 
