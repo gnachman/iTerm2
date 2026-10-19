@@ -207,4 +207,58 @@ class BidiURLDividerTests: XCTestCase {
         }
         withExtendedLifetime(dataSource) {}
     }
+
+    // QA's exact rows for F-495: a non-integration tmux split, left pane from
+    // t20l.sh (RTL text touching the divider) and right pane from t20r.sh,
+    // whose first line has a URL ending in a right-to-left letter. Cmd-hover
+    // found and underlined that URL only over its first few drawn cells. Every
+    // drawn cell of the URL must find it and fall inside its visual range.
+    // Fixed by 89d9078fb (F-427), which bounds every cell of a reordered range.
+    func testURLEndingInRTLTextRightOfDividerIsFoundOverEveryCell() {
+        let width = 160
+        let leftWidth = 79
+        let rightWidth = width - leftWidth - 1
+        let url = "https://example.com/پ"
+        let rightText = "سلام " + url + " دنیا"
+        for leftText in [String(repeating: " ", count: leftWidth - 9) + "سلام دنیا",
+                         pad("% zsh t20l.sh", leftWidth)] {
+            let row = leftText + "│" + pad(rightText, rightWidth)
+            XCTAssertEqual(row.count, width)
+            var scas = [ScreenCharArray]()
+            for i in 0..<10 {
+                let line = (i == 4) ? row : pad("left \(i)", leftWidth) + "│" + pad("right \(i)", rightWidth)
+                let base = screenCharArrayWithDefaultStyle(line, eol: EOL_HARD)
+                if let bidi = BidiDisplayInfoObjc(base) {
+                    scas.append(ScreenCharArray(copyOfLine: base.line, length: base.length,
+                                                continuation: base.continuation, bidiInfo: bidi))
+                } else {
+                    scas.append(base)
+                }
+            }
+            guard let bidi = scas[4].bidiInfo else { return XCTFail("row 4 is not reordered") }
+            let urlStart = leftWidth + 1 + 5
+            let urlCells = urlStart..<(urlStart + url.count)
+            let dataSource = DividerLinesDataSource(scas, width: Int32(width))
+            let delegate = MinimalURLActionHelperDelegate(dataSource)
+            let helper = iTermURLActionHelper(semanticHistoryController: iTermSemanticHistoryController())
+            helper.setValue(delegate, forKey: "delegate")
+
+            let extractor = iTermTextExtractor(dataSource: dataSource)
+            extractor.supportBidi = true
+            extractor.restrictToLogicalWindow(including: VT100GridCoordMake(Int32(urlStart), 4))
+            let logical = VT100GridWindowedRangeMake(
+                VT100GridCoordRangeMake(Int32(urlStart), 4, Int32(urlCells.upperBound), 4),
+                extractor.logicalWindow.location,
+                extractor.logicalWindow.length)
+            let visual = extractor.visualWindowedRange(forLogical: logical)
+            for x in urlCells {
+                let visualCoord = VT100GridCoordMake(bidi.visualForLogical(Int32(x)), 4)
+                XCTAssertEqual(helper.urlForCopy(at: visualCoord)?.absoluteString.removingPercentEncoding, url,
+                               "no URL at logical x=\(x), visual x=\(visualCoord.x)")
+                XCTAssertTrue(VT100GridWindowedRangeContainsCoord(visual, visualCoord),
+                              "URL cell at logical x=\(x), visual x=\(visualCoord.x) not in \(VT100GridWindowedRangeDescription(visual))")
+            }
+            withExtendedLifetime(delegate) {}
+        }
+    }
 }
