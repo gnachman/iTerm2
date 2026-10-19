@@ -1865,3 +1865,7 @@ Bug Fixes:
   in a title are now shown as “&” and “<” even
   when the title has no bold, italic, or
   underline tags.
+- The context menu of a tab group’s label now
+  matches the window’s light or dark appearance,
+  like a tab’s context menu, when it differs
+  from the system’s.
