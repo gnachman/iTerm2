@@ -1840,3 +1840,7 @@ Bug Fixes:
   not combine with now reports the dead key and
   then the second key, instead of the second key
   twice.
+- In the Minimal theme, a window opened while
+  iTerm2 is running now shows the profile’s
+  subtitle in its title bar instead of only
+  after the window is resized.
