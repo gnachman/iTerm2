@@ -323,6 +323,7 @@
 @implementation iTermAutoGitString {
     iTermVariableReference *_pwdRef;
     iTermVariableReference *_hostRef;
+    iTermVariableReference *_sshLevelRef;
     iTermRemoteGitStateObserver *_remoteObserver;
 }
 
@@ -341,6 +342,17 @@
             RLog(@"Hostname changed, update git poller enabled");
             [weakSelf updatePollerEnabled];
         };
+        // The host's connection can start framing without the hostname changing, as when a
+        // session restored after a restart recovers its connection.
+        _sshLevelRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySSHIntegrationLevel vendor:scope];
+        _sshLevelRef.onChangeBlock = ^{
+            RLog(@"SSH Integration level changed, update git poller enabled");
+            [weakSelf updatePollerEnabled];
+        };
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(conductorDidResynchronize:)
+                                                     name:[iTermConductor didResynchronizeNotificationName]
+                                                   object:nil];
         _remoteObserver = [[iTermRemoteGitStateObserver alloc] initWithScope:scope
                                                                        block:^{
             RLog(@"Remote git state changed; update enabled");
@@ -351,6 +363,11 @@
         RLog(@"Initializing git component %@ for scope of session with ID %@. poller is %@", self, scope.ID, _maker.gitPoller);
     }
     return self;
+}
+
+- (void)conductorDidResynchronize:(NSNotification *)notification {
+    RLog(@"A connection resynchronized, update git poller enabled");
+    [self updatePollerEnabled];
 }
 
 - (void)pwdDidChange {

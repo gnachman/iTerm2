@@ -455,6 +455,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // See -isTmuxBuried and -hasBeenTmuxBuried.
     BOOL _tmuxBuried;
     BOOL _hasBeenTmuxBuried;
+    // Stays set after the session stops being a tmux client, as a second -terminate finds it.
+    BOOL _hasBeenTmuxClient;
     // A tmux pane on a host reached through SSH Integration: the pane's pid on that host, from
     // #{pane_pid}. Its jobs are read from the gateway conductor's view of the host's processes
     // (see remoteTmuxPaneProcessInfoProvider). nil for a pane on this Mac, which uses
@@ -4009,10 +4011,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.workgroupInstance != nil) {
         return;
     }
-    if (_tmuxMode == TMUX_CLIENT || _hasBeenTmuxBuried) {
+    if (_hasBeenTmuxClient || _hasBeenTmuxBuried) {
         // The pane closed on the server. No profile command ran, and tmux Integration closes
         // panes it just made (e.g., a workgroup's placeholder windows) as a matter of course. A
-        // buried workgroup member may be ended after its connection is gone, too.
+        // buried workgroup member may be ended after its connection is gone, too. A session
+        // terminated again once it is no longer a client (as on detaching) is one too.
         return;
     }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
@@ -4608,6 +4611,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // is read. Without this the presentation name keeps the undecorated title until
     // something unrelated changes the base name. Issue 13072.
     [_nameController formattingDescriptorDidChange];
+    // Now the pane can reach its gateway, whose connection's host it may take.
+    [self updateInferredTmuxHost];
 }
 
 - (void)handleKeypressInTmuxGateway:(NSEvent *)event {
@@ -8148,6 +8153,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         processTitle = name;
     }
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionJob];
+    if (self.isTmuxGateway) {
+        // Whether tmux runs on the connected host decides its panes' host (TmuxPaneInferredHost).
+        [self updateInferredTmuxHostOfPanes];
+    }
     [self.variablesScope setValue:processTitle forVariableNamed:iTermVariableKeySessionProcessTitle];
     [self.variablesScope setValue:displayInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
     [self.variablesScope setValue:@(displayInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
@@ -10283,6 +10292,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)setTmuxMode:(PTYSessionTmuxMode)tmuxMode {
     @synchronized ([TmuxGateway class]) {
         _tmuxMode = tmuxMode;
+    }
+    if (tmuxMode == TMUX_CLIENT) {
+        _hasBeenTmuxClient = YES;
     }
     if (tmuxMode == TMUX_GATEWAY) {
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -18858,6 +18870,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                        iTermVariableKeySessionUsername: host.username ?: null,
                                        iTermVariableKeySessionIsLocalhost: isLocalhostValue };
     [self.variablesScope setValuesFromDictionary:variablesUpdate];
+    [self updateInferredTmuxHostOfPanes];
 
     [_textview setBadgeLabel:[self badgeLabel]];
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
@@ -21418,6 +21431,7 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     _conductor = [_conductor.parent retain];
     _conductor.delegate = self;
     [self updateVariablesFromConductor];
+    [self updateInferredTmuxHostOfPanes];
     _shell.sshIntegrationActive = _conductor != nil;
 }
 
@@ -25452,6 +25466,9 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
 }
 
 - (void)naggingControllerRestart {
+    if ([self restartEndedTmuxWorkgroupMember]) {
+        return;
+    }
     if (self.workgroupSessionMode == iTermWorkgroupSessionModeCodeReview &&
         self.codeReviewRawCommand) {
         // Code-review sessions re-show the prompt overlay so the user
@@ -27225,6 +27242,19 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 - (void)conductorStateDidChange {
     DLog(@"conductorDidExfiltrateState");
     [self updateVariablesFromConductor];
+    [self updateInferredTmuxHostOfPanes];
+}
+
+// A tmux gateway's host or connection changed: its panes' inferred hosts follow (see
+// TmuxPaneInferredHost). A pane reporting its own host updates only itself.
+- (void)updateInferredTmuxHostOfPanes {
+    if (self.isTmuxGateway) {
+        for (PTYSession *session in [self.tmuxController clientSessions]) {
+            [session updateInferredTmuxHost];
+        }
+    } else if (self.isTmuxClient) {
+        [self updateInferredTmuxHost];
+    }
 }
 
 - (void)updateVariablesFromConductor {

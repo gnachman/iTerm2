@@ -28716,6 +28716,18 @@
         }
       }
     },
+    "AdvancedSetting.sshFlowControl" : {
+      "comment" : "Advanced setting: sshFlowControl",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pace output from remote hosts.\nWith SSH Integration, iTerm2 tells the remote host how much output to send, so a program that prints a lot cannot fill the connection’s buffers, and Control-C takes effect at once instead of after the buffered output. Takes effect for new connections."
+          }
+        }
+      }
+    },
     "AdvancedSetting.sshSchemePath" : {
       "comment" : "Advanced setting: sshSchemePath",
       "extractionState" : "extracted_with_value",
@@ -53468,14 +53480,26 @@
         }
       }
     },
-    "ClaudeCode.UninstallRemoteHost" : {
-      "comment" : "Line of the uninstall confirmation for a remote host that will be cleaned up; the value is the host",
+    "ClaudeCode.UninstallConnectedHost" : {
+      "comment" : "Line of the uninstall confirmation for a host connected through SSH Integration, whose settings will be checked and cleaned up; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "It also removes the hook from Claude Code’s settings on %@."
+            "value" : "It also removes the hook from Claude Code’s settings on %@, if it’s there."
+          }
+        }
+      }
+    },
+    "ClaudeCode.UninstallDisconnectedHosts" : {
+      "comment" : "Line of the uninstall confirmation explaining that hosts not currently connected through SSH Integration are not changed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hosts that aren’t connected keep their hook. Connect to one with SSH Integration and uninstall again to remove it there."
           }
         }
       }
@@ -53518,18 +53542,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "卸载 Claude Code 集成？"
-          }
-        }
-      }
-    },
-    "ClaudeCode.UninstallUnreachableHost" : {
-      "comment" : "Line of the uninstall confirmation for a remote host with the hook installed that cannot be reached now; the value is the host",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%@ isn’t connected, so its hook stays. Connect to it with SSH Integration and uninstall again to remove it."
           }
         }
       }
@@ -55696,6 +55708,30 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Claude Code is running on %@, but iTerm2’s hook isn’t installed there, so its status won’t appear in the Session Status tool. Install it?"
+          }
+        }
+      }
+    },
+    "ClaudeHealthMonitor.ShellIntegrationTooOldHeading" : {
+      "comment" : "Heading of the warning shown when shell integration on a remote host is too old for Claude Code to run it2; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Shell Integration on %@?"
+          }
+        }
+      }
+    },
+    "ClaudeHealthMonitor.ShellIntegrationTooOldTitle" : {
+      "comment" : "Body of the warning shown when shell integration on a remote host is too old for Claude Code to run it2; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code on %1$@ can’t find the it2 command, which features such as Code Review ask it to run. The shell integration installed on %2$@ is too old to make it available. To update it, exit Claude Code and choose iTerm2 > Install Shell Integration in that session."
           }
         }
       }
@@ -58405,6 +58441,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "代码审查提示"
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.Changes" : {
+      "comment" : "Explains the two changes to the default code review system prompt that an update brings",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The default prompt has changed since then: it runs iTerm2’s own it2 command, so reviews work on remote hosts without a current shell integration install, and it tells it2 which tmux pane the review runs in, so reviews work in tmux."
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.Heading" : {
+      "comment" : "Heading of the offer to update a customized code review system prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Your Code Review Prompt?"
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.Keep" : {
+      "comment" : "Button that keeps a customized code review system prompt as it is",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep My Prompt"
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.MigrateAction" : {
+      "comment" : "What updating a customized code review system prompt does",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Prompt makes only the changes shown below. The rest of your prompt stays as you wrote it."
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.MigrateBody" : {
+      "comment" : "Body of the offer to update a customized code review system prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You customized your Code Review system prompt in Settings > General > AI > Prompts."
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.ResetAction" : {
+      "comment" : "What updating a code review system prompt that is a copy of an older default does",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Prompt replaces it with the current default, which then stays up to date."
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.ResetBody" : {
+      "comment" : "Body of the offer to update a code review system prompt that is a copy of an older default",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your Code Review system prompt in Settings > General > AI > Prompts is a saved copy of an older default."
+          }
+        }
+      }
+    },
+    "CodeReviewPromptUpdate.Update" : {
+      "comment" : "Button that updates a customized code review system prompt",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Prompt"
           }
         }
       }
@@ -85140,7 +85272,6 @@
     },
     "FramerPane.Stranded.Title" : {
       "comment" : "Announcement shown when programs that iTerm2 ran on a remote host for a workgroup are still running there after a restart, but their sessions were not restored. The count is the number of programs.",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "variations" : {
@@ -200371,7 +200502,6 @@
     },
     "TmuxWorkgroup.HiddenPanes.Ended" : {
       "comment" : "Announcement shown when a tmux session has programs left in hidden windows by a workgroup that no longer exists. The count is the number of programs.",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "variations" : {
@@ -200395,7 +200525,6 @@
     },
     "TmuxWorkgroup.HiddenPanes.InUse" : {
       "comment" : "Announcement shown when a tmux session has programs in hidden windows that belong to a workgroup none of this Mac’s workgroups match. Another Mac may be using them. The count is the number of programs.",
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "variations" : {
@@ -200437,6 +200566,102 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Stop Them"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroup.LockWait.Cancel" : {
+      "comment" : "Button that stops waiting; the workgroup's sessions are created later, when needed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Waiting"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroup.LockWait.TakeOver" : {
+      "comment" : "Button that stops waiting for the other iTerm2 and proceeds anyway",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Take Over"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroup.LockWait.Title" : {
+      "comment" : "Announcement shown while creating a workgroup's sessions in tmux waits for another iTerm2 attached to the same tmux session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Another iTerm2 attached to this tmux session is setting up a workgroup. This one is waiting for it to finish."
+          }
+        }
+      }
+    },
+    "TmuxWorkgroupAttacher.ChooseBody" : {
+      "comment" : "Asks which local workgroup to use for a workgroup found in a tmux session; %@ is the tmux session's name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "tmux session “%@” has a workgroup that more than one of your workgroups match. Which one should it use?"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroupAttacher.ChooseDecline" : {
+      "comment" : "Button that declines to attach a workgroup to panes found in a tmux session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Leave as Ordinary Panes"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroupAttacher.ChooseHeading" : {
+      "comment" : "Heading of the dialog asking which local workgroup to use for one found in a tmux session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a Workgroup"
+          }
+        }
+      }
+    },
+    "TmuxWorkgroupAttacher.UnmatchedBody" : {
+      "comment" : "Notification body when a workgroup found in a tmux session matches no local workgroup; %@ is the tmux session's name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "tmux session “%@” has a workgroup that none of your workgroups match, so its panes are shown as ordinary panes."
+          }
+        }
+      }
+    },
+    "TmuxWorkgroupAttacher.UnmatchedTitle" : {
+      "comment" : "Notification title when a workgroup found in a tmux session matches no local workgroup",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Workgroup Not Recognized"
           }
         }
       }

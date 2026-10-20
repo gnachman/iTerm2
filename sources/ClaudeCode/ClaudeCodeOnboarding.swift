@@ -1759,11 +1759,21 @@ class ClaudeCodeOnboarding: NSObject {
 
     @MainActor
     private func startResolvingRemoteConfigDirectory() {
-        guard remoteResolvedDirectory == nil, !remoteResolutionInFlight, let conductor = remoteConductor else {
+        guard remoteResolvedDirectory == nil, !remoteResolutionInFlight else {
+            return
+        }
+        guard let conductor = remoteConductor, conductor.framing else {
+            if pendingInstallStep == .installRemoteHook {
+                // Nothing would ever end the wait.
+                pendingInstallStep = nil
+                endWaitingForConfigResolution()
+                showRemoteInstallFailure(remoteDisconnectedMessage)
+            }
             return
         }
         remoteResolutionInFlight = true
-        Self.resolveRemoteConfigDirectory(conductor: conductor) { [weak self] directory in
+        // Shared with the step's pre-check, which looks at the same directory.
+        Self.remoteConfigDirectory(conductor: conductor) { [weak self] directory in
             guard let self, Self.instance === self else {
                 return
             }
@@ -1783,13 +1793,15 @@ class ClaudeCodeOnboarding: NSObject {
 
     @MainActor
     private func remoteConfigResolutionFailed() {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedTitle", defaultValue: "Couldn\u{2019}t Determine Settings Location", comment: "Title of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ClaudeCodeOnboarding.ConfigResolutionFailedTitle", defaultValue: "Couldn\u{2019}t Determine Settings Location", comment: "Title of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR from the user\u{2019}s shell")
         let host = remoteHost
-        alert.informativeText = String(localized: "ClaudeCodeOnboarding.RemoteConfigResolutionFailedBody", defaultValue: "iTerm2 couldn\u{2019}t read CLAUDE_CONFIG_DIR from your login shell on \(host), so it doesn\u{2019}t know where Claude Code keeps its settings there. Try again?", comment: "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR on a remote host; the value is the host")
-        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.Retry", defaultValue: "Retry", comment: "Button to retry resolving the Claude Code settings location"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
-        if alert.runModal() == .alertFirstButtonReturn {
+        warning.title = String(localized: "ClaudeCodeOnboarding.RemoteConfigResolutionFailedBody", defaultValue: "iTerm2 couldn\u{2019}t read CLAUDE_CONFIG_DIR from your login shell on \(host), so it doesn\u{2019}t know where Claude Code keeps its settings there. Try again?", comment: "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR on a remote host; the value is the host")
+        warning.actionLabels = [String(localized: "ClaudeCodeOnboarding.Retry", defaultValue: "Retry", comment: "Button to retry resolving the Claude Code settings location"),
+                                iTermLocalizedCancel()]
+        warning.cancelLabel = iTermLocalizedCancel()
+        warning.warningType = .kiTermWarningTypePersistent
+        if warning.runModal() == .kiTermWarningSelection0 {
             startResolvingRemoteConfigDirectory()
         } else {
             pendingInstallStep = nil
@@ -1803,6 +1815,7 @@ class ClaudeCodeOnboarding: NSObject {
         guard let conductor = remoteConductor else {
             return
         }
+        // Looks in the directory remoteConfigDirectory finds, which Install uses too.
         Self.remoteHooksHealthy(conductor: conductor) { [weak self] healthy in
             guard let self, Self.instance === self, healthy else {
                 return
@@ -1826,18 +1839,24 @@ class ClaudeCodeOnboarding: NSObject {
     @MainActor
     private func askAboutAlwaysAllow() -> AlwaysAllowAnswer {
         let host = remoteHost
-        let alert = NSAlert()
-        alert.messageText = String(localized: "ClaudeCodeOnboarding.AlwaysAllowHostTitle", defaultValue: "Always Allow \(host) to Use the iTerm2 API?", comment: "Title of the question asked before installing the Claude Code hook on a remote host; the value is the host")
-        alert.informativeText = String(localized: "ClaudeCodeOnboarding.AlwaysAllowHostBody", defaultValue: "Claude Code on \(host) reports its status to iTerm2 through the iTerm2 API.\n\nIf you always allow \(host), any program running as you on that host can see and control your terminal sessions, reading their contents and typing into them, without asking, on this and every future connection.\n\nIf you choose Ask Each Connection, iTerm2 asks the first time Claude Code reports on each new connection.\n\nYou can stop always allowing a host in Settings > General > Magic > API access over ssh.", comment: "Body of the question asked before installing the Claude Code hook on a remote host; the value is the host")
-        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.AlwaysAllow", defaultValue: "Always Allow", comment: "Button that installs the remote Claude Code hook and always allows the host to use the iTerm2 API"))
-        alert.addButton(withTitle: String(localized: "ClaudeCodeOnboarding.AskEachConnection", defaultValue: "Ask Each Connection", comment: "Button that installs the remote Claude Code hook without always allowing the host; iTerm2 asks on each connection"))
-        alert.addButton(withTitle: iTermLocalizedCancel())
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ClaudeCodeOnboarding.AlwaysAllowHostTitle", defaultValue: "Always Allow \(host) to Use the iTerm2 API?", comment: "Title of the question asked before installing the Claude Code hook on a remote host; the value is the host")
+        warning.title = String(localized: "ClaudeCodeOnboarding.AlwaysAllowHostBody", defaultValue: "Claude Code on \(host) reports its status to iTerm2 through the iTerm2 API.\n\nIf you always allow \(host), any program running as you on that host can see and control your terminal sessions, reading their contents and typing into them, without asking, on this and every future connection.\n\nIf you choose Ask Each Connection, iTerm2 asks the first time Claude Code reports on each new connection.\n\nYou can stop always allowing a host in Settings > General > Magic > API access over ssh.", comment: "Body of the question asked before installing the Claude Code hook on a remote host; the value is the host")
+        let alwaysAllow = iTermWarningAction(label: String(localized: "ClaudeCodeOnboarding.AlwaysAllow", defaultValue: "Always Allow", comment: "Button that installs the remote Claude Code hook and always allows the host to use the iTerm2 API"),
+                                             block: nil)
         // No default: Return must not grant access, or install without the user reading this.
-        alert.buttons[0].keyEquivalent = ""
-        switch alert.runModal() {
-        case .alertFirstButtonReturn:
+        alwaysAllow.keyEquivalent = ""
+        let cancel = iTermWarningAction(label: iTermLocalizedCancel(), block: nil)
+        cancel.isCancel = true
+        warning.warningActions = [alwaysAllow,
+                                  iTermWarningAction(label: String(localized: "ClaudeCodeOnboarding.AskEachConnection", defaultValue: "Ask Each Connection", comment: "Button that installs the remote Claude Code hook without always allowing the host; iTerm2 asks on each connection"),
+                                                     block: nil),
+                                  cancel]
+        warning.warningType = .kiTermWarningTypePersistent
+        switch warning.runModal() {
+        case .kiTermWarningSelection0:
             return .alwaysAllow
-        case .alertSecondButtonReturn:
+        case .kiTermWarningSelection1:
             return .askEachConnection
         default:
             return .cancel
@@ -1847,7 +1866,7 @@ class ClaudeCodeOnboarding: NSObject {
     @MainActor
     private func performRemoteHookInstall(configDirectory: String, step: Step) {
         guard let conductor = remoteConductor, conductor.framing else {
-            showRemoteInstallFailure(String(localized: "ClaudeCodeOnboarding.RemoteDisconnected", defaultValue: "The connection to \(remoteHost) has ended. Reconnect and try again.", comment: "Shown when the remote host disconnected before the Claude Code hook could be installed; the value is the host"))
+            showRemoteInstallFailure(remoteDisconnectedMessage)
             return
         }
         let grant: Bool
@@ -1901,11 +1920,18 @@ class ClaudeCodeOnboarding: NSObject {
         }
     }
 
+    @MainActor
+    private var remoteDisconnectedMessage: String {
+        return String(localized: "ClaudeCodeOnboarding.RemoteDisconnected", defaultValue: "The connection to \(remoteHost) has ended. Reconnect and try again.", comment: "Shown when the remote host disconnected before the Claude Code hook could be installed; the value is the host")
+    }
+
     private func showRemoteInstallFailure(_ message: String) {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
-        alert.informativeText = message
-        alert.runModal()
+        let warning = iTermWarning()
+        warning.heading = String(localized: "ClaudeCodeOnboarding.FailedToInstallHook", defaultValue: "Failed to install hook", comment: "Title of the alert shown when the Claude Code hook could not be installed")
+        warning.title = message
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        _ = warning.runModal()
     }
 
     // MARK: - Step: Enable Python API
@@ -2177,18 +2203,27 @@ class ClaudeCodeOnboarding: NSObject {
             return
         }
         let dependencies = ClaudeCodeRemoteConfigDirResolver.Dependencies(
-            run: { [weak conductor] commandLine, done in
+            run: { [weak conductor] commandLine, started, done in
                 // resolve() calls this synchronously, and it is called from here, on main.
                 MainActor.assumeIsolated {
                     guard let conductor else {
                         done(Data(), -1)
                         return
                     }
-                    conductor.runRemoteCommand(commandLine) { data, status in
+                    conductor.runRemoteCommand(commandLine, started: { pid in
+                        DispatchQueue.main.async {
+                            started(pid)
+                        }
+                    }) { data, status in
                         DispatchQueue.main.async {
                             done(data, status)
                         }
                     }
+                }
+            },
+            kill: { [weak conductor] pid in
+                MainActor.assumeIsolated {
+                    conductor?.killRemoteJob(pid, hangUp: true)
                 }
             },
             after: { seconds, block in

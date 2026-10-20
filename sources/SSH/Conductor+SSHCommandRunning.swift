@@ -57,6 +57,13 @@ extension Conductor: SSHCommandRunning {
     @objc
     func runRemoteCommand(_ commandLine: String,
                           completion: @escaping (Data, Int32) -> ()) {
+        runRemoteCommand(commandLine, started: nil, completion: completion)
+    }
+
+    /// `started` gets the job's pid once it runs, so the caller can end it with killRemoteJob.
+    func runRemoteCommand(_ commandLine: String,
+                          started: ((Int32) -> Void)?,
+                          completion: @escaping (Data, Int32) -> ()) {
         if framedPID == 0 {
             completion(Data(), -1)
             return
@@ -65,6 +72,13 @@ extension Conductor: SSHCommandRunning {
         // This command ends almost immediately, providing only the child process's pid as output,
         // but in actuality continues running in the background producing %output messages and
         // eventually %terminate.
-        send(.framerRun(commandLine), .handleRunRemoteCommand(commandLine, .init(completion)))
+        send(.framerRun(commandLine), .handleRunRemoteCommand(commandLine, .init(completion), started.map { .init($0) }))
+    }
+
+    /// Ends a job runRemoteCommand started: SIGTERM, or with `hangUp` a hangup, as closing a
+    /// terminal does, which also ends an interactive shell (that ignores SIGTERM). A framer too
+    /// old to hang up sends SIGTERM.
+    func killRemoteJob(_ pid: Int32, hangUp: Bool) {
+        send(.framerKill(pid: Int(pid), hangUp: hangUp), .fireAndForget)
     }
 }

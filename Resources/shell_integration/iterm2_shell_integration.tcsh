@@ -25,7 +25,15 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       setenv ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX ""
     endif
 
-    if ( x"$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != xscreen && x"$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != xtmux-256color && x"$TERM" != xlinux && x"$TERM" != xdumb ) then
+    # Inside tmux (TERM=tmux*, or $TMUX set when tmux uses a screen* TERM), tmux Integration passes
+    # the escape codes on intact and plain tmux discards them, so this loads; TERM=tmux* also
+    # reaches a host sshed to from a tmux pane. So does TERM=screen-256color, which many tmux users
+    # set. Other screen* TERMs without $TMUX are screen, or tmux beyond an ssh hop, and are skipped. ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX forces it on.
+    set _iterm2_in_tmux = 0
+    if ( $?TMUX ) then
+      if ( "$TMUX" != "" ) set _iterm2_in_tmux = 1
+    endif
+    if ( ( x"$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX" != x || $_iterm2_in_tmux || "$TERM" !~ screen* || x"$TERM" == xscreen-256color ) && x"$TERM" != xlinux && x"$TERM" != xdumb ) then
 
 
       set iterm2_shell_integration_installed="yes"
@@ -122,39 +130,34 @@ if ( ! ($?iterm2_shell_integration_installed)) then
           # unquoted backtick word-splits: a hostname containing whitespace would
           # then fill several %s and push the trailing ?machineID= argument off the
           # end (silently dropped), and the positions would misalign.
-          alias _iterm2_print_osc7 'printf "7;file://%s@%s%s%s" "$_iterm2_user" "`hostname -f`" `printf "%s" "$PWD" | env LC_ALL=C awk "$_iterm2_urlencode_awk"` "$_iterm2_machine_id_query"'
+          alias _iterm2_osc7 'printf "\033]7;file://%s@%s%s%s\007" "$_iterm2_user" "`hostname -f`" `printf "%s" "$PWD" | env LC_ALL=C awk "$_iterm2_urlencode_awk"` "$_iterm2_machine_id_query"'
       else
-          alias _iterm2_print_osc7 'printf "7;file://%s@%s%s%s" "$_iterm2_user" "$_iterm2_hostname" `printf "%s" "$PWD" | env LC_ALL=C awk "$_iterm2_urlencode_awk"` "$_iterm2_machine_id_query"'
+          alias _iterm2_osc7 'printf "\033]7;file://%s@%s%s%s\007" "$_iterm2_user" "$_iterm2_hostname" `printf "%s" "$PWD" | env LC_ALL=C awk "$_iterm2_urlencode_awk"` "$_iterm2_machine_id_query"'
       endif
-      alias _iterm2_osc7 "(_iterm2_start; _iterm2_print_osc7; _iterm2_end)"
 
       # Define aliases for printing the shell integration version this script is written against
-      alias _iterm2_print_shell_integration_version 'printf "1337;ShellIntegrationVersion=10;shell=tcsh"'
-      alias _iterm2_shell_integration_version "(_iterm2_start; _iterm2_print_shell_integration_version; _iterm2_end)"
+      alias _iterm2_shell_integration_version 'printf "\033]1337;ShellIntegrationVersion=10;shell=tcsh\007"'
 
       # Define aliases for defining the boundary between a command prompt and the
       # output of a command started from that prompt. $_iterm2_current_aid is
       # constant per shell session (see note above) so every C/A/B/D in this
       # shell carries the same aid string.
       if (! $?TERM_PROGRAM) then
-          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;aid=$_iterm2_current_aid"'
+          alias _iterm2_between_prompt_and_exec 'printf "\033]133;C;aid=$_iterm2_current_aid\007"'
       else
         if ( x"$TERM_PROGRAM" != x"iTerm.app" ) then
-          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;aid=$_iterm2_current_aid"'
+          alias _iterm2_between_prompt_and_exec 'printf "\033]133;C;aid=$_iterm2_current_aid\007"'
         else
-          alias _iterm2_print_between_prompt_and_exec 'printf "133;C;aid=$_iterm2_current_aid\r"'
+          alias _iterm2_between_prompt_and_exec 'printf "\033]133;C;aid=$_iterm2_current_aid\r\007"'
         endif
       endif
 
-      alias _iterm2_between_prompt_and_exec "(_iterm2_start; _iterm2_print_between_prompt_and_exec; _iterm2_end)"
 
       # Define aliases for defining the start of a command prompt.
-      alias _iterm2_print_before_prompt 'printf "133;A;aid=$_iterm2_current_aid"'
-      alias _iterm2_before_prompt "(_iterm2_start; _iterm2_print_before_prompt; _iterm2_end_prompt)"
+      alias _iterm2_before_prompt 'printf "\033]133;A;aid=$_iterm2_current_aid\007"'
 
       # Define aliases for defining the end of a command prompt.
-      alias _iterm2_print_after_prompt 'printf "133;B;aid=$_iterm2_current_aid"'
-      alias _iterm2_after_prompt "(_iterm2_start; _iterm2_print_after_prompt; _iterm2_end_prompt)"
+      alias _iterm2_after_prompt 'printf "\033]133;B;aid=$_iterm2_current_aid\007"'
 
       # Define aliases for printing the status of the last command.
       alias _iterm2_last_status 'printf "\033]133;D;$?;aid=$_iterm2_current_aid\007"'

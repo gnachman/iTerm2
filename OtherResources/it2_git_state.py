@@ -13,7 +13,8 @@
 # Result: {"repo": false} when the path is in no repository (or HEAD is unborn), {"timeout": true}
 # when the deadline passed, or the state.
 #
-# Python 3.7 or newer (the framer's minimum). No third-party modules.
+# Python 3.7 or newer (the framer's minimum). No third-party modules. Works with git as old as
+# 1.8: newer forms are tried first, and older ones used when git does not know them.
 
 import base64
 import json
@@ -125,13 +126,15 @@ def parse_status(output):
             count += 1
             untracked += 1
             continue
+        original = None
         if kind == "1":
             fields = line.split(" ", 8)
             xy, score, path = fields[1], None, fields[8]
         elif kind == "2":
             fields = line.split(" ", 9)
             xy, score, path = fields[1], fields[8], fields[9]
-            i += 1  # The original path, which nothing here needs.
+            original = decode(parts[i]) if i < len(parts) else None
+            i += 1
         elif kind == "u":
             fields = line.split(" ", 10)
             count += 1
@@ -141,12 +144,107 @@ def parse_status(output):
             continue
         count += 1
         x, y = xy[0], xy[1]
+        if y in ("A", "R"):
+            # Added with intent to add (git add -N): libgit2 sees an empty file staged and the
+            # content in the work tree. It finds no renames in the work tree, so one renamed
+            # there is the original deleted plus the new path.
+            if y == "R":
+                deleted += 1
+                if original is not None:
+                    entries.append((original, "none", "deleted"))
+            entries.append((path, "added", "modified"))
+            continue
         if y == "D":
             deleted += 1
         index = INDEX_KINDS.get(x, "none")
         if x == "R" and score != "R100":
             # libgit2 adds the modified flag to a rename whose content changed, and modified wins.
             index = "modified"
+        workdir = WORKDIR_KINDS.get(y, "none")
+        if index != "none" or workdir != "none":
+            entries.append((path, index, workdir))
+    return info, entries, count, untracked, deleted
+
+
+# Porcelain v1's XY for an unmerged path.
+UNMERGED_XY = ("DD", "AU", "UD", "UA", "DU", "AA", "UU")
+
+
+def parse_status_v1(output, oid):
+    """parse_status for `status --porcelain -b -z`, from git before 2.11, which has no v2. `oid`
+    is HEAD's, or None when HEAD is unborn. v1 gives no rename score, so a rename reads as renamed
+    even if its content changed too."""
+    info = {"oid": oid, "head": None, "ab": None}
+    entries = []
+    untracked = 0
+    deleted = 0
+    count = 0
+    parts = records(output)
+    i = 0
+    while i < len(parts):
+        raw = parts[i]
+        line = decode(raw)
+        i += 1
+        if line is None:
+            count += 1
+            if raw[:1] in (b"R", b"C") or raw[1:2] in (b"R", b"C"):
+                i += 1  # The original path.
+            continue
+        if line.startswith("## "):
+            branch = line[3:]
+            counts = None
+            if branch.endswith("]") and " [" in branch:
+                branch, counts = branch[:-1].rsplit(" [", 1)
+            ab = None
+            if "..." in branch:
+                branch = branch.split("...", 1)[0]
+                # An upstream whose branch is gone has no ahead/behind in v2.
+                if counts != "gone":
+                    ahead, behind = "0", "0"
+                    for item in (counts or "").split(", "):
+                        words = item.split(" ")
+                        if len(words) == 2 and words[0] == "ahead":
+                            ahead = words[1]
+                        elif len(words) == 2 and words[0] == "behind":
+                            behind = words[1]
+                    ab = (ahead, behind)
+            if branch == "HEAD (no branch)":
+                info["head"] = "(detached)"
+            else:
+                info["head"] = branch
+            info["ab"] = ab
+            continue
+        if len(line) < 4:
+            continue
+        xy, path = line[:2], line[3:]
+        if xy == "??":
+            count += 1
+            untracked += 1
+            continue
+        if xy == "!!":
+            continue
+        original = None
+        if xy[0] in ("R", "C") or xy[1] in ("R", "C"):
+            # The original path. A work-tree rename (of an intent-to-add file) has R second.
+            original = decode(parts[i]) if i < len(parts) else None
+            i += 1
+        count += 1
+        if xy in UNMERGED_XY:
+            entries.append((path, "none", "conflicted"))
+            continue
+        x = xy[0] if xy[0] != " " else "."
+        y = xy[1] if xy[1] != " " else "."
+        if y in ("A", "R"):
+            # As in parse_status.
+            if y == "R":
+                deleted += 1
+                if original is not None:
+                    entries.append((original, "none", "deleted"))
+            entries.append((path, "added", "modified"))
+            continue
+        if y == "D":
+            deleted += 1
+        index = INDEX_KINDS.get(x, "none")
         workdir = WORKDIR_KINDS.get(y, "none")
         if index != "none" or workdir != "none":
             entries.append((path, index, workdir))
@@ -209,18 +307,43 @@ def repo_state(git_dir):
     return "none"
 
 
+def find_git_dir(git):
+    """The repository's git directory, absolute, or None outside a repository."""
+    git_dir = git("rev-parse", "--absolute-git-dir")
+    # Before git 2.13, rev-parse echoes an option it doesn't know and succeeds.
+    if git_dir is not None and (decode(git_dir) or "").strip().startswith("/"):
+        return decode(git_dir).strip()
+    # Before git 2.13 there is only --git-dir, which may be relative to the working directory.
+    git_dir = git("rev-parse", "--git-dir")
+    if git_dir is None:
+        return None
+    return os.path.join(git.cwd, decode(git_dir).strip())
+
+
+def read_status(git):
+    """parse_status's result, or None if git can't say."""
+    options = ("--branch", "-z", "--untracked-files=all", "--ignore-submodules=all")
+    status = git("status", "--porcelain=v2", *options)
+    if status is not None:
+        return parse_status(status)
+    # Before git 2.11 there is only porcelain v1.
+    status = git("status", "--porcelain", *options)
+    if status is None:
+        return None
+    oid = git("rev-parse", "--verify", "--quiet", "HEAD")
+    return parse_status_v1(status, decode(oid).strip() if oid is not None else None)
+
+
 def collect(request, deadline):
     git = Git(existing_directory(request.get("path")), deadline)
-    git_dir = git("rev-parse", "--absolute-git-dir")
+    git_dir = find_git_dir(git)
     if git_dir is None:
         return {"repo": False}
-    git_dir = decode(git_dir).strip()
 
-    status = git("status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all",
-                 "--ignore-submodules=all")
+    status = read_status(git)
     if status is None:
         return {"repo": False}
-    info, entries, count, untracked, deleted = parse_status(status)
+    info, entries, count, untracked, deleted = status
     unmerged = set(path for path, _, workdir in entries if workdir == "conflicted")
     if info["oid"] in (None, "(initial)"):
         # Unborn HEAD: libgit2 has no head reference and reports no state.
@@ -241,8 +364,10 @@ def collect(request, deadline):
     stats = bool(request.get("stats"))
     if stats:
         result["files"] = [list(e) for e in entries]
-        changes = git("diff", "--no-ext-diff", "--no-relative", "--no-renames", "-z", "--name-status", "HEAD", "--")
-        lines = git("diff", "--no-ext-diff", "--no-relative", "--no-renames", "-z", "--numstat", "HEAD", "--")
+        changes = git("-c", "diff.relative=false", "diff", "--no-ext-diff", "--no-renames", "-z",
+                      "--name-status", "HEAD", "--")
+        lines = git("-c", "diff.relative=false", "diff", "--no-ext-diff", "--no-renames", "-z",
+                    "--numstat", "HEAD", "--")
         if changes is not None and lines is not None:
             numstat = parse_numstat(lines)
             added = untracked
@@ -276,8 +401,8 @@ def collect(request, deadline):
     if base and base != "HEAD":
         # Does the base name a tree? If not, keep the HEAD-relative list, as libgit2 does.
         if git("rev-parse", "--verify", "--quiet", base + "^{tree}") is not None:
-            changes = git("diff", "--no-ext-diff", "--no-relative", "-M", "-z", "--name-status",
-                          base + "^{tree}", "--")
+            changes = git("-c", "diff.relative=false", "diff", "--no-ext-diff", "-M", "-z",
+                          "--name-status", base + "^{tree}", "--")
             if changes is not None:
                 files = []
                 for letter, path in parse_name_status(changes):
@@ -308,4 +433,6 @@ def main():
     sys.stdout.flush()
 
 
-main()
+# Run as a script, or by exec as iTerm2 runs it; tests import it.
+if __name__ == "__main__":
+    main()

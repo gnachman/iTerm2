@@ -329,6 +329,43 @@ final class ConductorFlowTests: XCTestCase {
         XCTAssertEqual(delegate.commands.last, ["ping"])
     }
 
+    // Whether the framer listens for it2 isn't saved, so a restored conductor asks again;
+    // otherwise “Remote host can control iTerm2” stays disabled though it2 works.
+    func testARestoredConductorListensForIt2AgainAfterResynchronizing() throws {
+        conductor.it2Nonce = "nonce"
+        conductor.it2SocketPath = "/home/u/.iterm2/it2/x.sock"
+        let json = try XCTUnwrap(conductor.jsonValue)
+        let restored = try XCTUnwrap(Conductor.create(json, delegate: delegate))
+        restored.flowClock = { [unowned self] in self.now }
+        restored.flowTicksAutomatically = false
+        XCTAssertFalse(restored.it2ListenSucceeded)
+        XCTAssertFalse(restored.it2ProxyActive)
+        delegate.reset()
+        restored.didResynchronize()
+        let listen = ["it2listen", "/home/u/.iterm2/it2/x.sock"]
+        // Answer each command in turn, as the framer would, through the listen.
+        var answered = 0
+        while answered < delegate.commands.count && !restored.it2ListenSucceeded {
+            let command = delegate.commands[answered]
+            answered += 1
+            reply(command.first == "reset2" ? [command[1]] : [], conductor: restored)
+        }
+        XCTAssertTrue(delegate.commands.contains(listen), "\(delegate.commands)")
+        XCTAssertTrue(restored.it2ListenSucceeded)
+        XCTAssertEqual(delegate.commands[answered - 1], listen)
+    }
+
+    // A restored conductor that never set up it2 has nothing to listen for.
+    func testARestoredConductorWithoutIt2DoesNotListen() throws {
+        let json = try XCTUnwrap(conductor.jsonValue)
+        let restored = try XCTUnwrap(Conductor.create(json, delegate: delegate))
+        restored.flowClock = { [unowned self] in self.now }
+        restored.flowTicksAutomatically = false
+        delegate.reset()
+        restored.didResynchronize()
+        XCTAssertFalse(delegate.commands.contains { $0.first == "it2listen" })
+    }
+
     // After iTerm2 restarts, the conductor is rebuilt from its saved state with no controller,
     // while the framer may still have flow control on. Without a new `flow on` the framer
     // stops once its leftover credit is spent.

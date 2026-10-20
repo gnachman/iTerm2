@@ -105,7 +105,15 @@ final class TmuxWorkgroupBinding {
     /// For an instance adopted from the server: its record and tags are already there.
     func adoptLeader(paneID: Int) {
         leaderPaneID = paneID
+        isAdopted = true
     }
+
+    /// Adopted from the server rather than entered here. Its split and tab members may arrive
+    /// after it was adopted, as the Mac that entered it creates them one by one.
+    private(set) var isAdopted = false
+    /// Panes of members waiting for their sessions to join. By pane, so a member whose pane went
+    /// before its session registered is still adopted when its replacement arrives.
+    var lateMembersPending = Set<Int>()
 
     // MARK: - Peers
 
@@ -131,6 +139,7 @@ final class TmuxWorkgroupBinding {
             }
         }
         waitingPaneIDs = Set(instance.waitingPositions.compactMap { instance.paneForPosition[$0] })
+        keepMemberPanesOnExit(instance.paneForPosition)
         repinParkedPeers(instance.parkedPeersToResize)
         repairIfNeeded(instance)
         for (position, paneID) in instance.paneForPosition where position < configIDsByPosition.count {
@@ -156,6 +165,7 @@ final class TmuxWorkgroupBinding {
     /// TmuxWorkgroupRepair). An instance without its leader is being removed, not repaired.
     private func repairIfNeeded(_ instance: TmuxWorkgroupState.Instance) {
         guard repairer == nil,
+              !repairWaitDeclined,
               !instance.problems.isEmpty,
               !instance.problems.contains(.leaderMissing),
               let controller else {
@@ -171,14 +181,41 @@ final class TmuxWorkgroupBinding {
                                                  instanceID: self.instanceID,
                                                  identity: identity)
             self.repairer = repairer
-            repairer.onWaiting = { [instanceID] holder in
+            repairer.onWaiting = { [weak self, instanceID] holder in
                 RLog("TmuxWorkgroupBinding: repairing \(instanceID) waits on the lock held by \(holder)")
+                self?.lockWaitDidChange?()
+            }
+            repairer.onWaitingEnded = { [weak self] in
+                self?.lockWaitDidChange?()
             }
             repairer.run { [weak self, weak repairer] outcome in
                 RLog("TmuxWorkgroupBinding: repairing \(self?.instanceID ?? "?") ended: \(outcome)")
                 if self?.repairer === repairer {
                     self?.repairer = nil
+                    self?.lockWaitDidChange?()
                 }
+            }
+        }
+    }
+
+    /// Members' panes this client has made sure stay when their programs exit.
+    private var panesKeptOnExit = Set<Int>()
+
+    /// Every member but the leader keeps its pane when its program exits (see
+    /// TmuxWorkgroupCommands.memberOptions); otherwise a parked one whose program exits would take
+    /// its window, and with it the workgroup. Sent once per pane, as the option stays with it.
+    private func keepMemberPanesOnExit(_ paneForPosition: [Int: Int]) {
+        // A pane that left and later came back needs it again.
+        panesKeptOnExit.formIntersection(paneForPosition.values)
+        guard let gateway else {
+            return
+        }
+        for (position, paneID) in paneForPosition where position > 0 && !panesKeptOnExit.contains(paneID) {
+            panesKeptOnExit.insert(paneID)
+            gateway.sendGuarded(TmuxWorkgroupCommands.keepPaneOnExit(paneID: paneID,
+                                                                     instanceID: instanceID,
+                                                                     position: position)) { outcome in
+                RLog("TmuxWorkgroupBinding: keeping %\(paneID) when its program exits: \(outcome)")
             }
         }
     }
@@ -303,30 +340,53 @@ final class TmuxWorkgroupBinding {
     /// After isWaitingForLock may have changed.
     var lockWaitDidChange: (() -> Void)?
 
-    /// Whether creating this instance's peers waits on a lock held by another connected client.
+    /// Whether creating or repairing this instance's peers waits on a lock held by another
+    /// connected client, directly or behind another of this client's drivers that does.
     var isWaitingForLock: Bool {
-        return creators.contains { $0.isWaiting }
+        return creators.contains { $0.isWaiting } || repairer?.isWaiting == true
     }
 
-    /// The lock changed or a client detached: waiting creations try again.
-    func wakeLockWaiters() {
+    /// The user stopped waiting for a repair, so none is tried again until the lock changes or a
+    /// client detaches.
+    private var repairWaitDeclined = false
+
+    /// The lock changed or a client detached: waiting creations try again. Returns whether a
+    /// repair the user stopped waiting for may now be tried, on the next update.
+    @discardableResult
+    func wakeLockWaiters() -> Bool {
+        let retryRepair = repairWaitDeclined
+        repairWaitDeclined = false
         for creator in creators {
             creator.wake()
         }
         repairer?.wake()
+        return retryRepair
     }
 
     /// The user chose to take the lock from a holder that is connected but seems stuck.
     func takeOverLock() {
-        for creator in creators where creator.isWaiting {
+        // Forcing one may end another's wait (one queued behind it), so find them all first.
+        let waitingCreators = creators.filter { $0.isWaiting }
+        let waitingRepairer = repairer.flatMap { $0.isWaiting ? $0 : nil }
+        for creator in waitingCreators {
             creator.force()
         }
+        waitingRepairer?.force()
     }
 
-    /// The user chose to stop waiting. The peers are created on demand later.
+    /// The user chose to stop waiting. The peers are created on demand later, and the repair once
+    /// the lock changes.
     func stopWaitingForLock() {
-        for creator in creators where creator.isWaiting {
+        // Cancelling one ends the wait of those queued behind it, which then start and would
+        // wait again, so find them all first.
+        let waitingCreators = creators.filter { $0.isWaiting }
+        let waitingRepairer = repairer.flatMap { $0.isWaiting ? $0 : nil }
+        for creator in waitingCreators {
             creator.cancel()
+        }
+        if let waitingRepairer {
+            repairWaitDeclined = true
+            waitingRepairer.cancel()
         }
     }
 
@@ -457,9 +517,8 @@ final class TmuxWorkgroupBinding {
                 respawnIsSafe: gateway.versionAtLeastDecimalNumber(with: TmuxWorkgroupCommands.RelaunchMethod.safeRespawnVersion),
                 sessionID: self.sessionID,
                 instanceID: self.instanceID)
-            let remainOnExit = self.configIDsByPosition.indices.contains(member.tag.position) &&
-                (self.workgroup.session(withUniqueIdentifier: self.configIDsByPosition[member.tag.position])
-                    .map { TmuxWorkgroupState.startsWaiting($0.mode) } ?? false)
+            // As at creation: every member but the leader keeps its pane when its program exits.
+            let remainOnExit = member.tag.position > 0
             let relaunch = { (tag: TmuxWorkgroupState.PaneTag) in
                 RLog("TmuxWorkgroupBinding: relaunching %\(paneID) by \(method)")
                 gateway.sendList(TmuxWorkgroupCommands.relaunchMember(paneID: paneID, script: script, tag: tag,
@@ -484,6 +543,17 @@ final class TmuxWorkgroupBinding {
         }
     }
 
+    /// Whether a pane's program has exited, and which run it is; nil if tmux does not say.
+    func paneRun(paneID: Int, completion: @escaping (TmuxWorkgroupCommands.PaneRun?) -> Void) {
+        guard let gateway else {
+            completion(nil)
+            return
+        }
+        gateway.send(TmuxWorkgroupCommands.paneRunQuery(paneID: paneID)) { reply in
+            completion(TmuxWorkgroupCommands.PaneRun(reported: reply))
+        }
+    }
+
     /// For a member created after the instance went away.
     func killPane(_ paneID: Int) {
         gateway?.send(TmuxWorkgroupCommands.killPane(paneID)) { _ in }
@@ -504,20 +574,60 @@ final class TmuxWorkgroupBinding {
     }
 
     /// See removeFromServer(). `leaderPaneID` is nil when the leader is gone.
+    ///
+    /// A leader that is parked (the member in view was closed, taking the leader's tab with it)
+    /// is brought out into an ordinary window, which clients show as a tab: with no workgroup
+    /// left to switch back to it, it would otherwise stay hidden.
     static func removeFromServer(gateway: TmuxGateway, sessionID: Int, instanceID: String, leaderPaneID: Int?) {
         RLog("TmuxWorkgroupBinding: removing instance \(instanceID) from the server")
-        gateway.send("list-panes -s -t $\(sessionID) -F '#{pane_id} #{\(TmuxWorkgroupState.paneOptionName)}'") { [weak gateway] reply in
+        let queries = ["list-panes -s -t $\(sessionID) -F '#{pane_id} #{\(TmuxWorkgroupState.paneOptionName)}'",
+                       Self.leaderWindowQuery(sessionID: sessionID)]
+        gateway.sendList(queries) { [weak gateway] replies in
             guard let gateway else {
                 return
             }
             gateway.sendList(TmuxWorkgroupCommands.endInstance(sessionID: sessionID,
                                                                instanceID: instanceID,
                                                                leaderPaneID: leaderPaneID)) { _ in }
-            for paneID in memberPaneIDs(listPanesReply: reply ?? "", instanceID: instanceID)
+            if let leaderPaneID,
+               let bringOut = Self.bringOutParkedLeader(windowsReply: replies.count > 1 ? replies[1] : nil,
+                                                        leaderPaneID: leaderPaneID,
+                                                        sessionID: sessionID) {
+                RLog("TmuxWorkgroupBinding: the leader %\(leaderPaneID) of \(instanceID) is parked; bringing it out")
+                gateway.sendList(bringOut) { _ in }
+            }
+            for paneID in memberPaneIDs(listPanesReply: replies.first.flatMap { $0 } ?? "", instanceID: instanceID)
             where paneID != leaderPaneID {
                 gateway.send(TmuxWorkgroupCommands.killPane(paneID)) { _ in }
             }
         }
+    }
+
+    /// Each pane's window, how many panes it holds, and whether it is parked.
+    static func leaderWindowQuery(sessionID: Int) -> String {
+        return "list-panes -s -t $\(sessionID) -F '#{pane_id} #{window_id} #{window_panes} #{\(TmuxWorkgroupState.parkedOptionName)}'"
+    }
+
+    /// The commands that bring the leader out of a parked window, from a leaderWindowQuery reply;
+    /// nil when it is not parked, or not there.
+    static func bringOutParkedLeader(windowsReply: String?, leaderPaneID: Int, sessionID: Int) -> [String]? {
+        for line in (windowsReply ?? "").split(separator: "\n") {
+            let fields = line.split(separator: " ", maxSplits: 3, omittingEmptySubsequences: false)
+            guard fields.count >= 3,
+                  TmuxWorkgroupCommands.paneID(fromReply: String(fields[0])) == leaderPaneID else {
+                continue
+            }
+            guard fields.count == 4, TmuxWorkgroupAttacher.isParkedWindowTag(String(fields[3])),
+                  fields[1].hasPrefix("@"), let windowID = Int(fields[1].dropFirst()),
+                  let panes = Int(fields[2]) else {
+                return nil
+            }
+            return TmuxWorkgroupCommands.bringOutPane(sessionID: sessionID,
+                                                      paneID: leaderPaneID,
+                                                      windowID: windowID,
+                                                      sharesWindow: panes > 1)
+        }
+        return nil
     }
 
     /// A member's session ended on this Mac. If its pane is gone from the server the member really

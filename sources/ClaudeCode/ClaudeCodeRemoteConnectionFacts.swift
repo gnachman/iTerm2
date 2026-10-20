@@ -21,6 +21,8 @@ final class ClaudeCodeRemoteConnectionFacts {
     private final class Entry {
         var configDirectory: String?
         var hookPresent: Bool?
+        /// Those waiting on a lookup of configDirectory that is in flight.
+        var configDirectoryWaiters: [(String?) -> Void]?
     }
 
     // Weak keys: an entry disappears with its connection.
@@ -42,6 +44,37 @@ final class ClaudeCodeRemoteConnectionFacts {
 
     func setConfigDirectory(_ directory: String, for connection: AnyObject) {
         entry(for: connection).configDirectory = directory
+    }
+
+    /// The connection's config directory: known already, or found by `lookUp`, run at most once
+    /// at a time per connection so that everyone asking meanwhile gets the same answer (two
+    /// lookups could disagree, and each one runs the host's login shell). A failed lookup (nil)
+    /// is not remembered, so the next request tries again.
+    func configDirectory(for connection: AnyObject,
+                         lookUp: (@escaping (String?) -> Void) -> Void,
+                         completion: @escaping (String?) -> Void) {
+        let entry = entry(for: connection)
+        if let directory = entry.configDirectory {
+            completion(directory)
+            return
+        }
+        if entry.configDirectoryWaiters != nil {
+            entry.configDirectoryWaiters?.append(completion)
+            return
+        }
+        entry.configDirectoryWaiters = [completion]
+        // Holds the entry until the lookup answers, so every waiter hears back even if the
+        // connection goes away meanwhile.
+        lookUp { directory in
+            if let directory {
+                entry.configDirectory = directory
+            }
+            let waiters = entry.configDirectoryWaiters ?? []
+            entry.configDirectoryWaiters = nil
+            for waiter in waiters {
+                waiter(directory)
+            }
+        }
     }
 
     /// Whether the host's settings had iTerm2's hook (complete or not) when last looked at during

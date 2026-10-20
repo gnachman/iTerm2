@@ -1025,6 +1025,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
         [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
         [_droppedOutputTracker forgetPane:windowPane];
+        [aSession updateInferredTmuxHost];
         NSArray<void (^)(PTYSession<iTermTmuxControllerSession> *)> *calls =
             [_when[@(windowPane)] arrayByAddingObjectsFromArray:_whenAny] ?: [_whenAny copy];
         [_when removeObjectForKey:@(windowPane)];
@@ -1255,18 +1256,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 // tmux says nothing about panes in parked windows, which have no tab, ending: those the user
-// stopped, or that exited. Ends the buried sessions of those that are gone from the server. Only
-// sessions outside any workgroup: a workgroup's parked peer is left to its workgroup.
+// stopped, killed, or that exited. Ends the buried sessions of those that are gone from the server.
+// A workgroup member's session ending ends its workgroup, as closing a member does locally; a
+// member whose program merely exited keeps its pane (remain-on-exit) and is not gone.
 - (void)endBuriedSessionsWhosePanesAreGone {
     if (detached_ || _detaching || !gateway_) {
         return;
     }
-    NSMutableArray<NSNumber *> *candidates = [NSMutableArray array];
-    [_buriedSessions enumerateKeysAndObjectsUsingBlock:^(NSNumber *pane, PTYSession<iTermTmuxControllerSession> *session, BOOL *stop) {
-        if (!((PTYSession *)session).workgroupInstance) {
-            [candidates addObject:pane];
-        }
-    }];
+    NSArray<NSNumber *> *candidates = _buriedSessions.allKeys;
     if (!candidates.count) {
         return;
     }
@@ -1290,7 +1287,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
     for (NSNumber *pane in candidates) {
         PTYSession<iTermTmuxControllerSession> *session = _buriedSessions[pane];
-        if (!session || [existing containsObject:pane] || ((PTYSession *)session).workgroupInstance) {
+        if (!session || [existing containsObject:pane]) {
             continue;
         }
         RLog(@"Pane %@ of buried session %@ is gone; ending the session", pane, session);

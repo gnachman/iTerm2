@@ -63,8 +63,8 @@ struct IT2ProxyState: Equatable {
     // (the "Remote host can control iTerm2" menu). A TRANSIENT runtime flag: it lives OUTSIDE
     // `persisted`, so it is carried by value across an in-process SSH recovery (adopt ->
     // ConductorRecovery -> init(recovery:)) but is never written to disk. On state restoration
-    // the framer is relaunched and it2Listen re-runs, re-establishing it from that status
-    // rather than restoring it stale. That it is not persisted is now structural (this field
+    // the conductor sends it2Listen again once it resynchronizes (the framer answers that it
+    // already listens), re-establishing it from that status rather than restoring it stale. That it is not persisted is now structural (this field
     // is simply not part of `persisted`), not a CodingKeys allowlist to keep in sync.
     var listenSucceeded: Bool
 
@@ -864,19 +864,27 @@ extension Conductor {
     /// A mismatch does not delete the Mac's record. A transient read error would otherwise wipe
     /// a valid grant, and a genuinely stale one is replaced the next time the user picks Always
     /// Allow, since adding a grant replaces any existing record for that host.
+    ///
+    /// A grant made before the host kept one file per grant is in the old single file.
     func hostGrantVerifies(_ grant: IT2HostGrant, home: String) async -> Bool {
-        do {
-            let data = try await download("\(home)/\(IT2GrantToken.remoteRelativePath)",
-                                          chunk: nil,
-                                          uniqueID: nil)
-            let verified = IT2GrantToken.verify(fileContents: String(decoding: data, as: UTF8.self),
-                                                against: grant)
-            DLog("it2 host grant for \(grant.host): \(verified ? "verified" : "does not match")")
-            return verified
-        } catch {
-            DLog("it2 host grant for \(grant.host) could not be read: \(error)")
+        guard IT2GrantToken.isHex(grant.id) else {
+            DLog("it2 host grant for \(grant.host) has a malformed id")
             return false
         }
+        for path in [IT2GrantToken.remoteRelativePath(id: grant.id), IT2GrantToken.legacyRemoteRelativePath] {
+            do {
+                let data = try await download("\(home)/\(path)", chunk: nil, uniqueID: nil)
+                let verified = IT2GrantToken.verify(fileContents: String(decoding: data, as: UTF8.self),
+                                                    against: grant)
+                DLog("it2 host grant for \(grant.host) in \(path): \(verified ? "verified" : "does not match")")
+                if verified {
+                    return true
+                }
+            } catch {
+                DLog("it2 host grant for \(grant.host) could not be read from \(path): \(error)")
+            }
+        }
+        return false
     }
 
     /// Give this host a grant so future connections are allowed without asking. The host keeps
@@ -886,8 +894,11 @@ extension Conductor {
     func mintHostGrant() {
         let host = sshIdentity.stringIdentifier
         let token = IT2GrantToken.mint()
+        // This Mac's previous grant for the host, which the new one replaces there too.
+        let previous = Conductor.hostGrantStore.grant(forHost: host)?.id
         framerExecPythonStatements(statements: IT2GrantToken.remoteWriteStatements(id: token.id,
-                                                                                   secret: token.secret)) { [weak self] ok, output in
+                                                                                   secret: token.secret,
+                                                                                   replacing: previous)) { [weak self] ok, output in
             guard ok else {
                 // Host names stay out of RLog, which ships in user-submitted debug logs.
                 RLog("Could not write the it2 grant to the remote host")

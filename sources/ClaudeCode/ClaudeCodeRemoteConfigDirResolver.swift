@@ -25,9 +25,13 @@ import Foundation
 
 enum ClaudeCodeRemoteConfigDirResolver {
     struct Dependencies {
-        /// Runs a command line through /bin/sh -c on the remote host and delivers its output and
-        /// exit status.
-        let run: (_ commandLine: String, _ completion: @escaping (Data, Int32) -> Void) -> Void
+        /// Runs a command line through /bin/sh -c on the remote host, tells `started` its job's
+        /// pid once it runs, and delivers its output and exit status.
+        let run: (_ commandLine: String,
+                  _ started: @escaping (Int32) -> Void,
+                  _ completion: @escaping (Data, Int32) -> Void) -> Void
+        /// Ends the job `run` started, hanging up on it: an interactive shell ignores SIGTERM.
+        let kill: (_ pid: Int32) -> Void
         /// Calls `block` after `seconds`.
         let after: (_ seconds: TimeInterval, _ block: @escaping () -> Void) -> Void
         let makeSentinel: () -> String
@@ -84,6 +88,9 @@ enum ClaudeCodeRemoteConfigDirResolver {
     /// Delivers the directory, or nil when the lookup failed: no shell or home to work with, the
     /// command did not produce a complete answer, or the deadline passed. The caller must not
     /// guess on nil. Called exactly once, on whatever queue `run` and `after` call back on.
+    ///
+    /// A shell still running at the deadline (an rc file waiting for input, say) is ended, or it
+    /// would sit on the host for as long as the connection lasts.
     static func resolve(shell: String?,
                         home: String?,
                         dependencies: Dependencies,
@@ -95,6 +102,9 @@ enum ClaudeCodeRemoteConfigDirResolver {
         }
         let sentinel = dependencies.makeSentinel()
         var done = false
+        var exited = false
+        var timedOut = false
+        var jobPID: Int32?
         let finish = { (result: String?) in
             guard !done else {
                 return
@@ -102,13 +112,27 @@ enum ClaudeCodeRemoteConfigDirResolver {
             done = true
             completion(result)
         }
+        let killIfAbandoned = {
+            guard timedOut, !exited, let pid = jobPID else {
+                return
+            }
+            RLog("Remote CLAUDE_CONFIG_DIR lookup: ending the shell that did not answer")
+            jobPID = nil
+            dependencies.kill(pid)
+        }
         dependencies.after(deadline) {
             if !done {
                 RLog("Remote CLAUDE_CONFIG_DIR lookup failed: no answer within \(deadline) seconds")
+                timedOut = true
+                killIfAbandoned()
             }
             finish(nil)
         }
-        dependencies.run(commandLine(shell: shell, sentinel: sentinel)) { data, status in
+        dependencies.run(commandLine(shell: shell, sentinel: sentinel), { pid in
+            jobPID = pid
+            killIfAbandoned()
+        }) { data, status in
+            exited = true
             let output = String(decoding: data, as: UTF8.self)
             let result = directory(fromOutput: output, sentinel: sentinel, home: home)
             if result == nil {

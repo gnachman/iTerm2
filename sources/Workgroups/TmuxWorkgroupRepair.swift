@@ -121,7 +121,7 @@ struct TmuxWorkgroupRepair: TmuxWorkgroupLockedRepair {
         for problem in instance.problems {
             switch problem {
             case let .duplicateMember(_, paneID), let .unknownPosition(paneID, _):
-                return [TmuxWorkgroupCommands.untagPane(paneID: paneID)]
+                return TmuxWorkgroupCommands.releasePane(paneID: paneID)
             case .leaderMissing:
                 return nil
             case let .extraVisiblePeers(host, positions):

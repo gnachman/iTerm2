@@ -1889,6 +1889,23 @@ extension iTermWorkgroupInstance {
         return false
     }
 
+    /// Reloads a tmux member as its toolbar's Reload does, through whichever group holds it.
+    func reloadTmuxMember(_ session: PTYSession) -> Bool {
+        guard let configID = configID(forSession: session) else {
+            return false
+        }
+        if peerPort.contains(session: session) {
+            peerPort.workgroupNavigationDidTapReload(ownerPeerID: configID)
+            return true
+        }
+        for port in nestedPeerPorts where port.contains(session: session) {
+            port.workgroupNavigationDidTapReload(ownerPeerID: configID)
+            return true
+        }
+        workgroupNavigationDidTapReload(ownerPeerID: configID)
+        return true
+    }
+
     // Find the workgroup-config UUID that owns `session`. Mirrors the
     // peer/nested-peer/non-peer order used by toolbarItems(for:); the
     // main session falls back to the workgroup root.

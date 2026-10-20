@@ -66,6 +66,7 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
         tmux.reply(["%7"])
         tmux.reply()
         tmux.reply()
+        tmux.reply()  // remain-on-exit
         XCTAssertEqual(created, .some(7))
         XCTAssertEqual(tmux.written.count, 2, "nothing more to send")
     }
@@ -80,6 +81,7 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
                         .joined(separator: "; "))
         tmux.reply(["%8"])
         tmux.reply()
+        tmux.reply()  // remain-on-exit
         XCTAssertEqual(created, .some(8))
     }
 
@@ -120,20 +122,42 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
 
     // Untag the leader and unset the record in one list, then kill this instance's members (found
     // by tag, not by what this Mac knows) one at a time.
+    private var removalQueries: String {
+        return ["list-panes -s -t $4 -F '#{pane_id} #{@iterm2_wg}'",
+                TmuxWorkgroupBinding.leaderWindowQuery(sessionID: 4)].joined(separator: "; ")
+    }
+
     func testRemoveFromServer() {
         binding.publish(leaderPaneID: 0)
         let published = tmux.written.count
         tmux.reply()
         tmux.reply()
         binding.removeFromServer()
-        XCTAssertEqual(tmux.written.dropFirst(published),
-                       ["list-panes -s -t $4 -F '#{pane_id} #{@iterm2_wg}'"])
+        XCTAssertEqual(tmux.written.dropFirst(published), [removalQueries])
         tmux.reply(["%0 " + tag("INSTANCE", 0), "%5 " + tag("INSTANCE", 1), "%6 ", "%7 " + tag("OTHER", 1),
                     "%9 " + tag("INSTANCE", 2), "%x " + tag("INSTANCE", 2), "%8 garbage"])
+        tmux.reply(["%0 @1 1 ", "%5 @2 1 " + TmuxWorkgroupState.ParkedTag(instanceID: "INSTANCE").encoded])
         XCTAssertEqual(tmux.written.dropFirst(published + 1), [
             C.endInstance(sessionID: 4, instanceID: "INSTANCE", leaderPaneID: 0).joined(separator: "; "),
             "kill-pane -t %5",
             "kill-pane -t %9",
+        ])
+    }
+
+    // The member in view was closed, taking the leader's tab with it: the leader is parked, and is
+    // brought out before the members go, or it would stay hidden.
+    func testRemovingBringsAParkedLeaderOut() {
+        binding.publish(leaderPaneID: 0)
+        tmux.reply()
+        tmux.reply()
+        let published = tmux.written.count
+        binding.removeFromServer()
+        tmux.reply(["%0 " + tag("INSTANCE", 0), "%5 " + tag("INSTANCE", 2)])
+        tmux.reply(["%0 @3 1 " + TmuxWorkgroupState.ParkedTag(instanceID: "INSTANCE").encoded, "%5 @4 1 "])
+        XCTAssertEqual(tmux.written.dropFirst(published + 1), [
+            C.endInstance(sessionID: 4, instanceID: "INSTANCE", leaderPaneID: 0).joined(separator: "; "),
+            C.bringOutPane(sessionID: 4, paneID: 0, windowID: 3, sharesWindow: false).joined(separator: "; "),
+            "kill-pane -t %5",
         ])
     }
 
@@ -149,7 +173,7 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
     func testPaneGoneRemovesTheInstance() {
         binding.removeFromServerIfPaneIsGone(5)
         tmux.reply(["can't find pane: %5"], error: true)
-        XCTAssertEqual(tmux.written.last, "list-panes -s -t $4 -F '#{pane_id} #{@iterm2_wg}'")
+        XCTAssertEqual(tmux.written.last, removalQueries)
     }
 
     // The leader's program exited, so its instance ended here and released its binding before
@@ -165,8 +189,9 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
         binding = nil
         XCTAssertNil(released, "nothing else holds the binding of an ended instance")
         tmux.reply([""])
-        XCTAssertEqual(tmux.written.last, "list-panes -s -t $4 -F '#{pane_id} #{@iterm2_wg}'")
+        XCTAssertEqual(tmux.written.last, removalQueries)
         tmux.reply(["%5 " + tag("INSTANCE", 1)])
+        tmux.reply(["%5 @2 1 "])
         // The leader's pane is gone, so it is not untagged: in a list, that failing command would
         // stop the record from being unset.
         XCTAssertEqual(tmux.written.suffix(2), [
@@ -184,5 +209,38 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
         let gateway = tmux.gateway
         XCTAssertNil(TmuxWorkgroupBinding(gatewayProvider: { gateway }, sessionID: 4, workgroup: broken,
                                           instanceID: "I", gitBase: "main"))
+    }
+}
+
+// Ending an instance whose leader is parked brings the leader out, or it would stay hidden with
+// no workgroup left to switch back to it.
+final class TmuxWorkgroupParkedLeaderTests: XCTestCase {
+    private typealias B = TmuxWorkgroupBinding
+    private let parked = TmuxWorkgroupState.ParkedTag(instanceID: "I").encoded
+
+    func testAParkedLeaderAloneInItsWindowIsBroughtOut() {
+        let reply = "%0 @3 1 \(parked)\n%2 @1 1 "
+        XCTAssertEqual(B.bringOutParkedLeader(windowsReply: reply, leaderPaneID: 0, sessionID: 5),
+                       TmuxWorkgroupCommands.bringOutPane(sessionID: 5, paneID: 0, windowID: 3, sharesWindow: false))
+    }
+
+    func testOneSharingItsWindowIsBrokenOut() {
+        XCTAssertEqual(B.bringOutParkedLeader(windowsReply: "%0 @3 2 \(parked)", leaderPaneID: 0, sessionID: 5),
+                       TmuxWorkgroupCommands.bringOutPane(sessionID: 5, paneID: 0, windowID: 3, sharesWindow: true))
+    }
+
+    // In view, gone, or reported in a way that can't be read: nothing to do.
+    func testOtherwiseNothing() {
+        XCTAssertNil(B.bringOutParkedLeader(windowsReply: "%0 @1 1 ", leaderPaneID: 0, sessionID: 5))
+        XCTAssertNil(B.bringOutParkedLeader(windowsReply: "%0 @1 1", leaderPaneID: 0, sessionID: 5))
+        XCTAssertNil(B.bringOutParkedLeader(windowsReply: "%7 @3 1 \(parked)", leaderPaneID: 0, sessionID: 5))
+        XCTAssertNil(B.bringOutParkedLeader(windowsReply: "%0 x 1 \(parked)", leaderPaneID: 0, sessionID: 5))
+        XCTAssertNil(B.bringOutParkedLeader(windowsReply: "%0 @3 1 p_garbage", leaderPaneID: 0, sessionID: 5))
+        XCTAssertNil(B.bringOutParkedLeader(windowsReply: nil, leaderPaneID: 0, sessionID: 5))
+    }
+
+    func testTheQueryReadsWindowAndParkedTag() {
+        XCTAssertEqual(B.leaderWindowQuery(sessionID: 5),
+                       "list-panes -s -t $5 -F '#{pane_id} #{window_id} #{window_panes} #{@iterm2_wg_parked}'")
     }
 }

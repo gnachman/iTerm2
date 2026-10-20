@@ -6,9 +6,13 @@
 //
 //  Each connection normally asks before a remote it2 may drive iTerm2. A host the user
 //  has chosen to always allow gets a token: the HOST keeps the secret, in
-//  ~/.iterm2/it2-grant ("id:secret", mode 0600), and the MAC keeps only its SHA-256,
+//  ~/.iterm2/it2-grants/<id> ("id:secret", mode 0600), and the MAC keeps only its SHA-256,
 //  keyed by the SSHIdentity it was minted for. On a later connection with no decision
-//  yet, the Mac reads the file back and compares, and only asks when that fails.
+//  yet, the Mac reads that file back and compares, and only asks when that fails.
+//
+//  One file per grant, because several grants can land on one remote account: the same
+//  host reached by another name or port, another Mac, or another build of iTerm2 on this
+//  one. With one file for all, each would overwrite the others and keep asking again.
 //
 //  Holding only a hash means the Mac stores nothing that would let anyone impersonate a
 //  host, so the keychain buys nothing here, and it would actively hurt: its
@@ -33,8 +37,16 @@ struct IT2HostGrant: Codable, Equatable {
 }
 
 enum IT2GrantToken {
-    /// Where the host keeps its half, relative to the remote home directory.
-    static let remoteRelativePath = ".iterm2/it2-grant"
+    /// Where the host keeps its halves, relative to the remote home directory.
+    static let remoteDirectoryRelativePath = ".iterm2/it2-grants"
+    /// Where a grant made before there was one file per grant is kept. Read only.
+    static let legacyRemoteRelativePath = ".iterm2/it2-grant"
+
+    /// Where the host keeps the half of the grant `id`, relative to the remote home directory.
+    static func remoteRelativePath(id: String) -> String {
+        it_assert(isHex(id), "a grant id is hex, so it is safe in a path")
+        return remoteDirectoryRelativePath + "/" + id
+    }
 
     /// A fresh id and secret, both lowercase hex. Hex matters: they are embedded in a Python
     /// literal by remoteWriteStatements, and hex needs no escaping.
@@ -72,28 +84,44 @@ enum IT2GrantToken {
         return it2ConstantTimeEqual(sha256Hex(String(parts[1])), grant.secretSHA256)
     }
 
-    /// Python that writes the host's half atomically and privately.
+    /// Python that writes the host's half atomically and privately, and removes the half of
+    /// the grant it replaces, `replacing`, if this Mac had one for the host.
     ///
-    /// The temporary is created IN ~/.iterm2, never /tmp: on a shared host /tmp is readable by
-    /// every user and is not reliably writable. Created 0600 via mkstemp and moved into place
-    /// with os.replace, so no other user can ever read it and a reader never sees half a token.
-    static func remoteWriteStatements(id: String, secret: String) -> String {
+    /// The temporary is created IN ~/.iterm2/it2-grants, never /tmp: on a shared host /tmp is
+    /// readable by every user and is not reliably writable. Created 0600 via mkstemp and moved
+    /// into place with os.replace, so no other user can ever read it and a reader never sees
+    /// half a token.
+    static func remoteWriteStatements(id: String, secret: String, replacing: String? = nil) -> String {
         it_assert(isHex(id) && isHex(secret), "token must be hex to embed safely")
+        let removal: String
+        if let replacing, replacing != id {
+            it_assert(isHex(replacing), "a grant id is hex, so it is safe to embed")
+            removal = """
+
+            try:
+                os.remove(os.path.join(d, "\(replacing)"))
+            except OSError:
+                pass
+            """
+        } else {
+            removal = ""
+        }
         return """
         import os, tempfile
-        d = os.path.expanduser("~/.iterm2")
+        d = os.path.expanduser("~/\(remoteDirectoryRelativePath)")
         os.makedirs(d, mode=0o700, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=d, prefix=".it2-grant.")
+        os.chmod(d, 0o700)
+        fd, tmp = tempfile.mkstemp(dir=d, prefix=".new.")
         try:
             os.fchmod(fd, 0o600)
             os.write(fd, b"\(id):\(secret)\\n")
         finally:
             os.close(fd)
-        os.replace(tmp, os.path.join(d, "it2-grant"))
-        """
+        os.replace(tmp, os.path.join(d, "\(id)"))
+        """ + removal
     }
 
-    private static func isHex(_ value: String) -> Bool {
+    static func isHex(_ value: String) -> Bool {
         return !value.isEmpty && value.unicodeScalars.allSatisfy {
             ("0"..."9").contains($0) || ("a"..."f").contains($0)
         }
@@ -158,7 +186,7 @@ final class IT2HostGrantStore {
     /// revoking a grant takes trust away, it must not turn a refusal back into a question.
     ///
     /// The host's own file is left in place. It needs a live connection to delete, which there
-    /// may not be, and it is inert without the Mac's record; granting again overwrites it.
+    /// may not be, and it is inert without the Mac's record.
     @MainActor
     func revoke(host: String) {
         remove(host: host)

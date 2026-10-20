@@ -3,7 +3,7 @@
 //  iTerm2SharedARC
 //
 //  Offers the user the panes hidden from this Mac in parked windows (TmuxWorkgroupHiddenPanes):
-//  open them in tabs or stop them. Nothing is left hidden, so dismissing the offer opens them. It
+//  open them in tabs or stop them. Closing the offer leaves them as they are. It
 //  is an announcement in the instance's leader, which is in view, or else in any tab of this tmux
 //  connection. When the instance is still on the server, the offer says that other Macs using its
 //  workgroup will lose these panes. The choice is carried out while holding the session's
@@ -116,12 +116,16 @@ final class TmuxWorkgroupHiddenPaneOffer {
             if self.hosts[instanceID]?.value === host {
                 self.hosts.removeValue(forKey: instanceID)
             }
-            guard choice >= 0 || host?.delegate != nil else {
-                // Its session closed, which is no choice. The next snapshot offers them again.
-                return
+            switch choice {
+            case 0:
+                self.release(instanceID: instanceID, choice: .open)
+            case 1:
+                self.release(instanceID: instanceID, choice: .stop)
+            default:
+                // Closed or withdrawn: no choice. They stay hidden; a later snapshot offers
+                // them again.
+                break
             }
-            // Dismissing it leaves nothing hidden either.
-            self.release(instanceID: instanceID, choice: choice == 1 ? .stop : .open)
         }
         guard let announcement = iTermAnnouncementViewController.announcement(withTitle: title,
                                                                                 style: .kiTermAnnouncementViewStyleWarning,

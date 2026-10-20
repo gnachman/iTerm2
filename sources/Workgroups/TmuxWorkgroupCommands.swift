@@ -77,7 +77,7 @@ enum TmuxWorkgroupCommands {
     /// A new peer, parked: a window of its own running `script`, tagged as parked and its pane
     /// tagged as the member, in one list so no client ever sees the window untagged (a client that
     /// did would open it as a tab). The window is created after the last one, so `{end}` is it.
-    /// The first reply is the new pane's ID. See waitingMemberOptions for `waiting`.
+    /// The first reply is the new pane's ID. See memberOptions.
     static func createParkedPeer(sessionID: Int,
                                  instanceID: String,
                                  position: Int,
@@ -90,7 +90,7 @@ enum TmuxWorkgroupCommands {
         return ["new-window -d -a -t \(end) -P -F '#{pane_id}' " + encodedCommand(script: script),
                 "set -w -t \(end) \(TmuxWorkgroupState.parkedOptionName) \(TmuxWorkgroupState.ParkedTag(instanceID: instanceID).encoded)",
                 "set -p -t \(end) \(TmuxWorkgroupState.paneOptionName) \(tag.encoded)"] +
-            waitingMemberOptions(target: "-t \(end) ", tag: tag) +
+            memberOptions(target: "-t \(end) ", tag: tag) +
             ["resize-window -t \(end) -x \(width) -y \(height)"]
     }
 
@@ -204,7 +204,7 @@ enum TmuxWorkgroupCommands {
         args += ["-l", "\(percent)%", "-t", "%\(targetPaneID)", encodedCommand(script: script)]
         return [args.joined(separator: " "),
                 "set -p \(TmuxWorkgroupState.paneOptionName) \(tag.encoded)"] +
-            waitingMemberOptions(target: "", tag: tag) +
+            memberOptions(target: "", tag: tag) +
             ["last-pane -t %\(targetPaneID)"]
     }
 
@@ -214,13 +214,27 @@ enum TmuxWorkgroupCommands {
         let end = "'$\(sessionID):{end}'"
         return ["new-window -d -a -t \(end) -P -F '#{pane_id}' " + encodedCommand(script: script),
                 "set -p -t \(end) \(TmuxWorkgroupState.paneOptionName) \(tag.encoded)"] +
-            waitingMemberOptions(target: "-t \(end) ", tag: tag)
+            memberOptions(target: "-t \(end) ", tag: tag)
     }
 
-    /// A member created waiting (a code review or diff) keeps its pane when its program exits, as a
-    /// local one shows that it ended until Reload, which respawns the pane.
-    private static func waitingMemberOptions(target: String, tag: TmuxWorkgroupState.PaneTag) -> [String] {
-        return tag.waiting ? ["set -p \(target)remain-on-exit on"] : []
+    /// A member other than the leader keeps its pane when its program exits, as a local one shows
+    /// that it ended until Restart or Reload, which respawns the pane. The leader's pane closes,
+    /// which ends the workgroup, as it does locally.
+    private static func memberOptions(target: String, tag: TmuxWorkgroupState.PaneTag) -> [String] {
+        return tag.position > 0 ? ["set -p \(target)remain-on-exit on"] : []
+    }
+
+    /// memberOptions for a member that may lack it: one made before members kept their panes, by
+    /// another iTerm2 that does not, or whose pane was moved or respawned. Only while the pane is
+    /// still that member, waiting or not, so it can't undo another client's releasePane.
+    static func keepPaneOnExit(paneID: Int, instanceID: String, position: Int) -> String {
+        let option = "#{\(TmuxWorkgroupState.paneOptionName)}"
+        let tags = [false, true].map {
+            TmuxWorkgroupState.PaneTag(instanceID: instanceID, position: position, waiting: $0).encoded
+        }
+        return guarded(target: "%\(paneID)",
+                       condition: "#{||:#{==:\(option),\(tags[0])},#{==:\(option),\(tags[1])}}",
+                       action: "set -p -t %\(paneID) remain-on-exit on")
     }
 
     /// Replace what a pane runs, e.g. a code review member started after its prompt is entered.
@@ -358,6 +372,12 @@ enum TmuxWorkgroupCommands {
         return "set -p -u -t %\(paneID) \(TmuxWorkgroupState.paneOptionName)"
     }
 
+    /// Makes a member an ordinary pane: untagged, and no longer kept when its program exits (see
+    /// memberOptions), since nothing would offer to restart it.
+    static func releasePane(paneID: Int) -> [String] {
+        return [untagPane(paneID: paneID), "set -p -u -t %\(paneID) remain-on-exit"]
+    }
+
     static func setRecord(sessionID: Int, instanceID: String, record: TmuxWorkgroupState.InstanceRecord) -> String {
         return "set -t $\(sessionID) \(TmuxWorkgroupState.instanceOptionName(instanceID: instanceID)) \(record.encoded)"
     }
@@ -441,6 +461,43 @@ enum TmuxWorkgroupCommands {
     }
 
     static let identityQuery = "display -p '#{client_pid}:#{client_created}'"
+
+    /// Whether a pane's program has exited, and which run of it that is, so a restarted program
+    /// that exits again before the next report is still noticed. A run is its pid; tmux 3.3 and
+    /// later forget a dead pane's pid but say when it died, which tmux 3.2 does not.
+    struct PaneRun: Equatable {
+        static let format = "#{pane_dead}:#{pane_pid}:#{pane_dead_time}"
+
+        var dead: Bool
+        var run: String
+
+        init(dead: Bool, run: String) {
+            self.dead = dead
+            self.run = run
+        }
+
+        init?(reported: String?) {
+            guard let reported else {
+                return nil
+            }
+            let parts = reported.split(separator: ":", omittingEmptySubsequences: false)
+            guard parts.count == 3, parts[0] == "0" || parts[0] == "1" else {
+                return nil
+            }
+            let dead = parts[0] == "1"
+            if let pid = Int(parts[1]), pid > 0 {
+                self.init(dead: dead, run: String(pid))
+            } else if dead, let time = Int(parts[2]), time > 0 {
+                self.init(dead: dead, run: "died at \(time)")
+            } else {
+                return nil
+            }
+        }
+    }
+
+    static func paneRunQuery(paneID: Int) -> String {
+        return "display -p -t %\(paneID) '\(PaneRun.format)'"
+    }
 
     /// Fails, stopping the rest of its list, if the lock is held.
     static func tryLock(sessionID: Int, identity: ClientIdentity) -> String {
@@ -569,6 +626,8 @@ enum TmuxWorkgroupCommands {
             }
             if let holderIdentity = ClientIdentity(lockValue: holder) {
                 if holderIdentity == identity {
+                    // Only one driver per connection works at a time (TmuxWorkgroupLocalLockQueue),
+                    // so this client's own value is left over from one that is gone.
                     state = .acquired
                     return .acquired
                 }

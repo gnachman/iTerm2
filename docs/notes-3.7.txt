@@ -369,6 +369,11 @@ Improvements:
   an expression is true, such as a user variable
   your script sets. See ContextMenuProviderRPC’s
   submenu and visible_when arguments.
+- If you customized the Code Review system
+  prompt, iTerm2 offers to update it the next
+  time a review starts, so reviews work in tmux
+  and on remote hosts. It shows the changes
+  first, and changes nothing else in your prompt.
 - If a profile archives sessions when they close
   (Settings > Profiles > Session), Undo Close
   keeps working after its time limit runs out.
@@ -623,6 +628,24 @@ Improvements:
   status of a repository on a host reached
   through SSH Integration, by running git there.
   It used to need it2git set up on the host.
+- Shell integration now loads inside tmux,
+  including on a host you ssh to from a tmux
+  pane, so marks, the current directory and
+  host, and the git status work there. It used
+  to need the environment variable
+  ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX. It
+  still skips itself in GNU screen.
+- In a tmux Integration pane on a host reached
+  through SSH Integration, the git status bar
+  component and other features that depend on
+  the session’s host now work without shell
+  integration loaded in the pane.
+- With it2git on a remote host, the git status
+  bar component now counts changes the same way
+  as for a repository on this Mac: every
+  untracked file counts, conflicts are not
+  counted as changes, and a detached HEAD shows
+  its full commit ID.
 - In a tmux Integration session on a host reached
   through SSH Integration, each pane now knows
   which program is running in it. The tab shows
@@ -635,9 +658,7 @@ Improvements:
   longer fills the connection’s buffers. Control-C
   takes effect at once instead of after minutes
   of buffered output on a slow link, and typing
-  stays responsive while output streams. Turn it
-  off with the advanced setting “Pace output from
-  remote hosts.”
+  stays responsive while output streams.
 
 Bug Fixes:
 - In an AI chat with an empty message field, the
@@ -847,10 +868,6 @@ Bug Fixes:
   away. Sessions restored from before the restart
   still need to be restarted to regain it.
   Issue 12106.
-- Claude Code running in a tmux Integration split
-  pane that was not the active pane could drop
-  out of the Session Status tool and have its
-  workgroup torn down on every screen update.
 - A tmux Integration pane whose server was not
   yet known to be local when the pane opened
   never learned which program it was running.

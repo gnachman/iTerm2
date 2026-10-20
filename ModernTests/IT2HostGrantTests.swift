@@ -143,12 +143,63 @@ final class IT2HostGrantTests: XCTestCase {
     // readable by every user and may not be writable.
     func testRemoteWriteStaysInTheDotDirAndIsPrivate() {
         let script = IT2GrantToken.remoteWriteStatements(id: "ab", secret: "cd")
-        XCTAssertTrue(script.contains("~/.iterm2"))
+        XCTAssertTrue(script.contains("~/.iterm2/it2-grants"))
         XCTAssertTrue(script.contains("dir=d"), "the temporary must be created in ~/.iterm2: \(script)")
         XCTAssertFalse(script.contains("/tmp"))
         XCTAssertTrue(script.contains("0o600"), "the grant file must be private")
         XCTAssertTrue(script.contains("os.replace"), "atomic, so a reader never sees half a token")
         XCTAssertTrue(script.contains("ab:cd"))
+    }
+
+    /// Runs `statements` with python3 and HOME set to `home`.
+    private func runPython(_ statements: String, home: URL) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["python3", "-c", statements]
+        process.environment = ["HOME": home.path, "PATH": "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin"]
+        try process.run()
+        process.waitUntilExit()
+        XCTAssertEqual(process.terminationStatus, 0)
+    }
+
+    private func grant(_ token: (id: String, secret: String), host: String) -> IT2HostGrant {
+        return IT2HostGrant(host: host, id: token.id, secretSHA256: IT2GrantToken.sha256Hex(token.secret),
+                            granted: Date())
+    }
+
+    private func hostHalf(_ id: String, home: URL) -> String? {
+        return try? String(contentsOf: home.appendingPathComponent(IT2GrantToken.remoteRelativePath(id: id)),
+                           encoding: .utf8)
+    }
+
+    // Two grants that land on one remote account (another port, another Mac, another build of
+    // iTerm2) each keep their half, so neither keeps asking again. Granting a host again
+    // removes the half it replaces.
+    func testGrantsOnOneAccountDoNotClobberEachOther() throws {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("it2-grants-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: home) }
+        let a = IT2GrantToken.mint()
+        let b = IT2GrantToken.mint()
+        try runPython(IT2GrantToken.remoteWriteStatements(id: a.id, secret: a.secret), home: home)
+        try runPython(IT2GrantToken.remoteWriteStatements(id: b.id, secret: b.secret), home: home)
+        XCTAssertTrue(IT2GrantToken.verify(fileContents: try XCTUnwrap(hostHalf(a.id, home: home)),
+                                           against: grant(a, host: "h:22")))
+        XCTAssertTrue(IT2GrantToken.verify(fileContents: try XCTUnwrap(hostHalf(b.id, home: home)),
+                                           against: grant(b, host: "h:2222")))
+        let attributes = try FileManager.default.attributesOfItem(
+            atPath: home.appendingPathComponent(IT2GrantToken.remoteRelativePath(id: a.id)).path)
+        XCTAssertEqual((attributes[.posixPermissions] as? NSNumber)?.intValue, 0o600)
+
+        let again = IT2GrantToken.mint()
+        try runPython(IT2GrantToken.remoteWriteStatements(id: again.id, secret: again.secret, replacing: a.id),
+                      home: home)
+        XCTAssertNil(hostHalf(a.id, home: home), "the replaced half is gone")
+        XCTAssertNotNil(hostHalf(again.id, home: home))
+        XCTAssertNotNil(hostHalf(b.id, home: home), "another grant's half is untouched")
+        let leftovers = try FileManager.default.contentsOfDirectory(
+            atPath: home.appendingPathComponent(IT2GrantToken.remoteDirectoryRelativePath).path)
+        XCTAssertEqual(Set(leftovers), [again.id, b.id], "no temporaries left behind")
     }
 
     // MARK: - The announcement's answer

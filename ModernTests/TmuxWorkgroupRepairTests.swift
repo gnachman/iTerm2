@@ -87,12 +87,12 @@ final class TmuxWorkgroupRepairTests: XCTestCase {
     func testADuplicateMemberIsUntagged() {
         XCTAssertEqual(firstRepair(panes: ["%0 @1 80x24 \(tag(0))", "%1 @2 80x24 \(tag(1))", "%5 @1 40x24 \(tag(1))"],
                                    windows: ["@1 ", "@2 \(parked)"]),
-                       .repair([C.untagPane(paneID: 5)]))
+                       .repair(C.releasePane(paneID: 5)))
     }
 
     func testATagForAnUnknownPositionIsRemoved() {
         XCTAssertEqual(firstRepair(panes: ["%0 @1 80x24 \(tag(0))", "%7 @1 40x24 \(tag(9))"], windows: ["@1 "]),
-                       .repair([C.untagPane(paneID: 7)]))
+                       .repair(C.releasePane(paneID: 7)))
     }
 
     // MARK: - Two peers in view
@@ -167,11 +167,11 @@ final class TmuxWorkgroupRepairTests: XCTestCase {
         _ = r.start()
         XCTAssertEqual(r.didSnapshot(snapshot(panes: ["%0 @1 80x24 \(tag(0))", "%5 @1 40x24 \(tag(9))", "%6 @1 40x24 \(tag(8))"],
                                               windows: ["@1 "])),
-                       .repair([C.untagPane(paneID: 5)]))
+                       .repair(C.releasePane(paneID: 5)))
         XCTAssertEqual(r.didRepair(), .snapshot(TmuxWorkgroupAdoption.queries(sessionID: 3)))
         XCTAssertEqual(r.didSnapshot(snapshot(panes: ["%0 @1 80x24 \(tag(0))", "%5 @1 40x24 ", "%6 @1 40x24 \(tag(8))"],
                                               windows: ["@1 "])),
-                       .repair([C.untagPane(paneID: 6)]))
+                       .repair(C.releasePane(paneID: 6)))
         _ = r.didRepair()
         XCTAssertEqual(r.didSnapshot(snapshot(panes: ["%0 @1 80x24 \(tag(0))"], windows: ["@1 "])),
                        .finished(repairs: 2))
@@ -182,9 +182,9 @@ final class TmuxWorkgroupRepairTests: XCTestCase {
         var r = Repair(sessionID: 3, instanceID: "I", limit: 2)
         _ = r.start()
         let broken = snapshot(panes: ["%0 @1 80x24 \(tag(0))", "%5 @1 40x24 \(tag(9))"], windows: ["@1 "])
-        XCTAssertEqual(r.didSnapshot(broken), .repair([C.untagPane(paneID: 5)]))
+        XCTAssertEqual(r.didSnapshot(broken), .repair(C.releasePane(paneID: 5)))
         _ = r.didRepair()
-        XCTAssertEqual(r.didSnapshot(broken), .repair([C.untagPane(paneID: 5)]))
+        XCTAssertEqual(r.didSnapshot(broken), .repair(C.releasePane(paneID: 5)))
         XCTAssertEqual(r.didRepair(), .finished(repairs: 2))
     }
 

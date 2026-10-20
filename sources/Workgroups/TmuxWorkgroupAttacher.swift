@@ -21,6 +21,11 @@ final class TmuxWorkgroupAttacher: NSObject {
     private var subscription: iTermTmuxSubscriptionHandle?
     private var paneListSubscription: iTermTmuxSubscriptionHandle?
     private var lockSubscription: iTermTmuxSubscriptionHandle?
+    private var deadPaneSubscription: iTermTmuxSubscriptionHandle?
+    /// Every pane's run as last reported, member or not: one reported before its session joins
+    /// its workgroup is applied when it does. tmux reports only changes. Entries for panes that
+    /// are gone stay, which is harmless since tmux never reuses a pane ID.
+    private var paneRuns = [Int32: TmuxWorkgroupCommands.PaneRun]()
     private var refreshing = false
     private var refreshAgain = false
     private var toldAboutUnmatched = false
@@ -79,7 +84,58 @@ final class TmuxWorkgroupAttacher: NSObject {
                                              target: "") { [weak self] _, _ in
             self?.wakeLockWaiters()
         }
+        // A member's pane stays when its program exits (remain-on-exit), as a local member's
+        // session stays to show it ended; its session says so until it is restarted.
+        subscribeToPaneRuns(gateway)
         refresh()
+    }
+
+    private func subscribeToPaneRuns(_ gateway: TmuxGateway) {
+        deadPaneSubscription = gateway.subscribe(toFormat: TmuxWorkgroupCommands.PaneRun.format,
+                                                 target: "%*") { [weak self] value, parts in
+            self?.paneRunDidChange(value, arguments: parts ?? [])
+        }
+    }
+
+    /// A member was relaunched here. tmux reports a pane's run only when it changes, and from tmux
+    /// 3.3 a dead pane's run is known only by when it died, to the second, so a relaunched program
+    /// that exits within the second its last run did reads as unchanged and goes unreported.
+    /// Subscribing again makes tmux report every pane's run as it is now.
+    @objc func paneWasRelaunched() {
+        guard let gateway = controller?.gateway, let old = deadPaneSubscription else {
+            return
+        }
+        gateway.unsubscribe(old)
+        subscribeToPaneRuns(gateway)
+    }
+
+    private func paneRunDidChange(_ value: String?, arguments: [String]) {
+        guard let paneID = arguments.lazy.compactMap({ $0.hasPrefix("%") ? Int32($0.dropFirst()) : nil }).first else {
+            return
+        }
+        guard let run = TmuxWorkgroupCommands.PaneRun(reported: value) else {
+            RLog("TmuxWorkgroupAttacher: unexpected run report for %\(paneID): \(value ?? "(nil)")")
+            return
+        }
+        paneRuns[paneID] = run
+        if let session = controller?.session(forWindowPane: paneID) {
+            apply(run, to: session)
+        }
+    }
+
+    @objc func sessionDidJoinWorkgroup(_ session: PTYSession) {
+        guard session.isTmuxClient, let run = paneRuns[session.tmuxPane] else {
+            return
+        }
+        apply(run, to: session)
+    }
+
+    private func apply(_ run: TmuxWorkgroupCommands.PaneRun, to session: PTYSession) {
+        guard let instance = session.workgroupInstance,
+              instance.mainSession !== session else {
+            return
+        }
+        session.tmuxWorkgroupMemberProgramDidChange(run)
     }
 
     /// Another client detached. If it held the workgroup lock, the lock is now stale.
@@ -92,10 +148,14 @@ final class TmuxWorkgroupAttacher: NSObject {
             return
         }
         hiddenPaneOffer?.wake()
+        var retryRepair = false
         for instance in iTermWorkgroupController.instance.allInstances {
             if let binding = instance.tmuxBinding, binding.uses(gateway: gateway) {
-                binding.wakeLockWaiters()
+                retryRepair = binding.wakeLockWaiters() || retryRepair
             }
+        }
+        if retryRepair {
+            refresh()
         }
     }
 
@@ -179,13 +239,17 @@ final class TmuxWorkgroupAttacher: NSObject {
                         .first { $0.instanceUniqueIdentifier == derived.instanceID }?
                         .tmuxBinding?.update(from: derived)
                 }
-                // What adoption left unreachable here. Instances ended here are on their way out.
-                let adopted = self.adoptedInstanceIDs(gateway: gateway).union(self.endedHere)
+                // What no workgroup here can reach. Instances ended here are on their way out.
+                let ours = TmuxWorkgroupHiddenPanes.instancesOfThisMac(
+                    derivation: derivation,
+                    localWorkgroups: iTermWorkgroupModel.instance.workgroups,
+                    adoptedHere: self.adoptedInstanceIDs(gateway: gateway).union(self.endedHere),
+                    declined: self.declined)
                 self.hiddenPaneOffer?.update(TmuxWorkgroupHiddenPanes.find(panes: panes,
                                                                           windows: windows,
                                                                           derivation: derivation,
-                                                                          adoptedHere: adopted),
-                                             adoptedHere: adopted)
+                                                                          adoptedHere: ours),
+                                             adoptedHere: ours)
             } else {
                 RLog("TmuxWorkgroupAttacher: could not read workgroup state from tmux")
             }
@@ -233,7 +297,7 @@ final class TmuxWorkgroupAttacher: NSObject {
                     gateway.send(TmuxWorkgroupCommands.killPane(paneID)) { _ in }
                 }
                 for paneID in untagPaneIDs {
-                    gateway.send(TmuxWorkgroupCommands.untagPane(paneID: paneID)) { _ in }
+                    gateway.sendList(TmuxWorkgroupCommands.releasePane(paneID: paneID)) { _ in }
                 }
             }
         }

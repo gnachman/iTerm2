@@ -9,6 +9,10 @@
 //  read, or one whose record is gone. Nothing may stay hidden, so the user is offered to open them
 //  in tabs or stop them (TmuxWorkgroupHiddenPaneOffer).
 //
+//  An instance a local workgroup matches is this Mac's even when it is not adopted at the
+//  moment, as when its leader's window is hidden in iTerm2 so the leader has no session: its
+//  peers are not offered, since opening or stopping them would take them from the workgroup.
+//
 //  An adopted instance's own stranded panes are repaired by its binding instead
 //  (TmuxWorkgroupRepair), as are its members found in another instance's parked window.
 //
@@ -27,6 +31,21 @@ enum TmuxWorkgroupHiddenPanes {
         var inUseElsewhere: Bool
         /// The instance's leader, which is in view here, if it has one.
         var leaderPaneID: Int?
+    }
+
+    /// Instances whose parked panes are not offered: those adopted here, and those a local
+    /// workgroup matches that the user did not decline, adopted or not.
+    static func instancesOfThisMac(derivation: S.Derivation,
+                                   localWorkgroups: [iTermWorkgroup],
+                                   adoptedHere: Set<String>,
+                                   declined: Set<String>) -> Set<String> {
+        var result = adoptedHere
+        for instance in derivation.instances where !declined.contains(instance.instanceID) {
+            if S.match(instance.record, among: localWorkgroups) != .noMatch {
+                result.insert(instance.instanceID)
+            }
+        }
+        return result
     }
 
     /// Sorted by instance ID.
@@ -149,7 +168,7 @@ struct TmuxWorkgroupHiddenPaneRelease: TmuxWorkgroupLockedRepair {
         switch choice {
         case .open:
             let sharesWindow = panes.filter { $0.windowID == windowID }.count > 1
-            return .repair([TmuxWorkgroupCommands.untagPane(paneID: paneID)] +
+            return .repair(TmuxWorkgroupCommands.releasePane(paneID: paneID) +
                            TmuxWorkgroupCommands.bringOutPane(sessionID: sessionID,
                                                               paneID: paneID,
                                                               windowID: windowID,

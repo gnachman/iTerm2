@@ -42,7 +42,8 @@ final class TmuxWorkgroupCommandsTests: XCTestCase {
     }
 
     // One list, so no client ever sees the window untagged or unpinned; {end} is the window just
-    // created.
+    // created. Its pane stays when its program exits, as a local member's session stays to show
+    // that it ended until it is restarted.
     func testCreateParkedPeer() {
         let script = "true"
         XCTAssertEqual(C.createParkedPeer(sessionID: 2, instanceID: "I", position: 1, width: 80, height: 24,
@@ -50,6 +51,7 @@ final class TmuxWorkgroupCommandsTests: XCTestCase {
             "new-window -d -a -t '$2:{end}' -P -F '#{pane_id}' " + C.encodedCommand(script: script),
             "set -w -t '$2:{end}' @iterm2_wg_parked " + TmuxWorkgroupState.ParkedTag(instanceID: "I").encoded,
             "set -p -t '$2:{end}' @iterm2_wg " + TmuxWorkgroupState.PaneTag(instanceID: "I", position: 1).encoded,
+            "set -p -t '$2:{end}' remain-on-exit on",
             "resize-window -t '$2:{end}' -x 80 -y 24",
         ])
     }
@@ -128,6 +130,7 @@ final class TmuxWorkgroupCommandsTests: XCTestCase {
         func expected(_ flags: String) -> [String] {
             return ["split-window -P -F '#{pane_id}' \(flags) -t %3 " + C.encodedCommand(script: script),
                     "set -p @iterm2_wg \(tag.encoded)",
+                    "set -p remain-on-exit on",
                     "last-pane -t %3"]
         }
         XCTAssertEqual(split(SplitSettings(orientation: .vertical, side: .trailingOrBottom, location: 0.4)),
@@ -231,6 +234,31 @@ final class TmuxWorkgroupCommandsTests: XCTestCase {
         }
     }
 
+    // Which run of a pane's program a report is about: its pid while it runs, and once it exits
+    // its pid on tmux 3.2, or when it died on later versions, which forget a dead pane's pid.
+    func testPaneRun() {
+        typealias R = C.PaneRun
+        XCTAssertEqual(C.paneRunQuery(paneID: 4), "display -p -t %4 '#{pane_dead}:#{pane_pid}:#{pane_dead_time}'")
+        XCTAssertEqual(R(reported: "0:123:"), R(dead: false, run: "123"))
+        XCTAssertEqual(R(reported: "1:123:"), R(dead: true, run: "123"), "tmux 3.2")
+        XCTAssertEqual(R(reported: "1::1792342157"), R(dead: true, run: "died at 1792342157"), "tmux 3.3 and later")
+        XCTAssertNotEqual(R(reported: "1::1792342157"), R(reported: "1::1792342158"), "a restart that died again")
+        for bad in [nil, "", "1", "0::", "0::5", "1::", "2:5:", "1:x:y", "0:-1:", "1:5:6:7"] as [String?] {
+            XCTAssertNil(R(reported: bad), String(describing: bad))
+        }
+    }
+
+    // Every member but the leader keeps its pane when its program exits; a pane that leaves the
+    // workgroup goes back to closing.
+    func testKeepingAndReleasingPanes() {
+        let started = TmuxWorkgroupState.PaneTag(instanceID: "I", position: 2).encoded
+        let waiting = TmuxWorkgroupState.PaneTag(instanceID: "I", position: 2, waiting: true).encoded
+        XCTAssertEqual(C.keepPaneOnExit(paneID: 3, instanceID: "I", position: 2),
+                       "if -F -t %3 '#{||:#{==:#{@iterm2_wg},\(started)},#{==:#{@iterm2_wg},\(waiting)}}' " +
+                       "'set -p -t %3 remain-on-exit on' 'display -p \(C.guardFailedMarker)'")
+        XCTAssertEqual(C.releasePane(paneID: 3), ["set -p -u -t %3 @iterm2_wg", "set -p -u -t %3 remain-on-exit"])
+    }
+
     // The code review's input files are written where it runs, under the server's home.
     func testServerHome() {
         XCTAssertEqual(C.homeQuery, "show-environment -g HOME")
@@ -255,6 +283,7 @@ final class TmuxWorkgroupCommandsTests: XCTestCase {
         XCTAssertEqual(C.newWindow(sessionID: 4, script: "true", tag: tag), [
             "new-window -d -a -t '$4:{end}' -P -F '#{pane_id}' " + C.encodedCommand(script: "true"),
             "set -p -t '$4:{end}' @iterm2_wg \(tag.encoded)",
+            "set -p -t '$4:{end}' remain-on-exit on",
         ])
         XCTAssertEqual(C.respawnPane(paneID: 7, script: "true"),
                        "respawn-pane -k -t %7 " + C.encodedCommand(script: "true"))

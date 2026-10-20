@@ -15,7 +15,15 @@
 if [[ -o interactive ]]; then
   # Don't run in IDE terminals. TERM_PROGRAM is set by the local terminal but not
   # forwarded over SSH. LC_TERMINAL is set by iTerm2 and may be forwarded over SSH.
-  if [ \( -z "${TERM_PROGRAM-}" -o "${TERM_PROGRAM-}" = "iTerm.app" -o "${LC_TERMINAL-}" = "iTerm2" \) -a "${ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX-}""$TERM" != "tmux-256color" -a "${ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX-}""$TERM" != "screen" -a "${ITERM_SHELL_INTEGRATION_INSTALLED-}" = "" -a "$TERM" != linux -a "$TERM" != dumb ]; then
+  # Inside tmux (TERM=tmux*, or $TMUX set when tmux uses a screen* TERM), tmux Integration passes
+  # the escape codes on intact and plain tmux discards them, so this loads; TERM=tmux* also reaches
+  # a host sshed to from a tmux pane. So does TERM=screen-256color, which many tmux users set.
+  # Other screen* TERMs without $TMUX are screen, or tmux beyond an ssh hop, and are skipped. ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX forces it on. In tmux,
+  # TERM_PROGRAM is tmux's own.
+  if [[ -n "${ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX-}" || -n "${TMUX-}" || "${TERM-}" != screen* || "${TERM-}" = screen-256color ]] &&
+     [[ -z "${TERM_PROGRAM-}" || "${TERM_PROGRAM-}" = "iTerm.app" || "${LC_TERMINAL-}" = "iTerm2" ||
+        ( "${TERM_PROGRAM-}" = "tmux" && ( -n "${TMUX-}" || "${TERM-}" = tmux* ) ) ]] &&
+     [[ "${ITERM_SHELL_INTEGRATION_INSTALLED-}" = "" && "$TERM" != linux && "$TERM" != dumb ]]; then
     ITERM_SHELL_INTEGRATION_INSTALLED=Yes
     ITERM2_SHOULD_DECORATE_PROMPT="1"
 

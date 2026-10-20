@@ -72,7 +72,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
     // reason to make a user relaunch to have a host looked at again. Keyed by the conductor's
     // guid. A connection whose prompt could not be shown is removed again so the next claude
     // launch on it retries.
-    private var evaluatedConnections = Set<String>()
+    private var evaluatedConnections = ClaudeRemoteCheckGate()
     private static let remoteWarningIdentifier =
         "NoSyncSuppressClaudeCodeRemoteIntegrationPrompt"
 
@@ -205,7 +205,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         warning.title = String(localized: "ClaudeHealthMonitor.ShellIntegrationTooOldTitle", defaultValue: "Claude Code on \(host) can\u{2019}t find the it2 command, which features such as Code Review ask it to run. The shell integration installed on \(host) is too old to make it available. To update it, exit Claude Code and choose iTerm2 > Install Shell Integration in that session.", comment: "Body of the warning shown when shell integration on a remote host is too old for Claude Code to run it2; the value is the host")
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
         warning.identifier = Self.it2WarningIdentifier
-        warning.actionLabels = [String(localized: "ClaudeHealthMonitor.OK", defaultValue: "OK", comment: "Button to dismiss the warning that shell integration on a remote host is too old")]
+        warning.actionLabels = [iTermLocalizedOK()]
         warning.window = session.view?.window
         warning.runModalAsync { [weak self] _, _ in
             self?.alertInFlight = false
@@ -235,7 +235,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
             return
         }
         let connection = conductor.guid
-        guard !evaluatedConnections.contains(connection) else {
+        guard !evaluatedConnections.hasChecked(connection) else {
             DLog("Health: \(host) already checked on this connection; skipping")
             return
         }
@@ -250,8 +250,8 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         // Only for someone who uses the integration: set up on this Mac, or this session is in the
         // Claude Code workgroup. Nothing about the host is remembered, so whether the hook is
         // there is always read from the host.
-        evaluatedConnections.insert(connection)
-        guard iTermUserDefaults.claudeCodeIntegrationCompleted || Self.inClaudeCodeWorkgroup(session) else {
+        guard evaluatedConnections.shouldCheck(connection,
+                                               integrationInUse: iTermUserDefaults.claudeCodeIntegrationCompleted || Self.inClaudeCodeWorkgroup(session)) else {
             DLog("Health: the integration is not in use; not checking \(host)")
             return
         }
@@ -282,6 +282,8 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         case .unknown:
             DLog("Health: couldn't read \(host)'s settings; nothing to say")
             alertInFlight = false
+            // Perhaps the lookup of where the settings are timed out: the next launch looks again.
+            evaluatedConnections.forget(connection)
             return
         case .healthy:
             DLog("Health: \(host) is healthy")
@@ -304,7 +306,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         if iTermWarning.showingWarning() {
             RLog("Health: another warning came up during the remote check, deferring")
             alertInFlight = false
-            evaluatedConnections.remove(connection)
+            evaluatedConnections.forget(connection)
             return
         }
         RLog("Health: Claude Code hook \(installed ? "broken" : "not installed") on a remote host; prompting")
@@ -422,5 +424,30 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
                 ClaudeCodeOnboarding.show(session: session)
             }
         }
+    }
+}
+
+/// Which SSH Integration connections the health monitor has checked for Claude Code's hook. A
+/// connection seen while the integration is not in use is not counted, so it is checked once the
+/// user sets the integration up or enters the Claude Code workgroup.
+struct ClaudeRemoteCheckGate {
+    private var checked = Set<String>()
+
+    func hasChecked(_ connection: String) -> Bool {
+        return checked.contains(connection)
+    }
+
+    /// Whether to check `connection` now; if so, it counts as checked.
+    mutating func shouldCheck(_ connection: String, integrationInUse: Bool) -> Bool {
+        guard integrationInUse, !checked.contains(connection) else {
+            return false
+        }
+        checked.insert(connection)
+        return true
+    }
+
+    /// Its prompt could not be shown, so the next claude launch on it checks again.
+    mutating func forget(_ connection: String) {
+        checked.remove(connection)
     }
 }

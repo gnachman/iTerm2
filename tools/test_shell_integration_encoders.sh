@@ -112,15 +112,17 @@ run_tcsh_alias() {
   awkprog=$(sed -n "s/.*_iterm2_urlencode_awk = '\(.*\)'.*/\1/p" "$DIR/iterm2_shell_integration.tcsh")
   expected="7;file://${user}@${host}$(printf "%s" "$full" | env LC_ALL=C awk "$awkprog")?machineID=1:abc"
   # Generate a minimal tcsh script: the stored awk program, a known machineID
-  # query, the real first _iterm2_print_osc7 alias, cd into the tricky dir, emit.
+  # query, the real first _iterm2_osc7 alias, cd into the tricky dir, emit. The alias writes the
+  # whole sequence, ESC ] through BEL, which is stripped to compare the URL.
   local tmp; tmp=$(mktemp)
   { sed -n "/_iterm2_urlencode_awk = /p" "$DIR/iterm2_shell_integration.tcsh"
     echo 'set _iterm2_machine_id_query = "?machineID=1:abc"'
     sed -n '/set _iterm2_user = /p' "$DIR/iterm2_shell_integration.tcsh"
-    sed -n "/alias _iterm2_print_osc7/{p;q;}" "$DIR/iterm2_shell_integration.tcsh"
+    sed -n "/alias _iterm2_osc7/{p;q;}" "$DIR/iterm2_shell_integration.tcsh"
     printf 'cd "%s"\n' "$full"
-    echo '_iterm2_print_osc7'; } > "$tmp"
+    echo '_iterm2_osc7'; } > "$tmp"
   got=$(tcsh -f "$tmp")
+  got=${got#$'\033]'}; got=${got%$'\007'}
   rm -f "$tmp"; rm -rf "$base"
   if [ "$got" = "$expected" ]; then
     echo "ok   tcsh-alias/full-url"
@@ -208,10 +210,11 @@ run_tcsh_hostname_sanitize() {
       printf 'set iterm2_hostname = "%s"\n' "$h"
       sed -n '/set _iterm2_user = /p' "$DIR/iterm2_shell_integration.tcsh"
       sed -n '/if ( $?iterm2_hostname ) then/,/endif/p' "$DIR/iterm2_shell_integration.tcsh"
-      sed -n '/alias _iterm2_print_osc7/p' "$DIR/iterm2_shell_integration.tcsh" | sed -n '2p'
+      sed -n '/alias _iterm2_osc7/p' "$DIR/iterm2_shell_integration.tcsh" | sed -n '2p'
       echo 'cd /tmp'
-      echo '_iterm2_print_osc7'; } > "$tmp"
+      echo '_iterm2_osc7'; } > "$tmp"
     got=$(tcsh -f "$tmp"); rm -f "$tmp"
+    got=${got#$'\033]'}; got=${got%$'\007'}
     assert_sanitized_authority "tcsh-hostname-sanitize/[$h]" "$got" /tmp
   done
 }
@@ -256,9 +259,11 @@ run_single_emitter() {
       out=$(printf 'cd /tmp\ncd /usr\nexit\n' | TERM=xterm TERM_PROGRAM=iTerm.app \
             script -q /dev/null fish -i -C "source $DIR/iterm2_shell_integration.fish" 2>&1)
     else
+      # Not the caller's stdin, which script can't take its terminal settings from if it is a
+      # socket (as under some test runners); the commands come from -c.
       out=$(TERM=xterm TERM_PROGRAM=iTerm.app script -q /dev/null xonsh --no-rc -i -c "source -e $DIR/iterm2_shell_integration.xonsh
 cd /tmp
-cd /usr" 2>&1)
+cd /usr" 2>&1 < /dev/null)
     fi
     # Liveness (guard against a vacuous driver) uses the FULL output, which always
     # has at least one emission: fish emits our report per prompt, xonsh emits its

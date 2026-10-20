@@ -11,22 +11,160 @@
 
 import Foundation
 
+/// Lets one lock driver at a time work on a tmux connection. The lock's value names the client,
+/// not the acquisition, so a second driver of the same client would find its own value and take
+/// the lock as its own, and whichever finished first would release it while the other was still
+/// working. Drivers wait here, in the order they started, until the one ahead of them lets go.
+///
+/// While the driver ahead waits on another client's lock, the ones behind it wait on that client
+/// too, and say so, so that the user is told and can take the lock over or stop waiting.
+final class TmuxWorkgroupLocalLockQueue {
+    private static let queues = NSMapTable<TmuxGateway, TmuxWorkgroupLocalLockQueue>.weakToStrongObjects()
+
+    static func queue(for gateway: TmuxGateway) -> TmuxWorkgroupLocalLockQueue {
+        if let queue = queues.object(forKey: gateway) {
+            return queue
+        }
+        let queue = TmuxWorkgroupLocalLockQueue()
+        queues.setObject(queue, forKey: gateway)
+        return queue
+    }
+
+    private struct Entry {
+        var id: ObjectIdentifier
+        weak var driver: TmuxWorkgroupLockDriver?
+        var start: () -> Void
+    }
+
+    private var holder: Entry?
+    private var waiting = [Entry]()
+    /// The other client the holder waits on, if it does.
+    private(set) var holderWaitsOn: TmuxWorkgroupCommands.ClientIdentity?
+
+    /// Runs `start` now if nobody holds the queue, else once everyone ahead has left.
+    func enter(_ driver: TmuxWorkgroupLockDriver, start: @escaping () -> Void) {
+        let entry = Entry(id: ObjectIdentifier(driver), driver: driver, start: start)
+        guard holder != nil else {
+            holder = entry
+            start()
+            return
+        }
+        waiting.append(entry)
+        if let holderWaitsOn {
+            driver.queuedBehindWait(on: holderWaitsOn)
+        }
+    }
+
+    /// Lets the next one go, or stops waiting. Harmless when `id` is neither.
+    func leave(_ id: ObjectIdentifier) {
+        waiting.removeAll { $0.id == id }
+        guard holder?.id == id else {
+            return
+        }
+        holder = nil
+        holderStoppedWaiting()
+        guard !waiting.isEmpty else {
+            return
+        }
+        let next = waiting.removeFirst()
+        holder = next
+        next.start()
+    }
+
+    /// The holder waits on another client's lock.
+    func holderDidWait(_ driver: TmuxWorkgroupLockDriver, on other: TmuxWorkgroupCommands.ClientIdentity) {
+        guard holder?.id == ObjectIdentifier(driver) else {
+            return
+        }
+        holderWaitsOn = other
+        for entry in waiting {
+            entry.driver?.queuedBehindWait(on: other)
+        }
+    }
+
+    /// The holder took the lock, was cancelled, or left: those behind it no longer wait on another
+    /// client, only on this one.
+    func holderStoppedWaiting(_ driver: TmuxWorkgroupLockDriver) {
+        guard holder?.id == ObjectIdentifier(driver) else {
+            return
+        }
+        holderStoppedWaiting()
+    }
+
+    private func holderStoppedWaiting() {
+        guard holderWaitsOn != nil else {
+            return
+        }
+        holderWaitsOn = nil
+        for entry in waiting {
+            entry.driver?.queuedWaitDidEnd()
+        }
+    }
+
+    /// The user chose, from a driver waiting here, to take the lock from the other client.
+    func forceHolder() {
+        holder?.driver?.force()
+    }
+
+    func isQueued(_ driver: TmuxWorkgroupLockDriver) -> Bool {
+        let id = ObjectIdentifier(driver)
+        return waiting.contains { $0.id == id }
+    }
+
+    var isIdle: Bool {
+        holder == nil && waiting.isEmpty
+    }
+}
+
 final class TmuxWorkgroupLockDriver {
     typealias Lock = TmuxWorkgroupCommands.LockAcquisition
 
     private let gatewayProvider: () -> TmuxGateway?
     private var lock: Lock
     private(set) var lastAction: Lock.Action?
-    /// Called when the acquisition acquires, waits on a connected holder, or is cancelled.
+    /// Called when the acquisition acquires, waits on a connected holder, or is cancelled. A driver
+    /// queued behind another of this client's drivers that waits is told it waits too.
     var onSettled: ((Lock.Action) -> Void)?
+    /// Called when a queued driver no longer waits on another client because the one ahead of it
+    /// stopped waiting. It still waits its turn here, which is quick.
+    var onQueuedWaitEnded: (() -> Void)?
+    /// This connection's queue, once started. Left on release, on cancel once nothing it sent is
+    /// unanswered, and when this goes away.
+    private var localQueue: TmuxWorkgroupLocalLockQueue?
+    private var unanswered = 0
 
     init(gatewayProvider: @escaping () -> TmuxGateway?, sessionID: Int, identity: TmuxWorkgroupCommands.ClientIdentity) {
         self.gatewayProvider = gatewayProvider
         lock = Lock(sessionID: sessionID, identity: identity)
     }
 
+    deinit {
+        localQueue?.leave(ObjectIdentifier(self))
+    }
+
     func start() {
-        perform(lock.start())
+        guard localQueue == nil, let gateway = gatewayProvider() else {
+            perform(lock.start())
+            return
+        }
+        let queue = TmuxWorkgroupLocalLockQueue.queue(for: gateway)
+        localQueue = queue
+        queue.enter(self) { [weak self] in
+            guard let self else {
+                return
+            }
+            if case .cancelled = self.lock.state {
+                // Cancelled while waiting its turn.
+                self.leaveLocalQueue()
+                return
+            }
+            self.perform(self.lock.start())
+        }
+    }
+
+    private func leaveLocalQueue() {
+        localQueue?.leave(ObjectIdentifier(self))
+        localQueue = nil
     }
 
     /// The lock option changed or a client detached.
@@ -34,23 +172,51 @@ final class TmuxWorkgroupLockDriver {
         perform(lock.wake())
     }
 
-    /// The user chose to take the lock from a holder that is connected but seems stuck.
+    /// The user chose to take the lock from a holder that is connected but seems stuck. A
+    /// driver still queued behind this client's own driver passes it on to that one.
     func force() {
+        if let localQueue, localQueue.isQueued(self) {
+            localQueue.forceHolder()
+            return
+        }
         perform(lock.force())
+    }
+
+    /// The driver ahead of this one waits on `other`'s lock, so this does too.
+    fileprivate func queuedBehindWait(on other: TmuxWorkgroupCommands.ClientIdentity) {
+        let action = Lock.Action.wait(holder: other)
+        lastAction = action
+        onSettled?(action)
+    }
+
+    fileprivate func queuedWaitDidEnd() {
+        onQueuedWaitEnded?()
     }
 
     func cancel() {
         perform(lock.cancel())
+        leaveIfCancelledAndIdle()
     }
 
     /// Release the lock if this client still holds it.
     func release(completion: @escaping () -> Void) {
         guard let gateway = gatewayProvider() else {
+            leaveLocalQueue()
             completion()
             return
         }
+        // The unlock goes out before the next driver's attempt, since the gateway keeps order.
         gateway.sendGuarded(TmuxWorkgroupCommands.unlock(sessionID: lock.sessionID, identity: lock.identity)) { _ in
             completion()
+        }
+        leaveLocalQueue()
+    }
+
+    /// A reply after cancel() may still release a lock this took, so the next driver waits until
+    /// that is sent.
+    private func leaveIfCancelledAndIdle() {
+        if case .cancelled = lock.state, unanswered == 0 {
+            leaveLocalQueue()
         }
     }
 
@@ -64,26 +230,39 @@ final class TmuxWorkgroupLockDriver {
         }
         switch action {
         case .send(.tryLock(let command)):
+            unanswered += 1
             gateway.send(command) { [weak self] reply in
                 guard let self else { return }
+                self.unanswered -= 1
                 self.perform(self.lock.didTryLock(succeeded: reply != nil))
+                self.leaveIfCancelledAndIdle()
             }
         case .send(.snapshot(let commands)):
+            unanswered += 1
             gateway.sendList(commands) { [weak self] replies in
                 guard let self else { return }
+                self.unanswered -= 1
                 let holder = replies.first ?? nil
                 let clients = replies.count > 1 ? replies[1] : nil
                 self.perform(self.lock.didSnapshot(holder: holder ?? "", clients: clients ?? ""))
+                self.leaveIfCancelledAndIdle()
             }
         case .send(.evict(let command)):
+            unanswered += 1
             gateway.sendGuarded(command) { [weak self] outcome in
                 guard let self else { return }
+                self.unanswered -= 1
                 self.perform(self.lock.didEvict(outcome))
+                self.leaveIfCancelledAndIdle()
             }
         case .send(.release(let command)):
             RLog("TmuxWorkgroupLockDriver: took the lock after cancelling; releasing it")
             gateway.sendGuarded(command) { _ in }
-        case .wait, .acquired, .cancelled:
+        case .wait(let holder):
+            localQueue?.holderDidWait(self, on: holder)
+            onSettled?(action)
+        case .acquired, .cancelled:
+            localQueue?.holderStoppedWaiting(self)
             onSettled?(action)
         }
     }
@@ -149,6 +328,9 @@ final class TmuxWorkgroupPeerCreator {
             case .send:
                 break
             }
+        }
+        lockDriver.onQueuedWaitEnded = { [weak self] in
+            self?.stopWaiting()
         }
         lockDriver.start()
     }
@@ -234,6 +416,9 @@ final class TmuxWorkgroupRepairer {
 
     /// Called when a connected client holds the lock. See TmuxWorkgroupPeerCreator.onWaiting.
     var onWaiting: ((TmuxWorkgroupCommands.ClientIdentity) -> Void)?
+    /// See TmuxWorkgroupPeerCreator.onWaitingEnded.
+    var onWaitingEnded: (() -> Void)?
+    private(set) var isWaiting = false
 
     private let gatewayProvider: () -> TmuxGateway?
     private let lockDriver: TmuxWorkgroupLockDriver
@@ -265,14 +450,20 @@ final class TmuxWorkgroupRepairer {
             guard let self else { return }
             switch action {
             case .acquired:
+                self.stopWaiting()
                 self.perform(self.repair.start())
             case .wait(let holder):
+                self.isWaiting = true
                 self.onWaiting?(holder)
             case .cancelled:
+                self.stopWaiting()
                 self.finish(.cancelled)
             case .send:
                 break
             }
+        }
+        lockDriver.onQueuedWaitEnded = { [weak self] in
+            self?.stopWaiting()
         }
         lockDriver.start()
     }
@@ -280,6 +471,23 @@ final class TmuxWorkgroupRepairer {
     /// The lock changed or a client detached.
     func wake() {
         lockDriver.wake()
+    }
+
+    /// See TmuxWorkgroupPeerCreator.force().
+    func force() {
+        lockDriver.force()
+    }
+
+    func cancel() {
+        lockDriver.cancel()
+    }
+
+    private func stopWaiting() {
+        guard isWaiting else {
+            return
+        }
+        isWaiting = false
+        onWaitingEnded?()
     }
 
     private func perform(_ action: TmuxWorkgroupRepair.Action?) {

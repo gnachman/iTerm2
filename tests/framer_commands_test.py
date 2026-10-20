@@ -272,6 +272,21 @@ class RunTests(CommandTestCase):
             self.assertTrue(await self.h.wait_for(gone), "sleep %d survived" % sleeper)
         self.run_async(body)
 
+    def test_hanging_up_ends_an_interactive_shell(self):
+        # An interactive shell ignores SIGTERM, as when iTerm2 gives up on a login shell whose
+        # rc file waits for input. `kill <pid> hup` hangs up on it instead, as closing a
+        # terminal does.
+        shell = next(path for path in ("/bin/zsh", "/bin/bash") if os.path.exists(path))
+
+        async def body():
+            pid = await self.h.start("run", "exec %s -i -c 'echo rea$((1+1))dy; read line'" % shell)
+            self.assertTrue(await self.h.wait_for(lambda: b"rea2dy" in self.output(pid)),
+                            "the shell waits for a line: %r" % self.output(pid))
+            self.assertIsNone(await self.h.wait_terminated(pid, timeout=0.5), "it is still waiting")
+            self.assertEqual((await self.h.command("kill", str(pid), "hup")).status, 0)
+            self.assertIsNotNone(await self.h.wait_terminated(pid), "the shell ended")
+        self.run_async(body)
+
     def test_kill_errors(self):
         async def body():
             self.assertEqual((await self.h.command("kill", "999999999")).status, 1)

@@ -34,6 +34,40 @@ final class ClaudeCodeRemoteConnectionFactsTests: XCTestCase {
         XCTAssertFalse(memory.anyHookPresent)
     }
 
+    // The installer and the step's pre-check ask at once: one lookup answers both, so they can't
+    // disagree about where the settings are.
+    func testConcurrentRequestsShareOneLookup() {
+        let memory = ClaudeCodeRemoteConnectionFacts()
+        let connection = NSObject()
+        var lookups = [(String?) -> Void]()
+        var answers = [String?]()
+        for _ in 0..<2 {
+            memory.configDirectory(for: connection, lookUp: { lookups.append($0) }) { answers.append($0) }
+        }
+        XCTAssertEqual(lookups.count, 1)
+        lookups[0]("/srv/claude")
+        XCTAssertEqual(answers, ["/srv/claude", "/srv/claude"])
+        memory.configDirectory(for: connection, lookUp: { lookups.append($0) }) { answers.append($0) }
+        XCTAssertEqual(lookups.count, 1, "remembered for the connection")
+        XCTAssertEqual(answers.last, "/srv/claude")
+    }
+
+    // A failure is not remembered: the next request looks again.
+    func testAFailedLookupIsTriedAgain() {
+        let memory = ClaudeCodeRemoteConnectionFacts()
+        let connection = NSObject()
+        var lookups = [(String?) -> Void]()
+        var answers = [String?]()
+        memory.configDirectory(for: connection, lookUp: { lookups.append($0) }) { answers.append($0) }
+        lookups[0](nil)
+        XCTAssertEqual(answers, [nil])
+        memory.configDirectory(for: connection, lookUp: { lookups.append($0) }) { answers.append($0) }
+        XCTAssertEqual(lookups.count, 2)
+        lookups[1]("/home/u/.claude")
+        XCTAssertEqual(answers, [nil, "/home/u/.claude"])
+        XCTAssertNil(memory.configDirectory(for: NSObject()))
+    }
+
     // The default matches Claude Code's own when CLAUDE_CONFIG_DIR is unset; trailing slashes
     // do not double up.
     func testSettingsPath() {

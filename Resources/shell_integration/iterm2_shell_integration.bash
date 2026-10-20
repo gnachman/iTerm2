@@ -17,7 +17,11 @@
 
 
 # -- BEGIN ITERM2 CUSTOMIZATIONS --
-if [[ "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen && "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != tmux-256color && "$ITERM_SHELL_INTEGRATION_INSTALLED" = "" && "$-" == *i* && "$TERM" != linux && "$TERM" != dumb ]]; then
+# Inside tmux (TERM=tmux*, or $TMUX set when tmux uses a screen* TERM), tmux Integration passes the
+# escape codes on intact and plain tmux discards them, so this loads; TERM=tmux* also reaches a host
+# sshed to from a tmux pane. So does TERM=screen-256color, which many tmux users set. Other screen*
+# TERMs without $TMUX are screen, or tmux beyond an ssh hop, and are skipped. ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX forces it on.
+if [[ ( -n "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX" || -n "$TMUX" || "$TERM" != screen* || "$TERM" = screen-256color ) && "$ITERM_SHELL_INTEGRATION_INSTALLED" = "" && "$-" == *i* && "$TERM" != linux && "$TERM" != dumb ]]; then
 
 if shopt extdebug | grep on > /dev/null; then
   echo "iTerm2 Shell Integration not installed."
@@ -724,9 +728,11 @@ function iterm2_print_state_data() {
 
 # Usage: iterm2_set_user_var key value
 function iterm2_set_user_var() {
-  iterm2_begin_osc
-  printf "1337;SetUserVar=%s=%s" "$1" $(printf "%s" "$2" | base64 | tr -d '\n')
-  iterm2_end_osc
+  # Encoded before the sequence starts and written whole: tmux 2.6 to 3.0a give up on a sequence
+  # that pauses for 100 ms partway and show the rest as text.
+  local _iterm2_value
+  _iterm2_value=$(printf "%s" "$2" | base64 | tr -d '\n')
+  printf "\033]1337;SetUserVar=%s=%s\007" "$1" "$_iterm2_value"
 }
 
 if [ -z "$(type -t iterm2_print_user_vars)" ] || [ "$(type -t iterm2_print_user_vars)" != function ]; then

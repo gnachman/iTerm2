@@ -279,6 +279,8 @@ class Conductor: NSObject, SSHIdentityProvider {
         }
         set {
             restorableState.discoveredHostname = newValue
+            // tmux panes on this host take it (TmuxPaneInferredHost).
+            delegate?.conductorStateDidChange()
         }
     }
 
@@ -441,7 +443,8 @@ class Conductor: NSObject, SSHIdentityProvider {
     // socket bound but never re-runs it2Listen, so without this the menu would go permanently
     // disabled after any transient drop). Not persisted: it lives OUTSIDE IT2ProxyState.Persisted
     // (the only fields IT2ProxyState's Codable encodes), and the custom init(from:) resets it to
-    // false on decode -- so on state restoration it2Listen re-runs and re-establishes it. Gates
+    // false on decode -- so on state restoration it2Listen is sent again after resynchronizing,
+    // which re-establishes it. Gates
     // it2ProxyActive so the
     // "Remote host can control iTerm2" menu reflects whether the remote can actually connect.
     var it2ListenSucceeded: Bool {
@@ -1024,7 +1027,8 @@ extension Conductor {
         case framerLogin(cwd: String, args: [String])
         case framerEval(String)
         case framerSend(Data, pid: Int32)
-        case framerKill(pid: Int)
+        /// `hangUp`: a hangup rather than SIGTERM (see killRemoteJob).
+        case framerKill(pid: Int, hangUp: Bool = false)
         case framerQuit
         case framerRegister(pid: pid_t)
         case framerDeregister(pid: pid_t)
@@ -1124,8 +1128,8 @@ extension Conductor {
                 return ["eval", script.base64Encoded].joined(separator: "\n")
             case .framerSend(let data, pid: let pid):
                 return (["send", String(pid), data.base64EncodedString()]).joined(separator: "\n")
-            case .framerKill(pid: let pid):
-                return ["kill", String(pid)].joined(separator: "\n")
+            case .framerKill(pid: let pid, hangUp: let hangUp):
+                return (["kill", String(pid)] + (hangUp ? ["hup"] : [])).joined(separator: "\n")
             case .framerGetenv(let name):
                 return ["getenv", name].joined(separator: "\n")
             case .framerExecPythonStatements(let statements):
@@ -1208,8 +1212,8 @@ extension Conductor {
                 return "save \(dict.keys.joined(separator: ", "))"
             case .framerSend(let data, pid: let pid):
                 return "send \(data.semiVerboseDescription) to \(pid)"
-            case .framerKill(pid: let pid):
-                return "kill \(pid)"
+            case .framerKill(pid: let pid, hangUp: let hangUp):
+                return "kill \(pid)\(hangUp ? " hup" : "")"
             case .framerGetenv(let name):
                 return "getenv \(name)"
             case .framerExecPythonStatements(let statements):
@@ -1333,7 +1337,7 @@ extension Conductor {
                     return "handleJump"
                 case .writeOnSuccess(let code):
                     return "writeOnSuccess(\(code.count) chars)"
-                case .handleRunRemoteCommand(let command, _):
+                case .handleRunRemoteCommand(let command, _, _):
                     return "handleRunRemoteCommand(\(command))"
                 case .handleBackgroundJob(let output, _):
                     return"handleBackgroundJob(\(output.strings.count) lines)"
@@ -1363,7 +1367,8 @@ extension Conductor {
             case handleFramerLogin(StringArray)
             case handleJump(StringArray)
             case writeOnSuccess(String)  // see runPython
-            case handleRunRemoteCommand(String, OneTimeClosure2<Data, Int32, Void>)
+            /// The command line, the completion, and what to tell once the job's pid is known.
+            case handleRunRemoteCommand(String, OneTimeClosure2<Data, Int32, Void>, OneTimeClosure1<Int32, Void>?)
             case handleBackgroundJob(StringArray, OneTimeClosure2<Data, Int32, Void>)
             case handlePoll(StringArray, OneTimeClosure1<Data, Void>)
             case handleGetShell(StringArray)
@@ -1418,7 +1423,7 @@ extension Conductor {
                     return RawValues.handleGetenv.rawValue
                 case .writeOnSuccess(_):
                     return RawValues.writeOnSuccess.rawValue
-                case .handleRunRemoteCommand(_, _):
+                case .handleRunRemoteCommand(_, _, _):
                     return RawValues.handleRunRemoteCommand.rawValue
                 case .handleBackgroundJob(_, _):
                     return RawValues.handleBackgroundJob.rawValue
@@ -1453,7 +1458,7 @@ extension Conductor {
                     try container.encode(value, forKey: .stringArray)
                 case .writeOnSuccess(let value):
                     try container.encode(value, forKey: .string)
-                case .handleRunRemoteCommand(let value, _):
+                case .handleRunRemoteCommand(let value, _, _):
                     try container.encode(value, forKey: .string)
                 case .handleBackgroundJob(let value, _):
                     try container.encode(value, forKey: .stringArray)
@@ -1484,7 +1489,7 @@ extension Conductor {
                 case .writeOnSuccess:
                     self = .writeOnSuccess(try container.decode(String.self, forKey: .string))
                 case .handleRunRemoteCommand:
-                    self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), .init({_, _ in}))
+                    self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), .init({_, _ in}), nil)
                 case .handleBackgroundJob:
                     self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), .init({_, _ in}))
                 case .handlePoll:
@@ -1981,6 +1986,12 @@ extension Conductor {
         awaitingResynchronization = false
         forceReturnToGroundState()
         resetTransitively()
+        // A conductor restored after a restart doesn't know whether the framer still listens
+        // for it2 (that isn't saved), so it asks again. A framer that already listens answers
+        // that it does. After the reset, which would abort it.
+        if let path = it2SocketPath, it2Nonce != nil {
+            it2Listen(path: path)
+        }
         exfiltrateUsefulFramerInfo()
         flowRecoveryDidFinish()
         restartFlowControlAfterResynchronizing()
@@ -2155,6 +2166,9 @@ extension Conductor {
             }
         }
         framerGetenv("PATH")
+        // Who the login is as, which ssh may have taken from ~/.ssh/config rather than the
+        // command line, so the identity doesn't know it.
+        framerGetenv("USER")
     }
 
     private func uploadPayloads() {
@@ -2587,6 +2601,10 @@ extension Conductor {
             case .end:
                 if let line = lines.strings.first {
                     environmentVariables[name] = line
+                    if name == "USER" {
+                        // tmux panes on this host take it (TmuxPaneInferredHost).
+                        delegate?.conductorStateDidChange()
+                    }
                 }
             }
         case .writeOnSuccess(let code):
@@ -2601,7 +2619,7 @@ extension Conductor {
                 }
                 return
             }
-        case .handleRunRemoteCommand(let commandLine, let completion):
+        case .handleRunRemoteCommand(let commandLine, let completion, let started):
             switch result {
             case .line(let line):
                 guard let pid = Int32(line) else {
@@ -2611,6 +2629,7 @@ extension Conductor {
                                  command: .framerRun(commandLine)) { data, status in
                     completion.call(data, status)
                 }
+                started?.call(pid)
             case .sideChannelLine(_, _, _), .abort, .end(_), .canceled:
                 break
             }

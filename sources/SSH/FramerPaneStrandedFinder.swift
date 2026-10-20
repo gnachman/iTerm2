@@ -155,17 +155,20 @@ final class StrandedFramerPaneAnnouncer: StrandedFramerPanePresenter {
                 return
             }
             decided = true
-            if choice == 1 {
+            switch choice {
+            case 0:
+                RLog("Open \(pids.count) stranded panes in tabs")
+                for pid in pids {
+                    owner.openStrandedFramerPane(pid)
+                }
+            case 1:
                 RLog("User chose to stop \(pids.count) stranded panes")
                 for pid in pids {
                     conductor.stopUnclaimedPane(pid)
                 }
-            } else {
-                // Closing it without choosing leaves nothing hidden either.
-                RLog("Open \(pids.count) stranded panes in tabs (choice \(choice))")
-                for pid in pids {
-                    owner.openStrandedFramerPane(pid)
-                }
+            default:
+                // Closed without a choice: they keep running, unclaimed.
+                RLog("Stranded panes offer closed without a choice")
             }
         }
         guard let announcement = iTermAnnouncementViewController.announcement(withTitle: title,

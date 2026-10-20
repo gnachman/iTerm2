@@ -98,10 +98,20 @@ class PTYSessionSwiftState: NSObject {
     // Set on a session adopted to show a stranded framer pane: the session whose connection the
     // pane runs over. Not a workgroup member, so it has no workgroupRemoteHost.
     var framerPaneOwnerGUID: String?
+    /// A tmux workgroup member whose program exited: its pane stays (remain-on-exit) and its
+    /// session offers to restart it. The run that exited (TmuxWorkgroupCommands.PaneRun).
+    var tmuxMemberEndedRun: String?
 
     // A remote review peer's input files are being written; a second Start (auto-request calls it
     // directly) must not launch twice.
     var codeReviewLaunchPending = false
+    // The host this tmux pane took from its gateway (see TmuxPaneInferredHost), if any.
+    var inferredTmuxHost: TmuxPaneInferredHost.Host?
+    // The offer to update the code review system prompt is on screen; a second start meanwhile
+    // (the overlay stays up under it) is dropped.
+    var codeReviewPromptOfferInProgress = false
+    // A review is being started by the automatic request, which must not raise a modal.
+    var codeReviewAutoRequesting = false
     // Whether a workgroup member on a tmux server shows that its program has not started (the code
     // review prompt, or the diff waiting for changes). See syncTmuxWorkgroupWaiting.
     var tmuxWorkgroupWaiting = TmuxWorkgroupWaitingDisplay.none
@@ -1956,7 +1966,13 @@ extension PTYSession {
     // `workgroupInstance` points at the per-entry state owner.
     @objc var workgroupInstance: iTermWorkgroupInstance? {
         get { swiftState.workgroupInstance }
-        set { swiftState.workgroupInstance = newValue }
+        set {
+            swiftState.workgroupInstance = newValue
+            if newValue != nil {
+                // tmux may have said its program ended before it joined.
+                tmuxController?.workgroupAttacher?.sessionDidJoinWorkgroup(self)
+            }
+        }
     }
 
     // Workgroup-mode tag set by the spawn path. .codeReview triggers the
@@ -2902,8 +2918,13 @@ extension PTYSession {
         // which ends up calling iTermRightGutterController.layoutPanels and
         // creates the panel. Same goes for the 1→0 transition tearing it down
         // when no panel is around to detect its own visibility flip.
-        if view?.actualRightExtra != desiredRightExtra() {
-            delegate?.realParentWindow()?.rightExtraDidChange()
+        //
+        // In a peer group the clippings belong to the group, and the session that changed them
+        // may not be in view: a code review peer's go to the leader, which is hidden while the
+        // review is shown. The window to lay out is the one showing the group.
+        let shown = peerPort?.activeSession ?? self
+        if shown.view?.actualRightExtra != shown.desiredRightExtra() {
+            shown.delegate?.realParentWindow()?.rightExtraDidChange()
         }
     }
 

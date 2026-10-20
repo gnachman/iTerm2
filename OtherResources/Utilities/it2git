@@ -33,97 +33,138 @@
 
 GIT_BINARY=/usr/bin/git
 
-dirty() {
-    # Outputs "dirty" or "clean"
-    OUTPUT=$("$GIT_BINARY" status --porcelain --ignore-submodules -unormal 2>/dev/null)
-    if (($?)); then
-        echo "clean"
-        return
-    fi
-    if [ -z "$OUTPUT" ]; then
-        echo "clean"
+# The counts follow libgit2's, which iTerm2 uses for a directory on this Mac, so a repository
+# reads the same whichever way iTerm2 learns about it. Compatible with bash 3.2.
+
+# Never take index.lock: this only looks at a repository someone may be using.
+export GIT_OPTIONAL_LOCKS=0
+
+# Reads `status --porcelain -b -z` once and sets BRANCH, PUSH_COUNT, PULL_COUNT, DIRTY, ADDS
+# (untracked files), DELETES (deleted in the work tree) and UNMERGED (an array of paths).
+# Every untracked file counts, not just its directory, as libgit2 lists them.
+read_status() {
+    BRANCH=""
+    PUSH_COUNT=""
+    PULL_COUNT=""
+    ADDS=0
+    DELETES=0
+    UNMERGED=()
+    local count=0 record xy path skip=0 header counts upstream ahead behind item
+    while IFS= read -r -d '' record; do
+        if ((skip)); then
+            # The original path of a rename or copy.
+            skip=0
+            continue
+        fi
+        if [[ "$record" == "## "* ]]; then
+            header="${record#\#\# }"
+            counts=""
+            if [[ "$header" == *"]" && "$header" == *" ["* ]]; then
+                counts="${header##* [}"
+                counts="${counts%]}"
+                header="${header% \[*}"
+            fi
+            upstream=0
+            if [[ "$header" == *...* ]]; then
+                upstream=1
+                header="${header%%...*}"
+            fi
+            if ((upstream)) && [[ "$counts" != "gone" ]]; then
+                ahead=0
+                behind=0
+                local IFS_SAVED="$IFS"
+                IFS=','
+                for item in $counts; do
+                    item="${item# }"
+                    case "$item" in
+                        "ahead "*) ahead="${item#ahead }" ;;
+                        "behind "*) behind="${item#behind }" ;;
+                    esac
+                done
+                IFS="$IFS_SAVED"
+                PUSH_COUNT="$ahead"
+                PULL_COUNT="$behind"
+            fi
+            if [[ "$header" == "HEAD (no branch)" ]]; then
+                # Detached: libgit2 reports the full id.
+                BRANCH=$("$GIT_BINARY" rev-parse HEAD 2>/dev/null)
+            else
+                BRANCH="$header"
+            fi
+            continue
+        fi
+        xy="${record:0:2}"
+        path="${record:3}"
+        case "$xy" in
+            '!!') continue ;;
+        esac
+        count=$((count + 1))
+        case "$xy" in
+            '??') ADDS=$((ADDS + 1)); continue ;;
+            DD|AU|UD|UA|DU|AA|UU) UNMERGED[${#UNMERGED[@]}]="$path"; continue ;;
+        esac
+        case "$xy" in
+            # A rename in the work tree (of an intent-to-add file) has its R in the second column.
+            R*|C*|?R|?C) skip=1 ;;
+        esac
+        # libgit2 finds no renames in the work tree, so the original of one renamed there (an
+        # intent-to-add file) is deleted.
+        if [[ "${xy:1:1}" == "D" || "${xy:1:1}" == "R" ]]; then
+            DELETES=$((DELETES + 1))
+        fi
+    done < <("$GIT_BINARY" status --porcelain -b -z --untracked-files=all --ignore-submodules=all 2>/dev/null)
+    if ((count > 0)); then
+        DIRTY="dirty"
     else
-        echo "dirty"
+        DIRTY="clean"
     fi
 }
 
-counts() {
-    OUTPUT=$("$GIT_BINARY" rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)
-    if (($?)); then
-        echo "error"
-        return
-    fi
-    echo "$OUTPUT"
+# Compared whole, since a path may hold any character but NUL. There are seldom more than a few.
+is_unmerged() {
+    local unmerged
+    for unmerged in ${UNMERGED[@]+"${UNMERGED[@]}"}; do
+        [[ "$unmerged" == "$1" ]] && return 0
+    done
+    return 1
 }
 
-branch() {
-    OUTPUT=$("$GIT_BINARY" symbolic-ref -q --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)
-    if (($?)); then
-        return
-    fi
-    echo "$OUTPUT"
-}
-
-adds() {
-    "${GIT_BINARY}" ls-files --others --exclude-standard | wc -l
-}
-
-deletes() {
-    "${GIT_BINARY}" ls-files --deleted --exclude-standard | wc -l
-}
-
-# Line counts: "insertions<TAB>deletions" for modified files only.
-# Excludes added, untracked, and deleted files — their line contents are not
-# counted as inserted/deleted lines, only the file-level add/delete below.
-line_counts() {
-    local insertions=0 deletions=0
-    local line
-    # Include M (modified), R (renamed), T (typechange). Exclude A/D.
-    # --numstat prints "INS\tDEL\tPATH" per file; "-\t-\tPATH" for binary.
-    while IFS=$'\t' read -r line; do
-        local ins del
-        ins="${line%%$'\t'*}"
-        del="${line#*$'\t'}"
-        del="${del%%$'\t'*}"
+# Changes against HEAD, without rename detection, as libgit2's stats pass sees them: a
+# typechange is a deletion and an addition, a conflict is not counted, and lines are counted
+# for modified files only (binary files count none). Untracked files count as added. Sets
+# FILES_ADDED, FILES_MODIFIED, FILES_DELETED, LINES_INSERTED and LINES_DELETED.
+read_diff_stats() {
+    FILES_ADDED=$ADDS
+    FILES_MODIFIED=0
+    FILES_DELETED=0
+    LINES_INSERTED=0
+    LINES_DELETED=0
+    local letter path record ins del
+    while IFS= read -r -d '' letter && IFS= read -r -d '' path; do
+        if is_unmerged "$path"; then
+            continue
+        fi
+        case "$letter" in
+            A) FILES_ADDED=$((FILES_ADDED + 1)) ;;
+            D) FILES_DELETED=$((FILES_DELETED + 1)) ;;
+            T) FILES_ADDED=$((FILES_ADDED + 1)); FILES_DELETED=$((FILES_DELETED + 1)) ;;
+            M) FILES_MODIFIED=$((FILES_MODIFIED + 1)) ;;
+        esac
+    done < <("$GIT_BINARY" -c diff.relative=false diff --no-ext-diff --no-renames -z --name-status HEAD -- 2>/dev/null)
+    while IFS= read -r -d '' record; do
+        # "INSERTED<TAB>DELETED<TAB>PATH", or "-<TAB>-<TAB>PATH" for a binary file.
+        ins="${record%%$'\t'*}"
+        record="${record#*$'\t'}"
+        del="${record%%$'\t'*}"
+        path="${record#*$'\t'}"
+        if is_unmerged "$path"; then
+            continue
+        fi
         [[ "$ins" == "-" ]] && ins=0
         [[ "$del" == "-" ]] && del=0
-        insertions=$((insertions + ins))
-        deletions=$((deletions + del))
-    done < <("${GIT_BINARY}" diff --numstat --diff-filter=MRT HEAD 2>/dev/null)
-    printf '%s\t%s\n' "$insertions" "$deletions"
-}
-
-# File counts by status across staged+unstaged+untracked.
-# Added: brand-new files only (staged A or untracked ??).
-# Deleted: actually-removed files only (D in either column).
-# Modified: M/R/T/C/U — existing files whose contents changed.
-# Emits "A<TAB>M<TAB>D".
-file_counts() {
-    local added=0 modified=0 deleted=0 porcelain
-    porcelain=$("${GIT_BINARY}" status --porcelain --ignore-submodules -unormal 2>/dev/null) || {
-        printf '%s\t%s\t%s\n' 0 0 0
-        return
-    }
-    # git status --porcelain: two status chars in cols 1-2, space, path.
-    # XY where X=index, Y=worktree. Categorize per file, "added" and "deleted"
-    # take priority over "modified" when both columns differ (e.g. AM, MD).
-    local line x y
-    while IFS= read -r line; do
-        [[ -z "$line" ]] && continue
-        x="${line:0:1}"
-        y="${line:1:1}"
-        if [[ "$x" == "?" && "$y" == "?" ]]; then
-            added=$((added + 1))
-        elif [[ "$x" == "A" || "$y" == "A" ]]; then
-            added=$((added + 1))
-        elif [[ "$x" == "D" || "$y" == "D" ]]; then
-            deleted=$((deleted + 1))
-        else
-            # M, R, C, T, U, or any mix of those — existing file changed.
-            modified=$((modified + 1))
-        fi
-    done <<< "$porcelain"
-    printf '%s\t%s\t%s\n' "$added" "$modified" "$deleted"
+        LINES_INSERTED=$((LINES_INSERTED + ins))
+        LINES_DELETED=$((LINES_DELETED + del))
+    done < <("$GIT_BINARY" -c diff.relative=false diff --no-ext-diff --no-renames -z --numstat --diff-filter=M HEAD -- 2>/dev/null)
 }
 function iterm2_begin_osc {
   printf "\033]"
@@ -134,28 +175,16 @@ function iterm2_end_osc {
 }
 
 function iterm2_set_user_var() {
-  iterm2_begin_osc
-  printf "1337;SetUserVar=%s=%s" "$1" $(printf "%s" "$2" | base64 | tr -d '\n')
-  iterm2_end_osc
+  # Encoded before the sequence starts and written whole: tmux 2.6 to 3.0a give up on a sequence
+  # that pauses for 100 ms partway and show the rest as text.
+  local _iterm2_value
+  _iterm2_value=$(printf "%s" "$2" | base64 | tr -d '\n')
+  printf "\033]1337;SetUserVar=%s=%s\007" "$1" "$_iterm2_value"
 }
 
 git_poll () {
-    DIRECTORY="$1"
-    cd "$DIRECTORY"
-    DIRTY=$(dirty)
-    COUNTS=$(counts)
-    PUSH_COUNT=$(cut -f1 <<< "$COUNTS")
-    PULL_COUNT=$(cut -f2 <<< "$COUNTS")
-    BRANCH=$(branch)
-    ADDS=$(adds)
-    DELETES=$(deletes)
-    LINES=$(line_counts)
-    LINES_INSERTED=$(cut -f1 <<< "$LINES")
-    LINES_DELETED=$(cut -f2 <<< "$LINES")
-    FILES=$(file_counts)
-    FILES_ADDED=$(cut -f1 <<< "$FILES")
-    FILES_MODIFIED=$(cut -f2 <<< "$FILES")
-    FILES_DELETED=$(cut -f3 <<< "$FILES")
+    read_status
+    read_diff_stats
 
     iterm2_set_user_var gitBranch "$BRANCH"
     iterm2_set_user_var gitDirty "$DIRTY"
@@ -170,8 +199,9 @@ git_poll () {
     iterm2_set_user_var gitFilesDeleted "$FILES_DELETED"
 }
 
-"$GIT_BINARY" rev-parse --git-dir 2>/dev/null >/dev/null
-if (($?)); then
+# Outside a repository, or before its first commit (libgit2 then reports no state), every
+# variable is cleared.
+if ! "$GIT_BINARY" rev-parse --verify -q HEAD >/dev/null 2>&1; then
     iterm2_set_user_var gitBranch ""
     iterm2_set_user_var gitDirty ""
     iterm2_set_user_var gitPushCount ""
@@ -184,7 +214,7 @@ if (($?)); then
     iterm2_set_user_var gitFilesModified ""
     iterm2_set_user_var gitFilesDeleted ""
 else
-    git_poll "$PWD"
+    git_poll
 fi
 
 

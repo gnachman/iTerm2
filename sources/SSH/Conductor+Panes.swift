@@ -40,6 +40,10 @@ extension Conductor {
     /// resynchronized with its framer. Pane sessions reattach then.
     nonisolated static let didResynchronizeNotification = Notification.Name("iTermConductorDidResynchronize")
 
+    @objc nonisolated static var didResynchronizeNotificationName: String {
+        return didResynchronizeNotification.rawValue
+    }
+
     /// Runs `command` with the remote login shell in `directory`, on a pty of its own sized
     /// rows x cols, with `environment` added to the framer's. An empty command runs an
     /// interactive login shell. `completion` gets its pid, or nil if it could not be started.

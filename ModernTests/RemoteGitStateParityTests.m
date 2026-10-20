@@ -15,6 +15,9 @@
 
 #import "iTermGitClient.h"
 #import "iTermGitState.h"
+#import "iTermGitState+MainApp.h"
+#import "iTermVariableScope.h"
+#import "iTermVariables.h"
 
 // A Swift class (sources/SSH/RemoteGitState.swift). ModernTests cannot import
 // iTerm2SharedARC-Swift.h, so declare what these tests call.
@@ -28,9 +31,17 @@
 + (BOOL)scriptOutputIsWellFormed:(NSString *)output;
 @end
 
+// Also a Swift class (sources/VT100/UserVariableAssignment.swift): the payload of SetUserVar.
+@interface iTermUserVariableAssignment : NSObject
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly, nullable) NSString *value;
+- (nullable instancetype)initWithPayload:(NSString *)payload;
+@end
+
 @interface RemoteGitStateParityTests : XCTestCase
 @property (nonatomic, copy) NSString *repoDir;
 @property (nonatomic, strong) NSMutableArray<NSString *> *tempDirs;
+- (NSString *)run:(NSString *)executable arguments:(NSArray<NSString *> *)arguments inDir:(NSString *)dir status:(int *)status;
 @end
 
 @implementation RemoteGitStateParityTests
@@ -314,6 +325,47 @@
     [self assertParity];
 }
 
+// A file added with intent to add (git add -N).
+- (void)testIntentToAdd {
+    [self write:@"a.txt" contents:@"a\n"];
+    [self commitAll:@"one"];
+    [self write:@"later.txt" contents:@"l\n"];
+    [self git:@[ @"add", @"-N", @"later.txt" ]];
+    [self assertParity];
+}
+
+// A rename in the work tree, of a file added with intent to add, puts its R in the second column.
+// Its original path, here one that looks like a branch header or a deletion, is not a record.
+- (void)testWorkTreeRenameOfAnIntentToAddFile {
+    [self write:@"## evil" contents:@"hello\n"];
+    [self write:@"xDz" contents:@"q\n"];
+    [self commitAll:@"one"];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    XCTAssertTrue([fm moveItemAtPath:[self.repoDir stringByAppendingPathComponent:@"## evil"]
+                              toPath:[self.repoDir stringByAppendingPathComponent:@"new1"] error:nil]);
+    XCTAssertTrue([fm moveItemAtPath:[self.repoDir stringByAppendingPathComponent:@"xDz"]
+                              toPath:[self.repoDir stringByAppendingPathComponent:@"new2"] error:nil]);
+    [self git:@[ @"add", @"-N", @"new1", @"new2" ]];
+    [self assertParity];
+}
+
+// A conflicted path holding a newline must not hide the changes of a path that matches its
+// last line.
+- (void)testConflictWhosePathHoldsANewline {
+    [self write:@"b" contents:@"b\n"];
+    [self write:@"a\nb" contents:@"base\n"];
+    [self commitAll:@"base"];
+    [self git:@[ @"checkout", @"-q", @"-b", @"other" ]];
+    [self write:@"a\nb" contents:@"theirs\n"];
+    [self commitAll:@"theirs"];
+    [self git:@[ @"checkout", @"-q", @"main" ]];
+    [self write:@"a\nb" contents:@"ours\n"];
+    [self commitAll:@"ours"];
+    [self gitAllowingFailure:@[ @"merge", @"-q", @"other" ]];
+    [self write:@"b" contents:@"b\nmore\n"];
+    [self assertParity];
+}
+
 - (void)testDetachedHead {
     [self write:@"a.txt" contents:@"a\n"];
     [self commitAll:@"one"];
@@ -453,6 +505,89 @@
     [self commitAll:@"two"];
     [self git:@[ @"bisect", @"start" ]];
     [self assertParity];
+}
+
+@end
+
+// it2git (in the shell-integration submodule) is the git source for a plain ssh session with no
+// SSH Integration connection: it runs at each prompt and reports through user variables. It must
+// read every fixture above the way libgit2 does, for the fields it reports. It runs under
+// /bin/bash, which on macOS is 3.2, the oldest bash it supports, and its variables are decoded
+// as a session decodes them.
+@interface It2gitParityTests : RemoteGitStateParityTests
+@end
+
+@implementation It2gitParityTests
+
+- (NSString *)it2gitPath {
+    // ModernTests/ -> the repository.
+    NSString *root = [[[NSString stringWithUTF8String:__FILE__] stringByDeletingLastPathComponent]
+                      stringByDeletingLastPathComponent];
+    return [root stringByAppendingPathComponent:@"submodules/iTerm2-shell-integration/utilities/it2git"];
+}
+
+// What it2git sets, as a session's user variables would hold it.
+- (iTermGitState *)it2gitStateInDir:(NSString *)dir output:(NSString **)outputPtr {
+    int status = 0;
+    NSString *output = [self run:@"/bin/bash" arguments:@[ [self it2gitPath] ] inDir:dir status:&status];
+    *outputPtr = output;
+    XCTAssertEqual(status, 0, @"%@", output);
+    iTermVariables *variables = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextSession owner:self];
+    iTermVariableScope *scope = [[iTermVariableScope alloc] init];
+    [scope addVariables:variables toScopeNamed:nil];
+    iTermVariables *user = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self];
+    user.isUserWritable = YES;
+    [scope setValue:user forVariableNamed:@"user"];
+    NSString *prefix = @"\033]1337;SetUserVar=";
+    for (NSString *chunk in [output componentsSeparatedByString:prefix]) {
+        NSRange bel = [chunk rangeOfString:@"\a"];
+        if (bel.location == NSNotFound) {
+            continue;
+        }
+        iTermUserVariableAssignment *assignment =
+            [[iTermUserVariableAssignment alloc] initWithPayload:[chunk substringToIndex:bel.location]];
+        if (assignment) {
+            [scope setValue:assignment.value ?: @"" forVariableNamed:assignment.name];
+        }
+    }
+    return [[iTermGitState alloc] initWithScope:scope];
+}
+
+// it2git has no base and always reports stats, so each fixture is compared once, with stats and
+// against HEAD; the fields that depend on a base are not among those it reports.
+- (void)assertParityForPath:(NSString *)path gitBase:(NSString *)gitBase stats:(BOOL)stats {
+    if (!stats || (gitBase.length > 0 && ![gitBase isEqualToString:@"HEAD"])) {
+        return;
+    }
+    // A shell can't start in a directory that is gone; its nearest ancestor stands in.
+    NSString *dir = path;
+    BOOL isDirectory = NO;
+    while (![[NSFileManager defaultManager] fileExistsAtPath:dir isDirectory:&isDirectory] || !isDirectory) {
+        dir = [dir stringByDeletingLastPathComponent];
+    }
+    iTermGitState *local = [iTermGitState gitStateForRepoAtPath:path gitBase:nil includeDiffStats:YES];
+    NSString *output = nil;
+    iTermGitState *remote = [self it2gitStateInDir:dir output:&output];
+    NSString *context = [NSString stringWithFormat:@"path=%@ it2git output=%@", path,
+                         [output stringByReplacingOccurrencesOfString:@"\033" withString:@"ESC"]];
+    XCTAssertNotNil(remote, @"%@", context);
+    if (!local) {
+        // Not a repository, or HEAD is unborn: it2git clears every variable.
+        XCTAssertEqualObjects(remote.branch, @"", @"%@", context);
+        XCTAssertFalse(remote.dirty, @"%@", context);
+        return;
+    }
+    XCTAssertEqualObjects(remote.branch, local.branch, @"%@", context);
+    XCTAssertEqualObjects(remote.ahead, local.ahead, @"%@", context);
+    XCTAssertEqualObjects(remote.behind, local.behind, @"%@", context);
+    XCTAssertEqual(remote.dirty, local.dirty, @"%@", context);
+    XCTAssertEqual(remote.adds, local.adds, @"%@", context);
+    XCTAssertEqual(remote.deletes, local.deletes, @"%@", context);
+    XCTAssertEqual(remote.linesInserted, local.linesInserted, @"%@", context);
+    XCTAssertEqual(remote.linesDeleted, local.linesDeleted, @"%@", context);
+    XCTAssertEqual(remote.filesAdded, local.filesAdded, @"%@", context);
+    XCTAssertEqual(remote.filesModified, local.filesModified, @"%@", context);
+    XCTAssertEqual(remote.filesDeleted, local.filesDeleted, @"%@", context);
 }
 
 @end

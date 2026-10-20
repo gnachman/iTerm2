@@ -573,6 +573,11 @@ final class TmuxWorkgroupEndToEndHarness: XCTestCase, iTermWarningHandler {
         return session?.hasAnnouncement(withIdentifier: TmuxWorkgroupHiddenPaneOffer.announcementIdentifier(instanceID: instanceID)) ?? false
     }
 
+    /// A pane's own remain-on-exit, empty when it has none.
+    private func remainOnExit(_ paneID: Int) throws -> String {
+        return try server.lines(["show", "-p", "-v", "-t", "%\(paneID)", "remain-on-exit"]).joined()
+    }
+
     /// Panes on the server.
     private func paneIDs() throws -> Set<Int> {
         return Set(try server.lines(["list-panes", "-s", "-t", "s", "-F", "#{pane_id}"]).compactMap { Int($0.dropFirst()) })
@@ -602,6 +607,8 @@ final class TmuxWorkgroupEndToEndHarness: XCTestCase, iTermWarningHandler {
         }
         let tags = try tags()
         XCTAssertTrue(peers.allSatisfy { tags[$0] == nil }, "the peers are untagged: \(tags)")
+        XCTAssertEqual(try peers.map { try remainOnExit($0) }, ["", ""],
+                       "and close when their programs exit, like any pane")
         XCTAssertNotNil(tags[0], "the leader keeps its tag, for Macs that have the workgroup")
         XCTAssertFalse(hiddenPaneOffer(in: leader, instanceID: instanceID))
     }
@@ -638,6 +645,79 @@ final class TmuxWorkgroupEndToEndHarness: XCTestCase, iTermWarningHandler {
         let count = screenText(session)
         waitUntil("its output to keep arriving") { self.screenText(session) != count && self.screenText(session).contains("COUNTER-") }
         XCTAssertEqual(try parkedWindowCount(), 0)
+    }
+
+    // A workgroup this Mac has, whose leader's window is hidden in iTerm2, is not adopted while
+    // the leader has no session, but it is not foreign: its peers must not be offered, or
+    // opening (or, before, just closing the offer) would take them from the workgroup on every
+    // Mac. The offer for a window an ended workgroup left shows the refresh has happened.
+    func testAWorkgroupWhoseLeaderWindowIsHiddenIsNotOffered() throws {
+        let gateway = try attach()
+        let workgroup = addPeersWorkgroup()
+        let leader = try leader(gateway)
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: leader, mechanism: .menu))
+        let instance = try XCTUnwrap(leader.workgroupInstance)
+        waitUntil("both peers' sessions") { instance.peerPort.realizedPeerSessions.count == 3 }
+        let instanceID = instance.instanceUniqueIdentifier
+        let leaderWindow = try server.int(["display", "-p", "-t", "%0", "#{window_id}"], prefix: "@")
+        // Somewhere for offers to show once the leader's window is hidden.
+        _ = try server.lines(["new-window", "-d", "-t", "s:", "sh", "-c", "exec sleep 86400"])
+        let controller = try XCTUnwrap(gateway.tmuxController)
+        waitUntil("the other window's tab") { controller.clientSessions().count > 1 }
+        controller.hideWindow(Int32(leaderWindow))
+        waitUntil("the leader's tab to close") { controller.session(forWindowPane: 0)?.delegate == nil }
+        gateway.tmuxController?.detach()
+        waitUntil("the client to detach") { gateway.tmuxController == nil || gateway.tmuxController?.isAttached == false }
+
+        let again = try attach(waitingForLeader: false)
+        let reattached = try XCTUnwrap(again.tmuxController)
+        waitUntil("a tab") { !reattached.clientSessions().isEmpty }
+        _ = try makeParkedCounter()
+        waitUntil("the offer for the ended workgroup's window") {
+            reattached.clientSessions().contains { self.hiddenPaneOffer(in: $0, instanceID: "X") }
+        }
+        XCTAssertFalse(reattached.clientSessions().contains { self.hiddenPaneOffer(in: $0, instanceID: instanceID) },
+                       "the workgroup's own peers are not offered")
+    }
+
+    // Another Mac enters a workgroup in steps: the record and the leader's tag, then each member.
+    // This Mac adopts as soon as it sees the leader, so a member whose pane comes later must
+    // still join, or it stays an ordinary pane here (no toolbar, not closed with the workgroup).
+    func testAMemberCreatedAfterAdoptionJoins() throws {
+        let gateway = try attach()
+        let controller = try XCTUnwrap(gateway.tmuxController)
+        let workgroup = addSplitAndTabWorkgroup()
+        let instanceID = "late-" + UUID().uuidString
+        let record = TmuxWorkgroupState.InstanceRecord(workgroupID: workgroup.uniqueIdentifier,
+                                                       gitBase: "",
+                                                       skeleton: try XCTUnwrap(TmuxWorkgroupState.Skeleton(workgroup: workgroup)))
+        _ = try server.lines(["set", "-t", "s", TmuxWorkgroupState.instanceOptionName(instanceID: instanceID), record.encoded,
+                              ";", "set", "-p", "-t", "%0", TmuxWorkgroupState.paneOptionName,
+                              TmuxWorkgroupState.PaneTag(instanceID: instanceID, position: 0).encoded])
+        waitUntil("the instance to be adopted") { controller.session(forWindowPane: 0)?.workgroupInstance != nil }
+        let instance = try XCTUnwrap(controller.session(forWindowPane: 0)?.workgroupInstance)
+        XCTAssertTrue(instance.nonPeerSessions.isEmpty, "nothing else yet")
+
+        // The split (position 1), as the other Mac would create it.
+        let split = try server.int(["split-window", "-d", "-t", "%0", "-P", "-F", "#{pane_id}", "exec sleep 86400"],
+                                   prefix: "%")
+        _ = try server.lines(["set", "-p", "-t", "%\(split)", TmuxWorkgroupState.paneOptionName,
+                              TmuxWorkgroupState.PaneTag(instanceID: instanceID, position: 1).encoded])
+        waitUntil("the split to join the workgroup") {
+            controller.session(forWindowPane: Int32(split))?.workgroupInstance === instance
+        }
+        XCTAssertEqual(instance.nonPeerSessions.count, 1)
+
+        // The other Mac's iTerm2 is too old to keep members' panes; this one makes it so, or the
+        // split's program exiting would close it rather than say it ended.
+        try waitUntil("the split to keep its pane") { try self.remainOnExit(split) == "on" }
+        let session = try XCTUnwrap(controller.session(forWindowPane: Int32(split)))
+        _ = try server.lines(["respawn-pane", "-k", "-t", "%\(split)", "true"])
+        waitUntil("the split to say it ended") {
+            session.hasAnnouncement(withIdentifier: self.sessionEndedIdentifier)
+        }
+        XCTAssertTrue(controller.session(forWindowPane: 0)?.workgroupInstance === instance, "the workgroup carries on")
     }
 
     // MARK: - Code review, diff and Reload (14c part 4)
@@ -709,6 +789,38 @@ final class TmuxWorkgroupEndToEndHarness: XCTestCase, iTermWarningHandler {
         return ReviewWorkgroup(instance: instance,
                                diffID: workgroup.uniqueIdentifier + ".diff",
                                reviewID: workgroup.uniqueIdentifier + ".review")
+    }
+
+    // The review in view adds a clipping, as its it2 add-clipping does. The clipping goes to the
+    // workgroup's leader, which is hidden (buried) while the review is in view, so the panel has
+    // to open in the review's window, where the user is looking.
+    func testAClippingFromTheReviewInViewOpensItsPanel() throws {
+        let directory = try outputDirectory()
+        let gateway = try attach()
+        let w = try enterReviewWorkgroup(gateway, directory: directory)
+        let port = w.instance.peerPort
+        XCTAssertTrue(port.activate(identifier: w.reviewID))
+        waitUntil("the review in view") { !w.review.isTmuxBuried && w.review.view?.window != nil }
+        let review = w.review
+        XCTAssertTrue(try XCTUnwrap(w.instance.mainSession).isTmuxBuried, "the leader is hidden")
+        XCTAssertFalse(review.clippingsVisible)
+
+        var finished = false
+        var callError: Error?
+        iTermScriptFunctionCall.callFunction(#"iterm2.add_clipping(type: "Code Review Comment", title: "t", detail: "d")"#,
+                                             timeout: 5,
+                                             sideEffectsAllowed: true,
+                                             scope: review.genericScope,
+                                             retainSelf: true) { _, error, _ in
+            callError = error
+            finished = true
+        }
+        waitUntil("add_clipping to finish") { finished }
+        XCTAssertNil(callError)
+        XCTAssertEqual(review.clippings.map(\.title), ["t"], "the group's clippings, seen from the review")
+        waitUntil("the clippings panel to open in the review's window") {
+            (review.view?.actualRightExtra ?? 0) > 0
+        }
     }
 
     // A code review peer waits behind its prompt overlay, running nothing. Start evaluates the
@@ -1093,6 +1205,206 @@ final class TmuxWorkgroupEndToEndHarness: XCTestCase, iTermWarningHandler {
                        "the leader is no longer in a parked window")
     }
 
+    // The same, attached: closing the member in view (its pane gone, not just its program)
+    // ends the workgroup, as closing a member does locally. The leader is back in a tab, the
+    // other peer's pane is gone with its workgroup, and nothing is left adopted halfway.
+    func testKillingThePeerInViewEndsTheWorkgroupWhileAttached() throws {
+        let gateway = try attach()
+        let workgroup = addPeersWorkgroup()
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: try leader(gateway), mechanism: .menu))
+        let instance = try XCTUnwrap(try leader(gateway).workgroupInstance)
+        let port = instance.peerPort
+        let p1 = workgroup.uniqueIdentifier + ".p1"
+        waitUntil("both peers' sessions") { port.realizedPeerSessions.count == 3 }
+        XCTAssertTrue(port.activate(identifier: p1))
+        let peer = try XCTUnwrap(port.session(forIdentifier: p1))
+        waitUntil("the peer in view") { !peer.isTmuxBuried }
+        let other = Int(try XCTUnwrap(port.session(forIdentifier: workgroup.uniqueIdentifier + ".p2")).tmuxPane)
+        let controller = try XCTUnwrap(gateway.tmuxController)
+
+        _ = try server.lines(["kill-pane", "-t", "%\(peer.tmuxPane)"])
+        try waitUntil("the workgroup to end, here and on the server") {
+            try self.records().isEmpty && !self.paneIDs().contains(other)
+        }
+        waitUntil("the leader back in a tab, in no workgroup") {
+            guard let leader = controller.session(forWindowPane: 0) else {
+                return false
+            }
+            return !leader.isTmuxBuried && leader.delegate is PTYTab && leader.workgroupInstance == nil
+        }
+        XCTAssertFalse(iTermWorkgroupController.instance.allInstances.contains {
+            $0.instanceUniqueIdentifier == instance.instanceUniqueIdentifier
+        }, "not adopted again")
+        try waitUntil("no parked windows left") { try self.parkedWindowCount() == 0 }
+    }
+
+    // MARK: - Members whose programs exit
+    //
+    // As in a local workgroup: when the leader exits the workgroup ends; when another member's
+    // program exits, its session shows that it ended, with Restart, and the workgroup carries on.
+    // Closing a member (its pane gone, not just its program) ends the workgroup.
+
+    private let sessionEndedIdentifier = iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier
+
+    /// A root with two peers: p1 runs `p1Command`, p2 `p2Command`.
+    private func addExitingPeersWorkgroup(p1Command: String, p2Command: String) -> iTermWorkgroup {
+        let id = "e2e-" + UUID().uuidString
+        let workgroup = iTermWorkgroup(uniqueIdentifier: id, name: "E2E exiting peers", sessions: [
+            config(id + ".root", .root, parent: nil, toolbarItems: [.modeSwitcher]),
+            config(id + ".p1", .peer, parent: id + ".root", toolbarItems: [.modeSwitcher], command: p1Command),
+            config(id + ".p2", .peer, parent: id + ".root", toolbarItems: [.modeSwitcher], command: p2Command),
+        ])
+        iTermWorkgroupModel.instance.add(workgroup)
+        workgroupIDs.append(id)
+        return workgroup
+    }
+
+    private func paneIsDead(_ paneID: Int32) throws -> Bool {
+        return try server.lines(["display", "-p", "-t", "%\(paneID)", "#{pane_dead}"]) == ["1"]
+    }
+
+    func testAPeerInViewWhoseProgramExitsShowsItEndedAndRestarts() throws {
+        let gateway = try attach()
+        let marker = (NSTemporaryDirectory() as NSString).appendingPathComponent("e2e-runs-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: marker) }
+        let workgroup = addExitingPeersWorkgroup(p1Command: "echo run >> \(marker); read line",
+                                                 p2Command: "exec sleep 86400")
+        let leader = try leader(gateway)
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: leader, mechanism: .menu))
+        let instance = try XCTUnwrap(leader.workgroupInstance)
+        let port = instance.peerPort
+        let p1 = workgroup.uniqueIdentifier + ".p1"
+        waitUntil("both peers' sessions") { port.realizedPeerSessions.count == 3 }
+        XCTAssertTrue(port.activate(identifier: p1))
+        let peer = try XCTUnwrap(port.session(forIdentifier: p1))
+        waitUntil("the peer in view") { !peer.isTmuxBuried }
+
+        peer.writeTask("\r")  // Its program reads a line and exits.
+        try waitUntil("its pane to die") { try self.paneIsDead(peer.tmuxPane) }
+        waitUntil("the session to say it ended") { peer.hasAnnouncement(withIdentifier: self.sessionEndedIdentifier) }
+        XCTAssertTrue(leader.workgroupInstance === instance, "the workgroup carries on")
+        XCTAssertEqual(try records().count, 1)
+
+        XCTAssertTrue(peer.debugSelectAction(0, ofAnnouncementWithIdentifier: sessionEndedIdentifier))
+        waitUntil("the program to run again") {
+            ((try? String(contentsOfFile: marker, encoding: .utf8)) ?? "").components(separatedBy: "run").count - 1 == 2
+        }
+        waitUntil("the banner to go") { !(port.session(forIdentifier: p1)?.hasAnnouncement(withIdentifier: self.sessionEndedIdentifier) ?? true) }
+        XCTAssertTrue(leader.workgroupInstance === instance)
+    }
+
+    /// Enters a workgroup whose first peer, in view, appends to `marker` each run; the first run
+    /// waits for a line, later ones exit at once.
+    private func enterWithAPeerThatDiesAgain(marker: String) throws -> (iTermWorkgroupInstance, PTYSession, String) {
+        let gateway = try attach()
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: marker) }
+        let workgroup = addExitingPeersWorkgroup(p1Command: "echo run >> \(marker); [ $(wc -l < \(marker)) -gt 1 ] || read line",
+                                                 p2Command: "exec sleep 86400")
+        let leader = try leader(gateway)
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: leader, mechanism: .menu))
+        let instance = try XCTUnwrap(leader.workgroupInstance)
+        let p1 = workgroup.uniqueIdentifier + ".p1"
+        waitUntil("both peers' sessions") { instance.peerPort.realizedPeerSessions.count == 3 }
+        XCTAssertTrue(instance.peerPort.activate(identifier: p1))
+        let peer = try XCTUnwrap(instance.peerPort.session(forIdentifier: p1))
+        waitUntil("the peer in view") { !peer.isTmuxBuried }
+        peer.writeTask("\r")
+        waitUntil("the session to say it ended") { peer.hasAnnouncement(withIdentifier: self.sessionEndedIdentifier) }
+        return (instance, peer, p1)
+    }
+
+    private func runs(_ marker: String) -> Int {
+        return ((try? String(contentsOfFile: marker, encoding: .utf8)) ?? "").components(separatedBy: "run").count - 1
+    }
+
+    // A restarted program that exits again, perhaps before tmux next reports, says so again.
+    func testARestartedPeerThatExitsAgainSaysSoAgain() throws {
+        let marker = (NSTemporaryDirectory() as NSString).appendingPathComponent("e2e-runs-\(UUID().uuidString)")
+        let (instance, peer, p1) = try enterWithAPeerThatDiesAgain(marker: marker)
+        XCTAssertTrue(peer.debugSelectAction(0, ofAnnouncementWithIdentifier: sessionEndedIdentifier))
+        XCTAssertFalse(peer.hasAnnouncement(withIdentifier: sessionEndedIdentifier))
+        waitUntil("the program to run again") { self.runs(marker) == 2 }
+        waitUntil("the session to say it ended again") {
+            instance.peerPort.session(forIdentifier: p1)?.hasAnnouncement(withIdentifier: self.sessionEndedIdentifier) == true
+        }
+        XCTAssertTrue(instance.mainSession?.workgroupInstance === instance)
+    }
+
+    // Another Mac restarted the program before this one heard it ended: Restart here must not
+    // kill and rerun it.
+    func testRestartingARunThatAnotherClientAlreadyRestartedDoesNothing() throws {
+        let marker = (NSTemporaryDirectory() as NSString).appendingPathComponent("e2e-runs-\(UUID().uuidString)")
+        let (instance, peer, _) = try enterWithAPeerThatDiesAgain(marker: marker)
+        let controller = try XCTUnwrap(peer.tmuxController)
+        // Another client respawns it to run until killed; this one's banner is stale until tmux
+        // reports, which can't happen before the click since nothing runs in between.
+        _ = try server.lines(["respawn-pane", "-k", "-t", "%\(peer.tmuxPane)", "echo run >> \(marker); exec sleep 86400"])
+        let pid = try server.lines(["display", "-p", "-t", "%\(peer.tmuxPane)", "#{pane_pid}"])
+        XCTAssertTrue(peer.debugSelectAction(0, ofAnnouncementWithIdentifier: sessionEndedIdentifier))
+        // Anything Restart sends is answered before these, as the gateway keeps order; twice, for a
+        // relaunch decided on the first reply.
+        for _ in 0..<2 {
+            var answered = false
+            controller.gateway.send("display -p ok") { _ in answered = true }
+            waitUntil("tmux to answer") { answered }
+        }
+        waitUntil("the other client's run") { self.runs(marker) == 2 }
+        XCTAssertEqual(try server.lines(["display", "-p", "-t", "%\(peer.tmuxPane)", "#{pane_pid}"]), pid,
+                       "the program the other client restarted still runs")
+        XCTAssertTrue(instance.mainSession?.workgroupInstance === instance)
+    }
+
+    func testAParkedPeerWhoseProgramExitsCanBeSwitchedToAndRestarted() throws {
+        let gateway = try attach()
+        let workgroup = addExitingPeersWorkgroup(p1Command: "exec sleep 86400", p2Command: "sleep 1")
+        let leader = try leader(gateway)
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: leader, mechanism: .menu))
+        let instance = try XCTUnwrap(leader.workgroupInstance)
+        let port = instance.peerPort
+        let p2 = workgroup.uniqueIdentifier + ".p2"
+        waitUntil("both peers' sessions") { port.realizedPeerSessions.count == 3 }
+        let peer = try XCTUnwrap(port.session(forIdentifier: p2))
+        XCTAssertTrue(peer.isTmuxBuried)
+        try waitUntil("its pane to die while parked") { try self.paneIsDead(peer.tmuxPane) }
+        XCTAssertTrue(leader.workgroupInstance === instance, "the workgroup carries on")
+
+        XCTAssertTrue(port.activate(identifier: p2))
+        waitUntil("the ended peer in view, saying it ended") {
+            guard let shown = port.session(forIdentifier: p2) else {
+                return false
+            }
+            return !shown.isTmuxBuried && shown.hasAnnouncement(withIdentifier: self.sessionEndedIdentifier)
+        }
+        let shown = try XCTUnwrap(port.session(forIdentifier: p2))
+        XCTAssertTrue(shown.debugSelectAction(0, ofAnnouncementWithIdentifier: sessionEndedIdentifier))
+        try waitUntil("it to run again") {
+            guard let current = port.session(forIdentifier: p2) else {
+                return false
+            }
+            return try !self.paneIsDead(current.tmuxPane)
+        }
+    }
+
+    // Closing a member, not just its program ending, ends the workgroup, as locally. A parked
+    // peer's pane going away used to leave a session nothing could switch to or recreate.
+    func testKillingAParkedPeersPaneEndsTheWorkgroup() throws {
+        let gateway = try attach()
+        let workgroup = addPeersWorkgroup()
+        let leader = try leader(gateway)
+        XCTAssertTrue(iTermWorkgroupController.instance.enter(workgroupUniqueIdentifier: workgroup.uniqueIdentifier,
+                                                              on: leader, mechanism: .menu))
+        let instance = try XCTUnwrap(leader.workgroupInstance)
+        waitUntil("both peers' sessions") { instance.peerPort.realizedPeerSessions.count == 3 }
+        let peer = try XCTUnwrap(instance.peerPort.session(forIdentifier: workgroup.uniqueIdentifier + ".p2"))
+        _ = try server.lines(["kill-pane", "-t", "%\(peer.tmuxPane)"])
+        waitUntil("the workgroup to end") { leader.workgroupInstance == nil }
+        try waitUntil("the server to forget it") { try self.records().isEmpty }
+    }
+
     // MARK: - Waiting on another client's lock
 
     /// Another client, connected, holding the session's workgroup lock as if it were creating peers.
@@ -1177,6 +1489,37 @@ final class TmuxWorkgroupEndToEndHarness: XCTestCase, iTermWarningHandler {
         let w = try enterWhileLocked(gateway)
         XCTAssertTrue(w.leader.debugSelectAction(1, ofAnnouncementWithIdentifier: w.identifier))
         waitUntil("the bar to go") { !w.leader.hasAnnouncement(withIdentifier: w.identifier) }
+        XCTAssertEqual(try lockValue(), held)
+        XCTAssertEqual(try parkedWindowCount(), 0)
+    }
+
+    // A second creation queued behind the waiting one waits too. Stop Waiting stops both: the
+    // second must not start once the first is cancelled and wait again.
+    func testCancelStopsACreationQueuedBehindTheWait() throws {
+        let gateway = try attach()
+        _ = try holdLockInAnotherClient()
+        let held = try lockValue()
+        let w = try enterWhileLocked(gateway)
+        let instance = try XCTUnwrap(w.leader.workgroupInstance)
+        let binding = try XCTUnwrap(instance.tmuxBinding)
+        binding.createPeers(instance.workgroup.sessions.filter { $0.kind == .peer }, gitBase: "")
+        let controller = try XCTUnwrap(gateway.tmuxController)
+        // Anything the second creation sends before it queues is answered before this.
+        for _ in 0..<2 {
+            var answered = false
+            controller.gateway.send("display -p ok") { _ in answered = true }
+            waitUntil("tmux to answer") { answered }
+        }
+
+        XCTAssertTrue(w.leader.debugSelectAction(1, ofAnnouncementWithIdentifier: w.identifier))
+        XCTAssertFalse(binding.isWaitingForLock)
+        // A creation that started would have tried the lock, read who holds it, and waited.
+        for _ in 0..<3 {
+            var answered = false
+            controller.gateway.send("display -p ok") { _ in answered = true }
+            waitUntil("tmux to answer") { answered }
+        }
+        XCTAssertFalse(binding.isWaitingForLock, "nothing waits again")
         XCTAssertEqual(try lockValue(), held)
         XCTAssertEqual(try parkedWindowCount(), 0)
     }

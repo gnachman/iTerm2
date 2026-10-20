@@ -17,8 +17,8 @@
 //
 //  Side effects on this Mac, because it is also the remote host: ssh integration uploads it2 and
 //  its interpreter under ~/.iterm2 as it does on any host, and the always-allow tests write
-//  ~/.iterm2/it2-grant. That file is backed up and restored. Grants on the Mac side go to an
-//  in-memory store, never the user's defaults.
+//  grants in ~/.iterm2/it2-grants, which are removed afterwards, leaving the ones that were
+//  there. Grants on the Mac side go to an in-memory store, never the user's defaults.
 //
 
 import XCTest
@@ -54,8 +54,8 @@ private struct RemoteResult: CustomStringConvertible {
 final class SSHIntegrationLiveHarness: XCTestCase {
     private var sessions = [PTYSession]()
     private var store: IT2HostGrantStore!
-    private var savedGrantFile: Data?
-    private let grantFilePath = NSHomeDirectory() + "/.iterm2/it2-grant"
+    private let grantDirectory = NSHomeDirectory() + "/" + IT2GrantToken.remoteDirectoryRelativePath
+    private var grantsBefore = Set<String>()
 
     // Generous: the bootstrap uploads files and starts a framer before it2 can work. Waiting on a
     // condition rather than a fixed delay, so a slow run is slow, not a failure.
@@ -85,7 +85,7 @@ final class SSHIntegrationLiveHarness: XCTestCase {
             Self.removeLeftoverWorkgroups()
         }
         MainActor.assumeIsolated {
-            savedGrantFile = FileManager.default.contents(atPath: grantFilePath)
+            grantsBefore = Set((try? FileManager.default.contentsOfDirectory(atPath: grantDirectory)) ?? [])
             store = IT2HostGrantStore(backing: LiveGrantBacking())
             Conductor.hostGrantStoreForTesting = store
             Conductor.it2APIEnabledForTesting = true
@@ -101,11 +101,9 @@ final class SSHIntegrationLiveHarness: XCTestCase {
             sessions = []
             Conductor.hostGrantStoreForTesting = nil
             Conductor.it2APIEnabledForTesting = nil
-            if let savedGrantFile {
-                FileManager.default.createFile(atPath: grantFilePath, contents: savedGrantFile,
-                                               attributes: [.posixPermissions: 0o600])
-            } else {
-                try? FileManager.default.removeItem(atPath: grantFilePath)
+            let grants = (try? FileManager.default.contentsOfDirectory(atPath: grantDirectory)) ?? []
+            for name in grants where !grantsBefore.contains(name) {
+                try? FileManager.default.removeItem(atPath: grantDirectory + "/" + name)
             }
         }
         super.tearDown()
@@ -1053,7 +1051,8 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         waitUntil("the grant to be recorded", timeout: commandTimeout) {
             store.grant(forHost: host) != nil
         }
-        let attributes = try FileManager.default.attributesOfItem(atPath: grantFilePath)
+        let grantID = try XCTUnwrap(store.grant(forHost: host)).id
+        let attributes = try FileManager.default.attributesOfItem(atPath: grantDirectory + "/" + grantID)
         XCTAssertEqual((attributes[.posixPermissions] as? NSNumber)?.intValue, 0o600)
         close(first)
 
@@ -1077,6 +1076,91 @@ final class SSHIntegrationLiveHarness: XCTestCase {
     // The real lookup through framer's pty: the login shell starts, its rc files run, and the
     // markers come back intact around /usr/bin/env. Compared with what ssh reports for the same
     // login shell run the same way, which is what Claude Code started from that shell would see.
+    // MARK: - tmux Integration over SSH Integration
+
+    // A pane whose shell doesn't run shell integration never reports its host. On a tmux server
+    // reached through SSH Integration it takes the connection's, so its git status is read on
+    // that host. Its directory comes from tmux.
+    func testATmuxPaneWithoutShellIntegrationTakesTheConnectionsHost() throws {
+        let tmux = ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"].first {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }
+        let tmuxPath = try XCTUnwrap(tmux, "no tmux on this machine")
+        let socket = "it2live-\(UUID().uuidString.prefix(8))"
+        let repo = FileManager.default.temporaryDirectory.appendingPathComponent("it2live-repo-\(UUID().uuidString)")
+            .resolvingSymlinksInPath().path
+        try FileManager.default.createDirectory(atPath: repo, withIntermediateDirectories: true)
+        let git = Process()
+        git.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        git.arguments = ["init", "-q", repo]
+        try git.run()
+        git.waitUntilExit()
+        addTeardownBlock {
+            let kill = Process()
+            kill.executableURL = URL(fileURLWithPath: tmuxPath)
+            kill.arguments = ["-L", socket, "kill-server"]
+            try? kill.run()
+            kill.waitUntilExit()
+            try? FileManager.default.removeItem(atPath: repo)
+        }
+        let gateway = try XCTUnwrap(connect(loadShellIntegration: false,
+                                            command: "\(tmuxPath) -L \(socket) -f /dev/null -CC new-session -c \(repo) /bin/sh"))
+        waitUntil("the tmux pane's session", timeout: connectTimeout) {
+            gateway.tmuxController?.session(forWindowPane: 0) != nil
+        }
+        let pane = try XCTUnwrap(gateway.tmuxController?.session(forWindowPane: 0))
+        XCTAssertNil(pane.currentHost, "the pane's shell reports nothing")
+        let conductor = try XCTUnwrap(gateway.conductor)
+        waitUntil("the pane to take the connection's host", timeout: commandTimeout) {
+            let host = pane.genericScope.value(forVariableName: iTermVariableKeySessionHostname) as? String
+            return host != nil && (host == conductor.discoveredHostname || host == conductor.sshIdentity.hostname)
+        }
+        waitUntil("the pane to be known as remote", timeout: commandTimeout) {
+            pane.genericScope.value(forVariableName: iTermVariableKeySessionIsLocalhost) as? Bool == false
+        }
+        XCTAssertEqual(pane.genericScope.value(forVariableName: iTermVariableKeySessionIsLocalhost) as? Bool, false,
+                       "gateway job \(String(describing: gateway.genericScope.value(forVariableName: iTermVariableKeySessionJob)))")
+        // The directory is polled from tmux as output arrives, as it does when the user types.
+        pane.writeTask("\n")
+        // Compared resolved: tmux reports the physical path, /private/var for /var.
+        let resolved = { (path: String?) in path.map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path } }
+        waitUntil("the pane's directory from tmux", timeout: commandTimeout) {
+            resolved(pane.genericScope.value(forVariableName: iTermVariableKeySessionPath) as? String) == resolved(repo)
+        }
+        XCTAssertNotNil(iTermRemoteGitPollWorker.worker(forScope: pane.genericScope),
+                        "its git status is read through the connection")
+    }
+
+    // A plain ssh from the connected host to another runs tmux there, which isn't the
+    // connection's host, so the panes are not said to be on it. (Here both are this machine, but
+    // nothing tells the connection that.)
+    func testATmuxPaneBeyondAPlainSSHIsNotGivenTheConnectionsHost() throws {
+        let tmux = ["/opt/homebrew/bin/tmux", "/usr/local/bin/tmux", "/usr/bin/tmux"].first {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }
+        let tmuxPath = try XCTUnwrap(tmux, "no tmux on this machine")
+        let socket = "it2live-\(UUID().uuidString.prefix(8))"
+        addTeardownBlock {
+            let kill = Process()
+            kill.executableURL = URL(fileURLWithPath: tmuxPath)
+            kill.arguments = ["-L", socket, "kill-server"]
+            try? kill.run()
+            kill.waitUntilExit()
+        }
+        let gateway = try XCTUnwrap(connect(loadShellIntegration: false,
+                                            command: "ssh -o BatchMode=yes -tt localhost \(tmuxPath) -L \(socket) -f /dev/null -CC new-session /bin/sh"))
+        waitUntil("the tmux pane's session", timeout: connectTimeout) {
+            gateway.tmuxController?.session(forWindowPane: 0) != nil
+        }
+        let pane = try XCTUnwrap(gateway.tmuxController?.session(forWindowPane: 0))
+        waitUntil("the gateway's job to be known", timeout: commandTimeout) {
+            (gateway.genericScope.value(forVariableName: iTermVariableKeySessionJob) as? String) != nil
+        }
+        XCTAssertEqual(gateway.genericScope.value(forVariableName: iTermVariableKeySessionJob) as? String, "ssh")
+        XCTAssertNil(pane.genericScope.value(forVariableName: iTermVariableKeySessionIsLocalhost),
+                     "no host is inferred for a pane on another host")
+    }
+
     func testRemoteConfigDirectoryLookup() throws {
         let session = try XCTUnwrap(connect())
         let conductor = try XCTUnwrap(session.conductor)

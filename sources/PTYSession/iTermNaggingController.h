@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey;
 extern NSString *const kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey;
 extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
+// The Session Ended announcement.
+extern NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier;
 
 @protocol iTermNaggingControllerDelegate<NSObject>
 - (BOOL)naggingControllerCanShowMessageWithIdentifier:(NSString *)identifier;

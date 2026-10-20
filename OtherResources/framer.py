@@ -2132,6 +2132,9 @@ async def handle_send(identifier, args):
     return False
 
 async def handle_kill(identifier, args):
+    """kill <pid> [hup]: end a process. A pane is hung up on, as closing a terminal does; any
+    other process gets SIGTERM, or with `hup` is hung up on too, which ends an interactive shell
+    that ignores SIGTERM. A framer before `hup` ignores it and sends SIGTERM."""
     log(f'kill {args}')
     try:
         pid = int(args[0])
@@ -2144,7 +2147,7 @@ async def handle_kill(identifier, args):
         end(q,identifier, 1)
         return
     proc = PROCESSES[int(args[0])]
-    if proc.pane:
+    if proc.pane or args[1:2] == ["hup"]:
         proc.hang_up()
     else:
         proc.send_signal(signal.SIGTERM)

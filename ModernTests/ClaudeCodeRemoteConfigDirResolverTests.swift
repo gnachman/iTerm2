@@ -121,6 +121,7 @@ final class ClaudeCodeRemoteConfigDirResolverTests: XCTestCase {
 
     private final class CommandLog {
         var commands = [String]()
+        var killed = [Int32]()
     }
 
     private final class Clock {
@@ -134,12 +135,15 @@ final class ClaudeCodeRemoteConfigDirResolverTests: XCTestCase {
 
     private func dependencies(clock: Clock,
                               log: CommandLog? = nil,
+                              started: ((@escaping (Int32) -> Void) -> Void)? = nil,
                               run: @escaping (String, @escaping (Data, Int32) -> Void) -> Void) -> Resolver.Dependencies {
         return Resolver.Dependencies(
-            run: { command, completion in
+            run: { command, startedCallback, completion in
                 log?.commands.append(command)
+                started?(startedCallback)
                 run(command, completion)
             },
+            kill: { pid in log?.killed.append(pid) },
             after: { _, block in clock.pending.append(block) },
             makeSentinel: { self.sentinel })
     }
@@ -178,6 +182,45 @@ final class ClaudeCodeRemoteConfigDirResolverTests: XCTestCase {
         XCTAssertEqual(results, [nil])
         finish?(Data(output(env: ["CLAUDE_CONFIG_DIR=/late"]).utf8), 0)
         XCTAssertEqual(results, [nil], "delivered exactly once")
+    }
+
+    // A shell that never answers (an rc file waiting for input) is ended at the deadline rather
+    // than left on the host for the life of the connection.
+    func testTheShellIsEndedAtTheDeadline() {
+        let clock = Clock()
+        let log = CommandLog()
+        var results = [String?]()
+        let deps = dependencies(clock: clock, log: log, started: { $0(77) }) { _, _ in }
+        Resolver.resolve(shell: "/bin/zsh", home: "/home/u", dependencies: deps) { results.append($0) }
+        XCTAssertEqual(log.killed, [])
+        clock.fire()
+        XCTAssertEqual(results, [nil])
+        XCTAssertEqual(log.killed, [77])
+    }
+
+    // Its pid may arrive only after the deadline passed.
+    func testAShellThatStartsAfterTheDeadlineIsEnded() {
+        let clock = Clock()
+        let log = CommandLog()
+        var start: ((Int32) -> Void)?
+        let deps = dependencies(clock: clock, log: log, started: { start = $0 }) { _, _ in }
+        Resolver.resolve(shell: "/bin/zsh", home: "/home/u", dependencies: deps) { _ in }
+        clock.fire()
+        XCTAssertEqual(log.killed, [])
+        start?(78)
+        XCTAssertEqual(log.killed, [78])
+    }
+
+    // One that answered, or exited without answering, is left alone.
+    func testAShellThatExitedIsNotEnded() {
+        let clock = Clock()
+        let log = CommandLog()
+        let deps = dependencies(clock: clock, log: log, started: { $0(79) }) { _, completion in
+            completion(Data("noise".utf8), 1)
+        }
+        Resolver.resolve(shell: "/bin/zsh", home: "/home/u", dependencies: deps) { _ in }
+        clock.fire()
+        XCTAssertEqual(log.killed, [])
     }
 
     // Without the remote login shell or home there is nothing safe to run or to default to.

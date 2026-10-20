@@ -265,6 +265,101 @@ final class TmuxWorkgroupLiveHarness: XCTestCase {
         XCTAssertEqual(try server.option("@iterm2_wg_lock"), b.identity!.lockValue)
     }
 
+    // The lock's value names the client, so two drivers of one client must take turns: the
+    // second used to find its own value and take the lock as its own, and the first to finish
+    // released it while the other worked.
+    func testTwoDriversOfOneClientTakeTurns() throws {
+        let a = try attach()
+        let first = acquire(a)
+        XCTAssertEqual(first.lastAction, .acquired)
+        let second = lockDriver(a)
+        let settled = expectation(description: "second acquires")
+        second.onSettled = { _ in settled.fulfill() }
+        second.start()
+        // Anything it sent would be answered before this.
+        _ = send(a, "display -p ok")
+        XCTAssertNil(second.lastAction, "waits for the first")
+        let released = expectation(description: "first released")
+        first.release { released.fulfill() }
+        wait(for: [released, settled], timeout: 10)
+        XCTAssertEqual(second.lastAction, .acquired)
+        XCTAssertEqual(try server.option("@iterm2_wg_lock"), a.identity!.lockValue)
+    }
+
+    // A driver queued behind one of its own client's drivers that waits on another client says it
+    // waits too, so the user is told; taking over from it forces the one ahead.
+    func testADriverQueuedBehindAWaitWaitsAndCanTakeOver() throws {
+        let a = try attach()
+        let b = try attach()
+        XCTAssertEqual(acquire(b).lastAction, .acquired)
+        let first = acquire(a)
+        XCTAssertEqual(first.lastAction, .wait(holder: b.identity!))
+        let second = lockDriver(a)
+        var secondActions = [TmuxWorkgroupLockDriver.Lock.Action]()
+        second.onSettled = { secondActions.append($0) }
+        var queuedWaitEnded = 0
+        second.onQueuedWaitEnded = { queuedWaitEnded += 1 }
+        second.start()
+        XCTAssertEqual(secondActions, [.wait(holder: b.identity!)])
+
+        let firstAcquired = expectation(description: "first takes over")
+        first.onSettled = { action in
+            if action == .acquired {
+                firstAcquired.fulfill()
+            }
+        }
+        second.force()
+        wait(for: [firstAcquired], timeout: 10)
+        XCTAssertEqual(queuedWaitEnded, 1, "no longer waits on b")
+        XCTAssertEqual(try server.option("@iterm2_wg_lock"), a.identity!.lockValue)
+
+        let secondAcquired = expectation(description: "second acquires")
+        second.onSettled = { action in
+            if action == .acquired {
+                secondAcquired.fulfill()
+            }
+        }
+        first.release { }
+        wait(for: [secondAcquired], timeout: 10)
+    }
+
+    // Stopping a queued driver's wait cancels it without disturbing the one ahead, and the next
+    // driver still gets its turn.
+    func testCancellingADriverQueuedBehindAWait() throws {
+        let a = try attach()
+        let b = try attach()
+        XCTAssertEqual(acquire(b).lastAction, .acquired)
+        let first = acquire(a)
+        let second = lockDriver(a)
+        var secondActions = [TmuxWorkgroupLockDriver.Lock.Action]()
+        second.onSettled = { secondActions.append($0) }
+        second.start()
+        let third = lockDriver(a)
+        let thirdAcquired = expectation(description: "third acquires")
+        third.onSettled = { action in
+            if action == .acquired {
+                thirdAcquired.fulfill()
+            }
+        }
+        third.start()
+        second.cancel()
+        XCTAssertEqual(secondActions, [.wait(holder: b.identity!), .cancelled])
+        XCTAssertEqual(first.lastAction, .wait(holder: b.identity!))
+
+        release(b)
+        let firstAcquired = expectation(description: "first acquires")
+        first.onSettled = { action in
+            if action == .acquired {
+                firstAcquired.fulfill()
+            }
+        }
+        first.wake()
+        wait(for: [firstAcquired], timeout: 10)
+        first.release { }
+        wait(for: [thirdAcquired], timeout: 10)
+        XCTAssertEqual(secondActions.count, 2, "a cancelled driver never starts")
+    }
+
     // The point of the lock: two clients that both see a member missing create it once.
     func testRacingCreationsCreateOnce() throws {
         let a = try attach()
@@ -841,6 +936,32 @@ final class TmuxWorkgroupLiveHarness: XCTestCase {
 
     // Both clients' pollers see changes at once and both would start the diff. Exactly one claims
     // the start; it then relaunches it in the directory the member was created in.
+    private func remainOnExit(_ paneID: Int) throws -> String {
+        return try server.lines(["show", "-p", "-v", "-t", "%\(paneID)", "remain-on-exit"]).joined()
+    }
+
+    // A member made without remain-on-exit gets it, waiting or not, but a pane another client
+    // released meanwhile does not get it back.
+    func testKeepingAPaneOnExitOnlyWhileItIsAMember() throws {
+        let a = try attach()
+        let panes = try (0..<3).map { _ in
+            try server.int(["split-window", "-d", "-t", "s", "-P", "-F", "#{pane_id}", "exec sleep 86400"], prefix: "%")
+        }
+        for (paneID, waiting) in zip(panes[0..<2], [false, true]) {
+            _ = try server.lines(["set", "-p", "-t", "%\(paneID)", TmuxWorkgroupState.paneOptionName,
+                                  TmuxWorkgroupState.PaneTag(instanceID: instance, position: 1, waiting: waiting).encoded])
+        }
+        _ = sendList(a, C.releasePane(paneID: panes[2]))
+        wait(for: panes.map { guarded(a, C.keepPaneOnExit(paneID: $0, instanceID: instance, position: 1)) }, timeout: 10)
+        XCTAssertEqual(a.outcomes, [.applied, .applied, .guardFailed])
+        XCTAssertEqual(try panes.map { try remainOnExit($0) }, ["on", "on", ""])
+
+        // Releasing makes it an ordinary pane again.
+        XCTAssertEqual(sendList(a, C.releasePane(paneID: panes[0])).count, 2)
+        XCTAssertEqual(try remainOnExit(panes[0]), "")
+        XCTAssertEqual(try server.lines(["show", "-p", "-v", "-t", "%\(panes[0])", TmuxWorkgroupState.paneOptionName]).joined(), "")
+    }
+
     func testStartingAWaitingMemberRacesToOneWinner() throws {
         let a = try attach()
         let b = try attach()

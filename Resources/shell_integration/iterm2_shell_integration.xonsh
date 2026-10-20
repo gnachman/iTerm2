@@ -58,8 +58,9 @@ class _iTerm2Xonsh:
         @.env.register('ITERM2_INTEGRATION_DEBUG', type='bool', default=False,
                        doc="Set to `True` to enable debug messages.")
         @.env.register('ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX', type='bool', default=False,
-                       doc="By default, shell Integration does not work with tmux or screen. "
-                           "If you'd like to use it with tmux, set `True`. "
+                       doc="Shell integration loads in tmux but not in GNU screen. "
+                           "Set `True` to load it anyway, as where tmux is reached through ssh "
+                           "with a screen terminal type. "
                            "Docs: https://iterm2.com/documentation-shell-integration.html")
 
     def print_err(self, msg):
@@ -77,15 +78,26 @@ class _iTerm2Xonsh:
                 self.print_err('iTerm2 Integration: $TERM is not supported.')
             return False
 
+        # Inside tmux (TERM=tmux*, or $TMUX set when tmux uses a screen* TERM), tmux Integration
+        # passes the escape codes on intact and plain tmux discards them, so this loads; TERM=tmux*
+        # also reaches a host sshed to from a tmux pane. So does TERM=screen-256color, which many
+        # tmux users set. Other screen* TERMs without $TMUX are screen, or tmux beyond an ssh hop,
+        # and are skipped. ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX forces it.
         tmux_enabled = @.env.get('ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX')
-        if not tmux_enabled and term in ('screen', 'screen-256color', 'tmux-256color'):
+        in_tmux = bool(@.env.get('TMUX', '')) or term.startswith('tmux')
+        if not tmux_enabled and not in_tmux and term.startswith('screen') and term != 'screen-256color':
             if $ITERM2_INTEGRATION_DEBUG:
-                self.print_err('iTerm2 Integration: tmux is not enabled.')
+                self.print_err('iTerm2 Integration: screen is not supported.')
             return False
 
-        if 'iTerm' not in (term_program := @.env.get('TERM_PROGRAM', '')):
+        # Not in another terminal. TERM_PROGRAM is set by the local terminal but not forwarded over
+        # ssh; LC_TERMINAL is set by iTerm2 and may be. In tmux, TERM_PROGRAM is tmux's own.
+        term_program = @.env.get('TERM_PROGRAM', '')
+        if not (term_program == '' or 'iTerm' in term_program
+                or @.env.get('LC_TERMINAL', '') == 'iTerm2'
+                or (term_program == 'tmux' and in_tmux)):
             if $ITERM2_INTEGRATION_DEBUG:
-                self.print_err(f'iTerm2 Integration: iTerm not in $TERM_PROGRAM {term_program}.')
+                self.print_err(f'iTerm2 Integration: another terminal, $TERM_PROGRAM {term_program}.')
             return False
 
         return True
@@ -297,6 +309,7 @@ __xonsh__.iterm2 = _iTerm2Xonsh()
 # (its setenv does no re-expansion) and an absolute value there would break conductor.sh itself.
 # Guarded on the directory existing, so a host iTerm2 never uploaded to keeps a clean PATH, and
 # on absence from PATH, so re-sourcing does not stack duplicates.
+import os as _iterm2_os
 _iterm2_bin = _iterm2_os.path.expanduser("~/.iterm2/bin")
 if _iterm2_os.path.isdir(_iterm2_bin) and _iterm2_bin not in $PATH:
     $PATH.insert(0, _iterm2_bin)

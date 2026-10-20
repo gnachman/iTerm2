@@ -147,6 +147,10 @@ extension PTYSession {
             RLog("PTYSession[\(guid)]: autoRequestCodeReview aborted, not a code-review session (mode=\(workgroupSessionMode))")
             return false
         }
+        swiftState.codeReviewAutoRequesting = true
+        defer {
+            swiftState.codeReviewAutoRequesting = false
+        }
         if let overlay = view?.codeReviewPromptOverlay {
             RLog("PTYSession[\(guid)]: autoRequestCodeReview submitting existing overlay")
             overlay.onStart?(overlay.text)
@@ -177,12 +181,20 @@ extension PTYSession {
         // presentation has no prior submission, so fall back to the store.
         let defaultPrompt = codeReviewLastUsedPrompt ?? CodeReviewPromptStore.shared.defaultPromptText
         sessionView.presentCodeReviewPromptOverlay(defaultPrompt: defaultPrompt) { [weak self] text in
-            self?.codeReviewLastUsedPrompt = text
-            onStart(text)
+            guard let self, !self.swiftState.codeReviewPromptOfferInProgress else {
+                RLog("PTYSession: code review start ignored while the prompt update offer is up")
+                return
+            }
+            self.codeReviewLastUsedPrompt = text
+            // Every start, whether by Start, Reload or the automatic request, comes here, so a
+            // customized system prompt is offered its update before the first review uses it.
+            self.offerCodeReviewPromptUpdateIfNeeded {
+                onStart(text)
+            }
             // The overlay sits over scrolled-back content; once the user
             // submits, snap to the bottom so the launched program's output
             // is visible and the session follows new output.
-            self?.scrollToBottomAfterCodeReviewPrompt()
+            self.scrollToBottomAfterCodeReviewPrompt()
         }
     }
 

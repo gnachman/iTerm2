@@ -100,6 +100,7 @@ extension iTermWorkgroupInstance {
             }
         }
         binding.membersDidUpdate = { [weak self] in
+            self?.adoptLateTmuxMembers()
             self?.adoptReplacedTmuxMembers()
             self?.followTmuxVisibleMember()
             self?.syncTmuxMembersWaiting()
@@ -166,6 +167,52 @@ extension iTermWorkgroupInstance {
 
     /// After tmux reported the instance: a member whose position has a new pane (relaunched before
     /// tmux 3.8, by this client or another) takes that pane's session once it is registered here.
+    /// On a Mac that adopted the instance, a split or tab member whose pane appeared after it
+    /// adopted (another Mac creates them one by one after publishing the leader) joins once its
+    /// session exists. On the Mac that entered it, the spawner registers each as it creates it.
+    private func adoptLateTmuxMembers() {
+        guard let binding = tmuxBinding, binding.isAdopted, let controller = binding.controller else {
+            return
+        }
+        for config in workgroup.sessions {
+            switch config.kind {
+            case .split, .tab:
+                break
+            case .root, .peer:
+                continue
+            }
+            let configID = config.uniqueIdentifier
+            guard liveSession(forConfigID: configID) == nil,
+                  let paneID = binding.paneID(forConfigID: configID),
+                  !binding.lateMembersPending.contains(paneID) else {
+                continue
+            }
+            binding.lateMembersPending.insert(paneID)
+            controller.whenPaneRegistered(Int32(paneID)) { [weak self, weak binding] session in
+                binding?.lateMembersPending.remove(paneID)
+                guard let self, let binding, let session,
+                      !self.didTeardown,
+                      self.liveSession(forConfigID: configID) == nil,
+                      session.workgroupInstance == nil else {
+                    return
+                }
+                RLog("iTermWorkgroupInstance: member \(configID) arrived as %\(paneID) after adoption; joining it")
+                Self.applyTmuxMemberProfile(config: config, to: session)
+                session.workgroupSessionMode = config.mode
+                if self.peerChildren(of: config).isEmpty {
+                    self.registerNonPeer(session: session, config: config)
+                } else {
+                    self.registerTmuxPeerGroup(host: session,
+                                               config: config,
+                                               binding: binding,
+                                               adopted: [:],
+                                               activeIdentifier: configID,
+                                               createMissing: false)
+                }
+            }
+        }
+    }
+
     private func adoptReplacedTmuxMembers() {
         guard let binding = tmuxBinding else {
             return
@@ -375,6 +422,54 @@ extension PTYSession {
         return binding
     }
 
+    /// tmux says this member's program ended, or runs again after a restart (possibly by another
+    /// Mac). Like a local member's session, it says it ended and offers to restart it; the
+    /// workgroup carries on. It is not marked exited, which would drop the output of a program
+    /// another Mac restarts before this hears that it did.
+    func tmuxWorkgroupMemberProgramDidChange(_ run: TmuxWorkgroupCommands.PaneRun) {
+        let endedRun = run.dead ? run.run : nil
+        guard endedRun != swiftState.tmuxMemberEndedRun else {
+            return
+        }
+        swiftState.tmuxMemberEndedRun = endedRun
+        RLog("PTYSession[\(guid)]: tmux member's program \(run.dead ? "ended" : "runs again") (run \(run.run))")
+        if run.dead {
+            if !iTermAdvancedSettingsModel.suppressRestartAnnouncement() {
+                naggingController.sessionEnded(withExecFailure: false)
+            }
+        } else {
+            dismissAnnouncement(withIdentifier: iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier)
+        }
+    }
+
+    /// Restart from the Session Ended announcement of a tmux member whose program ended: relaunch
+    /// it in its pane as Reload does. False if this is not one. Nothing happens unless the run
+    /// that ended is still the pane's, as another Mac may have restarted it before this heard so;
+    /// relaunching would kill that.
+    @objc func restartEndedTmuxWorkgroupMember() -> Bool {
+        guard let endedRun = swiftState.tmuxMemberEndedRun,
+              let binding = workgroupTmuxBinding,
+              workgroupInstance != nil else {
+            return false
+        }
+        RLog("PTYSession[\(guid)]: restart ended tmux member")
+        binding.paneRun(paneID: Int(tmuxPane)) { [weak self] run in
+            guard let self else {
+                return
+            }
+            guard let instance = self.workgroupInstance else {
+                RLog("PTYSession[\(self.guid)]: not restarting: no longer in a workgroup")
+                return
+            }
+            guard run == TmuxWorkgroupCommands.PaneRun(dead: true, run: endedRun) else {
+                RLog("PTYSession[\(self.guid)]: not restarting: the pane's run is now \(String(describing: run))")
+                return
+            }
+            _ = instance.reloadTmuxMember(self)
+        }
+        return true
+    }
+
     /// Whether Reload, or picking a file in a diff, can replace what this workgroup member runs: a
     /// program that ran here, or a member on a tmux server, whose pane is respawned.
     @objc var canRelaunchWorkgroupMember: Bool {
@@ -393,6 +488,14 @@ extension PTYSession {
             RLog("PTYSession[\(self.guid)]: tmux member relaunched=\(relaunched)")
             if onlyIfWaiting {
                 self.tmuxWorkgroupMemberDidStart(relaunched)
+            }
+            if relaunched {
+                // The run that ended is over; whatever tmux reports next is a new one.
+                if self.swiftState.tmuxMemberEndedRun != nil {
+                    self.swiftState.tmuxMemberEndedRun = nil
+                    self.dismissAnnouncement(withIdentifier: iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier)
+                }
+                self.tmuxController?.workgroupAttacher?.paneWasRelaunched()
             }
         })
     }

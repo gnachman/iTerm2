@@ -23,12 +23,15 @@ final class TmuxWorkgroupHiddenPanesTests: XCTestCase {
     }
 
     // Positions: 0 root, 1 and 2 peers.
-    private var record: String {
-        let workgroup = iTermWorkgroup(uniqueIdentifier: "WG", name: "W", sessions: [
+    private var workgroup: iTermWorkgroup {
+        iTermWorkgroup(uniqueIdentifier: "WG", name: "W", sessions: [
             config("ROOT", .root, parent: nil),
             config("P1", .peer, parent: "ROOT"),
             config("P2", .peer, parent: "ROOT"),
         ])
+    }
+
+    private var record: String {
         return S.InstanceRecord(workgroupID: "WG", gitBase: "main", skeleton: S.Skeleton(workgroup: workgroup)!).encoded
     }
 
@@ -107,6 +110,40 @@ final class TmuxWorkgroupHiddenPanesTests: XCTestCase {
                        [Hidden.Group(instanceID: "I", paneIDs: [1], inUseElsewhere: true, leaderPaneID: 0)])
     }
 
+    // MARK: - Whose they are
+
+    private func derivation(_ replies: [String?]) -> S.Derivation {
+        S.derive(panes: TmuxWorkgroupAdoption.panes(listPanesReply: replies[1]!),
+                 windows: TmuxWorkgroupAdoption.windows(listWindowsReply: replies[2]!),
+                 instanceOptions: TmuxWorkgroupAdoption.instanceOptions(showReply: replies[0]!))
+    }
+
+    // A workgroup here matches it, so it is this Mac's even while not adopted, as when its
+    // leader's window is hidden in iTerm2 and the leader has no session. Its peers are not
+    // offered: opening or stopping them would take them from the workgroup.
+    func testAnInstanceALocalWorkgroupMatchesIsThisMacs() {
+        let ours = Hidden.instancesOfThisMac(derivation: derivation(unadopted),
+                                             localWorkgroups: [workgroup],
+                                             adoptedHere: [],
+                                             declined: [])
+        XCTAssertEqual(ours, ["I"])
+    }
+
+    func testADeclinedOrUnmatchedInstanceIsNot() {
+        XCTAssertEqual(Hidden.instancesOfThisMac(derivation: derivation(unadopted),
+                                                 localWorkgroups: [workgroup],
+                                                 adoptedHere: [],
+                                                 declined: ["I"]), [])
+        XCTAssertEqual(Hidden.instancesOfThisMac(derivation: derivation(unadopted),
+                                                 localWorkgroups: [],
+                                                 adoptedHere: [],
+                                                 declined: []), [])
+        XCTAssertEqual(Hidden.instancesOfThisMac(derivation: derivation(unadopted),
+                                                 localWorkgroups: [],
+                                                 adoptedHere: ["I"],
+                                                 declined: []), ["I"])
+    }
+
     // MARK: - Opening and stopping them
 
     private func firstStep(_ choice: Release.Choice, paneIDs: [Int], _ replies: [String?]) -> Release.Action? {
@@ -119,14 +156,14 @@ final class TmuxWorkgroupHiddenPanesTests: XCTestCase {
     // client shows as a tab.
     func testOpeningAPaneAloneInItsWindow() {
         XCTAssertEqual(firstStep(.open, paneIDs: [1, 2], unadopted),
-                       .repair([C.untagPane(paneID: 1)] +
+                       .repair(C.releasePane(paneID: 1) +
                                C.bringOutPane(sessionID: 3, paneID: 1, windowID: 2, sharesWindow: false)))
     }
 
     func testOpeningAPaneThatSharesItsWindow() {
         let replies = snapshot(records: [], panes: ["%4 @2 80x24 ", "%5 @2 80x24 "], windows: ["@2 \(parked())"])
         XCTAssertEqual(firstStep(.open, paneIDs: [4, 5], replies),
-                       .repair([C.untagPane(paneID: 4)] +
+                       .repair(C.releasePane(paneID: 4) +
                                C.bringOutPane(sessionID: 3, paneID: 4, windowID: 2, sharesWindow: true)))
     }
 

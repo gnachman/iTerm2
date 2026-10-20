@@ -308,9 +308,27 @@ enum ClaudeCodeRemoteHooks {
 // MARK: - Per-host install, health and uninstall
 
 extension ClaudeCodeOnboarding {
-    /// Where Claude Code keeps its settings on `conductor`'s host: CLAUDE_CONFIG_DIR as its login
-    /// shell reports it, looked up once per connection, or the default when that fails. Delivers
-    /// on the main thread.
+    /// CLAUDE_CONFIG_DIR on `conductor`'s host as its login shell reports it, looked up once per
+    /// connection, with one lookup at a time. nil when the lookup failed: the caller must not
+    /// guess. Delivers on the main thread.
+    @MainActor
+    static func remoteConfigDirectory(conductor: Conductor,
+                                      facts: ClaudeCodeRemoteConnectionFacts = .shared,
+                                      completion: @escaping (String?) -> Void) {
+        facts.configDirectory(for: conductor,
+                              lookUp: { [weak conductor] done in
+            guard let conductor else {
+                done(nil)
+                return
+            }
+            resolveRemoteConfigDirectory(conductor: conductor, completion: done)
+        },
+                              completion: completion)
+    }
+
+    /// Where Claude Code keeps its settings on `conductor`'s host, or nil when that couldn't be
+    /// found out. Status and uninstall then say they don't know, rather than read the default
+    /// location and wrongly conclude the hook isn't there. Delivers on the main thread.
     @MainActor
     static func remoteSettingsPath(conductor: Conductor,
                                    facts: ClaudeCodeRemoteConnectionFacts = .shared,
@@ -319,13 +337,11 @@ extension ClaudeCodeOnboarding {
             completion(nil)
             return
         }
-        if let directory = facts.configDirectory(for: conductor) {
-            completion(ClaudeCodeRemoteConnectionFacts.settingsPath(configDirectory: directory, home: home))
-            return
-        }
-        resolveRemoteConfigDirectory(conductor: conductor) { [weak conductor] directory in
-            if let directory, let conductor {
-                facts.setConfigDirectory(directory, for: conductor)
+        remoteConfigDirectory(conductor: conductor, facts: facts) { directory in
+            guard let directory else {
+                RLog("Remote Claude Code settings: the config directory lookup failed")
+                completion(nil)
+                return
             }
             completion(ClaudeCodeRemoteConnectionFacts.settingsPath(configDirectory: directory, home: home))
         }
