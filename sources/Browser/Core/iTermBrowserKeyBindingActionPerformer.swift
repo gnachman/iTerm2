@@ -63,7 +63,7 @@ class iTermBrowserKeyBindingActionPerformer {
 
         case .ACTION_ESCAPE_SEQUENCE, .ACTION_IR_FORWARD, .ACTION_IR_BACKWARD,
                 .ACTION_SEND_C_H_BACKSPACE, .ACTION_SEND_C_QM_BACKSPACE, .ACTION_RUN_COPROCESS,
-                .ACTION_TOGGLE_MOUSE_REPORTING:
+                .ACTION_TOGGLE_MOUSE_REPORTING, .ACTION_SET_CHARACTER_ENCODING:
             // Bindings that do not make sense in a browser are "handled".
             // UPDATE iTermEditKeyActionWindowController WHEN CHANGING THIS! It excludes items that are in this list.
             return true

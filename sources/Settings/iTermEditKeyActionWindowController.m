@@ -50,6 +50,8 @@ const CGFloat sideMarginWidth = 40;
 @property (nonatomic, readonly) BOOL profilePopupHidden;
 @property (nonatomic, readonly) BOOL selectionMovementUnitHidden;
 @property (nonatomic, readonly) BOOL profileLabelHidden;
+@property (nonatomic, readonly) BOOL encodingLabelHidden;
+@property (nonatomic, readonly) BOOL encodingPopupHidden;
 @property (nonatomic, readonly) BOOL menuToSelectPopupHidden;
 @property (nonatomic, readonly) BOOL settingToTogglePopupHidden;
 @property (nonatomic, readonly) BOOL shortcutFieldDisableKeyRemapping;
@@ -78,6 +80,8 @@ const CGFloat sideMarginWidth = 40;
         _profilePopupHidden = YES;
         _selectionMovementUnitHidden = YES;
         _profileLabelHidden = YES;
+        _encodingLabelHidden = YES;
+        _encodingPopupHidden = YES;
         _menuToSelectPopupHidden = YES;
         _settingToTogglePopupHidden = YES;
         _shortcutFieldDisableKeyRemapping = NO;
@@ -165,6 +169,13 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_LOAD_COLOR_PRESET:
                 _colorPresetsLabelHidden = NO;
                 _colorPresetsPopupHidden = NO;
+                _parameterValue = @"";
+                _applyHidden = NO;
+                break;
+
+            case KEY_ACTION_SET_CHARACTER_ENCODING:
+                _encodingLabelHidden = NO;
+                _encodingPopupHidden = NO;
                 _parameterValue = @"";
                 _applyHidden = NO;
                 break;
@@ -329,6 +340,8 @@ const CGFloat sideMarginWidth = 40;
     IBOutlet iTermMenuItemPopupView *_menuToSelectPopup;
     IBOutlet iTermSettingPopupView *_settingToTogglePopup;
     IBOutlet NSTextField *_profileLabel;
+    IBOutlet NSTextField *_encodingLabel;
+    IBOutlet NSPopUpButton *_encodingPopup;
     IBOutlet NSTextField *_colorPresetsLabel;
     IBOutlet NSPopUpButton *_colorPresetsPopup;
     IBOutlet NSPopUpButton *_snippetsPopup;
@@ -403,6 +416,7 @@ const CGFloat sideMarginWidth = 40;
         [[iTermSearchableComboViewGroup alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.GroupProfile", nil, [NSBundle mainBundle], @"Profile", @"Action group: Profile") items:[@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionChangeProfile", nil, [NSBundle mainBundle], @"Change Profile", @"Action name: Change Profile") tag:KEY_ACTION_SET_PROFILE],
             hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionLoadColorPreset", nil, [NSBundle mainBundle], @"Load Color Preset", @"Action name: Load Color Preset") tag:KEY_ACTION_LOAD_COLOR_PRESET],
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.ActionSetCharacterEncoding", nil, [NSBundle mainBundle], @"Set Character Encoding…", @"Action name: Set Character Encoding") tag:KEY_ACTION_SET_CHARACTER_ENCODING],
         ] arrayByRemovingNulls]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:NSLocalizedStringWithDefaultValue(@"EditKeyAction.GroupNavigateTabs", nil, [NSBundle mainBundle], @"Navigate Tabs", @"Action group: Navigate Tabs") items:@[
@@ -610,6 +624,9 @@ const CGFloat sideMarginWidth = 40;
     if (!_selectionMovementUnit.isHidden) {
         [_selectionMovementUnit selectItemWithTag:[parameterValue ?: @"" integerValue]];
     }
+    if (!_encodingPopup.isHidden) {
+        [self populateEncodingsSelecting:parameterValue ?: @""];
+    }
     if (!_secondaryComboViewContainer.isHidden && !secondary) {
         [_sequenceTableViewController setActions:[parameterValue ?: @"" keyBindingActionsFromSequenceParameter]];
     }
@@ -637,6 +654,29 @@ const CGFloat sideMarginWidth = 40;
     _applyMode = applyMode;
     [_applyButton selectItemWithTag:applyMode];
     [self updateError];
+}
+
+- (void)populateEncodingsSelecting:(NSString *_Nullable)value {
+    [_encodingPopup removeAllItems];
+    NSStringEncoding const *encodingPtr;
+    NSMutableArray<NSNumber *> *encodings = [NSMutableArray array];
+    for (encodingPtr = [NSString availableStringEncodings]; *encodingPtr; ++encodingPtr) {
+        [encodings addObject:@(*encodingPtr)];
+    }
+    [encodings sortUsingComparator:^NSComparisonResult(NSNumber *_Nonnull lhs, NSNumber *_Nonnull rhs) {
+        return [[NSString localizedNameOfStringEncoding:lhs.unsignedIntegerValue]
+                compare:[NSString localizedNameOfStringEncoding:rhs.unsignedIntegerValue]
+                options:NSCaseInsensitiveSearch];
+    }];
+    for (NSNumber *anEncoding in encodings) {
+        [_encodingPopup addItemWithTitle:[NSString localizedNameOfStringEncoding:anEncoding.unsignedIntegerValue]];
+        [[_encodingPopup lastItem] setTag:anEncoding.unsignedIntegerValue];
+    }
+    NSStringEncoding selected = (NSStringEncoding)value.integerValue;
+    if (!selected) {
+        selected = NSUTF8StringEncoding;
+    }
+    [_encodingPopup selectItemWithTag:selected];
 }
 
 - (void)setAction:(KEY_ACTION)keyAction parameter:(NSString *)parameter applyMode:(iTermActionApplyMode)applyMode {
@@ -755,6 +795,11 @@ const CGFloat sideMarginWidth = 40;
     }
     [_selectionMovementUnit setHidden:config.selectionMovementUnitHidden];
     [_profileLabel setHidden:config.profileLabelHidden];
+    [_encodingLabel setHidden:config.encodingLabelHidden];
+    [_encodingPopup setHidden:config.encodingPopupHidden];
+    if (!config.encodingPopupHidden) {
+        [self populateEncodingsSelecting:config.parameterValue ?: @""];
+    }
     [_menuToSelectPopup setHidden:config.menuToSelectPopupHidden];
     [_settingToTogglePopup setHidden:config.settingToTogglePopupHidden];
     _shortcutField.disableKeyRemapping = config.shortcutFieldDisableKeyRemapping;
@@ -831,6 +876,7 @@ const CGFloat sideMarginWidth = 40;
             !_menuToSelectPopup.isHidden ||
             !_settingToTogglePopup.isHidden ||
             !_colorPresetsPopup.isHidden ||
+            !_encodingPopup.isHidden ||
             !_snippetsPopup.isHidden ||
             !_pasteSpecialViewContainer.isHidden ||
             !_parameterLabel.isHidden ||
@@ -1023,6 +1069,9 @@ const CGFloat sideMarginWidth = 40;
         case KEY_ACTION_LOAD_COLOR_PRESET:
             return [[_colorPresetsPopup selectedItem] title];
 
+        case KEY_ACTION_SET_CHARACTER_ENCODING:
+            return [@(_encodingPopup.selectedTag) stringValue];
+
         case KEY_ACTION_SEND_SNIPPET:
             return [[_snippetsPopup selectedItem] representedObject];
 
@@ -1073,6 +1122,7 @@ const CGFloat sideMarginWidth = 40;
         [_snippetsPopup populateWithSnippetsSelectingActionKey:_snippetsPopup.selectedItem.representedObject];
         [_menuToSelectPopup reloadData];
         [_settingToTogglePopup reloadData];
+        [self populateEncodingsSelecting:[@(_encodingPopup.selectedTag) stringValue]];
         const BOOL secondary = (view == _secondaryComboView);
         if (secondary) {
             [_sequenceTableViewController setActionForCurrentItem:view.selectedTag];

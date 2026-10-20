@@ -13,6 +13,8 @@
                 <outlet property="_comboViewContainer" destination="rtR-KB-sUm" id="StD-xL-ZEV"/>
                 <outlet property="_detail" destination="cR8-0J-C7g" id="jHg-Xi-GT3"/>
                 <outlet property="_errorLabel" destination="75y-vf-RXW" id="eis-0c-fSl"/>
+                <outlet property="_encodingLabel" destination="mMEd-an-PLb" id="3px-72-h6Y"/>
+                <outlet property="_encodingPopup" destination="4KG-fm-PWQ" id="xZQ-U4-vgq"/>
                 <outlet property="_helpButton" destination="kfx-iG-Tb8" id="JK7-PN-FsL"/>
                 <outlet property="_keyboardShortcutLabel" destination="K5J-cS-cKV" id="OHV-3k-HGx"/>
                 <outlet property="_menuToSelectPopup" destination="Vc6-sA-YtV" id="67h-v0-Auo"/>
@@ -357,6 +359,28 @@ Gw
                                         </popUpButtonCell>
                                         <connections>
                                             <action selector="parameterDidChange:" target="-2" id="quc-EI-T1m"/>
+                                        </connections>
+                                    </popUpButton>
+                                    <textField hidden="YES" focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mMEd-an-PLb" userLabel="Encoding Label">
+                                        <rect key="frame" x="56" y="338" width="69" height="17"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Encoding:" id="0AX-WH-8Pq">
+                                            <font key="font" metaFont="system"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <popUpButton hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4KG-fm-PWQ" userLabel="Encoding popup">
+                                        <rect key="frame" x="127" y="334" width="279" height="26"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" id="X5d-hB-R1c">
+                                            <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="message"/>
+                                            <menu key="menu" title="OtherViews" autoenablesItems="NO" id="hY7-VC-Qox"/>
+                                        </popUpButtonCell>
+                                        <connections>
+                                            <action selector="parameterDidChange:" target="-2" id="Vtk-ox-2VI"/>
+                                            <outlet property="nextKeyView" destination="rEh-rY-u5S" id="4sF-9c-hSk"/>
                                         </connections>
                                     </popUpButton>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6C1-2g-xev" userLabel="Paste special container">
