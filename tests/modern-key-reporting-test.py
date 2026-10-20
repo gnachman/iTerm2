@@ -10,6 +10,7 @@ import termios
 import time
 import tty
 import re
+import subprocess
 
 # Create a pipe for signal handling
 rfd, wfd = os.pipe()
@@ -64,6 +65,34 @@ def unescape_string(s):
     s = re.sub(r'\\u\{([0-9a-fA-F]+)\}', lambda m: chr(int(m.group(1), 16)), s)
     return s
 
+# TISRomanSwitchState in the global domain is macOS's "Use the Caps Lock key to
+# switch to and from the last used Latin input source" setting. iTerm2 reads it
+# to decide how to report Caps Lock, so steps set it from their
+# TISRomanSwitchState column (blank means 0). The original value is restored on
+# exit.
+ROMAN_SWITCH_KEY = 'TISRomanSwitchState'
+
+def read_roman_switch_state():
+    """Returns the current value as a string, or None if the key is absent."""
+    result = subprocess.run(['defaults', 'read', '-g', ROMAN_SWITCH_KEY],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+def write_roman_switch_state(value):
+    """Sets the value, or deletes the key if value is None."""
+    if value is None:
+        subprocess.run(['defaults', 'delete', '-g', ROMAN_SWITCH_KEY],
+                       capture_output=True)
+    else:
+        subprocess.run(['defaults', 'write', '-g', ROMAN_SWITCH_KEY, '-int', value],
+                       check=True)
+
+def exit_on_signal(signum, frame):
+    # Raise SystemExit so the finally block in main restores settings.
+    sys.exit(128 + signum)
+
 # Function to read CSV and execute test steps
 def run_test_harness(csv_file, output_file, manual_only=False, no_retry=False, start_index=None):
     results = []
@@ -73,6 +102,7 @@ def run_test_harness(csv_file, output_file, manual_only=False, no_retry=False, s
         reader = csv.DictReader(file)
         lastkb = ""
         lastalt = ""
+        last_roman_switch = None
         rows = list(reader)
 
         for index, row in enumerate(rows):
@@ -112,6 +142,18 @@ def run_test_harness(csv_file, output_file, manual_only=False, no_retry=False, s
                 if option_as_alt != lastalt and option_as_alt != "NA":
                     print(f'Change config option-as-alt to {option_as_alt}')
                     lastalt = option_as_alt
+                roman_switch = (row.get(ROMAN_SWITCH_KEY) or '').strip() or '0'
+                if roman_switch != last_roman_switch:
+                    write_roman_switch_state(roman_switch)
+                    # macOS doesn't reload this setting when it's written with
+                    # defaults, so live keypresses (e.g., while recording) need
+                    # the checkbox changed by hand. Replay only needs iTerm2 to
+                    # read the stored value.
+                    state = 'ON' if roman_switch == '1' else 'OFF'
+                    print(f'Set {ROMAN_SWITCH_KEY} to {roman_switch}. If recording, turn {state} '
+                          '“Use the Caps Lock key to switch to and from the last used Latin '
+                          'input source” in System Settings.')
+                    last_roman_switch = roman_switch
                 if option_as_alt == "TRUE":
                     print(f'\033[?1036h', end='', flush=True)
                 else:
@@ -212,6 +254,9 @@ if __name__ == "__main__":
     output_file = f'harness{suffix}.json'  # Output JSON file with results
 
     manual_skipped = 0
+    original_roman_switch = read_roman_switch_state()
+    signal.signal(signal.SIGTERM, exit_on_signal)
+    signal.signal(signal.SIGHUP, exit_on_signal)
     try:
         print(f'\033[?1049h')
         # Save the current terminal settings
@@ -226,6 +271,7 @@ if __name__ == "__main__":
         # Restore the terminal settings
         print(f'\033[?1049l')
         restore_mode(sys.stdin.fileno(), old_settings)
+        write_roman_switch_state(original_roman_switch)
 
     if not manual_only:
         script = os.path.basename(sys.argv[0])

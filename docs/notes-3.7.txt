@@ -1515,3 +1515,11 @@ Bug Fixes:
   Snippets tool enabled in the toolbelt, a window
   could be made wider but not narrower. Issue
   13118.
+- When an app enables the Kitty keyboard
+  protocol and “Use the Caps Lock key to switch
+  to and from the last used Latin input source”
+  is on, tapping Caps Lock to switch input
+  sources no longer sends a malformed key report
+  that some apps read as Control-C. Holding it to
+  turn Caps Lock on or off now reports a Caps
+  Lock press and release. Issue 13136.

@@ -152,3 +152,165 @@ final class ModernKeyMapperTests: XCTestCase {
             [99])
     }
 }
+
+// Caps Lock under the Kitty protocol, including macOS's “Use the Caps Lock key
+// to switch to and from the last used Latin input source” setting. With that
+// setting on, the physical key (keyCode 57) is followed by synthetic
+// flags-changed events with keyCode 255 that undo or redo the lock change. The
+// event sequences below were recorded with the replay harness. Issue 13136.
+final class ModernKeyMapperCapsLockTests: XCTestCase {
+    private static let physical = UInt16(kVK_CapsLock)
+    private static let synthetic: UInt16 = 255
+    private static let modes8: VT100TerminalKeyReportingFlags = [.reportAllKeysAsEscapeCodes]
+    private static let modes10: VT100TerminalKeyReportingFlags = [.reportAllKeysAsEscapeCodes, .reportAllEventTypes]
+
+    // Feeds flags-changed events to a mapper the way iTermApplication does,
+    // carrying the previous event's flags forward.
+    private final class Driver {
+        let mapper = ModernKeyMapper()
+        private var previousFlags: NSEvent.ModifierFlags
+
+        init(flags: VT100TerminalKeyReportingFlags, switchesInputSource: Bool, locked: Bool) {
+            mapper.flags = flags
+            mapper.capsLockSwitchesInputSource = { switchesInputSource }
+            previousFlags = Driver.modifierFlags(locked: locked)
+        }
+
+        private static func modifierFlags(locked: Bool) -> NSEvent.ModifierFlags {
+            // 0x100 is set on every recorded event.
+            return NSEvent.ModifierFlags(rawValue: locked ? 0x10100 : 0x100)
+        }
+
+        func send(_ keyCode: UInt16, locked: Bool) -> String {
+            let flags = Driver.modifierFlags(locked: locked)
+            let event = NSEvent.keyEvent(with: .flagsChanged,
+                                         location: .zero,
+                                         modifierFlags: flags,
+                                         timestamp: 0,
+                                         windowNumber: 0,
+                                         context: nil,
+                                         characters: "",
+                                         charactersIgnoringModifiers: "",
+                                         isARepeat: false,
+                                         keyCode: keyCode)!
+            event.it_previousFlags = previousFlags
+            previousFlags = flags
+            return mapper.keyMapperString(forPreCocoaEvent: event) ?? ""
+        }
+    }
+
+    private func driver(_ flags: VT100TerminalKeyReportingFlags = modes10,
+                        switchesInputSource: Bool = true,
+                        locked: Bool) -> Driver {
+        return Driver(flags: flags, switchesInputSource: switchesInputSource, locked: locked)
+    }
+
+    private let lockReport = "\u{1b}[57358;65u\u{1b}[57358;65:3u"
+    private let unlockReport = "\u{1b}[57358u\u{1b}[57358;1:3u"
+
+    // MARK: - Setting on
+
+    // A tap switches the input source. It is not a Caps Lock key press as far
+    // as the application is concerned, so nothing is reported.
+    func testTapThatSwitchesInputSourceReportsNothing() {
+        let d = driver(locked: false)
+        XCTAssertEqual(d.send(Self.physical, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "")
+        XCTAssertEqual(d.send(Self.physical, locked: false), "")
+    }
+
+    // Holding locks after about 500 ms via a second synthetic event. There is
+    // no key-up event, so the press and release are both sent then.
+    func testHoldThatLocksReportsPressAndReleaseWhenLockEngages() {
+        let d = driver(locked: false)
+        XCTAssertEqual(d.send(Self.physical, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), lockReport)
+    }
+
+    // A tap while locked always unlocks. The unlock arrives after the
+    // physical key-up.
+    func testTapWhileLockedReportsUnlock() {
+        let d = driver(locked: true)
+        XCTAssertEqual(d.send(Self.physical, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), "")
+        XCTAssertEqual(d.send(Self.physical, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), unlockReport)
+    }
+
+    // Recorded once: a lock with no physical key events at all.
+    func testLockWithOnlySyntheticEventsReportsLock() {
+        let d = driver(locked: false)
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), lockReport)
+    }
+
+    func testHoldThatUnlocksReportsPressAndReleaseWhenLockReleases() {
+        let d = driver(locked: true)
+        XCTAssertEqual(d.send(Self.physical, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), unlockReport)
+    }
+
+    func testHoldThatLocksReportsOnlyPressWithoutEventTypes() {
+        let d = driver(Self.modes8, locked: false)
+        XCTAssertEqual(d.send(Self.physical, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), "\u{1b}[57358;65u")
+    }
+
+    func testHoldThatUnlocksReportsOnlyPressWithoutEventTypes() {
+        let d = driver(Self.modes8, locked: true)
+        XCTAssertEqual(d.send(Self.physical, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "\u{1b}[57358u")
+    }
+
+    // The same sequence as the replay harness: each gesture starts where the
+    // previous one left off.
+    func testConsecutiveGestures() {
+        let d = driver(locked: false)
+        // Tap switches input source.
+        XCTAssertEqual(d.send(Self.physical, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "")
+        XCTAssertEqual(d.send(Self.physical, locked: false), "")
+        // Hold locks.
+        XCTAssertEqual(d.send(Self.physical, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), lockReport)
+        // Tap unlocks.
+        XCTAssertEqual(d.send(Self.physical, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), "")
+        XCTAssertEqual(d.send(Self.physical, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), unlockReport)
+        // Lock with only synthetic events.
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), lockReport)
+        // Hold unlocks.
+        XCTAssertEqual(d.send(Self.physical, locked: false), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), "")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), unlockReport)
+    }
+
+    // MARK: - Setting off
+
+    // Unchanged behavior: each toggle is a single physical event. Reporting an
+    // unlock as a release is a known issue to be fixed separately.
+    func testSettingOffLockReportsPress() {
+        let d = driver(switchesInputSource: false, locked: false)
+        XCTAssertEqual(d.send(Self.physical, locked: true), "\u{1b}[57358;65u")
+    }
+
+    func testSettingOffUnlockReportsRelease() {
+        let d = driver(switchesInputSource: false, locked: true)
+        XCTAssertEqual(d.send(Self.physical, locked: false), "\u{1b}[57358;1:3u")
+    }
+
+    // A lock change from a key code that isn't a modifier key is reported as
+    // Caps Lock rather than with no key number (\e[65u or \e[1:3u).
+    func testSettingOffSyntheticLockChangeReportsCapsLockKeyNumber() {
+        let d = driver(switchesInputSource: false, locked: false)
+        XCTAssertEqual(d.send(Self.synthetic, locked: true), "\u{1b}[57358;65u")
+        XCTAssertEqual(d.send(Self.synthetic, locked: false), "\u{1b}[57358;1:3u")
+    }
+}
