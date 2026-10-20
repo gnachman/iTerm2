@@ -390,6 +390,11 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
 }
 
 - (void)updateIndicators {
+    if (![[self psmTabControlView] shouldShowActivityIndicators]) {
+        self.indicator.hidden = YES;
+        self.indicator.animate = NO;
+        return;
+    }
     PSMProgress effectiveProgress = _progress;
     if (self.state == NSControlStateValueOn) {
         // For the active tab, act as though progress is stopped so we just indicate the processing

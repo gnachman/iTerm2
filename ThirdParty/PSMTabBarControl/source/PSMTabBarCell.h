@@ -24,6 +24,7 @@
 - (id<PSMTabBarControlDelegate>)delegate;
 - (NSTabView *)tabView;
 - (BOOL)supportsMultiLineLabels;
+- (BOOL)shouldShowActivityIndicators;
 @end
 
 @interface PSMTabBarCell : NSActionCell <NSCoding>

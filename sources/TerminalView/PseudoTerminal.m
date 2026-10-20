@@ -8927,6 +8927,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [itad newSession:nil];
 }
 
+- (BOOL)tabViewShouldShowActivityIndicators:(NSTabView *)tabView {
+    return ![iTermPreferences hideTabActivityIndicator];
+}
+
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
     PTYTab *tab = tabViewItem.identifier;
     [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
@@ -13593,6 +13597,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                                                           effectiveAppearance:self.window.effectiveAppearance];
     [_contentView.tabBarControl setStyle:style];
     [_contentView.tabBarControl setTabsHaveCloseButtons:[iTermPreferences boolForKey:kPreferenceKeyTabsHaveCloseButton]];
+    // PTYTab.isProcessing depends on the Hide Activity Indicator setting and is only pushed when
+    // the tab's real processing state changes, so re-push it in case the setting changed.
+    for (PTYTab *tab in self.tabs) {
+        [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+    }
+    [_contentView.tabBarControl updateActivityIndicators];
     [_contentView.tabBarControl updateHeightWithDefault:[self desiredTabBarHeight]];
 
     [[self currentTab] recheckBlur];

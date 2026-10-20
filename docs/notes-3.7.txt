@@ -1534,3 +1534,7 @@ Bug Fixes:
 - With ligatures turned off, some fonts could
   still draw “fi” as a ligature and leave a gap
   after it, as in “confi g”. Issue 13133.
+- The “Hide activity indicator” setting now
+  also hides the tab’s spinner and progress
+  indicator when a program reports progress.
+  Issue 13145.

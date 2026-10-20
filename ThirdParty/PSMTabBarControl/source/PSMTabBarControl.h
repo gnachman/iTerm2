@@ -103,6 +103,11 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
     draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tabView;
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
 
+// Return NO to hide every tab's activity indicator, whether it would show
+// the busy state or progress. Defaults to YES. Call
+// -updateActivityIndicators when the answer changes.
+- (BOOL)tabViewShouldShowActivityIndicators:(NSTabView *)tabView;
+
 //Standard NSTabView methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)tabView:(NSTabView *)aTabView didCloseTabViewItem:(NSTabViewItem *)tabViewItem;
@@ -484,6 +489,9 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)graphicDidChangeForTabWithIdentifier:(nullable id)identifier;
 
 - (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons;
+// Re-asks the delegate whether to show activity indicators and updates the
+// cells if the answer changed.
+- (void)updateActivityIndicators;
 
 // Safely remove a cell.
 - (void)removeCell:(PSMTabBarCell *)cell;
