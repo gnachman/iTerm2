@@ -799,6 +799,15 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
             textField.cell.truncatesLastVisibleLine = YES;
             [cellView addSubview:textField];
         }
+        // makeViewWithIdentifier: only recycles views whose own identifier matches.
+        cellView.identifier = identifier;
+    }
+    // Folders and snippets share a reuse identifier, so a recycled cell may have been made for the
+    // other kind. Set its icon on every use, not just at creation.
+    iTermIconTableCellView *iconCell = [iTermIconTableCellView castFrom:cellView];
+    if (iconCell && _icon && _folderIcon) {
+        iconCell.icon = folder ? _folderIcon : _icon;
+        iconCell.iconView.contentTintColor = iconColor;
     }
     return cellView;
 }
