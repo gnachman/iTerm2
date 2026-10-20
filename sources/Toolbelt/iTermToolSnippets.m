@@ -786,7 +786,9 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                 cellView = [[iTermIconTableCellView alloc] initWithIcon:folder ? _folderIcon : _icon
                                                                   color:iconColor];
             } else {
-                cellView = [[iTermTableCellView alloc] init];
+                // Lays out its text field by hand. Don't use constraints here: see the comment
+                // on IconTableCellView.
+                cellView = [[iTermIconTableCellView alloc] initWithFrame:NSZeroRect];
             }
             textField = [NSTextField it_textFieldForTableViewWithIdentifier:identifier];
             cellView.strongTextField = textField;
@@ -796,15 +798,16 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
             textField.maximumNumberOfLines = 1;
             textField.cell.truncatesLastVisibleLine = YES;
             [cellView addSubview:textField];
-            textField.translatesAutoresizingMaskIntoConstraints = NO;
-            if (!_icon) {
-                [NSLayoutConstraint activateConstraints:@[
-                    [textField.leadingAnchor constraintEqualToAnchor:cellView.leadingAnchor],
-                    [textField.trailingAnchor constraintEqualToAnchor:cellView.trailingAnchor],
-                    [textField.centerYAnchor constraintEqualToAnchor:cellView.centerYAnchor],
-                ]];
-            }
         }
+        // makeViewWithIdentifier: only recycles views whose own identifier matches.
+        cellView.identifier = identifier;
+    }
+    // Folders and snippets share a reuse identifier, so a recycled cell may have been made for the
+    // other kind. Set its icon on every use, not just at creation.
+    iTermIconTableCellView *iconCell = [iTermIconTableCellView castFrom:cellView];
+    if (iconCell && _icon && _folderIcon) {
+        iconCell.icon = folder ? _folderIcon : _icon;
+        iconCell.iconView.contentTintColor = iconColor;
     }
     return cellView;
 }

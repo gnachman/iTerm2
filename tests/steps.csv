@@ -1,4 +1,4 @@
-Key,Type,Modifiers,Option as alt?,Keyboard,Mode,Expected output,Notes,Manual
+Key,Type,Modifiers,Option as alt?,Keyboard,Mode,Expected output,Notes,Manual,TISRomanSwitchState
 Right Arrow,"Press and repeat once",None,NA,US English,1,\e[C\e[C
 Home,"Hit",None,NA,US English,1,\e[H
 End,"Hit",None,NA,US English,1,\e[F
@@ -88,3 +88,11 @@ c,"Hit",Control Option,FALSE,US English,8,\e[57448;5u\e[57443;7u\e[99;7u
 e,"Press apostrophe and then hit",None,NA,US International PC,9,\e[101u,"Test this manually",TRUE
 e,"Press apostrophe and then hit",None,NA,US International PC,25,\e[101;;233u,"Issue 12906: dead key composition with associated text (bit 16). é is reported as 233. Bug: sends \e[101;;101u. Test this manually",TRUE
 Capslock,"Toggle on",None,NA,US English,8,\e[57358;65u,"Issue 12922: caps lock key toggle. Should send \e[57358;65u but currently sends \e[65u because the flagsChanged path omits kVK_CapsLock, so the caps modifier value 65 lands in the keycode slot.",
+Capslock,Toggle off,None,NA,US English,10,\e[57358;1:3u,"Issue 13136: setting off, unlock. Today an unlock reports only a release; a followup change will make each toggle report a press and a release.",,0
+Capslock,Tap to switch input source,None,NA,Pinyin - Simplified,10,,"Issue 13136: a tap switches the input source and must report nothing. Recorded: 57 on, 255 off, 57 off (within 45 ms). Today sends \e[57358;65u\e[1:3u.",,1
+Capslock,Press and hold until locked,None,NA,Pinyin - Simplified,10,\e[57358;65u\e[57358;65:3u,"Issue 13136: starts in Pinyin; macOS switches to the Latin source and locks with a synthetic event 500 ms after the press. Recorded: 57 on, 255 off, 255 on (+500 ms); no key-up event. Today sends \e[57358;65u\e[1:3u\e[65u.",,1
+Capslock,Tap while locked to unlock,None,NA,US English,10,\e[57358u\e[57358;1:3u,"Issue 13136: a tap while locked always unlocks. Recorded: 57 off, 255 on, 57 on, 255 off (+52 ms). The final unlock arrives after the key-up. Today sends \e[57358;1:3u\e[65u\e[1:3u.",,1
+Capslock,Press and hold until locked,None,NA,US English,10,\e[57358;65u\e[57358;65:3u,"Issue 13136: lock starting from a Latin input source. Recorded: 255 off, 255 on (+12 ms); no keyCode 57 events at all. Today sends \e[65u.",,1
+Capslock,Press and hold until unlocked,None,NA,US English,10,\e[57358u\e[57358;1:3u,"Issue 13136: recorded: 57 off, 255 on, 255 off (+500 ms); no key-up event. Today sends \e[57358;1:3u\e[65u\e[1:3u.",,1
+Capslock,Press and hold until locked,None,NA,US English,8,\e[57358;65u,"Issue 13136: without report-event-types only the press is reported. Recorded: 57 on, 255 off, 255 on (+500 ms).",,1
+Capslock,Press and hold until unlocked,None,NA,US English,8,\e[57358u,"Issue 13136: without report-event-types only the press is reported. Recorded: 57 off, 255 on, 255 off (+500 ms).",,1
