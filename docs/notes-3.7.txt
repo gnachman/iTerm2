@@ -1523,6 +1523,5 @@ Bug Fixes:
   that some apps read as Control-C. Holding it to
   turn Caps Lock on or off now reports a Caps
   Lock press and release. Issue 13136.
-||||||| parent of 254049a14 (Add release note for it2dl bash path fix)
 - The it2dl utility now works on systems where
   bash is not in /bin, such as Raspberry Pi OS.
