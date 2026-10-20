@@ -195,8 +195,9 @@ final class TmuxKeyReportingModeTests: XCTestCase {
         }
     }
 
-    func testPaneModifyOtherKeysStillClearsFlagsOutsideTmux() {
-        // Outside tmux a modifyOtherKeys change deliberately clears the Kitty flags.
+    func testModifyOtherKeysLeavesFlagsAloneOutsideTmux() {
+        // Outside tmux a modifyOtherKeys change leaves the Kitty flags alone, as in kitty.
+        // Issue 13138.
         let harness = makeHarness(isTmuxClient: false)
         harness.send(push(1))
         harness.sync()
@@ -204,8 +205,8 @@ final class TmuxKeyReportingModeTests: XCTestCase {
 
         harness.send(Array("\u{1b}[>4;2m".utf8))
         harness.sync()
-        XCTAssertEqual(harness.screen.terminalKeyReportingFlags, [],
-                       "Outside tmux a modifyOtherKeys change still clears the flags")
+        XCTAssertEqual(harness.screen.terminalKeyReportingFlags, .disambiguateEscape,
+                       "A modifyOtherKeys change must not clear the flags")
     }
 
     func testFullResetClearsFlagsOutsideTmux() {

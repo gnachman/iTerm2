@@ -433,26 +433,22 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalShowPrimaryBuffer];
     self.softAlternateScreenMode = NO;
     _keyReportingFlags = 0;
-    [self resetSendModifiersWithSideEffects:NO];
+    [self resetSendModifiersAndKeyReportingFlags];
     [self.delegate terminalDidChangeSendModifiers];
     [self.delegate terminalDidReset];
 }
 
 - (void)resetKeyReportingModeLocally {
     DLog(@"reset key reporting mode locally");
-    [self resetSendModifiersWithSideEffects:NO];
+    [self resetSendModifiersAndKeyReportingFlags];
     [self.delegate terminalDidChangeSendModifiers];
     [self.delegate terminalDidResetKeyReportingLocally];
 }
 
-- (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects {
-    DLog(@"reset send modifiers with side effects=%@", @(sideEffects));
-    self.dirty = YES;
-    // CSI >m and CSI >4m with no parameters land here, so this is the same sequence family as the
-    // parameterized branches in -executeToken: and needs the same before/after test. Resetting a
-    // mode that is already off changes nothing, and reporting it anyway would be read as the shell
-    // writing the mode. See 13032.
-    const VT100TerminalKeyReportingFlags beforeReset = self.keyReportingFlags;
+// Clears modifyOtherKeys and friends along with the kitty keyboard protocol state. For
+// terminal resets only; the escape sequences use -resetAllSendModifiersFromStream.
+- (void)resetSendModifiersAndKeyReportingFlags {
+    DLog(@"reset send modifiers and key reporting flags");
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
@@ -460,12 +456,17 @@ static const int kMaxScreenRows = 4096;
     self.dirty = YES;
     [_mainKeyReportingModeStack removeAllObjects];
     [_alternateKeyReportingModeStack removeAllObjects];
-    if (sideEffects) {
-        [self.delegate terminalDidChangeSendModifiers];
-        if (beforeReset != self.keyReportingFlags) {
-            [self.delegate terminalKeyReportingFlagsDidChange:YES];
-        }
+}
+
+// CSI > m and CSI > n with no parameters. Unlike a terminal reset, these leave the kitty
+// keyboard protocol flags and stacks alone. Issue 13138.
+- (void)resetAllSendModifiersFromStream {
+    DLog(@"reset all send modifiers from stream");
+    for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
+        _sendModifiers[i] = @-1;
     }
+    self.dirty = YES;
+    [self.delegate terminalDidChangeSendModifiers];
 }
 
 - (void)gentleReset {
@@ -3058,30 +3059,28 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_SCS:
             break;
 
-        case VT100CSI_RESET_MODIFIERS:
+        // XTMODKEYS (CSI > Ps ; Pv m) and its reset (CSI > Ps n) leave the kitty keyboard
+        // protocol alone, as they do in kitty, which ignores them, and in Ghostty. While kitty
+        // flags are set they take precedence over modifyOtherKeys (see -[PTYSession
+        // updateKeyMapper]), and the modifyOtherKeys level recorded here takes effect once the
+        // app pops its flags. Issue 13138.
+        case VT100CSI_RESET_MODIFIERS: {
             if (token.csi->count == 0) {
-                [self resetSendModifiersWithSideEffects:YES];
+                [self resetAllSendModifiersFromStream];
                 break;
             }
-            int resource = token.csi->p[0];
-            if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
+            const int resource = token.csi->p[0];
+            if (resource >= 0 && resource < NUM_MODIFIABLE_RESOURCES) {
                 _sendModifiers[resource] = @-1;
                 self.dirty = YES;
-                // Emptying the stack changes the effective flags whenever it was non-empty, so
-                // compare the getter across the change rather than assuming. See 13032.
-                const VT100TerminalKeyReportingFlags before = self.keyReportingFlags;
-                [self.currentKeyReportingModeStack removeAllObjects];
                 [self.delegate terminalDidChangeSendModifiers];
-                if (before != self.keyReportingFlags) {
-                    [self.delegate terminalKeyReportingFlagsDidChange:NO];
-                }
             }
-            self.dirty = YES;
             break;
+        }
 
         case VT100CSI_SET_MODIFIERS: {
             if (token.csi->count == 0) {
-                [self resetSendModifiersWithSideEffects:YES];
+                [self resetAllSendModifiersFromStream];
                 break;
             }
             const int resource = token.csi->p[0];
@@ -3099,21 +3098,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             self.dirty = YES;
             _sendModifiers[resource] = @(value);
-            // Zeroing the flags and emptying the stack below both change what the getter returns.
-            // Compare across the whole change and notify once. See 13032.
-            const VT100TerminalKeyReportingFlags beforeSetModifiers = self.keyReportingFlags;
-            _keyReportingFlags = 0;
-            // The protocol described here:
-            // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
-            // is flawed because if CSI > 4 ; 0 m pops the stack it would leave
-            // it in the wrong state if CSI > 4 ; 1 m were sent twice.
-            // CSI m will nuke the stack and CSI u will respect it.
-            self.dirty = YES;
-            [self.currentKeyReportingModeStack removeAllObjects];
             [self.delegate terminalDidChangeSendModifiers];
-            if (beforeSetModifiers != self.keyReportingFlags) {
-                [self.delegate terminalKeyReportingFlagsDidChange:YES];
-            }
             break;
         }
 

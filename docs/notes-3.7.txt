@@ -851,6 +851,12 @@ Bug Fixes:
   reporting for non-US keyboard layouts, so
   shortcuts such as Ctrl-C work without
   switching layouts.
+- Programs that turn on the Kitty keyboard
+  protocol and then request xterm’s
+  modifyOtherKeys, as Claude Code does, keep
+  the Kitty protocol, matching kitty. Before,
+  the request turned it off, so Command keys
+  stopped being reported.
 - Fixed a bug in the Kitty graphics protocol
   where transmitting a new image under an
   image id already in use kept drawing the
