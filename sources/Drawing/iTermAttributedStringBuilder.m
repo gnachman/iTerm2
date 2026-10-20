@@ -793,6 +793,15 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 attributes->ligatureLevel = 0;
             }
         }
+    } else {
+        // Without the fast path every run is shaped by CoreText, so honor a
+        // disabled ligature setting here. Otherwise fonts with a standard "fi"
+        // ligature draw it in one cell and leave a gap. Issue 13133.
+        const BOOL isAscii = !c->complexChar && c->code < 128;
+        const BOOL ligaturesEnabled = isAscii ? (_asciiLigaturesAvailable && _asciiLigatures) : _nonAsciiLigatures;
+        if (!ligaturesEnabled) {
+            attributes->ligatureLevel = 0;
+        }
     }
     if (c->underline) {
         switch (ScreenCharGetUnderlineStyle(*c)) {

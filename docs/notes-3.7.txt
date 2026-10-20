@@ -1531,3 +1531,6 @@ Bug Fixes:
   Lock press and release. Issue 13136.
 - The it2dl utility now works on systems where
   bash is not in /bin, such as Raspberry Pi OS.
+- With ligatures turned off, some fonts could
+  still draw “fi” as a ligature and leave a gap
+  after it, as in “confi g”. Issue 13133.
