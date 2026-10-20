@@ -5099,27 +5099,38 @@ typedef struct {
 } iTermSizeRange;
 
 // Private, derived parse-tree key: whether a leaf's session currently shows the per-session
-// toolbar (e.g. the workgroups toolbar). Populated by -annotateShowToolbarInTmuxParseTree: and
-// consumed by the geometry pass so that pass doesn't need the tmux controller.
+// toolbar (e.g. the workgroups toolbar). Populated by -annotateSessionDecorationsInTmuxParseTree:
+// and consumed by the geometry pass so that pass doesn't need the tmux controller.
 static NSString *const PTYTabParseTreeShowToolbarKey = @"iTerm2ShowToolbar";
 
-// Annotate each leaf with whether its session shows the per-session toolbar. Unlike titles (a
-// tab-wide pref) and bottom status bars (never present in tmux), the toolbar is per-session
-// (workgroup membership), so it can't be a single tab-wide flag. On initial creation the session
-// doesn't exist yet (sessionForWindowPane: returns nil, so toolbarReservedHeight is 0), which is correct.
-+ (void)annotateShowToolbarInTmuxParseTree:(NSMutableDictionary *)parseTree
-                            tmuxController:(TmuxController *)tmuxController {
+// Private, derived parse-tree key: the width a leaf's session reserves to the right of its grid
+// (adjacent timestamps and right-gutter panels like clippings). Populated alongside
+// PTYTabParseTreeShowToolbarKey.
+static NSString *const PTYTabParseTreeRightExtraKey = @"iTerm2RightExtra";
+
+// Annotate each leaf with per-session decorations. Unlike titles (a tab-wide pref) and bottom
+// status bars (never present in tmux), the toolbar (workgroup membership) and right extra
+// (clippings, inline chat, adjacent timestamps) are per-session, so they can't be tab-wide
+// values. On initial creation the session doesn't exist yet (sessionForWindowPane: returns nil, so
+// toolbarReservedHeight is 0 and right extra comes from the profile alone), which is correct.
++ (void)annotateSessionDecorationsInTmuxParseTree:(NSMutableDictionary *)parseTree
+                                          profile:(Profile *)profile
+                                   tmuxController:(TmuxController *)tmuxController {
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
         case kLeafLayoutNode: {
             const int windowPane = [parseTree[kLayoutDictWindowPaneKey] intValue];
             PTYSession *session = [tmuxController sessionForWindowPane:windowPane];
             parseTree[PTYTabParseTreeShowToolbarKey] = @(session.view.toolbarReservedHeight > 0);
+            parseTree[PTYTabParseTreeRightExtraKey] =
+                @(session ? session.desiredRightExtra : [PTYSession desiredRightExtraForProfile:profile session:nil]);
             break;
         }
         case kVSplitLayoutNode:
         case kHSplitLayoutNode:
             for (NSMutableDictionary *child in parseTree[kLayoutDictChildrenKey]) {
-                [self annotateShowToolbarInTmuxParseTree:child tmuxController:tmuxController];
+                [self annotateSessionDecorationsInTmuxParseTree:child
+                                                        profile:profile
+                                                 tmuxController:tmuxController];
             }
             break;
     }
@@ -5147,16 +5158,22 @@ static NSString *const PTYTabParseTreeShowToolbarKey = @"iTerm2ShowToolbar";
             const NSSize cellSize = [self cellSizeForBookmark:profile];
             // showToolbar reserves space for the per-session toolbar (e.g. the workgroups toolbar),
             // which is always at the top and steals cell space. It's read from the parse tree, which
-            // -annotateShowToolbarInTmuxParseTree:tmuxController: filled in per leaf, so this geometry
-            // pass doesn't need the tmux controller. Without the reservation the SessionView would be
+            // -annotateSessionDecorationsInTmuxParseTree: filled in per leaf, so this geometry pass
+            // doesn't need the tmux controller. Without the reservation the SessionView would be
             // sized to hold only the grid tmux sent, and the toolbar would overlay the top rows.
+            // Right extra comes from the same annotation. It's per-session because a right-gutter
+            // panel (e.g. clippings) or adjacent timestamps may be on in only one pane; using a
+            // tab-wide value makes that pane too narrow for its grid and leaves an empty strip at
+            // the right edge of the window.
+            NSNumber *annotatedRightExtra = [NSNumber castFrom:parseTree[PTYTabParseTreeRightExtraKey]];
+            const CGFloat rightExtra = annotatedRightExtra ? annotatedRightExtra.doubleValue : [PTYSession desiredRightExtraForProfile:profile session:nil];
             const NSSize size = [PTYTab _sessionSizeWithCellSize:cellSize
                                                       dimensions:NSMakeSize([parseTree[kLayoutDictWidthKey] intValue],
                                                                             [parseTree[kLayoutDictHeightKey] intValue])
                                                       showTitles:showTitles
                                              showBottomStatusBar:showBottomStatusBar
                                                      showToolbar:[parseTree[PTYTabParseTreeShowToolbarKey] boolValue]
-                                                      rightExtra:[PTYSession desiredRightExtraForProfile:profile session:nil]
+                                                      rightExtra:rightExtra
                                                       inTerminal:term];
             parseTree[kLayoutDictPixelWidthKey] = @(size.width);
             parseTree[kLayoutDictPixelHeightKey] = @(size.height);
@@ -5359,9 +5376,12 @@ static NSString *const PTYTabParseTreeShowToolbarKey = @"iTerm2ShowToolbar";
     // other places like this that decide if titles should be shown.
     const BOOL showTitles = forceTitleBar || (perPaneTitleBarEnabled && (zoomed || haveMultipleSessions));
 
-    // Record per-leaf toolbar state up front so the geometry pass below is a pure function of the
-    // parse tree (it reads PTYTabParseTreeShowToolbarKey rather than consulting the controller).
-    [PTYTab annotateShowToolbarInTmuxParseTree:parseTree tmuxController:tmuxController];
+    // Record per-leaf toolbar and right-extra state up front so the geometry pass below is a pure
+    // function of the parse tree (it reads PTYTabParseTreeShowToolbarKey and
+    // PTYTabParseTreeRightExtraKey rather than consulting the controller).
+    [PTYTab annotateSessionDecorationsInTmuxParseTree:parseTree
+                                              profile:profile
+                                       tmuxController:tmuxController];
 
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree

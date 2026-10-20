@@ -1506,3 +1506,8 @@ Bug Fixes:
   beachball when GPU rendering was on and the
   system was under heavy load, for example from
   memory pressure. Issue 13139.
+- In tmux integration, showing timestamps beside
+  the text in one pane of a window split into
+  top and bottom panes no longer covers the end
+  of that pane’s lines and leaves an empty strip
+  at the right edge of the window.
