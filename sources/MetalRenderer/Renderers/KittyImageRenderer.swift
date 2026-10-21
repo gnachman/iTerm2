@@ -154,10 +154,13 @@ class KittyImageRendererTransientState: iTermMetalCellRendererTransientState {
     }
 
     private func textureFrame(_ draw: iTermKittyImageDraw) -> NSRect {
-        return NSRect(x: draw.sourceFrame.minX / draw.image.scaledSize.width,
-                      y: draw.sourceFrame.minY / draw.image.scaledSize.height,
-                      width: draw.sourceFrame.width / draw.image.scaledSize.width,
-                      height: draw.sourceFrame.height / draw.image.scaledSize.height).inverted
+        return Self.textureFrame(sourceFrame: draw.sourceFrame, imageSize: draw.image.scaledSize)
+    }
+
+    // sourceFrame is in the image's bottom-left-origin coordinate space, as in iTermKittyImageDraw.
+    // Texture coordinates have a top-left origin, so flip it first (as the placeholder path does).
+    static func textureFrame(sourceFrame: NSRect, imageSize: NSSize) -> NSRect {
+        return (sourceFrame.flipped(in: imageSize.height) / imageSize).inverted
     }
 
     private func texture(for draw: iTermKittyImageDraw) -> MTLTexture? {

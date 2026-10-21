@@ -1563,3 +1563,9 @@ Bug Fixes:
   with tmux integration could freeze every tmux
   window. Triggers that use only matches[N] and
   line no longer wait on the session.
+- Fixed Kitty graphics images cropped to part of
+  their height showing the wrong part of the
+  image when GPU rendering is on. Multi-row
+  images forwarded by some terminal multiplexers
+  appeared with their rows in reverse order.
+  Issue 13146.
