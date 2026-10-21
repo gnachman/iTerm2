@@ -1538,3 +1538,8 @@ Bug Fixes:
   Settings > Appearance > Tabs now also hides
   the tab’s spinner when a program reports
   progress. Issue 13145.
+- Installing Shell Integration with “Download
+  and Run Installer” installed outdated
+  scripts, so the warning that this account’s
+  Shell Integration scripts are out of date
+  kept coming back. Issue 13155.
