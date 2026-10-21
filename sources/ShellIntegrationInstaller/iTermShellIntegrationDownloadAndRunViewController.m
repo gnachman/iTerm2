@@ -26,9 +26,9 @@
 
 - (NSString *)urlString {
     if (self.installUtilities) {
-        return @"https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh";
+        return @"https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh";
     }
-    return @"https://iterm2.com/shell_integration/install_shell_integration.sh";
+    return @"https://iterm2.com/shell_integration/v2/install_shell_integration.sh";
 }
 
 - (NSString *)command {
