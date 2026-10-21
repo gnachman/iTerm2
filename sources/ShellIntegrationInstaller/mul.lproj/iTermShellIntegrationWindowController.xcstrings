@@ -1052,43 +1052,43 @@
       }
     },
     "w9k-Lv-5eU.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"This will run the following command:\\n\\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash\"; ObjectID = \"w9k-Lv-5eU\";",
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"This will run the following command:\\n\\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash\"; ObjectID = \"w9k-Lv-5eU\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dies führt den folgenden Befehl aus:\n\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash"
+            "value" : "Dies führt den folgenden Befehl aus:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "This will run the following command:\n\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash"
+            "value" : "This will run the following command:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "以下のコマンドを実行します:\n\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash"
+            "value" : "以下のコマンドを実行します:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Isto executará o seguinte comando:\n\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash"
+            "value" : "Isto executará o seguinte comando:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Будет выполнена следующая команда:\n\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash"
+            "value" : "Будет выполнена следующая команда:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这将运行以下命令：\n\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash"
+            "value" : "这将运行以下命令：\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         }
       }
