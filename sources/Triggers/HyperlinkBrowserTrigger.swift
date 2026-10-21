@@ -23,7 +23,7 @@ class HyperlinkBrowserTrigger: Trigger {
     }
     override func triggerOptionalDefaultParameterValue(withInterpolation interpolation: Bool) -> String? {
         if interpolation {
-            "https://\\(match0)"
+            "https://\\(matches[0])"
         } else {
             "https://\\0"
         }

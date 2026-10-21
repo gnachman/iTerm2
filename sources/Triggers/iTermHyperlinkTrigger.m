@@ -36,7 +36,7 @@
 
 - (NSString *)triggerOptionalDefaultParameterValueWithInterpolation:(BOOL)interpolation {
     if (interpolation) {
-        return @"https://\\(match0)";
+        return @"https://\\(matches[0])";
     }
     return @"https://\\0";
 }

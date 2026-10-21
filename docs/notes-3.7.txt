@@ -1551,3 +1551,9 @@ Bug Fixes:
   longer breaks the tab bar (missing tabs, missing
   group headers, highlight on the wrong tab).
   Issue 13154.
+- Choosing the Make Hyperlink trigger action
+  with interpolated string parameters turned on
+  now fills in a working URL,
+  https://\(matches[0]). It previously filled in
+  https://\(match0), which refers to a variable
+  that doesn’t exist.
