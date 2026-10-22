@@ -2500,6 +2500,10 @@ class ClaudeCodeOnboarding: NSObject {
     }
 
     private func applyToolbeltToClaudeWindows() {
+        // Clicking Show again must not stack another scrim on top of the
+        // ones from the previous click, darkening the window further each time.
+        removeScrims()
+
         // Show toolbelt in all windows with Claude sessions (falling back to the
         // current session's window if we don't know of any Claude sessions yet).
         let sessions = claudeSessions()
