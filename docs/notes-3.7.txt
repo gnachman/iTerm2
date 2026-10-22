@@ -1557,3 +1557,9 @@ Bug Fixes:
   https://\(matches[0]). It previously filled in
   https://\(match0), which refers to a variable
   that doesn’t exist.
+- Fixed a bug where a trigger whose interpolated
+  parameter refers to its match, as in
+  \(matches[0]), could make output stall, and
+  with tmux integration could freeze every tmux
+  window. Triggers that use only matches[N] and
+  line no longer wait on the session.

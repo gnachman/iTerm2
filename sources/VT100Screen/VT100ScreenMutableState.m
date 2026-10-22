@@ -7783,7 +7783,10 @@ lengthExcludingInBandSignaling:data.length
 #pragma mark - iTermTriggerScopeProvider
 
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Urgent because token execution is paused until this runs. At a non-visible session's
+    // side-effect period that could take a second, and while paused the session stops reading
+    // input, which for a tmux pane stalls every session. Issue 13160.
+    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [iTermGCD assertMainQueueSafe];
         block([delegate triggerSideEffectVariableScope], delegate);
         [unpauser unpause];

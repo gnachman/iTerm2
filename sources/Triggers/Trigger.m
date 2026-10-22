@@ -401,7 +401,18 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
                                                         absLine:(long long)absLine
                                                           scope:(id<iTermTriggerScopeProvider>)scopeProvider
                                                useInterpolation:(BOOL)useInterpolation {
-    if (useInterpolation && [p interpolatedStringContainsNonliteral]) {
+    iTermTriggerInterpolatedParameter *parameter = useInterpolation ? [iTermTriggerInterpolatedParameter parameterWithString:p] : nil;
+    if (parameter.kind == iTermTriggerInterpolatedParameterKindTriggerLocal) {
+        // Evaluate without the session's scope so that token execution need not pause.
+        NSString *value = [parameter valueWithMatches:stringArray absLine:absLine];
+        if (value) {
+            return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+                [seal fulfill:value];
+            }];
+        }
+        DLog(@"Trigger-local evaluation of %@ failed. Falling back to evaluating with scope.", p);
+    }
+    if (parameter && parameter.kind != iTermTriggerInterpolatedParameterKindLiteral) {
         return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
             [scopeProvider performBlockWithScope:^(iTermVariableScope * _Nonnull scope, id<iTermObject> _Nonnull object) {
                 assert([NSThread isMainThread]);
