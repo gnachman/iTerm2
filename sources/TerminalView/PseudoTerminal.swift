@@ -368,8 +368,10 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
             return
         }
         let newPinned = !tab.isPinned
+        DLog("togglePinTab: tab=\(tab) newPinned=\(newPinned) group=\(tab.tabGroupID ?? "(none)")")
         if let gid = tab.tabGroupID, !gid.isEmpty {
             let members = tabs(inGroup: gid) ?? []
+            DLog("togglePinTab: toggling group members \(members)")
             // Pin/unpin the whole group as a block so it stays entirely pinned or
             // entirely unpinned. Pinning only one member would strand it across
             // the pinned/unpinned boundary and split the group (non-contiguous).
@@ -379,7 +381,11 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
             if members.contains(where: { $0.tmuxController() != nil }) {
                 return
             }
-            for member in members where member.isPinned != newPinned {
+            // Each member moves to the boundary as it toggles. Pinning left to
+            // right and unpinning right to left lands every member next to the
+            // previous one, so the group keeps its order.
+            let ordered = newPinned ? members : members.reversed()
+            for member in ordered where member.isPinned != newPinned {
                 member.isPinned = newPinned
             }
             // Each isPinned change reorders that tab to the pinned/unpinned boundary
@@ -409,7 +415,12 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         for (i, t) in allTabs.enumerated() where t.isPinned && t !== tab {
             lastPinnedIndex = i
         }
-        let targetIndex = lastPinnedIndex + 1
+        // The target is an index after the tab is removed from its current slot.
+        // If the tab sits left of the boundary (e.g. unpinning a tab that is not
+        // the last pinned one), removing it shifts the boundary left by one, so
+        // lastPinnedIndex + 1 would be one past the end of the list.
+        let targetIndex = currentIndex < lastPinnedIndex ? lastPinnedIndex : lastPinnedIndex + 1
+        DLog("didChangePinnedState: tab=\(tab) pinned=\(pinned) currentIndex=\(currentIndex) lastPinnedIndex=\(lastPinnedIndex) targetIndex=\(targetIndex) count=\(allTabs.count)")
         if currentIndex != targetIndex {
             moveTab(at: currentIndex, to: targetIndex)
         }

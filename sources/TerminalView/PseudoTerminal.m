@@ -12861,28 +12861,37 @@ typedef struct {
     NSArray<PTYTab *> *tabs = self.tabs;
     if (selectedIndex >= 0 && selectedIndex < (NSInteger)tabs.count) {
         PTYTab *movingTab = tabs[selectedIndex];
-        NSInteger lastPinnedIndex = -1;
-        for (NSInteger i = 0; i < (NSInteger)tabs.count; i++) {
-            if (tabs[i].isPinned) {
-                lastPinnedIndex = i;
+        // destinationIndex is an index after movingTab is removed, where the
+        // other pinned tabs occupy [0, otherPinnedCount). Counting them (rather
+        // than taking the last pinned index in the current order) stays correct
+        // when movingTab sits left of the boundary, as it does mid-unpin.
+        NSInteger otherPinnedCount = 0;
+        for (PTYTab *aTab in tabs) {
+            if (aTab != movingTab && aTab.isPinned) {
+                otherPinnedCount++;
             }
         }
         if (movingTab.isPinned) {
             // Pinned tab cannot move past the unpinned zone.
-            if (destinationIndex > lastPinnedIndex) {
-                destinationIndex = lastPinnedIndex;
+            if (destinationIndex > otherPinnedCount) {
+                destinationIndex = otherPinnedCount;
             }
         } else {
             // Unpinned tab cannot move into the pinned zone.
-            if (destinationIndex <= lastPinnedIndex) {
-                destinationIndex = lastPinnedIndex + 1;
+            if (destinationIndex < otherPinnedCount) {
+                destinationIndex = otherPinnedCount;
             }
+        }
+        if (destinationIndex >= (NSInteger)tabs.count) {
+            DLog(@"Clamping out-of-range destination %@ for %@ tabs", @(destinationIndex), @(tabs.count));
+            destinationIndex = tabs.count - 1;
         }
         if (selectedIndex == destinationIndex) {
             return;
         }
     }
 
+    DLog(@"Move tab from %@ to %@ of %@", @(selectedIndex), @(destinationIndex), @(tabs.count));
     [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self tabsDidReorder];

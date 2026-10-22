@@ -1665,6 +1665,8 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destIndex
 {
+    DLog(@"moveTabAtIndex:%@ toIndex:%@ tabViewItems=%@ cells=%@",
+         @(sourceIndex), @(destIndex), @(_tabView.numberOfTabViewItems), _cells);
     NSTabViewItem *theItem = [_tabView tabViewItemAtIndex:sourceIndex];
     BOOL reselect = ([_tabView selectedTabViewItem] == theItem);
 

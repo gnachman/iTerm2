@@ -1546,3 +1546,8 @@ Bug Fixes:
 - Fixed Shell Integration for xonsh, which was
   installed but never took effect. Installing
   it again fixes an existing installation.
+- Unpinning a pinned tab that was not the
+  rightmost pinned tab, or one in a tab group, no
+  longer breaks the tab bar (missing tabs, missing
+  group headers, highlight on the wrong tab).
+  Issue 13154.
