@@ -10,6 +10,7 @@
 #import "Coprocess.h"
 #import "DebugLogging.h"
 
+#include <stdatomic.h>
 #include <sys/time.h>
 #include <sys/select.h>
 
@@ -17,11 +18,27 @@
 
 NSString *const kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
-static int unblockPipeR;
-static int unblockPipeW;
+// The shared instance's unblock pipe's write end. UnblockTaskNotifier() reads it from a signal
+// handler, so it is a plain int that is written once.
+static volatile int gSharedUnblockPipeW = -1;
+static TaskNotifier *gSharedInstance;
 
 @implementation TaskNotifier
 {
+    int _unblockPipeR;
+    int _unblockPipeW;
+
+    // Testing only. When nil, select(2) is called directly.
+    iTermTaskNotifierSelect _select;
+    // Testing only. When nil, coprocess changes are posted on the main thread.
+    void (^_coprocessChangeHandler)(void);
+    // Set to stop the run loop. Only test instances are ever stopped.
+    atomic_bool _stopped;
+    // Signaled when -run returns.
+    dispatch_semaphore_t _didStop;
+    // Testing only. Set by -startForTesting.
+    BOOL _startedForTesting;
+
     NSMutableArray<id<iTermTask>> *_tasks;
     // Set to true when an element of '_tasks' was modified
     BOOL tasksChanged;
@@ -34,20 +51,25 @@ static int unblockPipeW;
 
 
 + (instancetype)sharedInstance {
-    static id instance;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        instance = [[self alloc] init];
+        TaskNotifier *notifier = [[self alloc] init];
+        gSharedUnblockPipeW = notifier->_unblockPipeW;
+        gSharedInstance = notifier;
         [NSThread detachNewThreadSelector:@selector(run)
-                                 toTarget:instance
+                                 toTarget:gSharedInstance
                                withObject:nil];
     });
-    return instance;
+    return gSharedInstance;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _unblockPipeR = -1;
+        _unblockPipeW = -1;
+        atomic_init(&_stopped, false);
+        _didStop = dispatch_semaphore_create(0);
         deadpool = [[NSMutableSet alloc] init];
         _tasks = [[NSMutableArray alloc] init];
         tasksLock = [[NSRecursiveLock alloc] init];
@@ -65,8 +87,18 @@ static int unblockPipeW;
             fcntl(unblockPipe[i], F_SETFD, flags | FD_CLOEXEC);
             fcntl(unblockPipe[i], F_SETFL, O_NONBLOCK);
         }
-        unblockPipeR = unblockPipe[0];
-        unblockPipeW = unblockPipe[1];
+        _unblockPipeR = unblockPipe[0];
+        _unblockPipeW = unblockPipe[1];
+    }
+    return self;
+}
+
+- (instancetype)initForTestingWithSelect:(iTermTaskNotifierSelect)select
+                  coprocessChangeHandler:(void (^)(void))coprocessChangeHandler {
+    self = [self init];
+    if (self) {
+        _select = [select copy];
+        _coprocessChangeHandler = [coprocessChangeHandler copy];
     }
     return self;
 }
@@ -75,9 +107,53 @@ static int unblockPipeW;
     [_tasks release];
     [tasksLock release];
     [deadpool release];
-    close(unblockPipeR);
-    close(unblockPipeW);
+    [_select release];
+    [_coprocessChangeHandler release];
+    dispatch_release(_didStop);
+    [self closeUnblockPipe];
     [super dealloc];
+}
+
+- (void)closeUnblockPipe {
+    // gSharedUnblockPipeW must stay valid forever. Clearing it first would not help because a
+    // signal handler may already have loaded it, and the closed fd could then be reused.
+    ITAssertWithMessage(self != gSharedInstance, @"The shared instance's unblock pipe must never be closed");
+    if (_unblockPipeR >= 0) {
+        close(_unblockPipeR);
+        _unblockPipeR = -1;
+    }
+    if (_unblockPipeW >= 0) {
+        close(_unblockPipeW);
+        _unblockPipeW = -1;
+    }
+}
+
+- (void)startForTesting {
+    ITAssertWithMessage(self != gSharedInstance, @"Only test instances may be started this way");
+    ITAssertWithMessage(!_startedForTesting, @"Already started");
+    _startedForTesting = YES;
+    NSThread *thread = [[NSThread alloc] initWithTarget:self selector:@selector(run) object:nil];
+    // Tests wait on this thread from main. Match main's QoS to avoid a priority inversion.
+    thread.qualityOfService = NSQualityOfServiceUserInteractive;
+    [thread start];
+    [thread release];
+}
+
+- (BOOL)stopForTestingWithTimeout:(NSTimeInterval)timeout {
+    ITAssertWithMessage(_startedForTesting, @"Not started for testing");
+    ITAssertWithMessage(!atomic_load(&_stopped), @"Already stopped");
+    // Set the flag before writing to the pipe. The pipe stays readable until the loop drains it,
+    // so a stop that arrives between the loop's check of the flag and select() is not lost.
+    atomic_store_explicit(&_stopped, true, memory_order_release);
+    [self unblock];
+    const long result = dispatch_semaphore_wait(_didStop,
+                                                dispatch_time(DISPATCH_TIME_NOW,
+                                                              (int64_t)(timeout * NSEC_PER_SEC)));
+    if (result != 0) {
+        return NO;
+    }
+    [self closeUnblockPipe];
+    return YES;
 }
 
 - (void)registerTask:(id<iTermTask>)task {
@@ -128,14 +204,22 @@ static int unblockPipeW;
 }
 
 - (void)unblock {
-    UnblockTaskNotifier();
+    char dummy = 0;
+    write(_unblockPipeW, &dummy, 1);
 }
 
 void UnblockTaskNotifier(void) {
     // This is called in a signal handler and must only call functions listed
-    // as safe in sigaction(2)'s man page.
+    // as safe in sigaction(2)'s man page. It must also preserve errno, since write() may set it
+    // (e.g., EAGAIN when the pipe is full) while the interrupted code is about to read it.
+    const int fd = gSharedUnblockPipeW;
+    if (fd < 0) {
+        return;
+    }
+    const int savedErrno = errno;
     char dummy = 0;
-    write(unblockPipeW, &dummy, 1);
+    write(fd, &dummy, 1);
+    errno = savedErrno;
 }
 
 - (BOOL)handleReadOnFileDescriptor:(int)fd task:(id<iTermTask>)task fdSet:(fd_set *)fdSet {
@@ -231,15 +315,15 @@ void UnblockTaskNotifier(void) {
     NSAutoreleasePool *autoreleasePool = [[NSAutoreleasePool alloc] init];
 
     // FIXME: replace this with something better...
-    for(;;) {
+    while (!atomic_load_explicit(&_stopped, memory_order_acquire)) {
 
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
         FD_ZERO(&efds);
 
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
-        highfd = unblockPipeR;
-        FD_SET(unblockPipeR, &rfds);
+        highfd = _unblockPipeR;
+        FD_SET(_unblockPipeR, &rfds);
         NSMutableSet *handledFds = [[NSMutableSet alloc] initWithCapacity:256];
 
         // Add all the PTYTask pipes
@@ -339,7 +423,13 @@ void UnblockTaskNotifier(void) {
         autoreleasePool = [[NSAutoreleasePool alloc] init];
 
         // Poll...
-        if (select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
+        int selectResult;
+        if (_select) {
+            selectResult = _select(highfd+1, &rfds, &wfds, &efds, NULL);
+        } else {
+            selectResult = select(highfd+1, &rfds, &wfds, &efds, NULL);
+        }
+        if (selectResult <= 0) {
             switch(errno) {
                 case EAGAIN:
                 case EINTR:
@@ -350,10 +440,10 @@ void UnblockTaskNotifier(void) {
         }
 
         // Interrupted?
-        if (FD_ISSET(unblockPipeR, &rfds)) {
+        if (FD_ISSET(_unblockPipeR, &rfds)) {
             char dummy[32];
             do {
-                read(unblockPipeR, dummy, sizeof(dummy));
+                read(_unblockPipeR, dummy, sizeof(dummy));
             } while (errno != EAGAIN);
         }
 
@@ -430,9 +520,13 @@ void UnblockTaskNotifier(void) {
         PtyTaskDebugLog(@"run3: unlock");
         [tasksLock unlock];
         if (notifyOfCoprocessChange) {
-            [self performSelectorOnMainThread:@selector(notifyCoprocessChange)
-                                   withObject:nil
-                                waitUntilDone:YES];
+            if (_coprocessChangeHandler) {
+                _coprocessChangeHandler();
+            } else {
+                [self performSelectorOnMainThread:@selector(notifyCoprocessChange)
+                                       withObject:nil
+                                    waitUntilDone:YES];
+            }
         }
 
     breakloop:
@@ -440,7 +534,9 @@ void UnblockTaskNotifier(void) {
         [autoreleasePool drain];
         autoreleasePool = [[NSAutoreleasePool alloc] init];
     }
-    assert(false);  // Must never get here or the autorelease pool would leak.
+    // Only test instances get here.
+    [autoreleasePool drain];
+    dispatch_semaphore_signal(_didStop);
 }
 
 // This is run in the main thread.

@@ -32,6 +32,14 @@
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
                                 environment:(NSDictionary<NSString *, NSString *> *)environment;
 
+// Wraps an already-running process. Makes outputFd and inputFd non-blocking and takes ownership
+// of all three file descriptors.
++ (Coprocess *)coprocessWithPid:(pid_t)pid
+                        command:(NSString *)command
+                       outputFd:(int)outputFd
+                        inputFd:(int)inputFd
+                        errorFd:(int)errorFd;
+
 + (NSArray *)mostRecentlyUsedCommands;
 + (void)setSilentlyIgnoreErrors:(BOOL)shouldIgnore fromCommand:(NSString *)command;
 + (BOOL)shouldIgnoreErrorsFromCommand:(NSString *)command;
