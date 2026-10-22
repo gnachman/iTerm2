@@ -202,6 +202,14 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
 
+// Fetch layouts from tmux and apply them (re-sync the UI with tmux).
+- (void)refreshLayoutsFromTmux;
+
+// Apply a layout made by moving a divider. Like windowPane:resizedBy:horizontally:, it counts as an
+// outstanding window resize until tmux's layouts come back, so a later drag isn't built from a
+// layout this one is about to replace.
+- (void)setLayoutInWindow:(int)window toLayoutWithMovedDivider:(NSString *)layout;
+
 // If completion is nonnull it will be called with the new window pane or -1 on error.
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically

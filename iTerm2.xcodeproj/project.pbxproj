@@ -730,6 +730,7 @@
 		3B7DA5807C8D054592F05EEC /* iTermInstanceLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3488E4BB13CB8F7C32CCB1AF /* iTermInstanceLock.swift */; };
 		3C8FED766F941C2CB0A070E4 /* iTermCharacterSets.h in Sources */ = {isa = PBXBuildFile; fileRef = 46019892B59C674931043643 /* iTermCharacterSets.h */; };
 		3DCAF403F69805DD1E24FA18 /* CompanionParkSupervisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137DB49C4B426A987FAB687D /* CompanionParkSupervisor.swift */; };
+		3DD6A45D19B84289CD37A82F /* TmuxDividerMover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6286876164FDF4B2B76D5079 /* TmuxDividerMover.swift */; };
 		3DF240AC0E869D3C0A076902 /* iTermModalSheetRunner.h in Sources */ = {isa = PBXBuildFile; fileRef = 4F0681FBE76FD9A1D5715D52 /* iTermModalSheetRunner.h */; };
 		3EB88252C886C05D366D3A5A /* repl_banner-pt-BR.txt in Resources */ = {isa = PBXBuildFile; fileRef = 618643F126AA9B1E7BC5FC39 /* repl_banner-pt-BR.txt */; };
 		41087F6965EAA157F08289C5 /* iTermCursorBlinkFadeCurveIcon.m in Sources */ = {isa = PBXBuildFile; fileRef = 7057439196C1E9D6AFF58395 /* iTermCursorBlinkFadeCurveIcon.m */; };
@@ -5878,6 +5879,7 @@
 		61DE2C181D86B1F93619B375 /* iTermSessionNameBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSessionNameBuiltInFunction.swift; sourceTree = "<group>"; };
 		624A286C1FB9434CBDBA79CC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermOnboardingWindowController.xib; sourceTree = "<group>"; };
 		625C956DD832F4FD0D8F9715 /* PrivateIPChecker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrivateIPChecker.swift; sourceTree = "<group>"; };
+		6286876164FDF4B2B76D5079 /* TmuxDividerMover.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxDividerMover.swift; sourceTree = "<group>"; };
 		6332079B8F2300214CA6B22E /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/SpecialExceptionsWindowController.xcstrings; sourceTree = "<group>"; };
 		6373295DEB74E8DFC995A362 /* iTermAdapterSettingsRevealHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermAdapterSettingsRevealHelper.swift; sourceTree = "<group>"; };
 		63E84D570B65467F50B49267 /* AILiveLlamaToolCallTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveLlamaToolCallTests.swift; sourceTree = "<group>"; };
@@ -11980,6 +11982,7 @@
 				4FE69A4E5E629BECA95BF11A /* TmuxPaneKeyMode.swift */,
 				415BDAAF720E15F25603BBC9 /* TmuxDroppedOutputScanner.swift */,
 				192AC5CD5EEBCEBCB0835AE3 /* TmuxJSONLayoutParser.swift */,
+				6286876164FDF4B2B76D5079 /* TmuxDividerMover.swift */,
 			);
 			path = tmux;
 			sourceTree = "<group>";
@@ -20133,6 +20136,7 @@
 				E5D1679B382CC51CBC944DC9 /* PasswordArchiveController.swift in Sources */,
 				0DD879A387C515F3B5C0DA97 /* iTermTestHostIsolation.swift in Sources */,
 				D7DC5CC75BA0E74CB40BC7D0 /* TriggerInterpolatedParameter.swift in Sources */,
+				3DD6A45D19B84289CD37A82F /* TmuxDividerMover.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

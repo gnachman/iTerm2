@@ -2478,6 +2478,56 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
+// Ask tmux for the current layouts and apply them. Used when a resize could not be expressed as a
+// resize-pane command and the UI must be put back to what tmux actually has.
+- (void)refreshLayoutsFromTmux {
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach. There is no tmux to ask.
+        DLog(@"Not refreshing layouts because detached");
+        return;
+    }
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:[self commandToListWindows]
+                                           responseTarget:self
+                                         responseSelector:@selector(listWindowsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors] ];
+    ++numOutstandingWindowResizes_;
+    [gateway_ sendCommandList:commands];
+}
+
+- (void)setLayoutInWindow:(int)window toLayoutWithMovedDivider:(NSString *)layout {
+    if (detached_ || !gateway_) {
+        // Windows can outlive a detach. There is no tmux to tell.
+        DLog(@"Not setting layout of window @%d to %@ because detached", window, layout);
+        return;
+    }
+    // select-layout can fail, for example if the panes changed since the layout was made. A failed
+    // command in a list fails the rest of the list, so both tolerate errors.
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:[self commandToSelectLayout:layout inWindow:window]
+                                           responseTarget:self
+                                         responseSelector:@selector(didSetLayoutWithMovedDivider:)
+                                           responseObject:nil
+                                                    flags:(kTmuxGatewayCommandShouldTolerateErrors |
+                                                           kTmuxGatewayCommandReportMalformedCommandErrors)],
+                           [gateway_ dictionaryForCommand:[self commandToListWindows]
+                                           responseTarget:self
+                                         responseSelector:@selector(listWindowsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors] ];
+    ++numOutstandingWindowResizes_;
+    [gateway_ sendCommandList:commands];
+}
+
+- (void)didSetLayoutWithMovedDivider:(NSString *)response {
+    if (response) {
+        return;
+    }
+    // The UI still shows the divider where it was dropped. The list-windows after the layout
+    // failed with it, so ask again to put the UI back to what tmux has.
+    DLog(@"select-layout for a moved divider failed; re-syncing layout from tmux");
+    [self refreshLayoutsFromTmux];
+}
+
 // The splitVertically parameter uses the iTerm2 conventions.
 - (void)splitWindowPane:(int)wp
              vertically:(BOOL)splitVertically
@@ -3629,18 +3679,24 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
     _sharedFontOverrides = dict;
 }
 
+// A layout has braces, which tmux's command parser takes for a command block unless quoted.
+- (NSString *)commandToSelectLayout:(NSString *)layout inWindow:(int)window {
+    return [NSString stringWithFormat:@"select-layout -t @%@ \"%@\"",
+            @(window), [layout stringByEscapingForTmux]];
+}
+
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout {
     if (detached_ || !gateway_) {
         // Windows can outlive a detach. There is no tmux to tell.
         DLog(@"Not setting layout of window @%d to %@ because detached", window, layout);
         return;
     }
-    NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-layout -t @%@ %@",
-                                                           @(window), layout]
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:[self commandToSelectLayout:layout inWindow:window]
                                            responseTarget:self
                                          responseSelector:@selector(didSetLayout:)
                                            responseObject:nil
-                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                                                    flags:(kTmuxGatewayCommandShouldTolerateErrors |
+                                                           kTmuxGatewayCommandReportMalformedCommandErrors)],
                            [gateway_ dictionaryForCommand:[self commandToListWindowsForSession:sessionId_]
                                            responseTarget:self
                                          responseSelector:@selector(didListWindowsSubsequentToSettingLayout:)

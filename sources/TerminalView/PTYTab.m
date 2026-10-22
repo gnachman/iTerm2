@@ -7746,6 +7746,70 @@ typedef struct {
     return [before arrayByAddingObjectsFromArray:after];
 }
 
+// Returns a leaf session view under |view| for which the nearest enclosing split that has the
+// given orientation is the one that contains |view|, or nil if every leaf is under another split
+// of that orientation. Used to choose the pane that tmux's resize-pane should be sent to so that
+// it moves the divider the user dragged and not an inner one.
++ (SessionView *)tmuxResizeTargetInView:(NSView *)view sameOrientationAs:(BOOL)isVertical {
+    if ([view isKindOfClass:[SessionView class]]) {
+        return (SessionView *)view;
+    }
+    if (![view isKindOfClass:[NSSplitView class]]) {
+        return nil;
+    }
+    NSSplitView *split = (NSSplitView *)view;
+    if (split.isVertical == isVertical) {
+        return nil;
+    }
+    for (NSView *child in split.subviews) {
+        SessionView *candidate = [self tmuxResizeTargetInView:child sameOrientationAs:isVertical];
+        if (candidate) {
+            return candidate;
+        }
+    }
+    return nil;
+}
+
+// How many cells each pane under |view| shows across the dividers of a split with the given
+// orientation, with the fraction kept. This inverts +_sessionSizeWithCellSize:... the way
+// -sessionSizeForViewSize: does, but without rounding down.
+- (NSDictionary<NSNumber *, NSNumber *> *)tmuxExtentsOfPanesUnderView:(NSView *)view
+                                                            vertical:(BOOL)isVertical
+                                                            cellSize:(NSSize)cellSize {
+    NSMutableDictionary<NSNumber *, NSNumber *> *result = [NSMutableDictionary dictionary];
+    for (PTYSession *session in [self sessionsUnderView:view]) {
+        const NSSize contentSize = [session.view maximumPossibleScrollViewContentSize];
+        const double extent = (isVertical ?
+                               (contentSize.width - [iTermPreferences sideMargins] * 2) / cellSize.width :
+                               (contentSize.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height);
+        result[@(session.tmuxPane)] = @(extent);
+    }
+    return result;
+}
+
+// Returns a layout for select-layout that matches what the window shows after a divider drag, or
+// nil if there isn't one.
+- (NSString *)tmuxLayoutAfterDraggingSplitter:(int)splitterIndex
+                                  ofSplitView:(PTYSplitView *)splitView
+                                     cellSize:(NSSize)cellSize {
+    // The layout is absolute and made from the last one tmux reported. While a resize or another
+    // moved divider is waiting on tmux, that layout is out of date and sending it would undo them.
+    if (!_tmuxFloatParseTree || isMaximized_ || tmuxController_.hasOutstandingWindowResize) {
+        return nil;
+    }
+    NSArray<NSNumber *> *panes = [[self sessionsUnderView:splitView] mapWithBlock:^id(PTYSession *session) {
+        return @(session.tmuxPane);
+    }];
+    return [iTermTmuxDividerMover layoutStringForParseTree:_tmuxFloatParseTree
+                                             movingDivider:splitterIndex
+                                          ofSplitWithPanes:panes
+                                          verticalDividers:splitView.isVertical
+                                           measuredExtents:[self tmuxExtentsOfPanesUnderView:splitView
+                                                                                    vertical:splitView.isVertical
+                                                                                    cellSize:cellSize]
+                                          paneBorderStatus:[self.tmuxController paneBorderStatusForWindow:self.tmuxWindow]];
+}
+
 - (void)splitView:(PTYSplitView *)splitView
   draggingDidEndOfSplit:(int)splitterIndex
            pixels:(NSSize)pxMoved {
@@ -7766,31 +7830,58 @@ typedef struct {
     [self updateUseMetal];
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
-    NSView *theView = [subviews uncheckedObjectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
+    NSView *theView = [subviews uncheckedObjectAtIndex:splitterIndex];  // the view left of or above the dragged splitter.
     if (theView) {
-        while ([theView isKindOfClass:[NSSplitView class]]) {
-            NSSplitView *subSplitView = (NSSplitView *)theView;
-            theView = [[subSplitView subviews] objectAtIndex:0];
+        const NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
+        // Sending the whole layout makes tmux show exactly what the drag previewed, including how
+        // nested splits beside the divider shared the change.
+        NSString *layout = [self tmuxLayoutAfterDraggingSplitter:splitterIndex
+                                                     ofSplitView:splitView
+                                                        cellSize:cellSize];
+        if (layout) {
+            DLog(@"Selecting layout %@ after dragging splitter %d", layout, splitterIndex);
+            [tmuxController_ setLayoutInWindow:self.tmuxWindow toLayoutWithMovedDivider:layout];
+            [self updateUseMetal];
+            return;
         }
-        SessionView *sessionView = (SessionView *)theView;
-        PTYSession *session = [self sessionForSessionView:sessionView];
-        
+
+        // Otherwise fall back to resize-pane. It moves the divider that belongs to the nearest
+        // enclosing split *in the same direction* as seen from the pane it is sent to. Picking the
+        // first leaf of the subview is wrong when that leaf sits inside a nested split of the same
+        // direction (for example three columns where the first column is itself divided into
+        // left/right panes): tmux then moves the inner divider and the dragged one snaps back.
+        // Only a pane that is not under another split of the dragged splitter's direction is
+        // addressed by the divider the user dragged.
+        SessionView *sessionView = [PTYTab tmuxResizeTargetInView:theView
+                                                sameOrientationAs:[splitView isVertical]];
+        if (!sessionView && splitterIndex + 1 == (int)subviews.count - 1) {
+            // When the target pane's cell is the last in its split, tmux resizes the previous
+            // sibling instead, so a pane right of or below the last divider also moves it.
+            sessionView = [PTYTab tmuxResizeTargetInView:subviews[splitterIndex + 1]
+                                       sameOrientationAs:[splitView isVertical]];
+        }
         // Determine the number of characters moved
-        NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
         int amount;
         if (pxMoved.width) {
             amount = pxMoved.width / cellSize.width;
         } else {
             amount = pxMoved.height / cellSize.height;
         }
-        
+
+        if (!sessionView || amount == 0) {
+            // Nothing tmux can do matches the preview, so put the UI back to tmux's layout.
+            DLog(@"Can't move splitter %d by %d; re-syncing layout from tmux", splitterIndex, amount);
+            [tmuxController_ refreshLayoutsFromTmux];
+            [self updateUseMetal];
+            return;
+        }
+        PTYSession *session = [self sessionForSessionView:sessionView];
+
         // Ask the tmux server to perform the move and we'll update our layout when
         // it finishes.
-        if (amount != 0) {
-            [tmuxController_ windowPane:[session tmuxPane]
-                              resizedBy:amount
-                           horizontally:[splitView isVertical]];
-        }
+        [tmuxController_ windowPane:[session tmuxPane]
+                          resizedBy:amount
+                       horizontally:[splitView isVertical]];
     }
     [self updateUseMetal];
 }

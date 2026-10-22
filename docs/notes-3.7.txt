@@ -579,6 +579,11 @@ Bug Fixes:
   characters, and a URL with disallowed
   characters is rejected with a warning instead
   of opening.
+- Dragging a split divider in a tmux window
+  now leaves the panes the way the drag showed
+  them. Before, a different divider could move,
+  or panes beside the divider could jump to
+  other sizes when the drag ended.
 - On macOS 26, hiding a hotkey window when no
   other iTerm2 windows are open once again
   returns focus to the previous app right away,
