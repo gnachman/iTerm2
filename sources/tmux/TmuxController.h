@@ -283,6 +283,11 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)saveHiddenWindows;
 - (void)savePerWindowSettings;
 - (void)savePerTabSettings;
+// Call when tab groups may have changed. Saves per-tab settings soon if they did,
+// unless windows are still opening.
+- (void)tabGroupsDidChange;
+// Call when a tmux window closes so its saved per-tab settings aren't carried forward.
+- (void)forgetPerTabSettingsForWindow:(int)windowId;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
 // Floating panes (tmux 3.8 and later). Each change comes back as a layout change.

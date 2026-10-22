@@ -390,6 +390,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // tab-group contiguity invariant and re-push membership to the tab bar.
 - (void)tabsDidReorder;
 
+// Call after saved tab groups are applied to tmux tabs as their windows open.
+- (void)tmuxTabGroupsDidLoadForTabs:(NSArray<PTYTab *> *)restoredTabs;
+
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.
 - (void)screenParametersDidChange;
