@@ -1,6 +1,14 @@
 Version 3.7.7
 
 Bug Fixes:
+- Hardened the handler for x-man-page: URLs so a
+  malicious URL can no longer be crafted to run
+  an unexpected command or make man render an
+  arbitrary local file. Man section and page
+  names are now checked against an allowlist of
+  characters, and a URL with disallowed
+  characters is rejected with a warning instead
+  of opening.
 - Installing Shell Integration with “Download
   and Run Installer” installed outdated
   scripts, so the warning that this account’s
