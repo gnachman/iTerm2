@@ -574,35 +574,149 @@
     return [hostname sanitizedHostname];
 }
 
-- (NSString *)sanitizedCommand:(NSString *)unsafeCommand {
-    return [unsafeCommand sanitizedCommand];
+// Returns YES if every character of string is in allowed and the first
+// character is in allowedFirst. Validation is by allowlist, not blacklist, so
+// backslashes, control characters, and anything else we did not think of are
+// rejected rather than passed through.
++ (BOOL)string:(NSString *)string
+    hasFirstCharacterIn:(NSCharacterSet *)allowedFirst
+       remainingCharactersIn:(NSCharacterSet *)allowed {
+    if (string.length == 0) {
+        return NO;
+    }
+    if (![allowedFirst characterIsMember:[string characterAtIndex:0]]) {
+        return NO;
+    }
+    NSString *rest = [string substringFromIndex:1];
+    return [rest rangeOfCharacterFromSet:[allowed invertedSet]].location == NSNotFound;
+}
+
+// Returns arg if it is a safe man operand (page name or apropos pattern), else
+// nil. The first character must be ASCII alphanumeric or underscore and the
+// rest must be ASCII alphanumeric or one of . _ + : @ -. In particular this
+// rejects:
+//   - a leading "-", so the operand can never be parsed as a man option. This
+//     matters for the apropos branch, where man.sh re-runs getopts on the
+//     operands after "--" has already been consumed.
+//   - "/", which makes /usr/bin/man treat the operand as a path to a roff file
+//     and render it (e.g. /tmp/evil.1 or Downloads/evil.1). Real man page
+//     names never contain a slash.
+//   - "\", which componentsInShellCommand would interpret as an escape, and all
+//     control characters and other punctuation.
+// Unlike sanitizedCommand this fails closed: anything outside the allowlist
+// rejects the whole URL rather than silently running a modified command.
++ (nullable NSString *)validatedManArgument:(NSString *)arg {
+    static NSCharacterSet *first;
+    static NSCharacterSet *rest;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        first = [NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"];
+        rest = [NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._+:@-"];
+    });
+    if (![self string:arg hasFirstCharacterIn:first remainingCharactersIn:rest]) {
+        return nil;
+    }
+    return arg;
+}
+
+// Returns section if it is a valid man section (ASCII alphanumeric only, e.g.
+// 1, 3, 3tcl, n), else nil. A man section never contains a leading dash, a
+// slash, or shell metacharacters, so this both validates and prevents option
+// injection.
++ (nullable NSString *)validatedManSection:(NSString *)section {
+    static NSCharacterSet *alphanumeric;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        alphanumeric = [NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"];
+    });
+    if (![self string:section hasFirstCharacterIn:alphanumeric remainingCharactersIn:alphanumeric]) {
+        return nil;
+    }
+    return section;
+}
+
+- (void)showManPageURLWarningWithMessage:(NSString *)message {
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"SessionLauncher.IllegalManPageHeading", nil, [NSBundle mainBundle], @"Illegal Man Page URL", @"Heading of a warning that an x-man-page URL is not allowed.")
+                                window:nil];
+}
+
+- (void)showInvalidManPageURLWarning {
+    RLog(@"rejected man page url: disallowed character");
+    [self showManPageURLWarningWithMessage:NSLocalizedStringWithDefaultValue(@"SessionLauncher.IllegalManPageMessage", nil, [NSBundle mainBundle], @"The man page URL contained a disallowed character. The set of allowed characters is limited for security reasons.", @"Warning message shown when an x-man-page URL contains disallowed characters.")];
+}
+
+- (void)showEmptyManPageURLWarning {
+    RLog(@"rejected man page url: empty operand");
+    [self showManPageURLWarningWithMessage:NSLocalizedStringWithDefaultValue(@"SessionLauncher.EmptyManPageMessage", nil, [NSBundle mainBundle], @"The man page URL did not name a man page or search term.", @"Warning message shown when an x-man-page URL has no page name or apropos search term.")];
+}
+
+// Validates a man operand (page name or apropos pattern) and shows the
+// appropriate warning when it is rejected. Returns nil on rejection.
+- (NSString *)validatedManArgumentShowingWarning:(NSString *)arg {
+    if (arg.length == 0) {
+        [self showEmptyManPageURLWarning];
+        return nil;
+    }
+    NSString *validated = [iTermSessionLauncher validatedManArgument:arg];
+    if (!validated) {
+        [self showInvalidManPageURLWarning];
+        return nil;
+    }
+    return validated;
 }
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toShowManPage:(NSURL *)url {
     DLog(@"Modify profile to show man page for url %@", url);
     // https://github.com/ouspg/urlhandlers/blob/master/cases/x-man-page.md
-    // host = section, path = page         -> login -pfq fenris /usr/bin/man -P ul -S mysection mypage
-    // host = section, path = page; type=a -> login -pfq fenris /usr/bin/man -P cat -k -S mysection pattern
+    // host = section, path = page         -> login -pfq fenris /usr/bin/man -P ul -S mysection -- mypage
+    // host = section, path = page; type=a -> login -pfq fenris /usr/bin/man -P cat -k -- pattern
+    //
+    // x-man-page: URLs are reachable from untrusted sources (web pages, chat,
+    // documents), so every operand is validated against an allowlist and fails
+    // closed. validatedManArgument rejects a leading "-" so an operand can never
+    // be read as a man option (e.g. -P/-C, which /usr/bin/man eval's), and
+    // rejects "/" so it can never name a file for man to render. The "--" is
+    // defense in depth only: it stops option parsing for the page branches, but
+    // not for -k, where man.sh re-runs getopts on the operands in
+    // whatis_parse_args. See issue 5298.
     NSArray<NSString *> *parts = [url.path componentsSeparatedByString:@";"];
     NSString *command = nil;
     if ([parts.lastObject isEqualToString:@"type=a"]) {
         // x-man-page:///<query>;type=a
         // Apropos
-        command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P cat -k %@",
+        NSString *query = [self validatedManArgumentShowingWarning:[parts[0] stringByRemovingPrefix:@"/"]];
+        if (!query) {
+            return nil;
+        }
+        command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P cat -k -- %@",
                    NSUserName(),
-                   [self sanitizedCommand:[parts[0] stringByRemovingPrefix:@"/"]]];
+                   query];
     } else {
+        NSString *page = [self validatedManArgumentShowingWarning:[url.path stringByRemovingPrefix:@"/"]];
+        if (!page) {
+            return nil;
+        }
         if (url.host.length) {
             // x-man-page://<section>/<command>
-            command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P ul -S %@ %@",
+            NSString *section = [iTermSessionLauncher validatedManSection:url.host];
+            if (!section) {
+                [self showInvalidManPageURLWarning];
+                return nil;
+            }
+            command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P ul -S %@ -- %@",
                        NSUserName(),
-                       [self sanitizedCommand:url.host],
-                       [self sanitizedCommand:url.path]];
+                       section,
+                       page];
         } else {
             // x-man-page:///<command>
-            command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P ul %@",
+            command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P ul -- %@",
                        NSUserName(),
-                       [self sanitizedCommand:url.path]];
+                       page];
         }
     }
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: command,

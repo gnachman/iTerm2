@@ -65,6 +65,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (BOOL)profileIsWellFormed:(Profile *)profile;
 
+// Validation for operands of x-man-page: URLs. Exposed for unit tests.
+// Returns the argument if it is a safe man page name or apropos pattern, else nil.
++ (nullable NSString *)validatedManArgument:(NSString *)arg;
+// Returns the argument if it is a valid man section (ASCII alphanumeric), else nil.
++ (nullable NSString *)validatedManSection:(NSString *)section;
+
 // These class methods are a migration path for legacy code that predates the session launcher.
 
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
