@@ -2812,7 +2812,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     _metalGlue.textView = _textview;
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
-    if (_profile.profileIsBrowser) {
+    if (self.isBrowserSession) {
         [_textview configureAsBrowser];
     } else {
         [_textview setFontTable:[iTermFontTable fontTableForProfile:_profile]
@@ -4948,7 +4948,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (iTermSessionEndAction)endAction {
-    if (self.profile.profileIsBrowser) {
+    if (self.isBrowserSession) {
         return iTermSessionEndActionClose;
     }
     // Workgroup-spawned members force the default end action so a profile
@@ -10530,7 +10530,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _newOutput;
 }
 - (BOOL)isBrowserSession {
-    return self.view.isBrowser || self.profile.profileIsBrowser;
+    // The view is the authority on what this session actually is: changing the
+    // profile type in Settings mutates the profile, but an existing session
+    // keeps the kind of view it was created with.
+    if (_view) {
+        return _view.isBrowser;
+    }
+    return self.profile.profileIsBrowser;
+}
+
+- (ProfileType)sessionProfileType {
+    return self.isBrowserSession ? ProfileTypeBrowser : ProfileTypeTerminal;
 }
 
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession
@@ -17490,7 +17500,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (BOOL)setProfile:(NSDictionary *)newProfile
     preservingName:(BOOL)preserveName
       adjustWindow:(BOOL)adjustWindow {
-    if (self.profile.profileType != newProfile.profileType) {
+    if (self.sessionProfileType != newProfile.profileType) {
         DLog(@"Can't change browserness from %@ to %@", self.profile, newProfile);
         return NO;
     }
@@ -25896,14 +25906,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (!self.delegate.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
-    return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName profileType:self.profile.profileType];
+    return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName profileType:self.sessionProfileType];
 }
 
 - (void)showCapturedOutputTool {
     if (!self.delegate.realParentWindow.shouldShowToolbelt) {
         [self.delegate.realParentWindow toggleToolbeltVisibility:nil];
     }
-    if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName profileType:self.profile.profileType]) {
+    if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName profileType:self.sessionProfileType]) {
         [iTermToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
     }
 }

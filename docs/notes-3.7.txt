@@ -1577,3 +1577,9 @@ Bug Fixes:
   images forwarded by some terminal multiplexers
   appeared with their rows in reverse order.
   Issue 13146.
+- Switching a profile between Terminal and Web
+  Browser in Settings > Profiles > General no
+  longer makes sessions already open with that
+  profile lose their tab and window names. The
+  names could not be recovered by switching the
+  setting back.
