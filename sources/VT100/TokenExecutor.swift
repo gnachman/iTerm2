@@ -105,7 +105,8 @@ class TokenExecutor: NSObject {
             impl.delegate = delegate
         }
     }
-    private let semaphore = DispatchSemaphore(value: Int(iTermAdvancedSettingsModel.bufferDepth()))
+    // Limits how many token arrays from the pty are buffered, giving backpressure to reading.
+    private let budget = TokenBudget(capacity: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
     private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()
@@ -138,8 +139,23 @@ class TokenExecutor: NSObject {
         queue.setSpecific(key: Self.isTokenExecutorSpecificKey, value: true)
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
-                                 semaphore: semaphore,
                                  queue: queue)
+    }
+
+    // Any queue. Whether addTokens(_:lengthTotal:lengthExcludingInBandSignaling:) would return
+    // without blocking right now. A reader that is the only one adding tokens to this executor can
+    // check this before reading, and use notifyWhenTokenCapacityAvailable(on:_:) instead of blocking.
+    @objc
+    var hasTokenCapacity: Bool {
+        return budget.hasCapacity
+    }
+
+    // Any queue. Runs `block` asynchronously on `queue` once the executor has drained enough
+    // buffered tokens to be worth reading again, or right away if it already has. At most one block
+    // may be pending at a time.
+    @objc(notifyWhenTokenCapacityAvailableOnQueue:block:)
+    func notifyWhenTokenCapacityAvailable(on queue: DispatchQueue, _ block: @escaping () -> Void) {
+        budget.notifyWhenCapacityAvailable(on: queue, block)
     }
 
     // This takes ownership of vector.
@@ -158,7 +174,7 @@ class TokenExecutor: NSObject {
         TimingStats(name: "Parser thread")
     }()
     // Flip this to true to measure how much time the TaskNotifier thread spends busy (reading,
-    // parsing, and in select()) vs idle (blocked on TokenExecutor's semaphore), and how much
+    // parsing, and in select()) vs idle (blocked on TokenExecutor's budget), and how much
     // time the mutation thread spends busy (executing tokens) vs idle (waiting for tokens).
     static let enableTimingStats = false
 
@@ -185,15 +201,14 @@ class TokenExecutor: NSObject {
                             lengthTotal: lengthTotal,
                             lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
                             highPriority: highPriority,
-                            semaphore: nil as DispatchSemaphore?)
+                            budget: nil)
             return
         }
-        // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
-        let semaphore = self.semaphore
+        // Normal code path for tokens from PTY. Use the budget to give backpressure to reading.
         if TokenExecutor.enableTimingStats {
             TokenExecutor.parserTimingStats.recordEnd()
         }
-        _ = semaphore.wait(timeout: .distantFuture)
+        budget.acquire()
         if TokenExecutor.enableTimingStats {
             TokenExecutor.parserTimingStats.recordStart()
         }
@@ -201,7 +216,7 @@ class TokenExecutor: NSObject {
                         lengthTotal: lengthTotal,
                         lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
                         highPriority: highPriority,
-                        semaphore: semaphore)
+                        budget: budget)
         queue.async { [weak self] in
             self?.impl.didAddTokens()
         }
@@ -298,11 +313,11 @@ class TokenExecutor: NSObject {
                                  lengthTotal: Int,
                                  lengthExcludingInBandSignaling: Int,
                                  highPriority: Bool,
-                                 semaphore: DispatchSemaphore?) {
+                                 budget: TokenBudget?) {
         let tokenArray = TokenArray(vector,
                                     lengthTotal: lengthTotal,
                                     lengthExcludingInBandSignaling: lengthExcludingInBandSignaling,
-                                    semaphore: semaphore)
+                                    budget: budget)
         self.impl.addTokens(tokenArray, highPriority: highPriority)
     }
 
@@ -364,7 +379,6 @@ private class TokenExecutorImpl {
     private let terminal: VT100Terminal
     private let queue: DispatchQueue
     private let slownessDetector: SlownessDetector
-    private let semaphore: DispatchSemaphore
     private var taskQueue = iTermTaskQueue()
     private var sideEffects = iTermTaskQueue()
     // Counts side effects ever added. See TokenExecutor.sideEffectSerial.
@@ -425,12 +439,10 @@ private class TokenExecutorImpl {
 
     init(_ terminal: VT100Terminal,
          slownessDetector: SlownessDetector,
-         semaphore: DispatchSemaphore,
          queue: DispatchQueue) {
         self.terminal = terminal
         self.queue = queue
         self.slownessDetector = slownessDetector
-        self.semaphore = semaphore
         sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: Self.foregroundSideEffectPeriod, action: { [weak self] in
             guard let self = self else {
                 return
@@ -718,7 +730,7 @@ private class TokenExecutorImpl {
         executeHighPriorityTasks()
         guard let delegate = delegate else {
             // This is necessary to avoid deadlock. If the terminal is disabled then the token queue
-            // will hold semaphores that need to be signaled.
+            // holds budget slots that need to be released.
             if gDebugLogging.boolValue {
                 DLog("empty queue")
             }

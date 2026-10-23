@@ -19,7 +19,7 @@ final class TwoTierTokenQueueTests: XCTestCase {
         let token = VT100Token()
         token.type = VT100CSI_SET_MODIFIERS
         CVectorAppendVT100Token(&vector, token)
-        return TokenArray(vector, lengthTotal: 1, lengthExcludingInBandSignaling: 1, semaphore: nil)
+        return TokenArray(vector, lengthTotal: 1, lengthExcludingInBandSignaling: 1, budget: nil)
     }
 
     func testTokensAddedDuringFirstAccessAreNotLost() {
