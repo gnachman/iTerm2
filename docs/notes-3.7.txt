@@ -670,6 +670,10 @@ Improvements:
   background processes.
 
 Bug Fixes:
+- Snapping a window to part of the screen,
+  such as one third of its width, no longer
+  leaves it stuck wider than the display.
+  You can resize it smaller again.
 - Commands saved to Command History no longer
   include a right-hand prompt (such as zsh’s
   RPROMPT) drawn on the same line.
