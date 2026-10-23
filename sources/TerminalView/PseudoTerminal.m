@@ -9016,6 +9016,42 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     [control setTabGroupIdentifiers:identifiers forTabViewItems:items];
     [control setTabGroupCollapsedFlags:collapsedFlags forTabViewItems:items];
+
+    // Groups of tmux tabs are saved in tmux so they survive detach and reattach.
+    NSMutableSet<TmuxController *> *controllers = [NSMutableSet set];
+    for (PTYTab *aTab in tabs) {
+        if (aTab.tmuxController) {
+            [controllers addObject:aTab.tmuxController];
+        }
+    }
+    for (TmuxController *controller in controllers) {
+        [controller tabGroupsDidChange];
+    }
+}
+
+- (void)tmuxTabGroupsDidLoadForTabs:(NSArray<PTYTab *> *)restoredTabs {
+    // A restored tab joining a group that's already open here (e.g., a window reopened
+    // from the dashboard) may have been saved before the group was renamed or recolored.
+    // The open members are current, so take their attributes.
+    for (PTYTab *restoredTab in restoredTabs) {
+        if (restoredTab.tabGroupID.length == 0) {
+            continue;
+        }
+        PTYTab *current = [self.tabs objectPassingTest:^BOOL(PTYTab *tab, NSUInteger index, BOOL *stop) {
+            return ![restoredTabs containsObject:tab] && [tab.tabGroupID isEqualToString:restoredTab.tabGroupID];
+        }];
+        if (current) {
+            restoredTab.tabGroupName = current.tabGroupName;
+            restoredTab.tabGroupColor = current.tabGroupColor;
+            restoredTab.tabGroupCollapsed = current.tabGroupCollapsed;
+        }
+    }
+    // Same steps as restoring an arrangement: keep members adjacent, make each group's
+    // collapsed state uniform, then push it to the tab bar without animating.
+    [self enforceTabGroupContiguityInvariant];
+    [self normalizeTabGroupCollapsedState];
+    [self updateTabGroups];
+    [self relayoutTabGroupChipsSynchronously];
 }
 
 // Re-derive the group chips and lay the tab bar out synchronously. The drag

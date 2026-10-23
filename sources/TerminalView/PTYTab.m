@@ -7600,19 +7600,65 @@ typedef struct {
     return [self.variablesScope valueForVariableName:name];
 }
 
-- (NSString *)tmuxPerTabSetting {
-    NSString *format = self.variablesScope.tabTitleOverrideFormat;
-    if (format == nil) {
+// Like -hexStringPreservingColorSpace, but rounds sRGB components rather than truncating them so
+// the color doesn't darken a little on each save. Colors that aren't sRGB or Display P3 (such as
+// the system colors new groups get) are saved as sRGB.
+- (NSString *)tmuxTabGroupColorString {
+    NSColor *color = self.tabGroupColor;
+    if (!color) {
         return nil;
     }
+    if (color.type == NSColorTypeComponentBased &&
+        [color.colorSpace isEqual:[NSColorSpace displayP3ColorSpace]]) {
+        return [color hexStringPreservingColorSpace];
+    }
+    color = [color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    if (!color) {
+        return nil;
+    }
+    return [NSString stringWithFormat:@"#%02x%02x%02x",
+            (int)round(MAX(0, MIN(1, color.redComponent)) * 255),
+            (int)round(MAX(0, MIN(1, color.greenComponent)) * 255),
+            (int)round(MAX(0, MIN(1, color.blueComponent)) * 255)];
+}
+
+- (NSString *)tmuxPerTabSetting {
     // key=value&key=value&...
-    // Semicolon is reserved. Don't use it.
-    return [NSString stringWithFormat:@"%@=%@", @"t", [format base64EncodedWithEncoding:NSUTF8StringEncoding]];
+    // Semicolon is reserved. Don't use it. Older versions ignore unknown keys.
+    NSMutableArray<NSString *> *parts = [NSMutableArray array];
+    NSString *format = self.variablesScope.tabTitleOverrideFormat;
+    if (format != nil) {
+        [parts addObject:[NSString stringWithFormat:@"t=%@", [format base64EncodedWithEncoding:NSUTF8StringEncoding]]];
+    }
+    if (self.tabGroupID.length > 0) {
+        // g=[base64 group ID], gn=[base64 group name], gc=[group color as #rrggbb or p3#rrrrggggbbbb],
+        // gx=1 if collapsed.
+        // Every member carries the group's attributes, as in window arrangements.
+        [parts addObject:[NSString stringWithFormat:@"g=%@", [self.tabGroupID base64EncodedWithEncoding:NSUTF8StringEncoding]]];
+        if (self.tabGroupName.length > 0) {
+            [parts addObject:[NSString stringWithFormat:@"gn=%@", [self.tabGroupName base64EncodedWithEncoding:NSUTF8StringEncoding]]];
+        }
+        NSString *colorString = [self tmuxTabGroupColorString];
+        if (colorString.length > 0) {
+            [parts addObject:[NSString stringWithFormat:@"gc=%@", colorString]];
+        }
+        if (self.tabGroupCollapsed) {
+            [parts addObject:@"gx=1"];
+        }
+    }
+    if (parts.count == 0) {
+        return nil;
+    }
+    return [parts componentsJoinedByString:@"&"];
 }
 
 - (void)setPerTabSettings:(NSString *)setting {
     DLog(@"SET per-tab settings %@ for %@", setting, self);
     NSArray<NSString *> *parts = [setting componentsSeparatedByString:@"&"];
+    NSString *groupID = nil;
+    NSString *groupName = nil;
+    NSColor *groupColor = nil;
+    BOOL groupCollapsed = NO;
     for (NSString *part in parts) {
         iTermTuple<NSString *, NSString *> *kvp = [part it_stringBySplittingOnFirstSubstring:@"="];
         if (!kvp) {
@@ -7626,7 +7672,23 @@ typedef struct {
                     self.variablesScope.tabTitleOverrideFormat = titleOverride;
                 }
             }
+        } else if ([kvp.firstObject isEqualToString:@"g"]) {
+            groupID = [kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        } else if ([kvp.firstObject isEqualToString:@"gn"]) {
+            groupName = [kvp.secondObject stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        } else if ([kvp.firstObject isEqualToString:@"gc"]) {
+            groupColor = kvp.secondObject.length > 0 ? [NSColor colorPreservingColorspaceFromString:kvp.secondObject] : nil;
+        } else if ([kvp.firstObject isEqualToString:@"gx"]) {
+            groupCollapsed = [kvp.secondObject isEqualToString:@"1"];
         }
+    }
+    // Only ever adds group membership. A setting without a group (e.g., written by an older
+    // version) must not ungroup a tab the user grouped since it was saved.
+    if (groupID.length > 0) {
+        self.tabGroupID = groupID;
+        self.tabGroupName = groupName;
+        self.tabGroupColor = groupColor;
+        self.tabGroupCollapsed = groupCollapsed;
     }
 }
 
