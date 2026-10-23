@@ -2404,3 +2404,7 @@ Bug Fixes:
   no longer appears for claude commands that
   don’t start a session, such as “claude -p” or
   “claude plugin list”.
+- Running a coprocess no longer leaves a file
+  open each time. After many coprocesses,
+  iTerm2 could run out of open files and fail
+  to create new sessions.

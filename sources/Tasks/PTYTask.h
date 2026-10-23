@@ -199,6 +199,10 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 - (instancetype)init;
 
+// Testing only. Makes a task that owns `fd` (closing it on dealloc) and has no process. It is not
+// registered with TaskNotifier.
+- (instancetype)initForTestingWithFileDescriptor:(int)fd;
+
 - (BOOL)hasBrokenPipe;
 
 // Command the profile was created with. nil for login shell or whatever's in the command field of the profile otherwise.
@@ -247,7 +251,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode;
 
-- (void)registerTmuxTask;
+- (void)markAsTmuxTask;
 
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion;
 

@@ -278,11 +278,6 @@ private final class FakeTask: NSObject, iTermTask {
     }
 
     @discardableResult
-    func waitForZeroLengthReads(_ count: Int, file: StaticString = #filePath, line: UInt = #line) -> Bool {
-        return signal.wait(file: file, line: line) { zeroLengthReads >= count }
-    }
-
-    @discardableResult
     func waitForBrokenPipe(file: StaticString = #filePath, line: UInt = #line) -> Bool {
         return signal.wait(file: file, line: line) { brokenPipeCalls > 0 }
     }
@@ -320,17 +315,22 @@ private final class FakeTask: NSObject, iTermTask {
             gate.wait()
             signal.notify { locked { _isBlockedInRead = false } }
         }
-        // Same shape as -[PTYTask processRead]: up to four 1024-byte reads.
+        // Same shape as -[PTYTask processRead]: up to four 1024-byte reads. EOF (read() == 0) and
+        // hard errors end the task after delivering whatever was read.
         var buffer = [UInt8](repeating: 0, count: 1024 * 4)
         var bytesRead = 0
+        var broken = false
         for _ in 0..<4 {
             let n = buffer.withUnsafeMutableBytes { pointer in
                 Darwin.read(fd, pointer.baseAddress! + bytesRead, 1024)
             }
+            if n == 0 {
+                broken = true
+                break
+            }
             if n < 0 {
                 if errno != EAGAIN && errno != EINTR {
-                    brokenPipe()
-                    return
+                    broken = true
                 }
                 break
             }
@@ -339,21 +339,26 @@ private final class FakeTask: NSObject, iTermTask {
                 break
             }
         }
-        let copro = coprocess
-        signal.notify {
-            locked {
-                _readCalls += 1
-                if bytesRead == 0 {
-                    _zeroLengthReads += 1
+        if !broken || bytesRead > 0 {
+            let copro = coprocess
+            signal.notify {
+                locked {
+                    _readCalls += 1
+                    if bytesRead == 0 {
+                        _zeroLengthReads += 1
+                    }
+                    _received.append(buffer, count: bytesRead)
                 }
-                _received.append(buffer, count: bytesRead)
+            }
+            // Like -[PTYTask readTask:length:], send output to the coprocess.
+            if let copro, bytesRead > 0 {
+                objc_sync_enter(self)
+                copro.outputBuffer.append(buffer, length: bytesRead)
+                objc_sync_exit(self)
             }
         }
-        // Like -[PTYTask readTask:length:], send output to the coprocess.
-        if let copro, bytesRead > 0 {
-            objc_sync_enter(self)
-            copro.outputBuffer.append(buffer, length: bytesRead)
-            objc_sync_exit(self)
+        if broken {
+            brokenPipe()
         }
     }
 
@@ -373,11 +378,17 @@ private final class FakeTask: NSObject, iTermTask {
         }
     }
 
+    // Like -[PTYTask brokenPipe], only the first call counts. brokenPipeCalls is the number of
+    // times the task reported it, not the number of times the notifier invoked this.
     func brokenPipe() {
+        var first = false
         signal.notify {
             locked {
+                first = !_hasBrokenPipe
                 _hasBrokenPipe = true
-                _brokenPipeCalls += 1
+                if first {
+                    _brokenPipeCalls += 1
+                }
             }
         }
         notifier?.deregister(self)
@@ -511,7 +522,22 @@ final class TaskIOCharacterizationTests: XCTestCase {
         XCTAssertTrue(probe.flush(notifier))
         pty.writeToSlave(Data("x".utf8))
         XCTAssertTrue(probe.flush(notifier))
-        XCTAssertEqual(task.readCalls, 1, "A single deregister removes every registration")
+        XCTAssertEqual(task.readCalls, 1, "One deregister removes a task that was registered twice")
+    }
+
+    func testRegisteringTwiceCallsDidRegisterOnce() throws {
+        let (task, _) = try makeTask()
+        notifier.register(task)
+        notifier.register(task)
+        // didRegister is dispatched to main. Main is FIFO, so once this runs, any didRegister
+        // from either registration has already run.
+        let drained = expectation(description: "main drained")
+        DispatchQueue.main.async {
+            drained.fulfill()
+        }
+        wait(for: [drained], timeout: timeout)
+        XCTAssertEqual(task.didRegisterCalls, 1)
+        deregisterAndFlush(task)
     }
 
     // MARK: Reading
@@ -645,8 +671,9 @@ final class TaskIOCharacterizationTests: XCTestCase {
 
     // MARK: End of file
 
-    // When the slave closes with no process attached, the master reports EIO on read, which
-    // PTYTask treats as a broken pipe.
+    // When the slave has no openers, a pty master is both readable (read() returns 0) and in the
+    // select exception set. The loop may call brokenPipe for both in one iteration; the task
+    // reports it once.
     func testSlaveCloseCausesBrokenPipe() throws {
         let (task, pty) = try makeTask()
         notifier.register(task)
@@ -657,10 +684,9 @@ final class TaskIOCharacterizationTests: XCTestCase {
         XCTAssertEqual(task.brokenPipeCalls, 1)
     }
 
-    // A pipe at EOF is readable forever and read() returns 0, which processRead does not treat
-    // as an error. The loop keeps calling processRead until something deregisters the task.
-    // Phase 1 changes PTYTask to treat this as EOF.
-    func testPipeEOFIsNotTreatedAsBrokenPipe() throws {
+    // A pipe at EOF is readable forever, but it is not in the exception set. Only processRead
+    // seeing read() == 0 ends the task.
+    func testPipeEOFCausesBrokenPipe() throws {
         var fds: [Int32] = [-1, -1]
         guard pipe(&fds) == 0 else {
             XCTFail("pipe() failed: \(errno)")
@@ -674,9 +700,10 @@ final class TaskIOCharacterizationTests: XCTestCase {
         let task = FakeTask(fd: fds[0], notifier: notifier)
         notifier.register(task)
         close(fds[1])
-        XCTAssertTrue(task.waitForZeroLengthReads(3))
-        XCTAssertEqual(task.brokenPipeCalls, 0)
-        deregisterAndFlush(task)
+        XCTAssertTrue(task.waitForBrokenPipe())
+        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertEqual(task.brokenPipeCalls, 1)
+        XCTAssertEqual(task.zeroLengthReads, 0)
     }
 
     // MARK: Reaping
@@ -760,6 +787,41 @@ final class TaskIOCharacterizationTests: XCTestCase {
         withExtendedLifetime(pty) {}
     }
 
+    // The coprocess reads the child's stderr until EOF and must then close it. Each coprocess used
+    // to leak this fd.
+    func testCoprocessClosesStderrAfterEOF() throws {
+        // The child waits for a line on stdin so the fd is still open when the test inspects it.
+        let coprocess = try makeCoprocess("/bin/sh", ["-c", "read x; echo oops >&2"])
+        let pid = coprocess.pid
+        let errorFd = coprocess.errorFileDescriptorForTesting
+        var before = stat()
+        XCTAssertEqual(fstat(errorFd, &before), 0)
+        XCTAssertEqual(Darwin.write(coprocess.outputFd, "\n", 1), 1)
+
+        let done = expectation(description: "error output complete")
+        var errors: String?
+        coprocess.notify(whenErrorOutputIsComplete: { output in
+            errors = output
+            done.fulfill()
+        })
+        wait(for: [done], timeout: timeout)
+        // The test host's environment may make the child log other things to stderr first.
+        XCTAssertTrue(errors?.hasSuffix("oops\n\n") ?? false, errors ?? "nil")
+
+        // Closed, or reused for something else. Either way it is no longer the pipe.
+        var after = stat()
+        if fstat(errorFd, &after) == 0 {
+            XCTAssertFalse(after.st_dev == before.st_dev && after.st_ino == before.st_ino)
+        } else {
+            XCTAssertEqual(errno, EBADF)
+        }
+
+        coprocess.terminate()
+        // Nothing else reaps this child: it was never handed to a notifier.
+        var status: Int32 = 0
+        XCTAssertEqual(waitpid(pid, &status, 0), pid)
+    }
+
     // MARK: Process helpers
 
     private enum Stdin {
@@ -833,6 +895,10 @@ final class TaskIOCharacterizationTests: XCTestCase {
     // A coprocess running cat, wired like +[Coprocess launchedCoprocessWithCommand:environment:]
     // but without touching user defaults.
     private func makeCatCoprocess() throws -> Coprocess {
+        return try makeCoprocess("/bin/cat", [])
+    }
+
+    private func makeCoprocess(_ path: String, _ args: [String]) throws -> Coprocess {
         var fds = [Int32]()
         func makePipe() throws -> (read: Int32, write: Int32) {
             var pair: [Int32] = [-1, -1]
@@ -851,8 +917,8 @@ final class TaskIOCharacterizationTests: XCTestCase {
             for fd in [toCat.write, fromCat.read, errors.read] {
                 _ = fcntl(fd, F_SETFD, FD_CLOEXEC)
             }
-            spawned = try spawn("/bin/cat",
-                                [],
+            spawned = try spawn(path,
+                                args,
                                 stdin: .fileDescriptor(toCat.read),
                                 stdout: fromCat.write,
                                 stderr: errors.write)
@@ -866,7 +932,7 @@ final class TaskIOCharacterizationTests: XCTestCase {
         close(errors.write)
         // The coprocess owns the rest.
         return Coprocess(pid: spawned.pid,
-                         command: "cat",
+                         command: path,
                          outputFd: toCat.write,
                          inputFd: fromCat.read,
                          errorFd: errors.read)

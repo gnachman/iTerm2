@@ -54,4 +54,12 @@
 - (void)mainProcessDidTerminate;
 - (void)terminate;
 
+// Calls `completion` on the main queue once the child's stderr has reached EOF, with everything
+// it wrote there.
+- (void)notifyWhenErrorOutputIsComplete:(void (^)(NSString *errors))completion;
+
+// Testing only. The read end of the child's stderr, which the coprocess owns. It is closed once
+// error output is complete, after which the number may be reused. Never use it for I/O.
+@property(nonatomic, readonly) int errorFileDescriptorForTesting;
+
 @end

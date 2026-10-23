@@ -10820,7 +10820,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)setTmuxPane:(int)windowPane {
     [self.variablesScope setValue:@(windowPane) forVariableNamed:iTermVariableKeySessionTmuxWindowPane];
     self.tmuxMode = TMUX_CLIENT;
-    [_shell registerTmuxTask];
+    [_shell markAsTmuxTask];
 }
 
 - (int)tmuxPane {

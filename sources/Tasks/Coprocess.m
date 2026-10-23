@@ -32,6 +32,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 
     NSMutableString *_errors;
     dispatch_group_t _stderrGroup;
+    int _errorFd;
 }
 
 @synthesize pid = pid_;
@@ -196,12 +197,19 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 }
 
 - (void)monitorErrorsOnFileDescriptor:(int)errorFd {
+    _errorFd = errorFd;
     dispatch_queue_t queue = dispatch_queue_create("com.iterm2.coprocess-errors", 0);
     _errors = [[NSMutableString alloc] init];
     dispatch_group_t group = _stderrGroup;
     dispatch_group_enter(group);
     dispatch_async(queue, ^{
         FILE *f = fdopen(errorFd, "r");
+        if (!f) {
+            close(errorFd);
+            self.savedErrors = self->_errors;
+            dispatch_group_leave(group);
+            return;
+        }
         while (1) {
             size_t size = 0;
             char *line = fgetln(f, &size);
@@ -221,6 +229,8 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
                 }
             }
         }
+        // Closes errorFd.
+        fclose(f);
         self.savedErrors = self->_errors;
         dispatch_group_leave(group);
     });
@@ -301,13 +311,23 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         self.inputFd = -1;
         self.pid = -1;
         @synchronized (self) {
-            dispatch_group_notify(_stderrGroup, dispatch_get_main_queue(), ^{
-                if (self.savedErrors.length > 0) {
-                    [self.delegate coprocess:self didTerminateWithErrorOutput:self.savedErrors];
+            [self notifyWhenErrorOutputIsComplete:^(NSString *errors) {
+                if (errors.length > 0) {
+                    [self.delegate coprocess:self didTerminateWithErrorOutput:errors];
                 }
-            });
+            }];
         }
     }
+}
+
+- (void)notifyWhenErrorOutputIsComplete:(void (^)(NSString *errors))completion {
+    dispatch_group_notify(_stderrGroup, dispatch_get_main_queue(), ^{
+        completion(self.savedErrors);
+    });
+}
+
+- (int)errorFileDescriptorForTesting {
+    return _errorFd;
 }
 
 - (int)readFileDescriptor

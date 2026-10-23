@@ -548,20 +548,26 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                                          tree:(NSDictionary *)tree
                                clientUniqueID:(NSString *)clientUniqueID {
     DLog(@"%@: startConductorRecoveryModeWithID:%@ tree:%@ clientUniqueID:%@", self, dcsID, tree, clientUniqueID);
-    [_sshParsers removeAllObjects];
-    const NSInteger boundary = [self reallyStartConductorRecoveryModeWithID:dcsID
-                                                                       tree:tree
-                                                             clientUniqueID:clientUniqueID];
-    DLog(@"After recovery:");
-    [self printParsers:@""];
-    return boundary;
+    // The parse path holds the lock while it uses _sshParsers on another thread.
+    @synchronized (self) {
+        [_sshParsers removeAllObjects];
+        const NSInteger boundary = [self reallyStartConductorRecoveryModeWithID:dcsID
+                                                                           tree:tree
+                                                                 clientUniqueID:clientUniqueID];
+        DLog(@"After recovery:");
+        [self printParsers:@""];
+        return boundary;
+    }
 }
 
 - (void)printParsers:(NSString *)prefix {
-    [_sshParsers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, VT100Parser * _Nonnull obj, BOOL * _Nonnull stop) {
-        DLog(@"%@%@", prefix, obj);
-        [obj printParsers:[@"    " stringByAppendingString:prefix]];
-    }];
+    // Same lock order as the parse path: this parser, then its children.
+    @synchronized (self) {
+        [_sshParsers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, VT100Parser * _Nonnull obj, BOOL * _Nonnull stop) {
+            DLog(@"%@%@", prefix, obj);
+            [obj printParsers:[@"    " stringByAppendingString:prefix]];
+        }];
+    }
 }
 
 - (NSInteger)reallyStartConductorRecoveryModeWithID:(NSString *)dcsID
@@ -744,11 +750,14 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
     dispatch_once(&onceToken, ^{
         sHistogram = [[iTermHistogram alloc] init];
     });
-    [sHistogram addValue:(double)length];
-    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
-    if (now - sLastHistogramLog > 5.0) {
-        sLastHistogramLog = now;
-        NSLog(@"Non-ASCII string length histogram: %@", sHistogram.stringValue);
+    // Parsers for different sessions may run on different threads.
+    @synchronized (sHistogram) {
+        [sHistogram addValue:(double)length];
+        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        if (now - sLastHistogramLog > 5.0) {
+            sLastHistogramLog = now;
+            NSLog(@"Non-ASCII string length histogram: %@", sHistogram.stringValue);
+        }
     }
 }
 
@@ -756,11 +765,12 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
     NSString *string = token.string;
     const int64_t stringBytes = (int64_t)string.length * sizeof(unichar);
     const int64_t maxBytes = [iTermAdvancedSettingsModel asyncPreconvertMaxOutstandingBytes];
-    const int64_t current = atomic_load(&sOutstandingPreconvertBytes);
-    if (current + stringBytes > maxBytes) {
+    // Reserve first, then check, so concurrent parsers can't all pass the check and overshoot.
+    const int64_t previous = atomic_fetch_add(&sOutstandingPreconvertBytes, stringBytes);
+    if (previous + stringBytes > maxBytes) {
+        atomic_fetch_sub(&sOutstandingPreconvertBytes, stringBytes);
         return;
     }
-    atomic_fetch_add(&sOutstandingPreconvertBytes, stringBytes);
 
     VT100StringConversionConfig config;
     @synchronized (self) {

@@ -98,6 +98,16 @@ static void HandleSigChld(int n) {
     return self;
 }
 
+- (instancetype)initForTestingWithFileDescriptor:(int)fd {
+    self = [self init];
+    if (self) {
+        iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:_jobManagerQueue];
+        jobManager.fd = fd;
+        self.jobManager = jobManager;
+    }
+    return self;
+}
+
 - (void)dealloc {
     RLog(@"Dealloc PTYTask %p", self);
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
@@ -413,10 +423,20 @@ static void HandleSigChld(int n) {
 
 - (void)brokenPipe {
     RLog(@"brokenPipe %@", self);
+    BOOL first;
     @synchronized(self) {
+        first = !brokenPipe_;
         brokenPipe_ = YES;
     }
+    // Always deregister (it's idempotent) so a task can never be left registered on a dead fd.
     [[TaskNotifier sharedInstance] deregisterTask:self];
+    // TaskNotifier may call this more than once (e.g., read() returned 0 and the fd was also in
+    // the exception set). Report it only once. A second report would reach the session after a
+    // restart had already replaced this task and end the new shell.
+    if (!first) {
+        RLog(@"Ignore redundant brokenPipe for %@", self);
+        return;
+    }
     [self.delegate threadedTaskBrokenPipe];
 }
 
@@ -439,21 +459,24 @@ static void HandleSigChld(int n) {
     int bytesRead = 0;
 
     char buffer[MAXRW * iterations];
+    BOOL broken = NO;
     for (int i = 0; i < iterations; ++i) {
         // Only read up to MAXRW*iterations bytes, then release control
         ssize_t n = read(self.fd, buffer + bytesRead, MAXRW);
-        if (n == 0 && bytesRead == 0 && self.framerPaneJobManager) {
-            // A framer pane's output comes through a pipe, which reads end of file rather than
-            // failing as a pty does when its program is gone.
-            [self brokenPipe];
-            return;
+        if (n == 0) {
+            // EOF. A pty master reads 0 once its slave has no openers; a pipe (such as a framer
+            // pane's output) reads 0 once its write end is closed. Either way, nothing more will
+            // ever arrive. (This is distinct from reading nothing because of EAGAIN, which is
+            // handled below.)
+            broken = YES;
+            break;
         }
         if (n < 0) {
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
                 // It was a serious error.
-                [self brokenPipe];
-                return;
+                broken = YES;
+                break;
             } else {
                 // We could read again in the case of EINTR but it would
                 // complicate the code with little advantage. Just bail out.
@@ -472,8 +495,13 @@ static void HandleSigChld(int n) {
 
     hasOutput = YES;
 
-    // Send data to the terminal
-    [self readTask:buffer length:bytesRead];
+    if (!broken || bytesRead > 0) {
+        // Send data to the terminal. This precedes brokenPipe so the last output isn't lost.
+        [self readTask:buffer length:bytesRead];
+    }
+    if (broken) {
+        [self brokenPipe];
+    }
 }
 
 - (void)processWrite {
@@ -652,10 +680,10 @@ static void HandleSigChld(int n) {
     return [_jobManager finishAttaching:partialResult task:self];
 }
 
-- (void)registerTmuxTask {
+- (void)markAsTmuxTask {
+    // Registration happened in setReadOnlyFileDescriptor:.
     _isTmuxTask = YES;
-    RLog(@"Register pid %@ as coprocess-only task", @(self.pid));
-    [[TaskNotifier sharedInstance] registerTask:self];
+    RLog(@"Mark %@ as a tmux task", self);
 }
 
 #pragma mark - Private
@@ -903,7 +931,16 @@ static void HandleSigChld(int n) {
     return hasOutput;
 }
 
+// Safe from any thread. On the TaskNotifier thread, prefer appendToCoprocessOutputBuffer:, which
+// skips the unneeded wakeup.
 - (void)writeToCoprocess:(NSData *)data {
+    [self appendToCoprocessOutputBuffer:data];
+    // The notifier only selects on the coprocess for writing when it has output, so wake it up
+    // to notice the new data.
+    [[TaskNotifier sharedInstance] unblock];
+}
+
+- (void)appendToCoprocessOutputBuffer:(NSData *)data {
     @synchronized (self) {
         [coprocess_.outputBuffer appendData:data];
     }
@@ -922,7 +959,8 @@ static void HandleSigChld(int n) {
 
     @synchronized (self) {
         if (coprocess_ && !self.sshIntegrationActive) {
-            [self writeToCoprocess:[NSData dataWithBytes:buffer length:length]];
+            // On the notifier thread, which will select on the coprocess before sleeping again.
+            [self appendToCoprocessOutputBuffer:[NSData dataWithBytes:buffer length:length]];
         }
     }
 }

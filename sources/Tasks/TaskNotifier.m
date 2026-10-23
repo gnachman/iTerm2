@@ -159,6 +159,11 @@ static TaskNotifier *gSharedInstance;
 - (void)registerTask:(id<iTermTask>)task {
     PtyTaskDebugLog(@"registerTask: lock\n");
     [tasksLock lock];
+    if ([_tasks containsObject:task]) {
+        DLog(@"Ignore redundant registration of %@", task);
+        [tasksLock unlock];
+        return;
+    }
     PtyTaskDebugLog(@"Add task at %p\n", (void*)task);
     [_tasks addObject:task];
     PtyTaskDebugLog(@"There are now %lu tasks\n", (unsigned long)_tasks.count);
@@ -523,9 +528,11 @@ void UnblockTaskNotifier(void) {
             if (_coprocessChangeHandler) {
                 _coprocessChangeHandler();
             } else {
+                // Don't wait: the observers only redraw, and waiting would stall every
+                // session's I/O until main is free.
                 [self performSelectorOnMainThread:@selector(notifyCoprocessChange)
                                        withObject:nil
-                                    waitUntilDone:YES];
+                                    waitUntilDone:NO];
             }
         }
 
