@@ -223,8 +223,8 @@ private final class FakeTask: NSObject, iTermTask {
     private weak var notifier: TaskNotifier?
 
     let fd: Int32
+    let pidToWaitOn: pid_t
     var pid: pid_t { 0 }
-    var pidToWaitOn: pid_t { 0 }
     var sshIntegrationActive: Bool { false }
 
     private var _coprocess: Coprocess?
@@ -240,9 +240,10 @@ private final class FakeTask: NSObject, iTermTask {
     private var _readGate: DispatchSemaphore?
     private var _isBlockedInRead = false
 
-    init(fd: Int32, notifier: TaskNotifier) {
+    init(fd: Int32, notifier: TaskNotifier, pidToWaitOn: pid_t = 0) {
         self.fd = fd
         self.notifier = notifier
+        self.pidToWaitOn = pidToWaitOn
     }
 
     private func locked<T>(_ block: () -> T) -> T {
@@ -412,19 +413,43 @@ private final class FakeTask: NSObject, iTermTask {
 
 // MARK: - Tests
 
-final class TaskIOCharacterizationTests: XCTestCase {
-    private var probe: SelectProbe!
-    private var notifier: TaskNotifier!
+class TaskIOCharacterizationTests: XCTestCase {
+    fileprivate var probe: SelectProbe!
+    fileprivate var notifier: TaskNotifier!
     private var coprocessChanges = 0
     private let coprocessChangeSignal = Signal()
+    // Nil when the notifier reaps with its dead pool.
+    fileprivate var reaper: ChildReaper?
+    // Pids the reaper has stopped watching, in order.
+    fileprivate var reapedPids = [pid_t]()
+    // Pids the reaper stopped watching without reaping (for example, not a child).
+    fileprivate var abandonedPids = [pid_t]()
+    fileprivate let reapSignal = Signal()
+
+    // Subclasses override this to reap with a ChildReaper instead of the dead pool.
+    fileprivate func makeReaper(didReap: @escaping (pid_t, Bool) -> Void) -> ChildReaper? {
+        return nil
+    }
 
     override func setUp() {
         super.setUp()
         probe = SelectProbe()
-        notifier = TaskNotifier(forTestingWithSelect: probe.select) { [weak self] in
+        reaper = makeReaper { [weak self] pid, reaped in
+            guard let self else { return }
+            reapSignal.notify {
+                self.reapedPids.append(pid)
+                if !reaped {
+                    self.abandonedPids.append(pid)
+                }
+            }
+        }
+        let reapPid: ((pid_t) -> Void)? = reaper.map { reaper in { pid in reaper.reap(pid) } }
+        notifier = TaskNotifier(forTestingWithSelect: probe.select,
+                                coprocessChangeHandler: { [weak self] in
             guard let self else { return }
             coprocessChangeSignal.notify { self.coprocessChanges += 1 }
-        }
+        },
+                                reaper: reapPid)
         notifier.startForTesting()
     }
 
@@ -432,6 +457,7 @@ final class TaskIOCharacterizationTests: XCTestCase {
         XCTAssertTrue(notifier.stopForTesting(withTimeout: timeout))
         notifier = nil
         probe = nil
+        reaper = nil
         super.tearDown()
     }
 
@@ -445,24 +471,41 @@ final class TaskIOCharacterizationTests: XCTestCase {
 
     // Waits for a child to exit without reaping it. The notifier may already have reaped it (its
     // dead pool is polled at the top of every iteration), which is also fine.
-    private func waitForExitWithoutReaping(_ pid: pid_t, file: StaticString = #filePath, line: UInt = #line) {
+    fileprivate func waitForExitWithoutReaping(_ pid: pid_t, file: StaticString = #filePath, line: UInt = #line) {
         var info = siginfo_t()
         let rc = waitid(P_PID, id_t(pid), &info, WEXITED | WNOWAIT)
         let error = errno
         XCTAssertTrue(rc == 0 || error == ECHILD, "waitid failed: \(error)", file: file, line: line)
     }
 
+    // `pid` must already have exited and been handed to the notifier for reaping. Waits for it to
+    // be reaped and then asserts that it was.
+    fileprivate func assertEventuallyReaped(_ pid: pid_t, file: StaticString = #filePath, line: UInt = #line) {
+        if reaper != nil {
+            XCTAssertTrue(reapSignal.wait(file: file, line: line) { self.reapedPids.contains(pid) },
+                          file: file,
+                          line: line)
+            reapSignal.notify {
+                XCTAssertFalse(abandonedPids.contains(pid), "Something else reaped \(pid)", file: file, line: line)
+            }
+        } else {
+            // The dead pool is polled at the top of every iteration.
+            XCTAssertTrue(probe.flush(notifier, file: file, line: line))
+        }
+        assertReaped(pid, file: file, line: line)
+    }
+
     // Asserts that `pid` no longer exists, which for a child means it has been reaped.
-    private func assertReaped(_ pid: pid_t, file: StaticString = #filePath, line: UInt = #line) {
+    fileprivate func assertReaped(_ pid: pid_t, file: StaticString = #filePath, line: UInt = #line) {
         let rc = kill(pid, 0)
         let error = errno
         XCTAssertEqual(rc, -1, "Process \(pid) still exists", file: file, line: line)
         XCTAssertEqual(error, ESRCH, file: file, line: line)
     }
 
-    private func makeTask() throws -> (FakeTask, RawPTY) {
+    private func makeTask(pidToWaitOn: pid_t = 0) throws -> (FakeTask, RawPTY) {
         let pty = try RawPTY()
-        let task = FakeTask(fd: pty.master, notifier: notifier)
+        let task = FakeTask(fd: pty.master, notifier: notifier, pidToWaitOn: pidToWaitOn)
         return (task, pty)
     }
 
@@ -716,8 +759,7 @@ final class TaskIOCharacterizationTests: XCTestCase {
         XCTAssertEqual(kill(pid, 0), 0, "An unreaped zombie still exists")
 
         notifier.wait(forPid: pid)
-        XCTAssertTrue(probe.flush(notifier))
-        assertReaped(pid)
+        assertEventuallyReaped(pid)
     }
 
     // A pid that is still running stays in the dead pool and is reaped after it exits.
@@ -731,11 +773,56 @@ final class TaskIOCharacterizationTests: XCTestCase {
         close(pid.stdin)
         kill(pid.pid, SIGKILL)
         waitForExitWithoutReaping(pid.pid)
+        assertEventuallyReaped(pid.pid)
+    }
+
+    // Deregistering a task reaps its pidToWaitOn.
+    func testDeregisterReapsPidToWaitOn() throws {
+        let pid = try spawn("/usr/bin/true", [])
+        let (task, pty) = try makeTask(pidToWaitOn: pid)
+        notifier.register(task)
+        waitForExitWithoutReaping(pid)
+        XCTAssertEqual(kill(pid, 0), 0, "An unreaped zombie still exists")
+
+        deregisterAndFlush(task)
+        assertEventuallyReaped(pid)
+        withExtendedLifetime(pty) {}
+    }
+
+    // waitpid treats 0 as "any child in my process group", so waiting for pid 0 must not reap an
+    // unrelated child.
+    func testWaitForPidZeroReapsNothing() throws {
+        let pid = try spawn("/usr/bin/true", [])
+        waitForExitWithoutReaping(pid)
+
+        notifier.wait(forPid: 0)
         XCTAssertTrue(probe.flush(notifier))
-        assertReaped(pid.pid)
+        XCTAssertEqual(kill(pid, 0), 0, "The zombie must not have been reaped")
+
+        var status: Int32 = 0
+        XCTAssertEqual(waitpid(pid, &status, 0), pid)
     }
 
     // MARK: Coprocesses
+
+    // Deregistering a task that still has a coprocess reaps the coprocess.
+    func testDeregisterReapsCoprocess() throws {
+        let (task, pty) = try makeTask()
+        let cat = try makeCatCoprocess()
+        let pid = cat.pid
+        task.coprocess = cat
+        notifier.register(task)
+        XCTAssertTrue(probe.flush(notifier))
+
+        // While the coprocess is alive the loop can't see its EOF, so only deregistration hands
+        // it over for reaping.
+        deregisterAndFlush(task)
+        cat.terminate()
+        kill(pid, SIGKILL)
+        waitForExitWithoutReaping(pid)
+        assertEventuallyReaped(pid)
+        withExtendedLifetime(pty) {}
+    }
 
     // Bytes the task reads go to the coprocess; its output comes back through writeTask.
     func testCoprocessRoundTrip() throws {
@@ -759,8 +846,7 @@ final class TaskIOCharacterizationTests: XCTestCase {
         notifier.wait(forPid: pid)
         // Let the notifier reap cat so no zombie is left in the test host.
         waitForExitWithoutReaping(pid)
-        XCTAssertTrue(probe.flush(notifier))
-        assertReaped(pid)
+        assertEventuallyReaped(pid)
         withExtendedLifetime(pty) {}
     }
 
@@ -780,8 +866,7 @@ final class TaskIOCharacterizationTests: XCTestCase {
         XCTAssertEqual(cat.pid, -1)
 
         waitForExitWithoutReaping(pid)
-        XCTAssertTrue(probe.flush(notifier))
-        assertReaped(pid)
+        assertEventuallyReaped(pid)
 
         deregisterAndFlush(task)
         withExtendedLifetime(pty) {}
@@ -824,27 +909,27 @@ final class TaskIOCharacterizationTests: XCTestCase {
 
     // MARK: Process helpers
 
-    private enum Stdin {
+    fileprivate enum Stdin {
         case devNull
         case pipe
         case fileDescriptor(Int32)
     }
 
-    private struct Spawned {
+    fileprivate struct Spawned {
         var pid: pid_t
         // The write end of the child's stdin when Stdin.pipe was requested, otherwise -1.
         var stdin: Int32
     }
 
-    private func spawn(_ path: String, _ args: [String]) throws -> pid_t {
+    fileprivate func spawn(_ path: String, _ args: [String]) throws -> pid_t {
         return try spawn(path, args, stdin: .devNull).pid
     }
 
-    private func spawn(_ path: String,
-                       _ args: [String],
-                       stdin: Stdin,
-                       stdout: Int32? = nil,
-                       stderr: Int32? = nil) throws -> Spawned {
+    fileprivate func spawn(_ path: String,
+                           _ args: [String],
+                           stdin: Stdin,
+                           stdout: Int32? = nil,
+                           stderr: Int32? = nil) throws -> Spawned {
         var actions: posix_spawn_file_actions_t? = nil
         posix_spawn_file_actions_init(&actions)
         defer { posix_spawn_file_actions_destroy(&actions) }
@@ -936,5 +1021,145 @@ final class TaskIOCharacterizationTests: XCTestCase {
                          outputFd: toCat.write,
                          inputFd: fromCat.read,
                          errorFd: errors.read)
+    }
+}
+
+// Runs every test above with a ChildReaper doing the reaping instead of the dead pool.
+final class TaskIOCharacterizationWithChildReaperTests: TaskIOCharacterizationTests {
+    fileprivate override func makeReaper(didReap: @escaping (pid_t, Bool) -> Void) -> ChildReaper? {
+        return ChildReaper(didReap: didReap)
+    }
+
+    func testReapingTheSamePidTwiceReportsOnce() throws {
+        let child = try spawn("/bin/cat", [], stdin: .pipe)
+        notifier.wait(forPid: child.pid)
+        notifier.wait(forPid: child.pid)
+        close(child.stdin)
+        kill(child.pid, SIGKILL)
+        assertEventuallyReaped(child.pid)
+
+        // Anything else the reaper had queued for this pid has run by the time this one is done.
+        let marker = try spawn("/usr/bin/true", [])
+        notifier.wait(forPid: marker)
+        assertEventuallyReaped(marker)
+        reapSignal.notify {
+            XCTAssertEqual(reapedPids, [child.pid, marker])
+        }
+    }
+
+    // A pid that is not a child can't be waited on, so the reaper stops watching it.
+    func testReapingAProcessThatIsNotAChildGivesUp() throws {
+        notifier.wait(forPid: 1)
+        XCTAssertTrue(reapSignal.wait { self.reapedPids == [1] })
+        reapSignal.notify {
+            XCTAssertEqual(abandonedPids, [1])
+        }
+    }
+
+    // macOS has been seen to leave an exited child unreapable for a while (see
+    // iTermMonoServerJobManager's killServerIfRunning). The reaper must keep retrying without
+    // blocking its queue.
+    func testRetriesWhenAnExitedChildIsNotYetReapable() throws {
+        let lock = NSLock()
+        var calls = 0
+        var sawBlockingWait = false
+        let signal = Signal()
+        var reaped = [pid_t: Bool]()
+        let reaper = ChildReaper(didReap: { pid, success in
+            signal.notify { reaped[pid] = success }
+        }, waitpid: { pid, status, options in
+            var n = 0
+            signal.notify {
+                lock.lock()
+                calls += 1
+                n = calls
+                if options & WNOHANG == 0 {
+                    sawBlockingWait = true
+                }
+                lock.unlock()
+            }
+            // Pretend the first three calls found nothing to reap, as in the macOS bug.
+            if n <= 3 {
+                return 0
+            }
+            return Darwin.waitpid(pid, status, options)
+        })
+        let child = try spawn("/bin/cat", [], stdin: .pipe)
+        reaper.reap(child.pid)
+        // The first call is the check made right after the exit source is armed. Kill the child
+        // only after that, so the exit is seen by the source.
+        XCTAssertTrue(signal.wait {
+            lock.lock()
+            defer { lock.unlock() }
+            return calls >= 1
+        })
+        close(child.stdin)
+        kill(child.pid, SIGKILL)
+
+        XCTAssertTrue(signal.wait { reaped[child.pid] != nil })
+        signal.notify {
+            XCTAssertEqual(reaped[child.pid], true)
+        }
+        assertReaped(child.pid)
+        lock.lock()
+        XCTAssertGreaterThan(calls, 3)
+        XCTAssertFalse(sawBlockingWait)
+        lock.unlock()
+    }
+
+    // Requests made while a pid is still being watched count as one, even if the reaper only gets
+    // to them after it has reaped the pid. Otherwise the late one would watch a pid that no longer
+    // exists, or that already belongs to another process.
+    func testRequestsMadeBeforeTheReapCountAsOne() throws {
+        let child = try spawn("/usr/bin/true", [])
+        let queue = DispatchQueue(label: "TaskIOCharacterizationTests.reaper")
+        // Nothing can throw while it is suspended, which would release it suspended and crash.
+        queue.suspend()
+        let signal = Signal()
+        var reports = [String]()
+        let reaper = ChildReaper(didReap: { pid, success in
+            signal.notify { reports.append("\(pid) \(success)") }
+        }, queue: queue)
+        reaper.reap(child)
+        reaper.reap(child)
+        waitForExitWithoutReaping(child)
+        queue.resume()
+
+        let marker = try spawn("/usr/bin/true", [])
+        reaper.reap(marker)
+        XCTAssertTrue(signal.wait { reports.count >= 2 && reports.last == "\(marker) true" })
+        signal.notify {
+            XCTAssertEqual(reports, ["\(child) true", "\(marker) true"])
+        }
+    }
+
+    // A request made after the pid was reaped is a new request.
+    func testRequestAfterTheReapIsNew() throws {
+        let signal = Signal()
+        var reports = [String]()
+        let reaper = ChildReaper(didReap: { pid, success in
+            signal.notify { reports.append("\(pid) \(success)") }
+        })
+        let child = try spawn("/usr/bin/true", [])
+        reaper.reap(child)
+        XCTAssertTrue(signal.wait { reports.count == 1 })
+        reaper.reap(child)
+        // Nothing has that pid now (or it is not this process's child), so it gives up.
+        XCTAssertTrue(signal.wait { reports.count == 2 })
+        signal.notify {
+            XCTAssertEqual(reports, ["\(child) true", "\(child) false"])
+        }
+    }
+
+    // waitpid treats 0 and negative pids as process groups, which would reap other code's children.
+    func testNonPositivePidsAreIgnored() throws {
+        reaper?.reap(0)
+        reaper?.reap(-1)
+        let marker = try spawn("/usr/bin/true", [])
+        reaper?.reap(marker)
+        assertEventuallyReaped(marker)
+        reapSignal.notify {
+            XCTAssertEqual(reapedPids, [marker])
+        }
     }
 }

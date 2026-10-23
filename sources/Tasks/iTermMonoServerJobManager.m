@@ -336,7 +336,9 @@
     // wait here, I'll add the server to the deadpool. The TaskNotifier thread can wait
     // on it when it spins. I hope in this weird case that waitpid doesn't take long to run
     // and that it's rare enough that the zombies don't pile up. Not much else I can do.
-    [[TaskNotifier sharedInstance] waitForPid:serverPid];
+    if (serverPid > 0) {
+        [[TaskNotifier sharedInstance] waitForPid:serverPid];
+    }
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {

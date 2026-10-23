@@ -9,6 +9,8 @@
 #import "TaskNotifier.h"
 #import "Coprocess.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 
 #include <stdatomic.h>
 #include <sys/time.h>
@@ -32,6 +34,8 @@ static TaskNotifier *gSharedInstance;
     iTermTaskNotifierSelect _select;
     // Testing only. When nil, coprocess changes are posted on the main thread.
     void (^_coprocessChangeHandler)(void);
+    // When nil, pids to reap go in `deadpool`.
+    void (^_reaper)(pid_t);
     // Set to stop the run loop. Only test instances are ever stopped.
     atomic_bool _stopped;
     // Signaled when -run returns.
@@ -54,6 +58,11 @@ static TaskNotifier *gSharedInstance;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         TaskNotifier *notifier = [[self alloc] init];
+        if ([self usesTaskIOMonitors]) {
+            notifier->_reaper = [^(pid_t pid) {
+                [[iTermChildReaper sharedInstance] reapProcessWithID:pid];
+            } copy];
+        }
         gSharedUnblockPipeW = notifier->_unblockPipeW;
         gSharedInstance = notifier;
         [NSThread detachNewThreadSelector:@selector(run)
@@ -61,6 +70,16 @@ static TaskNotifier *gSharedInstance;
                                withObject:nil];
     });
     return gSharedInstance;
+}
+
++ (BOOL)usesTaskIOMonitors {
+    static BOOL value;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        value = [iTermAdvancedSettingsModel useTaskIOMonitors];
+        RLog(@"useTaskIOMonitors=%@", value ? @"YES" : @"NO");
+    });
+    return value;
 }
 
 - (instancetype)init {
@@ -94,11 +113,13 @@ static TaskNotifier *gSharedInstance;
 }
 
 - (instancetype)initForTestingWithSelect:(iTermTaskNotifierSelect)select
-                  coprocessChangeHandler:(void (^)(void))coprocessChangeHandler {
+                  coprocessChangeHandler:(void (^)(void))coprocessChangeHandler
+                                  reaper:(void (^)(pid_t))reaper {
     self = [self init];
     if (self) {
         _select = [select copy];
         _coprocessChangeHandler = [coprocessChangeHandler copy];
+        _reaper = [reaper copy];
     }
     return self;
 }
@@ -109,6 +130,7 @@ static TaskNotifier *gSharedInstance;
     [deadpool release];
     [_select release];
     [_coprocessChangeHandler release];
+    [_reaper release];
     dispatch_release(_didStop);
     [self closeUnblockPipe];
     [super dealloc];
@@ -185,10 +207,10 @@ static TaskNotifier *gSharedInstance;
     PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
     pid_t pidToWaitOn = task.pidToWaitOn;
     if (pidToWaitOn > 0) {
-        [deadpool addObject:@(pidToWaitOn)];
+        [self reapPid:pidToWaitOn];
     }
     if ([task hasCoprocess]) {
-        [deadpool addObject:@([[task coprocess] pid])];
+        [self reapPid:[[task coprocess] pid]];
     }
     [_tasks removeObject:task];
     tasksChanged = YES;
@@ -200,12 +222,26 @@ static TaskNotifier *gSharedInstance;
     [self unblock];
 }
 
-// NB: This is currently used for coprocesses.
 - (void)waitForPid:(pid_t)pid {
     [tasksLock lock];
-    [deadpool addObject:@(pid)];
+    [self reapPid:pid];
     [tasksLock unlock];
     [self unblock];
+}
+
+// Call with tasksLock held.
+- (void)reapPid:(pid_t)pid {
+    if (pid <= 0) {
+        // waitpid treats 0 and negative pids as process groups, which would reap other code's
+        // children.
+        DLog(@"Ignore request to reap pid %@", @(pid));
+        return;
+    }
+    if (_reaper) {
+        _reaper(pid);
+    } else {
+        [deadpool addObject:@(pid)];
+    }
 }
 
 - (void)unblock {
@@ -511,7 +547,7 @@ void UnblockTaskNotifier(void) {
                             [self handleWriteOnFileDescriptor:coprocessWriteFd withCoprocess:coprocess fdSet:&wfds];
 
                             if ([coprocess eof]) {
-                                [deadpool addObject:@([coprocess pid])];
+                                [self reapPid:[coprocess pid]];
                                 [coprocess terminate];
                                 [task setCoprocess:nil];
                                 notifyOfCoprocessChange = YES;
@@ -550,14 +586,6 @@ void UnblockTaskNotifier(void) {
 - (void)notifyCoprocessChange {
     [[NSNotificationCenter defaultCenter] postNotificationName:kCoprocessStatusChangeNotification
                                                         object:nil];
-}
-
-- (void)lock {
-    [tasksLock lock];
-}
-
-- (void)unlock {
-    [tasksLock unlock];
 }
 
 @end

@@ -4727,6 +4727,7 @@
 		D14E96013DD1B056E5D3648A /* KittyDnDViewDragHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3B7308CA423F151EA51042 /* KittyDnDViewDragHost.swift */; };
 		D2EA0869C83835F0422A576A /* iTermTabTitleFrameFingerprint.m in Sources */ = {isa = PBXBuildFile; fileRef = 492BD49DF191574CBABE660D /* iTermTabTitleFrameFingerprint.m */; };
 		D364886B87EB8B81EB2FCEA3 /* StableSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4CF48AED76F97C523B1A9E6 /* StableSessionID.swift */; };
+		D3C3D7DE7E900CCF5BA700F0 /* ChildReaper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 322466D9BE92E249E2878D66 /* ChildReaper.swift */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		D3D470D34777DFA2474E14DC /* iTermSessionTabStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */; };
 		D40FA74614B9343BFA69E64D /* companion-browser-editing.js in Resources */ = {isa = PBXBuildFile; fileRef = FECE5E04FE9D0FCDF073F6F5 /* companion-browser-editing.js */; };
@@ -5634,6 +5635,7 @@
 		30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FloatingPaneGeometry.swift; sourceTree = "<group>"; };
 		31C2813D74024540BE832D8B /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermTextPopoverViewController.xcstrings; sourceTree = "<group>"; };
 		31CBF1015D2B6474294432E1 /* iTermUndoCloseShortcutChangeWarning.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUndoCloseShortcutChangeWarning.swift; sourceTree = "<group>"; };
+		322466D9BE92E249E2878D66 /* ChildReaper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChildReaper.swift; sourceTree = "<group>"; };
 		3227E6C120C7EDABDA77D963 /* TerminalCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TerminalCommand.swift; sourceTree = "<group>"; };
 		3298E60BA3D410B4C3FC1A98 /* PeerSessionSettingsViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PeerSessionSettingsViewController.swift; sourceTree = "<group>"; };
 		32F620701AFB247E7D96D713 /* PaneFocusFollowsMouse.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PaneFocusFollowsMouse.swift; sourceTree = "<group>"; };
@@ -13766,6 +13768,7 @@
 				A616CF102841AA1600EF82D0 /* WinSizeController.swift */,
 				ED4D6F76FD82DD8AA45E812B /* iTermMultiServerSocketNumbers.swift */,
 				3DADE73F74E739BD29D488FB /* iTermForkedServerRegistry.swift */,
+				322466D9BE92E249E2878D66 /* ChildReaper.swift */,
 			);
 			path = Tasks;
 			sourceTree = "<group>";
@@ -20417,6 +20420,7 @@
 				70D038AFADC84CCE1E6E493D /* ConductorDownload.swift in Sources */,
 				FA29DC893FAE2253F478E70E /* ClaudeInteractivity.swift in Sources */,
 				3B70D1EB941BFD9362AFDEC8 /* PTYSession+ClaudeInteractivity.swift in Sources */,
+				D3C3D7DE7E900CCF5BA700F0 /* ChildReaper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

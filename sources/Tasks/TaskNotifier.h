@@ -55,8 +55,9 @@ typedef int (^iTermTaskNotifierSelect)(int nfds,
 
 - (void)notifyCoprocessChange;
 
-- (void)lock;
-- (void)unlock;
+// Whether the shared instance uses the new task I/O implementation (the useTaskIOMonitors advanced
+// setting). Read once per process, since the two implementations must never be mixed.
++ (BOOL)usesTaskIOMonitors;
 
 #pragma mark - Testing
 
@@ -64,10 +65,13 @@ typedef int (^iTermTaskNotifierSelect)(int nfds,
 // by -startForTesting) and its own unblock pipe. UnblockTaskNotifier() does not wake it; call
 // -unblock instead.
 // If `select` is nil, select(2) is used.
-// If `coprocessChangeHandler` is nil, coprocess changes are posted on the main thread (which
-// blocks the loop until main runs it). Otherwise the handler is called on the notifier's thread.
+// If `coprocessChangeHandler` is nil, coprocess changes are posted on the main thread. Otherwise
+// the handler is called on the notifier's thread.
+// If `reaper` is nil, pids to reap go in a dead pool that the loop polls. Otherwise each is passed
+// to `reaper`, which is called with the notifier's lock held.
 - (instancetype)initForTestingWithSelect:(iTermTaskNotifierSelect)select
-                  coprocessChangeHandler:(void (^)(void))coprocessChangeHandler;
+                  coprocessChangeHandler:(void (^)(void))coprocessChangeHandler
+                                  reaper:(void (^)(pid_t pid))reaper;
 - (void)startForTesting;
 
 // Stops the thread started by -startForTesting. Returns NO if it did not stop within `timeout`,

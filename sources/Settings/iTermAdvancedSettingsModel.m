@@ -854,6 +854,7 @@ DEFINE_SETTABLE_STRING(browserPluginPathHint, BrowserPluginPathHint, @"", SECTIO
 // Experimental features I'm afraid to turn on right now, but want to in the future:
 DEFINE_BOOL(killSessionsOnLogout, NO, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.killSessionsOnLogout", nil, [NSBundle mainBundle], @"Kill sessions on logout.\nA possible fix for issue 4147.", @"Advanced setting: killSessionsOnLogout"));
 DEFINE_BOOL(useExperimentalFontMetrics, NO, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.useExperimentalFontMetrics", nil, [NSBundle mainBundle], @"Use a more theoretically correct technique to measure line height.\nYou must restart iTerm2 or adjust a session's font size for this change to take effect.", @"Advanced setting: useExperimentalFontMetrics"));
+DEFINE_BOOL(useTaskIOMonitors, NO, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.useTaskIOMonitors", nil, [NSBundle mainBundle], @"Use a new, unfinished implementation of session input and output. For development only.\nYou must restart iTerm2 for this setting to take effect.", @"Advanced setting: useTaskIOMonitors"));
 DEFINE_BOOL(fastForegroundJobUpdates, YES, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.fastForegroundJobUpdates", nil, [NSBundle mainBundle], @"Enable low-latency updates of the current foreground job", @"Advanced setting: fastForegroundJobUpdates"));
 
 // Experiments currently under test
