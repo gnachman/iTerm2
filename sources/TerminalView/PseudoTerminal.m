@@ -6306,6 +6306,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     const BOOL userIsDraggingWindow = (_windowIsMoving &&
                                        ([NSEvent pressedMouseButtons] & 1) != 0);
     [_locationLockController windowDidMoveUserIsDragging:userIsDraggingWindow];
+    // A title-bar drag does not latch a minimum. An accessibility client moves
+    // the window first and shrinks it second, and the move is what leaves the
+    // window hanging off the screen with minSize stuck at that frame.
+    if (!userIsDraggingWindow) {
+        [self.ptyWindow it_clearLatchedMinSize];
+    }
     // Keeps _windowIsMoving honest, at the cost of the anchor check above. Read
     // the comment there before moving or deleting this.
     _windowIsMoving = NO;
@@ -6314,6 +6320,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification {
+    // Drop a floor AppKit may have stored while applying this frame. The next
+    // resize, including the rest of a live drag, then is not clamped to it.
+    [self.ptyWindow it_clearLatchedMinSize];
     PtyLog(@"windowDidResize to: %fx%f self=%@", [[self window] frame].size.width, [[self window] frame].size.height, self);
     PtyLog(@"%@", [NSThread callStackSymbols]);
     if (self.swipeIdentifier) {
@@ -6732,6 +6741,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
          NSStringFromSize(self.window.minSize),
          NSStringFromSize(self.window.contentMinSize),
          NSStringFromRect(self.window.frame));
+    // Log the latched values first. AppKit clamps the upcoming drag to them
+    // before -windowWillResize:toSize: is called.
+    [self.ptyWindow it_clearLatchedMinSize];
     // -fittingSize forces a constraint-based layout pass. Keep it out of RLog, whose arguments are
     // always evaluated, so it only runs when the user has deliberately turned debug logging on.
     DLog(@"contentView fittingSize=%@ constraints=%@ frameView constraints=%@",

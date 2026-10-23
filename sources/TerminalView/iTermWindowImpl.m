@@ -662,10 +662,31 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 #endif
 
+- (void)it_clearLatchedMinSize {
+    // A healthy terminal window keeps both at {0, 0}. The delegate enforces the
+    // real minimum in -windowWillResize:toSize:. Only write when something has
+    // latched a floor, so a resize that is already healthy does not touch them.
+    if (!NSEqualSizes(self.minSize, NSZeroSize)) {
+        DLog(@"Clearing latched minSize %@ frame %@",
+             NSStringFromSize(self.minSize), NSStringFromRect(self.frame));
+        self.minSize = NSZeroSize;
+    }
+    if (!NSEqualSizes(self.contentMinSize, NSZeroSize)) {
+        DLog(@"Clearing latched contentMinSize %@ frame %@",
+             NSStringFromSize(self.contentMinSize), NSStringFromRect(self.frame));
+        self.contentMinSize = NSZeroSize;
+    }
+}
+
 - (void)accessibilitySetSizeAttribute:(id)arg1 {
+    // Clear before the resize so AppKit does not clamp this change to a floor
+    // latched by the preceding move, and again after so the size just applied
+    // does not itself become the next floor.
+    [self it_clearLatchedMinSize];
     self.it_accessibilityResizing += 1;
     [super accessibilitySetSizeAttribute:arg1];
     self.it_accessibilityResizing -= 1;
+    [self it_clearLatchedMinSize];
 }
 
 - (NSColor *)it_terminalWindowDecorationBackgroundColor {

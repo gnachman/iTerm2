@@ -566,6 +566,10 @@ Improvements:
   a program or by tmux.
 
 Bug Fixes:
+- Snapping a window to part of the screen,
+  such as one third of its width, no longer
+  leaves it stuck wider than the display.
+  You can resize it smaller again.
 - With KeePassXC as the browser password
   manager, “Remember this password” for a
   website’s sign-in dialog now saves the
