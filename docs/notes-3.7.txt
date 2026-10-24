@@ -2014,3 +2014,6 @@ Bug Fixes:
   now shows a globe icon instead of a terminal
   icon, both in the message field and in sent
   messages.
+- The Internet-Free shell integration install
+  no longer sometimes hangs while installing
+  the utilities, waiting at a “> ” prompt.

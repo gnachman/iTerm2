@@ -776,18 +776,23 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSMutableString *result = [NSMutableString string];
     NSString *folder = [self.dotdir stringByAppendingPathComponent:@".iterm2"];
     [result appendString:[self switchToHelperShell:reallySend expectation:expectation]];
-    [result appendString:[self sendText:[NSString stringWithFormat:@"mkdir %@; echo ok\n", folder]
+    // Each command waits for its own answer before the next is typed. The answers differ, and the
+    // empty quotes keep the echo of a command from looking like its answer. Output a command
+    // prints after the next line is typed can land in the middle of that line's echo, so an
+    // answer is matched anywhere in a row, not only as a whole line.
+    [result appendString:[self sendText:[NSString stringWithFormat:@"mkdir %@; echo it2-\"\"mkdir-done\n", folder]
                              reallySend:reallySend
-                             afterRegex:@"."
+                             afterRegex:@"it2-mkdir-done"
                             expectation:expectation]];
-    [result appendString:[self sendText:[NSString stringWithFormat:@"cd %@; echo ok\n", folder]
+    [result appendString:[self sendText:[NSString stringWithFormat:@"cd %@; echo it2-\"\"cd-done\n", folder]
                              reallySend:reallySend
-                             afterRegex:@"^ok$"
+                             afterRegex:@"it2-cd-done"
                             expectation:expectation]];
-    // OpenBSD has no base64 command, but it has b64decode.
+    // OpenBSD has no base64 command, but it has b64decode. sh reads the here-document from the
+    // tty after this line, so the body can follow as soon as the line is echoed.
     [result appendString:[self sendText:@"if command -v base64 >/dev/null 2>&1; then base64 -d; else b64decode -r; fi <<'EOF'| tar xfz -\n"
                              reallySend:reallySend
-                             afterRegex:@"^ok$"
+                             afterRegex:@"."
                             expectation:expectation]];
     NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"utilities" withExtension:@"tgz"];
     if (!url) {
