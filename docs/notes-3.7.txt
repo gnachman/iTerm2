@@ -2006,6 +2006,11 @@ Bug Fixes:
   API, calling Tab.async_update_layout() without
   changing any sizes no longer grows the
   original pane back to its old width.
+- In AI Chat with streaming responses on, a
+  code block at the end of a reply now shows as
+  code with a copy button instead of as large
+  text or with a stray closing ```.
+
 
 
 
