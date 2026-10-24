@@ -1173,7 +1173,7 @@ class CockpitWindowController: NSWindowController {
                 displayName: target.name,
                 font: font,
                 color: NSColor.linkColor,
-                symbolName: symbolName(forToken: target.token)))
+                symbolName: ChatMentionDisplay.symbolName(forToken: target.token)))
             result.append(NSAttributedString(string: " ",
                                              attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
         }
@@ -1256,36 +1256,23 @@ class CockpitWindowController: NSWindowController {
             mentionPicker.update(query: context.query)
         } else {
             mentionPicker.show(anchorView: composerVC.completionAnchorView,
-                               query: context.query) { [weak self] guid, displayName in
-                self?.insertMention(guid: guid, displayName: displayName)
+                               query: context.query) { [weak self] choice in
+                self?.insertMention(choice)
             }
         }
     }
 
-    // The chip icon for a target token: window, tab, or (default)
-    // session. Matches the window/tab/pane glyphs used elsewhere (the
-    // Companion app's session tree): macwindow / folder / terminal.
-    private func symbolName(forToken token: String) -> String {
-        if token.hasPrefix("win:") {
-            return SFSymbol.macwindow.rawValue
-        }
-        if token.hasPrefix("tab:") {
-            return SFSymbol.folder.rawValue
-        }
-        return SFSymbol.terminal.rawValue
-    }
-
     // Replace the first at-mention run with an atomic chip token.
-    private func insertMention(guid: String, displayName: String) {
+    private func insertMention(_ choice: ChatMentionPickerController.Choice) {
         guard let range = firstMentionContext()?.range ?? activeMentionRange else { return }
         let font = profileASCIIFont()
         let mention = NSMutableAttributedString(
             attributedString: ChatSessionMentionAttachment.attributedString(
-                guid: guid,
-                displayName: displayName,
+                guid: choice.guid,
+                displayName: choice.displayName,
                 font: font,
                 color: NSColor.linkColor,
-                symbolName: symbolName(forToken: guid)))
+                symbolName: choice.symbolName))
         mention.append(NSAttributedString(string: " ",
                                           attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
         composerVC.replace(range, with: mention)

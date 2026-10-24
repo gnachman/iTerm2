@@ -68,7 +68,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
     private weak var highlightedSessionView: NSView?
     private weak var highlightOverlay: NSView?
     private var roots: [Node] = []
-    private var onChoose: ((_ guid: String, _ displayName: String) -> Void)?
+    private var onChoose: ((Choice) -> Void)?
     private weak var anchorView: NSView?
     private weak var hostWindow: NSWindow?
     private(set) var isVisible = false
@@ -148,7 +148,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
 
     func show(anchorView: NSView,
               query: String,
-              onChoose: @escaping (_ guid: String, _ displayName: String) -> Void) {
+              onChoose: @escaping (Choice) -> Void) {
         self.anchorView = anchorView
         self.hostWindow = anchorView.window
         self.onChoose = onChoose
@@ -211,19 +211,31 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         }
         let choose = onChoose
         hide()
-        choose?(choice.guid, choice.displayName)
+        choose?(choice)
+    }
+
+    // What a committed row turns into: the chip's token, its label, and the
+    // SF Symbol drawn before the label.
+    struct Choice {
+        let guid: String
+        let displayName: String
+        let symbolName: String
     }
 
     // The chip a committed row becomes, or nil if the row can't be picked.
     static func choice(for node: Node,
-                       allowsContainerSelection: Bool) -> (guid: String, displayName: String)? {
+                       allowsContainerSelection: Bool) -> Choice? {
         if let session = node.session {
             // Insert the reload-durable stableID so the user's @mention keeps
             // resolving after a shell reload rotates the session's guid.
-            return (session.stableID, ChatMentionDisplay.displayName(for: session))
+            return Choice(guid: session.stableID,
+                          displayName: ChatMentionDisplay.displayName(for: session),
+                          symbolName: ChatMentionDisplay.symbolName(for: session))
         }
         if allowsContainerSelection, let token = node.containerToken {
-            return (token, node.name)
+            return Choice(guid: token,
+                          displayName: node.name,
+                          symbolName: ChatMentionDisplay.symbolName(forToken: token))
         }
         return nil
     }
