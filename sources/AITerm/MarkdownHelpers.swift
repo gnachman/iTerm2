@@ -7,33 +7,56 @@
 
 import SwiftyMarkdown
 
-func sanitizeMarkdown(_ input: String) -> String {
-    // Regular expression pattern to match leading spaces followed by ``` and optional lowercase letters till the end of the string
-    let pattern = "^ *```[a-z]*$"
+private let fenceLineRegex = try! NSRegularExpression(pattern: "^ *(```[a-z]*)[ \\t]*$")
 
-    // Create a regular expression object
-    guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-        return input
+// Returns the bare fence (``` plus any info string) if the line is a code
+// fence, or nil otherwise. SwiftyMarkdown only accepts an opening fence
+// matching ^```[a-z]*$ and a closing fence equal to ```, while CommonMark
+// also allows leading spaces and trailing whitespace. Streamed replies often
+// end in “``` ” because the server sends a space after the last word.
+private func normalizedFence(_ line: String) -> String? {
+    let range = NSRange(line.startIndex..<line.endIndex, in: line)
+    guard let match = fenceLineRegex.firstMatch(in: line, options: [], range: range),
+          let fenceRange = Range(match.range(at: 1), in: line) else {
+        return nil
     }
+    return String(line[fenceRange])
+}
 
-    // Check if the input matches the pattern
-    let range = NSRange(input.startIndex..<input.endIndex, in: input)
-    let matches = regex.matches(in: input, options: [], range: range)
-
-    // If there's a match, remove the leading spaces
-    if let match = matches.first, match.range.length > 0 {
-        let result = input.replacingOccurrences(of: " ", with: "", options: [], range: input.startIndex..<input.index(input.startIndex, offsetBy: match.range.length))
-        return result
-    }
-
-    // Return the original string if there's no match
-    return input
+// Prepares message markdown for SwiftyMarkdown, one line at a time. It
+// reduces code fences to the bare form SwiftyMarkdown recognizes and empties
+// whitespace-only lines outside code blocks. SwiftyMarkdown treats a
+// whitespace-only line as a setext heading underline, turning the line above
+// it (for example, the last line of a code block followed by a streamed
+// trailing space) into a heading. CommonMark treats such a line as blank.
+func sanitizeMarkdownLines(_ input: String) -> String {
+    var inCodeBlock = false
+    return input.components(separatedBy: "\n").map { line in
+        if let fence = normalizedFence(line) {
+            // Mirrors SwiftyMarkdown: any fence opens a block; only a bare
+            // ``` closes one.
+            if !inCodeBlock {
+                inCodeBlock = true
+                return fence
+            }
+            if fence == "```" {
+                inCodeBlock = false
+                return fence
+            }
+            // An opening fence inside a block is code, not markup.
+            return line
+        }
+        if !inCodeBlock && !line.isEmpty && line.trimmingCharacters(in: .whitespaces).isEmpty {
+            return ""
+        }
+        return line
+    }.joined(separator: "\n")
 }
 
 private func SwiftyMarkdownForMessage(string unsafeString: String,
                                       linkColor: NSColor?,
                                       textColor: NSColor?) -> SwiftyMarkdown {
-    let massagedValue = unsafeString.components(separatedBy: "\n").map { sanitizeMarkdown($0) }.joined(separator: "\n")
+    let massagedValue = sanitizeMarkdownLines(unsafeString)
 
     let md = SwiftyMarkdown(string: massagedValue)
     let pointSize = NSFont.systemFontSize

@@ -1892,3 +1892,7 @@ Bug Fixes:
   terminal window, Edit > Find > Find… now
   focuses the Settings search field instead of
   opening the find bar in the terminal behind it.
+- In AI Chat with streaming responses on, a
+  code block at the end of a reply now shows as
+  code with a copy button instead of as large
+  text or with a stray closing ```.
