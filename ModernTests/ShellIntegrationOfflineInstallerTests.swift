@@ -309,6 +309,146 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
     }
 }
 
+// Plays xonsh with the POSIX sh the installer starts from it. xonsh's line editor
+// (prompt_toolkit) reads typeahead in bulk, like nushell's: text typed after `sh -c '…'` but
+// before that sh prints its first prompt is kept by xonsh (recorded in textLostToXonsh) instead
+// of reaching sh. prompt_toolkit also breaks a long command line with hard newlines when it
+// echoes it, so a row of the echo can start with what looks like the helper's prompt.
+private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
+    static let xonshPrompt = "user@host ~ @ "
+    static let scriptPath = "~/.config/xonsh/rc.d/iterm2.xsh"
+
+    private enum State {
+        case xonsh
+        case helperStarting
+        case helper
+    }
+    private var state = State.xonsh
+    private var helperDepth = 0
+    private var pendingInput = ""
+    private var heredoc: (path: String?, lines: [String])?
+
+    private(set) var createdDirectories = Set<String>()
+    private(set) var files = [String: String]()
+    private(set) var textLostToXonsh = [String]()
+
+    var helperIsRunning: Bool {
+        return state != .xonsh
+    }
+
+    override func respond(to text: String) -> [String] {
+        if state == .helperStarting {
+            textLostToXonsh.append(text)
+            return []
+        }
+        pendingInput += text
+        var result = [String]()
+        while let newline = pendingInput.firstIndex(of: "\n") {
+            let line = String(pendingInput[..<newline])
+            pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
+            result.append(contentsOf: handle(line))
+            if state == .helperStarting {
+                if !pendingInput.isEmpty {
+                    textLostToXonsh.append(pendingInput)
+                    pendingInput = ""
+                }
+                break
+            }
+        }
+        return result
+    }
+
+    private func handle(_ line: String) -> [String] {
+        switch state {
+        case .xonsh:
+            return handleInXonsh(line)
+        case .helper:
+            return handleInHelper(line)
+        case .helperStarting:
+            return []
+        }
+    }
+
+    private func handleInXonsh(_ line: String) -> [String] {
+        if line.hasPrefix("sh -c 'ENV=/dev/null") {
+            state = .helperStarting
+            laterEvents.append { [weak self] in
+                guard let self else {
+                    return
+                }
+                self.state = .helper
+                self.helperDepth = 1
+                self.output(">> ")
+            }
+            // The echo, broken by the line editor right before the prompt in PS1=">> ".
+            let echo = Self.xonshPrompt + line
+            guard let range = echo.range(of: ">> \"") else {
+                return [echo]
+            }
+            return [String(echo[..<range.lowerBound]), String(echo[range.lowerBound...])]
+        }
+        // The discovery command is answered from responses.
+        let answer = super.respond(to: line + "\n")
+        if !answer.isEmpty {
+            return [Self.xonshPrompt + line] + answer + [Self.xonshPrompt]
+        }
+        return [Self.xonshPrompt + line, "xonsh: command not found: \(line)", Self.xonshPrompt]
+    }
+
+    private func handleInHelper(_ line: String) -> [String] {
+        if var heredoc {
+            let echo = "> " + line
+            if line != "EOF" {
+                heredoc.lines.append(line)
+                self.heredoc = heredoc
+                return [echo, "> "]
+            }
+            self.heredoc = nil
+            guard let path = heredoc.path else {
+                return [echo, ">> "]
+            }
+            let directory = (path as NSString).deletingLastPathComponent
+            guard createdDirectories.contains(directory) else {
+                return [echo, "sh: \(path): No such file or directory", ">> "]
+            }
+            files[path] = heredoc.lines.joined(separator: "\n") + "\n"
+            return [echo, ">> "]
+        }
+
+        var result = [">> " + line]
+        var prompt = ">> "
+        if line.hasPrefix("mkdir -p ") {
+            createdDirectories.insert(String(line.dropFirst("mkdir -p ".count)))
+        } else if line.hasPrefix("cat <<'EOF' > ") {
+            heredoc = (path: String(line.dropFirst("cat <<'EOF' > ".count)), lines: [])
+            prompt = "> "
+        } else if line.contains("<<'EOF'") {
+            heredoc = (path: nil, lines: [])
+            prompt = "> "
+        } else if line.hasPrefix("chmod +x ") {
+            let path = String(line.dropFirst("chmod +x ".count))
+            if files[path] == nil {
+                result.append("chmod: \(path): No such file or directory")
+            }
+        } else if (line.hasPrefix("mkdir ") || line.hasPrefix("cd ")) && line.hasSuffix("; echo ok") {
+            result.append("ok")
+        } else if line.hasPrefix("sh -c 'ENV=/dev/null") {
+            // A nested sh reads the typeahead a byte at a time, so it starts without losing any.
+            helperDepth += 1
+        } else if line == "exit" {
+            helperDepth -= 1
+            if helperDepth == 0 {
+                state = .xonsh
+                prompt = Self.xonshPrompt
+            }
+        } else if !line.isEmpty {
+            result.append("sh: \(line): command not found")
+        }
+        result.append(prompt)
+        return result
+    }
+}
+
 final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     static let shellCommand = "sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n"
     private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"
@@ -510,6 +650,19 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         let next = controller.shellIntegrationInstallerNextCommandForSendShellCommands() ?? ""
         XCTAssertEqual(next, Self.shellCommand)
         XCTAssertFalse(next.contains("(null)"), next)
+    }
+
+    // F-436: writing the script starts a helper sh and then, from within it, a nested one. The
+    // nested launch must wait for output from the outer helper, not be typed at the same time.
+    func testWriteScriptTypesOneThingUntilTheShellResponds() {
+        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone, end")
+        let discoveryCount = terminal.sentTexts.count
+
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        let typed = Array(terminal.sentTexts.dropFirst(discoveryCount))
+        XCTAssertEqual(typed, ["sh\nENV=/dev/null INPUTRC=/dev/null sh\n PS1='>> '; PS2='> '\n"])
     }
 
     func testSkipAfterDiscoveryUsesDiscoveredDotdir() {
@@ -738,4 +891,68 @@ final class ShellIntegrationOnlineInstallerTests: XCTestCase {
 // must work without asking $SHELL for nu's autoload directory.
 final class ShellIntegrationOfflineNushellFromZshInstallerTests: ShellIntegrationOfflineNushellInstallerTests {
     override class var shellVariable: String { "/bin/zsh" }
+}
+
+// F-436: xonsh reads typeahead in bulk, so the installer must wait for the helper sh's prompt
+// before typing into it, or xonsh keeps the commands and the steps go wrong.
+final class ShellIntegrationOfflineXonshInstallerTests: XCTestCase {
+    private var controller: iTermShellIntegrationWindowController!
+    private var terminal: FakeXonshTerminal!
+
+    override func setUp() {
+        super.setUp()
+        terminal = FakeXonshTerminal(testCase: self)
+        terminal.responses[ShellIntegrationOfflineInstallerTests.shellCommand] = "My shell is Python xonsh --no-rc -i or /bin/zsh, end"
+        controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
+        controller.delegate = terminal
+        XCTAssertNotNil(controller.window)
+        controller.shellIntegrationInstallerSetInstallUtilities(true)
+        controller.shellIntegrationInstallerSendShellCommands(-1)
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+        XCTAssertEqual(controller.shell, .xonsh)
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+    }
+
+    override func tearDown() {
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.window?.orderOut(nil)
+        controller = nil
+        terminal = nil
+        super.tearDown()
+    }
+
+    func testWriteScriptWaitsForTheHelperAndReturnsToXonsh() {
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        XCTAssertEqual(terminal.textLostToXonsh, [])
+        XCTAssertNotNil(terminal.files[FakeXonshTerminal.scriptPath])
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+    }
+
+    func testInstallUtilitiesWaitsForTheHelperAndReturnsToXonsh() {
+        controller.shellIntegrationInstallerSkipStage()
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertEqual(terminal.textLostToXonsh, [])
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+
+    func testWholeInstallReturnsToXonsh() {
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertEqual(terminal.textLostToXonsh, [])
+        XCTAssertNotNil(terminal.files[FakeXonshTerminal.scriptPath])
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
 }
