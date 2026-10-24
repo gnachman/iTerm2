@@ -119,6 +119,13 @@
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
+// The lines holding the command’s output, for measuring its size. The next
+// prompt’s line is excluded.
+- (VT100GridRange)lineRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
+// The number of cells used by the command’s output. Unlike
+// numberOfCellsUsedInRange: on its line range, this excludes the eol mark and
+// padding zsh’s PROMPT_SP adds after output with no trailing newline.
+- (NSInteger)numberOfCellsUsedInOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 // Indicates if we're in alternate screen mode.
 - (BOOL)showingAlternateScreen;

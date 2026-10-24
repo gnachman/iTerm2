@@ -1995,6 +1995,13 @@ Bug Fixes:
   terminal window, Edit > Find > Find… now
   focuses the Settings search field instead of
   opening the find bar in the terminal behind it.
+- Command Info’s Output size no longer counts
+  the next prompt or the command typed at it,
+  and is no longer too large for a command that
+  has scrolled into history.
+- Command Info’s Output size no longer counts
+  the “%” marker and padding zsh adds after
+  output that doesn’t end in a newline.
 
 
 

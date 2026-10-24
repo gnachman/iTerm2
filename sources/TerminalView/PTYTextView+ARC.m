@@ -621,7 +621,7 @@ iTermCommandInfoViewControllerDelegate>
          fromOffscreenCommandLine:(BOOL)fromOffscreenCommandLine {
     long long overflow = self.dataSource.totalScrollbackOverflow;
     const int line = absoluteLineNumber - overflow;
-    const VT100GridRange lineRange = [self lineRangeForMark:mark];
+    const VT100GridRange lineRange = [self.dataSource lineRangeOfOutputForCommandMark:mark];
     NSString *directory = [self.dataSource workingDirectoryOnLine:line];
     id<VT100RemoteHostReading> remoteHost = [self.dataSource remoteHostOnLine:line];
     const NSPoint point = [self convertPoint:windowPoint
@@ -632,7 +632,7 @@ iTermCommandInfoViewControllerDelegate>
                                            date:date
                                       directory:directory
                                      remoteHost:remoteHost
-                                     outputSize:[self.dataSource numberOfCellsUsedInRange:lineRange]
+                                     outputSize:[self.dataSource numberOfCellsUsedInOutputForCommandMark:mark]
                                     outputLines:[self.dataSource numberOfRawLinesInRange:lineRange]
                                   outputPromise:outputPromise
                                  outputProgress:outputProgress
@@ -644,13 +644,6 @@ iTermCommandInfoViewControllerDelegate>
 
 - (VT100GridCoordRange)coordRangeForMark:(id<VT100ScreenMarkReading>)mark {
     return [self.dataSource textViewRangeOfOutputForCommandMark:mark];
-}
-
-- (VT100GridRange)lineRangeForMark:(id<VT100ScreenMarkReading>)mark {
-    const VT100GridCoordRange coordRange = [self coordRangeForMark:mark];
-    const int location = MAX(0, coordRange.start.y);
-    const int length = MAX(0, coordRange.end.y - coordRange.start.y + 1);
-    return VT100GridRangeMake(location, length);
 }
 
 - (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
