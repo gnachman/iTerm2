@@ -25,6 +25,16 @@ NSString *const kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNot
 static volatile int gSharedUnblockPipeW = -1;
 static TaskNotifier *gSharedInstance;
 
+// The select loop is the only user of raw descriptor numbers. Everything else does I/O through
+// iTermOwnedFileDescriptor, which can't be closed out from under it.
+static int iTermUnsafeFileDescriptor(iTermOwnedFileDescriptor *owned) {
+    return owned ? owned.unsafeFileDescriptor : -1;
+}
+
+static int iTermTaskUnsafeFileDescriptor(id<iTermTask> task) {
+    return iTermUnsafeFileDescriptor(task.ownedFileDescriptor);
+}
+
 @implementation TaskNotifier
 {
     int _unblockPipeR;
@@ -225,19 +235,20 @@ static TaskNotifier *gSharedInstance;
 
 - (void)registerTask:(id<iTermTask>)task {
     if (_monitors) {
-        if (task.fd < 0) {
-            // The select loop deregisters such a task, reaping its processes, on its next
-            // iteration.
-            RLog(@"Deregister %@, which has no file descriptor", task);
-            [self dispatchDidRegister:task];
-            [self deregisterTask:task];
-            return;
+        switch ([_monitors registerTask:task]) {
+            case iTermTaskIOMonitorRegistrationRegistered:
+                [self dispatchDidRegister:task];
+                return;
+            case iTermTaskIOMonitorRegistrationAlreadyRegistered:
+                return;
+            case iTermTaskIOMonitorRegistrationNoFileDescriptor:
+                // The select loop deregisters such a task, reaping its processes, on its next
+                // iteration.
+                RLog(@"Deregister %@, which has no file descriptor", task);
+                [self dispatchDidRegister:task];
+                [self deregisterTask:task];
+                return;
         }
-        if (![_monitors registerTask:task]) {
-            return;
-        }
-        [self dispatchDidRegister:task];
-        return;
     }
     PtyTaskDebugLog(@"registerTask: lock\n");
     [tasksLock lock];
@@ -453,7 +464,7 @@ void UnblockTaskNotifier(void) {
         PtyTaskDebugLog(@"Begin cleaning out dead tasks");
         NSMutableArray<id<iTermTask>> *tasksToDeregister = [NSMutableArray array];
         for (id<iTermTask> theTask in _tasks) {
-            if ([theTask fd] < 0) {
+            if (iTermTaskUnsafeFileDescriptor(theTask) < 0) {
                 PtyTaskDebugLog(@"Deregister dead task %@\n", theTask);
                 [tasksToDeregister addObject:theTask];
             }
@@ -492,7 +503,7 @@ void UnblockTaskNotifier(void) {
         PtyTaskDebugLog(@"Begin enumeration over %lu tasks\n", (unsigned long)[_tasks count]);
         for (id<iTermTask> task in _tasks) {
             PtyTaskDebugLog(@"Got task %@\n", task);
-            int fd = [task fd];
+            int fd = iTermTaskUnsafeFileDescriptor(task);
             if (fd < 0) {
                 PtyTaskDebugLog(@"Task has fd of %d\n", fd);
             } else {
@@ -513,21 +524,21 @@ void UnblockTaskNotifier(void) {
                 Coprocess *coprocess = [task coprocess];
                 if (coprocess) {
                     if ([coprocess wantToRead] && [task writeBufferHasRoom]) {
-                        int rfd = [coprocess readFileDescriptor];
+                        int rfd = iTermUnsafeFileDescriptor(coprocess.ownedReadFileDescriptor);
                         if (rfd > highfd) {
                             highfd = rfd;
                         }
                         FD_SET(rfd, &rfds);
                     }
                     if ([coprocess wantToWrite]) {
-                        int wfd = [coprocess writeFileDescriptor];
+                        int wfd = iTermUnsafeFileDescriptor(coprocess.ownedWriteFileDescriptor);
                         if (wfd > highfd) {
                             highfd = wfd;
                         }
                         FD_SET(wfd, &wfds);
                     }
                     if (![coprocess eof]) {
-                        int rfd = [coprocess readFileDescriptor];
+                        int rfd = iTermUnsafeFileDescriptor(coprocess.ownedReadFileDescriptor);
                         if (rfd > highfd) {
                             highfd = rfd;
                         }
@@ -578,7 +589,7 @@ void UnblockTaskNotifier(void) {
         id<iTermTask> task;
         while ((task = [iter nextObject])) {
             PtyTaskDebugLog(@"Got task %@\n", task);
-            int fd = [task fd];
+            int fd = iTermTaskUnsafeFileDescriptor(task);
 
             if (fd >= 0) {
                 // This is mostly paranoia, but if two threads
@@ -603,11 +614,11 @@ void UnblockTaskNotifier(void) {
                     iter = [_tasks objectEnumerator];
                 }
                 // Move input around between coprocess and main process.
-                if ([task fd] >= 0 && ![task hasBrokenPipe]) {  // Make sure the pipe wasn't just broken.
+                if (iTermTaskUnsafeFileDescriptor(task) >= 0 && ![task hasBrokenPipe]) {  // Make sure the pipe wasn't just broken.
                     @synchronized (task) {
                         Coprocess *coprocess = [task coprocess];
                         if (coprocess) {
-                            fd = [coprocess readFileDescriptor];
+                            fd = iTermUnsafeFileDescriptor(coprocess.ownedReadFileDescriptor);
                             if ([handledFds containsObject:@(fd)]) {
                                 NSLog(@"Duplicate fd %d", fd);
                                 continue;
@@ -618,7 +629,7 @@ void UnblockTaskNotifier(void) {
                             [self handleErrorOnFileDescriptor:fd withCoprocess:coprocess fdSet:&efds];
 
                             // Handle writes
-                            int coprocessWriteFd = [coprocess writeFileDescriptor];
+                            int coprocessWriteFd = iTermUnsafeFileDescriptor(coprocess.ownedWriteFileDescriptor);
                             if ([handledFds containsObject:@(coprocessWriteFd)]) {
                                 NSLog(@"Duplicate fd %d", coprocessWriteFd);
                                 continue;

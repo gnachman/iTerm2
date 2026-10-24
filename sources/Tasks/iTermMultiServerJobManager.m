@@ -7,6 +7,8 @@
 
 #import "iTermMultiServerJobManager.h"
 
+#import "iTerm2SharedARC-Swift.h"
+
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFileDescriptorMultiClient.h"
@@ -224,9 +226,8 @@ typedef struct {
                     callback:callback];
 }
 
-- (int)fd {
-    iTermFileDescriptorMultiClientChild *c = self.cachedChild;
-    return c ? c.fd : -1;
+- (iTermOwnedFileDescriptor *)ownedFileDescriptor {
+    return self.cachedChild.ownedFileDescriptor;
 }
 
 - (BOOL)closeFileDescriptor {
@@ -249,12 +250,9 @@ typedef struct {
 
 - (BOOL)ioAllowed {
     iTermFileDescriptorMultiClientChild *c = self.cachedChild;
-    return (c != nil && c.fd >= 0);
+    return (c != nil && !c.ownedFileDescriptor.isClosed);
 }
 
-- (void)setFd:(int)fd {
-    assert(fd == -1);
-}
 
 - (NSString *)tty {
     __block NSString *result = nil;

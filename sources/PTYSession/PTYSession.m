@@ -10441,7 +10441,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         fcntl(fd, F_SETFL, flags & (~O_NONBLOCK));
     }
 
-    _shell.readOnlyFileDescriptor = fds[0];
+    [_shell readTmuxPaneOutputFrom:[[[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:fds[0]] autorelease]];
     [_tmuxClientWritePipe release];
     _tmuxClientWritePipe = [[NSFileHandle alloc] initWithFileDescriptor:fds[1]
                                                          closeOnDealloc:YES];

@@ -69,7 +69,7 @@ final class FramerPaneJobManagerTests: XCTestCase {
         manager.conductorPaneDidOutput(Data("hello ".utf8))
         manager.conductorPaneDidOutput(Data("world".utf8))
         manager.conductorPaneDidExit(code: 3)
-        XCTAssertEqual(readToEnd(manager.fd), Data("hello world".utf8))
+        XCTAssertEqual(readToEnd(try XCTUnwrap(manager.ownedFileDescriptor).unsafeFileDescriptor), Data("hello world".utf8))
         XCTAssertEqual(manager.exitCode, 3)
     }
 
@@ -78,7 +78,7 @@ final class FramerPaneJobManagerTests: XCTestCase {
         let manager = try XCTUnwrap(FramerPaneJobManager(conductor: makeConductor(delegate)))
         manager.conductorPaneDidOutput(Data("partial".utf8))
         manager.conductorPaneDidLoseConnection()
-        XCTAssertEqual(readToEnd(manager.fd), Data("partial".utf8))
+        XCTAssertEqual(readToEnd(try XCTUnwrap(manager.ownedFileDescriptor).unsafeFileDescriptor), Data("partial".utf8))
         XCTAssertNil(manager.exitCode)
     }
 
@@ -120,7 +120,7 @@ final class FramerPaneJobManagerTests: XCTestCase {
     func testKillingBeforeThePaneStartedEndsTheSession() throws {
         let manager = try XCTUnwrap(FramerPaneJobManager(conductor: makeConductor(Delegate())))
         manager.kill(with: .force)
-        XCTAssertEqual(readToEnd(manager.fd), Data())
+        XCTAssertEqual(readToEnd(try XCTUnwrap(manager.ownedFileDescriptor).unsafeFileDescriptor), Data())
     }
 
     // A restored pane session waits for its leader's conductor to resynchronize, then
@@ -155,7 +155,7 @@ final class FramerPaneJobManagerTests: XCTestCase {
         XCTAssertEqual(reattachedPID, 4242)
         restored.handlePaneOutput(Data(" then more".utf8), pid: 4242, depth: 0)
         manager.conductorPaneDidExit(code: 0)
-        XCTAssertEqual(readToEnd(manager.fd), Data("missed then more".utf8))
+        XCTAssertEqual(readToEnd(try XCTUnwrap(manager.ownedFileDescriptor).unsafeFileDescriptor), Data("missed then more".utf8))
         XCTAssertTrue(delegate.commandNames.contains("panesize"), "sent its size")
     }
 

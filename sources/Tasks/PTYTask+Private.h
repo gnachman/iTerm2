@@ -13,7 +13,6 @@
 }
 
 @property(atomic, assign) BOOL hasMuteCoprocess;
-@property(atomic, readwrite) int fd;
 @property(atomic, weak) iTermLoggingHelper *loggingHelper;
 @property(atomic, strong) id<iTermJobManager> jobManager;
 

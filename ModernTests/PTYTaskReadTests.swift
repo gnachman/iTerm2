@@ -50,7 +50,7 @@ final class PTYTaskReadTests: XCTestCase {
     private func makeTask(fd: Int32) -> PTYTask {
         let flags = fcntl(fd, F_GETFL)
         _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
-        let task = PTYTask(forTestingWithFileDescriptor: fd)!
+        let task = PTYTask(forTestingWith: OwnedFileDescriptor(fd))!
         task.delegate = delegate
         return task
     }

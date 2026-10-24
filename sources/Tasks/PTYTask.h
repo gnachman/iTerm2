@@ -13,6 +13,7 @@
 @class Coprocess;
 @class iTermIOBuffer;
 @class iTermFramerPaneJobManager;
+@class iTermOwnedFileDescriptor;
 @class iTermProcessInfo;
 @protocol iTermTask;
 @class iTermWinSizeController;
@@ -90,7 +91,8 @@ typedef struct {
 
 @protocol iTermJobManager<NSObject>
 
-@property (atomic) int fd;
+// Owns the descriptor. Nil if there is none.
+@property (atomic, readonly) iTermOwnedFileDescriptor *ownedFileDescriptor;
 @property (atomic, copy) NSString *tty;
 @property (atomic, readonly) pid_t externallyVisiblePid;
 @property (atomic, readonly) BOOL hasJob;
@@ -162,7 +164,6 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic, readonly) BOOL isSessionRestorationPossible;
 @property(nonatomic, readonly) id sessionRestorationIdentifier;
 
-@property(atomic, readonly) int fd;
 @property(atomic, readonly) pid_t pid;
 // Externally, only PTYSession should assign to this when reattaching to a server.
 @property(atomic, readonly) NSString *tty;
@@ -181,9 +182,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // pane, otherwise the task's own. Both the cached and the fetched lookups (PTYTask+ProcessInfo)
 // use it.
 @property(nonatomic, readonly) pid_t processInfoPID;
-// This is used by tmux clients as a way to route data from %output in to the taskNotifier. Like
-// the name says you can't write to it.
-@property(atomic) int readOnlyFileDescriptor;
+// Makes this a tmux pane's task, reading the pane's %output from the read end of a pipe the
+// session writes to. Nothing is written to it. Registers the task.
+- (void)readTmuxPaneOutputFrom:(iTermOwnedFileDescriptor *)readEnd;
 
 // This is used by clients so they can initialize the TTY size once when the view size is known
 // for real. It is never assigned to by PTYTask.
@@ -204,9 +205,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 - (instancetype)init;
 
-// Testing only. Makes a task that owns `fd` (closing it on dealloc) and has no process. It is not
+// Testing only. Makes a task that reads from `fileDescriptor` and has no process. It is not
 // registered with TaskNotifier.
-- (instancetype)initForTestingWithFileDescriptor:(int)fd;
+- (instancetype)initForTestingWithFileDescriptor:(iTermOwnedFileDescriptor *)fileDescriptor;
 
 - (BOOL)hasBrokenPipe;
 

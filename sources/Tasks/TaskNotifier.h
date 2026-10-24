@@ -6,11 +6,14 @@
 extern NSString *const kCoprocessStatusChangeNotification;
 
 @class Coprocess;
+@class iTermOwnedFileDescriptor;
 @class PTYTask;
 
 @protocol iTermTask<NSObject>
 
-@property (nonatomic, readonly) int fd;
+// The task's file descriptor, or nil if there is none. Task I/O monitors lease it so it is not
+// closed while they watch it.
+@property (nonatomic, readonly) iTermOwnedFileDescriptor *ownedFileDescriptor;
 
 @property (nonatomic, readonly) pid_t pid;
 @property (nonatomic, readonly) pid_t pidToWaitOn;

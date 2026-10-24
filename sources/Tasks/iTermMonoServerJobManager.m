@@ -16,11 +16,13 @@
 #import "NSWorkspace+iTerm.h"
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
+#import "iTerm2SharedARC-Swift.h"
 
 #import <Foundation/Foundation.h>
 
 @interface iTermMonoServerJobManager()
 @property (atomic, strong, readwrite) dispatch_queue_t queue;
+@property (atomic, readwrite) iTermOwnedFileDescriptor *ownedFileDescriptor;
 @end
 
 @implementation iTermMonoServerJobManager {
@@ -31,7 +33,6 @@
     pid_t _socketFd;
 }
 
-@synthesize fd = _fd;
 @synthesize tty = _tty;
 @synthesize queue;
 
@@ -46,15 +47,29 @@
         _serverPid = (pid_t)-1;
         _serverChildPid = -1;
         _socketFd = -1;
-        _fd = -1;
+        // Never nil, so messaging it never returns 0 for "no descriptor".
+        _ownedFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:-1];
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p fd=%d tty=%@ serverPid=%@ serverChildPid=%@ socketFd=%@>",
+    return [NSString stringWithFormat:@"<%@: %p fd=%@ tty=%@ serverPid=%@ serverChildPid=%@ socketFd=%@>",
             NSStringFromClass([self class]), self,
-            _fd, _tty, @(_serverPid), @(_serverChildPid), @(_socketFd)];
+            self.ownedFileDescriptor, _tty, @(_serverPid), @(_serverChildPid), @(_socketFd)];
+}
+
+// Takes ownership of `fd`. Any previous descriptor must already be closed.
+- (void)takeOwnershipOfFileDescriptor:(int)fd {
+    ITAssertWithMessage(self.ownedFileDescriptor.isClosed,
+                        @"Replacing open file descriptor %@ with %@", self.ownedFileDescriptor, @(fd));
+    self.ownedFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:fd];
+}
+
+// Ties the descriptor's lifetime to this object's rather than to whoever else holds the wrapper.
+// A lease (such as a task I/O monitor's) still keeps it open until it is released.
+- (void)dealloc {
+    [self.ownedFileDescriptor close];
 }
 
 - (pid_t)childPid {
@@ -67,11 +82,10 @@
 
 - (BOOL)closeFileDescriptor {
     @synchronized (self) {
-        if (self.fd == -1) {
+        if (self.ownedFileDescriptor.isClosed) {
             return NO;
         }
-        close(self.fd);
-        self.fd = -1;
+        [self.ownedFileDescriptor close];
         return YES;
     }
 }
@@ -145,7 +159,7 @@
 
     char **cArgv = [argv nullTerminatedCStringArray];
     char **cEnviron = [newEnviron nullTerminatedCStringArray];
-    self.fd = iTermForkAndExecToRunJobInServer(&forkState,
+    const int fd = iTermForkAndExecToRunJobInServer(&forkState,
                                                &ttyState,
                                                unixDomainSocketPath,
                                                argpath.UTF8String,
@@ -155,11 +169,11 @@
                                                cEnviron);
     iTermFreeeNullTerminatedCStringArray(cArgv);
     iTermFreeeNullTerminatedCStringArray(cEnviron);
+    [self takeOwnershipOfFileDescriptor:fd];
 
-    const int fd = self.fd;
-    if (fd >= 0) {
-        fcntl(self.fd, F_SETFL, O_NONBLOCK);
-    }
+    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+        fcntl(fd, F_SETFL, O_NONBLOCK);
+    }];
 
     // If you get here you're the parent.
     _serverPid = forkState.pid;
@@ -181,7 +195,9 @@
                 completion:(void (^)(iTermJobManagerForkAndExecStatus, NSNumber *))completion {
     // Make sure the master side of the pty is closed on future exec() calls.
     DLog(@"fcntl");
-    fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
+    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+        fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+    }];
 
     // The client and server connected to each other before forking. The server
     // will send us the child pid now. We don't really need the rest of the
@@ -216,9 +232,8 @@
         // lets the server know it should call accept(). We now have two copies of the master PTY
         // file descriptor. Let's close the original one because attachToServer: will use the
         // copy in serverConnection.
-        close(_fd);
+        [self.ownedFileDescriptor close];
         DLog(@"close fd");
-        _fd = -1;
 
         // The serverConnection has the wrong server PID because the connection was made prior
         // to fork(). Update serverConnection with the real server PID.
@@ -234,13 +249,14 @@
         DLog(@"attached. Set nonblocking");
         self.tty = [NSString stringWithUTF8String:ttyState.tty];
 
-        int flags = fcntl(_fd, F_GETFL);
-        fcntl(_fd, F_SETFL, flags | O_NONBLOCK);
+        [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+            fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+        }];
 
         DLog(@"fini");
         return iTermJobManagerForkAndExecStatusSuccess;
     }
-    close(_fd);
+    [self.ownedFileDescriptor close];
     RLog(@"Server died immediately!");
     DLog(@"fini");
     return iTermJobManagerForkAndExecStatusTaskDiedImmediately;
@@ -253,7 +269,7 @@
                        task:(id<iTermTask>)task {
     assert(serverConnection.type == iTermGeneralServerConnectionTypeMono);
     assert([iTermAdvancedSettingsModel runJobsInServers]);
-    _fd = serverConnection.mono.ptyMasterFd;
+    [self takeOwnershipOfFileDescriptor:serverConnection.mono.ptyMasterFd];
     _serverPid = serverConnection.mono.serverPid;
     _serverChildPid = serverConnection.mono.childPid;
     _socketFd = serverConnection.mono.socketFd;
@@ -408,7 +424,7 @@
 - (BOOL)ioAllowed {
     __block BOOL result;
     dispatch_sync(self.queue, ^{
-        result = (_fd != -1);
+        result = !self.ownedFileDescriptor.isClosed;
     });
     return result;
 }

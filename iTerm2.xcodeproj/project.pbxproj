@@ -4762,6 +4762,7 @@
 		DF93E577C867F721A8F84CB7 /* iTermTabGroupContiguity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842E85C7646AD1CE30E147AD /* iTermTabGroupContiguity.swift */; };
 		DFD374B25802C2E7C25B95F0 /* AILiveOllamaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC03AC4196A9AA446D5A176 /* AILiveOllamaTests.swift */; };
 		E0674A4A31C8440A9DF370CD /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E85C9259B4BF4E83BBC22D64 /* InfoPlist.xcstrings */; };
+		E150F42CDFEA057CC83BD2B6 /* OwnedFileDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6A75C3A685499244178687 /* OwnedFileDescriptor.swift */; };
 		E2DFAD8D76A3655948CB3F37 /* iTermModalSheetRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */; };
 		E3F691502939DF2E874D7DD1 /* IT2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FC80BA122066E3610BEA16 /* IT2.swift */; };
 		E42AFCD2191DB57A5A504F23 /* AIProviderPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC183FBA34E8F9843DD6AA6 /* AIProviderPreset.swift */; };
@@ -6066,6 +6067,7 @@
 		7C74C12959E7040AF3A3B12F /* iTermAnnotatedScreenshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermAnnotatedScreenshot.swift; sourceTree = "<group>"; };
 		7D2E85E9A8C2432B82F6723D /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/CommandHistoryPopup.xcstrings; sourceTree = "<group>"; };
 		7D730FE360343BDF96BB4D92 /* iTermUvCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUvCommand.swift; sourceTree = "<group>"; };
+		7F6A75C3A685499244178687 /* OwnedFileDescriptor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OwnedFileDescriptor.swift; sourceTree = "<group>"; };
 		7F7C79A0745E993B91C40235 /* WorkgroupToolbarBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupToolbarBuilder.swift; sourceTree = "<group>"; };
 		AFD50FEF7599E1BBCD195581 /* it2_git_state.py */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.python; name = it2_git_state.py; path = OtherResources/it2_git_state.py; sourceTree = "<group>"; };
 		7FEACD97BE4694F8EA0745A9 /* it2.py */ = {isa = PBXFileReference; includeInIndex = 1; name = it2.py; path = OtherResources/it2.py; sourceTree = "<group>"; };
@@ -14171,6 +14173,7 @@
 				C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */,
 				EADF3E7DB1C0DAB2A13D7D99 /* iTermModalAlertRegistry.swift */,
 				9A292340C410A896E03ADEC3 /* iTermWeakObserverList.swift */,
+				7F6A75C3A685499244178687 /* OwnedFileDescriptor.swift */,
 			);
 			path = Infrastructure;
 			sourceTree = "<group>";
@@ -20429,6 +20432,7 @@
 				D3C3D7DE7E900CCF5BA700F0 /* ChildReaper.swift in Sources */,
 				78F6E883D21EEDFFC89F6DB0 /* TokenBudget.swift in Sources */,
 				B2B910741C395DF2BB52D26D /* TaskIOMonitor.swift in Sources */,
+				E150F42CDFEA057CC83BD2B6 /* OwnedFileDescriptor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

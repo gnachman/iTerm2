@@ -10,6 +10,7 @@
 #import "iTermWeakReference.h"
 
 @class Coprocess;
+@class iTermOwnedFileDescriptor;
 
 @protocol iTermCoprocessDelegate<NSObject>
 - (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors;
@@ -18,14 +19,13 @@
 @interface Coprocess : NSObject
 
 @property(nonatomic, assign) pid_t pid;  // -1 after termination
-@property(nonatomic, assign) int outputFd;  // for writing
-@property(nonatomic, assign) int inputFd;  // for reading
+// Own the pipes to and from the child. -terminate closes them, or deallocation does.
+@property(nonatomic, readonly) iTermOwnedFileDescriptor *ownedWriteFileDescriptor;
+@property(nonatomic, readonly) iTermOwnedFileDescriptor *ownedReadFileDescriptor;
 @property(nonatomic, readonly) NSMutableData *outputBuffer;
 @property(nonatomic, readonly) NSMutableData *inputBuffer;
 @property(nonatomic, assign) BOOL eof;
 @property(nonatomic, assign) BOOL mute;
-@property(nonatomic, readonly) int readFileDescriptor;  // for reading
-@property(nonatomic, readonly) int writeFileDescriptor;  // for writing
 @property(nonatomic, retain) id<iTermCoprocessDelegate, iTermWeakReference> delegate;
 @property(nonatomic, readonly) NSString *command;
 

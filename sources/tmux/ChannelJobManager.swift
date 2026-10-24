@@ -8,7 +8,7 @@
 @objc(iTermChannelJobManager)
 class ChannelJobManager: NSObject, iTermJobManager {
     @objc var ioBuffer: IOBuffer?
-    var fd: Int32 = -1
+    var ownedFileDescriptor: OwnedFileDescriptor? { nil }
     var tty = "(embedded)"  // TODO: This actually could be plumbed through the protocol
     var externallyVisiblePid: pid_t { 0 }
     var hasJob: Bool { true }

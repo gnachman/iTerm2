@@ -11,6 +11,8 @@
 #import "iTermResult.h"
 #import "iTermThreadSafety.h"
 
+@class iTermOwnedFileDescriptor;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermFileDescriptorMultiClientChild : NSObject
@@ -21,7 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) NSDictionary<NSString *, NSString *> *environment;
 @property (atomic, readonly) BOOL utf8;
 @property (atomic, readonly) NSString *initialDirectory;
-@property (atomic, readonly) int fd;
+// Owns the pty master. It is closed by -closeFileDescriptor or when this object is deallocated.
+@property (atomic, readonly) iTermOwnedFileDescriptor *ownedFileDescriptor;
 @property (atomic, readonly) NSString *tty;
 
 // Mutable properties. Must only be accessed on the child's thread.

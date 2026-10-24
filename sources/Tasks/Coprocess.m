@@ -8,6 +8,8 @@
 
 #import "Coprocess.h"
 
+#import "iTerm2SharedARC-Swift.h"
+
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "iTermUserDefaults.h"
@@ -36,8 +38,6 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 }
 
 @synthesize pid = pid_;
-@synthesize outputFd = outputFd_;
-@synthesize inputFd = inputFd_;
 @synthesize inputBuffer = inputBuffer_;
 @synthesize outputBuffer = outputBuffer_;
 @synthesize eof = eof_;
@@ -155,8 +155,8 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
                         errorFd:(int)errorFd {
     Coprocess *result = [[Coprocess alloc] init];
     result.pid = pid;
-    result.outputFd = outputFd;
-    result.inputFd = inputFd;
+    result->_ownedWriteFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:outputFd];
+    result->_ownedReadFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:inputFd];
 
     // Make sure the file descriptors are non-blocking.
     int flags = fcntl(outputFd, F_GETFL);
@@ -194,6 +194,13 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         outputBuffer_ = [[NSMutableData alloc] init];
     }
     return self;
+}
+
+// Ties the pipes' lifetimes to this object's rather than to whoever else holds their wrappers. A
+// lease (such as a task I/O monitor's) still keeps them open until it is released.
+- (void)dealloc {
+    [_ownedWriteFileDescriptor close];
+    [_ownedReadFileDescriptor close];
 }
 
 - (void)monitorErrorsOnFileDescriptor:(int)errorFd {
@@ -241,10 +248,15 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     if (self.pid < 0 || writePipeClosed_) {
         return -1;
     }
-    int fd = [self writeFileDescriptor];
-    int n = write(fd, [outputBuffer_ bytes], [outputBuffer_ length]);
+    __block int n = -1;
+    // Captured in the block: a close deferred until the block returns could change errno.
+    __block int error = EBADF;
+    [_ownedWriteFileDescriptor withFileDescriptor:^(int fd) {
+        n = write(fd, [outputBuffer_ bytes], [outputBuffer_ length]);
+        error = errno;
+    }];
 
-    if (n < 0 && (!(errno == EAGAIN || errno == EINTR))) {
+    if (n < 0 && (!(error == EAGAIN || error == EINTR))) {
         writePipeClosed_ = YES;
     } else if (n == 0) {
         writePipeClosed_ = YES;
@@ -262,16 +274,22 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         return -1;
     }
     int rc = 0;
-    int fd = [self readFileDescriptor];
     while (inputBuffer_.length < kMaxInputBufferSize) {
         char buffer[1024];
-        int n = read(fd, buffer, sizeof(buffer));
+        char *bufferPointer = buffer;
+        __block int n = -1;
+        // Captured in the block: a close deferred until the block returns could change errno.
+        __block int error = EBADF;
+        [_ownedReadFileDescriptor withFileDescriptor:^(int fd) {
+            n = read(fd, bufferPointer, sizeof(buffer));
+            error = errno;
+        }];
         if (n == 0) {
             rc = 0;
             eof_ = YES;
             break;
         } else if (n < 0) {
-            if (errno != EAGAIN && errno != EINTR) {
+            if (error != EAGAIN && error != EINTR) {
                 eof_ = YES;
                 rc = n;
                 break;
@@ -305,10 +323,9 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 - (void)terminate {
     if (self.pid > 0) {
         kill(self.pid, 15);
-        close(self.outputFd);
-        close(self.inputFd);
-        self.outputFd = -1;
-        self.inputFd = -1;
+        // Closing waits for anything still using them, such as a task I/O monitor.
+        [_ownedWriteFileDescriptor close];
+        [_ownedReadFileDescriptor close];
         self.pid = -1;
         @synchronized (self) {
             [self notifyWhenErrorOutputIsComplete:^(NSString *errors) {
@@ -328,16 +345,6 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 
 - (int)errorFileDescriptorForTesting {
     return _errorFd;
-}
-
-- (int)readFileDescriptor
-{
-    return self.inputFd;
-}
-
-- (int)writeFileDescriptor
-{
-    return self.outputFd;
 }
 
 @end

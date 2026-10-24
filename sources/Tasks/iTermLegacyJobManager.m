@@ -12,14 +12,15 @@
 #import "NSArray+iTerm.h"
 #import "PTYTask+MRR.h"
 #import "TaskNotifier.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @interface iTermLegacyJobManager()
 @property (atomic) pid_t childPid;
+@property (atomic, readwrite) iTermOwnedFileDescriptor *ownedFileDescriptor;
 @end
 
 @implementation iTermLegacyJobManager
 
-@synthesize fd = _fd;
 @synthesize tty = _tty;
 @synthesize queue = _queue;
 
@@ -31,15 +32,29 @@
     self = [super init];
     if (self) {
         _queue = queue;
-        _fd = -1;
+        // Never nil, so messaging it never returns 0 for "no descriptor".
+        _ownedFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:-1];
         self.childPid = -1;
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p fd=%d tty=%@ childPid=%@>",
-            NSStringFromClass([self class]), self, _fd, _tty, @(self.childPid)];
+    return [NSString stringWithFormat:@"<%@: %p fd=%@ tty=%@ childPid=%@>",
+            NSStringFromClass([self class]), self, self.ownedFileDescriptor, _tty, @(self.childPid)];
+}
+
+// Takes ownership of `fd`. Any previous descriptor must already be closed.
+- (void)takeOwnershipOfFileDescriptor:(int)fd {
+    ITAssertWithMessage(self.ownedFileDescriptor.isClosed,
+                        @"Replacing open file descriptor %@ with %@", self.ownedFileDescriptor, @(fd));
+    self.ownedFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:fd];
+}
+
+// Ties the descriptor's lifetime to this object's rather than to whoever else holds the wrapper.
+// A lease (such as a task I/O monitor's) still keeps it open until it is released.
+- (void)dealloc {
+    [self.ownedFileDescriptor close];
 }
 
 - (pid_t)serverPid {
@@ -60,11 +75,10 @@
 
 - (BOOL)closeFileDescriptor {
     @synchronized (self) {
-        if (self.fd == -1) {
+        if (self.ownedFileDescriptor.isClosed) {
             return NO;
         }
-        close(self.fd);
-        self.fd = -1;
+        [self.ownedFileDescriptor close];
         return YES;
     }
 }
@@ -109,7 +123,7 @@
     };
     char **cArgv = [argv nullTerminatedCStringArray];
     char **cEnviron = [newEnviron nullTerminatedCStringArray];
-    self.fd = iTermForkAndExecToRunJobDirectly(&forkState,
+    const int fd = iTermForkAndExecToRunJobDirectly(&forkState,
                                                &ttyState,
                                                argpath.UTF8String,
                                                cArgv,
@@ -118,6 +132,7 @@
                                                cEnviron);
     iTermFreeeNullTerminatedCStringArray(cArgv);
     iTermFreeeNullTerminatedCStringArray(cEnviron);
+    [self takeOwnershipOfFileDescriptor:fd];
 
     // If you get here you're the parent.
     self.childPid = forkState.pid;
@@ -130,10 +145,11 @@
 
     // Make sure the master side of the pty is closed on future exec() calls.
     DLog(@"fcntl");
-    fcntl(self.fd, F_SETFD, fcntl(self.fd, F_GETFD) | FD_CLOEXEC);
-
+    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+        fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+        fcntl(fd, F_SETFL, O_NONBLOCK);
+    }];
     self.tty = [NSString stringWithUTF8String:ttyState.tty];
-    fcntl(self.fd, F_SETFL, O_NONBLOCK);
     return iTermJobManagerForkAndExecStatusSuccess;
 }
 
@@ -217,7 +233,7 @@
 }
 
 - (BOOL)ioAllowed {
-    return self.fd >= 0;
+    return !self.ownedFileDescriptor.isClosed;
 }
 
 - (BOOL)isReadOnly {

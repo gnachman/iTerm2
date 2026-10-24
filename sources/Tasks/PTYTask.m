@@ -93,16 +93,16 @@ static void HandleSigChld(int n) {
         } else {
             self.jobManager = [[iTermLegacyJobManager alloc] initWithQueue:_jobManagerQueue];
         }
-        self.fd = -1;
     }
     return self;
 }
 
-- (instancetype)initForTestingWithFileDescriptor:(int)fd {
+- (instancetype)initForTestingWithFileDescriptor:(iTermOwnedFileDescriptor *)fileDescriptor {
+    ITAssertWithMessage(fileDescriptor != nil, @"A tmux job manager needs a file descriptor");
     self = [self init];
     if (self) {
         iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:_jobManagerQueue];
-        jobManager.fd = fd;
+        jobManager.ownedFileDescriptor = fileDescriptor;
         self.jobManager = jobManager;
     }
     return self;
@@ -133,7 +133,7 @@ static void HandleSigChld(int n) {
             self,
             self.jobManager,
             @(self.pid),
-            @(self.fd),
+            self.ownedFileDescriptor,
             _tmuxClientProcessID];
 }
 
@@ -166,14 +166,9 @@ static void HandleSigChld(int n) {
     return self.jobManager.sessionRestorationIdentifier;
 }
 
-- (int)fd {
-    assert(self.jobManager);
-    return self.jobManager.fd;
-}
 
-- (void)setFd:(int)fd {
-    assert(self.jobManager);
-    self.jobManager.fd = fd;
+- (iTermOwnedFileDescriptor *)ownedFileDescriptor {
+    return self.jobManager.ownedFileDescriptor;
 }
 
 - (pid_t)pid {
@@ -244,15 +239,17 @@ static void HandleSigChld(int n) {
 }
 
 - (BOOL)passwordInput {
-    struct termios termAttributes;
-    if ([iTermAdvancedSettingsModel detectPasswordInput] &&
-        self.fd > 0 &&
-        isatty(self.fd) &&
-        tcgetattr(self.fd, &termAttributes) == 0) {
-        return !(termAttributes.c_lflag & ECHO) && (termAttributes.c_lflag & ICANON);
-    } else {
+    if (![iTermAdvancedSettingsModel detectPasswordInput]) {
         return NO;
     }
+    __block BOOL result = NO;
+    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+        struct termios termAttributes;
+        if (fd > 0 && isatty(fd) && tcgetattr(fd, &termAttributes) == 0) {
+            result = !(termAttributes.c_lflag & ECHO) && (termAttributes.c_lflag & ICANON);
+        }
+    }];
+    return result;
 }
 
 - (BOOL)hasBrokenPipe {
@@ -323,9 +320,11 @@ static void HandleSigChld(int n) {
     _tmuxClientProcessID = tmuxClientProcessID;
 }
 
-- (void)setReadOnlyFileDescriptor:(int)readOnlyFileDescriptor {
+- (void)readTmuxPaneOutputFrom:(iTermOwnedFileDescriptor *)readEnd {
+    // A nil wrapper would read as an open descriptor to the job manager.
+    ITAssertWithMessage(readEnd != nil, @"A tmux job manager needs a file descriptor");
     iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:self->_jobManagerQueue];
-    jobManager.fd = readOnlyFileDescriptor;
+    jobManager.ownedFileDescriptor = readEnd;
     RLog(@"Configure %@ as tmux task", self);
     _jobManager = jobManager;
     [[TaskNotifier sharedInstance] registerTask:self];
@@ -349,13 +348,6 @@ static void HandleSigChld(int n) {
 
 - (iTermFramerPaneJobManager *)framerPaneJobManager {
     return [iTermFramerPaneJobManager castFrom:_jobManager];
-}
-
-- (int)readOnlyFileDescriptor {
-    if (![_jobManager isKindOfClass:[iTermTmuxJobManager class]]) {
-        return -1;
-    }
-    return _jobManager.fd;
 }
 
 // Send keyboard input, coprocess output, tmux commands, etc.
@@ -455,27 +447,55 @@ static void HandleSigChld(int n) {
 // defines the depth of our queue also determines (in the steady state) how much data can be
 // buffered and it's 1024 bytes * initial semaphore count.
 - (void)processRead {
-    int iterations = 4;
-    int bytesRead = 0;
+    const int iterations = 4;
+    __block int bytesRead = 0;
 
     char buffer[MAXRW * iterations];
-    BOOL broken = NO;
+    char *bufferPointer = buffer;
+    __block BOOL broken = NO;
+    // Keeps the descriptor open while reading. Once it has been closed, it is treated like a read
+    // error.
+    if (![self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+        BOOL readFailed = NO;
+        bytesRead = [self readFromFileDescriptor:fd into:bufferPointer iterations:iterations broken:&readFailed];
+        broken = readFailed;
+    }]) {
+        broken = YES;
+    }
+
+    hasOutput = YES;
+
+    if (!broken || bytesRead > 0) {
+        // Send data to the terminal. This precedes brokenPipe so the last output isn't lost.
+        [self readTask:buffer length:bytesRead];
+    }
+    if (broken) {
+        [self brokenPipe];
+    }
+}
+
+// Reads up to MAXRW * iterations bytes from `fd` into `buffer`. Sets *broken on EOF or a hard error.
+- (int)readFromFileDescriptor:(int)fd
+                         into:(char *)buffer
+                   iterations:(int)iterations
+                       broken:(BOOL *)broken {
+    int bytesRead = 0;
     for (int i = 0; i < iterations; ++i) {
         // Only read up to MAXRW*iterations bytes, then release control
-        ssize_t n = read(self.fd, buffer + bytesRead, MAXRW);
+        ssize_t n = read(fd, buffer + bytesRead, MAXRW);
         if (n == 0) {
             // EOF. A pty master reads 0 once its slave has no openers; a pipe (such as a framer
             // pane's output) reads 0 once its write end is closed. Either way, nothing more will
             // ever arrive. (This is distinct from reading nothing because of EAGAIN, which is
             // handled below.)
-            broken = YES;
+            *broken = YES;
             break;
         }
         if (n < 0) {
             // There was a read error.
             if (errno != EAGAIN && errno != EINTR) {
                 // It was a serious error.
-                broken = YES;
+                *broken = YES;
                 break;
             } else {
                 // We could read again in the case of EINTR but it would
@@ -492,16 +512,7 @@ static void HandleSigChld(int n) {
             break;
         }
     }
-
-    hasOutput = YES;
-
-    if (!broken || bytesRead > 0) {
-        // Send data to the terminal. This precedes brokenPipe so the last output isn't lost.
-        [self readTask:buffer length:bytesRead];
-    }
-    if (broken) {
-        [self brokenPipe];
-    }
+    return bytesRead;
 }
 
 - (void)processWrite {
@@ -515,10 +526,16 @@ static void HandleSigChld(int n) {
     if (length > MAXRW) {
         length = MAXRW;
     }
-    ssize_t written = write(self.fd, [writeBuffer mutableBytes], length);
+    __block ssize_t written = -1;
+    // Captured in the block: a close deferred until the block returns could change errno.
+    __block int error = EBADF;
+    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+        written = write(fd, ptr, length);
+        error = errno;
+    }];
 
     // No data?
-    if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
+    if ((written < 0) && (!(error == EAGAIN || error == EINTR))) {
         [self brokenPipe];
     } else if (written > 0) {
         // Shrink the writeBuffer
@@ -986,9 +1003,9 @@ static void HandleSigChld(int n) {
 
 - (void)closeFileDescriptorAndDeregisterIfPossible {
     assert(self.jobManager);
-    const int fd = self.fd;
+    iTermOwnedFileDescriptor *owned = self.ownedFileDescriptor;
     if ([self.jobManager closeFileDescriptor]) {
-        RLog(@"Deregister file descriptor %d for process %@ after closing it", fd, @(self.pid));
+        RLog(@"Deregister file descriptor %@ for process %@ after closing it", owned, @(self.pid));
         [[TaskNotifier sharedInstance] deregisterTask:self];
     }
 }
@@ -1009,7 +1026,8 @@ static void HandleSigChld(int n) {
 @implementation PTYTask(WinSizeControllerDelegate)
 
 - (BOOL)winSizeControllerIsReady {
-    return self.fd != -1;
+    iTermOwnedFileDescriptor *owned = self.ownedFileDescriptor;
+    return owned != nil && !owned.isClosed;
 }
 
 - (void)winSizeControllerSetGridSize:(VT100GridSize)gridSize
@@ -1024,7 +1042,10 @@ static void HandleSigChld(int n) {
     if (framerPane) {
         [framerPane setGridSize:gridSize];
     } else {
-        iTermSetTerminalSize(self.fd, desiredSize);
+        // Keeps the descriptor from being closed, and its number reused, during the ioctl.
+        [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+            iTermSetTerminalSize(fd, desiredSize);
+        }];
     }
     [self.delegate taskDidResizeToGridSize:gridSize pixelSize:NSMakeSize(desiredSize.pixelSize.width,
                                                                          desiredSize.pixelSize.height)];

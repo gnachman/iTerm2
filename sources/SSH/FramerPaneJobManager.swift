@@ -25,7 +25,8 @@ import Foundation
 @objc(iTermFramerPaneJobManager)
 final class FramerPaneJobManager: NSObject, iTermJobManager, ConductorPaneClient {
     private let lock = NSLock()
-    private var readFD: Int32 = -1
+    /// The pipe's read end, which the session's task reads the pane's output from.
+    private var readEnd: OwnedFileDescriptor?
     private var writeFD: Int32 = -1
     /// Writes into the pipe block when the session's reader falls behind, so they happen here
     /// rather than on the main thread.
@@ -62,20 +63,13 @@ final class FramerPaneJobManager: NSObject, iTermJobManager, ConductorPaneClient
     var queue: dispatch_queue_t? { nil }
     var isReadOnly: Bool { true }
 
-    var fd: Int32 {
-        get {
-            lock.lock()
-            defer { lock.unlock() }
-            return readFD
-        }
-        set {
-            lock.lock()
-            defer { lock.unlock() }
-            readFD = newValue
-        }
+    var ownedFileDescriptor: OwnedFileDescriptor? {
+        lock.lock()
+        defer { lock.unlock() }
+        return readEnd
     }
 
-    var ioAllowed: Bool { fd >= 0 }
+    var ioAllowed: Bool { ownedFileDescriptor.map { !$0.isClosed } ?? false }
 
     static func available() -> Bool {
         true
@@ -105,7 +99,7 @@ final class FramerPaneJobManager: NSObject, iTermJobManager, ConductorPaneClient
         _ = fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK)
         _ = fcntl(fds[0], F_SETFD, FD_CLOEXEC)
         _ = fcntl(fds[1], F_SETFD, FD_CLOEXEC)
-        readFD = fds[0]
+        readEnd = OwnedFileDescriptor(fds[0])
         writeFD = fds[1]
         self.conductorProvider = conductorProvider
         self.gridSizeProvider = gridSizeProvider
@@ -123,13 +117,11 @@ final class FramerPaneJobManager: NSObject, iTermJobManager, ConductorPaneClient
         if writeFD >= 0 {
             close(writeFD)
         }
-        if readFD >= 0 {
-            close(readFD)
-        }
+        readEnd?.close()
     }
 
     override var description: String {
-        return "<\(Self.self): \(it_addressString) fd=\(fd) remotePID=\(remotePID.map(String.init) ?? "none")>"
+        return "<\(Self.self): \(it_addressString) fd=\(ownedFileDescriptor?.unsafeFileDescriptor ?? -1) remotePID=\(remotePID.map(String.init) ?? "none")>"
     }
 
     /// The pane started with this pid.
@@ -352,11 +344,11 @@ final class FramerPaneJobManager: NSObject, iTermJobManager, ConductorPaneClient
     func closeFileDescriptor() -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        guard readFD >= 0 else {
+        guard let readEnd, !readEnd.isClosed else {
             return false
         }
-        close(readFD)
-        readFD = -1
+        readEnd.close()
+        self.readEnd = nil
         return true
     }
 

@@ -11,6 +11,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermTmuxJobManager : NSObject<iTermJobManager>
+// Owns the read end of the pipe the session writes %output to.
+@property (atomic, strong, readwrite) iTermOwnedFileDescriptor *ownedFileDescriptor;
 
 @end
 

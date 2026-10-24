@@ -108,7 +108,8 @@ private final class Signal {
 // slave.
 private final class RawPTY {
     private static let openptyLock = NSLock()
-    let master: Int32
+    // Closed when this is deallocated, once nothing (such as a monitor) is using it.
+    let master: OwnedFileDescriptor
     private(set) var slave: Int32
 
     init() throws {
@@ -130,7 +131,7 @@ private final class RawPTY {
             let flags = fcntl(fd, F_GETFL)
             _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
         }
-        self.master = master
+        self.master = OwnedFileDescriptor(master)
         self.slave = slave
     }
 
@@ -212,7 +213,7 @@ private final class RawPTY {
 
     deinit {
         closeSlave()
-        close(master)
+        master.close()
     }
 }
 
@@ -228,7 +229,7 @@ private final class FakeTask: NSObject, iTermTask {
     private let signal = Signal()
     private weak var notifier: TaskNotifier?
 
-    let fd: Int32
+    let ownedFileDescriptor: OwnedFileDescriptor?
     let pidToWaitOn: pid_t
     var pid: pid_t { 0 }
     var sshIntegrationActive: Bool { false }
@@ -252,8 +253,8 @@ private final class FakeTask: NSObject, iTermTask {
     private var _consumer: DispatchQueue?
     private var _slotsTaken = 0
 
-    init(fd: Int32, notifier: TaskNotifier, pidToWaitOn: pid_t = 0) {
-        self.fd = fd
+    init(fd: OwnedFileDescriptor, notifier: TaskNotifier, pidToWaitOn: pid_t = 0) {
+        ownedFileDescriptor = fd
         self.notifier = notifier
         self.pidToWaitOn = pidToWaitOn
     }
@@ -379,7 +380,14 @@ private final class FakeTask: NSObject, iTermTask {
         var broken = false
         for _ in 0..<4 {
             let n = buffer.withUnsafeMutableBytes { pointer in
-                Darwin.read(fd, pointer.baseAddress! + bytesRead, 1024)
+                // Like PTYTask, treat a closed descriptor as a read error.
+                var n = -1
+                if !(ownedFileDescriptor?.withFileDescriptor { fd in
+                    n = Darwin.read(fd, pointer.baseAddress! + bytesRead, 1024)
+                } ?? false) {
+                    errno = EBADF
+                }
+                return n
             }
             if n == 0 {
                 broken = true
@@ -435,7 +443,13 @@ private final class FakeTask: NSObject, iTermTask {
         lock.lock()
         let length = min(_writeBuffer.count, 1024)
         let written = _writeBuffer.withUnsafeBytes { pointer in
-            Darwin.write(fd, pointer.baseAddress!, length)
+            var n = -1
+            if !(ownedFileDescriptor?.withFileDescriptor { fd in
+                n = Darwin.write(fd, pointer.baseAddress!, length)
+            } ?? false) {
+                errno = EBADF
+            }
+            return n
         }
         let error = errno
         if written > 0 {
@@ -663,7 +677,7 @@ class TaskIOCharacterizationTests: XCTestCase {
     }
 
     func testRegisteringTwiceCallsDidRegisterOnce() throws {
-        let (task, _) = try makeTask()
+        let (task, pty) = try makeTask()
         notifier.register(task)
         notifier.register(task)
         // didRegister is dispatched to main. Main is FIFO, so once this runs, any didRegister
@@ -675,6 +689,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         wait(for: [drained], timeout: timeout)
         XCTAssertEqual(task.didRegisterCalls, 1)
         deregisterAndFlush(task)
+        withExtendedLifetime(pty) {}
     }
 
     // MARK: Reading
@@ -831,10 +846,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         }
         let flags = fcntl(fds[0], F_GETFL)
         _ = fcntl(fds[0], F_SETFL, flags | O_NONBLOCK)
-        defer {
-            close(fds[0])
-        }
-        let task = FakeTask(fd: fds[0], notifier: notifier)
+        let task = FakeTask(fd: OwnedFileDescriptor(fds[0]), notifier: notifier)
         notifier.register(task)
         close(fds[1])
         XCTAssertTrue(task.waitForBrokenPipe())
@@ -966,6 +978,32 @@ class TaskIOCharacterizationTests: XCTestCase {
         withExtendedLifetime(pty) {}
     }
 
+    // A coprocess that goes away closes its pipes, even if something else still holds their
+    // wrappers and it was never terminated.
+    func testDeallocatingACoprocessClosesItsPipes() throws {
+        var pid: pid_t = -1
+        var read: OwnedFileDescriptor?
+        var write: OwnedFileDescriptor?
+        weak var weakCat: Coprocess?
+        try autoreleasepool {
+            let cat = try makeCatCoprocess()
+            weakCat = cat
+            pid = cat.pid
+            read = cat.ownedReadFileDescriptor
+            write = cat.ownedWriteFileDescriptor
+            // The stderr reader keeps the coprocess alive until the child's stderr closes.
+            kill(pid, SIGKILL)
+        }
+        // The reader lets go of it on a background queue at some point after EOF.
+        let deallocated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in weakCat == nil },
+                                                    object: nil)
+        wait(for: [deallocated], timeout: timeout)
+        XCTAssertEqual(read?.isClosed, true)
+        XCTAssertEqual(write?.isClosed, true)
+        var status: Int32 = 0
+        XCTAssertEqual(waitpid(pid, &status, 0), pid)
+    }
+
     // The coprocess reads the child's stderr until EOF and must then close it. Each coprocess used
     // to leak this fd.
     func testCoprocessClosesStderrAfterEOF() throws {
@@ -975,7 +1013,9 @@ class TaskIOCharacterizationTests: XCTestCase {
         let errorFd = coprocess.errorFileDescriptorForTesting
         var before = stat()
         XCTAssertEqual(fstat(errorFd, &before), 0)
-        XCTAssertEqual(Darwin.write(coprocess.outputFd, "\n", 1), 1)
+        XCTAssertTrue(coprocess.ownedWriteFileDescriptor.withFileDescriptor { fd in
+            XCTAssertEqual(Darwin.write(fd, "\n", 1), 1)
+        })
 
         let done = expectation(description: "error output complete")
         var errors: String?
@@ -1375,6 +1415,70 @@ final class TaskIOMonitorCharacterizationTests: TaskIOCharacterizationWithChildR
         deregisterAndFlush(task)
         budget.release()
         XCTAssertEqual(task.received, Data("a".utf8))
+    }
+
+    // What `fd` refers to, or nil if it is not open. Comparing identities shows whether a number
+    // still refers to the same file, since the test host may reuse a closed number at any time.
+    private func identity(_ fd: Int32) -> [Int64]? {
+        var info = stat()
+        guard fstat(fd, &info) == 0 else {
+            return nil
+        }
+        return [Int64(info.st_dev), Int64(bitPattern: info.st_ino), Int64(info.st_rdev)]
+    }
+
+    // Closing the pty while it is registered must not close it under the monitor's sources. It is
+    // closed once the monitor is done with it.
+    func testClosingWhileRegisteredWaitsForTheMonitor() throws {
+        let (task, pty) = try makeTask()
+        var number: Int32 = -1
+        pty.master.withFileDescriptor { number = $0 }
+        let original = identity(number)
+        XCTAssertNotNil(original)
+        notifier.register(task)
+        XCTAssertTrue(flush())
+
+        pty.master.close()
+        XCTAssertEqual(task.ownedFileDescriptor?.isClosed, true)
+        XCTAssertEqual(identity(number), original, "Closed while the monitor still watches it")
+
+        deregisterAndFlush(task)
+        XCTAssertNotEqual(identity(number), original, "Not closed after the monitor let go")
+    }
+
+    // -[Coprocess terminate] while the monitor services the coprocess leaves its pipes open until
+    // the monitor stops using them.
+    func testTerminatedCoprocessIsClosedWhenTheMonitorLetsGo() throws {
+        let (task, pty) = try makeTask()
+        let cat = try makeCatCoprocess()
+        let pid = cat.pid
+        var readNumber: Int32 = -1
+        var writeNumber: Int32 = -1
+        cat.ownedReadFileDescriptor.withFileDescriptor { readNumber = $0 }
+        cat.ownedWriteFileDescriptor.withFileDescriptor { writeNumber = $0 }
+        let readIdentity = identity(readNumber)
+        let writeIdentity = identity(writeNumber)
+        task.coprocess = cat
+        notifier.register(task)
+        XCTAssertTrue(flush())
+
+        // Terminate it without removing it from the task, so the monitor keeps its sources.
+        objc_sync_enter(task)
+        cat.terminate()
+        objc_sync_exit(task)
+        XCTAssertEqual(identity(readNumber), readIdentity, "Closed while the monitor still watches it")
+        XCTAssertEqual(identity(writeNumber), writeIdentity, "Closed while the monitor still watches it")
+
+        task.coprocess = nil
+        notifier.unblockTask(task)
+        XCTAssertTrue(flush())
+        XCTAssertNotEqual(identity(readNumber), readIdentity, "Not closed after the monitor let go")
+        XCTAssertNotEqual(identity(writeNumber), writeIdentity, "Not closed after the monitor let go")
+
+        notifier.wait(forPid: pid)
+        assertEventuallyReaped(pid)
+        deregisterAndFlush(task)
+        withExtendedLifetime(pty) {}
     }
 
     // A session's next task (as after a restart) can wait on a budget its previous task left full

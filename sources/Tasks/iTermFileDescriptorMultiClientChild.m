@@ -7,6 +7,8 @@
 
 #import "iTermFileDescriptorMultiClientChild.h"
 
+#import "iTerm2SharedARC-Swift.h"
+
 @implementation iTermFileDescriptorMultiClientChild {
     iTermThread *_thread;
     NSMutableArray<iTermCallback<id, iTermResult<NSNumber *> *> *> *_callbacks;
@@ -49,9 +51,9 @@
         _utf8 = report->isUTF8;
         _initialDirectory = [[NSString alloc] initWithUTF8String:report->pwd];
         _hasTerminated = report->terminated;
-        _fd = report->fd;
-        assert(_fd >= 0);
-        fcntl(_fd, F_SETFL, O_NONBLOCK);
+        assert(report->fd >= 0);
+        fcntl(report->fd, F_SETFL, O_NONBLOCK);
+        _ownedFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:report->fd];
         _tty = [NSString stringWithUTF8String:report->tty] ?: @"";
         _haveWaited = NO;
         _callbacks = [NSMutableArray array];
@@ -59,23 +61,19 @@
     return self;
 }
 
+// Ties the descriptor's lifetime to this object's rather than to whoever else holds the wrapper.
+// A lease (such as a task I/O monitor's) still keeps it open until it is released.
 - (void)dealloc {
-    if (_fd >= 0) {
-        close(_fd);
-        _fd = -1;
-    }
+    [_ownedFileDescriptor close];
 }
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p pid=%@ fd=%@>", NSStringFromClass(self.class),
-            self, @(self.pid), @(self.fd)];
+            self, @(self.pid), _ownedFileDescriptor];
 }
 
 - (void)closeFileDescriptor {
-    [_thread dispatchRecursiveSync:^(id _Nonnull state) {
-        close(_fd);
-        _fd = -1;
-    }];
+    [_ownedFileDescriptor close];
 }
 
 - (void)willWaitPreemptively {

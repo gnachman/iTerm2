@@ -7,9 +7,11 @@
 
 #import "iTermTmuxJobManager.h"
 
+#import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
+
 @implementation iTermTmuxJobManager
 
-@synthesize fd = _fd;
 @synthesize tty = _tty;
 @synthesize queue = _queue;
 
@@ -20,14 +22,21 @@
 - (instancetype)initWithQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {
-        _fd = -1;
+        // Never nil, so messaging it never returns 0 for "no descriptor".
+        _ownedFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:-1];
     }
     return self;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p read-only-fd=%d tty=%@>",
-            NSStringFromClass([self class]), self, _fd, _tty];
+    return [NSString stringWithFormat:@"<%@: %p read-only-fd=%@ tty=%@>",
+            NSStringFromClass([self class]), self, self.ownedFileDescriptor, _tty];
+}
+
+// Ties the descriptor's lifetime to this object's rather than to whoever else holds the wrapper.
+// A lease (such as a task I/O monitor's) still keeps it open until it is released.
+- (void)dealloc {
+    [self.ownedFileDescriptor close];
 }
 
 - (pid_t)serverPid {
@@ -48,11 +57,10 @@
 
 - (BOOL)closeFileDescriptor {
     @synchronized (self) {
-        if (self.fd == -1) {
+        if (self.ownedFileDescriptor.isClosed) {
             return NO;
         }
-        close(self.fd);
-        self.fd = -1;
+        [self.ownedFileDescriptor close];
         return YES;
     }
 }
@@ -94,7 +102,7 @@
 
 - (BOOL)ioAllowed {
     @synchronized (self) {
-        return self.fd >= 0;
+        return !self.ownedFileDescriptor.isClosed;
     }
 }
 
