@@ -283,8 +283,8 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
                 result.append("chmod: \(path): No such file or directory")
             }
             prompt = ">> "
-        } else if line.hasPrefix("mkdir ") || line.hasPrefix("cd ") {
-            result.append("ok")
+        } else if line.hasPrefix("mkdir ") || line.hasPrefix("cd "), let range = line.range(of: "; echo ") {
+            result.append(line[range.upperBound...].replacingOccurrences(of: "\"", with: ""))
             prompt = ">> "
         } else if line.hasPrefix("sh -c 'ENV=/dev/null") {
             // A nested sh reads the typeahead a byte at a time, so it starts without losing any.
@@ -430,8 +430,8 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
             if files[path] == nil {
                 result.append("chmod: \(path): No such file or directory")
             }
-        } else if (line.hasPrefix("mkdir ") || line.hasPrefix("cd ")) && line.hasSuffix("; echo ok") {
-            result.append("ok")
+        } else if line.hasPrefix("mkdir ") || line.hasPrefix("cd "), let range = line.range(of: "; echo ") {
+            result.append(line[range.upperBound...].replacingOccurrences(of: "\"", with: ""))
         } else if line.hasPrefix("sh -c 'ENV=/dev/null") {
             // A nested sh reads the typeahead a byte at a time, so it starts without losing any.
             helperDepth += 1
@@ -952,6 +952,172 @@ final class ShellIntegrationOfflineXonshInstallerTests: XCTestCase {
 
         XCTAssertEqual(terminal.textLostToXonsh, [])
         XCTAssertNotNil(terminal.files[FakeXonshTerminal.scriptPath])
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+}
+
+// Plays tcsh started by hand from a zsh login shell, with the helper sh the installer starts
+// from it. The tty echoes typed text as soon as it is typed, but a command's output comes only
+// once it has run. Output a command has not printed yet when the next line is typed lands
+// inside that line's echo, as in `…fi <<'Eok`.
+private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
+    private var depth = 0
+    private var pendingInput = ""
+    private var delayedOutput = [String]()
+    private var flushScheduled = false
+    private var prompt = "> "
+    private var heredocLines: [String]?
+
+    private(set) var heredocBodies = [[String]]()
+
+    var helperIsRunning: Bool {
+        return depth > 0
+    }
+
+    override func respond(to text: String) -> [String] {
+        pendingInput += text
+        var rows = [String]()
+        while let newline = pendingInput.firstIndex(of: "\n") {
+            let line = String(pendingInput[..<newline])
+            pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
+            if delayedOutput.isEmpty {
+                rows.append(line)
+            } else {
+                // The earlier command's output arrives in the middle of this line's echo.
+                let cut = line.index(line.startIndex, offsetBy: line.count / 2)
+                rows.append(String(line[..<cut]) + delayedOutput.removeFirst())
+                rows.append(contentsOf: delayedOutput)
+                delayedOutput.removeAll()
+                rows.append(String(line[cut...]))
+            }
+            let inSh = depth > 0
+            var printed = handle(line)
+            if inSh {
+                // sh's line editor redraws the line as soon as it reads it. What the command
+                // prints comes later.
+                rows.append(printed.removeFirst())
+            }
+            delayedOutput.append(contentsOf: printed)
+            if !flushScheduled {
+                flushScheduled = true
+                laterEvents.append { [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    self.flushScheduled = false
+                    let lines = self.delayedOutput
+                    self.delayedOutput.removeAll()
+                    for line in lines {
+                        self.output(line)
+                    }
+                }
+            }
+        }
+        return rows
+    }
+
+    // What the shell prints when it gets to a line: in sh, the line editor's redraw of its prompt
+    // and the line it read, then the command's output and the next prompt.
+    private func handle(_ line: String) -> [String] {
+        if depth == 0 {
+            if line == "sh" {
+                depth = 1
+                prompt = "$ "
+                return [prompt]
+            }
+            return super.respond(to: line + "\n") + ["> "]
+        }
+        let redraw = prompt + line
+        if var lines = heredocLines {
+            if line == "EOF" {
+                heredocBodies.append(lines)
+                heredocLines = nil
+                prompt = ">> "
+            } else {
+                lines.append(line)
+                heredocLines = lines
+            }
+            return [redraw, prompt]
+        }
+        var result = [redraw]
+        if line.hasPrefix("ENV=/dev/null") {
+            depth += 1
+            prompt = "$ "
+        } else if line.hasPrefix(" PS1=") {
+            prompt = ">> "
+        } else if line.contains("<<'EOF'") {
+            heredocLines = []
+            prompt = "> "
+        } else if line == "exit" {
+            depth -= 1
+            if depth == 0 {
+                return [redraw, "> "]
+            }
+            prompt = depth == 1 ? "$ " : ">> "
+        } else if let range = line.range(of: "; echo ") {
+            if line.hasPrefix("mkdir ") {
+                result.append("mkdir: \(line.dropFirst("mkdir ".count).prefix(while: { $0 != ";" })): File exists")
+            }
+            result.append(line[range.upperBound...].replacingOccurrences(of: "\"", with: ""))
+        }
+        return result + [prompt]
+    }
+}
+
+// F-481: with tcsh started from zsh, output from a command can arrive in the middle of the echo
+// of the next one. The utilities step must wait for each command's own answer, or it waits for
+// an answer that already went by and never sends the here-document body.
+final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
+    private var controller: iTermShellIntegrationWindowController!
+    private var terminal: FakeTcshFromZshTerminal!
+
+    override func setUp() {
+        super.setUp()
+        terminal = FakeTcshFromZshTerminal(testCase: self)
+        terminal.responses[ShellIntegrationOfflineInstallerTests.shellCommand] = "My shell is tcsh -csh or /bin/zsh, end"
+        controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
+        controller.delegate = terminal
+        XCTAssertNotNil(controller.window)
+        controller.shellIntegrationInstallerSetInstallUtilities(true)
+        controller.shellIntegrationInstallerSendShellCommands(-1)
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+        XCTAssertEqual(controller.shell, .tcsh)
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+    }
+
+    override func tearDown() {
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.window?.orderOut(nil)
+        controller = nil
+        terminal = nil
+        super.tearDown()
+    }
+
+    func testInstallUtilitiesSendsTheArchiveAndExitsTheHelper() {
+        controller.shellIntegrationInstallerSkipStage()
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertEqual(terminal.heredocBodies.count, 1)
+        XCTAssertGreaterThan(terminal.heredocBodies.first?.count ?? 0, 1)
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+
+    func testWholeInstallSendsBothHereDocumentsAndExitsTheHelper() {
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertEqual(terminal.heredocBodies.count, 2)
         XCTAssertFalse(terminal.helperIsRunning)
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }

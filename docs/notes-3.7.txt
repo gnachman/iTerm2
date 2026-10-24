@@ -1897,3 +1897,6 @@ Bug Fixes:
   code block at the end of a reply now shows as
   code with a copy button instead of as large
   text or with a stray closing ```.
+- The Internet-Free shell integration install
+  no longer sometimes hangs while installing
+  the utilities, waiting at a “> ” prompt.
