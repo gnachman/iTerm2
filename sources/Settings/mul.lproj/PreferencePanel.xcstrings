@@ -30272,7 +30272,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Rückgängig“ kann eine geschlossene Sitzung für bis zu so viele Sekunden wiederherstellen:"
+            "value" : "Sekunden, in denen „Rückgängig“ eine geschlossene Sitzung wiederherstellen kann:"
           }
         },
         "en" : {
