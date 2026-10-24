@@ -119,6 +119,9 @@
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
+// The lines holding the command’s output, for measuring its size. The next
+// prompt’s line is excluded.
+- (VT100GridRange)lineRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 // Indicates if we're in alternate screen mode.
 - (BOOL)showingAlternateScreen;

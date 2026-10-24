@@ -920,7 +920,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     const NSInteger numberOfScrollbackLines = self.numberOfScrollbackLines;
     if (range.location < numberOfScrollbackLines) {
         historyRange.location = range.location;
-        historyRange.length = numberOfScrollbackLines - range.location;
+        historyRange.length = MIN(range.length, numberOfScrollbackLines - range.location);
 
         screenRange.location = 0;
         screenRange.length = range.length - historyRange.length;
@@ -1417,6 +1417,18 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     return [_state rangeOfOutputForCommandMark:mark];
+}
+
+- (VT100GridRange)lineRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    const VT100GridCoordRange coordRange = [self rangeOfOutputForCommandMark:mark];
+    // The coord range is half-open. When it ends at column 0, which is where
+    // the next prompt begins, its last line holds none of the output. Output
+    // with no trailing newline shares that line with the prompt and is not
+    // counted, which matches what Copy Output selects.
+    const int location = MAX(0, coordRange.start.y);
+    const int endY = coordRange.end.x > 0 ? coordRange.end.y + 1 : coordRange.end.y;
+    const int length = MAX(0, endY - location);
+    return VT100GridRangeMake(location, length);
 }
 
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
