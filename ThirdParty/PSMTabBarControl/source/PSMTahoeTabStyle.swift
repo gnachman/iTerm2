@@ -2156,9 +2156,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if let image = cell.cachedTitle?.inputs.graphic {
             let drawGraphic: (ResolvedLayout) -> () = { resolved in
                 var rect = resolved.frame
-                rect.origin.y = cell.frame.minY + (cell.frame.height - kPSMTabBarIconWidth) / 2.0 + orientationShift
-                rect.size.height = kPSMTabBarIconWidth
-                rect.size.width = kPSMTabBarIconWidth
+                rect.origin.y = cell.frame.minY + (cell.frame.height - PSMTabBarGraphicWidth()) / 2.0 + orientationShift
+                rect.size.height = PSMTabBarGraphicWidth()
+                rect.size.width = PSMTabBarGraphicWidth()
                 image.draw(in: rect,
                              from: .zero,
                              operation: .sourceOver,
@@ -2168,7 +2168,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             }
 
             objects.append(GroupLO(name: Name.graphic.rawValue, priority: Priority.graphic.rawValue, gravity: orientation == .horizontalOrientation ? .center : .left, members: [
-                ImageLO(name: "Graphic", image: image, priority: Priority.required.rawValue, gravity: .left, preferredWidth: kPSMTabBarIconWidth, draw: drawGraphic),
+                ImageLO(name: "Graphic", image: image, priority: Priority.required.rawValue, gravity: .left, preferredWidth: PSMTabBarGraphicWidth(), draw: drawGraphic),
                 FixedSpacerLO(name: Name.preLabelSpace.rawValue, width: 2.0, priority: Priority.required.rawValue, gravity: .left)
             ]))
         }

@@ -58,6 +58,10 @@ const CGFloat PSMTabBarGraphicMargin = 2;
 // Value used in _currentStep to indicate that resizing operation is not in progress
 const NSInteger kPSMIsNotBeingResized = -1;
 
+CGFloat PSMTabBarGraphicWidth(void) {
+    return [iTermAdvancedSettingsModel tabIconSize];
+}
+
 // Value used in _currentStep when a resizing operation has just been started
 const NSInteger kPSMStartResizeAnimation = 0;
 
