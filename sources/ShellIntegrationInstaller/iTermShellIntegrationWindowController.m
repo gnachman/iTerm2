@@ -51,6 +51,23 @@ BOOL iTermShellIntegrationShellLoadsScriptAutomatically(iTermShellIntegrationShe
     return NO;
 }
 
+// Shells whose line editor reads everything typed ahead, so text typed after the command that
+// starts the helper sh is lost to the shell unless the helper is already reading.
+static BOOL iTermShellIntegrationShellReadsTypeaheadInBulk(iTermShellIntegrationShell shell) {
+    switch (shell) {
+        case iTermShellIntegrationShellXonsh:
+        case iTermShellIntegrationShellNu:
+            return YES;
+        case iTermShellIntegrationShellBash:
+        case iTermShellIntegrationShellTcsh:
+        case iTermShellIntegrationShellZsh:
+        case iTermShellIntegrationShellFish:
+        case iTermShellIntegrationShellUnknown:
+            return NO;
+    }
+    return NO;
+}
+
 // Asks nu where it autoloads per-user scripts from, keeps the answer in the helper shell, and
 // creates that directory. nushell 0.102 and later read $nu.user-autoload-dirs; 0.100 and 0.101
 // only read the vendor directories, so there the per-user one under the data directory is used,
@@ -619,20 +636,24 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)switchToHelperShell:(BOOL)reallySend
                       expectation:(inout iTermExpectation **)expectation {
-    // nushell reads typeahead in bulk, so a command sent before the helper sh prompts would be
-    // read by nushell instead of sh. Wait for the helper's prompt. Other shells leave typeahead
-    // in the tty for sh to read, so any output will do.
-    NSString *regex = (self.shell == iTermShellIntegrationShellNu) ? @"^>> " : @".";
+    // nushell and xonsh read typeahead in bulk, so a command sent before the helper sh prompts
+    // would be read by them instead of sh, and xonsh runs it once sh exits. Wait for the helper's
+    // prompt. Their line editors break the echo of a long command line with hard newlines, so a
+    // row of the echo can start with the >> " in PS1=">> ", which must not count. Other shells
+    // leave typeahead in the tty for sh to read, so any output will do.
+    NSString *regex = iTermShellIntegrationShellReadsTypeaheadInBulk(self.shell) ? @"^>> (?!\")" : @".";
     return [self sendText:self.launchHelperShellString
                reallySend:reallySend
                afterRegex:regex
               expectation:expectation];
 }
 
+// expectation is inout, not out: ARC passes an out parameter a nil temporary, so the commands
+// here would start a chain of their own and be typed alongside the caller's instead of after them.
 - (NSString *)catString:(NSString *)string
                      to:(NSString *)path
              reallySend:(BOOL)reallySend
-            expectation:(out iTermExpectation **)expectation {
+            expectation:(inout iTermExpectation **)expectation {
     NSMutableString *result = [NSMutableString string];
     [result appendString:[self switchToHelperShell:reallySend expectation:expectation]];
     [result appendString:[self sendText:[NSString stringWithFormat:@"cat <<'EOF' > %@\n", path]
@@ -750,7 +771,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)catToUtilities:(BOOL)reallySend
-                 expectation:(out iTermExpectation **)expectation
+                 expectation:(inout iTermExpectation **)expectation
                   completion:(void (^)(void))completion {
     NSMutableString *result = [NSMutableString string];
     NSString *folder = [self.dotdir stringByAppendingPathComponent:@".iterm2"];
