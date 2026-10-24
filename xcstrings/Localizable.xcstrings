@@ -56264,7 +56264,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "输入类型：@ 选择要写入的会话"
+            "value" : "输入 @ 以选择要写入的会话"
           }
         }
       }
@@ -56894,7 +56894,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "类型 @ 以选择会话，或先选择行"
+            "value" : "输入 @ 以选择会话，或先选择行"
           }
         }
       }
