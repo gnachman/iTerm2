@@ -25,10 +25,12 @@
  */
 
 #import "PTYTabView.h"
+#import <Carbon/Carbon.h>
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermSwipeTracker.h"
+#import "iTerm2SharedARC-Swift.h"
 
 const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
                                   NSEventModifierFlagCommand |
@@ -50,6 +52,16 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     // Modifiers that are being used for cycling tabs. Only valid if _isCyclingWithModifierPressed
     // is YES.
     NSUInteger _cycleModifierFlags;
+
+    // Index into _tabViewItemsInMRUOrder of the tab that will be selected when the modifiers are
+    // released. Only valid if _isCyclingWithModifierPressed is YES.
+    NSUInteger _cycleIndex;
+
+    // Overlay listing tabs while cycling with a modifier held.
+    iTermTabSwitcher *_switcher;
+
+    // Handles the arrow and escape keys while the switcher is up. Only valid while cycling.
+    id _cycleKeyMonitor;
 
     // For handling swipe outside PTYTextView, such as on pane title bar.
     iTermSwipeTracker *_swipeTracker;
@@ -108,6 +120,7 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     }
 
     [_tabViewItemsInMRUOrder removeObject:tabViewItemToRemove];
+    [self cancelCycling];
 
     if (self.selectedTabViewItem == tabViewItemToRemove) {
         NSArray<NSTabViewItem *> *items = self.tabViewItems;
@@ -179,15 +192,7 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
     }
 }
 
-- (void)cycleForwards:(BOOL)forwards {
-    if ([_tabViewItemsInMRUOrder count] == 0) {
-        return;
-    }
-    NSTabViewItem* tabViewItem = [self selectedTabViewItem];
-    NSUInteger theIndex = [_tabViewItemsInMRUOrder indexOfObject:tabViewItem];
-    if (theIndex == NSNotFound) {
-        theIndex = 0;
-    }
+- (NSUInteger)MRUIndexAfter:(NSUInteger)theIndex forwards:(BOOL)forwards {
     if (forwards) {
         theIndex++;
         if (theIndex >= [_tabViewItemsInMRUOrder count]) {
@@ -201,27 +206,144 @@ const NSUInteger kAllModifiers = (NSEventModifierFlagControl |
         }
         theIndex = temp;
     }
-    NSTabViewItem* next = _tabViewItemsInMRUOrder[theIndex];
-    // The MRU order won't be changed by cycling until you let up the modifier key in
-    // cycleFlagsChanged:.
+    return theIndex;
+}
+
+- (void)cycleForwards:(BOOL)forwards {
+    if ([_tabViewItemsInMRUOrder count] == 0) {
+        return;
+    }
+    NSTabViewItem* tabViewItem = [self selectedTabViewItem];
+    NSUInteger theIndex = [_tabViewItemsInMRUOrder indexOfObject:tabViewItem];
+    if (theIndex == NSNotFound) {
+        theIndex = 0;
+    }
+    NSTabViewItem* next = _tabViewItemsInMRUOrder[[self MRUIndexAfter:theIndex forwards:forwards]];
     [self selectTabViewItem:next];
 }
 
 - (void)cycleKeyDownWithModifiers:(NSUInteger)modifierFlags forwards:(BOOL)forwards {
+    if ([_tabViewItemsInMRUOrder count] == 0) {
+        return;
+    }
     if (!_isCyclingWithModifierPressed) {
         // Initial press; set modifier mask from current modifiers
         _cycleModifierFlags = (modifierFlags & kAllModifiers);
         _isCyclingWithModifierPressed = (_cycleModifierFlags != 0);
+        if (_isCyclingWithModifierPressed) {
+            [self beginCycling];
+        }
     }
-    [self cycleForwards:forwards];
+    if (!_isCyclingWithModifierPressed) {
+        // No modifier to hold, so there's nothing to preview: switch immediately.
+        [self cycleForwards:forwards];
+        return;
+    }
+    // The tab isn't selected, and the MRU order doesn't change, until the modifiers are released
+    // in cycleFlagsChanged:.
+    [self moveCycleSelectionForwards:forwards];
+}
+
+- (void)moveCycleSelectionForwards:(BOOL)forwards {
+    _cycleIndex = [self MRUIndexAfter:_cycleIndex forwards:forwards];
+    [_switcher selectIndex:_cycleIndex];
+}
+
+- (void)beginCycling {
+    NSUInteger index = [_tabViewItemsInMRUOrder indexOfObject:[self selectedTabViewItem]];
+    _cycleIndex = (index == NSNotFound) ? 0 : index;
+    if (!_switcher) {
+        _switcher = [[iTermTabSwitcher alloc] init];
+    }
+    __weak __typeof(self) weakSelf = self;
+    _switcher.hoverHandler = ^(NSInteger index) {
+        [weakSelf selectCycleIndex:index];
+    };
+    _switcher.clickHandler = ^(NSInteger index) {
+        [weakSelf commitCycleIndex:index];
+    };
+    [_switcher beginWithTabViewItems:_tabViewItemsInMRUOrder
+                       selectedIndex:_cycleIndex
+                          overWindow:self.window];
+    _cycleKeyMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown
+                                                             handler:^NSEvent * _Nullable(NSEvent *event) {
+        return [weakSelf handleCycleKeyDown:event];
+    }];
+    // If the app is deactivated mid-cycle we never see the modifiers come up.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(cancelCycling)
+                                                 name:NSApplicationDidResignActiveNotification
+                                               object:nil];
+}
+
+- (void)cancelCycling {
+    if (!_isCyclingWithModifierPressed) {
+        return;
+    }
+    _isCyclingWithModifierPressed = NO;
+    [self endCycling];
+}
+
+- (void)selectCycleIndex:(NSInteger)index {
+    if (!_isCyclingWithModifierPressed || index < 0 || index >= (NSInteger)_tabViewItemsInMRUOrder.count) {
+        return;
+    }
+    _cycleIndex = index;
+    [_switcher selectIndex:_cycleIndex];
+}
+
+// Selects the tab at the given index right away and ends cycling, as if the modifiers had been
+// released with that tab highlighted.
+- (void)commitCycleIndex:(NSInteger)index {
+    if (!_isCyclingWithModifierPressed) {
+        return;
+    }
+    [self selectCycleIndex:index];
+    _isCyclingWithModifierPressed = NO;
+    [self endCycling];
+    if (_cycleIndex < [_tabViewItemsInMRUOrder count]) {
+        [self selectTabViewItem:_tabViewItemsInMRUOrder[_cycleIndex]];
+    }
+}
+
+// Returns nil if the event was consumed.
+- (NSEvent *)handleCycleKeyDown:(NSEvent *)event {
+    if (!_isCyclingWithModifierPressed || event.window != self.window) {
+        return event;
+    }
+    switch (event.keyCode) {
+        case kVK_Escape:
+            [self cancelCycling];
+            return nil;
+        case kVK_Return:
+        case kVK_ANSI_KeypadEnter:
+            [self commitCycleIndex:_cycleIndex];
+            return nil;
+        case kVK_DownArrow:
+            [self moveCycleSelectionForwards:YES];
+            return nil;
+        case kVK_UpArrow:
+            [self moveCycleSelectionForwards:NO];
+            return nil;
+    }
+    return event;
+}
+
+- (void)endCycling {
+    if (_cycleKeyMonitor) {
+        [NSEvent removeMonitor:_cycleKeyMonitor];
+        _cycleKeyMonitor = nil;
+    }
+    [_switcher end];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSApplicationDidResignActiveNotification
+                                                  object:nil];
 }
 
 - (void)cycleFlagsChanged:(NSUInteger)modifierFlags {
     if (_isCyclingWithModifierPressed && ((modifierFlags & _cycleModifierFlags) == 0)) {
         // Modifiers released while cycling.
-        _isCyclingWithModifierPressed = NO;
-        // While this looks like a no-op, it has the effect of re-ordering the MRU list.
-        [self selectTabViewItem:[self selectedTabViewItem]];
+        [self commitCycleIndex:_cycleIndex];
     }
 }
 
