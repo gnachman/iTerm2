@@ -78,7 +78,7 @@
                                        samplesPerPixel:3
                                               hasAlpha:NO
                                         colorSpaceName:NSCalibratedRGBColorSpace];
-        [[diffImage dataForFileOfType:NSBitmapImageFileTypePNG] writeToFile:diffPath atomically:NO];
+        result.diffImageWriteFailed = ![diffImage saveAsPNGTo:diffPath];
     }
 
     return result;

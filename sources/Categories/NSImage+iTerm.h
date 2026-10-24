@@ -81,7 +81,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSBitmapImageRep * _Nullable)bitmapImageRep;  // prefer it_bitmapImageRep
 - (NSBitmapImageRep *)it_bitmapImageRep;  // This is a cleaner method than -bitmapImageRep which won't change the pixel format.
 - (NSImageRep * _Nullable)bestRepresentationForScale:(CGFloat)scale;
-- (void)saveAsPNGTo:(NSString *)filename;
+// Returns NO if the image could not be encoded or the file could not be written.
+- (BOOL)saveAsPNGTo:(NSString *)filename;
 
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor;
 - (NSImage *)it_imageWithTintColor:(NSColor *)tintColor size:(NSSize)size;

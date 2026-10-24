@@ -376,8 +376,13 @@
     return coloredImage;
 }
 
-- (void)saveAsPNGTo:(NSString *)filename {
-    [[self dataForFileOfType:NSBitmapImageFileTypePNG] writeToFile:filename atomically:NO];
+- (BOOL)saveAsPNGTo:(NSString *)filename {
+    NSData *data = [self dataForFileOfType:NSBitmapImageFileTypePNG];
+    if (!data) {
+        DLog(@"Could not encode image as PNG for %@", filename);
+        return NO;
+    }
+    return [data writeToFile:filename atomically:NO];
 }
 
 // TODO: Should this use -bitmapImageRep?
