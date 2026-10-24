@@ -1749,6 +1749,10 @@ Bug Fixes:
   you asked for. A pane used to come up a column
   or row short and the window shrank a little
   each time.
+- After Session.async_split_pane() in the Python
+  API, calling Tab.async_update_layout() without
+  changing any sizes no longer grows the
+  original pane back to its old width.
 - With the GPU renderer off, selecting part of
   an Arabic or Persian word, or a find match
   inside one, no longer breaks the letters’
