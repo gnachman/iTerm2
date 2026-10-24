@@ -249,6 +249,7 @@ class ChatViewController: NSViewController {
         guard let session = notif.object as? PTYSession else {
             return
         }
+        hostSessionWillTerminate(session)
         // Quitting with window restoration on closes every window, but the
         // session comes back at the next launch with the same stableID, so
         // keep the terminal or browser link (and the watches and timers this
@@ -540,6 +541,9 @@ class ChatViewController: NSViewController {
         self.divider = dividerView
 
         inputView.delegate = self
+        inputView.revealForMentionSelection = { [weak self] in
+            self?.revealForMentionSelection()
+        }
 
         // Disable autoresizing for the children we lay out manually
         // so AppKit doesn't move them on window resize. Empty mask
@@ -3683,6 +3687,9 @@ extension ChatViewController: iTermRightGutterPanel {
         if streaming {
             stopStreaming()
         }
+        // A half-typed @-mention would otherwise leave its session buttons up
+        // with no way back to this chat.
+        inputView.endMentionComposition()
         brokerSubscription?.unsubscribe()
         brokerSubscription = nil
         chatID = nil
@@ -3720,6 +3727,31 @@ extension ChatViewController: iTermRightGutterPanel {
             return session
         }
         return panelAttachedSession
+    }
+
+    // Closing the tab that hosts a sidebar chat takes the chat out of the
+    // window the same way switching tabs does, so the input can't tell that
+    // it's gone. End any half-typed mention so its session buttons don't
+    // linger.
+    fileprivate func hostSessionWillTerminate(_ session: PTYSession) {
+        guard isInlinePanel,
+              session === currentInlinePanelSession || session === panelAttachedSession else {
+            return
+        }
+        inputView.endMentionComposition()
+    }
+
+    // The user picked an @-mention by clicking a session, possibly in another
+    // tab or window. Bring this chat back in front of them: a sidebar chat
+    // lives in its session, so reveal that session (switching tabs if
+    // needed); a chat window just comes to the front.
+    fileprivate func revealForMentionSelection() {
+        if isInlinePanel {
+            currentInlinePanelSession?.reveal()
+            return
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        view.window?.makeKeyAndOrderFront(nil)
     }
 }
 

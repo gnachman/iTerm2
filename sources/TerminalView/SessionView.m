@@ -1234,12 +1234,17 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)updateSessionSelectorButton {
     NSString *reason = iTermSessionSelector.currentReason;
     const BOOL isTerminal = !self.isBrowser;
-    if (reason != nil && _sessionSelectorButton.superview == nil && iTermSessionSelector.wantsTerminal == isTerminal) {
+    const BOOL wanted = [iTermSessionSelector wantsSessionOfKindTerminal:isTerminal];
+    if (reason != nil && _sessionSelectorButton.superview == nil && wanted) {
         [self addSessionSelectorButtonWithReason:reason];
-    } else if ((!iTermSessionSelector.isActive || iTermSessionSelector.wantsTerminal != isTerminal) &&
-               _sessionSelectorButton.superview != nil) {
+    } else if (!wanted && _sessionSelectorButton.superview != nil) {
         [_sessionSelectorButton removeFromSuperview];
         _sessionSelectorButton = nil;
+    } else if (reason != nil && _sessionSelectorButton != nil) {
+        // A different request may now be on top of the stack.
+        _sessionSelectorButton.title = reason;
+        _sessionSelectorButton.onRevealClicked = iTermSessionSelector.currentRevealAction;
+        [self updateSessionSelectorButtonFrame];
     }
 }
 
@@ -1249,6 +1254,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _sessionSelectorButton.onButtonClicked = ^{
         [weakSelf didSelectThisSession:nil];
     };
+    _sessionSelectorButton.onRevealClicked = iTermSessionSelector.currentRevealAction;
     [self addSubview:_sessionSelectorButton];
     [self updateSessionSelectorButtonFrame];
 }
@@ -1256,7 +1262,14 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)updateSessionSelectorButtonFrame {
     [_sessionSelectorButton sizeToFit];
     NSRect frame = _sessionSelectorButton.frame;
-    frame.origin.x = (self.bounds.size.width - frame.size.width) / 2;
+    // Center over the terminal content, not over a right gutter panel such as
+    // an inline AI chat (which may be the very chat asking for a session).
+    // When the terminal area is too narrow for it, fall back to the full width.
+    CGFloat availableWidth = self.bounds.size.width - self.actualPanelReservation;
+    if (availableWidth < frame.size.width) {
+        availableWidth = self.bounds.size.width;
+    }
+    frame.origin.x = MAX(0, (availableWidth - frame.size.width) / 2);
     frame.origin.y = (self.bounds.size.height - frame.size.height) / 2;
     _sessionSelectorButton.frame = frame;
 }

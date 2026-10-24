@@ -53,6 +53,20 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     // keystroke so runtime orchestration toggles are reflected immediately.
     var orchestrationEnabledProvider: (() -> Bool)?
     private let mentionPicker = ChatMentionPickerController()
+    // While an @-mention is being composed, every session also shows a
+    // "Select this Session" button so the user can pick one by clicking it
+    // instead of hunting through the picker. Fulfilled when one is clicked.
+    private var mentionSessionPromise: iTermPromise<PTYSession>?
+    // Called after a session was picked by clicking its button, or when the
+    // user clicks a session's Reveal Chat button. Either can happen with focus
+    // elsewhere (or, for a chat in a session's sidebar, from another tab). The
+    // host brings the chat back into view so the input can retake focus.
+    var revealForMentionSelection: (() -> Void)?
+    // Set when the user dismisses a mention with Escape so that moving the
+    // view between windows or moving the caret doesn't reopen it. Typing
+    // clears it.
+    private var mentionDismissed = false
+    private weak var observedWindow: NSWindow?
 
     var stoppable = false {
         didSet {
@@ -194,6 +208,12 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         it_fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        if let mentionSessionPromise {
+            SessionSelector.cancel(mentionSessionPromise)
+        }
+    }
+
     // intentionally no `intrinsicContentSize` override — that property is
     // an auto-layout protocol and returning a non-noIntrinsicMetric value
     // pulls the whole view tree into the constraint engine. Callers ask
@@ -319,7 +339,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     }
 
     func clear() {
-        mentionPicker.hide()
+        hideMentionPicker()
         stringValue = ""
         attachmentsView.files.removeAll()
         updateAttachmentsView()
@@ -598,7 +618,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             inputTextFieldContainer.stringValue
         }
         set {
-            mentionPicker.hide()
+            hideMentionPicker()
             inputTextFieldContainer.stringValue = newValue
             updateSendButtonEnabled()
             heightDidChange()
@@ -612,7 +632,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             inputTextFieldContainer.attributedStringValue
         }
         set {
-            mentionPicker.hide()
+            hideMentionPicker()
             inputTextFieldContainer.attributedStringValue = newValue
             updateSendButtonEnabled()
             heightDidChange()
@@ -704,11 +724,17 @@ extension ChatInputView: NSTextViewDelegate {
                 mentionPicker.commitSelection()
                 return true
             case #selector(NSResponder.cancelOperation(_:)):
-                mentionPicker.hide()
+                endMentionComposition()
                 return true
             default:
                 break
             }
+        } else if mentionSessionPromise != nil,
+                  commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+            // The popup hides itself when nothing matches, but the session
+            // buttons are still up; Escape should take them down too.
+            endMentionComposition()
+            return true
         }
         if commandSelector == #selector(NSResponder.insertNewline(_:))
             && !iTermApplication.shared().it_modifierFlags.contains(.shift)
@@ -726,6 +752,7 @@ extension ChatInputView: NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         updateSendButtonEnabled()
         heightDidChange()
+        mentionDismissed = false
         updateMentionPicker()
         delegate?.textDidChange()
     }
@@ -793,8 +820,17 @@ extension ChatInputView {
 
     private func updateMentionPicker() {
         guard orchestrationEnabledProvider?() == true,
-              window != nil,
+              !mentionDismissed,
+              !isHiddenOrHasHiddenAncestor,
               let context = mentionQueryContext() else {
+            hideMentionPicker()
+            return
+        }
+        startMentionSessionSelectorIfNeeded()
+        guard window != nil else {
+            // Out of the window (e.g., a sidebar chat whose tab isn't
+            // selected): the popup would float unanchored, but the mention is
+            // still being composed, so leave the session buttons up.
             mentionPicker.hide()
             return
         }
@@ -805,6 +841,103 @@ extension ChatInputView {
                                query: context.query) { [weak self] guid, displayName in
                 self?.insertMention(guid: guid, displayName: displayName)
             }
+        }
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        // Only track real moves to a new window. Leaving the window (a
+        // sidebar chat in a tab that isn't selected) keeps the mention alive.
+        guard let newWindow, newWindow !== observedWindow else {
+            return
+        }
+        if let observedWindow {
+            NotificationCenter.default.removeObserver(self,
+                                                      name: NSWindow.willCloseNotification,
+                                                      object: observedWindow)
+        }
+        observedWindow = newWindow
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(windowWillClose(_:)),
+                                               name: NSWindow.willCloseNotification,
+                                               object: newWindow)
+    }
+
+    @objc private func windowWillClose(_ notification: Notification) {
+        // Closing only orders the window out, so the view never leaves it.
+        // Don't leave session buttons up for a chat nobody can see.
+        endMentionComposition()
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil, let observedWindow {
+            // The view may next land in a different window (e.g., its tab was
+            // moved), so stop listening to the old one.
+            NotificationCenter.default.removeObserver(self,
+                                                      name: NSWindow.willCloseNotification,
+                                                      object: observedWindow)
+            self.observedWindow = nil
+        }
+        updateMentionPicker()
+    }
+
+    override func viewDidHide() {
+        super.viewDidHide()
+        // E.g., the sidebar chat was toggled off.
+        endMentionComposition()
+    }
+
+    // Stops offering the mention until the user types again: on Escape, or
+    // when the chat goes away or can't be seen.
+    func endMentionComposition() {
+        mentionDismissed = true
+        hideMentionPicker()
+    }
+
+    // Hides the popup and takes down the session buttons.
+    private func hideMentionPicker() {
+        mentionPicker.hide()
+        if let mentionSessionPromise {
+            self.mentionSessionPromise = nil
+            SessionSelector.cancel(mentionSessionPromise)
+        }
+    }
+
+    private func startMentionSessionSelectorIfNeeded() {
+        guard mentionSessionPromise == nil else {
+            return
+        }
+        let promise = SessionSelector.select(
+            terminal: nil,
+            reason: String(localized: "ChatInputView.MentionSessionReason",
+                           defaultValue: "Mention this session in AI chat?",
+                           comment: "Prompt shown over each session while the user types an @-mention in the AI chat, letting them pick the session to mention by clicking it"),
+            reveal: { [weak self] in
+                // Take the user back to the half-typed mention. Coming back
+                // into the window reopens the picker list.
+                self?.revealForMentionSelection?()
+                self?.makeTextViewFirstResponder()
+            })
+        mentionSessionPromise = promise
+        promise.then { [weak self] session in
+            guard let self, self.mentionSessionPromise === promise else {
+                return
+            }
+            self.mentionSessionPromise = nil
+            // Insert before revealing so that moving back into the window
+            // doesn't find a half-typed mention and restart the picker. Same
+            // token the picker inserts: the reload-durable stableID.
+            self.insertMention(guid: session.stableID,
+                               displayName: ChatMentionDisplay.displayName(for: session))
+            self.revealForMentionSelection?()
+            self.makeTextViewFirstResponder()
+        }
+        promise.catchError { [weak self] _ in
+            guard let self, self.mentionSessionPromise === promise else {
+                return
+            }
+            self.mentionSessionPromise = nil
         }
     }
 
