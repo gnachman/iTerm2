@@ -2002,6 +2002,10 @@ Bug Fixes:
 - Command Info’s Output size no longer counts
   the “%” marker and padding zsh adds after
   output that doesn’t end in a newline.
+- After Session.async_split_pane() in the Python
+  API, calling Tab.async_update_layout() without
+  changing any sizes no longer grows the
+  original pane back to its old width.
 
 
 

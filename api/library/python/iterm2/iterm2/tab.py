@@ -315,12 +315,18 @@ class Tab:
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
         """
+        # A layout change handled during the await below can replace the
+        # root, so remember which sessions this request covered.
+        sessions = self.all_sessions
         response = await async_set_tab_layout(
             self.connection, self.tab_id, self.__root.to_protobuf()
         )
         status = response.set_tab_layout_response.status
         # pylint: disable=no-member
         if status == api_pb2.SetTabLayoutResponse.Status.Value("OK"):
+            for session in sessions:
+                # pylint: disable=protected-access
+                session._preferred_size_was_applied()
             return response.set_tab_layout_response
         raise RPCException(api_pb2.SetTabLayoutResponse.Status.Name(status))
 
