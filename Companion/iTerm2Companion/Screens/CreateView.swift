@@ -115,7 +115,7 @@ struct CreateView: View {
             Button {
                 model.createChat(mode: .session(guid: session.guid))
             } label: {
-                SessionTreeRow(icon: "terminal",
+                SessionTreeRow(icon: session.symbolName,
                                title: title,
                                subtitle: session.subtitle.isEmpty ? nil : session.subtitle,
                                level: level)

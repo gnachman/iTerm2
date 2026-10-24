@@ -84,9 +84,7 @@ class iTermBrowserSuggestionsController {
                 searchScore = .weakSearch
                 actualQuery = query
             }
-            let trimmed = actualQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-            let queryParameterValue = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
-            let url = iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: queryParameterValue)
+            let url = webSearchURLString(for: actualQuery)
 
             let searchSuggestion = URLSuggestion(
                 url: url,

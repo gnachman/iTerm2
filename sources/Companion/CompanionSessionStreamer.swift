@@ -30,7 +30,9 @@ protocol CompanionFrameSource: AnyObject {
     var scale: Double { get }
     /// Cell/margin geometry (in encoded pixels) for touch-to-cell mapping. Read on
     /// the main thread alongside a render; stable except across resize/font/scale.
-    var cellGeometry: CompanionCellGeometry { get }
+    /// Nil for content with no cell grid (a web page), which tells the phone not to
+    /// offer cell-based features like text selection.
+    var cellGeometry: CompanionCellGeometry? { get }
     /// Absolute line number of the top visible row right now (overflow-adjusted).
     /// Changes whenever the screen scrolls, so it is captured per frame.
     var liveTop: Int64 { get }
@@ -50,6 +52,9 @@ protocol CompanionFrameSource: AnyObject {
     /// Whether the session reports mouse-wheel events to the program right now, so the
     /// phone can translate scroll gestures into wheel reports while on the alt screen.
     var scrollWheelReporting: Bool { get }
+    /// Whether the source shows a web page rather than a terminal. Fixed for the
+    /// source's lifetime (a session never changes kind).
+    var isBrowser: Bool { get }
     /// Render the current visible screen, or nil if it cannot be produced now.
     /// The encoder and pool size themselves to the returned image's dimensions.
     func renderCurrentScreen() -> CGImage?
@@ -64,6 +69,17 @@ extension CompanionFrameSource {
     // A fake defaults to the primary screen with no mouse reporting.
     var isAlternateScreen: Bool { false }
     var scrollWheelReporting: Bool { false }
+    var isBrowser: Bool { false }
+}
+
+/// A frame source the host bridge drives from its per-stream timer.
+protocol CompanionLiveFrameSource: CompanionFrameSource {
+    /// When the source's content last changed, on a clock private to the source.
+    /// The bridge marks the stream dirty whenever this advances.
+    var contentLastChangedAt: TimeInterval { get }
+    /// Called on every stream timer tick, before the change check, so a source
+    /// that produces frames asynchronously can start its next one.
+    func tick()
 }
 
 final class CompanionSessionStreamer: @unchecked Sendable {
@@ -103,6 +119,9 @@ final class CompanionSessionStreamer: @unchecked Sendable {
     }
 
     private let source: CompanionFrameSource
+    /// Captured once at init (on the main thread): it never changes, and the
+    /// config is built on the encoder thread, which must not touch the source.
+    private let isBrowser: Bool
     /// The requested frame-rate cap. Mutable: the phone can retune it live via
     /// updateStreamParams (the one quality-preserving adaptation lever for a
     /// terminal). Guarded by `lock`.
@@ -256,6 +275,7 @@ final class CompanionSessionStreamer: @unchecked Sendable {
          onDataLimitReached: @escaping () -> Void = {}) {
         self.streamID = streamID
         self.source = source
+        self.isBrowser = source.isBrowser
         self.maxFrameRate = maxFrameRate > 0 ? maxFrameRate : 30
         self.bitrateCeiling = bitrateCeiling
         self.onConfig = onConfig
@@ -373,7 +393,18 @@ final class CompanionSessionStreamer: @unchecked Sendable {
             return
         }
         guard let decision else { return }
-        guard let image = source.renderCurrentScreen() else { return }
+        guard let image = source.renderCurrentScreen() else {
+            // Nothing to show yet (e.g., a web view snapshot still in flight). Keep
+            // the frame pending so a requested keyframe is not lost.
+            lock.lock()
+            if decision.keyframe {
+                pacer.requestKeyframe()
+            } else {
+                pacer.noteDirty()
+            }
+            lock.unlock()
+            return
+        }
         guard ensureEncoder(width: image.width, height: image.height),
               let encoder, let pool,
               let pixelBuffer = try? pool.pixelBuffer(from: image) else {
@@ -559,7 +590,8 @@ final class CompanionSessionStreamer: @unchecked Sendable {
                     totalLines: lastTotalLines,
                     canResize: lastCanResize,
                     altScreen: lastAltScreen,
-                    scrollWheelReporting: lastScrollWheel))
+                    scrollWheelReporting: lastScrollWheel,
+                    isBrowser: isBrowser))
                 flags.insert(.configChanged)
             }
         }

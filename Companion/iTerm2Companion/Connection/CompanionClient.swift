@@ -8,6 +8,7 @@
 //  model types (Chat, Message) shared with the Mac app.
 //
 
+import CoreGraphics
 import Foundation
 import CompanionProtocol
 
@@ -319,6 +320,47 @@ actor CompanionClient {
     /// older content; `lines` is the notch count.
     func reportScrollWheel(streamID: UInt32, up: Bool, lines: Int) async throws {
         try await session.send(.reportScrollWheel(streamID: streamID, up: up, lines: lines))
+    }
+
+    /// Click the web page of a browser stream at an encoded-image pixel (origin at
+    /// the top left). Requires a mac at `browserInputRevision`.
+    func browserTap(streamID: UInt32, imagePoint: CGPoint) async throws {
+        try await session.send(.browserTap(streamID: streamID, x: imagePoint.x, y: imagePoint.y))
+    }
+
+    /// Scroll the web page of a browser stream under an encoded-image pixel, moving
+    /// its content by `delta` encoded-image pixels (positive is right / down).
+    /// Requires a mac at `browserInputRevision`.
+    func browserScroll(streamID: UInt32, imagePoint: CGPoint, delta: CGVector) async throws {
+        try await session.send(.browserScroll(streamID: streamID,
+                                              x: imagePoint.x,
+                                              y: imagePoint.y,
+                                              deltaX: delta.dx,
+                                              deltaY: delta.dy))
+    }
+
+    /// Browser controls for a browser stream's page. Each requires a mac at
+    /// `browserInputRevision`; the new state arrives as browserNavigationChanged.
+    func browserGoBack(streamID: UInt32) async throws {
+        try await session.send(.browserGoBack(streamID: streamID))
+    }
+
+    func browserGoForward(streamID: UInt32) async throws {
+        try await session.send(.browserGoForward(streamID: streamID))
+    }
+
+    func browserReload(streamID: UInt32) async throws {
+        try await session.send(.browserReload(streamID: streamID))
+    }
+
+    func browserStopLoading(streamID: UInt32) async throws {
+        try await session.send(.browserStopLoading(streamID: streamID))
+    }
+
+    /// Load text typed in the phone's address field: a URL is opened, and anything
+    /// else is searched for.
+    func browserLoad(streamID: UInt32, text: String) async throws {
+        try await session.send(.browserLoad(streamID: streamID, text: text))
     }
 
     /// Select the entire terminal content.

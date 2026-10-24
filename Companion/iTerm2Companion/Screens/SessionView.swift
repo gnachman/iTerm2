@@ -800,26 +800,44 @@ private struct LiveSessionView: View {
     /// Diagnostics: log only the first media frame received per view, so a working
     /// (or stalled) stream is visible in the log without spamming per frame.
     @State private var didLogFirstMedia = false
+    /// Bumped by the keyboard toolbar button (browser streams) to show or hide the
+    /// keyboard.
+    @State private var keyboardToggleRequests = 0
+    /// The height of the browser controls over the top of the canvas, which the
+    /// canvas keeps the page clear of.
+    @State private var browserControlsHeight: CGFloat = 0
 
     /// The one-time discoverability tip: shown until the user first opens the on-screen
     /// keyboard (persisted in AppModel), and only when the mac accepts input and the
     /// stream is live. Reactive via AppModel observation - no timer, no manual state.
     private var showKeyboardTip: Bool {
+        // A web page raises the keyboard itself when a text field gets focus.
         model.keyInputSupported && !model.didRevealSessionKeyboard && endedReason == nil
+            && !model.activeStreamIsBrowser
     }
 
     var body: some View {
         ZStack {
             // Overlays pinned within the safe area, so the nav bar and tab bar never
             // hide them even though the canvas below fills edge to edge.
-            VStack {
-                HStack {
-                    liveBadge
+            VStack(spacing: 0) {
+                if model.browserInputActive {
+                    BrowserControlsBar(isLive: endedReason == nil)
+                        .onGeometryChange(for: CGFloat.self) { proxy in
+                            proxy.size.height
+                        } action: { height in
+                            browserControlsHeight = height
+                        }
+                }
+                VStack {
+                    HStack {
+                        liveBadge
+                        Spacer()
+                    }
                     Spacer()
                 }
-                Spacer()
+                .padding()
             }
-            .padding()
             if let endedReason {
                 ContentUnavailableView {
                     Label("Stream Ended", systemImage: "stop.circle")
@@ -870,7 +888,10 @@ private struct LiveSessionView: View {
                 LiveCanvas(holder: holder, model: model, guid: guid,
                            isLive: endedReason == nil,
                            layout: model.liveCanvasLayout,
-                           selectionRange: model.activeSelectionRange)
+                           selectionRange: model.activeSelectionRange,
+                           browserEditing: model.activeStreamBrowserEditing,
+                           keyboardToggleRequests: keyboardToggleRequests,
+                           topChromeHeight: model.browserInputActive ? browserControlsHeight : 0)
             }
             .ignoresSafeArea()
         }
@@ -893,9 +914,23 @@ private struct LiveSessionView: View {
             }
         }
         .toolbar {
+            // A web page's editors are not always detectable, so a browser stream
+            // also offers the keyboard on demand.
+            if model.browserInputActive && model.keyInputSupported {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        keyboardToggleRequests += 1
+                    } label: {
+                        Image(systemName: "keyboard")
+                    }
+                    .accessibilityLabel("Show or Hide Keyboard")
+                    .disabled(endedReason != nil)
+                }
+            }
             // Only offer the resize control when the mac is new enough to honor it;
-            // an older mac would silently ignore the resizeSession message.
-            if model.sessionResizeSupported {
+            // an older mac would silently ignore the resizeSession message. A web
+            // page has no grid to resize.
+            if model.sessionResizeSupported && !model.activeStreamIsBrowser {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         model.resizeActiveSessionForLegibility(viewSize: viewportSize)
@@ -1097,6 +1132,105 @@ private final class LoupeUIView: UIView {
     }
 }
 
+/// Back, forward, an address field, and reload/stop for a browser stream, shown
+/// over the top of the live canvas. The address field shows the page's address
+/// and, on Go, loads what was typed (the mac opens a URL or searches for text).
+private struct BrowserControlsBar: View {
+    @Environment(AppModel.self) private var model
+    /// Whether the stream is still live. The controls are disabled after it ends.
+    let isLive: Bool
+
+    @State private var address = ""
+    @State private var addressSelection: TextSelection?
+    @FocusState private var addressFocused: Bool
+
+    private var navigation: CompanionBrowserNavigationState? {
+        model.activeStreamBrowserNavigation
+    }
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Button {
+                model.browserGoBack()
+            } label: {
+                Image(systemName: "chevron.backward")
+                    .frame(width: 36, height: 36)
+            }
+            .accessibilityLabel("Back")
+            .disabled(!isLive || navigation?.canGoBack != true)
+
+            Button {
+                model.browserGoForward()
+            } label: {
+                Image(systemName: "chevron.forward")
+                    .frame(width: 36, height: 36)
+            }
+            .accessibilityLabel("Forward")
+            .disabled(!isLive || navigation?.canGoForward != true)
+
+            TextField("Search or enter website", text: $address, selection: $addressSelection)
+                .focused($addressFocused)
+                .keyboardType(.webSearch)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.go)
+                .lineLimit(1)
+                .font(.subheadline)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.14), in: Capsule())
+                .disabled(!isLive)
+                .onSubmit {
+                    model.browserLoad(text: address)
+                    addressFocused = false
+                }
+
+            if navigation?.isLoading == true {
+                Button {
+                    model.browserStopLoading()
+                } label: {
+                    Image(systemName: "xmark")
+                        .frame(width: 36, height: 36)
+                }
+                .accessibilityLabel("Stop Loading")
+                .disabled(!isLive)
+            } else {
+                Button {
+                    model.browserReload()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .frame(width: 36, height: 36)
+                }
+                .accessibilityLabel("Reload")
+                .disabled(!isLive || navigation == nil)
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 4)
+        .background(.ultraThinMaterial)
+        .foregroundStyle(.white)
+        .environment(\.colorScheme, .dark)
+        .onAppear {
+            address = navigation?.url ?? ""
+        }
+        .onChange(of: navigation?.url) { _, url in
+            // Don't replace what the user is typing.
+            if !addressFocused {
+                address = url ?? ""
+            }
+        }
+        .onChange(of: addressFocused) { _, focused in
+            if focused {
+                // Select the address so typing replaces it, as in Safari.
+                addressSelection = TextSelection(range: address.startIndex..<address.endIndex)
+            } else {
+                // Leaving the field without going anywhere restores the address.
+                address = navigation?.url ?? ""
+            }
+        }
+    }
+}
+
 /// The live view as a zoomable/scrollable canvas (Safari model): two-finger pinch
 /// zooms, one-finger drag scrolls (when zoomed in), and a long-press begins a
 /// selection that the same press-and-drag extends, with the magnifier and the
@@ -1114,6 +1248,14 @@ private struct LiveCanvas: UIViewRepresentable {
     let layout: CompanionLiveCanvasLayout?
     /// Drives handle repositioning: a change re-runs updateUIView.
     let selectionRange: CompanionSelectionRange?
+    /// Whether a text field on a browser stream's page has focus. The keyboard
+    /// follows it.
+    let browserEditing: Bool
+    /// Bumped by the toolbar's keyboard button to show or hide the keyboard.
+    let keyboardToggleRequests: Int
+    /// Height of controls drawn over the top of the canvas (the browser controls),
+    /// which the content is kept clear of at rest.
+    let topChromeHeight: CGFloat
 
     func makeCoordinator() -> Coordinator { Coordinator(holder: holder, model: model, guid: guid) }
     func makeUIView(context: Context) -> UIView { context.coordinator.makeContainer() }
@@ -1127,7 +1269,10 @@ private struct LiveCanvas: UIViewRepresentable {
         context.coordinator.setGuid(guid)
         context.coordinator.installTileSlotCallback()
         context.coordinator.layout = layout
+        context.coordinator.topChromeHeight = topChromeHeight
         context.coordinator.applyWheelMode()
+        context.coordinator.applyBrowserEditing(browserEditing)
+        context.coordinator.applyKeyboardToggleRequests(keyboardToggleRequests)
         context.coordinator.applyLayout()
         context.coordinator.repositionHandles()
         context.coordinator.updateSelectionTiles()
@@ -1204,6 +1349,8 @@ private struct LiveCanvas: UIViewRepresentable {
 
         // History canvas layout (set from updateUIView).
         var layout: CompanionLiveCanvasLayout?
+        /// Height of controls over the top of the canvas (set from updateUIView).
+        var topChromeHeight: CGFloat = 0
         /// The live video band within the (tall) content view, in content coords.
         private var videoRect: CGRect = .zero
         private var pointsPerLine: CGFloat = 0
@@ -1259,8 +1406,33 @@ private struct LiveCanvas: UIViewRepresentable {
         /// True when the mac reports the session is on the alt screen with mouse-wheel
         /// reporting on: scroll gestures become wheel input instead of scrollback.
         private var wheelScrollMode: Bool {
-            layout?.altScreen == true && layout?.scrollWheelReporting == true
+            browserMode || (layout?.altScreen == true && layout?.scrollWheelReporting == true)
         }
+
+        /// True when the stream shows a web page the mac accepts input for: taps
+        /// click the page, drags scroll it, and the keyboard follows text-field focus.
+        private var browserMode: Bool {
+            model.browserInputActive
+        }
+
+        // Browser scrolling. Drag distance (and, after a flick, momentum) is
+        // accumulated in encoded-image pixels and sent at most once per display-link
+        // tick, so a fast drag does not flood the relay.
+        private var lastWheelTranslation: CGPoint = .zero
+        private var browserScrollPending = CGVector.zero
+        /// The encoded-image pixel under the gesture, so the page scrolls whatever
+        /// is under the finger.
+        private var browserScrollPoint = CGPoint.zero
+        /// Momentum after a flick, in encoded-image pixels per second.
+        private var browserScrollVelocity = CGVector.zero
+        private var browserScrollLink: CADisplayLink?
+        private var browserScrollLastTick: CFTimeInterval = 0
+        /// Whether a pinch happened during the current drag, which then neither
+        /// scrolls the page nor coasts.
+        private var browserPanSawPinch = false
+        /// The browser editing state last acted on, so only a change moves the keyboard.
+        private var appliedBrowserEditing = false
+        private var appliedKeyboardToggleRequests = 0
 
         init(holder: LiveVideoHolder, model: AppModel, guid: String) {
             self.holder = holder
@@ -1652,6 +1824,7 @@ private struct LiveCanvas: UIViewRepresentable {
         }
 
         func tearDown() {
+            stopBrowserScrolling()
             NotificationCenter.default.removeObserver(self)
             cancelWhisperDictation()
             keyInput.resignFirstResponder()
@@ -1781,7 +1954,7 @@ private struct LiveCanvas: UIViewRepresentable {
             contentView.addGestureRecognizer(longPress)
 
             // Tap clears the selection / dismisses the menu.
-            let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+            let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
             contentView.addGestureRecognizer(tap)
 
             // Single-finger pan for scroll-to-wheel, enabled only in wheel mode. It
@@ -1848,7 +2021,7 @@ private struct LiveCanvas: UIViewRepresentable {
             // when the keyboard is down.
             let keyboardOverlap = max(0, container.bounds.height - keyboardTopInContainer)
             let bottom = max(safe.bottom, keyboardOverlap) + Self.bottomMargin
-            return UIEdgeInsets(top: safe.top, left: safe.left,
+            return UIEdgeInsets(top: safe.top + topChromeHeight, left: safe.left,
                                 bottom: bottom, right: safe.right)
         }
 
@@ -1869,6 +2042,10 @@ private struct LiveCanvas: UIViewRepresentable {
             let size = scrollView.bounds.size
             guard size.width > 0, size.height > 0 else { return }
             let desiredInset = desiredContentInsets()
+            if model.activeStreamIsBrowser {
+                applyBrowserLayout(size: size, insets: desiredInset)
+                return
+            }
             // No geometry yet: fall back to the video filling the viewport.
             guard let layout, layout.imageSize.width > 0, layout.rows > 0, layout.totalLines > 0 else {
                 applyContentInsets(desiredInset)
@@ -1957,6 +2134,34 @@ private struct LiveCanvas: UIViewRepresentable {
             refreshTiles()
         }
 
+        /// A web page has no scrollback, so the canvas is just the page, fit within
+        /// the insets (clear of the bars, the browser controls, and the keyboard).
+        /// Like the terminal layout, it is left alone while zoomed: a pinch lays the
+        /// scroll view out continuously, and resetting the content's frame then
+        /// would undo the zoom.
+        private func applyBrowserLayout(size: CGSize, insets: UIEdgeInsets) {
+            guard scrollView.zoomScale <= 1.001 else { return }
+            let imageSize = layout?.imageSize ?? .zero
+            let key = "browser|\(Int(size.width))x\(Int(size.height))|\(Int(imageSize.width))x\(Int(imageSize.height))|\(Int(insets.top)),\(Int(insets.bottom)),\(Int(insets.left)),\(Int(insets.right))"
+            guard key != appliedKey else { return }
+            appliedKey = key
+            applyContentInsets(insets)
+            let available = CGSize(width: max(1, size.width - insets.left - insets.right),
+                                   height: max(1, size.height - insets.top - insets.bottom))
+            contentView.frame = CGRect(origin: .zero, size: available)
+            scrollView.contentSize = available
+            // The video is aspect-fit within this frame.
+            holder.view.frame = contentView.bounds
+            videoRect = contentView.bounds
+            scrollView.contentOffset = CGPoint(x: -insets.left, y: -insets.top)
+            // Zoom until one Mac pixel covers 4 iPhone pixels, as for a terminal.
+            if imageSize.width > 0, imageSize.height > 0 {
+                let fitScale = min(available.width / imageSize.width, available.height / imageSize.height)
+                let displayScale = max(1, scrollView.traitCollection.displayScale)
+                scrollView.maximumZoomScale = max(1, 4 / (fitScale * displayScale))
+            }
+        }
+
         private var isPinnedToBottom: Bool {
             let maxY = scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom
             return scrollView.contentOffset.y >= maxY - 1
@@ -2001,6 +2206,198 @@ private struct LiveCanvas: UIViewRepresentable {
             if !decelerate { refreshTiles() }
         }
 
+        // MARK: Browser input
+
+        /// A tap on a web page clicks it on the mac. A tap also stops a fling, as it
+        /// does in a browser.
+        private func handleBrowserTap(_ g: UITapGestureRecognizer) {
+            browserScrollVelocity = .zero
+            guard let imagePoint = CompanionTouchMapper.imagePoint(viewPoint: g.location(in: holder.view),
+                                                                   viewSize: holder.view.bounds.size,
+                                                                   imageSize: model.activeStreamImageSize) else {
+                return
+            }
+            model.sendBrowserTap(imagePoint: imagePoint)
+            // Tapping the field that already has focus (after the keyboard was
+            // dismissed) produces no editing change, so bring the keyboard back here.
+            if model.activeStreamBrowserEditing {
+                showKeyboard()
+            }
+        }
+
+        /// Raise the keyboard when a text field on the page gains focus and lower it
+        /// when focus leaves, unless the user is writing in the local composer.
+        ///
+        /// The mac reports editing before the first stream config says the stream
+        /// is a browser, so a state that arrives early is not consumed: it is
+        /// applied by the updateUIView pass that runs once browser mode turns on.
+        func applyBrowserEditing(_ editing: Bool) {
+            guard browserMode, editing != appliedBrowserEditing else {
+                return
+            }
+            appliedBrowserEditing = editing
+            if editing {
+                showKeyboard()
+            } else if keyInput.mode != .composer {
+                keyInput.resignFirstResponder()
+            }
+        }
+
+        /// The toolbar's keyboard button: a fallback for pages whose editors the mac
+        /// cannot detect.
+        func applyKeyboardToggleRequests(_ requests: Int) {
+            guard requests != appliedKeyboardToggleRequests else {
+                return
+            }
+            appliedKeyboardToggleRequests = requests
+            if keyInput.isFirstResponder {
+                keyInput.exitComposer(clearDraft: false)
+                keyInput.resignFirstResponder()
+            } else {
+                showKeyboard()
+            }
+        }
+
+        private func showKeyboard() {
+            if isLive && model.keyInputSupported && keyInput.becomeFirstResponder() {
+                model.markSessionKeyboardRevealed()
+            }
+        }
+
+        /// Encoded-image pixels per point of finger travel at the current zoom.
+        private var imagePixelsPerScrollPoint: CGFloat {
+            let pixelsPerPoint = CompanionTouchMapper.imagePixelsPerViewPoint(viewSize: holder.view.bounds.size,
+                                                                              imageSize: model.activeStreamImageSize) ?? 0
+            return pixelsPerPoint / max(scrollView.zoomScale, 0.01)
+        }
+
+        /// A drag scrolls the page. When zoomed in, the drag first pans the zoomed
+        /// view (the scroll view's own pan) and only motion pushing past the top or
+        /// bottom edge scrolls the page, matching the terminal's wheel mode.
+        private func handleBrowserPan(_ g: UIPanGestureRecognizer) {
+            switch g.state {
+            case .began:
+                browserScrollVelocity = .zero
+                lastWheelTranslation = .zero
+                browserPanSawPinch = isPinching
+                if let point = CompanionTouchMapper.imagePoint(viewPoint: g.location(in: holder.view),
+                                                               viewSize: holder.view.bounds.size,
+                                                               imageSize: model.activeStreamImageSize) {
+                    browserScrollPoint = point
+                }
+            case .changed:
+                let translation = g.translation(in: scrollView)
+                let delta = CGPoint(x: translation.x - lastWheelTranslation.x,
+                                    y: translation.y - lastWheelTranslation.y)
+                lastWheelTranslation = translation
+                // The first finger of a pinch moves too; that motion zooms rather
+                // than scrolling the page.
+                if isPinching {
+                    browserPanSawPinch = true
+                } else if !browserPanSawPinch {
+                    accrueBrowserScroll(delta: delta)
+                }
+            case .ended:
+                lastWheelTranslation = .zero
+                // Coast after a flick, but only when the whole page fits (zoom 1):
+                // when zoomed in, the scroll view's own deceleration owns the flick.
+                if scrollView.zoomScale <= 1.001 && !browserPanSawPinch {
+                    let velocity = g.velocity(in: scrollView)
+                    let scale = imagePixelsPerScrollPoint
+                    browserScrollVelocity = CGVector(dx: velocity.x * scale, dy: velocity.y * scale)
+                    startBrowserScrollLink()
+                }
+            case .cancelled, .failed:
+                lastWheelTranslation = .zero
+            default:
+                break
+            }
+        }
+
+        private var isPinching: Bool {
+            switch scrollView.pinchGestureRecognizer?.state {
+            case .began, .changed:
+                return true
+            default:
+                return scrollView.isZooming
+            }
+        }
+
+        private func accrueBrowserScroll(delta: CGPoint) {
+            var effective = delta
+            if scrollView.zoomScale > 1.001 {
+                // Zoomed: horizontal drags pan the zoomed view, and vertical ones
+                // scroll the page only once the view is at its top or bottom edge.
+                let offsetY = scrollView.contentOffset.y
+                let minY = -scrollView.adjustedContentInset.top
+                let maxY = max(minY, scrollView.contentSize.height - scrollView.bounds.height
+                                     + scrollView.adjustedContentInset.bottom)
+                let atTop = offsetY <= minY + 0.5
+                let atBottom = offsetY >= maxY - 0.5
+                effective.x = 0
+                if !((delta.y > 0 && atTop) || (delta.y < 0 && atBottom)) {
+                    effective.y = 0
+                }
+            }
+            guard effective != .zero else {
+                return
+            }
+            let scale = imagePixelsPerScrollPoint
+            browserScrollPending.dx += effective.x * scale
+            browserScrollPending.dy += effective.y * scale
+            startBrowserScrollLink()
+        }
+
+        private func startBrowserScrollLink() {
+            guard browserScrollLink == nil else {
+                return
+            }
+            let link = CADisplayLink(target: self, selector: #selector(browserScrollTick(_:)))
+            link.preferredFrameRateRange = CAFrameRateRange(minimum: 20, maximum: 30, preferred: 30)
+            link.add(to: .main, forMode: .common)
+            browserScrollLink = link
+            browserScrollLastTick = CACurrentMediaTime()
+        }
+
+        private func stopBrowserScrolling() {
+            browserScrollLink?.invalidate()
+            browserScrollLink = nil
+            browserScrollPending = .zero
+            browserScrollVelocity = .zero
+        }
+
+        /// UIScrollView's normal deceleration: velocity keeps this fraction per ms.
+        private static let browserScrollDeceleration = 0.998
+        /// Momentum below this many encoded-image pixels per second stops.
+        private static let browserScrollMinimumVelocity: CGFloat = 30
+
+        @objc private func browserScrollTick(_ link: CADisplayLink) {
+            let now = CACurrentMediaTime()
+            let elapsed = min(max(now - browserScrollLastTick, 0), 0.1)
+            browserScrollLastTick = now
+            if browserScrollVelocity != .zero {
+                browserScrollPending.dx += browserScrollVelocity.dx * elapsed
+                browserScrollPending.dy += browserScrollVelocity.dy * elapsed
+                let decay = CGFloat(pow(Self.browserScrollDeceleration, elapsed * 1000))
+                browserScrollVelocity.dx *= decay
+                browserScrollVelocity.dy *= decay
+                if hypot(browserScrollVelocity.dx, browserScrollVelocity.dy) < Self.browserScrollMinimumVelocity {
+                    browserScrollVelocity = .zero
+                }
+            }
+            // Send whole pixels; carry the remainder so slow drags still add up.
+            let send = CGVector(dx: browserScrollPending.dx.rounded(.towardZero),
+                                dy: browserScrollPending.dy.rounded(.towardZero))
+            if send != .zero {
+                browserScrollPending.dx -= send.dx
+                browserScrollPending.dy -= send.dy
+                model.sendBrowserScroll(imagePoint: browserScrollPoint, delta: send)
+            } else if browserScrollVelocity == .zero {
+                browserScrollLink?.invalidate()
+                browserScrollLink = nil
+            }
+        }
+
         // MARK: Scroll-to-wheel (alt screen + mouse reporting)
 
         /// Enable the wheel pan and disable rubber-band bounce while in wheel mode, so
@@ -2022,6 +2419,10 @@ private struct LiveCanvas: UIViewRepresentable {
         @objc private func handleWheelPan(_ g: UIPanGestureRecognizer) {
             // A hold-then-drag selects; never wheel while selecting or dragging handles.
             guard wheelScrollMode, !selecting, !draggingStart, !draggingEnd else { return }
+            if browserMode {
+                handleBrowserPan(g)
+                return
+            }
             switch g.state {
             case .began:
                 lastWheelTranslationY = 0
@@ -2465,8 +2866,12 @@ private struct LiveCanvas: UIViewRepresentable {
             }
         }
 
-        @objc private func handleTap() {
+        @objc private func handleTap(_ g: UITapGestureRecognizer) {
             editMenu.dismissMenu()
+            if browserMode {
+                handleBrowserTap(g)
+                return
+            }
             // A tap with a selection up only clears it (a single tap should not both
             // dismiss the selection and pop the keyboard).
             if model.activeSelectionRange != nil {

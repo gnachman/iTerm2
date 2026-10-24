@@ -27,7 +27,8 @@ enum CompanionSessionLister {
         // shell reload that rotates the guid.
         CompanionSessionSummary(guid: session.stableID,
                                 name: session.name,
-                                subtitle: session.subtitle ?? "")
+                                subtitle: session.subtitle ?? "",
+                                isBrowser: session.isBrowserSession())
     }
 
     /// The window > tab > pane hierarchy the phone's Sessions tab browses,

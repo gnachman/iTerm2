@@ -16,7 +16,7 @@ private final class FakeFrameSource: CompanionFrameSource {
     let columns: Int
     let rows: Int
     let scale: Double
-    var cellGeometry = CompanionCellGeometry(cellWidth: 8, cellHeight: 16, leftMargin: 0, topMargin: 0)
+    var cellGeometry: CompanionCellGeometry? = CompanionCellGeometry(cellWidth: 8, cellHeight: 16, leftMargin: 0, topMargin: 0)
     var liveTop: Int64 = 0
     var canResize = true
     var isAlternateScreen = false
@@ -24,6 +24,9 @@ private final class FakeFrameSource: CompanionFrameSource {
     private let pixelWidth: Int
     private let pixelHeight: Int
     private var image: CGImage
+    /// When false, renderCurrentScreen returns nil, like a web view whose first
+    /// snapshot has not arrived yet.
+    var ready = true
 
     init(pixelWidth: Int, pixelHeight: Int, columns: Int, rows: Int, scale: Double) {
         self.columns = columns
@@ -48,7 +51,7 @@ private final class FakeFrameSource: CompanionFrameSource {
                        provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)!
     }
 
-    func renderCurrentScreen() -> CGImage? { image }
+    func renderCurrentScreen() -> CGImage? { ready ? image : nil }
 }
 
 /// Lock-protected sink, since encoder callbacks fire on a VideoToolbox thread.
@@ -384,6 +387,48 @@ final class CompanionSessionStreamerTests: XCTestCase {
         XCTAssertEqual(frame.liveTop, 4321)
         XCTAssertEqual(frame.generationId, out.configs.first?.generationId)
         XCTAssertGreaterThan(frame.generationId, 0)
+    }
+
+    func testNoCellGeometryIsSentAsNil() throws {
+        try skipIfNoEncoder()
+        // A browser stream has no cell grid.
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 0, rows: 0, scale: 2)
+        source.cellGeometry = nil
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)
+        streamer.flush()
+
+        let config = try XCTUnwrap(out.configs.first)
+        XCTAssertNil(config.cellGeometry)
+        XCTAssertEqual(config.rows, 0)
+        XCTAssertEqual(config.totalLines, 0)
+        XCTAssertEqual(out.medias.count, 1)
+    }
+
+    func testKeyframeWaitsForFirstRenderableFrame() throws {
+        try skipIfNoEncoder()
+        let source = FakeFrameSource(pixelWidth: 320, pixelHeight: 240, columns: 0, rows: 0, scale: 2)
+        source.ready = false
+        let out = Collector()
+        let streamer = CompanionSessionStreamer(streamID: 1, source: source, maxFrameRate: 30,
+                                                onConfig: { out.addConfig($0) },
+                                                onMedia: { out.addMedia($0) })
+        streamer.start()
+        streamer.tick(nowMilliseconds: 0)
+        streamer.flush()
+        XCTAssertTrue(out.medias.isEmpty)
+
+        // The subscribe keyframe must still go out once there is something to show,
+        // without the source having to report a change.
+        source.ready = true
+        streamer.tick(nowMilliseconds: 10)
+        streamer.flush()
+        let frame = try XCTUnwrap(out.medias.first)
+        XCTAssertTrue(frame.flags.contains(.keyframe))
     }
 
     // MARK: Config resend vs generation bump

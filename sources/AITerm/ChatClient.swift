@@ -127,6 +127,7 @@ class ChatClient {
                                              message: Message,
                                              request: RemoteCommand,
                                              safe: Bool?) -> Message? {
+        repairSessionKinds(chatID: chatID)
         let maybeGuid = if request.content.permissionCategory.isBrowserSpecific {
             model.chat(id: chatID)?.browserSessionGuid
         } else {
@@ -180,6 +181,31 @@ class ChatClient {
         }
     }
 
+    // Chats created before session kinds were enforced may have a browser
+    // session linked as their terminal (or the reverse). Move such a link to the
+    // slot matching the session's kind so tools for the other kind ask the user
+    // to pick a suitable session instead of failing against the wrong one.
+    private func repairSessionKinds(chatID: String) {
+        guard let chat = model.chat(id: chatID) else {
+            return
+        }
+        let (terminal, browser) = ChatListModel.sessionGuidsByKind(terminal: chat.terminalSessionGuid,
+                                                                   browser: chat.browserSessionGuid)
+        guard terminal != chat.terminalSessionGuid || browser != chat.browserSessionGuid else {
+            return
+        }
+        RLog("Repairing session links of chat \(chatID): terminal \(chat.terminalSessionGuid ?? "nil") -> \(terminal ?? "nil"), browser \(chat.browserSessionGuid ?? "nil") -> \(browser ?? "nil")")
+        do {
+            // Clear first so neither setter sees a guid of the wrong kind.
+            try model.setTerminalGuid(for: chatID, to: nil)
+            try model.setBrowserGuid(for: chatID, to: nil)
+            try model.setTerminalGuid(for: chatID, to: terminal)
+            try model.setBrowserGuid(for: chatID, to: browser)
+        } catch {
+            RLog("Failed to repair session links of chat \(chatID): \(error)")
+        }
+    }
+
     func publishClientLocalMessage(chatID: String,
                                    action: ClientLocal.Action) throws {
         try broker.publishMessageFromAgent(chatID: chatID,
@@ -209,14 +235,31 @@ class ChatClient {
         if request.shouldPublishNotice {
             try broker.publishNotice(chatID: chatID, notice: "\(request.markdownDescription)…")
         }
-        try session.execute(request) { [weak self] response, userNotice in
-            done = true
-            try self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
-                                                            requestUUID: messageUniqueID,
-                                                            message: response,
-                                                            functionCallName: request.llmMessage.function_call?.name ?? "Unknown function call name",
-                                                            functionCallID: request.llmMessage.functionCallID,
-                                                            userNotice: userNotice)
+        let functionCallName = request.llmMessage.function_call?.name ?? "Unknown function call name"
+        do {
+            try session.execute(request) { [weak self] response, userNotice in
+                done = true
+                try self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
+                                                                    requestUUID: messageUniqueID,
+                                                                    message: response,
+                                                                    functionCallName: functionCallName,
+                                                                    functionCallID: request.llmMessage.functionCallID,
+                                                                    userNotice: userNotice)
+            }
+        } catch {
+            // The command could not start (e.g., a terminal tool aimed at a browser
+            // session). Answer the function call with the error so the model can
+            // continue; otherwise the turn waits forever for a response that never comes.
+            guard !done else {
+                throw error
+            }
+            RLog("Remote command \(functionCallName) failed: \(error.localizedDescription)")
+            try respondToRemoteCommandRequestWithFailure(inChat: chatID,
+                                                         requestUUID: messageUniqueID,
+                                                         error: error,
+                                                         functionCallName: functionCallName,
+                                                         functionCallID: request.llmMessage.functionCallID)
+            return
         }
         if !done {
             try publish(message: Message(chatID: chatID,
@@ -242,6 +285,29 @@ class ChatClient {
                                             author: .user,
                                             content: .remoteCommandResponse(
                                                 .success(message),
+                                                requestUUID,
+                                                functionCallName,
+                                                functionCallID),
+                                            sentDate: Date(),
+                                            uniqueID: UUID()),
+                           toChatID: chatID,
+                           partial: false)
+    }
+
+    func respondToRemoteCommandRequestWithFailure(inChat chatID: String,
+                                                  requestUUID: UUID,
+                                                  error: Error,
+                                                  functionCallName: String,
+                                                  functionCallID: LLM.Message.FunctionCallID?) throws {
+        let reason = error.localizedDescription
+        try broker.publishNotice(chatID: chatID,
+                                 notice: String(localized: "ChatClient.RemoteCommandFailed",
+                                                defaultValue: "The function call failed: \(reason)",
+                                                comment: "Notice shown in AI chat when a tool the AI asked to run could not be run. The argument is the reason."))
+        try broker.publish(message: Message(chatID: chatID,
+                                            author: .user,
+                                            content: .remoteCommandResponse(
+                                                .failure(AIError(reason)),
                                                 requestUUID,
                                                 functionCallName,
                                                 functionCallID),

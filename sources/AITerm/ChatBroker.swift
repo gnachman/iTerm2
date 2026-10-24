@@ -82,6 +82,11 @@ class ChatBroker {
                 initialMessages: [Message]) throws -> String {
         ensureServiceRunning()
 
+        // A session's kind is fixed, so file each guid under the kind it really is
+        // regardless of which slot the caller used.
+        let (terminalSessionGuid, browserSessionGuid) = ChatListModel.sessionGuidsByKind(
+            terminal: terminalSessionGuid,
+            browser: browserSessionGuid)
         let rce = RemoteCommandExecutor.instance
         let chat = Chat(title: title,
                         terminalSessionGuid: terminalSessionGuid,

@@ -20,6 +20,27 @@ func normalizeURL(_ urlString: String) -> URL? {
     return nil
 }
 
+/// The configured search engine's URL for a web search for `query`.
+func webSearchURLString(for query: String) -> String {
+    let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+    let queryParameterValue = trimmed.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trimmed
+    return iTermAdvancedSettingsModel.searchCommand().replacingOccurrences(of: "%@", with: queryParameterValue)
+}
+
+/// What text typed into an address bar should load when no suggestion is
+/// chosen: the URL it names if it strongly looks like one, and otherwise a web
+/// search for it. This matches the URL bar's top-ranked suggestion.
+func urlStringForTypedText(_ text: String) -> String? {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+        return nil
+    }
+    if stringIsStronglyURLLike(trimmed), let url = normalizeURL(trimmed) {
+        return url.absoluteString
+    }
+    return webSearchURLString(for: trimmed)
+}
+
 private func stringHasValidScheme(_ urlString: String) -> Bool {
     return urlString.hasPrefix("http://") ||
     urlString.hasPrefix("https://") ||

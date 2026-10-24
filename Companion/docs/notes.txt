@@ -37,6 +37,15 @@ New Features:
   you can turn them on later under Settings while
   paired. Previously this was only reachable by
   enabling alerts on the Mac.
+- Web browser sessions are now interactive in
+  the live view: tap to click, drag or flick to
+  scroll, pinch to zoom, and type into text
+  fields. The keyboard comes up when a text
+  field on the page has focus, and the keyboard
+  button in the toolbar shows or hides it on
+  demand. Back, forward, reload, and an address
+  field sit above the page. Requires an
+  up-to-date Mac.
 
 Bug Fixes:
 - The QR scanner used to show a black preview the

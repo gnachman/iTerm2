@@ -19,7 +19,7 @@ struct SessionBrowserView: View {
             NavigationLink(value: AppModel.Destination.session(guid: session.guid,
                                                                title: title,
                                                                originatingChatID: nil)) {
-                SessionTreeRow(icon: "terminal",
+                SessionTreeRow(icon: session.symbolName,
                                title: title,
                                subtitle: session.subtitle.isEmpty ? nil : session.subtitle,
                                level: level,

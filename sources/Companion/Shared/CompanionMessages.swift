@@ -31,18 +31,31 @@ public enum CompanionCollapseToken {
     }
 }
 
-/// What a terminal session looks like on the wire. PTYSession itself cannot
-/// cross, so this is the protocol's projection of one (used by the phone's
-/// session picker).
+/// What a session looks like on the wire. PTYSession itself cannot cross, so
+/// this is the protocol's projection of one (used by the phone's session
+/// picker).
 public struct CompanionSessionSummary: Codable, Equatable, Hashable {
     public var guid: String
     public var name: String
     public var subtitle: String
+    /// Whether this is a web browser session rather than a terminal. Older Macs
+    /// omit it and decode as false; older phones ignore it.
+    public var isBrowser: Bool
 
-    public init(guid: String, name: String, subtitle: String) {
+    public init(guid: String, name: String, subtitle: String, isBrowser: Bool = false) {
         self.guid = guid
         self.name = name
         self.subtitle = subtitle
+        self.isBrowser = isBrowser
+    }
+
+    // Custom decode so a summary from a Mac that predates isBrowser still decodes.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        guid = try c.decode(String.self, forKey: .guid)
+        name = try c.decode(String.self, forKey: .name)
+        subtitle = try c.decode(String.self, forKey: .subtitle)
+        isBrowser = try c.decodeIfPresent(Bool.self, forKey: .isBrowser) ?? false
     }
 }
 
@@ -353,11 +366,16 @@ struct CompanionStreamConfig: Codable, Equatable {
     /// the phone translates a scroll gesture into a `reportScrollWheel` message instead
     /// of browsing scrollback. Older hosts omit it and decode as false.
     var scrollWheelReporting: Bool = false
+    /// Whether the stream shows a web browser session rather than a terminal
+    /// (revision 15+). The phone sends taps and scrolls for a browser stream as
+    /// `browserTap` / `browserScroll`. Older hosts omit it and decode as false.
+    var isBrowser: Bool = false
 
     init(streamID: UInt32, generationId: UInt32, codecExtradata: Data,
          pixelWidth: Int, pixelHeight: Int, scale: Double, columns: Int, rows: Int,
          cellGeometry: CompanionCellGeometry? = nil, firstAbsLine: Int64 = 0, totalLines: Int = 0,
-         canResize: Bool? = nil, altScreen: Bool = false, scrollWheelReporting: Bool = false) {
+         canResize: Bool? = nil, altScreen: Bool = false, scrollWheelReporting: Bool = false,
+         isBrowser: Bool = false) {
         self.streamID = streamID
         self.generationId = generationId
         self.codecExtradata = codecExtradata
@@ -372,6 +390,7 @@ struct CompanionStreamConfig: Codable, Equatable {
         self.canResize = canResize
         self.altScreen = altScreen
         self.scrollWheelReporting = scrollWheelReporting
+        self.isBrowser = isBrowser
     }
 
     // Custom decode: synthesized Decodable ignores the property defaults and throws
@@ -395,6 +414,7 @@ struct CompanionStreamConfig: Codable, Equatable {
         canResize = try c.decodeIfPresent(Bool.self, forKey: .canResize)
         altScreen = try c.decodeIfPresent(Bool.self, forKey: .altScreen) ?? false
         scrollWheelReporting = try c.decodeIfPresent(Bool.self, forKey: .scrollWheelReporting) ?? false
+        isBrowser = try c.decodeIfPresent(Bool.self, forKey: .isBrowser) ?? false
     }
 }
 
@@ -564,6 +584,35 @@ struct CompanionMacStatus: Codable, Equatable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         modalAlerts = try c.decodeIfPresent([CompanionModalAlert].self, forKey: .modalAlerts) ?? []
         mainBlocked = try c.decodeIfPresent(Bool.self, forKey: .mainBlocked) ?? false
+    }
+}
+
+/// What the phone shows in its browser controls for a browser stream.
+struct CompanionBrowserNavigationState: Codable, Equatable {
+    /// The page's address, or empty before anything has loaded.
+    var url: String
+    /// The page's title, or empty if it has none.
+    var title: String
+    var canGoBack: Bool
+    var canGoForward: Bool
+    var isLoading: Bool
+
+    init(url: String, title: String, canGoBack: Bool, canGoForward: Bool, isLoading: Bool) {
+        self.url = url
+        self.title = title
+        self.canGoBack = canGoBack
+        self.canGoForward = canGoForward
+        self.isLoading = isLoading
+    }
+
+    // Lenient decode so a field can be added later without breaking older peers.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        url = try c.decodeIfPresent(String.self, forKey: .url) ?? ""
+        title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
+        canGoBack = try c.decodeIfPresent(Bool.self, forKey: .canGoBack) ?? false
+        canGoForward = try c.decodeIfPresent(Bool.self, forKey: .canGoForward) ?? false
+        isLoading = try c.decodeIfPresent(Bool.self, forKey: .isLoading) ?? false
     }
 }
 
@@ -863,6 +912,38 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// `.modalAlertAnswerRejected` and then its current status.
     case answerModalAlert(alertID: String, buttonIndex: Int, suppress: Bool, inputs: [String: String]? = nil)
 
+    /// Click the web page of a browser stream (revision 15+) at (`x`, `y`), in
+    /// encoded-image pixels with the origin at the top left. The mac delivers it
+    /// to the page as a mouse click. No reply.
+    case browserTap(streamID: UInt32, x: Double, y: Double)
+
+    /// Scroll the web page of a browser stream (revision 15+). (`x`, `y`) is where
+    /// the gesture is, in encoded-image pixels from the top left, so the mac
+    /// scrolls whatever is under it (a scrollable element or the page). `deltaX` /
+    /// `deltaY` are how far the content should move, in encoded-image pixels;
+    /// positive moves it right / down, the way it follows a dragging finger.
+    /// No reply.
+    case browserScroll(streamID: UInt32, x: Double, y: Double, deltaX: Double, deltaY: Double)
+
+    /// Go back in the history of a browser stream's page (revision 15+). No reply;
+    /// the result arrives as `.browserNavigationChanged`.
+    case browserGoBack(streamID: UInt32)
+
+    /// Go forward in the history of a browser stream's page (revision 15+). No reply.
+    case browserGoForward(streamID: UInt32)
+
+    /// Reload a browser stream's page (revision 15+). No reply.
+    case browserReload(streamID: UInt32)
+
+    /// Stop loading a browser stream's page (revision 15+). No reply.
+    case browserStopLoading(streamID: UInt32)
+
+    /// Load what the user typed in the phone's address field into a browser
+    /// stream (revision 15+). The mac treats `text` the way its own URL bar does:
+    /// something that looks like a URL is opened, and anything else is searched
+    /// for with the configured search engine. No reply.
+    case browserLoad(streamID: UInt32, text: String)
+
     /// Discriminators this build knows. MUST list every case above (except
     /// `.unsupported` is included so a peer that literally sends it round-trips).
     /// Add a line here whenever a case is added.
@@ -879,6 +960,8 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
         "selectionGesture", "clearSelection", "copySelection",
         "selectAllInStream", "pasteText", "sendKey", "resizeSession",
         "fetchAutoProvideConsent", "grantAutoProvideConsent", "answerModalAlert",
+        "browserTap", "browserScroll", "browserGoBack", "browserGoForward",
+        "browserReload", "browserStopLoading", "browserLoad",
     ]
 }
 
@@ -1071,6 +1154,17 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// listed there, the user has to answer it at the mac.
     case modalAlertAnswerRejected(alertID: String)
 
+    /// Unsolicited (revision 15+): whether a text field on the web page of a
+    /// browser stream has keyboard focus changed. The phone shows its keyboard
+    /// while `editing` is true. Sent when a stream starts and on every change,
+    /// and only to a phone at revision 15+.
+    case browserEditingChanged(streamID: UInt32, editing: Bool)
+
+    /// Unsolicited (revision 15+): the address, title, history, or loading state
+    /// of a browser stream's page changed. Sent when a stream starts and on every
+    /// change, and only to a phone at revision 15+.
+    case browserNavigationChanged(streamID: UInt32, state: CompanionBrowserNavigationState)
+
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
@@ -1081,7 +1175,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
         "selectionRange", "historyTile", "streamExtent", "autoProvideConsent",
         "turnLifecycle", "aiAvailabilityChanged", "macStatusChanged",
-        "modalAlertAnswerRejected",
+        "modalAlertAnswerRejected", "browserEditingChanged", "browserNavigationChanged",
     ]
 }
 

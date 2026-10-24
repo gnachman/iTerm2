@@ -564,6 +564,12 @@ Improvements:
   appearing literally. The window title shows the
   text without the tags, including titles set by
   a program or by tmux.
+- In iTerm2 Buddy, you can now tap, scroll, and
+  type into a web browser session from your
+  phone, and use back, forward, reload, and an
+  address field. The phone’s keyboard comes up
+  when a text field on the page has focus.
+  Requires an up-to-date iTerm2 Buddy.
 
 Bug Fixes:
 - With KeePassXC as the browser password
@@ -1586,3 +1592,13 @@ Bug Fixes:
   text with an input method now finishes the
   character and performs the key in one press, as
   Return already did.
+- Opening a web browser session in iTerm2 Buddy
+  now shows the web page instead of a black
+  screen.
+- An AI chat started from a web browser session
+  in iTerm2 Buddy is now linked to it as a web
+  browser, not a terminal.
+- When AI chat asks to run a tool that can’t run
+  in the linked session, the chat now reports
+  the error and continues instead of waiting
+  forever.

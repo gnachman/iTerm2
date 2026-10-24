@@ -580,6 +580,16 @@ final class AppModel {
     /// Whether the session reports mouse-wheel events, from the latest config. With
     /// altScreen, the phone translates scroll gestures into reportScrollWheel.
     private(set) var activeStreamScrollWheelReporting = false
+    /// Whether the active stream shows a web browser session, from the latest
+    /// config. Taps and scrolls then go to the page (see browserInputActive).
+    private(set) var activeStreamIsBrowser = false
+    /// Whether a text field on the browser stream's page has keyboard focus, from
+    /// the mac's browserEditingChanged events. The keyboard follows it.
+    private(set) var activeStreamBrowserEditing = false
+    /// The browser stream page's address, title, and history state, from the mac's
+    /// browserNavigationChanged events. Drives the browser controls; nil until the
+    /// mac reports it.
+    private(set) var activeStreamBrowserNavigation: CompanionBrowserNavigationState?
     private var activeStreamGeneration: UInt32 = 0
     /// Rendered scrollback tiles keyed by the tile's first absolute line, with the
     /// fetches in flight so scroll events do not duplicate them.
@@ -4362,6 +4372,9 @@ final class AppModel {
                 // scroll-to-wheel, exactly as before this feature.
                 activeStreamAltScreen = config.altScreen
                 activeStreamScrollWheelReporting = config.scrollWheelReporting
+                // Absent (older mac) decodes as false: the stream is treated as a
+                // terminal, as before browser input existed.
+                activeStreamIsBrowser = config.isBrowser
                 // A new generation re-renders everything; stale tiles must not show.
                 if config.generationId != activeStreamGeneration {
                     // Not the first config for this stream = a mid-stream geometry
@@ -4409,6 +4422,14 @@ final class AppModel {
             if streamID == activeStreamID {
                 activeSelectionRange = range
             }
+        case .browserEditingChanged(let streamID, let editing):
+            if streamID == activeStreamID {
+                activeStreamBrowserEditing = editing
+            }
+        case .browserNavigationChanged(let streamID, let state):
+            if streamID == activeStreamID {
+                activeStreamBrowserNavigation = state
+            }
         case .streamEnded(let streamID, let reason):
             if streamID == activeStreamID {
                 // A host-side end is a stream transition like the others: neutralize the
@@ -4417,6 +4438,8 @@ final class AppModel {
                 neutralizeDeadStream()
                 activeStreamGeometry = nil
                 activeSelectionRange = nil
+                activeStreamBrowserEditing = false
+                activeStreamBrowserNavigation = nil
                 // A host-side end is terminal: drop the intent so it does not
                 // restart, and tell the view (which shows it only for reasons
                 // worth surfacing, e.g. the session closed).
@@ -4516,6 +4539,9 @@ final class AppModel {
         activeStreamCanResize = true
         activeStreamAltScreen = false
         activeStreamScrollWheelReporting = false
+        activeStreamIsBrowser = false
+        activeStreamBrowserEditing = false
+        activeStreamBrowserNavigation = nil
         activeStreamGeneration = 0
         activeSelectionRange = nil
         onStreamConfig = onConfig
@@ -4631,6 +4657,61 @@ final class AppModel {
     func sendScrollWheel(up: Bool, lines: Int) {
         guard lines > 0, let client, let streamID = activeStreamID else { return }
         Task { try? await client.reportScrollWheel(streamID: streamID, up: up, lines: lines) }
+    }
+
+    /// Whether the connected Mac accepts taps, scrolls, and keys for a streamed web
+    /// browser session. Below this revision a browser stream is view-only.
+    var browserInputSupported: Bool {
+        macRevision >= CompanionProtocolVersion.browserInputRevision
+    }
+
+    /// Whether taps and scrolls on the live view go to a web page rather than
+    /// driving terminal selection and scrollback.
+    var browserInputActive: Bool {
+        activeStreamIsBrowser && browserInputSupported
+    }
+
+    /// Click the browser stream's page at an encoded-image pixel.
+    func sendBrowserTap(imagePoint: CGPoint) {
+        guard browserInputActive, let client, let streamID = activeStreamID else { return }
+        Task { try? await client.browserTap(streamID: streamID, imagePoint: imagePoint) }
+    }
+
+    /// Scroll the browser stream's page under an encoded-image pixel, moving its
+    /// content by `delta` encoded-image pixels (positive is right / down).
+    func sendBrowserScroll(imagePoint: CGPoint, delta: CGVector) {
+        guard browserInputActive, let client, let streamID = activeStreamID else { return }
+        Task { try? await client.browserScroll(streamID: streamID, imagePoint: imagePoint, delta: delta) }
+    }
+
+    /// The browser controls, which act on the browser stream's page.
+    func browserGoBack() {
+        sendBrowserNavigation { client, streamID in try await client.browserGoBack(streamID: streamID) }
+    }
+
+    func browserGoForward() {
+        sendBrowserNavigation { client, streamID in try await client.browserGoForward(streamID: streamID) }
+    }
+
+    func browserReload() {
+        sendBrowserNavigation { client, streamID in try await client.browserReload(streamID: streamID) }
+    }
+
+    func browserStopLoading() {
+        sendBrowserNavigation { client, streamID in try await client.browserStopLoading(streamID: streamID) }
+    }
+
+    /// Load what the user typed in the address field: the mac opens it if it
+    /// looks like a URL and otherwise searches for it.
+    func browserLoad(text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        sendBrowserNavigation { client, streamID in try await client.browserLoad(streamID: streamID, text: trimmed) }
+    }
+
+    private func sendBrowserNavigation(_ send: @escaping @Sendable (CompanionClient, UInt32) async throws -> Void) {
+        guard browserInputActive, let client, let streamID = activeStreamID else { return }
+        Task { try? await send(client, streamID) }
     }
 
     /// Report flow-control feedback for the active stream.
@@ -5309,6 +5390,8 @@ extension AppModel {
         watchState.install(chatID: chatID, subscribedHere: false, token: token)
     }
     func testSetMacRevision(_ revision: Int) { macRevision = revision }
+    /// Make `streamID` the stream being watched, as a streamStarted reply would.
+    func testSetActiveStreamID(_ streamID: UInt32?) { activeStreamID = streamID }
     func testNoteTyping(isTyping: Bool, chatID: String) {
         noteWatchedTypingStatus(isTyping: isTyping, chatID: chatID)
     }

@@ -192,6 +192,106 @@ final class CompanionStreamMessagesTests: XCTestCase {
         // the phone shows scrollback and never sends wheel input, exactly as before.
         XCTAssertFalse(config.altScreen)
         XCTAssertFalse(config.scrollWheelReporting)
+        // A host predating browser input omits isBrowser; the phone treats the
+        // stream as a terminal, exactly as before.
+        XCTAssertFalse(config.isBrowser)
+    }
+
+    func testStreamConfigRoundTripsIsBrowser() throws {
+        let original = CompanionStreamConfig(streamID: 7, generationId: 3, codecExtradata: Data([1, 2]),
+                                             pixelWidth: 800, pixelHeight: 500, scale: 2, columns: 0, rows: 0,
+                                             canResize: false, isBrowser: true)
+        let decoded = try decoder().decode(CompanionStreamConfig.self, from: try encoder().encode(original))
+        XCTAssertEqual(decoded, original)
+        XCTAssertTrue(decoded.isBrowser)
+    }
+
+    func testBrowserTapRoundTrip() throws {
+        guard case let .browserTap(streamID, x, y) =
+                try roundTripClient(.browserTap(streamID: 4, x: 10.5, y: 20.25)) else {
+            return XCTFail("expected .browserTap")
+        }
+        XCTAssertEqual(streamID, 4)
+        XCTAssertEqual(x, 10.5)
+        XCTAssertEqual(y, 20.25)
+    }
+
+    func testBrowserScrollRoundTrip() throws {
+        guard case let .browserScroll(streamID, x, y, deltaX, deltaY) =
+                try roundTripClient(.browserScroll(streamID: 4, x: 1, y: 2, deltaX: -3.5, deltaY: 40)) else {
+            return XCTFail("expected .browserScroll")
+        }
+        XCTAssertEqual(streamID, 4)
+        XCTAssertEqual(x, 1)
+        XCTAssertEqual(y, 2)
+        XCTAssertEqual(deltaX, -3.5)
+        XCTAssertEqual(deltaY, 40)
+    }
+
+    func testBrowserEditingChangedRoundTrip() throws {
+        for editing in [true, false] {
+            guard case let .browserEditingChanged(streamID, decoded) =
+                    try roundTripHost(.browserEditingChanged(streamID: 9, editing: editing)) else {
+                return XCTFail("expected .browserEditingChanged")
+            }
+            XCTAssertEqual(streamID, 9)
+            XCTAssertEqual(decoded, editing)
+        }
+    }
+
+    func testSessionSummaryRoundTripsIsBrowser() throws {
+        let original = CompanionSessionSummary(guid: "g", name: "Docs", subtitle: "", isBrowser: true)
+        let decoded = try decoder().decode(CompanionSessionSummary.self, from: try encoder().encode(original))
+        XCTAssertEqual(decoded, original)
+    }
+
+    /// A Mac that predates isBrowser omits it, and the session is a terminal.
+    func testSessionSummaryWithoutIsBrowserIsATerminal() throws {
+        let json = #"{"guid":"g","name":"zsh","subtitle":"~"}"#
+        let decoded = try decoder().decode(CompanionSessionSummary.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded, CompanionSessionSummary(guid: "g", name: "zsh", subtitle: "~"))
+    }
+
+    func testBrowserNavigationRequestsRoundTrip() throws {
+        guard case .browserGoBack(4) = try roundTripClient(.browserGoBack(streamID: 4)) else {
+            return XCTFail("expected .browserGoBack")
+        }
+        guard case .browserGoForward(4) = try roundTripClient(.browserGoForward(streamID: 4)) else {
+            return XCTFail("expected .browserGoForward")
+        }
+        guard case .browserReload(4) = try roundTripClient(.browserReload(streamID: 4)) else {
+            return XCTFail("expected .browserReload")
+        }
+        guard case .browserStopLoading(4) = try roundTripClient(.browserStopLoading(streamID: 4)) else {
+            return XCTFail("expected .browserStopLoading")
+        }
+        guard case let .browserLoad(streamID, text) =
+                try roundTripClient(.browserLoad(streamID: 4, text: "iterm2 “docs”")) else {
+            return XCTFail("expected .browserLoad")
+        }
+        XCTAssertEqual(streamID, 4)
+        XCTAssertEqual(text, "iterm2 “docs”")
+    }
+
+    func testBrowserNavigationChangedRoundTrip() throws {
+        let state = CompanionBrowserNavigationState(url: "https://iterm2.com/", title: "iTerm2",
+                                                    canGoBack: true, canGoForward: false, isLoading: true)
+        guard case let .browserNavigationChanged(streamID, decoded) =
+                try roundTripHost(.browserNavigationChanged(streamID: 9, state: state)) else {
+            return XCTFail("expected .browserNavigationChanged")
+        }
+        XCTAssertEqual(streamID, 9)
+        XCTAssertEqual(decoded, state)
+    }
+
+    /// Fields added to the navigation state later must not break an older phone,
+    /// and missing ones decode as empty or false.
+    func testBrowserNavigationStateDecodesLeniently() throws {
+        let json = #"{"url":"https://example.com/","futureField":1}"#
+        let decoded = try decoder().decode(CompanionBrowserNavigationState.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded, CompanionBrowserNavigationState(url: "https://example.com/", title: "",
+                                                                canGoBack: false, canGoForward: false,
+                                                                isLoading: false))
     }
 
     func testStreamConfigRoundTripsHistoryExtent() throws {

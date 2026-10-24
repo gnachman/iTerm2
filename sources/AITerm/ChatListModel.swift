@@ -418,7 +418,69 @@ class ChatListModel: ChatListDataSource {
         }
     }
 
+    struct SessionKindMismatchError: LocalizedError {
+        var linkingAsBrowser: Bool
+        var errorDescription: String? {
+            if linkingAsBrowser {
+                return String(localized: "ChatListModel.TerminalCannotBeBrowser",
+                              defaultValue: "A terminal session cannot be linked as a web browser.",
+                              comment: "Error shown when trying to link a terminal session to an AI chat in the web browser slot")
+            }
+            return String(localized: "ChatListModel.BrowserCannotBeTerminal",
+                          defaultValue: "A web browser session cannot be linked as a terminal.",
+                          comment: "Error shown when trying to link a web browser session to an AI chat in the terminal slot")
+        }
+    }
+
+    /// Whether `reference` (a guid or stableID) names a live browser session.
+    /// Returns nil when it does not resolve to a live session. A session never
+    /// changes kind, so a resolved answer stays correct for its lifetime.
+    static func isBrowserSession(reference: String) -> Bool? {
+        return iTermController.sharedInstance()?.anySession(forReference: reference)?.isBrowserSession()
+    }
+
+    /// Put each guid in the slot matching its session's kind, so a browser
+    /// session is never linked as a terminal (or vice versa), including when the
+    /// caller swapped them. A guid that does not resolve to a live session stays
+    /// in the slot the caller put it in unless a live session of that kind
+    /// claims the slot. `isBrowser` looks up a session's kind (nil if it is not
+    /// live); tests inject it.
+    static func sessionGuidsByKind(
+        terminal: String?,
+        browser: String?,
+        isBrowser: (String) -> Bool? = { isBrowserSession(reference: $0) }
+    ) -> (terminal: String?, browser: String?) {
+        // Classify each input once, against the original values.
+        let terminalKind = terminal.flatMap(isBrowser)
+        let browserKind = browser.flatMap(isBrowser)
+        let terminalResult: String?
+        if terminalKind == false {
+            terminalResult = terminal
+        } else if browserKind == false {
+            terminalResult = browser
+        } else if terminalKind == nil {
+            terminalResult = terminal
+        } else {
+            terminalResult = nil
+        }
+        let browserResult: String?
+        if browserKind == true {
+            browserResult = browser
+        } else if terminalKind == true {
+            browserResult = terminal
+        } else if browserKind == nil {
+            browserResult = browser
+        } else {
+            browserResult = nil
+        }
+        return (terminalResult, browserResult)
+    }
+
     func setTerminalGuid(for chatID: String, to guid: String?) throws {
+        if let guid, Self.isBrowserSession(reference: guid) == true {
+            DLog("Refusing to link browser session \(guid) as the terminal of chat \(chatID)")
+            throw SessionKindMismatchError(linkingAsBrowser: false)
+        }
         if let i = index(of: chatID) {
             if guid != nil {
                 it_assert(chatStorage[i].orchestrationEnabled == false,
@@ -431,6 +493,10 @@ class ChatListModel: ChatListDataSource {
     }
 
     func setBrowserGuid(for chatID: String, to guid: String?) throws {
+        if let guid, Self.isBrowserSession(reference: guid) == false {
+            DLog("Refusing to link terminal session \(guid) as the browser of chat \(chatID)")
+            throw SessionKindMismatchError(linkingAsBrowser: true)
+        }
         if let i = index(of: chatID) {
             if guid != nil {
                 it_assert(chatStorage[i].orchestrationEnabled == false,

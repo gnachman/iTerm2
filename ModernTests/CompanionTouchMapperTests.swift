@@ -140,4 +140,18 @@ final class CompanionTouchMapperTests: XCTestCase {
         XCTAssertEqual(p.column, 0)
         XCTAssertEqual(p.absLine, 77)
     }
+
+    // A browser stream has no cell geometry; taps map straight to image pixels.
+    func testStaticImagePointUndoesLetterboxWithoutGeometry() {
+        // A 1000x500 image in a 400x400 view is scaled by 0.4 to 400x200 and
+        // centered vertically (100 points of bar above and below).
+        let imageSize = CGSize(width: 1000, height: 500)
+        let viewSize = CGSize(width: 400, height: 400)
+        let point = CompanionTouchMapper.imagePoint(viewPoint: CGPoint(x: 200, y: 150),
+                                                    viewSize: viewSize,
+                                                    imageSize: imageSize)
+        XCTAssertEqual(point, CGPoint(x: 500, y: 125))
+        XCTAssertEqual(CompanionTouchMapper.imagePixelsPerViewPoint(viewSize: viewSize, imageSize: imageSize), 2.5)
+        XCTAssertNil(CompanionTouchMapper.imagePoint(viewPoint: .zero, viewSize: viewSize, imageSize: .zero))
+    }
 }
