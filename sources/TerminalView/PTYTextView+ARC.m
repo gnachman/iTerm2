@@ -632,7 +632,7 @@ iTermCommandInfoViewControllerDelegate>
                                            date:date
                                       directory:directory
                                      remoteHost:remoteHost
-                                     outputSize:[self.dataSource numberOfCellsUsedInRange:lineRange]
+                                     outputSize:[self.dataSource numberOfCellsUsedInOutputForCommandMark:mark]
                                     outputLines:[self.dataSource numberOfRawLinesInRange:lineRange]
                                   outputPromise:outputPromise
                                  outputProgress:outputProgress
