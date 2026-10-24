@@ -661,6 +661,10 @@ Bug Fixes:
   with “Failed to copy file” after using SSH
   Integration. Temporary connection files it
   could not copy are now skipped.
+- Shell > SSH > Disconnect now recovers an SSH
+  Integration session whose local it2ssh process
+  was killed. Previously the session stopped
+  showing output and ignored input.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.

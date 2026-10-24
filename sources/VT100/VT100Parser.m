@@ -90,6 +90,20 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
     }
 }
 
+- (BOOL)forceUnhookDCSReturningSuccess:(NSString *)uniqueID {
+    @synchronized (self) {
+        if (!uniqueID.length || ![_controlParser shouldUnhook:uniqueID]) {
+            return NO;
+        }
+        _dcsHooked = NO;
+        [_controlParser unhookDCS];
+        // Match SSH_UNHOOK so stale per-pid parsers don't capture a later session's output.
+        [_sshParsers removeAllObjects];
+        _mainSSHParserPID = -1;
+        return YES;
+    }
+}
+
 - (BOOL)addNextParsedTokensToVector:(CVector *)vector
                   nonSignalingCount:(out int *)nonSignalingCountPtr {
     *nonSignalingCountPtr = 0;
