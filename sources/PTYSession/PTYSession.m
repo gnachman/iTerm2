@@ -4791,6 +4791,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_screen threadedReadTask:buffer length:length];
 }
 
+- (BOOL)taskHasReadCapacity {
+    return [_screen threadedHasTokenCapacity];
+}
+
+- (void)taskNotifyWhenReadCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block {
+    [_screen threadedNotifyWhenTokenCapacityAvailableOnQueue:queue block:block];
+}
+
 - (BOOL)haveResizedRecently {
     const NSTimeInterval kGracePeriodAfterResize = 0.25;
     return [NSDate timeIntervalSinceReferenceDate] < _lastResize + kGracePeriodAfterResize;

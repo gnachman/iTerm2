@@ -1948,6 +1948,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return atomic_load_explicit(&_bytesReceived, memory_order_relaxed);
 }
 
+- (BOOL)threadedHasTokenCapacity {
+    return _mutableState.tokenExecutor.hasTokenCapacity;
+}
+
+- (void)threadedNotifyWhenTokenCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block {
+    [_mutableState.tokenExecutor notifyWhenTokenCapacityAvailableOnQueue:queue block:block];
+}
+
 - (long long)lastPromptLine {
     return _state.lastPromptLine;
 }

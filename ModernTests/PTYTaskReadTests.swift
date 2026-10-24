@@ -34,6 +34,8 @@ private final class RecordingTaskDelegate: NSObject, PTYTaskDelegate {
     func taskMuteCoprocessDidChange(_ task: PTYTask!, hasMuteCoprocess: Bool) {}
     func taskDidResize(to gridSize: VT100GridSize, pixelSize: NSSize) {}
     func taskDidReadFromCoprocessWhileSSHIntegration(inUse data: Data!) {}
+    func taskHasReadCapacity() -> Bool { true }
+    func taskNotifyWhenReadCapacityAvailable(on queue: DispatchQueue!, block: (() -> Void)!) {}
 }
 
 final class PTYTaskReadTests: XCTestCase {

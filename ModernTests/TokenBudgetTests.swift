@@ -96,6 +96,26 @@ final class TokenBudgetTests: XCTestCase {
         XCTAssertEqual(calls.value, 2)
     }
 
+    // A reader that stopped (for example, a session's previous task) can leave a handler pending.
+    // Registering a new one replaces it and wakes the old one, so neither waiter is stranded.
+    func testRegisteringAgainWakesThePreviousHandler() {
+        let budget = TokenBudget(capacity: 2)
+        XCTAssertTrue(budget.tryAcquire())
+        XCTAssertTrue(budget.tryAcquire())
+        let first = Counter()
+        let second = Counter()
+        budget.notifyWhenCapacityAvailable(on: handlerQueue) { first.value += 1 }
+        budget.notifyWhenCapacityAvailable(on: handlerQueue) { second.value += 1 }
+        drainHandlers()
+        XCTAssertEqual(first.value, 1)
+        XCTAssertEqual(second.value, 0)
+
+        budget.release()
+        drainHandlers()
+        XCTAssertEqual(first.value, 1)
+        XCTAssertEqual(second.value, 1)
+    }
+
     // The handler is never called inline: releases happen while the executor holds locks.
     func testHandlerIsNotCalledInline() {
         let budget = TokenBudget(capacity: 2)

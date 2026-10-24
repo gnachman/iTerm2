@@ -291,6 +291,10 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)threadedReadTask:(char *)buffer length:(int)length;
 // Bytes read from the task so far, for the flow control monitor's receive rate. Safe on any thread.
 - (long long)bytesReceived;
+// Any thread. Whether -threadedReadTask:length: would return without blocking.
+- (BOOL)threadedHasTokenCapacity;
+// Any thread. Runs `block` asynchronously on `queue` once there may be token capacity again.
+- (void)threadedNotifyWhenTokenCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block;
 
 - (void)destructivelySetScreenWidth:(int)width
                              height:(int)height

@@ -64,12 +64,17 @@ final class TokenBudget {
 
     // Any thread. Runs `block` asynchronously on `queue` once usage drops to the low watermark, or
     // right away if it is already there. Releases happen while the executor holds locks and in the
-    // middle of executing tokens, so the block is never called inline. At most one block may be
-    // pending at a time.
+    // middle of executing tokens, so the block is never called inline.
+    //
+    // Only one block is kept. Registering another runs the pending one right away, so a block may
+    // run while there is still no capacity and must check again. A reader that stopped (such as a
+    // session's previous task) can leave a block behind, and the next reader must not be stranded
+    // by it.
     func notifyWhenCapacityAvailable(on queue: DispatchQueue, _ block: @escaping () -> Void) {
         state.sync { state in
-            it_assert(state.capacityAvailableHandler == nil,
-                      "A capacity-available handler is already pending")
+            if let previous = state.capacityAvailableHandler {
+                previous.queue.async(execute: previous.block)
+            }
             state.capacityAvailableHandler = (queue, block)
             dispatchHandlerIfBelowWatermark(&state)
         }

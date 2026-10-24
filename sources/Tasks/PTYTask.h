@@ -43,6 +43,11 @@
 - (void)taskDidResizeToGridSize:(VT100GridSize)gridSize pixelSize:(NSSize)pixelSize;
 - (void)taskDidReadFromCoprocessWhileSSHIntegrationInUse:(NSData *)data;
 
+// Any thread. Whether -threadedReadTask:length: would return without blocking.
+- (BOOL)taskHasReadCapacity;
+// Any thread. Runs `block` asynchronously on `queue` once there may be capacity again.
+- (void)taskNotifyWhenReadCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block;
+
 @end
 
 typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {

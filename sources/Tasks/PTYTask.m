@@ -150,7 +150,7 @@ static void HandleSigChld(int n) {
         _paused = paused;
     }
     // Start/stop selecting on our FD
-    [[TaskNotifier sharedInstance] unblock];
+    [[TaskNotifier sharedInstance] unblockTask:self];
     [_delegate taskDidChangePaused:self paused:paused];
 }
 
@@ -225,7 +225,7 @@ static void HandleSigChld(int n) {
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf.delegate taskMuteCoprocessDidChange:self hasMuteCoprocess:self.hasMuteCoprocess];
     });
-    [[TaskNotifier sharedInstance] unblock];
+    [[TaskNotifier sharedInstance] unblockTask:self];
 }
 
 - (BOOL)writeBufferHasRoom {
@@ -397,7 +397,7 @@ static void HandleSigChld(int n) {
     assert(!jobManager || !self.jobManager.isReadOnly);
     [writeLock lock];
     [writeBuffer appendData:data];
-    [[TaskNotifier sharedInstance] unblock];
+    [[TaskNotifier sharedInstance] unblockTask:self];
     [writeLock unlock];
 }
 
@@ -541,6 +541,7 @@ static void HandleSigChld(int n) {
         coprocess_ = nil;
         self.hasMuteCoprocess = NO;
     }
+    [[TaskNotifier sharedInstance] unblockTask:self];
     [self.delegate taskMuteCoprocessDidChange:self hasMuteCoprocess:self.hasMuteCoprocess];
 
     if (thePid) {
@@ -931,13 +932,31 @@ static void HandleSigChld(int n) {
     return hasOutput;
 }
 
+- (BOOL)hasReadCapacity {
+    id<PTYTaskDelegate> delegate = self.delegate;
+    if (!delegate) {
+        // What is read goes nowhere, so it can't back up.
+        return YES;
+    }
+    return [delegate taskHasReadCapacity];
+}
+
+- (void)notifyWhenReadCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block {
+    id<PTYTaskDelegate> delegate = self.delegate;
+    if (!delegate) {
+        dispatch_async(queue, block);
+        return;
+    }
+    [delegate taskNotifyWhenReadCapacityAvailableOnQueue:queue block:block];
+}
+
 // Safe from any thread. On the TaskNotifier thread, prefer appendToCoprocessOutputBuffer:, which
 // skips the unneeded wakeup.
 - (void)writeToCoprocess:(NSData *)data {
     [self appendToCoprocessOutputBuffer:data];
     // The notifier only selects on the coprocess for writing when it has output, so wake it up
     // to notice the new data.
-    [[TaskNotifier sharedInstance] unblock];
+    [[TaskNotifier sharedInstance] unblockTask:self];
 }
 
 - (void)appendToCoprocessOutputBuffer:(NSData *)data {

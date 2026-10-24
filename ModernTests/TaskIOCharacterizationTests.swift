@@ -107,14 +107,20 @@ private final class Signal {
 // A pty in raw mode. The fake task owns the master; the test plays the role of the child on the
 // slave.
 private final class RawPTY {
+    private static let openptyLock = NSLock()
     let master: Int32
     private(set) var slave: Int32
 
     init() throws {
         var master: Int32 = -1
         var slave: Int32 = -1
-        guard openpty(&master, &slave, nil, nil, nil) == 0 else {
-            throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
+        // openpty occasionally fails (errno -6) when several threads call it at once.
+        Self.openptyLock.lock()
+        let rc = openpty(&master, &slave, nil, nil, nil)
+        let error = errno
+        Self.openptyLock.unlock()
+        guard rc == 0 else {
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(error))
         }
         var attributes = termios()
         tcgetattr(slave, &attributes)
@@ -239,6 +245,12 @@ private final class FakeTask: NSObject, iTermTask {
     private var _didRegisterOnMain = true
     private var _readGate: DispatchSemaphore?
     private var _isBlockedInRead = false
+    // Stands in for the session's TokenExecutor. Each read that delivers bytes takes a slot.
+    private var _budget: TokenBudget?
+    // Reads that found the budget full. Delivering them would have blocked a real session.
+    private var _readsWithoutCapacity = 0
+    private var _consumer: DispatchQueue?
+    private var _slotsTaken = 0
 
     init(fd: Int32, notifier: TaskNotifier, pidToWaitOn: pid_t = 0) {
         self.fd = fd
@@ -258,6 +270,15 @@ private final class FakeTask: NSObject, iTermTask {
         locked { _wantsRead = value }
     }
 
+    // Reads take slots from `budget`. If `consumer` is given, each slot is released on it, like a
+    // TokenExecutor executing what was read. Otherwise the test releases them.
+    func setBudget(_ budget: TokenBudget?, consumer: DispatchQueue? = nil) {
+        locked {
+            _budget = budget
+            _consumer = consumer
+        }
+    }
+
     // While set, processRead blocks until the semaphore is signaled.
     func setReadGate(_ gate: DispatchSemaphore?) {
         locked { _readGate = gate }
@@ -272,10 +293,45 @@ private final class FakeTask: NSObject, iTermTask {
     var writeBufferCount: Int { locked { _writeBuffer.count } }
     var isBlockedInRead: Bool { locked { _isBlockedInRead } }
     var writeBufferIsEmpty: Bool { locked { _writeBuffer.isEmpty } }
+    var readsWithoutCapacity: Int { locked { _readsWithoutCapacity } }
+    // Reads that took a budget slot.
+    var slotsTaken: Int { locked { _slotsTaken } }
+
+    @discardableResult
+    func waitForSlotsTaken(_ count: Int, file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        return signal.wait(file: file, line: line) { slotsTaken >= count }
+    }
+
+    @discardableResult
+    func waitForCoprocessRemoved(file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        return signal.wait(file: file, line: line) { coprocess == nil }
+    }
+
+    // Like -[PTYTask stopCoprocess]. Returns the pid handed over for reaping, if any.
+    @discardableResult
+    func stopCoprocess() -> pid_t? {
+        objc_sync_enter(self)
+        let copro = coprocess
+        let pid = copro?.pid ?? -1
+        copro?.terminate()
+        coprocess = nil
+        objc_sync_exit(self)
+        notifier?.unblockTask(self)
+        guard pid > 0 else {
+            return nil
+        }
+        notifier?.wait(forPid: pid)
+        return pid
+    }
 
     @discardableResult
     func waitForReceived(count: Int, file: StaticString = #filePath, line: UInt = #line) -> Bool {
         return signal.wait(file: file, line: line) { locked { _received.count >= count } }
+    }
+
+    @discardableResult
+    func waitForReadCalls(_ count: Int, file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        return signal.wait(file: file, line: line) { readCalls >= count }
     }
 
     @discardableResult
@@ -297,7 +353,7 @@ private final class FakeTask: NSObject, iTermTask {
 
     var coprocess: Coprocess! {
         get { locked { _coprocess } }
-        set { locked { _coprocess = newValue } }
+        set { signal.notify { locked { _coprocess = newValue } } }
     }
 
     var hasCoprocess: Bool { coprocess != nil }
@@ -344,6 +400,18 @@ private final class FakeTask: NSObject, iTermTask {
             let copro = coprocess
             signal.notify {
                 locked {
+                    if let _budget, bytesRead > 0 {
+                        if !_budget.tryAcquire() {
+                            _readsWithoutCapacity += 1
+                        } else {
+                            _slotsTaken += 1
+                            if let _consumer {
+                                _consumer.async {
+                                    _budget.release()
+                                }
+                            }
+                        }
+                    }
                     _readCalls += 1
                     if bytesRead == 0 {
                         _zeroLengthReads += 1
@@ -397,7 +465,19 @@ private final class FakeTask: NSObject, iTermTask {
 
     func write(_ data: Data!, coprocess: Bool) {
         locked { _writeBuffer.append(data) }
-        notifier?.unblock()
+        notifier?.unblockTask(self)
+    }
+
+    var hasReadCapacity: Bool {
+        locked { _budget?.hasCapacity ?? true }
+    }
+
+    func notifyWhenReadCapacityAvailable(on queue: DispatchQueue!, block: (() -> Void)!) {
+        if let budget = locked({ _budget }) {
+            budget.notifyWhenCapacityAvailable(on: queue, block)
+        } else {
+            queue.async(execute: block)
+        }
     }
 
     func didRegister() {
@@ -431,6 +511,21 @@ class TaskIOCharacterizationTests: XCTestCase {
         return nil
     }
 
+    // Subclasses override this to use another implementation.
+    fileprivate func makeNotifier(coprocessChangeHandler: @escaping () -> Void,
+                                  reaper: ((pid_t) -> Void)?) -> TaskNotifier {
+        return TaskNotifier(forTestingWithSelect: probe.select,
+                            coprocessChangeHandler: coprocessChangeHandler,
+                            reaper: reaper)
+    }
+
+    // Returns once the notifier has handled everything that was ready when this was called, and
+    // has stopped using the file descriptors of tasks deregistered before it was called.
+    @discardableResult
+    fileprivate func flush(file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        return probe.flush(notifier, file: file, line: line)
+    }
+
     override func setUp() {
         super.setUp()
         probe = SelectProbe()
@@ -444,8 +539,7 @@ class TaskIOCharacterizationTests: XCTestCase {
             }
         }
         let reapPid: ((pid_t) -> Void)? = reaper.map { reaper in { pid in reaper.reap(pid) } }
-        notifier = TaskNotifier(forTestingWithSelect: probe.select,
-                                coprocessChangeHandler: { [weak self] in
+        notifier = makeNotifier(coprocessChangeHandler: { [weak self] in
             guard let self else { return }
             coprocessChangeSignal.notify { self.coprocessChanges += 1 }
         },
@@ -462,11 +556,11 @@ class TaskIOCharacterizationTests: XCTestCase {
     }
 
     // Deregisters and waits for the loop to stop using the task, so its fd can be closed safely.
-    private func deregisterAndFlush(_ tasks: FakeTask..., file: StaticString = #filePath, line: UInt = #line) {
+    fileprivate func deregisterAndFlush(_ tasks: FakeTask..., file: StaticString = #filePath, line: UInt = #line) {
         for task in tasks {
             notifier.deregister(task)
         }
-        XCTAssertTrue(probe.flush(notifier, file: file, line: line))
+        XCTAssertTrue(flush(file: file, line: line))
     }
 
     // Waits for a child to exit without reaping it. The notifier may already have reaped it (its
@@ -490,7 +584,7 @@ class TaskIOCharacterizationTests: XCTestCase {
             }
         } else {
             // The dead pool is polled at the top of every iteration.
-            XCTAssertTrue(probe.flush(notifier, file: file, line: line))
+            XCTAssertTrue(flush(file: file, line: line))
         }
         assertReaped(pid, file: file, line: line)
     }
@@ -503,7 +597,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         XCTAssertEqual(error, ESRCH, file: file, line: line)
     }
 
-    private func makeTask(pidToWaitOn: pid_t = 0) throws -> (FakeTask, RawPTY) {
+    fileprivate func makeTask(pidToWaitOn: pid_t = 0) throws -> (FakeTask, RawPTY) {
         let pty = try RawPTY()
         let task = FakeTask(fd: pty.master, notifier: notifier, pidToWaitOn: pidToWaitOn)
         return (task, pty)
@@ -532,14 +626,14 @@ class TaskIOCharacterizationTests: XCTestCase {
         notifier.register(task)
         notifier.deregister(task)
         notifier.deregister(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         withExtendedLifetime(pty) {}
     }
 
     func testDeregisterNeverRegisteredIsHarmless() throws {
         let (task, pty) = try makeTask()
         notifier.deregister(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         withExtendedLifetime(pty) {}
     }
 
@@ -550,21 +644,21 @@ class TaskIOCharacterizationTests: XCTestCase {
         let (task, pty) = try makeTask()
         notifier.register(task)
         notifier.register(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         // Small enough for the tty to queue in one piece and for one processRead to drain, so a
         // second read in the same iteration would show up as a zero-length read.
         let expected = pattern(count: 50)
         pty.writeToSlave(expected)
         XCTAssertTrue(task.waitForReceived(count: expected.count))
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(task.received, expected)
         XCTAssertEqual(task.readCalls, 1)
         XCTAssertEqual(task.zeroLengthReads, 0)
 
         notifier.deregister(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         pty.writeToSlave(Data("x".utf8))
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(task.readCalls, 1, "One deregister removes a task that was registered twice")
     }
 
@@ -601,14 +695,14 @@ class TaskIOCharacterizationTests: XCTestCase {
         let (task, pty) = try makeTask()
         task.setWantsRead(false)
         notifier.register(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         pty.writeToSlave(Data("hello".utf8))
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(task.readCalls, 0)
 
         // Like -[PTYTask setPaused:NO], the task changes its answer and unblocks.
         task.setWantsRead(true)
-        notifier.unblock()
+        notifier.unblockTask(task)
         XCTAssertTrue(task.waitForReceived(count: 5))
         XCTAssertEqual(task.received, Data("hello".utf8))
         deregisterAndFlush(task)
@@ -651,7 +745,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         // Failed calls count as entries, so this returns only after all three have been consumed.
         // Every errno takes the same path (skip the rest of the iteration). Receiving data below
         // shows the loop went on to make a real call.
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(probe.pendingFailures, 0)
         pty.writeToSlave(Data("hello".utf8))
         XCTAssertTrue(task.waitForReceived(count: 5))
@@ -695,7 +789,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         // because select reports the master writable whenever there is room.
         var remaining = task.writeBufferCount
         while true {
-            XCTAssertTrue(probe.flush(notifier))
+            XCTAssertTrue(flush())
             let now = task.writeBufferCount
             if now == remaining {
                 break
@@ -720,10 +814,10 @@ class TaskIOCharacterizationTests: XCTestCase {
     func testSlaveCloseCausesBrokenPipe() throws {
         let (task, pty) = try makeTask()
         notifier.register(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         pty.closeSlave()
         XCTAssertTrue(task.waitForBrokenPipe())
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(task.brokenPipeCalls, 1)
     }
 
@@ -744,7 +838,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         notifier.register(task)
         close(fds[1])
         XCTAssertTrue(task.waitForBrokenPipe())
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(task.brokenPipeCalls, 1)
         XCTAssertEqual(task.zeroLengthReads, 0)
     }
@@ -766,7 +860,7 @@ class TaskIOCharacterizationTests: XCTestCase {
     func testWaitForPidReapsChildThatExitsLater() throws {
         let pid = try spawn("/bin/cat", [], stdin: .pipe)
         notifier.wait(forPid: pid.pid)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(kill(pid.pid, 0), 0, "Still running")
 
         // Kill it rather than relying on EOF on stdin, which another process could hold open.
@@ -796,7 +890,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         waitForExitWithoutReaping(pid)
 
         notifier.wait(forPid: 0)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
         XCTAssertEqual(kill(pid, 0), 0, "The zombie must not have been reaped")
 
         var status: Int32 = 0
@@ -812,7 +906,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         let pid = cat.pid
         task.coprocess = cat
         notifier.register(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
 
         // While the coprocess is alive the loop can't see its EOF, so only deregistration hands
         // it over for reaping.
@@ -858,7 +952,7 @@ class TaskIOCharacterizationTests: XCTestCase {
         let pid = cat.pid
         task.coprocess = cat
         notifier.register(task)
-        XCTAssertTrue(probe.flush(notifier))
+        XCTAssertTrue(flush())
 
         kill(pid, SIGKILL)
         XCTAssertTrue(coprocessChangeSignal.wait { self.coprocessChanges > 0 })
@@ -979,7 +1073,7 @@ class TaskIOCharacterizationTests: XCTestCase {
 
     // A coprocess running cat, wired like +[Coprocess launchedCoprocessWithCommand:environment:]
     // but without touching user defaults.
-    private func makeCatCoprocess() throws -> Coprocess {
+    fileprivate func makeCatCoprocess() throws -> Coprocess {
         return try makeCoprocess("/bin/cat", [])
     }
 
@@ -1025,7 +1119,7 @@ class TaskIOCharacterizationTests: XCTestCase {
 }
 
 // Runs every test above with a ChildReaper doing the reaping instead of the dead pool.
-final class TaskIOCharacterizationWithChildReaperTests: TaskIOCharacterizationTests {
+class TaskIOCharacterizationWithChildReaperTests: TaskIOCharacterizationTests {
     fileprivate override func makeReaper(didReap: @escaping (pid_t, Bool) -> Void) -> ChildReaper? {
         return ChildReaper(didReap: didReap)
     }
@@ -1160,6 +1254,552 @@ final class TaskIOCharacterizationWithChildReaperTests: TaskIOCharacterizationTe
         assertEventuallyReaped(marker)
         reapSignal.notify {
             XCTAssertEqual(reapedPids, [marker])
+        }
+    }
+}
+
+// Runs every test above with task I/O monitors instead of the select loop.
+final class TaskIOMonitorCharacterizationTests: TaskIOCharacterizationWithChildReaperTests {
+    fileprivate override func makeNotifier(coprocessChangeHandler: @escaping () -> Void,
+                                           reaper: ((pid_t) -> Void)?) -> TaskNotifier {
+        return TaskNotifier(forTestingWithTaskIOMonitorsAndCoprocessChangeHandler: coprocessChangeHandler,
+                            reaper: reaper)
+    }
+
+    @discardableResult
+    fileprivate override func flush(file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        let ok = notifier.flushForTesting(withTimeout: timeout)
+        XCTAssertTrue(ok, "Monitors did not become idle", file: file, line: line)
+        return ok
+    }
+
+    override func testFailedSelectIsRetried() throws {
+        throw XCTSkip("There is no select loop")
+    }
+
+    override func testBlockedReadStallsOtherTasks() throws {
+        throw XCTSkip("See testBlockedReadDoesNotStallOtherTasks")
+    }
+
+    // Each task has its own queue, so a task blocked in processRead doesn't hold up another.
+    func testBlockedReadDoesNotStallOtherTasks() throws {
+        let (blocker, blockerPTY) = try makeTask()
+        let (other, otherPTY) = try makeTask()
+        let gate = DispatchSemaphore(value: 0)
+        blocker.setReadGate(gate)
+        notifier.register(blocker)
+        notifier.register(other)
+
+        blockerPTY.writeToSlave(Data("a".utf8))
+        XCTAssertTrue(blocker.waitUntilBlockedInRead())
+        otherPTY.writeToSlave(Data("b".utf8))
+        XCTAssertTrue(other.waitForReceived(count: 1))
+        XCTAssertTrue(blocker.isBlockedInRead)
+
+        blocker.setReadGate(nil)
+        gate.signal()
+        XCTAssertTrue(blocker.waitForReceived(count: 1))
+        deregisterAndFlush(blocker, other)
+    }
+
+    // When the task can't take more input, the monitor stops reading instead of blocking, and
+    // starts again once there is room.
+    func testFullBudgetStopsReadingUntilThereIsRoom() throws {
+        let (task, pty) = try makeTask()
+        let budget = TokenBudget(capacity: 2)
+        task.setBudget(budget)
+        notifier.register(task)
+        // Wait for each read so every byte takes a slot of its own.
+        pty.writeToSlave(Data("a".utf8))
+        XCTAssertTrue(task.waitForReceived(count: 1))
+        pty.writeToSlave(Data("b".utf8))
+        XCTAssertTrue(task.waitForReceived(count: 2))
+        XCTAssertFalse(budget.hasCapacity)
+
+        pty.writeToSlave(Data("c".utf8))
+        // Flushing waits for the monitor to handle the readable fd, which it does by not reading.
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.received, Data("ab".utf8))
+
+        // One of two slots in use is the low watermark.
+        budget.release()
+        XCTAssertTrue(task.waitForReceived(count: 3))
+        XCTAssertEqual(task.received, Data("abc".utf8))
+        XCTAssertEqual(task.readsWithoutCapacity, 0)
+        deregisterAndFlush(task)
+    }
+
+    // A flood with a consumer that stops and starts loses and reorders nothing, and never reads
+    // without room for what it reads.
+    func testFloodWithStalledConsumer() throws {
+        let (task, pty) = try makeTask()
+        let budget = TokenBudget(capacity: 4)
+        let consumer = DispatchQueue(label: "TaskIOMonitorCharacterizationTests.consumer")
+        consumer.suspend()
+        task.setBudget(budget, consumer: consumer)
+        notifier.register(task)
+
+        let expected = pattern(count: 256 * 1024)
+        let written = expectation(description: "written")
+        DispatchQueue.global().async {
+            pty.writeToSlave(expected)
+            written.fulfill()
+        }
+        // The consumer isn't running, so reading stops once the budget is full.
+        XCTAssertTrue(task.waitForReadCalls(4))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.readCalls, 4)
+        XCTAssertLessThan(task.received.count, expected.count)
+
+        consumer.resume()
+        XCTAssertTrue(task.waitForReceived(count: expected.count))
+        wait(for: [written], timeout: timeout)
+        XCTAssertEqual(task.received, expected)
+        XCTAssertEqual(task.readsWithoutCapacity, 0)
+        deregisterAndFlush(task)
+    }
+
+    // A monitor cancelled while it waits for room must resume its read source before cancelling
+    // it, or the source's cancel handler never runs and the flush times out.
+    func testDeregisterWhileWaitingForRoom() throws {
+        let (task, pty) = try makeTask()
+        let budget = TokenBudget(capacity: 1)
+        task.setBudget(budget)
+        notifier.register(task)
+        pty.writeToSlave(Data("a".utf8))
+        XCTAssertTrue(task.waitForReceived(count: 1))
+        pty.writeToSlave(Data("b".utf8))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.readCalls, 1)
+
+        deregisterAndFlush(task)
+        budget.release()
+        XCTAssertEqual(task.received, Data("a".utf8))
+    }
+
+    // A session's next task (as after a restart) can wait on a budget its previous task left full
+    // while waiting for room.
+    func testNewTaskCanWaitOnABudgetLeftFull() throws {
+        let budget = TokenBudget(capacity: 1)
+        let (old, oldPTY) = try makeTask()
+        old.setBudget(budget)
+        notifier.register(old)
+        oldPTY.writeToSlave(Data("a".utf8))
+        XCTAssertTrue(old.waitForReceived(count: 1))
+        oldPTY.writeToSlave(Data("b".utf8))
+        XCTAssertTrue(flush())
+        deregisterAndFlush(old)
+
+        let (new, newPTY) = try makeTask()
+        new.setBudget(budget)
+        notifier.register(new)
+        newPTY.writeToSlave(Data("c".utf8))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(new.readCalls, 0)
+
+        budget.release()
+        XCTAssertTrue(new.waitForReceived(count: 1))
+        XCTAssertEqual(new.received, Data("c".utf8))
+        deregisterAndFlush(new)
+        XCTAssertEqual(old.received, Data("a".utf8))
+    }
+}
+
+// MARK: - Stress
+
+// A deterministic random number generator, so a failing run can be reproduced from its seed (as
+// far as thread scheduling allows).
+private struct SplitMix64: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
+    }
+
+    mutating func data(count: Int) -> Data {
+        var result = Data(count: count)
+        result.withUnsafeMutableBytes { buffer in
+            for i in 0..<buffer.count {
+                buffer[i] = UInt8(truncatingIfNeeded: next())
+            }
+        }
+        return result
+    }
+}
+
+// Runs a block on a thread of its own. The stress test's helpers block, and blocking GCD's worker
+// threads could starve the monitors' queues.
+private final class TestThread {
+    private let done = DispatchSemaphore(value: 0)
+
+    init(_ name: String, _ block: @escaping () -> Void) {
+        let thread = Thread { [done] in
+            block()
+            done.signal()
+        }
+        thread.name = name
+        thread.start()
+    }
+
+    // Waits up to `deadline`, which defaults to the per-wait timeout. Pass .distantFuture for a
+    // thread that does many waits, each with its own deadline.
+    func join(until deadline: DispatchTime? = nil, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertEqual(done.wait(timeout: deadline ?? .now() + timeout),
+                       .success,
+                       "Thread did not finish",
+                       file: file,
+                       line: line)
+    }
+}
+
+// Writes to a non-blocking fd until everything is written or stop() is called, whichever is
+// first. Unlike RawPTY.writeToSlave, it can be abandoned while nothing is reading.
+private final class StoppableWriter {
+    private var stopPipe: [Int32] = [-1, -1]
+
+    init() {
+        _ = pipe(&stopPipe)
+    }
+
+    deinit {
+        close(stopPipe[0])
+        close(stopPipe[1])
+    }
+
+    func stop() {
+        var byte: UInt8 = 0
+        _ = Darwin.write(stopPipe[1], &byte, 1)
+    }
+
+    func write(_ data: Data, to fd: Int32) {
+        data.withUnsafeBytes { buffer in
+            var offset = 0
+            while offset < buffer.count {
+                let n = Darwin.write(fd, buffer.baseAddress! + offset, buffer.count - offset)
+                if n > 0 {
+                    offset += n
+                    continue
+                }
+                if n < 0 && errno == EINTR {
+                    continue
+                }
+                guard n < 0 && errno == EAGAIN else {
+                    XCTFail("write failed: \(errno)")
+                    return
+                }
+                var fds = [pollfd(fd: fd, events: Int16(POLLOUT), revents: 0),
+                           pollfd(fd: stopPipe[0], events: Int16(POLLIN), revents: 0)]
+                if poll(&fds, 2, -1) < 0 && errno != EINTR {
+                    XCTFail("poll failed: \(errno)")
+                    return
+                }
+                if fds[1].revents != 0 {
+                    return
+                }
+            }
+        }
+    }
+}
+
+extension TaskIOMonitorCharacterizationTests {
+    private enum StressPhase: CaseIterable {
+        case bulkRead
+        case trickleRead
+        case bulkWrite
+        case duplex
+        case pausedRead
+        case stalledConsumer
+        case coprocessEcho
+        case coprocessExits
+    }
+
+    private enum StressEnding: CaseIterable {
+        case deregister
+        case endOfFile
+        case deregisterDuringTraffic
+    }
+
+    // Many tasks at once, each running a random series of phases that read, write, pause, stall
+    // the consumer, and add and remove coprocesses, then ending in a random way. Meanwhile another
+    // thread registers and deregisters tasks as fast as it can, and idle tasks sit registered
+    // throughout. Every byte in each direction is checked.
+    //
+    // Raise the constants below for a longer soak.
+    func testStress() throws {
+        let seed: UInt64 = 0x5EED_7A51
+        let rounds = 3
+        let workersPerRound = 8
+        let phasesPerWorker = 6
+        print("TaskIOMonitor stress test seed: \(String(seed, radix: 16))")
+
+        // These should never be read from, and their monitors are neighbors of the busy ones.
+        var idle = [(FakeTask, RawPTY)]()
+        for _ in 0..<16 {
+            let (task, pty) = try makeTask()
+            notifier.register(task)
+            idle.append((task, pty))
+        }
+
+        for round in 0..<rounds {
+            var threads = [TestThread]()
+            for worker in 0..<workersPerRound {
+                let workerSeed = seed &+ UInt64(round * 1000 + worker)
+                threads.append(TestThread("stress worker \(round).\(worker)") { [self] in
+                    var rng = SplitMix64(seed: workerSeed)
+                    runStressWorker(phases: phasesPerWorker, rng: &rng)
+                })
+            }
+            let churnSeed = seed &+ UInt64(round * 1000 + 999)
+            threads.append(TestThread("stress churn \(round)") { [self] in
+                var rng = SplitMix64(seed: churnSeed)
+                churnRegistrations(count: 100, rng: &rng)
+            })
+            // Every blocking step in a worker has its own deadline, so it always finishes.
+            threads.forEach { $0.join(until: .distantFuture) }
+        }
+
+        for (task, pty) in idle {
+            XCTAssertEqual(task.readCalls, 0)
+            deregisterAndFlush(task)
+            withExtendedLifetime(pty) {}
+        }
+    }
+
+    private func flush(_ task: FakeTask, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(notifier.flushForTesting(task: task, timeout: timeout),
+                      "Monitor did not become idle",
+                      file: file,
+                      line: line)
+    }
+
+    private func runStressWorker(phases: Int, rng: inout SplitMix64) {
+        let task: FakeTask
+        let pty: RawPTY
+        do {
+            (task, pty) = try makeTask()
+        } catch {
+            XCTFail("makeTask failed: \(error)")
+            return
+        }
+        notifier.register(task)
+        defer {
+            // Harmless if already deregistered. Keeps an early return from leaving a monitor on
+            // fds that are about to be closed and reused by other workers.
+            notifier.deregister(task)
+            flush(task)
+            withExtendedLifetime(pty) {}
+        }
+        // Everything written to the slave, in order. The task must receive exactly this.
+        var expected = Data()
+
+        for _ in 0..<phases {
+            let phase = StressPhase.allCases.randomElement(using: &rng)!
+            switch phase {
+            case .bulkRead:
+                let data = rng.data(count: Int.random(in: 1...(512 * 1024), using: &rng))
+                expected.append(data)
+                let writer = TestThread("bulk writer") { pty.writeToSlave(data) }
+                XCTAssertTrue(task.waitForReceived(count: expected.count))
+                writer.join()
+
+            case .trickleRead:
+                for _ in 0..<Int.random(in: 1...200, using: &rng) {
+                    let data = rng.data(count: Int.random(in: 1...16, using: &rng))
+                    expected.append(data)
+                    pty.writeToSlave(data)
+                    XCTAssertTrue(task.waitForReceived(count: expected.count))
+                }
+
+            case .bulkWrite:
+                let data = rng.data(count: Int.random(in: 1...(256 * 1024), using: &rng))
+                var echoed = Data()
+                let reader = TestThread("bulk reader") { echoed = pty.readFromSlave(count: data.count) }
+                writeInRandomChunks(data, to: task, rng: &rng)
+                reader.join()
+                XCTAssertEqual(echoed, data)
+
+            case .duplex:
+                let input = rng.data(count: Int.random(in: 1...(256 * 1024), using: &rng))
+                let output = rng.data(count: Int.random(in: 1...(256 * 1024), using: &rng))
+                expected.append(input)
+                var echoed = Data()
+                let reader = TestThread("duplex reader") { echoed = pty.readFromSlave(count: output.count) }
+                let writer = TestThread("duplex writer") { pty.writeToSlave(input) }
+                writeInRandomChunks(output, to: task, rng: &rng)
+                XCTAssertTrue(task.waitForReceived(count: expected.count))
+                reader.join()
+                writer.join()
+                XCTAssertEqual(echoed, output)
+
+            case .pausedRead:
+                task.setWantsRead(false)
+                notifier.unblockTask(task)
+                flush(task)
+                let readsBefore = task.readCalls
+                // Small enough for the pty to hold without anyone reading, so the flush has
+                // something pending to wait for and proves the monitor declined to read it.
+                let first = rng.data(count: Int.random(in: 1...512, using: &rng))
+                let rest = rng.data(count: Int.random(in: 0...(64 * 1024), using: &rng))
+                expected.append(first)
+                expected.append(rest)
+                pty.writeToSlave(first)
+                flush(task)
+                let writer = TestThread("paused writer") { pty.writeToSlave(rest) }
+                XCTAssertEqual(task.readCalls, readsBefore, "Read while paused")
+                task.setWantsRead(true)
+                notifier.unblockTask(task)
+                XCTAssertTrue(task.waitForReceived(count: expected.count))
+                writer.join()
+
+            case .stalledConsumer:
+                let capacity = Int.random(in: 1...8, using: &rng)
+                let budget = TokenBudget(capacity: capacity)
+                let consumer = DispatchQueue(label: "stress consumer")
+                consumer.suspend()
+                task.setBudget(budget, consumer: consumer)
+                // Each read takes at most 4KB, so this can't fit in the budget.
+                let data = rng.data(count: capacity * 4096 + Int.random(in: 1...(256 * 1024), using: &rng))
+                expected.append(data)
+                let slotsBefore = task.slotsTaken
+                let writer = TestThread("stalled writer") { pty.writeToSlave(data) }
+                XCTAssertTrue(task.waitForSlotsTaken(slotsBefore + capacity))
+                flush(task)
+                XCTAssertEqual(task.slotsTaken, slotsBefore + capacity, "Read with a full budget")
+                XCTAssertLessThan(task.received.count, expected.count)
+                consumer.resume()
+                XCTAssertTrue(task.waitForReceived(count: expected.count))
+                writer.join()
+                // Let every slot be released and any capacity callback run before dropping it.
+                consumer.sync {}
+                flush(task)
+                XCTAssertEqual(task.readsWithoutCapacity, 0)
+                XCTAssertTrue(budget.hasCapacity)
+                task.setBudget(nil)
+
+            case .coprocessEcho:
+                let cat: Coprocess
+                do {
+                    cat = try makeCatCoprocess()
+                } catch {
+                    XCTFail("makeCatCoprocess failed: \(error)")
+                    return
+                }
+                task.coprocess = cat
+                notifier.unblockTask(task)
+                // pty slave -> task -> cat -> task's write buffer -> pty slave
+                let data = rng.data(count: Int.random(in: 1...(128 * 1024), using: &rng))
+                expected.append(data)
+                var echoed = Data()
+                let reader = TestThread("echo reader") { echoed = pty.readFromSlave(count: data.count) }
+                let writer = TestThread("echo writer") { pty.writeToSlave(data) }
+                XCTAssertTrue(task.waitForReceived(count: expected.count))
+                writer.join()
+                reader.join()
+                XCTAssertEqual(echoed, data)
+                if let pid = task.stopCoprocess() {
+                    assertEventuallyReaped(pid)
+                }
+
+            case .coprocessExits:
+                let cat: Coprocess
+                do {
+                    cat = try makeCatCoprocess()
+                } catch {
+                    XCTFail("makeCatCoprocess failed: \(error)")
+                    return
+                }
+                let pid = cat.pid
+                task.coprocess = cat
+                notifier.unblockTask(task)
+                flush(task)
+                kill(pid, SIGKILL)
+                // The monitor sees EOF, reaps it, and removes it from the task.
+                XCTAssertTrue(task.waitForCoprocessRemoved())
+                XCTAssertEqual(cat.pid, -1)
+                assertEventuallyReaped(pid)
+            }
+            XCTAssertEqual(task.received, expected)
+            XCTAssertEqual(task.brokenPipeCalls, 0)
+        }
+
+        switch StressEnding.allCases.randomElement(using: &rng)! {
+        case .deregister:
+            notifier.deregister(task)
+            flush(task)
+
+        case .endOfFile:
+            pty.closeSlave()
+            XCTAssertTrue(task.waitForBrokenPipe())
+            flush(task)
+            XCTAssertEqual(task.brokenPipeCalls, 1)
+
+        case .deregisterDuringTraffic:
+            let data = rng.data(count: 4 * 1024 * 1024)
+            let writer = StoppableWriter()
+            let thread = TestThread("abandoned writer") { writer.write(data, to: pty.slave) }
+            XCTAssertTrue(task.waitForReceived(count: expected.count + Int.random(in: 1...(64 * 1024), using: &rng)))
+            notifier.deregister(task)
+            flush(task)
+            let readsAfterCancel = task.readCalls
+            // Whatever was read before the monitor stopped arrived intact and in order.
+            let received = task.received
+            XCTAssertEqual(received, (expected + data).prefix(received.count))
+            writer.stop()
+            thread.join()
+            XCTAssertEqual(task.readCalls, readsAfterCancel, "Read after cancellation")
+            expected = received
+        }
+        XCTAssertEqual(task.received, expected)
+        XCTAssertEqual(task.readsWithoutCapacity, 0)
+        XCTAssertNil(task.coprocess)
+    }
+
+    private func writeInRandomChunks(_ data: Data, to task: FakeTask, rng: inout SplitMix64) {
+        var offset = 0
+        while offset < data.count {
+            let end = min(data.count, offset + Int.random(in: 1...8192, using: &rng))
+            task.write(data.subdata(in: offset..<end), coprocess: false)
+            offset = end
+        }
+    }
+
+    // Registers and deregisters tasks as fast as possible, sometimes twice, sometimes with a byte
+    // in flight, so monitors start and cancel while others are busy.
+    private func churnRegistrations(count: Int, rng: inout SplitMix64) {
+        for _ in 0..<count {
+            let task: FakeTask
+            let pty: RawPTY
+            do {
+                (task, pty) = try makeTask()
+            } catch {
+                XCTFail("makeTask failed: \(error)")
+                return
+            }
+            notifier.register(task)
+            if Bool.random(using: &rng) {
+                notifier.register(task)
+            }
+            if Bool.random(using: &rng) {
+                pty.writeToSlave(Data("x".utf8))
+            }
+            if Bool.random(using: &rng) {
+                task.write(Data("y".utf8), coprocess: false)
+            }
+            notifier.deregister(task)
+            if Bool.random(using: &rng) {
+                notifier.deregister(task)
+            }
+            // The pty can't be closed until the monitor is done with it.
+            flush(task)
+            withExtendedLifetime(pty) {}
         }
     }
 }

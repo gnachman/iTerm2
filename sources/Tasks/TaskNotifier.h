@@ -31,6 +31,13 @@ extern NSString *const kCoprocessStatusChangeNotification;
 - (void)writeTask:(NSData *)data coprocess:(BOOL)coprocess;
 - (void)didRegister;
 
+// Used only by task I/O monitors (see +[TaskNotifier usesTaskIOMonitors]).
+// Any thread. Whether processRead can pass on what it reads without blocking.
+@property (nonatomic, readonly) BOOL hasReadCapacity;
+// Any thread. Runs `block` asynchronously on `queue` once hasReadCapacity may have become true. It
+// may run while there is still no capacity, so check again.
+- (void)notifyWhenReadCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block;
+
 @end
 
 // Has the same signature and semantics as select(2). Tests use it to observe or script the loop.
@@ -49,6 +56,8 @@ typedef int (^iTermTaskNotifierSelect)(int nfds,
 - (void)deregisterTask:(id<iTermTask>)task;
 
 - (void)unblock;
+// Call after changing what `task`'s wantsRead, wantsWrite, or coprocess return.
+- (void)unblockTask:(id<iTermTask>)task;
 - (void)run;
 
 - (void)waitForPid:(pid_t)pid;
@@ -73,6 +82,21 @@ typedef int (^iTermTaskNotifierSelect)(int nfds,
                   coprocessChangeHandler:(void (^)(void))coprocessChangeHandler
                                   reaper:(void (^)(pid_t pid))reaper;
 - (void)startForTesting;
+
+// Like -initForTestingWithSelect:coprocessChangeHandler:reaper:, but services tasks with task I/O
+// monitors instead of a select loop. `reaper` is required. -startForTesting does nothing.
+- (instancetype)initForTestingWithTaskIOMonitorsAndCoprocessChangeHandler:(void (^)(void))coprocessChangeHandler
+                                                                    reaper:(void (^)(pid_t pid))reaper;
+
+// Task I/O monitors only. Waits until every registered task's monitor has handled whatever is
+// ready and every deregistered task's monitor has stopped using its file descriptors. Returns NO on
+// timeout.
+- (BOOL)flushForTestingWithTimeout:(NSTimeInterval)timeout;
+
+// Task I/O monitors only. Like -flushForTestingWithTimeout:, but only for `task`, so other tasks may
+// keep adding input meanwhile.
+- (BOOL)flushTaskForTesting:(id<iTermTask>)task timeout:(NSTimeInterval)timeout
+    NS_SWIFT_NAME(flushForTesting(task:timeout:));
 
 // Stops the thread started by -startForTesting. Returns NO if it did not stop within `timeout`,
 // for example because a task's callback is blocked.
