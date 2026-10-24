@@ -335,6 +335,16 @@ New Features:
   Data can also include them.
 
 Improvements:
+- Cycle Tabs Forward and Cycle Tabs Backward now
+  show a list of the window’s tabs, most
+  recently used first, like the macOS app
+  switcher. While you hold the modifier, each
+  press or the up and down arrow keys move the
+  highlight, and the pointer can too. Release
+  the modifier or click a tab to switch to it,
+  or press Esc to cancel. A key bound without a
+  modifier still switches right away.
+  The design was inspiered by author's app Tab Finder (https://apps.apple.com/ua/app/tab-finder-lite-for-safari/id6744665433)
 - Pausing a spinning progress indicator with
   OSC 9;4;4 now shows a paused spinner: a still
   yellow band in the session and a pause symbol
