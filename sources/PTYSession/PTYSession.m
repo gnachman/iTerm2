@@ -66,6 +66,7 @@
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
 #import "TriggerController.h"
+#import "ToastWindowController.h"
 #import "VT100DCSParser.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen+Search.h"
@@ -12101,6 +12102,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
         case KEY_ACTION_ALERT_ON_NEXT_MARK:
         case KEY_ACTION_COPY_MODE:
+        case KEY_ACTION_SET_CHARACTER_ENCODING:
             return NO;
 
         case KEY_ACTION_TOGGLE_SETTING:
@@ -12551,6 +12553,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             [self setXtermMouseReportingEverAllowed:![self xtermMouseReporting]];
             break;
+        case KEY_ACTION_SET_CHARACTER_ENCODING: {
+            const NSStringEncoding encoding = (NSStringEncoding)action.parameter.integerValue;
+            if (encoding != 0) {
+                // Persist into the session's divorced profile so Edit Session and
+                // session restores reflect the change; reloadProfile applies it live.
+                [self setSessionSpecificProfileValues:@{ KEY_CHARACTER_ENCODING: @(encoding) }];
+                NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SetCharacterEncodingToast",
+                                                                                                 nil,
+                                                                                                 [NSBundle mainBundle],
+                                                                                                 @"Character encoding set to %@",
+                                                                                                 @"Toast shown after changing the character encoding with a key binding; %@ is the name of the encoding"),
+                                     [NSString localizedNameOfStringEncoding:encoding]];
+                [ToastWindowController showToastWithMessage:message];
+            }
+            break;
+        }
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [self invokeFunctionCall:action.parameter
                                scope:self.variablesScope
