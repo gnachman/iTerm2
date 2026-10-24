@@ -80,6 +80,9 @@ static int iTermTaskUnsafeFileDescriptor(id<iTermTask> task) {
             } reaper:^(pid_t pid) {
                 [[iTermChildReaper sharedInstance] reapProcessWithID:pid];
             }];
+            // No SIGCHLD handler is installed on this path. Log the signals so a debug log shows
+            // whether they still arrive.
+            [iTermSIGCHLDObserver startLogging];
         }
         gSharedUnblockPipeW = notifier->_unblockPipeW;
         gSharedInstance = notifier;

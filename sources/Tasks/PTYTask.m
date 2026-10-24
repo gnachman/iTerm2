@@ -842,7 +842,11 @@ static void HandleSigChld(int n) {
     // In response to bug 2903, wherein select() fails to return despite the file
     // descriptor having EOF status, I changed the handler to unblock the task
     // notifier.
-    signal(SIGCHLD, HandleSigChld);
+    // Task I/O monitors don't use select, and ChildReaper waits for exits with kqueue, so they
+    // need no handler.
+    if (![TaskNotifier usesTaskIOMonitors]) {
+        signal(SIGCHLD, HandleSigChld);
+    }
 
     NSMutableArray<NSString *> *argv = [NSMutableArray array];
     [argv addObject:[progpath stringByStandardizingPath]];

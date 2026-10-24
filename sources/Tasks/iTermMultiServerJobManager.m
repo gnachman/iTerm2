@@ -376,9 +376,7 @@ typedef struct {
         dispatch_group_leave(group);
     }];
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-    if (result.brokenPipe) {
-        [task brokenPipe];
-    }
+    // finishAttaching:task: reports a broken pipe.
     return [self finishAttaching:result task:task];
 }
 

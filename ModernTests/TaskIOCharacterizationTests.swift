@@ -217,6 +217,12 @@ private final class RawPTY {
     }
 }
 
+private extension Data {
+    func ends(with suffix: Data) -> Bool {
+        return count >= suffix.count && self[(endIndex - suffix.count)...] == suffix
+    }
+}
+
 private func pattern(count: Int) -> Data {
     return Data((0..<count).map { UInt8(truncatingIfNeeded: $0 &* 31 &+ $0 / 251) })
 }
@@ -333,6 +339,13 @@ private final class FakeTask: NSObject, iTermTask {
     @discardableResult
     func waitForReadCalls(_ count: Int, file: StaticString = #filePath, line: UInt = #line) -> Bool {
         return signal.wait(file: file, line: line) { readCalls >= count }
+    }
+
+    @discardableResult
+    func waitForReceived(file: StaticString = #filePath,
+                         line: UInt = #line,
+                         where predicate: @escaping (Data) -> Bool) -> Bool {
+        return signal.wait(file: file, line: line) { predicate(received) }
     }
 
     @discardableResult
@@ -834,6 +847,59 @@ class TaskIOCharacterizationTests: XCTestCase {
         XCTAssertTrue(task.waitForBrokenPipe())
         XCTAssertTrue(flush())
         XCTAssertEqual(task.brokenPipeCalls, 1)
+    }
+
+    // Bug 2903: EOF must be noticed when a child exits, with no SIGCHLD handler to prod anything.
+    // The child holds the only open slave, so its exit leaves the slave with no openers.
+    func testChildExitCausesBrokenPipe() throws {
+        // Make sure no handler is installed, since one could wake the select loop and hide the bug.
+        let previousHandler = signal(SIGCHLD, SIG_DFL)
+        defer {
+            signal(SIGCHLD, previousHandler)
+        }
+        let (task, pty) = try makeTask()
+        // The child's reads must block. The slave shares its file status flags with the child's
+        // copies.
+        _ = fcntl(pty.slave, F_SETFL, fcntl(pty.slave, F_GETFL) & ~O_NONBLOCK)
+        // It waits for a line first, so the test can close its own copy of the slave before the
+        // child writes anything (closing flushes pending output). It then waits again before
+        // exiting, because macOS discards whatever the master hasn't read when the last slave
+        // closes.
+        let child = try spawn("/bin/sh",
+                              ["-c", "read x; printf hi; read y"],
+                              stdin: .fileDescriptor(pty.slave),
+                              stdout: pty.slave,
+                              stderr: pty.slave)
+        var exited = false
+        defer {
+            // If the test failed before the child exited, don't leave it blocked in read or hang
+            // waiting for it.
+            if !exited {
+                kill(child.pid, SIGKILL)
+                var status: Int32 = 0
+                waitpid(child.pid, &status, 0)
+            }
+        }
+        pty.closeSlave()
+        notifier.register(task)
+        task.write(Data("\n".utf8), coprocess: false)
+        // The test host's environment may make the child log other things to stderr first. Wait
+        // until "hi" is the last thing read so nothing is left unread when the slave closes.
+        XCTAssertTrue(task.waitForReceived { $0.ends(with: Data("hi".utf8)) })
+        XCTAssertEqual(task.brokenPipeCalls, 0)
+
+        task.write(Data("\n".utf8), coprocess: false)
+        guard task.waitForBrokenPipe() else {
+            return
+        }
+        exited = true
+        XCTAssertNotNil(task.received.range(of: Data("hi".utf8)))
+        XCTAssertEqual(task.brokenPipeCalls, 1)
+
+        notifier.wait(forPid: child.pid)
+        waitForExitWithoutReaping(child.pid)
+        assertEventuallyReaped(child.pid)
+        XCTAssertTrue(flush())
     }
 
     // A pipe at EOF is readable forever, but it is not in the exception set. Only processRead
