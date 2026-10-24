@@ -853,8 +853,8 @@ extension ChatInputView {
             mentionPicker.update(query: context.query)
         } else {
             mentionPicker.show(anchorView: inputTextFieldContainer,
-                               query: context.query) { [weak self] guid, displayName in
-                self?.insertMention(guid: guid, displayName: displayName)
+                               query: context.query) { [weak self] choice in
+                self?.insertMention(choice)
             }
         }
     }
@@ -943,8 +943,10 @@ extension ChatInputView {
             // Insert before revealing so that moving back into the window
             // doesn't find a half-typed mention and restart the picker. Same
             // token the picker inserts: the reload-durable stableID.
-            self.insertMention(guid: session.stableID,
-                               displayName: ChatMentionDisplay.displayName(for: session))
+            self.insertMention(ChatMentionPickerController.Choice(
+                guid: session.stableID,
+                displayName: ChatMentionDisplay.displayName(for: session),
+                symbolName: ChatMentionDisplay.symbolName(for: session)))
             self.revealForMentionSelection?()
             self.makeTextViewFirstResponder()
         }
@@ -956,7 +958,7 @@ extension ChatInputView {
         }
     }
 
-    private func insertMention(guid: String, displayName: String) {
+    private func insertMention(_ choice: ChatMentionPickerController.Choice) {
         let tv = inputTextFieldContainer.textView
         guard let context = mentionQueryContext() else {
             return
@@ -967,10 +969,11 @@ extension ChatInputView {
         let color = resolvedMentionColor()
         let mention = NSMutableAttributedString(
             attributedString: ChatSessionMentionAttachment.attributedString(
-                guid: guid,
-                displayName: displayName,
+                guid: choice.guid,
+                displayName: choice.displayName,
                 font: font,
-                color: color))
+                color: color,
+                symbolName: choice.symbolName))
         // A trailing space so the next keystroke isn't swallowed into the token.
         mention.append(NSAttributedString(string: " ",
                                           attributes: [.font: font, .foregroundColor: NSColor.labelColor]))

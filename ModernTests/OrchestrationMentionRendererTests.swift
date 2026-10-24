@@ -181,6 +181,85 @@ final class OrchestrationMentionRendererTests: XCTestCase {
         XCTAssertFalse(out.string.contains(other))
     }
 
+    // MARK: - Icon kind (QA finding F-501)
+
+    // The SF Symbol image the mention's leading glyph was built from.
+    private func iconImage(_ attributed: NSAttributedString, at index: Int) -> NSImage? {
+        let attrs = attributed.attributes(at: index, effectiveRange: nil)
+        return (attrs[.dynamicAttachment] as? DynamicImage)?.image
+    }
+
+    private func assertIcon(_ image: NSImage?,
+                            is symbol: SFSymbol,
+                            file: StaticString = #filePath,
+                            line: UInt = #line) {
+        let expected = NSImage(systemSymbolName: symbol.rawValue, accessibilityDescription: nil)
+        XCTAssertNotNil(image?.tiffRepresentation, file: file, line: line)
+        XCTAssertNotNil(expected?.tiffRepresentation, file: file, line: line)
+        XCTAssertEqual(image?.tiffRepresentation, expected?.tiffRepresentation,
+                       "icon is not \(symbol.rawValue)", file: file, line: line)
+    }
+
+    // The icon assertions compare rasterized symbols, so they only mean
+    // something if the globe and the terminal rasterize differently.
+    func test_iconComparison_distinguishesGlobeFromTerminal() {
+        let globe = NSImage(systemSymbolName: SFSymbol.globe.rawValue, accessibilityDescription: nil)
+        let terminal = NSImage(systemSymbolName: SFSymbol.terminal.rawValue, accessibilityDescription: nil)
+        XCTAssertNotNil(globe?.tiffRepresentation)
+        XCTAssertNotEqual(globe?.tiffRepresentation, terminal?.tiffRepresentation)
+    }
+
+    func test_resolvedMention_usesResolvedSymbol() {
+        let out = OrchestrationMentionRenderer.link(attr("@\(guid)"), linkColor: .blue) { _, uuid in
+            OrchestrationMentionRenderer.Resolved(displayName: "Page",
+                                                  revealGuid: uuid,
+                                                  symbolName: SFSymbol.globe.rawValue)
+        }
+        assertIcon(iconImage(out, at: 0), is: .globe)
+    }
+
+    func test_resolvedMention_defaultsToTerminalSymbol() {
+        let out = OrchestrationMentionRenderer.link(attr("@\(guid)"), linkColor: .blue, resolve: resolveTo("zsh"))
+        assertIcon(iconImage(out, at: 0), is: .terminal)
+    }
+
+    func test_defunctMention_usesTerminalSymbol() {
+        let out = OrchestrationMentionRenderer.link(attr("@\(guid)"), linkColor: .blue, resolve: resolveNone)
+        assertIcon(iconImage(out, at: 0), is: .terminal)
+    }
+
+    // QA's repro: a browser mention among terminal mentions in one bubble.
+    // Each glyph matches its own session's kind.
+    @MainActor
+    func test_liveSessionResolution_picksGlobeForBrowserSession() throws {
+        let browser = try XCTUnwrap(PTYSession(synthetic: false))
+        browser.profile = [KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeBrowserValue]
+        let terminal = try XCTUnwrap(PTYSession(synthetic: false))
+        terminal.profile = [:]
+        let other = "ffffffff-ffff-ffff-ffff-ffffffffffff"
+        let sessions = [guid: browser, other: terminal]
+        let lookup: (String) -> PTYSession? = { sessions[$0] }
+
+        let browserResolved = try XCTUnwrap(OrchestrationMentionRenderer.resolveSession(reference: guid,
+                                                                                        lookup: lookup))
+        XCTAssertEqual(browserResolved.symbolName, SFSymbol.globe.rawValue)
+        let terminalResolved = try XCTUnwrap(OrchestrationMentionRenderer.resolveSession(reference: other,
+                                                                                         lookup: lookup))
+        XCTAssertEqual(terminalResolved.symbolName, SFSymbol.terminal.rawValue)
+        XCTAssertNil(OrchestrationMentionRenderer.resolveSession(reference: "00000000-0000-0000-0000-000000000000",
+                                                                 lookup: lookup))
+
+        let out = OrchestrationMentionRenderer.link(attr("@\(guid) @\(other)"), linkColor: .blue) { _, token in
+            OrchestrationMentionRenderer.resolveSession(reference: token, lookup: lookup)
+        }
+        assertIcon(iconImage(out, at: 0), is: .globe)
+        let secondIcon = (out.string as NSString).range(of: "\u{FFFC}",
+                                                        options: [],
+                                                        range: NSRange(location: 1, length: out.length - 1))
+        XCTAssertNotEqual(secondIcon.location, NSNotFound)
+        assertIcon(iconImage(out, at: secondIcon.location), is: .terminal)
+    }
+
     // MARK: - Attribute inheritance
 
     func test_baseFontAttribute_preservedOnLink() {

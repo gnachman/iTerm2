@@ -2010,6 +2010,10 @@ Bug Fixes:
   code block at the end of a reply now shows as
   code with a copy button instead of as large
   text or with a stray closing ```.
+- In AI Chat, a mention of a web browser session
+  now shows a globe icon instead of a terminal
+  icon, both in the message field and in sent
+  messages.
 
 
 
