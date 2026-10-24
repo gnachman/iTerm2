@@ -1762,8 +1762,9 @@ Bug Fixes:
   when you change the font size from the Font
   menu or Font panel.
 - In AI Chat, a mention of a web browser session
-  in the message field now shows a globe icon
-  instead of a terminal icon.
+  now shows a globe icon instead of a terminal
+  icon, both in the message field and in sent
+  messages.
 - In the AI Chats window, when sending a message
   moves a chat to the top of the list, the
   highlight now moves with it instead of
