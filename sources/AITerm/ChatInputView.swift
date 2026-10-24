@@ -332,6 +332,10 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         if hintLabel.frame != hintFrame {
             hintLabel.frame = hintFrame
         }
+        // Whether the hint fits depends on the field's width.
+        if !stoppable {
+            hintLabel.isHidden = shouldHideHintLabel()
+        }
     }
 
     private func setupDragAndDrop() {
@@ -433,24 +437,33 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     private func shouldHideHintLabel() -> Bool {
         let textView = inputTextFieldContainer.textView
         let text = textView.string
+        let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
 
+        let textWidth: CGFloat
         if text.isEmpty {
-            return false
+            // The placeholder is drawn instead, inset 5pt from the left
+            // edge. A long one (e.g., the @-mention hint) can run under the
+            // hint label.
+            guard let placeholder = inputTextFieldContainer.placeholder,
+                  !placeholder.isEmpty else {
+                return false
+            }
+            textWidth = 5 + ceil((placeholder as NSString).size(withAttributes: [.font: font]).width)
+        } else {
+            guard let layoutManager = textView.layoutManager,
+                  let textContainer = textView.textContainer else {
+                return true
+            }
+
+            let usedRect = layoutManager.usedRect(for: textContainer)
+            let lineHeight = layoutManager.defaultLineHeight(for: font)
+
+            if usedRect.height > lineHeight * 1.5 {
+                return true
+            }
+            textWidth = usedRect.width
         }
 
-        guard let layoutManager = textView.layoutManager,
-              let textContainer = textView.textContainer else {
-            return !text.isEmpty
-        }
-
-        let usedRect = layoutManager.usedRect(for: textContainer)
-        let lineHeight = layoutManager.defaultLineHeight(for: textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize))
-
-        if usedRect.height > lineHeight * 1.5 {
-            return true
-        }
-
-        let textWidth = usedRect.width
         let hintWidth = hintLabel.intrinsicContentSize.width
         let availableWidth = textView.bounds.width
 
@@ -657,6 +670,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.placeholder = orchestration
             ? String(localized: "ChatInputView.PlaceholderMention", defaultValue: "Type a message, or @ to mention a session…", comment: "Placeholder in the chat input field when @-mentions are available")
             : String(localized: "ChatInputView.Placeholder", defaultValue: "Type a message…", comment: "Placeholder in the chat input field")
+        updateSendButtonEnabled()
     }
 
     private func revealSelectedRange() {
