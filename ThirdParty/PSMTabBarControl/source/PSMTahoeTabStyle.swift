@@ -450,6 +450,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         max(0, rect.height / 2.0)
     }
 
+    @objc func previewOutlinePath(forTabCell cell: PSMTabBarCell, lineWidth: CGFloat) -> NSBezierPath? {
+        // Trace the pill just inside its edge, leaving the outside for the progress ring.
+        let rect = backgroundRect(for: cell.frame).insetBy(dx: lineWidth / 2, dy: lineWidth / 2)
+        let radius = pillCornerRadius(for: rect)
+        return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+    }
+
     @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
         // Grow the bar past the pill on every side so it can render as an
         // outline around the tab. The middle is punched out by the clip path.

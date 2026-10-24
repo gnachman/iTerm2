@@ -225,6 +225,7 @@ NSString *const kPreferenceKeySizeChangesAffectProfile = @"Size Changes Affect P
 NSString *const kPreferenceKeyActions = @"Actions";
 NSString *const kPreferenceKeySnippets = @"Snippets";
 NSString *const kPreferenceKeyHTMLTabTitles = @"HTMLTabTitles";
+NSString *const kPreferenceKeyShowTabSwitcherWhenCyclingTabs = @"ShowTabSwitcherWhenCyclingTabs";
 NSString *const kPreferenceKeyDisableTransparencyForKeyWindow = @"DisableTransparencyForKeyWindow";
 NSString *const kPreferenceKeyNeverBlockSystemShutdown = @"NeverBlockSystemShutdown";
 NSString *const kPreferenceKeyMenuActionImages = @"NSMenuEnableActionImages";
@@ -946,6 +947,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyDefaultToolbeltWidth: @250,
                   kPreferenceKeySizeChangesAffectProfile: @NO,
                   kPreferenceKeyHTMLTabTitles: @NO,
+                  kPreferenceKeyShowTabSwitcherWhenCyclingTabs: @NO,
 
                   kPreferenceKeyDisableTransparencyForKeyWindow: @NO,
                   kPreferenceKeyNeverBlockSystemShutdown: @NO,

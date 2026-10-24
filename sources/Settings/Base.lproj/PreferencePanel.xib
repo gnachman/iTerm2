@@ -1424,6 +1424,7 @@ CA
                 <outlet property="_hideTab" destination="4462" id="GTv-bn-7th"/>
                 <outlet property="_hideTabNumber" destination="4446" id="PIE-R6-5sO"/>
                 <outlet property="_htmlTabTitles" destination="Ids-PU-lco" id="kJN-gO-Kup"/>
+                <outlet property="_showTabSwitcherWhenCyclingTabs" destination="peF-rz-Vml" id="Pse-Gm-w5S"/>
                 <outlet property="_menuBarItemString" destination="HTU-il-ex5" id="MbS-tr-O01"/>
                 <outlet property="_newTabsOpenAtEndOfTabBar" destination="8fl-4D-pAU" id="teT-Nr-m1g"/>
                 <outlet property="_perPaneStatusBars" destination="rf8-fE-qJb" id="76w-3w-lRJ"/>
@@ -9164,11 +9165,11 @@ You can choose to define the characters considered part of a word with a regular
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ksv-Y5-pY9" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="-9" y="-3" width="724" height="351"/>
+                                        <rect key="frame" x="-9" y="-35" width="724" height="383"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q0o-aJ-Wec">
-                                                <rect key="frame" x="168" y="83" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="115" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show new-output indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="P1b-LJ-ARG">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9180,7 +9181,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4446">
-                                                <rect key="frame" x="168" y="143" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="175" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab numbers" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9192,7 +9193,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5374">
-                                                <rect key="frame" x="168" y="103" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="135" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show activity indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9204,7 +9205,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4462">
-                                                <rect key="frame" x="168" y="298" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="330" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar even when there is only one tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4499">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9215,7 +9216,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vJk-74-qzt">
-                                                <rect key="frame" x="168" y="200" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="232" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Preserve window size when tab bar shows or hides" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="9ky-UU-jS2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9226,7 +9227,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7EK-nW-yMU">
-                                                <rect key="frame" x="178" y="179" width="526" height="18"/>
+                                                <rect key="frame" x="178" y="211" width="526" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When the appearance of the tab bar causes a window to grow, part of it may move outside the main area of the screen (for example, under the Dock). When this setting is enabled, the window’s size will remain the same if growing it to accommodate a tab bar would cause that to occur.</string>
                                                 <buttonCell key="cell" type="check" title="…but only if it would cause the window to go off-screen" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="8OW-y4-gl0">
@@ -9238,7 +9239,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1dE-aB-uR8">
-                                                <rect key="frame" x="168" y="123" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="155" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Tabs have close buttons" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9250,7 +9251,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Esq-U7-Af7">
-                                                <rect key="frame" x="168" y="277" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="309" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Flash tab bar when switching tabs in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="2Eu-ti-9Nf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9262,7 +9263,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e4x-7h-mzh">
-                                                <rect key="frame" x="168" y="257" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="289" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Show tab bar in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="UI6-As-YT2">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9274,7 +9275,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q7y-hG-x0m" userLabel="Stretch Tabs to Fill Bar">
-                                                <rect key="frame" x="168" y="49" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="81" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Stretch tabs to fill bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="X12-cb-Cnf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9286,7 +9287,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button toolTip="The following tags are recognized: &lt;u&gt;, &lt;i&gt;, and &lt;b&gt;. You can also use &amp;lt; and &amp;amp;." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Ids-PU-lco" userLabel="Stretch Tabs to Fill Bar">
-                                                <rect key="frame" x="168" y="17" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="49" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Support basic HTML tags in tab titles" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="RnY-AK-UW0">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9294,11 +9295,11 @@ You can choose to define the characters considered part of a word with a regular
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="settingChanged:" target="wvi-ET-SJJ" id="ohC-he-kp8"/>
-                                                    <outlet property="nextKeyView" destination="5330" id="IO9-5v-iWV"/>
+                                                    <outlet property="nextKeyView" destination="peF-rz-Vml" id="IO9-5v-iWV"/>
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wdp-g0-Ijc">
-                                                <rect key="frame" x="10" y="299" width="151" height="16"/>
+                                                <rect key="frame" x="10" y="331" width="151" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Visibility:" id="Kd3-yO-E1K">
                                                     <font key="font" metaFont="system"/>
@@ -9307,7 +9308,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8fl-4D-pAU">
-                                                <rect key="frame" x="168" y="333" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="365" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="New tabs open at end of tab bar" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="zol-Fn-qsO">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9318,7 +9319,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xzk-d8-JvO">
-                                                <rect key="frame" x="10" y="334" width="151" height="16"/>
+                                                <rect key="frame" x="10" y="366" width="151" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="New Tabs" id="EFZ-bl-bzg">
                                                     <font key="font" metaFont="system"/>
@@ -9327,7 +9328,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TD2-6Y-yWy">
-                                                <rect key="frame" x="10" y="201" width="151" height="16"/>
+                                                <rect key="frame" x="10" y="233" width="151" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Resizing:" id="yre-4a-e3D">
                                                     <font key="font" metaFont="system"/>
@@ -9336,7 +9337,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O6x-0u-3fs">
-                                                <rect key="frame" x="10" y="144" width="151" height="16"/>
+                                                <rect key="frame" x="10" y="176" width="151" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Features:" id="u6g-s7-Aas">
                                                     <font key="font" metaFont="system"/>
@@ -9345,7 +9346,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rSP-zL-fB8">
-                                                <rect key="frame" x="10" y="50" width="151" height="16"/>
+                                                <rect key="frame" x="10" y="82" width="151" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Appearance:" id="v9Q-KQ-omE">
                                                     <font key="font" metaFont="system"/>
@@ -9354,7 +9355,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hfd-zQ-47S">
-                                                <rect key="frame" x="10" y="18" width="151" height="16"/>
+                                                <rect key="frame" x="10" y="50" width="151" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="HTML titles:" id="3mP-CQ-XJW">
                                                     <font key="font" metaFont="system"/>
@@ -9363,7 +9364,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ADj-ym-e1D">
-                                                <rect key="frame" x="168" y="236" width="536" height="18"/>
+                                                <rect key="frame" x="168" y="268" width="536" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Tab bar scrolls when tabs don’t fit" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="zw1-7D-hGm">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -9372,6 +9373,27 @@ You can choose to define the characters considered part of a word with a regular
                                                 <connections>
                                                     <action selector="settingChanged:" target="wvi-ET-SJJ" id="an1-Qt-4QI"/>
                                                     <outlet property="nextKeyView" destination="5330" id="UR1-JK-bGF"/>
+                                                </connections>
+                                            </button>
+                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tmA-Xb-XyH">
+                                                <rect key="frame" x="10" y="18" width="151" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Control-Tab Switcher:" id="Oyq-yX-gkj">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                            <button toolTip="When Cycle Tabs Forward or Cycle Tabs Backward is bound to a key with a modifier, such as Control-Tab, holding the modifier shows the window’s tabs, most recently used first, with a preview of the highlighted tab. Release the modifier to switch to it." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="peF-rz-Vml" userLabel="Show Tab Switcher">
+                                                <rect key="frame" x="168" y="17" width="536" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Show a list of tabs with a preview while cycling through tabs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="aPS-UF-qCJ">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="wvi-ET-SJJ" id="KaX-ro-ZcC"/>
+                                                    <outlet property="nextKeyView" destination="5330" id="2o3-kt-8ew"/>
                                                 </connections>
                                             </button>
                                         </subviews>

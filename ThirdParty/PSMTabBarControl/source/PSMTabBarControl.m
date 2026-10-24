@@ -159,6 +159,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
 
 @implementation PSMTabBarControl {
+    // The tab a tab switcher has highlighted, drawn with an outline.
+    __weak NSTabViewItem *_previewedTabViewItem;
+
     // The tab a drag is resting over, which will be selected if it stays there. Not retained: it
     // is checked against _cells before use.
     PSMTabBarCell *_springLoadingCell;
@@ -1643,6 +1646,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
               clipRect:rect
             horizontal:horizontalFlag
           withOverflow:_lainOutWithOverflow];
+    [self drawPreviewedTabOutline];
     if (needClip) {
         [NSGraphicsContext restoreGraphicsState];
     }
@@ -4541,6 +4545,59 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (void)tabView:(NSTabView *)aTabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)anIndex {
     if ([[self delegate] respondsToSelector:@selector(tabView:willInsertTabViewItem:atIndex:)]) {
         [[self delegate] tabView:aTabView willInsertTabViewItem:tabViewItem atIndex:anIndex];
+    }
+}
+
+- (void)tabView:(NSTabView *)tabView setPreviewedTabViewItem:(NSTabViewItem *)tabViewItem {
+    if (_previewedTabViewItem == tabViewItem) {
+        return;
+    }
+    _previewedTabViewItem = tabViewItem;
+    [self setNeedsDisplay:YES];
+}
+
+- (NSRect)tabBarScreenFrameForTabView:(NSTabView *)tabView {
+    if (!self.window || self.isHiddenOrHasHiddenAncestor || NSIsEmptyRect(self.bounds)) {
+        return NSZeroRect;
+    }
+    return [self.window convertRectToScreen:[self convertRect:self.bounds toView:nil]];
+}
+
+- (void)tabView:(NSTabView *)tabView closeTabViewItemWithConfirmation:(NSTabViewItem *)tabViewItem {
+    [[tabViewItem retain] autorelease];
+    if ([[self delegate] respondsToSelector:@selector(tabView:shouldCloseTabViewItem:)] &&
+        ![[self delegate] tabView:_tabView shouldCloseTabViewItem:tabViewItem]) {
+        return;
+    }
+    if ([[self delegate] respondsToSelector:@selector(tabView:closeTab:button:)]) {
+        [[self delegate] tabView:_tabView closeTab:[tabViewItem identifier] button:0];
+    }
+}
+
+- (void)drawPreviewedTabOutline {
+    NSTabViewItem *item = _previewedTabViewItem;
+    if (!item) {
+        return;
+    }
+    for (PSMTabBarCell *cell in [self cells]) {
+        if (cell.representedObject != item) {
+            continue;
+        }
+        if (cell.isInOverflowMenu || cell.isCollapsedHidden || cell.isTabGroupChip || NSIsEmptyRect(cell.frame)) {
+            return;
+        }
+        const CGFloat lineWidth = 2;
+        NSBezierPath *path = nil;
+        if ([_style respondsToSelector:@selector(previewOutlinePathForTabCell:lineWidth:)]) {
+            path = [_style previewOutlinePathForTabCell:cell lineWidth:lineWidth];
+        }
+        if (!path) {
+            path = [NSBezierPath bezierPathWithRect:NSInsetRect(cell.frame, lineWidth / 2, lineWidth / 2)];
+        }
+        path.lineWidth = lineWidth;
+        [[NSColor controlAccentColor] set];
+        [path stroke];
+        return;
     }
 }
 

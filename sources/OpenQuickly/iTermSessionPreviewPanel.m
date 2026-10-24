@@ -6,9 +6,12 @@
 #import "iTermSessionPreviewPanel.h"
 
 #import "PTYSession.h"
+#import "PTYTab.h"
 
 // Width of the preview side panel when shown.
 static const CGFloat kSessionPreviewWidth = 400;
+// Gap between the parent frame and the preview.
+static const CGFloat kSessionPreviewGap = 8;
 // Inset around the preview snapshot inside its container.
 static const CGFloat kSessionPreviewInset = 12;
 // Layout metrics for the labels block above the preview image. Shared between
@@ -38,10 +41,14 @@ static CGFloat iTermSessionPreviewLabelsBlockHeight(void) {
     NSTextField *_titleLabel;
     NSTextField *_detailLabel;
     BOOL _attached;
-    // The session most recently snapshotted, so we don't re-render the grid on
-    // every update when the same session stays selected.
-    NSString *_cachedSessionGuid;
+    // Identifies what was most recently snapshotted (a session or a tab), so we
+    // don't re-render the grid on every update when the same one stays selected.
+    NSString *_cachedKey;
     __weak NSWindow *_parentWindow;
+}
+
++ (CGFloat)horizontalSpaceBesideParent {
+    return kSessionPreviewGap + kSessionPreviewWidth;
 }
 
 - (void)buildWindowIfNeeded {
@@ -110,17 +117,45 @@ static CGFloat iTermSessionPreviewLabelsBlockHeight(void) {
                 detail:(NSString *)detail
            parentFrame:(NSRect)parentFrame
           parentWindow:(NSWindow *)parentWindow {
+    [self showWithCacheKey:session.guid
+                     image:^NSImage *{ return [session terminalContentSnapshot]; }
+                     title:title
+                    detail:detail
+               parentFrame:parentFrame
+              parentWindow:parentWindow];
+}
+
+- (void)showForTab:(PTYTab *)tab
+             title:(NSString *)title
+            detail:(NSString *)detail
+       parentFrame:(NSRect)parentFrame
+      parentWindow:(NSWindow *)parentWindow {
+    // Localization unneeded: a cache key.
+    [self showWithCacheKey:[NSString stringWithFormat:@"tab:%d", tab.uniqueId]
+                     image:^NSImage *{ return [tab contentSnapshot]; }
+                     title:title
+                    detail:detail
+               parentFrame:parentFrame
+              parentWindow:parentWindow];
+}
+
+- (void)showWithCacheKey:(NSString *)cacheKey
+                   image:(NSImage *(^NS_NOESCAPE)(void))imageProvider
+                   title:(NSString *)title
+                  detail:(NSString *)detail
+             parentFrame:(NSRect)parentFrame
+            parentWindow:(NSWindow *)parentWindow {
     [self buildWindowIfNeeded];
     _parentWindow = parentWindow;
 
-    if (![session.guid isEqualToString:_cachedSessionGuid]) {
-        // Re-render only when the highlighted session actually changes; the
+    if (![cacheKey isEqualToString:_cachedKey]) {
+        // Re-render only when the highlighted item actually changes; the
         // grid render is non-trivial and callers fire on every keystroke.
-        // Only cache the guid on a successful render so a transient nil
+        // Only cache the key on a successful render so a transient nil
         // (e.g. textview not yet laid out) doesn't lock in a blank preview.
-        NSImage *image = [session terminalContentSnapshot];
+        NSImage *image = imageProvider();
         _imageView.image = image;
-        _cachedSessionGuid = image ? [session.guid copy] : nil;
+        _cachedKey = image ? [cacheKey copy] : nil;
     }
     _titleLabel.stringValue = title ?: @"";
     _detailLabel.stringValue = detail ?: @"";
@@ -142,8 +177,7 @@ static CGFloat iTermSessionPreviewLabelsBlockHeight(void) {
     _attached = YES;
 }
 
-- (NSRect)windowFrameForParentFrame:(NSRect)parentFrame {
-    const CGFloat gap = 8;
++ (CGFloat)heightForImageSize:(NSSize)imageSize screen:(NSScreen *)screen {
     const CGFloat inset = kSessionPreviewInset;
     const CGFloat labelsBlockHeight = iTermSessionPreviewLabelsBlockHeight();
     const CGFloat innerWidth = kSessionPreviewWidth - 2 * inset;
@@ -151,15 +185,21 @@ static CGFloat iTermSessionPreviewLabelsBlockHeight(void) {
     // Size the image area to the snapshot's aspect ratio so a tall session
     // gets a tall preview and a short session gets a short preview.
     CGFloat imageHeight = 240;
-    NSImage *image = _imageView.image;
-    if (image && image.size.width > 0) {
-        imageHeight = innerWidth * (image.size.height / image.size.width);
+    if (imageSize.width > 0) {
+        imageHeight = innerWidth * (imageSize.height / imageSize.width);
     }
-    CGFloat windowHeight = inset + labelsBlockHeight + imageHeight + inset;
+    const CGFloat windowHeight = inset + labelsBlockHeight + imageHeight + inset;
+    const NSRect visibleFrame = (screen ?: [NSScreen mainScreen]).visibleFrame;
+    const CGFloat maxHeight = MAX(visibleFrame.size.height - 24, 300);
+    return MIN(MAX(windowHeight, 200), maxHeight);
+}
+
+- (NSRect)windowFrameForParentFrame:(NSRect)parentFrame {
+    const CGFloat gap = kSessionPreviewGap;
     NSScreen *screen = _parentWindow.screen ?: [NSScreen mainScreen];
     const NSRect visibleFrame = screen.visibleFrame;
-    const CGFloat maxHeight = MAX(visibleFrame.size.height - 24, 300);
-    windowHeight = MIN(MAX(windowHeight, 200), maxHeight);
+    const CGFloat windowHeight = [iTermSessionPreviewPanel heightForImageSize:_imageView.image.size
+                                                                       screen:screen];
 
     // Prefer the right side of the parent; flip to the left if the right side
     // would extend off-screen, and clamp horizontally to the visible frame.
@@ -226,7 +266,7 @@ static CGFloat iTermSessionPreviewLabelsBlockHeight(void) {
     _titleLabel = nil;
     _detailLabel = nil;
     _visible = NO;
-    _cachedSessionGuid = nil;
+    _cachedKey = nil;
     _parentWindow = nil;
 }
 

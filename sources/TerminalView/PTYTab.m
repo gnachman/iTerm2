@@ -2667,6 +2667,68 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self updateTabTitle];
 }
 
+#pragma mark - Content Snapshot
+
+- (NSImage *)contentSnapshot {
+    NSView *canvasView = root_;
+    const NSSize size = canvasView.bounds.size;
+    if (size.width <= 0 || size.height <= 0) {
+        return nil;
+    }
+    const BOOL flipped = canvasView.isFlipped;
+    NSMutableArray<NSDictionary *> *pieces = [NSMutableArray array];
+    // Render every pane now. The drawing handler below runs each time the image is drawn, so it
+    // must only composite what is already rendered.
+    for (PTYSession *session in [self tiledSessions]) {
+        SessionView *sessionView = session.view;
+        if (![sessionView isDescendantOf:canvasView] || sessionView.isHidden) {
+            continue;
+        }
+        NSView *contentView = sessionView.scrollview ?: sessionView;
+        NSMutableDictionary *piece = [NSMutableDictionary dictionary];
+        piece[@"sessionRect"] = [NSValue valueWithRect:[canvasView convertRect:sessionView.bounds fromView:sessionView]];
+        piece[@"contentRect"] = [NSValue valueWithRect:[canvasView convertRect:contentView.bounds fromView:contentView]];
+        piece[@"background"] = [session.processedBackgroundColor colorWithAlphaComponent:1] ?: [NSColor blackColor];
+        NSImage *image = [session terminalContentSnapshot];
+        if (image) {
+            piece[@"image"] = image;
+        }
+        [pieces addObject:piece];
+    }
+    DLog(@"Content snapshot of %@ has %@ panes", self, @(pieces.count));
+    if (pieces.count == 0) {
+        return nil;
+    }
+    return [NSImage imageWithSize:size flipped:flipped drawingHandler:^BOOL(NSRect dstRect) {
+        // What shows between panes.
+        [[NSColor colorWithWhite:0.35 alpha:1] set];
+        NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+        for (NSDictionary *piece in pieces) {
+            const NSRect sessionRect = [piece[@"sessionRect"] rectValue];
+            const NSRect contentRect = [piece[@"contentRect"] rectValue];
+            [(NSColor *)piece[@"background"] set];
+            NSRectFill(sessionRect);
+            NSImage *image = piece[@"image"];
+            if (!image || image.size.width <= 0 || image.size.height <= 0) {
+                continue;
+            }
+            // Fill the pane’s width and keep the aspect ratio, pinned to the top of the pane.
+            const CGFloat height = contentRect.size.width * image.size.height / image.size.width;
+            const CGFloat y = flipped ? NSMinY(contentRect) : NSMaxY(contentRect) - height;
+            [NSGraphicsContext saveGraphicsState];
+            NSRectClip(contentRect);
+            [image drawInRect:NSMakeRect(NSMinX(contentRect), y, contentRect.size.width, height)
+                     fromRect:NSZeroRect
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1
+               respectFlipped:YES
+                        hints:nil];
+            [NSGraphicsContext restoreGraphicsState];
+        }
+        return YES;
+    }];
+}
+
 #pragma mark - Screenshot Mode
 
 - (PTYSession *)enterScreenshotModeForSession:(PTYSession *)liveSession {

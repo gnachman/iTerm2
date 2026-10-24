@@ -248,6 +248,10 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
 
+// An image of the tab’s split panes as laid out, each drawn from its session’s terminal content
+// snapshot. Floating panes are not included. Returns nil if there is nothing to draw.
+- (NSImage *)contentSnapshot;
+
 // Screenshot mode: creates synthetic session for interactive redaction selection
 - (PTYSession *)enterScreenshotModeForSession:(PTYSession *)liveSession;
 - (void)exitScreenshotModeForSession:(PTYSession *)syntheticSession;

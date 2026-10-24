@@ -44,6 +44,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell;
 @optional
 - (nullable NSBezierPath *)progressBarClipPathForTabCell:(PSMTabBarCell *)cell;
+// The path to stroke, `lineWidth` wide, to mark the tab a tab switcher has highlighted. It should
+// follow the shape this style gives tabs and stay inside the cell. Without it the bar strokes the
+// cell's rectangle.
+- (nullable NSBezierPath *)previewOutlinePathForTabCell:(PSMTabBarCell *)cell lineWidth:(CGFloat)lineWidth;
 // The shape per-cell accessory subviews (the progress bar, the activity indicator) must stay inside,
 // in the bar's coordinates, or nil if there is none. They draw on top of -drawRect: and so never see
 // the graphics clip this style sets for cells; the bar masks them to this instead. Note this is the

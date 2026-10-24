@@ -6,6 +6,15 @@ Major New Features:
   API key to chat with grok-4.7.
 
 New Features:
+- Control-Tab Switcher: holding the modifier
+  for Cycle Tabs Forward or Backward (Control-Tab
+  by default) can show the window’s tabs, most
+  recently used first, with each tab’s icon,
+  status, and when you last saw it, plus a
+  preview of the highlighted tab. Release the
+  modifier to switch. Turn it on in Settings >
+  Appearance > Tabs. Based on a contribution by
+  Oleh (kopyl).
 - iTerm2 > Suppressed Alerts lists most alerts
   and announcements at the top of a session that
   are no longer shown because you chose “Never,”

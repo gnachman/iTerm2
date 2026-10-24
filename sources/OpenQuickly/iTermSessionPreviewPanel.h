@@ -15,8 +15,16 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class PTYSession;
+@class PTYTab;
 
 @interface iTermSessionPreviewPanel : NSObject
+
+// Horizontal space the panel takes beside its parent frame, including the gap
+// between them. Lets a caller leave room for it when positioning the parent.
+@property (class, nonatomic, readonly) CGFloat horizontalSpaceBesideParent;
+
+// The panel's height when it shows an image of `imageSize` on `screen`.
++ (CGFloat)heightForImageSize:(NSSize)imageSize screen:(nullable NSScreen *)screen;
 
 // YES while the preview is on screen.
 @property (nonatomic, readonly) BOOL visible;
@@ -30,6 +38,14 @@ NS_ASSUME_NONNULL_BEGIN
                 detail:(NSString *)detail
            parentFrame:(NSRect)parentFrame
           parentWindow:(NSWindow *)parentWindow
+    NS_SWIFT_NAME(show(for:title:detail:parentFrame:parentWindow:));
+
+// Like -showForSession:..., but shows the whole tab: all of its split panes as they are laid out.
+- (void)showForTab:(PTYTab *)tab
+             title:(NSString *)title
+            detail:(NSString *)detail
+       parentFrame:(NSRect)parentFrame
+      parentWindow:(NSWindow *)parentWindow
     NS_SWIFT_NAME(show(for:title:detail:parentFrame:parentWindow:));
 
 // Reposition the (already visible) panel for a new parent frame without

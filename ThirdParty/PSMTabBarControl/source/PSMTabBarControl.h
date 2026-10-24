@@ -80,6 +80,15 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)sender;
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
 - (nullable NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+@optional
+// Outlines `tabViewItem` to show it is the one a tab switcher will select, or removes the
+// outline if it is nil.
+- (void)tabView:(NSTabView *)tabView setPreviewedTabViewItem:(nullable NSTabViewItem *)tabViewItem;
+// Where the tab bar is on screen, so a tab switcher can avoid covering it, or NSZeroRect if it is
+// not showing.
+- (NSRect)tabBarScreenFrameForTabView:(NSTabView *)tabView;
+// Closes `tabViewItem` as its close button would, including any confirmation.
+- (void)tabView:(NSTabView *)tabView closeTabViewItemWithConfirmation:(NSTabViewItem *)tabViewItem;
 @end
 
 // These methods are KVO-observed.

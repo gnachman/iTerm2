@@ -75,6 +75,7 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
     IBOutlet NSButton *_stretchTabsToFillBar;
     IBOutlet NSButton *_scrollableSideTabBar;
     IBOutlet NSButton *_htmlTabTitles;
+    IBOutlet NSButton *_showTabSwitcherWhenCyclingTabs;
 
     // Show window number in title bar.
     IBOutlet NSButton *_windowNumber;
@@ -402,6 +403,11 @@ NSString *const iTermProcessTypeDidChangeNotification = @"iTermProcessTypeDidCha
                    relatedView:nil
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf postRefreshNotification]; };
+
+    [self defineControl:_showTabSwitcherWhenCyclingTabs
+                    key:kPreferenceKeyShowTabSwitcherWhenCyclingTabs
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber
