@@ -808,6 +808,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     void (^_pendingConductor)(PTYSession *);
     BOOL _connectingSSH;
     NSMutableData *_queuedConnectingSSH;
+    // it2ssh unique ID of the outermost conductor most recently ended by Disconnect. Its
+    // EndSSH may arrive after the hook was forced off and must still release it2ssh.
+    NSString *_disconnectedSSHClientUniqueID;
 
     __weak id<VT100ScreenMarkReading> _selectedScreenMark;
     NSMutableArray<PTYSessionHostState *> *_hostStack;
@@ -1371,6 +1374,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_appSwitchingPreventionDetector release];
     [_stuckKeyReportingDetector release];
     [_queuedConnectingSSH release];
+    [_disconnectedSSHClientUniqueID release];
     [_hostStack release];
     [_defaultPointer release];
     [_originatingArrangement release];
@@ -20876,6 +20880,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _connectingSSH = NO;
     if (![_conductor ancestryContainsClientUniqueID:uniqueID]) {
         DLog(@"Ancestry does not contain this unique ID");
+        if (uniqueID.length && [uniqueID isEqualToString:_disconnectedSSHClientUniqueID]) {
+            // Disconnect already unhooked this conductor, but it2ssh still waits for a
+            // newline before exiting.
+            [_disconnectedSSHClientUniqueID release];
+            _disconnectedSSHClientUniqueID = nil;
+            [self writeTaskNoBroadcast:@"\x03\n"];
+        }
         return 0;
     }
     BOOL found = NO;
@@ -26477,8 +26488,31 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendBannerMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.DisconnectedFrom", nil, [NSBundle mainBundle], @"Disconnected from %@", @"Banner shown when an SSH connection ends; placeholder is the host identity"), identity]];
     }];
+    // If the local it2ssh was killed (F-482) nothing will ever answer the quit request, so
+    // the framer's unhook and it2ssh's EndSSH never arrive and the DCS hook would swallow
+    // the local shell's output forever. Give a live remote time to unhook cleanly, then
+    // force the outermost hook off. This is a no-op if the hook is already gone.
+    NSString *dcsID = _conductor.parent == nil ? [[_conductor.dcsID copy] autorelease] : nil;
+    if (_conductor.parent == nil) {
+        [_disconnectedSSHClientUniqueID release];
+        _disconnectedSSHClientUniqueID = [_conductor.clientUniqueID copy];
+    }
     [self unhookSSHConductor];
     [_sshWriteQueue setLength:0];
+    if (dcsID.length) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
+        });
+    }
+}
+
+- (void)forceUnhookAbandonedConductorDCS:(NSString *)dcsID {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        if ([terminal.parser forceUnhookDCSReturningSuccess:dcsID]) {
+            RLog(@"Forced unhook of abandoned conductor DCS %@", dcsID);
+        }
+    }];
 }
 
 - (void)conductorStopQueueingInput {
