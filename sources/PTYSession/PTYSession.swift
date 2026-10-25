@@ -2878,8 +2878,8 @@ extension PTYSession {
         // This is called from -updateDisplayBecause: for every session on the
         // display cadence; for the off-by-default common case the disabled path
         // must not pay for a profile lookup and two profile-pref reads per session
-        // per tick.
-        guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+        // per tick. This also covers the administrator's GenerativeAIAllowed lockout.
+        guard AITabTitleGenerator.isEnabled else {
             // The feature is off. If we previously set an AI title it would otherwise
             // stay frozen on the tab for the life of the session: the profile keeps
             // the AI component bit (so it stays reachable to uncheck) and
@@ -3009,7 +3009,7 @@ extension PTYSession {
                 // same stuck state the profile-switch guard below forgets to avoid.
                 // forgetAITitleState clears aiTitle AND resets those fingerprints so a
                 // re-enable re-generates.
-                guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+                guard AITabTitleGenerator.isEnabled else {
                     self.forgetAITitleState()
                     return
                 }
@@ -3304,7 +3304,7 @@ extension PTYSession {
     // synchronously, without the async main-hop in the @objc entry point above.
     @MainActor
     func clearAppliedAITitleIfFeatureDisabled() {
-        guard !iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+        guard !AITabTitleGenerator.isEnabled else {
             return
         }
         if let current = genericScope.value(forVariableName: iTermVariableKeySessionAITitle) as? String,

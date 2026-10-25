@@ -13,11 +13,26 @@
 import Foundation
 import FoundationModels
 
-enum AppleIntelligenceRunnerError: Error {
+enum AppleIntelligenceRunnerError: LocalizedError {
     // The token budget left no room for the screen (over-large instructions/schema
     // or a too-small maxContextTokens). A deterministic, best-effort-degrade error:
     // generate() maps it to "no title" rather than crashing.
     case tokenBudgetTooSmall
+    // An administrator disallowed generative AI (GenerativeAIAllowed). On-device
+    // requests never pass through iTermAIClient.request, the backstop that refuses
+    // remote LLM requests under the lockout, so the runner refuses them itself.
+    case disallowedByAdministrator
+
+    var errorDescription: String? {
+        switch self {
+        case .tokenBudgetTooSmall:
+            return nil
+        case .disallowedByAdministrator:
+            return String(localized: "AppleIntelligenceRunner.DisallowedByAdministrator",
+                          defaultValue: "Generative AI features have been disabled by the system administrator.",
+                          comment: "Error shown when an Apple Intelligence request is refused because an administrator disabled generative AI")
+        }
+    }
 }
 
 // Token counts for the (constant) instructions and generation schema are process-
@@ -59,11 +74,22 @@ private actor TokenCountCache {
 
 @available(macOS 26, *)
 enum AppleIntelligenceRunner {
+    /// Throws unless generative AI is allowed. Every entry point that reaches the
+    /// on-device model calls this first, before creating a session or counting
+    /// tokens, so the administrator lockout covers all of them.
+    private static func checkAllowed() throws {
+        guard iTermAdvancedSettingsModel.generativeAIAllowed() else {
+            RLog("Refusing Apple Intelligence request: generative AI is disallowed by the administrator")
+            throw AppleIntelligenceRunnerError.disallowedByAdministrator
+        }
+    }
+
     /// Sends `system` as the session instructions and `user` as the prompt,
     /// returning the model's text. `maxTokens` is accepted for parity with the
     /// HTTP backends but is advisory here: the on-device session manages its
     /// own response length, and classification replies are short.
     static func complete(system: String?, user: String, maxTokens: Int) async throws -> String {
+        try checkAllowed()
         let session = LanguageModelSession(model: .default,
                                            instructions: system ?? "")
         return try await session.respond(to: user).content
@@ -81,6 +107,7 @@ enum AppleIntelligenceRunner {
     static func generate<Content: Generable>(system: String?,
                                              user: String,
                                              as type: Content.Type) async throws -> Content {
+        try checkAllowed()
         let session = LanguageModelSession(model: .default,
                                            instructions: system ?? "")
         let options = GenerationOptions(samplingMode: .greedy)
@@ -106,6 +133,7 @@ enum AppleIntelligenceRunner {
                                                      maxContextTokens: Int = 4096,
                                                      outputReserve: Int = 256,
                                                      onProgress: @escaping @Sendable () -> Void = {}) async throws -> Content {
+        try checkAllowed()
         // Signal progress at every token-count XPC hop and before respond(), so the
         // caller's watchdog can time out on IDLE (no forward progress) rather than a
         // fixed total-time cap. On a throttled Mac the token-count fan-out below can sum
