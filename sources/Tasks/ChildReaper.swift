@@ -84,7 +84,7 @@ final class ChildReaper: NSObject {
         dispatchPrecondition(condition: .onQueue(queue))
         // reap(_:) lets each pid through once until its watch ends.
         it_assert(watches[pid] == nil, "Already watching pid \(pid)")
-        DLog("Wait for pid \(pid)")
+        RLog("Wait for pid \(pid)")
         let source = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: queue)
         let watch = Watch(source: source)
         source.setEventHandler { [weak self, weak watch] in
@@ -110,7 +110,11 @@ final class ChildReaper: NSObject {
         dispatchPrecondition(condition: .onQueue(queue))
         let delay = watch.retryDelay
         watch.retryDelay = min(delay * 2, Self.maximumRetryDelay)
-        DLog("pid \(pid) exited but is not reapable yet. Retry in \(delay)s")
+        if delay < Self.maximumRetryDelay && watch.retryDelay == Self.maximumRetryDelay {
+            RLog("pid \(pid) exited but is still not reapable. Retry every \(Self.maximumRetryDelay)s")
+        } else {
+            DLog("pid \(pid) exited but is not reapable yet. Retry in \(delay)s")
+        }
         queue.asyncAfter(deadline: .now() + delay) { [weak self, weak watch] in
             guard let self, let watch, watches[pid] === watch else {
                 return
@@ -142,7 +146,7 @@ final class ChildReaper: NSObject {
         // A failure is permanent (such as ECHILD), so retrying would never succeed.
         let outcome: ReapResult
         if result == pid {
-            DLog("Reaped pid \(pid)")
+            RLog("Reaped pid \(pid)")
             outcome = .reaped
         } else {
             let error = errno

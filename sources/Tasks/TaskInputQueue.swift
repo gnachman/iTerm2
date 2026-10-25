@@ -109,7 +109,7 @@ final class TaskInputQueue: NSObject {
             return (Array(state.readabilityHandlers.values), discarded)
         }
         if let discarded {
-            DLog("Closed \(self), discarding \(discarded) unread bytes")
+            RLog("Closed \(self), discarding \(discarded) unread bytes")
         }
         handlers.forEach { $0() }
     }

@@ -118,6 +118,13 @@ final class TaskIOMonitor: NSObject {
     private var awaitingReadCapacity = false
     // From inputQueue.addReadabilityHandler, while the monitor is running.
     private var readabilityToken: Int?
+    // When the task stopped having room to read, while it still has none. A wait longer than
+    // stallReportDelay is logged even without debug logging, as is its end.
+    private var stalledSince: DispatchTime?
+    private var reportedStall = false
+    // At most one stall check is scheduled at a time, however often stalls begin and end.
+    private var stallCheckPending = false
+    private static let stallReportDelay = 5.0
     private var coprocessIO: CoprocessIO?
     // Sources whose cancel handlers have not run yet, including ones no longer referenced above.
     private var liveSources = 0
@@ -229,6 +236,7 @@ final class TaskIOMonitor: NSObject {
                 inputQueue?.removeReadabilityHandler(readabilityToken)
                 self.readabilityToken = nil
             }
+            stallDidEnd("stopped")
             readSource?.cancel()
             writeSource?.cancel()
             coprocessIO?.cancel()
@@ -360,6 +368,8 @@ final class TaskIOMonitor: NSObject {
         }
         // Not reading while paused also means EOF isn't noticed until the task is unpaused.
         guard task.wantsRead else {
+            // Paused, which isn't a lack of room.
+            stallDidEnd("paused")
             readSource?.suspend()
             signalIfInputQueueIsReadable()
             return
@@ -371,6 +381,7 @@ final class TaskIOMonitor: NSObject {
             return
         }
         task.processRead()
+        stallDidEnd("has room to read again")
         // processRead reads at most a few kilobytes. On end of file it deregistered the task.
         signalIfInputQueueIsReadable()
         // processRead may have queued output for the coprocess.
@@ -383,6 +394,7 @@ final class TaskIOMonitor: NSObject {
             return
         }
         DLog("\(self) waits for read capacity")
+        stallMayBegin()
         awaitingReadCapacity = true
         task.notifyWhenReadCapacityAvailable(on: queue) { [weak self] in
             guard let self else {
@@ -392,6 +404,60 @@ final class TaskIOMonitor: NSObject {
             awaitingReadCapacity = false
             update()
         }
+    }
+
+    // A stall lasts across waits that end without room, until the task reads again, is paused,
+    // or the monitor stops.
+    private func stallMayBegin() {
+        dispatchPrecondition(condition: .onQueue(queue))
+        guard stalledSince == nil else {
+            return
+        }
+        stalledSince = .now()
+        scheduleStallCheck(after: Self.stallReportDelay)
+    }
+
+    private func scheduleStallCheck(after delay: Double) {
+        dispatchPrecondition(condition: .onQueue(queue))
+        guard !stallCheckPending else {
+            return
+        }
+        stallCheckPending = true
+        queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+            self?.checkStall()
+        }
+    }
+
+    private func checkStall() {
+        dispatchPrecondition(condition: .onQueue(queue))
+        stallCheckPending = false
+        guard state == .running, let start = stalledSince, !reportedStall else {
+            return
+        }
+        let elapsed = Self.seconds(since: start)
+        if elapsed < Self.stallReportDelay {
+            // The stall this was scheduled for ended and a later one began.
+            scheduleStallCheck(after: Self.stallReportDelay - elapsed)
+            return
+        }
+        reportedStall = true
+        RLog("\(self) has had no room to read for \(String(format: "%.1f", elapsed))s")
+    }
+
+    private func stallDidEnd(_ how: String) {
+        dispatchPrecondition(condition: .onQueue(queue))
+        guard let start = stalledSince else {
+            return
+        }
+        stalledSince = nil
+        if reportedStall {
+            reportedStall = false
+            RLog("\(self) \(how) after \(String(format: "%.1f", Self.seconds(since: start)))s without room to read")
+        }
+    }
+
+    private static func seconds(since start: DispatchTime) -> Double {
+        return Double(DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1e9
     }
 
     private func handleWrite() {
@@ -460,7 +526,7 @@ final class TaskIOMonitor: NSObject {
             DLog("\(self) can't service coprocess \(coprocess), which is closed")
             return nil
         }
-        DLog("\(self) starts servicing coprocess \(coprocess)")
+        RLog("\(self) starts servicing coprocess \(coprocess)")
         let readFileDescriptor = readLease.fileDescriptor
         let writeFileDescriptor = writeLease.fileDescriptor
         let read = makeSource(DispatchSource.makeReadSource(fileDescriptor: readFileDescriptor,
@@ -521,7 +587,7 @@ final class TaskIOMonitor: NSObject {
     private func finishCoprocess(_ io: CoprocessIO) {
         dispatchPrecondition(condition: .onQueue(queue))
         let coprocess = io.coprocess
-        DLog("EOF on coprocess \(coprocess) of \(self)")
+        RLog("EOF on coprocess \(coprocess) of \(self)")
         io.cancel()
         coprocessIO = nil
         // terminate() signals the pid, so it must not be reaped (and possibly reused) first.
@@ -658,6 +724,7 @@ final class TaskIOMonitorRegistry: NSObject {
             guard let self else {
                 return
             }
+            RLog("\(monitor) stopped")
             // Return the removed entry so it is released after unlocking. Releasing a task can
             // deregister it, which would take this lock again.
             let removed = state.mutableAccess { state in
