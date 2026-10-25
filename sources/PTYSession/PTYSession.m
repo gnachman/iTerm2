@@ -817,6 +817,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // thread. A recovery requested before the terminal learns of the abandonment is
     // refused here (F-459).
     iTermFramerRecoveryRefusals *_framerRecoveryRefusals;
+    // The tty's modes from before the outermost connection's ssh made it raw, and that
+    // connection's it2ssh unique ID (F-460).
+    iTermTTYModes *_preSSHTTYModes;
+    NSString *_preSSHTTYModesClientUniqueID;
+    // it2ssh ran on another tty (e.g., inside tmux), so this session's tty isn't ssh's.
+    BOOL _preSSHTTYIsElsewhere;
+    iTermTTYModeRepairer *_ttyModeRepairer;
 
     __weak id<VT100ScreenMarkReading> _selectedScreenMark;
     NSMutableArray<PTYSessionHostState *> *_hostStack;
@@ -993,6 +1000,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _announcements = [[NSMutableDictionary alloc] init];
         _sshClientMonitor = [[iTermSSHClientMonitor alloc] init];
         _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
+        _ttyModeRepairer = [[iTermTTYModeRepairer alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directoryTracker = [[iTermSessionDirectoryTracker alloc] initWithVariablesScope:self.variablesScope];
         _directoryTracker.delegate = self;
@@ -1385,6 +1393,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [_disconnectedSSHClientUniqueID release];
     [_sshClientMonitor release];
     [_framerRecoveryRefusals release];
+    [_preSSHTTYModes release];
+    [_preSSHTTYModesClientUniqueID release];
+    [_ttyModeRepairer release];
     [_hostStack release];
     [_defaultPointer release];
     [_originatingArrangement release];
@@ -5024,6 +5035,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setExited:NO];
     [_shell autorelease];
     _shell = nil;
+    // Its tty modes are no business of the new shell's.
+    [_ttyModeRepairer disarm];
     [_logging stop];
 
     self.guid = [NSString uuid];
@@ -20785,6 +20798,21 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     iTermSecretClaim *claim = [[iTermSecretServer instance] claim:token];
     const BOOL localOrigin = (claim != nil);
+    if (!_conductor) {
+        // A new outermost connection owns the tty now.
+        [_ttyModeRepairer disarm];
+        [_preSSHTTYModes release];
+        _preSSHTTYModes = nil;
+        [_preSSHTTYModesClientUniqueID release];
+        _preSSHTTYModesClientUniqueID = [uniqueID copy];
+        _preSSHTTYIsElsewhere = NO;
+        if (claim.ttyModes && [claim.ttyModes.path isEqualToString:_shell.tty]) {
+            // it2ssh fetched the token on this session's tty before it started ssh.
+            _preSSHTTYModes = [claim.ttyModes retain];
+        } else if (claim.ttyModes) {
+            _preSSHTTYIsElsewhere = YES;
+        }
+    }
 
     NSString *directory = nil;
     if (_sshState == iTermSSHStateProfile && !_conductor) {
@@ -20937,6 +20965,53 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self forceUnhookAbandonedConductorDCS:dcsID
              refusingFramerRecoveryAtDepth:parentDepth
                   abandonedClientUniqueIDs:abandonedClientUniqueIDs];
+    if (parentDepth < 0) {
+        // The outermost connection's ssh ran on this session's tty.
+        [self restoreTTYModesIfIT2SSHExitedForClientUniqueID:uniqueID];
+    }
+}
+
+// ssh left the tty in raw mode if its it2ssh was killed (F-460). Never touch the modes
+// while it2ssh might be alive: its ssh would still be using them.
+- (void)restoreTTYModesIfIT2SSHExitedForClientUniqueID:(NSString *)uniqueID {
+    if (!uniqueID.length || ![_sshClientMonitor it2sshHasExitedForClientUniqueID:uniqueID]) {
+        DLog(@"it2ssh %@ is not known to have exited; leaving tty modes alone", uniqueID);
+        return;
+    }
+    if (![iTermTTYModeRepairer mayRepairAfterAbandoningClientUniqueID:uniqueID
+                                                   lastClientUniqueID:_preSSHTTYModesClientUniqueID
+                                                     connectionActive:_conductor != nil
+                                                      ranOnAnotherTTY:_preSSHTTYIsElsewhere
+                                                    shellProcessGroup:[_sshClientMonitor shellProcessGroupForClientUniqueID:uniqueID]]) {
+        RLog(@"Not restoring tty modes after abandoning %@", uniqueID);
+        return;
+    }
+    PTYTask *task = _shell;
+    const int fd = task.fd;
+    NSString *ttyPath = task.tty;
+    if (fd <= 0 || !ttyPath.length) {
+        return;
+    }
+    const pid_t foregroundProcessGroup = tcgetpgrp(fd);
+    // Something started since then may have set the modes itself. Then only arm the
+    // repairer: it acts when a command starts with the shell's reapplied raw modes, which
+    // no program that wants a raw tty has.
+    const BOOL repairNow = [_sshClientMonitor mayRepairTTYWithForegroundProcessGroup:foregroundProcessGroup
+                                                                     clientUniqueID:uniqueID];
+    RLog(@"Repair tty modes now=%@ with process group %d in the foreground", @(repairNow), (int)foregroundProcessGroup);
+    iTermTTYModeRepairer *repairer = _ttyModeRepairer;
+    __weak PTYTask *weakTask = task;
+    [repairer repairAfterAbandonedSSHWithFileDescriptor:^int{
+        // -1 once the task closes its pty, or after it is replaced.
+        PTYTask *strongTask = weakTask;
+        return strongTask ? strongTask.fd : -1;
+    }
+                                                ttyPath:ttyPath
+                                              goodModes:_preSSHTTYModes
+                                              repairNow:repairNow];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.ttyModeRepairer = repairer;
+    }];
 }
 
 static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID) {
@@ -26701,6 +26776,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     NSString *dcsID = [[_conductor.dcsID copy] autorelease];
     NSString *clientUniqueID = [[_conductor.clientUniqueID copy] autorelease];
     const int parentDepth = _conductor.parent ? _conductor.parent.depth : -1;
+    const BOOL isOutermost = (_conductor.parent == nil);
     if (_conductor.parent == nil) {
         [_disconnectedSSHClientUniqueID release];
         _disconnectedSSHClientUniqueID = [_conductor.clientUniqueID copy];
@@ -26721,6 +26797,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
             // Kill it before unhooking so less of its output arrives unhooked.
             [weakSelf killOrphanedSSHClientForClientUniqueID:clientUniqueID];
             [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
+            if (isOutermost) {
+                [weakSelf restoreTTYModesIfIT2SSHExitedForClientUniqueID:clientUniqueID];
+            }
         });
     }
 }

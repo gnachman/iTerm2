@@ -2847,6 +2847,8 @@ typedef struct {
 // output<D>
 - (void)terminalCommandDidEnd {
     DLog(@"begin");
+    // The command line was read and the command is starting.
+    [self.ttyModeRepairer commandWillRun];
     [self closeVerifiedOSC7Window];
     [self invalidatePendingPromptState];
     [self commandDidEnd];
@@ -2893,6 +2895,7 @@ typedef struct {
 - (void)terminalReturnCodeOfLastCommandWas:(NSNumber * _Nullable)returnCode
                                        aid:(NSString * _Nullable)aid {
     RLog(@"begin returnCode=%@ aid=%@", returnCode, aid);
+    [self.ttyModeRepairer commandDidFinish];
     [self invalidatePendingPromptState];
     if (aid != nil && self.marksByAid[aid] != nil) {
         RLog(@"terminalReturnCodeOfLastCommandWas: routing to close-by-aid path "
