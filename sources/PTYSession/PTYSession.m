@@ -1201,6 +1201,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
     [_restoreSavedForegroundJobAncestors release];
+    [_slowlySentPasteEvents release];
     [_restoredArchivePath release];
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
     NSString *guid = [_guid copy];
@@ -15836,8 +15837,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     event.delayKey = @"";
     event.flags = kPasteFlagsDisableWarnings;
     if (!_slowlySentPasteEvents) {
-        _slowlySentPasteEvents = [NSHashTable hashTableWithOptions:(NSPointerFunctionsWeakMemory |
-                                                                    NSPointerFunctionsObjectPointerPersonality)];
+        _slowlySentPasteEvents = [[NSHashTable alloc] initWithOptions:(NSPointerFunctionsWeakMemory |
+                                                                       NSPointerFunctionsObjectPointerPersonality)
+                                                             capacity:0];
     }
     [_slowlySentPasteEvents addObject:event];
     [_pasteHelper tryToPasteEvent:event];
