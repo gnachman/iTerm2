@@ -1002,6 +1002,9 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     private(set) var heredocBodies = [[String]]()
     // Set to make tar fail to extract the utilities archive, as for one damaged on the way.
     var extractionFails = false
+    // Set to make sh unable to create the file the archive goes into, as in a folder that is
+    // not writable.
+    var receiveFails = false
 
     var helperIsRunning: Bool {
         return depth > 0
@@ -1083,6 +1086,10 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             prompt = "$ "
         } else if line.hasPrefix(" PS1=") {
             prompt = ">> "
+        } else if line.contains(receiveUtilitiesCommandMarker) && receiveFails {
+            // The redirection failed, so the read loop never runs and sh reads commands again.
+            result.append("sh: .it2-utilities.b64: Permission denied")
+            result.append("it2-cannot-receive-utilities")
         } else if line.contains(receiveUtilitiesCommandMarker) {
             // sh reads the archive from the tty with its line editor off, so there is no prompt.
             result.append("it2-receiving-utilities")
@@ -1191,6 +1198,26 @@ final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         let steps = controller.sendShellCommandsStepListField.stringValue
         XCTAssertTrue(steps.contains("utility scripts were not installed"), steps)
         XCTAssertFalse(steps.contains("Done!"), steps)
+    }
+
+    // F-462: when sh can't create the file the archive goes into, the archive is not typed (it
+    // would run as commands) and the step says the utilities were not installed.
+    func testInstallUtilitiesDoesNotTypeTheArchiveWhenShCannotReceiveIt() {
+        terminal.receiveFails = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        let firstLine = encodedUtilitiesArchive().first ?? ""
+        XCTAssertFalse(firstLine.isEmpty)
+        XCTAssertNotNil(terminal.sentTexts.firstIndex { $0.contains(receiveUtilitiesCommandMarker) })
+        XCTAssertFalse(terminal.sentTexts.contains { $0.contains(firstLine) })
+        XCTAssertFalse(terminal.sentTexts.contains { $0.contains("\nEOF\n") })
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+        XCTAssertTrue(controller.sendShellCommandsWriteFailed)
+        let steps = controller.sendShellCommandsStepListField.stringValue
+        XCTAssertTrue(steps.contains("utility scripts were not installed"), steps)
     }
 
     func testWholeInstallSendsBothHereDocumentsAndExitsTheHelper() {
@@ -1338,5 +1365,132 @@ final class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
                         "fi\n",
                         "exit\nexit\n"])
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+}
+
+// F-462: runs the command with which the helper sh receives and unpacks the utilities in real
+// POSIX shells, in the utilities folder, as the installer types it.
+final class ShellIntegrationReceiveUtilitiesCommandTests: XCTestCase {
+    private static let shells = ["/bin/sh", "/bin/dash"]
+    private var home: URL!
+    private var folder: URL!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        folder = home.appendingPathComponent(".iterm2")
+    }
+
+    override func tearDownWithError() throws {
+        if FileManager.default.fileExists(atPath: folder.path) {
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: folder.path)
+        }
+        try? FileManager.default.removeItem(at: home)
+        try super.tearDownWithError()
+    }
+
+    private func makeFolder(writable: Bool = true) throws {
+        if FileManager.default.fileExists(atPath: folder.path) {
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: folder.path)
+        }
+        try? FileManager.default.removeItem(at: home)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        if !writable {
+            try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: folder.path)
+        }
+    }
+
+    private func encodedArchiveLines() throws -> [String] {
+        let bundle = Bundle(for: iTermShellIntegrationWindowController.self)
+        let url = try XCTUnwrap(bundle.url(forResource: "utilities", withExtension: "tgz"))
+        let data = try Data(contentsOf: url)
+        return data.base64EncodedString(options: [.lineLength76Characters, .endLineWithLineFeed])
+            .components(separatedBy: "\n")
+    }
+
+    // Runs the command in an interactive sh, like the helper, with `input` as what is typed
+    // after it, and returns what sh printed.
+    private func run(_ shell: String, input: String) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: shell)
+        process.arguments = ["-i", "-c", iTermShellIntegrationWindowController.receiveUtilitiesCommand]
+        process.currentDirectoryURL = folder
+        process.environment = ["ENV": "/dev/null", "HOME": home.path, "PATH": "/usr/bin:/bin:/usr/sbin:/sbin"]
+        let stdin = Pipe()
+        let output = Pipe()
+        process.standardInput = stdin
+        process.standardOutput = output
+        process.standardError = output
+        try process.run()
+        stdin.fileHandleForWriting.write(Data(input.utf8))
+        try stdin.fileHandleForWriting.close()
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private func leftoverTemporaryFiles() -> [String] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+        return names.filter { $0.hasPrefix(".it2-utilities") }
+    }
+
+    func testInstallsTheArchive() throws {
+        for shell in Self.shells {
+            try makeFolder()
+            let input = try encodedArchiveLines().joined(separator: "\n") + "\nEOF\n"
+            let output = try run(shell, input: input)
+
+            XCTAssertTrue(output.contains("it2-receiving-utilities"), "\(shell): \(output)")
+            XCTAssertTrue(output.contains("it2-utilities-installed"), "\(shell): \(output)")
+            XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("it2check").path), shell)
+            XCTAssertEqual(leftoverTemporaryFiles(), [], shell)
+        }
+    }
+
+    // The read loop's file can't be created, so sh must not say it is receiving: iTerm2 would
+    // then type the archive into its prompt.
+    func testDoesNotReceiveWhenTheFolderIsNotWritable() throws {
+        for shell in Self.shells {
+            try makeFolder(writable: false)
+            let output = try run(shell, input: "EOF\n")
+
+            XCTAssertTrue(output.contains("it2-cannot-receive-utilities"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-receiving-utilities"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-utilities-installed"), "\(shell): \(output)")
+        }
+    }
+
+    // tar given no input at all succeeds, so that must not count as installed.
+    func testEmptyArchiveFails() throws {
+        for shell in Self.shells {
+            try makeFolder()
+            let output = try run(shell, input: "EOF\n")
+
+            XCTAssertTrue(output.contains("it2-utilities-failed"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-utilities-installed"), "\(shell): \(output)")
+            XCTAssertEqual(leftoverTemporaryFiles(), [], shell)
+        }
+    }
+
+    func testTruncatedArchiveFails() throws {
+        for shell in Self.shells {
+            try makeFolder()
+            let lines = try encodedArchiveLines()
+            let input = lines.prefix(lines.count / 2).joined(separator: "\n") + "\nEOF\n"
+            let output = try run(shell, input: input)
+
+            XCTAssertTrue(output.contains("it2-utilities-failed"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-utilities-installed"), "\(shell): \(output)")
+            XCTAssertEqual(leftoverTemporaryFiles(), [], shell)
+        }
+    }
+
+    // sh echoes the typed command, and the echo must not look like any of its answers.
+    func testCommandDoesNotContainItsAnswers() {
+        let command = iTermShellIntegrationWindowController.receiveUtilitiesCommand
+        for answer in ["it2-receiving-utilities", "it2-cannot-receive-utilities",
+                       "it2-utilities-installed", "it2-utilities-failed"] {
+            XCTAssertFalse(command.contains(answer), answer)
+        }
     }
 }
