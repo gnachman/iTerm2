@@ -72,7 +72,7 @@
     if (!trusted && error) {
         if (underlying) {
             *error = [SIGError errorWrapping:underlying
-                                        code:SIGErrorCodeTrust
+                                        code:SIGErrorCodeTrustFailed
                                       detail:@"Failed to evaluate certificate chain"];
         } else {
             *error = [SIGError errorWithCode:SIGErrorCodeTrustFailed
