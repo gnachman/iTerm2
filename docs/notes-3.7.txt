@@ -1934,4 +1934,7 @@ Bug Fixes:
 - Canceling the Internet-Free shell integration
   install while it sends the utilities now
   stops sending them right away instead of a
-  minute or more later.
+  minute or more later. Canceling a step or
+  clicking Send Again now returns you to your
+  own shell instead of leaving you inside the
+  installer’s helper shells at a “>> ” prompt.
