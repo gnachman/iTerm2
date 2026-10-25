@@ -236,6 +236,31 @@ final class BrowserViewSourceTests: XCTestCase {
         XCTAssertFalse(shown.injected)
     }
 
+    // T-95: innerHTML leaves quotes in text unescaped, so attribute values must be matched by
+    // their plain quotes to be highlighted. Highlighting must not turn the source into markup.
+    func testAttributeValuesAreHighlighted() throws {
+        let source = """
+            <div class="a b" title='t' id=x>v</div>
+            <p title='"><img src=y onerror=alert(1)>' data-x="'<b>">w</p>
+            """
+        let manager = try makeManager()
+        let webView = try XCTUnwrap(manager.webView)
+        manager.showSourceInBrowser(htmlSource: source,
+                                    url: try XCTUnwrap(URL(string: "http://example.invalid/")))
+        waitForLoad(of: iTermBrowserSourceHandler.sourceURL, in: webView)
+        let text = try XCTUnwrap(
+            evaluate("document.querySelector('.source-code').textContent", in: webView))
+        XCTAssertEqual(text, source.replacingOccurrences(of: "\n", with: ""))
+        let valuesJSON = try XCTUnwrap(evaluate(
+            "JSON.stringify(Array.from(document.querySelectorAll('.source-code .attr-value')).map(e => e.textContent))",
+            in: webView))
+        let values = try JSONDecoder().decode([String].self, from: Data(valuesJSON.utf8))
+        XCTAssertEqual(values, ["\"a b\"", "'t'"])
+        XCTAssertEqual(evaluate(
+            "document.querySelector('.source-code img, .source-code b, .source-code script') ? 'yes' : 'no'",
+            in: webView), "no")
+    }
+
     // A local file's relative links become file links.
     func testFilePageLinksToFiles() throws {
         let source = "<a href=\"y.html\">y</a>"

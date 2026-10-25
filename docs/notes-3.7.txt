@@ -1972,3 +1972,5 @@ Bug Fixes:
   with a space or other special character is
   now escaped, so accepting it gives a working
   command.
+- The browser’s View Source now highlights
+  attribute values.

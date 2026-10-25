@@ -334,8 +334,11 @@
                 let result = '<span class="token tag">' + openBracket + tagName + '</span>';
 
                 if (attributes) {
-                    // Highlight attributes within the tag
-                    let processedAttrs = attributes.replace(/\s([a-zA-Z][a-zA-Z0-9-]*)(=)(&quot;[^&]*&quot;|&#39;[^&]*&#39;)/g,
+                    // Highlight attributes within the tag. innerHTML doesn't escape
+                    // quotes in text, so values are in plain quotes. `attributes`
+                    // has no & (so no escaped < or >), and the value is only ever
+                    // that serialized text wrapped in a span, so it can't become markup.
+                    let processedAttrs = attributes.replace(/\s([a-zA-Z][a-zA-Z0-9-]*)(=)("[^"]*"|'[^']*')/g,
                         ' <span class="token attr-name">$1</span><span class="token punctuation">$2</span><span class="token attr-value">$3</span>');
                     result += processedAttrs;
                 }
