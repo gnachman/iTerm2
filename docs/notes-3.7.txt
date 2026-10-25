@@ -1941,3 +1941,9 @@ Bug Fixes:
 - An scp download that asks for a password no
   longer hangs if you open the Password Manager
   and close it without choosing a password.
+- An upload over SSH Integration no longer
+  overwrites a remote file of the same name when
+  iTerm2 could not check whether one exists, for
+  example because of a permission error or a
+  connection problem. The upload now fails with
+  an error instead.
