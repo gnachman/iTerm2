@@ -887,7 +887,7 @@ class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
 // decides which shell it supports. Until it supports nushell, the installer must switch to the
 // Internet-free installer, which does, instead of reporting nushell as unsupported.
 final class ShellIntegrationOnlineInstallerTests: XCTestCase {
-    private static let curlCommand = "\ncurl -L https://iterm2.com/shell_integration/install_shell_integration.sh | bash\n"
+    private static let curlCommand = "\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration.sh | bash\n"
     private static let oldScriptNuError = "Your shell, nu, is not supported yet. Only tcsh, zsh, bash, and fish are supported. Sorry!"
 
     private var controller: iTermShellIntegrationWindowController!
