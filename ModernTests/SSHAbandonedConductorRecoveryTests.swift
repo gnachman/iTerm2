@@ -785,3 +785,136 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
     }
 }
+
+// MARK: - F-554: an abandoned connection writes nothing
+
+// Records what a conductor writes.
+private final class WriteRecordingConductorDelegate: NSObject, ConductorDelegate {
+    var written = ""
+
+    func conductorWrite(string: String) {
+        written += string
+    }
+    func conductorAbort(reason: String) {}
+    func conductorQuit() {}
+    func conductorStateDidChange() {}
+    func conductorStopQueueingInput() {}
+    func conductorSendInitialText() {}
+    func conductorRequestIT2Authorization(guid: String,
+                                          displayName: String,
+                                          completion: @escaping (Bool, Bool) -> Void) {
+        completion(false, false)
+    }
+    func conductorDismissIT2AuthorizationPrompt(guid: String) {}
+    let guid = "write-recording-delegate"
+}
+
+// After killing it2ssh while the remote streamed output, iTerm2 typed YXV0b3BvbGw= (base64
+// of “autopoll”) into the local shell. Once a connection is abandoned, nothing that
+// happens to its conductor afterward may write a command for it.
+@MainActor
+final class SSHAbandonedConductorWriteTests: XCTestCase {
+    private let autopoll = "autopoll".data(using: .utf8)!.base64EncodedString()
+    private var conductors = [Conductor]()
+    private var delegates = [WriteRecordingConductorDelegate]()
+
+    override func tearDown() {
+        for conductor in conductors {
+            ConductorRegistry.instance.remove(conductorGUID: conductor.guid,
+                                              sshIdentity: conductor.sshIdentity)
+        }
+        conductors = []
+        delegates = []
+        super.tearDown()
+    }
+
+    private func makeConductor(parent: Conductor?,
+                               delegate: WriteRecordingConductorDelegate) -> Conductor {
+        let conductor = Conductor("f554.example.com", boolArgs: "", dcsID: "dcs",
+                                  clientUniqueID: "cid\(conductors.count)",
+                                  varsToSend: [:], clientVars: [:], initialDirectory: nil,
+                                  shouldInjectShellIntegration: false, parent: parent)
+        // The conductor holds its delegate weakly.
+        delegates.append(delegate)
+        conductor.delegate = delegate
+        // Framing with a login shell running, as after a successful it2ssh handshake.
+        conductor.framedPID = 4242
+        conductors.append(conductor)
+        drain()
+        return conductor
+    }
+
+    private static func inFlight(_ conductor: Conductor) -> Int {
+        switch conductor.state {
+        case .willExecutePipeline(let contexts):
+            return contexts.count
+        case .executingPipeline(_, let pending):
+            return 1 + pending.count
+        case .ground, .unhooked, .recovery, .recovered:
+            return 0
+        }
+    }
+
+    // Delivers the remote's %end for every command in flight (e.g., registering the login
+    // shell), so the next command is written at once.
+    private func drain() {
+        for _ in 0..<100 {
+            guard let busy = conductors.first(where: { Self.inFlight($0) > 0 }) else {
+                return
+            }
+            busy.handleCommandEnd(identifier: "id", type: "f", status: 0, depth: busy.depth)
+        }
+        XCTFail("Commands are still in flight")
+    }
+
+    // What the framer's autopoll report ends with. The conductor answers it by asking for
+    // the next one (after registering the login shell to poll, the first time).
+    private func deliverAutopollEOF(to conductor: Conductor) {
+        conductor.handleSideChannelOutput("EOF",
+                                          pid: SSH_OUTPUT_AUTOPOLL_PID,
+                                          channel: 1,
+                                          depth: conductor.depth)
+        drain()
+    }
+
+    // The control: a live connection asks for the next autopoll report.
+    func testLiveConnectionRequestsAutopoll() {
+        let delegate = WriteRecordingConductorDelegate()
+        let conductor = makeConductor(parent: nil, delegate: delegate)
+        delegate.written = ""
+        deliverAutopollEOF(to: conductor)
+        XCTAssertTrue(delegate.written.contains(autopoll), delegate.written)
+    }
+
+    // An autopoll report parsed before the abandonment and handled after it, while the
+    // session still holds the conductor.
+    func testAbandonedConnectionDoesNotRequestAutopoll() {
+        let delegate = WriteRecordingConductorDelegate()
+        let conductor = makeConductor(parent: nil, delegate: delegate)
+        delegate.written = ""
+        conductor.abandon()
+        deliverAutopollEOF(to: conductor)
+        conductor.sendKeys("ls\r".data(using: .utf8)!)
+        XCTAssertEqual(delegate.written, "")
+    }
+
+    // A nested connection's commands go through its parent, which is still connected, to
+    // the remote shell that ran the nested it2ssh.
+    func testAbandonedNestedConnectionDoesNotWriteThroughParent() {
+        let delegate = WriteRecordingConductorDelegate()
+        let parent = makeConductor(parent: nil, delegate: delegate)
+        let child = makeConductor(parent: parent, delegate: WriteRecordingConductorDelegate())
+        delegate.written = ""
+        deliverAutopollEOF(to: child)
+        XCTAssertFalse(delegate.written.isEmpty, "a live nested connection writes through its parent")
+
+        let otherDelegate = WriteRecordingConductorDelegate()
+        let liveParent = makeConductor(parent: nil, delegate: otherDelegate)
+        let abandonedChild = makeConductor(parent: liveParent,
+                                           delegate: WriteRecordingConductorDelegate())
+        otherDelegate.written = ""
+        abandonedChild.abandon()
+        deliverAutopollEOF(to: abandonedChild)
+        XCTAssertEqual(otherDelegate.written, "")
+    }
+}

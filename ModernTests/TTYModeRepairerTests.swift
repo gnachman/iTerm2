@@ -58,14 +58,24 @@ private final class PTYPair {
 
     // Everything that can be read from the master without waiting.
     func readAvailableFromMaster() -> [UInt8] {
+        return Self.readAvailable(master)
+    }
+
+    // Everything that can be read from the slave without waiting. The slave must not be
+    // canonical, or a partial line would not be readable.
+    func readAvailableFromSlave() -> [UInt8] {
+        return Self.readAvailable(slave)
+    }
+
+    private static func readAvailable(_ fd: Int32) -> [UInt8] {
         var result = [UInt8]()
         var buffer = [UInt8](repeating: 0, count: 4096)
         while true {
-            var pfd = pollfd(fd: master, events: Int16(POLLIN), revents: 0)
+            var pfd = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
             guard poll(&pfd, 1, 200) == 1 else {
                 return result
             }
-            let n = read(master, &buffer, buffer.count)
+            let n = read(fd, &buffer, buffer.count)
             guard n > 0 else {
                 return result
             }
@@ -167,6 +177,56 @@ final class TTYModeRepairerTests: XCTestCase {
         XCTAssertTrue(has(modes.c_oflag, OPOST))
         XCTAssertTrue(has(modes.c_iflag, IXON))
         XCTAssertTrue(has(modes.c_iflag, ICRNL))
+    }
+
+    // F-554: the conductor's commands (e.g., an autopoll request) that the dead ssh client
+    // didn't read are discarded instead of being read by the shell. Input written later is
+    // delivered.
+    func testDiscardPendingInputDropsWhatTheDeadClientDidNotRead() throws {
+        let pty = try PTYPair()
+        pty.enterSSHRawMode()
+        let stale = Array("YXV0b3BvbGw=\n".utf8)
+        XCTAssertEqual(write(pty.master, stale, stale.count), stale.count)
+
+        XCTAssertTrue(TTYModeRepairer.discardPendingInput(masterFileDescriptor: pty.master, ttyPath: pty.path))
+        XCTAssertEqual(pty.readAvailableFromSlave(), [])
+
+        let later = Array("ls\n".utf8)
+        XCTAssertEqual(write(pty.master, later, later.count), later.count)
+        XCTAssertEqual(pty.readAvailableFromSlave(), later)
+    }
+
+    // Pending input and unwritten output are discarded only when the connection was
+    // abandoned just now, nothing else owns the tty, and the tty was still in ssh's raw
+    // mode. Not from Disconnect's forced unhook seconds later, when the shell may have owned
+    // the tty for a while (the input may be the user's typeahead), and not when another
+    // program is in the foreground (a large paste's unwritten tail may be its).
+    func testMayDiscardInputOnlyRightAfterAbandoningWhileSSHRawModeRemains() {
+        XCTAssertTrue(TTYModeRepairer.mayDiscardInputForDeadClient(abandonedJustNow: true, repairNow: true, foundSSHRawMode: true))
+        XCTAssertFalse(TTYModeRepairer.mayDiscardInputForDeadClient(abandonedJustNow: false, repairNow: true, foundSSHRawMode: true))
+        XCTAssertFalse(TTYModeRepairer.mayDiscardInputForDeadClient(abandonedJustNow: true, repairNow: false, foundSSHRawMode: true))
+        XCTAssertFalse(TTYModeRepairer.mayDiscardInputForDeadClient(abandonedJustNow: true, repairNow: true, foundSSHRawMode: false))
+    }
+
+    // What decides foundSSHRawMode: the repairer arms only for a tty still in ssh's raw mode.
+    func testRepairerArmsOnlyForSSHRawMode() throws {
+        let pty = try PTYPair()
+        let repairer = TTYModeRepairer()
+        repairer.repairAfterAbandonedSSH(fileDescriptor: { pty.master }, ttyPath: pty.path, goodModes: nil, repairNow: true, shellProcessID: 0)
+        XCTAssertFalse(repairer.isArmed, "a sane tty")
+        pty.enterSSHRawMode()
+        repairer.repairAfterAbandonedSSH(fileDescriptor: { pty.master }, ttyPath: pty.path, goodModes: nil, repairNow: true, shellProcessID: 0)
+        XCTAssertTrue(repairer.isArmed, "ssh's raw mode")
+    }
+
+    // A pty that isn't the session's keeps its input.
+    func testDiscardPendingInputLeavesAnotherPTYAlone() throws {
+        let pty = try PTYPair()
+        pty.enterSSHRawMode()
+        let input = Array("keep".utf8)
+        XCTAssertEqual(write(pty.master, input, input.count), input.count)
+        XCTAssertFalse(TTYModeRepairer.discardPendingInput(masterFileDescriptor: pty.master, ttyPath: "/dev/ttys999"))
+        XCTAssertEqual(pty.readAvailableFromSlave(), input)
     }
 
     // F-553: setting the modes through the pty's master discards the output still waiting

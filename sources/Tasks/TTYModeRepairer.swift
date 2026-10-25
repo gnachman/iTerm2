@@ -426,9 +426,7 @@ final class TTYModeRepairer: NSObject {
     // The modes are set through the slave, never the master: on macOS setting them through
     // the master discards the output waiting to be read and leaves a process that waits for
     // that output to drain (zsh restores its modes with TCSADRAIN when a job ends) asleep
-    // until something else writes to the tty (F-553). Opening the slave doesn't make it a
-    // controlling tty, and iTerm2 isn't in the tty's session, so this can't stop iTerm2
-    // with SIGTTOU.
+    // until something else writes to the tty (F-553).
     private static func set(_ masterFD: Int32,
                             slave path: String,
                             _ modes: termios,
@@ -437,9 +435,60 @@ final class TTYModeRepairer: NSObject {
             RLog("tty modes changed while repairing them; leaving them alone")
             return false
         }
+        return withSlave(ofMaster: masterFD, path: path) { slaveFD in
+            var modes = modes
+            if tcsetattr(slaveFD, TCSANOW, &modes) != 0 {
+                RLog("tcsetattr failed: \(String(cString: strerror(errno)))")
+                return false
+            }
+            return true
+        }
+    }
+
+    // Whether what is waiting to be written to the tty and read from it may be discarded as
+    // written for a dead ssh client (F-554). Only when the connection was abandoned just as
+    // its it2ssh was found dead (not, e.g., seconds after Disconnect, when the shell may have
+    // owned the tty for a while and the input may be the user's), nothing else owns the tty
+    // (`repairNow`), and the tty was still in ssh's raw mode (`foundSSHRawMode`, the
+    // repairer armed), so nothing read it since.
+    @objc(mayDiscardInputForDeadClientAbandonedJustNow:repairNow:foundSSHRawMode:)
+    static func mayDiscardInputForDeadClient(abandonedJustNow: Bool,
+                                             repairNow: Bool,
+                                             foundSSHRawMode: Bool) -> Bool {
+        return abandonedJustNow && repairNow && foundSSHRawMode
+    }
+
+    // Discards the input waiting to be read from the tty whose master is `masterFD`. When
+    // an abandoned connection's ssh client is gone, that input was written for it (e.g.,
+    // conductor commands such as an autopoll request, which ssh didn't read while it was
+    // busy writing output) and would otherwise be read by the shell that owns the tty
+    // (F-554). Returns whether it was discarded.
+    @objc(discardPendingInputOfMasterFileDescriptor:ttyPath:)
+    static func discardPendingInput(masterFileDescriptor masterFD: Int32, ttyPath path: String) -> Bool {
+        guard isMaster(masterFD, of: path) else {
+            return false
+        }
+        return withSlave(ofMaster: masterFD, path: path) { slaveFD in
+            if tcflush(slaveFD, TCIFLUSH) != 0 {
+                RLog("tcflush failed: \(String(cString: strerror(errno)))")
+                return false
+            }
+            RLog("Discarded input written for an abandoned ssh client")
+            return true
+        }
+    }
+
+    // Opens the slave of the pty whose master is `masterFD` and runs `body` with it.
+    // Opening the slave doesn't make it a controlling tty, and iTerm2 isn't in the tty's
+    // session, so using it can't stop iTerm2 with SIGTTOU. This fails with EBUSY if a
+    // program put the tty in exclusive mode (TIOCEXCL); then the tty is left alone, which
+    // beats losing its pending output by going through the master.
+    private static func withSlave(ofMaster masterFD: Int32,
+                                  path: String,
+                                  _ body: (Int32) -> Bool) -> Bool {
         let slaveFD = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK | O_CLOEXEC)
         guard slaveFD >= 0 else {
-            RLog("Can't open \(path) to repair its modes: \(String(cString: strerror(errno)))")
+            RLog("Can't open \(path): \(String(cString: strerror(errno)))")
             return false
         }
         defer {
@@ -447,15 +496,10 @@ final class TTYModeRepairer: NSObject {
         }
         // The path could have been reused by another pty if the master closed meanwhile.
         guard isMaster(masterFD, of: path) else {
-            RLog("The pty changed while repairing its modes; leaving them alone")
+            RLog("The pty changed; leaving \(path) alone")
             return false
         }
-        var modes = modes
-        if tcsetattr(slaveFD, TCSANOW, &modes) != 0 {
-            RLog("tcsetattr failed: \(String(cString: strerror(errno)))")
-            return false
-        }
-        return true
+        return body(slaveFD)
     }
 
     // Whether every signature flag that is set in the good modes is clear now.

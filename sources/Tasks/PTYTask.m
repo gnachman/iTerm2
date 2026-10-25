@@ -376,6 +376,14 @@ static void HandleSigChld(int n) {
     [writeLock unlock];
 }
 
+- (NSUInteger)discardPendingWrites {
+    [writeLock lock];
+    const NSUInteger length = writeBuffer.length;
+    [writeBuffer setLength:0];
+    [writeLock unlock];
+    return length;
+}
+
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
     [self.jobManager killWithMode:mode];
     if (_tmuxClientProcessID) {
