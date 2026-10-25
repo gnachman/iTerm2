@@ -93,20 +93,24 @@
 }
 
 - (NSDate *)expirationDate {
-    CFArrayRef keys = CFArrayCreate(NULL, (const void **)&kSecOIDInvalidityDate, 1, &kCFTypeArrayCallBacks);
-    CFDictionaryRef result = SecCertificateCopyValues(_secCertificate, keys, NULL);
-    NSDate *date = nil;
-    if (result != NULL) {
-        CFDictionaryRef invalidityDateDictionary = CFDictionaryGetValue(result, kSecOIDInvalidityDate);
-        if (invalidityDateDictionary) {
-            CFTypeRef value = CFDictionaryGetValue(invalidityDateDictionary, kSecPropertyKeyValue);
-            date = (__bridge NSDate *)value;
-        }
-        CFRelease(result);
+    // The validity period's Not After date. Its value is a CFNumber of seconds since the
+    // reference date.
+    NSArray *keys = @[ (__bridge id)kSecOIDX509V1ValidityNotAfter ];
+    NSDictionary *values = (__bridge_transfer NSDictionary *)SecCertificateCopyValues(_secCertificate,
+                                                                                    (__bridge CFArrayRef)keys,
+                                                                                    NULL);
+    NSDictionary *property = values[(__bridge id)kSecOIDX509V1ValidityNotAfter];
+    if (![property isKindOfClass:[NSDictionary class]]) {
+        return nil;
     }
-    CFRelease(keys);
-
-    return date;
+    id value = property[(__bridge id)kSecPropertyKeyValue];
+    if ([value isKindOfClass:[NSDate class]]) {
+        return value;
+    }
+    if ([value isKindOfClass:[NSNumber class]]) {
+        return [NSDate dateWithTimeIntervalSinceReferenceDate:[value doubleValue]];
+    }
+    return nil;
 }
 
 - (NSData *)serialNumber {
