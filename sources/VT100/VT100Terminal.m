@@ -1855,6 +1855,17 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         return;
     }
     if (token.sshInfo.valid &&
+        !VT100TokenTypeIsSSHMeta(token.type) &&
+        [_framerRecoveryRefusals isRefusedForChildrenOfConductorAtDepth:token.sshInfo.depth - 1]) {
+        // An abandoned connection's output that was parsed inside its framing before the
+        // abandonment. The banner saying it ended was already drawn, so drawing this after
+        // it would scroll the banner away and leave the dead connection's output as the
+        // last thing on the screen (F-551). Output parsed after the forced unhook isn't
+        // framed and is drawn. Meta tokens go on to the checks that handle them.
+        DLog(@"Drop output token from an abandoned connection at depth %d", token.sshInfo.depth);
+        return;
+    }
+    if (token.sshInfo.valid &&
         token.sshInfo.channel >= 0) {
         DLog(@"Token is from an ssh side-channel");
         // A side-channel produced output. Ignore anything that isn't plaintext to make parsing easy.

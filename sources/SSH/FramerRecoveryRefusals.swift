@@ -10,6 +10,8 @@ import Foundation
 // Remembers which SSH Integration connections were abandoned so their framer output can't
 // start framer recovery (F-354, F-459). Recovering would type base64 "recover" into the
 // shell that owns the tty and leave a recovery conductor holding the keyboard.
+// VT100Terminal also drops the output parsed inside a refused connection's framing, so
+// a backlog queued before the abandonment can't scroll its banner away (F-551).
 //
 // Abandoning a connection abandons every connection nested in it, so a refusal at a
 // parent depth covers that depth and every deeper one. That keeps output parsed before

@@ -415,6 +415,79 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         assertShellOutputIsDrawn()
     }
 
+    // F-551: the abandonment's banner runs ahead of output that was already parsed but
+    // not yet executed (the token executor runs high-priority tasks before queued
+    // tokens). That backlog is up to bufferDepth reads of the dead connection's framed
+    // output, thousands of lines of `yes`, which scrolled the banner off the screen and
+    // left a static screen of "y". Output the abandoned connection framed must not be
+    // drawn once it is abandoned, so the banner stays the last thing on the screen.
+    func testBannerIsNotScrolledAwayByAbandonedConnectionsQueuedOutput() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 500) +
+                           framedYes(id: "o2", lines: 500) +
+                           osc134("%output o3 100 -1 0") + "y\r\ny\r\ny")
+        abandonRoot()
+        execute(queued)
+        let visible = session.screen.compactLineDump() ?? ""
+        let lines = visible.components(separatedBy: "\n")
+        guard let bannerIndex = lines.lastIndex(where: { $0.contains("Disconnected from") }) else {
+            XCTFail("Banner is not on the screen:\n\(visible)")
+            return
+        }
+        XCTAssertFalse(lines[(bannerIndex + 1)...].contains { $0.contains("y") }, visible)
+        XCTAssertNil(session.conductor)
+
+        // Output that arrives after the forced unhook is not framed, so the shell's prompt
+        // is drawn after the banner.
+        send("\r\nlocal% ")
+        let after = session.screen.compactLineDump() ?? ""
+        XCTAssertTrue(after.contains("Disconnected from"), after)
+        XCTAssertTrue(after.contains("local% "), after)
+        XCTAssertEqual(session.writes, [])
+    }
+
+    // Disconnect draws the same banner, so the backlog framed before it is dropped too.
+    func testDisconnectDropsQueuedFramedOutput() {
+        let conductor = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 500))
+        conductor?.quit()
+        execute(queued)
+        let visible = session.screen.compactLineDump() ?? ""
+        XCTAssertTrue(visible.contains("Disconnected from"), visible)
+        XCTAssertFalse(visible.contains("y."), visible)
+    }
+
+    // After an abandonment, a new connection's framed output is drawn.
+    func testNewConnectionsOutputIsDrawnAfterAbandonment() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 100))
+        abandonRoot()
+        execute(queued)
+        send(hook(uniqueID: "777"))
+        XCTAssertEqual(session.conductor?.clientUniqueID, "777")
+        send(osc134("%output o2 100 -1 0") + "new-line\r\n" + osc134("%end o2"))
+        XCTAssertTrue(screenText().contains("new-line"), screenText())
+    }
+
+    // Abandoning a nested connection drops what it framed, but its parent's output (still
+    // connected) is drawn.
+    func testNestedAbandonmentDropsOnlyNestedConnectionsQueuedOutput() {
+        let root = hookRoot()
+        send(osc134("%output out1 100 -1 0") + hook(uniqueID: nestedID) + osc134("%end out1"))
+        XCTAssertEqual(session.conductor?.clientUniqueID, nestedID)
+        // The nested conductor's output is framed again inside the root's. The root's own
+        // output comes from another of its processes, whose stream isn't hooked.
+        let nestedFrame = osc134("%output n1 200 -1 0") + "nested-y\r\n" + osc134("%end n1")
+        let queued = parse(osc134("%output out2 100 -1 0") + nestedFrame + osc134("%end out2") +
+                           osc134("%output out3 101 -1 0") + "root-line\r\n" + osc134("%end out3"))
+        session.abandonSSH(throughClientUniqueID: nestedID)
+        execute(queued)
+        XCTAssertTrue(session.conductor === root)
+        let text = screenText()
+        XCTAssertFalse(text.contains("nested-y"), text)
+        XCTAssertTrue(text.contains("root-line"), text)
+    }
+
     // The abandonment interrupts the parser in the middle of an OSC 134 line.
     func testAbandonmentMidOSCDoesNotRecover() {
         _ = hookRoot()

@@ -149,7 +149,9 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 // recovery (and type "recover" into the shell that owns the tty). This refuses recovery
 // for the children of the conductor at parentDepth (-1 for the outermost connection) and
 // of every deeper conductor until a connection that wasn't abandoned hooks there (F-354,
-// F-459). clientUniqueIDs names the abandoned connections.
+// F-459). clientUniqueIDs names the abandoned connections. Output parsed inside those
+// connections' framing is dropped rather than drawn, so it can't scroll away the banner
+// that says they ended (F-551).
 - (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth
                               abandonedClientUniqueIDs:(NSArray<NSString *> *)clientUniqueIDs;
 - (BOOL)framerRecoveryIsRefusedForChildrenOfConductorAtDepth:(int)parentDepth;
