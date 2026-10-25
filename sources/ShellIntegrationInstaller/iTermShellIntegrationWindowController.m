@@ -85,16 +85,29 @@ static NSString *const iTermShellIntegrationNuVerifyScriptCommandFormat =
     @"if test $? -eq 0 && test -s %1$@; then chmod +x %1$@; echo iTerm2-nu-script-\"\"written; else echo iTerm2-nu-script-\"\"missing; fi\n";
 static NSString *const iTermShellIntegrationNuVerifyScriptRegex = @"^iTerm2-nu-script-(written|missing)$";
 
-// Typed into the helper sh in the utilities folder. Prints it2-receiving-utilities, reads the
-// base64 archive from the tty up to a line that is just EOF into a file (with read, so not
-// through a line editor), extracts it, and prints it2-utilities-installed if tar succeeded or
-// it2-utilities-failed if not. The empty quotes keep the echo of the command from matching.
+// Typed into the helper sh in the utilities folder. Reads the base64 archive from the tty up to
+// a line that is just EOF into a file (with read, so not through a line editor), decodes it
+// into a second file, extracts that, and removes both files.
+//
+// It prints it2-receiving-utilities only once the file the archive goes into is open, so the
+// archive can't be typed into sh's prompt. The redirection is on the group that prints it, so
+// if the file can't be created (say the folder isn't writable) the group doesn't run and sh
+// prints it2-cannot-receive-utilities instead. fd 3 is sh's own stdout, since the group's goes
+// to the file.
+//
+// Then it prints it2-utilities-installed only if decoding succeeded, tar succeeded, and a file
+// from the archive is there; otherwise it2-utilities-failed. Each step's status is checked
+// separately because there is no pipefail in POSIX sh, and tar given no input at all succeeds.
+//
+// The empty quotes keep the echo of the command from matching any of these.
 static NSString *const iTermShellIntegrationReceiveUtilitiesCommand =
     @"if command -v base64 >/dev/null 2>&1; then IT2_B64D='base64 -d'; else IT2_B64D='b64decode -r'; fi; "
-    @"echo it2-\"\"receiving-utilities; "
-    @"while IFS= read -r IT2_LINE && test \"$IT2_LINE\" != EOF; do printf '%s\\n' \"$IT2_LINE\"; done > .it2-utilities.b64; "
-    @"if $IT2_B64D < .it2-utilities.b64 | tar xfz -; then echo it2-\"\"utilities-installed; else echo it2-\"\"utilities-failed; fi; "
-    @"rm -f .it2-utilities.b64\n";
+    @"if { echo it2-\"\"receiving-utilities >&3; "
+    @"while IFS= read -r IT2_LINE && test \"$IT2_LINE\" != EOF; do printf '%s\\n' \"$IT2_LINE\"; done; } 3>&1 > .it2-utilities.b64; then "
+    @"if $IT2_B64D < .it2-utilities.b64 > .it2-utilities.tgz && tar xfz .it2-utilities.tgz && test -s it2check; "
+    @"then echo it2-\"\"utilities-installed; else echo it2-\"\"utilities-failed; fi; "
+    @"else echo it2-\"\"cannot-receive-utilities; fi; "
+    @"rm -f .it2-utilities.b64 .it2-utilities.tgz\n";
 
 typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     iTermShellIntegrationInstallationStateFirstPage,
@@ -235,6 +248,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (BOOL)sendShellCommandsWriteFailed {
     return self.sendShellCommandsViewController.writeFailed;
+}
+
++ (NSString *)receiveUtilitiesCommand {
+    return iTermShellIntegrationReceiveUtilitiesCommand;
 }
 
 - (BOOL)showingDownloadAndRunPage {
@@ -821,28 +838,49 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // editor, and the tty stays in canonical mode, where a full input buffer makes the writer
     // wait instead of dropping input. The loop stops at a line that is just EOF, which base64
     // never produces (its lines are multiples of four characters). The archive is typed only
-    // once sh says the loop is about to read, so none of it can reach sh's prompt and run as a
-    // command. tar's exit status then says whether it arrived intact, since gzip checks a CRC.
-    // OpenBSD has no base64 command, but it has b64decode.
-    [result appendString:[self sendText:iTermShellIntegrationReceiveUtilitiesCommand
-                             reallySend:reallySend
-                             afterRegex:@"it2-receiving-utilities"
-                            expectation:expectation]];
+    // once sh says the loop is reading into a file it created, so none of it can reach sh's
+    // prompt and run as a command. tar's exit status then says whether it arrived intact, since
+    // gzip checks a CRC. OpenBSD has no base64 command, but it has b64decode.
     NSData *data = [NSData dataWithContentsOfURL:url];
     NSString *encoded = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed)];
-    __weak __typeof(self) weakSelf = self;
-    [result appendString:[self sendText:[encoded stringByAppendingString:@"\nEOF\n"]
-                             reallySend:reallySend
-                             afterRegex:@"it2-utilities-(installed|failed)"
-                            expectation:expectation
-                             completion:^(NSArray<NSString *> *captures) {
-        // sh printed the result, so it is reading commands again.
-        [weakSelf sendText:weakSelf.exitHelperShellString reallySend:YES];
-        completion([captures[1] isEqualToString:@"installed"]);
-    }]];
+    NSString *archive = [encoded stringByAppendingString:@"\nEOF\n"];
     if (!reallySend) {
+        [result appendString:iTermShellIntegrationReceiveUtilitiesCommand];
+        [result appendString:archive];
         [result appendString:self.exitHelperShellString];
+        return result;
     }
+    // Whether to type the archive depends on sh's answer, so it is not chained after the
+    // command like the other texts: the answer's completion types it, or gives up.
+    __weak __typeof(self) weakSelf = self;
+    const NSUInteger generation = _cancellationGeneration;
+    [self sendText:iTermShellIntegrationReceiveUtilitiesCommand
+        reallySend:YES
+        afterRegex:@"it2-(receiving|cannot-receive)-utilities"
+       expectation:expectation
+        completion:^(NSArray<NSString *> *captures) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_cancellationGeneration != generation) {
+            DLog(@"Not answering the utilities receive command after a cancel");
+            return;
+        }
+        if (![captures[1] isEqualToString:@"receiving"]) {
+            // sh could not create the file to receive the archive into. It is reading commands.
+            [strongSelf sendText:strongSelf.exitHelperShellString reallySend:YES];
+            completion(NO);
+            return;
+        }
+        iTermExpectation *archiveExpectation = nil;
+        [strongSelf sendText:archive
+                  reallySend:YES
+                  afterRegex:@"it2-utilities-(installed|failed)"
+                 expectation:&archiveExpectation
+                  completion:^(NSArray<NSString *> *captures) {
+            // sh printed the result, so it is reading commands again.
+            [weakSelf sendText:weakSelf.exitHelperShellString reallySend:YES];
+            completion([captures[1] isEqualToString:@"installed"]);
+        }];
+    }];
     return result;
 }
 

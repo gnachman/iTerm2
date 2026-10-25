@@ -28,6 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL showingDownloadAndRunPage;
 @property (nonatomic, readonly) BOOL showingSendShellCommandsPage;
 @property (nonatomic, readonly) NSTextField *sendShellCommandsStepListField;
+// The command the helper sh runs in the utilities folder to receive and unpack the archive.
+@property (class, nonatomic, readonly) NSString *receiveUtilitiesCommand;
 @end
 
 NS_ASSUME_NONNULL_END

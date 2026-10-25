@@ -1926,5 +1926,8 @@ Bug Fixes:
   .profile or .bash_profile.
 - The Internet-Free shell integration install
   no longer reports that it installed the
-  utilities when they failed to unpack, and
-  no longer garbles them on a busy computer.
+  utilities when they failed to unpack, no
+  longer garbles them on a busy computer, and
+  no longer types them into the shell as
+  commands when the ~/.iterm2 folder is not
+  writable.
