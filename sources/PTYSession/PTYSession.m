@@ -20975,13 +20975,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                   abandonedClientUniqueIDs:abandonedClientUniqueIDs];
     if (parentDepth < 0) {
         // The outermost connection's ssh ran on this session's tty.
-        [self restoreTTYModesIfIT2SSHExitedForClientUniqueID:uniqueID];
+        [self restoreTTYModesIfIT2SSHExitedForClientUniqueID:uniqueID
+                                   discardingInputForDeadClient:YES];
     }
 }
 
 // ssh left the tty in raw mode if its it2ssh was killed (F-460). Never touch the modes
 // while it2ssh might be alive: its ssh would still be using them.
-- (void)restoreTTYModesIfIT2SSHExitedForClientUniqueID:(NSString *)uniqueID {
+//
+// If discardInput, the connection was abandoned just now, as soon as its it2ssh was found
+// dead, and input written for its ssh client that the client never read is discarded too
+// (F-554).
+- (void)restoreTTYModesIfIT2SSHExitedForClientUniqueID:(NSString *)uniqueID
+                          discardingInputForDeadClient:(BOOL)discardInput {
     if (!uniqueID.length || ![_sshClientMonitor it2sshHasExitedForClientUniqueID:uniqueID]) {
         DLog(@"it2ssh %@ is not known to have exited; leaving tty modes alone", uniqueID);
         return;
@@ -20997,7 +21003,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     PTYTask *task = _shell;
     const int fd = task.fd;
     NSString *ttyPath = task.tty;
-    if (fd <= 0 || !ttyPath.length) {
+    if (fd <= 0 || !ttyPath.length || _exited || task.hasBrokenPipe) {
+        // Opening the slave of a pty whose shell is gone could make iTerm2's close the last
+        // one, which discards the shell's final output.
         return;
     }
     const pid_t foregroundProcessGroup = tcgetpgrp(fd);
@@ -21018,6 +21026,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                               goodModes:_preSSHTTYModes
                                               repairNow:repairNow
                                          shellProcessID:[_sshClientMonitor shellProcessIDForClientUniqueID:uniqueID]];
+    if ([iTermTTYModeRepairer mayDiscardInputForDeadClientAbandonedJustNow:discardInput
+                                                                 repairNow:repairNow
+                                                           foundSSHRawMode:repairer.isArmed]) {
+        // What is waiting to be written to the tty or read from it was written for the dead
+        // ssh client, which didn't read it while it was busy writing output. It includes
+        // conductor commands, such as an autopoll request, that the shell would otherwise read
+        // as a command line (F-554).
+        const NSUInteger dropped = [task discardPendingWrites];
+        const BOOL flushed = [iTermTTYModeRepairer discardPendingInputOfMasterFileDescriptor:fd
+                                                                                      ttyPath:ttyPath];
+        RLog(@"Discarded %@ unwritten bytes and %@ the tty's pending input for abandoned it2ssh %@",
+             @(dropped), flushed ? @"flushed" : @"could not flush", uniqueID);
+    }
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.ttyModeRepairer = repairer;
     }];
@@ -26807,7 +26828,10 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
             [weakSelf killOrphanedSSHClientForClientUniqueID:clientUniqueID];
             [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
             if (isOutermost) {
-                [weakSelf restoreTTYModesIfIT2SSHExitedForClientUniqueID:clientUniqueID];
+                // The shell may have owned the tty for a while by now, so what is waiting
+                // to be read may be the user's.
+                [weakSelf restoreTTYModesIfIT2SSHExitedForClientUniqueID:clientUniqueID
+                                             discardingInputForDeadClient:NO];
             }
         });
     }

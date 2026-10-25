@@ -380,6 +380,11 @@ class Conductor: NSObject, SSHIdentityProvider {
 
     @objc var autopollEnabled = true
     var _queueWrites = true
+    // Set when the connection is abandoned because its it2ssh died. Nothing may be written
+    // for it after that: there is no ssh to read it, so a command (e.g., an autopoll
+    // request) would be typed into the shell that owns the tty, or into the parent's remote
+    // shell for a nested connection (F-554).
+    @objc private(set) var abandoned = false
 
     // Set while a pipeline transition is running a handler that could call back in.
     // handleCommandEnd captures the pipeline's contents from the pattern match, runs the
@@ -1834,6 +1839,8 @@ extension Conductor {
     // anything or notifying the delegate; the caller unhooks.
     @objc func abandon() {
         log("abandon")
+        // First, so nothing that canceling requests triggers can write.
+        abandoned = true
         cancelAllRequests()
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
@@ -1867,6 +1874,10 @@ extension Conductor {
     }
 
     @objc func sendKeys(_ data: Data) {
+        guard !abandoned else {
+            log("Abandoned. Not sending keys.")
+            return
+        }
         guard let pid = framedPID else {
             DLog("[sendKeys] Write: \(data.stringOrHex)")
             delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)
@@ -3070,6 +3081,10 @@ extension Conductor {
 
     private func write(_ string: String, end: String = "\n") {
         log("write: \(string)")
+        guard !abandoned else {
+            log("Abandoned. Not writing.")
+            return
+        }
         let savedQueueWrites = _queueWrites
         _queueWrites = false
         if let parent = parent {
@@ -3129,7 +3144,9 @@ extension Conductor {
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
-        delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
+        if !abandoned {
+            delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
+        }
         delegate?.conductorAbort(reason: reason)
     }
 }
