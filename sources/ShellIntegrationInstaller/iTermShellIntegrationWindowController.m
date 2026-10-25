@@ -98,13 +98,17 @@ static NSString *const iTermShellIntegrationNuVerifyScriptRegex = @"^iTerm2-nu-s
 // Then it prints it2-utilities-installed only if decoding succeeded, tar succeeded, and a file
 // from the archive is there; otherwise it2-utilities-failed. Each step's status is checked
 // separately because there is no pipefail in POSIX sh, and tar given no input at all succeeds.
+// tar reads the whole archive once before extracting anything, which checks gzip's CRC, so a
+// damaged or partial archive (as when Cancel stops typing it) doesn't overwrite any utility
+// with part of a file.
 //
 // The empty quotes keep the echo of the command from matching any of these.
 static NSString *const iTermShellIntegrationReceiveUtilitiesCommand =
     @"if command -v base64 >/dev/null 2>&1; then IT2_B64D='base64 -d'; else IT2_B64D='b64decode -r'; fi; "
     @"if { echo it2-\"\"receiving-utilities >&3; "
     @"while IFS= read -r IT2_LINE && test \"$IT2_LINE\" != EOF; do printf '%s\\n' \"$IT2_LINE\"; done; } 3>&1 > .it2-utilities.b64; then "
-    @"if $IT2_B64D < .it2-utilities.b64 > .it2-utilities.tgz && tar xfz .it2-utilities.tgz && test -s it2check; "
+    @"if $IT2_B64D < .it2-utilities.b64 > .it2-utilities.tgz && tar tfz .it2-utilities.tgz > /dev/null && "
+    @"tar xfz .it2-utilities.tgz && test -s it2check; "
     @"then echo it2-\"\"utilities-installed; else echo it2-\"\"utilities-failed; fi; "
     @"else echo it2-\"\"cannot-receive-utilities; fi; "
     @"rm -f .it2-utilities.b64 .it2-utilities.tgz\n";
@@ -139,6 +143,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // Incremented by cancelAllExpectations, so a command whose typing was already queued when
     // its expectation was canceled is not typed.
     NSUInteger _cancellationGeneration;
+    // The command that receives the utilities archive was typed and sh has not yet said whether
+    // the archive unpacked (or that it could not receive it), so sh may be in its read loop.
+    BOOL _utilitiesReadLoopMayBeRunning;
 }
 
 #pragma mark - NSWindowController
@@ -292,6 +299,21 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             afterRegex:(NSString *)regex
            expectation:(inout iTermExpectation **)expectation
             completion:(void (^)(NSArray<NSString *> *))completion {
+    return [self sendText:text
+               reallySend:reallySend
+               afterRegex:regex
+              expectation:expectation
+                  didSend:nil
+               completion:completion];
+}
+
+// didSend is called right after text is typed.
+- (NSString *)sendText:(NSString *)text
+            reallySend:(BOOL)reallySend
+            afterRegex:(NSString *)regex
+           expectation:(inout iTermExpectation **)expectation
+               didSend:(void (^)(void))didSend
+            completion:(void (^)(NSArray<NSString *> *))completion {
     if (!reallySend) {
         return text;
     }
@@ -309,6 +331,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         }
         if (text) {
             [strongSelf.delegate shellIntegrationWindowControllerSendText:text];
+        }
+        if (didSend) {
+            didSend();
         }
     }
                        completion:completion];
@@ -363,6 +388,21 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         [[self.delegate shellIntegrationExpect] cancelExpectation:obj];
     }];
     [_pendingExpectations removeAllObjects];
+    if (_utilitiesReadLoopMayBeRunning) {
+        // Typing the archive takes a minute or more. Stop it rather than let it go on after
+        // Cancel, but still type the line that ends it, as the archive would have: otherwise
+        // sh stays in its read loop, silently taking whatever is typed next into the file
+        // (including the commands of a retry). The newline first ends a line the stop may have
+        // cut. sh then fails to unpack what it got, removes its files, and prompts. This is
+        // safe because sh checks the whole archive before unpacking any of it, so a partial
+        // one installs nothing. If sh has not read the receive command yet, its loop reads
+        // just these lines and ends the same way. A here-document of a shell integration
+        // script, in contrast, is left to finish: cut short, ending it would write a partial
+        // script that a dotfile may already source.
+        _utilitiesReadLoopMayBeRunning = NO;
+        [self.delegate shellIntegrationWindowControllerStopSendingText];
+        [self.delegate shellIntegrationWindowControllerSendText:@"\nEOF\n"];
+    }
     [self.currentViewController setBusy:NO];
 }
 
@@ -858,6 +898,12 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         reallySend:YES
         afterRegex:@"it2-(receiving|cannot-receive)-utilities"
        expectation:expectation
+           didSend:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            strongSelf->_utilitiesReadLoopMayBeRunning = YES;
+        }
+    }
         completion:^(NSArray<NSString *> *captures) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf || strongSelf->_cancellationGeneration != generation) {
@@ -866,6 +912,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         }
         if (![captures[1] isEqualToString:@"receiving"]) {
             // sh could not create the file to receive the archive into. It is reading commands.
+            strongSelf->_utilitiesReadLoopMayBeRunning = NO;
             [strongSelf sendText:strongSelf.exitHelperShellString reallySend:YES];
             completion(NO);
             return;
@@ -876,8 +923,12 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                   afterRegex:@"it2-utilities-(installed|failed)"
                  expectation:&archiveExpectation
                   completion:^(NSArray<NSString *> *captures) {
+            __strong __typeof(self) innerSelf = weakSelf;
+            if (innerSelf) {
+                innerSelf->_utilitiesReadLoopMayBeRunning = NO;
+            }
             // sh printed the result, so it is reading commands again.
-            [weakSelf sendText:weakSelf.exitHelperShellString reallySend:YES];
+            [innerSelf sendText:innerSelf.exitHelperShellString reallySend:YES];
             completion([captures[1] isEqualToString:@"installed"]);
         }];
     }];

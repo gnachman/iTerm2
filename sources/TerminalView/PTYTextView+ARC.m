@@ -1608,6 +1608,10 @@ launchProfileInCurrentTerminal:(Profile *)profile
     [self.delegate sendTextSlowly:text];
 }
 
+- (void)shellIntegrationWindowControllerStopSendingText {
+    [self.delegate stopSendingTextSlowly];
+}
+
 - (iTermExpect *)shellIntegrationExpect {
     return [self.delegate textViewExpect];
 }

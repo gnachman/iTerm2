@@ -41,6 +41,13 @@ private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindo
         unansweredTexts.append(text)
     }
 
+    // How many times the installer asked to stop typing what it sent.
+    private(set) var stopSendingTextCount = 0
+
+    func shellIntegrationWindowControllerStopSendingText() {
+        stopSendingTextCount += 1
+    }
+
     func shellIntegrationExpect() -> iTermExpect {
         return dryExpect
     }
@@ -1005,6 +1012,8 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     // Set to make sh unable to create the file the archive goes into, as in a folder that is
     // not writable.
     var receiveFails = false
+    // Set to keep sh reading the archive, as while it is still being typed.
+    var archiveNeverEnds = false
 
     var helperIsRunning: Bool {
         return depth > 0
@@ -1065,7 +1074,7 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
         }
         let redraw = prompt + line
         if var lines = heredocLines {
-            if line == "EOF" {
+            if line == "EOF" && !(receivingUtilities && archiveNeverEnds) {
                 heredocBodies.append(lines)
                 heredocLines = nil
                 prompt = ">> "
@@ -1218,6 +1227,62 @@ final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertTrue(controller.sendShellCommandsWriteFailed)
         let steps = controller.sendShellCommandsStepListField.stringValue
         XCTAssertTrue(steps.contains("utility scripts were not installed"), steps)
+    }
+
+    // F-463: the archive takes a minute or more to type. Cancel must stop typing it, not just
+    // stop waiting for sh's answer.
+    func testCancelStopsTypingTheArchive() {
+        terminal.archiveNeverEnds = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        XCTAssertTrue(terminal.sentTexts.contains { $0.hasSuffix("\nEOF\n") })
+        XCTAssertEqual(terminal.heredocBodies, [])
+        let stopsBefore = terminal.stopSendingTextCount
+        let sentBefore = terminal.sentTexts.count
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+
+        XCTAssertEqual(terminal.stopSendingTextCount, stopsBefore + 1)
+        // The line that ends the read loop is still typed, so sh doesn't keep taking what is
+        // typed next into its file.
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), ["\nEOF\n"])
+    }
+
+    // F-463: Send Again while the archive is being typed stops it, and the retry's commands
+    // reach sh rather than its read loop.
+    func testSendAgainWhileTypingTheArchiveInstalls() {
+        terminal.archiveNeverEnds = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        XCTAssertEqual(terminal.heredocBodies, [])
+
+        // As the step's Send Again button does while busy.
+        terminal.archiveNeverEnds = false
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertEqual(terminal.heredocBodies.count, 2)
+        XCTAssertEqual(terminal.heredocBodies.last, encodedUtilitiesArchive())
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+        XCTAssertFalse(controller.sendShellCommandsWriteFailed)
+    }
+
+    // F-463: a shell integration script cut short would be written partially if the here-document
+    // were then ended, so Cancel lets it finish. Once the archive is in, there is nothing to stop.
+    func testCancelStopsTypingOnlyTheArchive() {
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        controller.shellIntegrationInstallerCancelExpectations()
+        XCTAssertEqual(terminal.stopSendingTextCount, 0)
+
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+        controller.shellIntegrationInstallerCancelExpectations()
+        XCTAssertEqual(terminal.stopSendingTextCount, 0)
     }
 
     func testWholeInstallSendsBothHereDocumentsAndExitsTheHelper() {
@@ -1482,6 +1547,20 @@ final class ShellIntegrationReceiveUtilitiesCommandTests: XCTestCase {
             XCTAssertTrue(output.contains("it2-utilities-failed"), "\(shell): \(output)")
             XCTAssertFalse(output.contains("it2-utilities-installed"), "\(shell): \(output)")
             XCTAssertEqual(leftoverTemporaryFiles(), [], shell)
+        }
+    }
+
+    // F-463: Cancel can stop typing the archive partway. tar would unpack the files before the
+    // cut and part of the one at it, overwriting good copies, so nothing may be unpacked.
+    func testMostOfTheArchiveUnpacksNothing() throws {
+        for shell in Self.shells {
+            try makeFolder()
+            let lines = try encodedArchiveLines()
+            let input = lines.prefix(lines.count * 9 / 10).joined(separator: "\n") + "\nEOF\n"
+            let output = try run(shell, input: input)
+
+            XCTAssertTrue(output.contains("it2-utilities-failed"), "\(shell): \(output)")
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [], shell)
         }
     }
 

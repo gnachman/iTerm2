@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermShellIntegrationWindowControllerDelegate<NSObject>
 - (void)shellIntegrationWindowControllerSendText:(NSString *)text;
+// Stop typing text sent with shellIntegrationWindowControllerSendText: that has not been typed
+// yet, such as the rest of a long paste.
+- (void)shellIntegrationWindowControllerStopSendingText;
 - (iTermExpect *)shellIntegrationExpect;
 @end
 

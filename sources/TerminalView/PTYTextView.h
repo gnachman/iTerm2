@@ -114,6 +114,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)sendText:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (void)openAdvancedPasteWithText:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (void)sendTextSlowly:(NSString *)text;
+// Stops typing what sendTextSlowly: was given and has not typed yet. Other pastes go on.
+- (void)stopSendingTextSlowly;
 - (void)textViewSelectionDidChangeToTruncatedString:(NSString *)maybeSelection;
 - (void)launchCoprocessWithCommand:(NSString *)command;
 - (void)insertText:(NSString *)string;
