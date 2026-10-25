@@ -33966,6 +33966,48 @@
         }
       }
     },
+    "AppleIntelligenceRunner.DisallowedByAdministrator" : {
+      "comment" : "Error shown when an Apple Intelligence request is refused because an administrator disabled generative AI",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generative KI-Funktionen wurden vom Systemadministrator deaktiviert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generative AI features have been disabled by the system administrator."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生成AI機能はシステム管理者によって無効にされています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os recursos de IA generativa foram desativados pelo administrador do sistema."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Функции генеративного ИИ отключены системным администратором."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生成式 AI 功能已被系统管理员禁用。"
+          }
+        }
+      }
+    },
     "ApplyLayout.DuplicateSessionID" : {
       "comment" : "Error shown when a session GUID appears more than once in an apply_layout spec",
       "extractionState" : "extracted_with_value",
@@ -65531,6 +65573,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 通过 SSH 集成"
+          }
+        }
+      }
+    },
+    "ConductorUpload.NameCheckFailed" : {
+      "comment" : "Error shown when an upload over SSH integration is stopped because checking for an existing file of the same name failed. The first value is the file name; the second is the reason the check failed.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es konnte nicht geprüft werden, ob „%1$@“ auf dem Remote-Host bereits vorhanden ist, daher wurde die Datei nicht hochgeladen: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t check whether “%1$@” already exists on the remote host, so it was not uploaded: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホストに“%1$@”が既に存在するかどうかを確認できなかったため、アップロードしませんでした: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível verificar se “%1$@” já existe no host remoto, então o arquivo não foi enviado: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось проверить, существует ли «%1$@» на удалённом хосте, поэтому файл не был загружен: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法检查“%1$@”是否已存在于远程主机上，因此未上传：%2$@"
           }
         }
       }
@@ -126087,10 +126171,40 @@
       "comment" : "Button that ends an SSH Integration connection",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trennen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Disconnect"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切断"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconectar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отключиться"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "断开连接"
           }
         }
       }
@@ -126099,10 +126213,40 @@
       "comment" : "Announcement shown when a shell prompt appears while iTerm2 still thinks an SSH Integration connection is active, which suggests it2ssh was killed; placeholder is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die SSH-Verbindung zu %@ wurde anscheinend unerwartet beendet. Trennen Sie die Verbindung, um zur Shell zurückzukehren, in der sie gestartet wurde."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "It looks like the SSH connection to %@ ended unexpectedly. Disconnect to return to the shell that started it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@へのSSH接続が予期せず終了したようです。切断すると、接続を開始したシェルに戻ります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que a conexão SSH com %@ foi encerrada inesperadamente. Desconecte para voltar ao shell que a iniciou."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Похоже, SSH-подключение к %@ неожиданно прервалось. Отключитесь, чтобы вернуться в оболочку, из которой оно было запущено."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 %@ 的 SSH 连接似乎意外结束了。断开连接即可返回启动它的 shell。"
           }
         }
       }
@@ -126111,10 +126255,40 @@
       "comment" : "Announcement shown when a shell prompt appears while iTerm2 still thinks an SSH Integration connection to an unknown host is active, which suggests it2ssh was killed",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die SSH-Verbindung wurde anscheinend unerwartet beendet. Trennen Sie die Verbindung, um zur Shell zurückzukehren, in der sie gestartet wurde."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "It looks like the SSH connection ended unexpectedly. Disconnect to return to the shell that started it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH接続が予期せず終了したようです。切断すると、接続を開始したシェルに戻ります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que a conexão SSH foi encerrada inesperadamente. Desconecte para voltar ao shell que a iniciou."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Похоже, SSH-подключение неожиданно прервалось. Отключитесь, чтобы вернуться в оболочку, из которой оно было запущено."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH 连接似乎意外结束了。断开连接即可返回启动它的 shell。"
           }
         }
       }
@@ -161793,6 +161967,48 @@
         }
       }
     },
+    "SSHEndpointException.FileOperationFailed" : {
+      "comment" : "Error shown when a file operation on an SSH endpoint fails for a reason other than the file not existing, such as a permission error",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Dateivorgang auf dem Remote-Host ist fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The file operation failed on the remote host"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホストでのファイル操作に失敗しました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A operação de arquivo falhou no host remoto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось выполнить операцию с файлом на удалённом хосте"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "远程主机上的文件操作失败"
+          }
+        }
+      }
+    },
     "SSHEndpointException.InternalError" : {
       "comment" : "Error shown when an internal SSH endpoint error occurs",
       "extractionState" : "extracted_with_value",
@@ -174946,10 +175162,40 @@
       "comment" : "Shown when discovering the shell finds a helper shell (with a “>> ” prompt) that a canceled shell integration install left running in the terminal, instead of the user's own shell",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Das Terminal befindet sich in einer Hilfs-Shell, die eine frühere Installation offen gelassen hat, nicht in Ihrer eigenen Shell. Geben Sie „exit“ ein, bis die Eingabeaufforderung Ihrer eigenen Shell wieder erscheint, und wählen Sie dann „Fortfahren“, um es erneut zu versuchen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "🛑 The terminal is in a helper shell that an earlier install left running, not in your own shell. Enter “exit” until your own shell’s prompt is back, then select “Continue” to try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 ターミナルは、以前のインストールが残したヘルパーシェルの中にあり、ご自分のシェルではありません。ご自分のシェルのプロンプトが戻るまで“exit”を入力してから、「続ける」を選択してもう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 O terminal está em um shell auxiliar que uma instalação anterior deixou em execução, não no seu próprio shell. Digite “exit” até que o prompt do seu shell volte e selecione “Continuar” para tentar novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Терминал находится во вспомогательной оболочке, которую оставила запущенной предыдущая установка, а не в вашей оболочке. Вводите «exit», пока не вернётся приглашение вашей оболочки, затем нажмите «Продолжить», чтобы повторить попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 终端当前处于之前的安装遗留下来的辅助 shell 中，而不是你自己的 shell。请输入“exit”，直到你自己的 shell 提示符重新出现，然后选择“继续”重试。"
           }
         }
       }
@@ -174992,6 +175238,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完成！选择“继续”以继续。"
+          }
+        }
+      }
+    },
+    "ShellIntegrationInstaller.InstallFailed" : {
+      "comment" : "Shown when the command that installs the iTerm2 utility scripts reports that they could not be extracted",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Die iTerm2-Hilfsskripte wurden nicht installiert. Prüfen Sie das Terminal auf Fehler und wählen Sie dann „Fortfahren“, um es erneut zu versuchen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🛑 The iTerm2 utility scripts were not installed. Check the terminal for errors, then select “Continue” to try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 iTerm2のユーティリティスクリプトはインストールされませんでした。ターミナルでエラーを確認してから、「続ける」を選択してもう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Os scripts utilitários do iTerm2 não foram instalados. Verifique se há erros no terminal e selecione “Continuar” para tentar novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 Служебные скрипты iTerm2 не установлены. Проверьте терминал на наличие ошибок, затем нажмите «Продолжить», чтобы повторить попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛑 未能安装 iTerm2 实用脚本。请检查终端中的错误，然后选择“继续”重试。"
           }
         }
       }
