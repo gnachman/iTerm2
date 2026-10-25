@@ -31,6 +31,12 @@ private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindo
     // Things that happen only after the shell has dealt with everything typed so far, such as a
     // newly launched shell printing its first prompt.
     var laterEvents = [() -> Void]()
+    // When set, a match completes the installer's expectation (running its completion) only
+    // after the callback that types the next command has run, as can happen in the app, where
+    // the completion goes through the token executor's side effects. Otherwise it completes
+    // right away.
+    var defersMatchCompletions = false
+    private var deferredMatchCompletions = [() -> Void]()
 
     init(testCase: XCTestCase) {
         self.testCase = testCase
@@ -65,6 +71,11 @@ private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindo
             drained.fulfill()
         }
         testCase.wait(for: [drained], timeout: 10)
+        let completions = deferredMatchCompletions
+        deferredMatchCompletions.removeAll()
+        for completion in completions {
+            completion()
+        }
     }
 
     // The lines the shell prints in response to typed text.
@@ -87,8 +98,12 @@ private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindo
             guard let captures = Self.captures(of: expectation.regex, in: line) else {
                 continue
             }
-            expectation.didMatch(withCaptureGroups: captures) { closure in
-                closure()
+            expectation.didMatch(withCaptureGroups: captures) { [weak self] closure in
+                guard let self, self.defersMatchCompletions else {
+                    closure()
+                    return
+                }
+                self.deferredMatchCompletions.append(closure)
             }
         }
     }
@@ -122,6 +137,9 @@ private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindo
                 }
             } else if !laterEvents.isEmpty {
                 laterEvents.removeFirst()()
+            } else if dryExpect.dirty {
+                // A deferred completion added an expectation, whose text the next sync types.
+                continue
             } else {
                 return
             }
@@ -688,8 +706,8 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         XCTAssertFalse(next.contains("(null)"), next)
     }
 
-    // F-436: writing the script starts a helper sh and then, from within it, a nested one. The
-    // nested launch must wait for output from the outer helper, not be typed at the same time.
+    // F-436, F-544: writing the script starts the helper shells, once. Nothing else is typed
+    // until they prompt.
     func testWriteScriptTypesOneThingUntilTheShellResponds() {
         discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone, end")
         let discoveryCount = terminal.sentTexts.count
@@ -1012,14 +1030,42 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     // Set to make sh unable to create the file the archive goes into, as in a folder that is
     // not writable.
     var receiveFails = false
-    // Set to keep sh reading the archive, as while it is still being typed.
+    // Set to keep sh reading the archive, as while it is still being typed: the line that ends
+    // the archive doesn't arrive, though one typed later does.
     var archiveNeverEnds = false
+    // Text typed from the first text containing this on waits, unread, as for a shell that is
+    // slow to start or a long paste still being typed, until releaseHeldInput().
+    var holdInputContaining: String?
+    private var heldInput = ""
+    // How many times exit reached the user's shell, which would end it.
+    private(set) var exitsTypedIntoUserShell = 0
 
     var helperIsRunning: Bool {
         return depth > 0
     }
 
+    var helperDepth: Int {
+        return depth
+    }
+
+    func releaseHeldInput() {
+        holdInputContaining = nil
+        let text = heldInput
+        heldInput = ""
+        for line in respond(to: text) {
+            output(line)
+        }
+    }
+
     override func respond(to text: String) -> [String] {
+        if !heldInput.isEmpty || holdInputContaining.map({ text.contains($0) }) == true {
+            heldInput += text
+            return []
+        }
+        var text = text
+        if archiveNeverEnds && receivingUtilities && text.count > "\nEOF\n".count && text.hasSuffix("\nEOF\n") {
+            text.removeLast("EOF\n".count)
+        }
         pendingInput += text
         var rows = [String]()
         while let newline = pendingInput.firstIndex(of: "\n") {
@@ -1070,11 +1116,14 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
                 prompt = "$ "
                 return [prompt]
             }
+            if line == "exit" {
+                exitsTypedIntoUserShell += 1
+            }
             return super.respond(to: line + "\n") + ["> "]
         }
         let redraw = prompt + line
         if var lines = heredocLines {
-            if line == "EOF" && !(receivingUtilities && archiveNeverEnds) {
+            if line == "EOF" {
                 heredocBodies.append(lines)
                 heredocLines = nil
                 prompt = ">> "
@@ -1090,7 +1139,7 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             return [redraw, prompt]
         }
         var result = [redraw]
-        if line.hasPrefix("ENV=/dev/null") {
+        if line == "sh" || line.hasPrefix("ENV=/dev/null") {
             depth += 1
             prompt = "$ "
         } else if line.hasPrefix(" PS1=") {
@@ -1114,6 +1163,10 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
                 return [redraw, "> "]
             }
             prompt = depth == 1 ? "$ " : ">> "
+        } else if line.hasPrefix("echo ") {
+            result.append(line.dropFirst("echo ".count)
+                .replacingOccurrences(of: "\"", with: "")
+                .replacingOccurrences(of: "$PS1", with: prompt))
         } else if let range = line.range(of: "; echo ") {
             if line.hasPrefix("mkdir ") {
                 result.append("mkdir: \(line.dropFirst("mkdir ".count).prefix(while: { $0 != ";" })): File exists")
@@ -1127,13 +1180,17 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
 // F-481: with tcsh started from zsh, output from a command can arrive in the middle of the echo
 // of the next one. The utilities step must wait for each command's own answer, or it waits for
 // an answer that already went by and never sends the here-document body.
-final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
+class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
+    // See FakeShellIntegrationTerminal.defersMatchCompletions.
+    class var defersMatchCompletions: Bool { false }
+
     private var controller: iTermShellIntegrationWindowController!
     private var terminal: FakeTcshFromZshTerminal!
 
     override func setUp() {
         super.setUp()
         terminal = FakeTcshFromZshTerminal(testCase: self)
+        terminal.defersMatchCompletions = Self.defersMatchCompletions
         terminal.responses[ShellIntegrationOfflineInstallerTests.shellCommand] = "My shell is tcsh -csh or /bin/zsh, end"
         controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
         controller.delegate = terminal
@@ -1242,11 +1299,196 @@ final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         let sentBefore = terminal.sentTexts.count
 
         _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
 
         XCTAssertEqual(terminal.stopSendingTextCount, stopsBefore + 1)
         // The line that ends the read loop is still typed, so sh doesn't keep taking what is
         // typed next into its file.
-        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), ["\nEOF\n"])
+        let typed = Array(terminal.sentTexts.dropFirst(sentBefore))
+        XCTAssertTrue(typed.first?.hasPrefix("\nEOF\n") == true, "\(typed)")
+    }
+
+    private var launchesTyped: Int {
+        return terminal.sentTexts.filter { $0.contains("ENV=/dev/null INPUTRC=/dev/null sh") }.count
+    }
+
+    // F-544: Cancel while the archive is typed ends sh's read loop and, once sh says it is done,
+    // leaves both helper shells for the user's shell.
+    func testCancelWhileTypingTheArchiveReturnsToTheUserShell() {
+        terminal.archiveNeverEnds = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        XCTAssertEqual(terminal.helperDepth, 2)
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+    }
+
+    // F-544: Cancel while the script's here-document is typed lets it finish, then leaves the
+    // helpers. The helpers are started once, not again from within themselves.
+    func testCancelWhileWritingTheScriptReturnsToTheUserShell() {
+        terminal.holdInputContaining = "<<'EOF'"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        XCTAssertEqual(terminal.heredocBodies.count, 0)
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(launchesTyped, 1)
+        XCTAssertEqual(terminal.heredocBodies.count, 1)
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+    }
+
+    // F-544: until the helpers prompt, it isn't known that they run, so Cancel types nothing
+    // (exit could reach the user's shell).
+    func testCancelBeforeTheHelpersPromptTypesNothing() {
+        terminal.holdInputContaining = "ENV=/dev/null"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        let sentBefore = terminal.sentTexts.count
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(terminal.sentTexts.count, sentBefore)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+    }
+
+    // F-543: Send Again while the archive is typed reuses the helpers rather than starting two
+    // more inside them, so the step's exits end at the user's shell.
+    func testSendAgainWhileTypingTheArchiveReturnsToTheUserShell() {
+        terminal.archiveNeverEnds = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        terminal.archiveNeverEnds = false
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertEqual(launchesTyped, 1)
+        XCTAssertEqual(terminal.heredocBodies.last, encodedUtilitiesArchive())
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+
+    // F-543: Send Again while the script's here-document is typed waits for it to finish and
+    // writes the script again from the same helpers.
+    func testSendAgainWhileWritingTheScriptReturnsToTheUserShell() {
+        terminal.holdInputContaining = "<<'EOF'"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(launchesTyped, 1)
+        XCTAssertEqual(terminal.heredocBodies.count, 2)
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+    }
+
+    // F-544: once the helpers prompted, Cancel while the next command waits for its answer
+    // leaves them, even if the completion of the launch's expectation had not run when that
+    // command was typed.
+    func testCancelAfterTheHelpersPromptReturnsToTheUserShell() {
+        terminal.holdInputContaining = "mkdir "
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        XCTAssertEqual(terminal.helperDepth, 2)
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+    }
+
+    // A second Send Again once the retry is typing into the helpers again doesn't treat them as
+    // still reading the archive: it neither stops typing nor ends a read loop that has ended.
+    func testSecondSendAgainAfterTheArchiveEndedDoesNotStopTyping() {
+        terminal.archiveNeverEnds = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        terminal.archiveNeverEnds = false
+        terminal.holdInputContaining = "mkdir "
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        let stops = terminal.stopSendingTextCount
+
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(terminal.stopSendingTextCount, stops)
+        XCTAssertEqual(launchesTyped, 1)
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+
+    // Leaving the page while sh reads the archive and starting over asks the user's shell what
+    // it is, once the helpers have exited, rather than asking a helper.
+    func testDiscoveryAfterLeavingThePageWhileTypingTheArchiveAsksTheUserShell() {
+        terminal.archiveNeverEnds = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        let sentBefore = terminal.sentTexts.count
+
+        controller.shellIntegrationInstallerBack()
+        controller.shellIntegrationInstallerSendShellCommands(-1)
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+
+        let typed = Array(terminal.sentTexts.dropFirst(sentBefore))
+        XCTAssertEqual(typed.count, 3, "\(typed)")
+        XCTAssertEqual(typed.dropFirst().first, "exit\nexit\n")
+        XCTAssertEqual(typed.last, ShellIntegrationOfflineInstallerTests.shellCommand)
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+    }
+
+    // F-543: Send Again before the helpers prompt waits for them instead of starting more.
+    func testSendAgainBeforeTheHelpersPromptReturnsToTheUserShell() {
+        terminal.holdInputContaining = "ENV=/dev/null"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(launchesTyped, 1)
+        XCTAssertEqual(terminal.heredocBodies.count, 1)
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
     }
 
     // F-463: Send Again while the archive is being typed stops it, and the retry's commands
@@ -1303,7 +1545,10 @@ final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
 // F-353: the dotfile step for bash. The rows sh prints for the line that starts the
 // here-document match both its own expectation and the next one in the same batch of output, so
 // the next one completes before the main thread gets around to typing its text.
-final class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
+class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
+    // See FakeShellIntegrationTerminal.defersMatchCompletions.
+    class var defersMatchCompletions: Bool { false }
+
     private static let launchHelper = "sh\nENV=/dev/null INPUTRC=/dev/null sh\n PS1='>> '; PS2='> '\n"
     private static let bashDotfileAssignment = "IT2_INSTALLER_DOTFILE=$(if test -f ~/.bash_profile; then echo ~/.bash_profile; else echo ~/.profile; fi)\n"
     private static let bashIf = "if ! grep iterm2_shell_integration \"$IT2_INSTALLER_DOTFILE\"  > /dev/null 2>&1; then\n"
@@ -1316,6 +1561,7 @@ final class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
     override func setUp() {
         super.setUp()
         terminal = FakeShellIntegrationTerminal(testCase: self)
+        terminal.defersMatchCompletions = Self.defersMatchCompletions
         controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
         controller.delegate = terminal
         XCTAssertNotNil(controller.window)
@@ -1402,10 +1648,11 @@ final class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
     // anyway, and before EOF.
     func testBashDotfileStepTypesTheSourceLineWhenItsExpectationIsAnsweredEarly() {
         discover(parentProcess: "bash bash", shellPath: "/bin/zsh")
-        terminal.responseLines[Self.launchHelper + Self.bashDotfileAssignment] = [
-            ">> IT2_INSTALLER_DOTFILE=$(if test -f ~/.bash_profile; then echo ~/.bash_profile; else echo ~/.profile; fi)"
+        terminal.responseLines[Self.launchHelper] = [">> "]
+        terminal.responseLines[Self.bashDotfileAssignment + Self.bashIf] = [
+            ">> IT2_INSTALLER_DOTFILE=$(if test -f ~/.bash_profile; then echo ~/.bash_profile; else echo ~/.profile; fi)",
+            ">> if ! grep iterm2_shell_integration \"$IT2_INSTALLER_DOTFILE\"  > /dev/null 2>&1; then"
         ]
-        terminal.responseLines[Self.bashIf] = [">> if ! grep iterm2_shell_integration \"$IT2_INSTALLER_DOTFILE\"  > /dev/null 2>&1; then"]
         terminal.responseLines[Self.bashCat] = [">     cat <<-EOF >> \"$IT2_INSTALLER_DOTFILE\"", "> "]
         terminal.responseLines[Self.bashSource] = ["> test -e ~/.iterm2_shell_integration.bash && source ~/.iterm2_shell_integration.bash || true"]
         terminal.responseLines["EOF\n"] = ["> EOF"]
@@ -1422,8 +1669,8 @@ final class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
         terminal.run()
 
         XCTAssertEqual(Array(terminal.sentTexts.dropFirst(discoveryCount)),
-                       [Self.launchHelper + Self.bashDotfileAssignment,
-                        Self.bashIf,
+                       [Self.launchHelper,
+                        Self.bashDotfileAssignment + Self.bashIf,
                         Self.bashCat,
                         Self.bashSource,
                         "EOF\n",
@@ -1572,4 +1819,14 @@ final class ShellIntegrationReceiveUtilitiesCommandTests: XCTestCase {
             XCTAssertFalse(command.contains(answer), answer)
         }
     }
+}
+
+// The same tests with expectations completed in the order the app can complete them: the next
+// command is typed before the completion of the expectation that matched runs.
+final class ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests: ShellIntegrationOfflineTcshFromZshInstallerTests {
+    override class var defersMatchCompletions: Bool { true }
+}
+
+final class ShellIntegrationOfflineDotfileDeferredCompletionInstallerTests: ShellIntegrationOfflineDotfileInstallerTests {
+    override class var defersMatchCompletions: Bool { true }
 }
