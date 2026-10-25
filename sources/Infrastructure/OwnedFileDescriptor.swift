@@ -94,6 +94,62 @@ final class OwnedFileDescriptor: NSObject {
         return state.access { $0.fileDescriptor < 0 }
     }
 
+    // Any thread. Makes a pipe, returning its read end then its write end, or nil if pipe(2)
+    // fails (errno says why). Neither end is nonblocking or closed on exec.
+    @objc(pipe)
+    static func makePipe() -> iTermTuple<OwnedFileDescriptor, OwnedFileDescriptor>? {
+        var fds: [Int32] = [-1, -1]
+        guard pipe(&fds) == 0 else {
+            return nil
+        }
+        return iTermTuple(object: OwnedFileDescriptor(fds[0]), andObject: OwnedFileDescriptor(fds[1]))
+    }
+
+    // Any thread. Whether O_NONBLOCK is set. False once closed, and setting it then does nothing.
+    @objc var nonblocking: Bool {
+        get {
+            return flag(get: F_GETFL, O_NONBLOCK)
+        }
+        set {
+            setFlag(get: F_GETFL, set: F_SETFL, O_NONBLOCK, newValue)
+        }
+    }
+
+    // Any thread. Whether FD_CLOEXEC is set. False once closed, and setting it then does nothing.
+    @objc var closeOnExec: Bool {
+        get {
+            return flag(get: F_GETFD, FD_CLOEXEC)
+        }
+        set {
+            setFlag(get: F_GETFD, set: F_SETFD, FD_CLOEXEC, newValue)
+        }
+    }
+
+    private func flag(get: Int32, _ flag: Int32) -> Bool {
+        var result = false
+        withFileDescriptor { fd in
+            let flags = fcntl(fd, get)
+            result = flags >= 0 && (flags & flag) != 0
+        }
+        return result
+    }
+
+    private func setFlag(get: Int32, set: Int32, _ flag: Int32, _ value: Bool) {
+        withFileDescriptor { fd in
+            let flags = fcntl(fd, get)
+            guard flags >= 0 else {
+                let error = errno
+                DLog("fcntl(\(fd), \(get)) failed: \(String(cString: strerror(error)))")
+                return
+            }
+            let updated = value ? (flags | flag) : (flags & ~flag)
+            if updated != flags && fcntl(fd, set, updated) < 0 {
+                let error = errno
+                DLog("fcntl(\(fd), \(set)) failed: \(String(cString: strerror(error)))")
+            }
+        }
+    }
+
     // Any thread. Returns nil once close() has been called.
     func lease() -> Lease? {
         guard let fd = beginUse() else {

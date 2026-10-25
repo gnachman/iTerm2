@@ -183,4 +183,84 @@ final class OwnedFileDescriptorTests: XCTestCase {
             XCTAssertFalse(sawCloseWhileInUse)
         }
     }
+
+    // MARK: Helpers
+
+    func testPipeConnectsItsEnds() throws {
+        let pipe = try XCTUnwrap(OwnedFileDescriptor.makePipe())
+        let readEnd = try XCTUnwrap(pipe.firstObject)
+        let writeEnd = try XCTUnwrap(pipe.secondObject)
+        var written = -1
+        writeEnd.withFileDescriptor { fd in
+            written = Darwin.write(fd, "x", 1)
+        }
+        XCTAssertEqual(written, 1)
+        var byte: UInt8 = 0
+        var read = -1
+        readEnd.withFileDescriptor { fd in
+            read = Darwin.read(fd, &byte, 1)
+        }
+        XCTAssertEqual(read, 1)
+        XCTAssertEqual(byte, UInt8(ascii: "x"))
+    }
+
+    func testNonblocking() throws {
+        let pipe = try XCTUnwrap(OwnedFileDescriptor.makePipe())
+        let readEnd = try XCTUnwrap(pipe.firstObject)
+        XCTAssertFalse(readEnd.nonblocking)
+
+        readEnd.nonblocking = true
+        XCTAssertTrue(readEnd.nonblocking)
+        var result = 0
+        var error: Int32 = 0
+        var byte: UInt8 = 0
+        readEnd.withFileDescriptor { fd in
+            result = Darwin.read(fd, &byte, 1)
+            error = errno
+        }
+        // An empty pipe returns right away instead of blocking.
+        XCTAssertEqual(result, -1)
+        XCTAssertEqual(error, EAGAIN)
+
+        readEnd.nonblocking = false
+        XCTAssertFalse(readEnd.nonblocking)
+    }
+
+    // Setting one status flag leaves the others alone.
+    func testNonblockingKeepsOtherFlags() throws {
+        let pipe = try XCTUnwrap(OwnedFileDescriptor.makePipe())
+        let writeEnd = try XCTUnwrap(pipe.secondObject)
+        writeEnd.withFileDescriptor { fd in
+            _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_APPEND)
+        }
+        writeEnd.nonblocking = true
+        var flags: Int32 = 0
+        writeEnd.withFileDescriptor { fd in
+            flags = fcntl(fd, F_GETFL)
+        }
+        XCTAssertNotEqual(flags & O_APPEND, 0)
+        XCTAssertNotEqual(flags & O_NONBLOCK, 0)
+    }
+
+    func testCloseOnExec() throws {
+        let pipe = try XCTUnwrap(OwnedFileDescriptor.makePipe())
+        let readEnd = try XCTUnwrap(pipe.firstObject)
+        XCTAssertFalse(readEnd.closeOnExec)
+        readEnd.closeOnExec = true
+        XCTAssertTrue(readEnd.closeOnExec)
+        readEnd.closeOnExec = false
+        XCTAssertFalse(readEnd.closeOnExec)
+    }
+
+    // Once closed there is nothing to change. Setting is ignored rather than touching whatever
+    // the number now refers to.
+    func testFlagsOfAClosedDescriptor() throws {
+        let pipe = try XCTUnwrap(OwnedFileDescriptor.makePipe())
+        let readEnd = try XCTUnwrap(pipe.firstObject)
+        readEnd.close()
+        readEnd.nonblocking = true
+        readEnd.closeOnExec = true
+        XCTAssertFalse(readEnd.nonblocking)
+        XCTAssertFalse(readEnd.closeOnExec)
+    }
 }

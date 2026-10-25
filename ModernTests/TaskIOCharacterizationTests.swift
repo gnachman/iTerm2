@@ -979,16 +979,13 @@ class TaskIOCharacterizationTests: XCTestCase {
     // A pipe at EOF is readable forever, but it is not in the exception set. Only processRead
     // seeing read() == 0 ends the task.
     func testPipeEOFCausesBrokenPipe() throws {
-        var fds: [Int32] = [-1, -1]
-        guard pipe(&fds) == 0 else {
-            XCTFail("pipe() failed: \(errno)")
-            return
-        }
-        let flags = fcntl(fds[0], F_GETFL)
-        _ = fcntl(fds[0], F_SETFL, flags | O_NONBLOCK)
-        let task = FakeTask(fd: OwnedFileDescriptor(fds[0]), notifier: notifier)
+        let pipe = try XCTUnwrap(OwnedFileDescriptor.makePipe())
+        let readEnd = try XCTUnwrap(pipe.firstObject)
+        let writeEnd = try XCTUnwrap(pipe.secondObject)
+        readEnd.nonblocking = true
+        let task = FakeTask(fd: readEnd, notifier: notifier)
         notifier.register(task)
-        close(fds[1])
+        writeEnd.close()
         XCTAssertTrue(task.waitForBrokenPipe())
         XCTAssertTrue(flush())
         XCTAssertEqual(task.brokenPipeCalls, 1)

@@ -46,11 +46,10 @@ final class PTYTaskReadTests: XCTestCase {
         delegate = RecordingTaskDelegate()
     }
 
-    // The task takes ownership of `fd` and closes it when it is deallocated.
-    private func makeTask(fd: Int32) -> PTYTask {
-        let flags = fcntl(fd, F_GETFL)
-        _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
-        let task = PTYTask(forTestingWith: OwnedFileDescriptor(fd))!
+    // The task closes `fd` when it is deallocated.
+    private func makeTask(fd: OwnedFileDescriptor) -> PTYTask {
+        fd.nonblocking = true
+        let task = PTYTask(forTestingWith: fd)!
         task.delegate = delegate
         return task
     }
@@ -59,19 +58,28 @@ final class PTYTaskReadTests: XCTestCase {
     // deregistered.
     func testEachPidIsHandedToTheReaperOnce() throws {
         let (read, write) = try makePipe()
-        defer { close(write) }
+        defer { write.close() }
         let task = try XCTUnwrap(makeTask(fd: read) as? iTermTask)
         XCTAssertTrue(task.markPidHanded(toReaper: 123))
         XCTAssertFalse(task.markPidHanded(toReaper: 123))
         XCTAssertTrue(task.markPidHanded(toReaper: 456))
     }
 
-    private func makePipe() throws -> (read: Int32, write: Int32) {
-        var fds: [Int32] = [-1, -1]
-        guard pipe(&fds) == 0 else {
+    private func makePipe() throws -> (read: OwnedFileDescriptor, write: OwnedFileDescriptor) {
+        guard let pipe = OwnedFileDescriptor.makePipe(),
+              let read = pipe.firstObject,
+              let write = pipe.secondObject else {
             throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
         }
-        return (fds[0], fds[1])
+        return (read, write)
+    }
+
+    private func write(_ data: Data, to fd: OwnedFileDescriptor) -> Int {
+        var written = -1
+        fd.withFileDescriptor { fd in
+            written = data.withUnsafeBytes { Darwin.write(fd, $0.baseAddress!, $0.count) }
+        }
+        return written
     }
 
     private var readData: Data {
@@ -84,7 +92,7 @@ final class PTYTaskReadTests: XCTestCase {
 
     func testNothingToReadIsNotEOF() throws {
         let fds = try makePipe()
-        defer { close(fds.write) }
+        defer { fds.write.close() }
         let task = makeTask(fd: fds.read)
 
         task.processRead()
@@ -96,7 +104,7 @@ final class PTYTaskReadTests: XCTestCase {
     func testPipeEOFIsBrokenPipe() throws {
         let fds = try makePipe()
         let task = makeTask(fd: fds.read)
-        close(fds.write)
+        fds.write.close()
 
         task.processRead()
 
@@ -112,7 +120,7 @@ final class PTYTaskReadTests: XCTestCase {
         guard openpty(&master, &slave, nil, nil, nil) == 0 else {
             throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
         }
-        let task = makeTask(fd: master)
+        let task = makeTask(fd: OwnedFileDescriptor(master))
         close(slave)
 
         task.processRead()
@@ -127,7 +135,7 @@ final class PTYTaskReadTests: XCTestCase {
     func testBrokenPipeIsReportedOnce() throws {
         let fds = try makePipe()
         let task = makeTask(fd: fds.read)
-        close(fds.write)
+        fds.write.close()
 
         task.processRead()
         task.brokenPipe()
@@ -140,9 +148,9 @@ final class PTYTaskReadTests: XCTestCase {
         let task = makeTask(fd: fds.read)
         // Exactly one full read, so EOF is seen by the next read() within the same processRead.
         let payload = Data((0..<1024).map { UInt8($0 & 0xff) })
-        let written = payload.withUnsafeBytes { Darwin.write(fds.write, $0.baseAddress!, $0.count) }
+        let written = write(payload, to: fds.write)
         XCTAssertEqual(written, payload.count)
-        close(fds.write)
+        fds.write.close()
 
         task.processRead()
 
@@ -152,10 +160,10 @@ final class PTYTaskReadTests: XCTestCase {
 
     func testDataWithoutEOFIsNotBrokenPipe() throws {
         let fds = try makePipe()
-        defer { close(fds.write) }
+        defer { fds.write.close() }
         let task = makeTask(fd: fds.read)
         let payload = Data("hello".utf8)
-        let written = payload.withUnsafeBytes { Darwin.write(fds.write, $0.baseAddress!, $0.count) }
+        let written = write(payload, to: fds.write)
         XCTAssertEqual(written, payload.count)
 
         task.processRead()

@@ -170,10 +170,7 @@
     iTermFreeeNullTerminatedCStringArray(cArgv);
     iTermFreeeNullTerminatedCStringArray(cEnviron);
     [self takeOwnershipOfFileDescriptor:fd];
-
-    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
-        fcntl(fd, F_SETFL, O_NONBLOCK);
-    }];
+    self.ownedFileDescriptor.nonblocking = YES;
 
     // If you get here you're the parent.
     _serverPid = forkState.pid;
@@ -194,10 +191,7 @@
                       task:(id<iTermTask>)task
                 completion:(void (^)(iTermJobManagerForkAndExecStatus, NSNumber *))completion {
     // Make sure the master side of the pty is closed on future exec() calls.
-    DLog(@"fcntl");
-    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
-        fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
-    }];
+    self.ownedFileDescriptor.closeOnExec = YES;
 
     // The client and server connected to each other before forking. The server
     // will send us the child pid now. We don't really need the rest of the
@@ -249,9 +243,7 @@
         DLog(@"attached. Set nonblocking");
         self.tty = [NSString stringWithUTF8String:ttyState.tty];
 
-        [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
-            fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-        }];
+        self.ownedFileDescriptor.nonblocking = YES;
 
         DLog(@"fini");
         return iTermJobManagerForkAndExecStatusSuccess;

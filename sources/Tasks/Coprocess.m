@@ -82,12 +82,31 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         replacementEnvironment = [kvps nullTerminatedCStringArray];
     }
     [Coprocess addCommandToMostRecentlyUsed:command];
-    int inputPipe[2];
-    int outputPipe[2];
-    int errorPipe[2];
-    pipe(inputPipe);
-    pipe(outputPipe);
-    pipe(errorPipe);
+    // Plain descriptors, because the child uses them after fork() and the error pipe's read end
+    // goes to fdopen(). The parent's ends are wrapped once the child has its own.
+    int inputPipe[2] = { -1, -1 };
+    int outputPipe[2] = { -1, -1 };
+    int errorPipe[2] = { -1, -1 };
+    if (pipe(inputPipe) != 0 || pipe(outputPipe) != 0 || pipe(errorPipe) != 0) {
+        const int error = errno;
+        DLog(@"pipe() failed: %s", strerror(error));
+        for (int i = 0; i < 2; i++) {
+            if (inputPipe[i] >= 0) {
+                close(inputPipe[i]);
+            }
+            if (outputPipe[i] >= 0) {
+                close(outputPipe[i]);
+            }
+            if (errorPipe[i] >= 0) {
+                close(errorPipe[i]);
+            }
+        }
+        if (replacementEnvironment) {
+            iTermFreeeNullTerminatedCStringArray(replacementEnvironment);
+        }
+        [self showLaunchFailure];
+        return nil;
+    }
     signal(SIGPIPE, SIG_IGN);
     const int maxfd = getdtablesize();
     pid_t pid = fork();
@@ -124,13 +143,16 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         fprintf(stderr, "## exec failed %s for command /bin/sh -c %s##\n", strerror(errno), [command UTF8String]);
         _exit(-1);
     } else if (pid < (pid_t)0) {
-        [iTermWarning showWarningWithTitle:@""
-                                   actions:@[ iTermLocalizedOK() ]
-                                 accessory:nil
-                                identifier:nil
-                               silenceable:kiTermWarningTypePersistent
-                                   heading:NSLocalizedStringWithDefaultValue(@"Coprocess.FailedToLaunch", nil, [NSBundle mainBundle], @"Failed to launch coprocess.", @"Error shown when a coprocess could not be launched.")
-                                    window:nil];
+        DLog(@"fork() failed: %s", strerror(errno));
+        for (int i = 0; i < 2; i++) {
+            close(inputPipe[i]);
+            close(outputPipe[i]);
+            close(errorPipe[i]);
+        }
+        if (replacementEnvironment) {
+            iTermFreeeNullTerminatedCStringArray(replacementEnvironment);
+        }
+        [self showLaunchFailure];
         return nil;
     }
 
@@ -148,6 +170,16 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
                                errorFd:errorPipe[0]];
 }
 
++ (void)showLaunchFailure {
+    [iTermWarning showWarningWithTitle:@""
+                               actions:@[ iTermLocalizedOK() ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:NSLocalizedStringWithDefaultValue(@"Coprocess.FailedToLaunch", nil, [NSBundle mainBundle], @"Failed to launch coprocess.", @"Error shown when a coprocess could not be launched.")
+                                window:nil];
+}
+
 + (Coprocess *)coprocessWithPid:(pid_t)pid
                         command:(NSString *)command
                        outputFd:(int)outputFd
@@ -158,11 +190,8 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     result->_ownedWriteFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:outputFd];
     result->_ownedReadFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:inputFd];
 
-    // Make sure the file descriptors are non-blocking.
-    int flags = fcntl(outputFd, F_GETFL);
-    fcntl(outputFd, F_SETFL, flags | O_NONBLOCK);
-    flags = fcntl(inputFd, F_GETFL);
-    fcntl(inputFd, F_SETFL, flags | O_NONBLOCK);
+    result->_ownedWriteFileDescriptor.nonblocking = YES;
+    result->_ownedReadFileDescriptor.nonblocking = YES;
     result->_stderrGroup = dispatch_group_create();
     [result monitorErrorsOnFileDescriptor:errorFd];
     result.command = command;

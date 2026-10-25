@@ -144,11 +144,8 @@
     }
 
     // Make sure the master side of the pty is closed on future exec() calls.
-    DLog(@"fcntl");
-    [self.ownedFileDescriptor withFileDescriptor:^(int fd) {
-        fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
-        fcntl(fd, F_SETFL, O_NONBLOCK);
-    }];
+    self.ownedFileDescriptor.closeOnExec = YES;
+    self.ownedFileDescriptor.nonblocking = YES;
     self.tty = [NSString stringWithUTF8String:ttyState.tty];
     return iTermJobManagerForkAndExecStatusSuccess;
 }

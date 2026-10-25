@@ -52,8 +52,8 @@
         _initialDirectory = [[NSString alloc] initWithUTF8String:report->pwd];
         _hasTerminated = report->terminated;
         assert(report->fd >= 0);
-        fcntl(report->fd, F_SETFL, O_NONBLOCK);
         _ownedFileDescriptor = [[iTermOwnedFileDescriptor alloc] initWithFileDescriptor:report->fd];
+        _ownedFileDescriptor.nonblocking = YES;
         _tty = [NSString stringWithUTF8String:report->tty] ?: @"";
         _haveWaited = NO;
         _callbacks = [NSMutableArray array];
