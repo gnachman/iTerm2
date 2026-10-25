@@ -11,8 +11,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol PaneFocusFollowsMousePane;
+
 @protocol iTermGenericStatusBarContainer<NSObject>
 - (NSColor *)genericStatusBarContainerBackgroundColor;
+// The pane the status bar belongs to, for focus follows mouse.
+- (nullable id<PaneFocusFollowsMousePane>)genericStatusBarContainerFocusFollowsMousePane;
 @end
 
 @interface iTermGenericStatusBarContainer : NSView<iTermStatusBarContainer>

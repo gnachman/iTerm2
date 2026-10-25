@@ -14,6 +14,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol PaneFocusFollowsMousePane;
 @protocol ProcessInfoProvider;
 @class iTermAction;
 @class iTermStatusBarLayout;
@@ -53,6 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<ProcessInfoProvider>)statusBarProcessInfoProvider;
 - (void)statusBarPerformNaturalLanguageQuery:(NSString *)query;
 - (iTermFindDriver * _Nullable)statusBarFindDriver;
+// The pane the status bar belongs to, for focus follows mouse.
+- (nullable id<PaneFocusFollowsMousePane>)statusBarFocusFollowsMousePane;
 
 @end
 

@@ -3100,6 +3100,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return [self backgroundColorForDecorativeSubviews];
 }
 
+- (id<PaneFocusFollowsMousePane>)genericStatusBarContainerFocusFollowsMousePane {
+    return self;
+}
+
 #pragma mark - SplitSelectionViewDelegate
 
 - (void)didSelectDestinationSession:(PTYSession *)session half:(SplitSessionHalf)half {

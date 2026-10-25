@@ -20,6 +20,13 @@ extension NSView {
     @objc var it_focusFollowsMouseResponder: NSView? {
         return nil
     }
+
+    // A view outside every pane that belongs to one, such as the window's status bar, which
+    // belongs to the current session, returns that pane. Views in its subtree count as being in
+    // that pane.
+    @objc var it_focusFollowsMouseOwningPane: PaneFocusFollowsMousePane? {
+        return nil
+    }
 }
 
 // Everything PaneFocusFollowsMouse needs from the outside world, so its decisions can be tested

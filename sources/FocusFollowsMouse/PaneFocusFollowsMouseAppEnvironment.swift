@@ -134,6 +134,10 @@ final class PaneFocusFollowsMouseAppEnvironment: PaneFocusFollowsMouseEnvironmen
             if view.it_isEditableText {
                 return view
             }
+            if view.it_focusFollowsMouseOwningPane != nil {
+                // The top of a part of the pane that lies outside the session view.
+                return nil
+            }
             current = view.superview
         }
         return nil
@@ -339,6 +343,9 @@ final class PaneFocusFollowsMouseAppEnvironment: PaneFocusFollowsMouseEnvironmen
         while let candidate = current {
             if let sessionView = candidate as? SessionView {
                 return sessionView
+            }
+            if let owner = candidate.it_focusFollowsMouseOwningPane {
+                return owner as? SessionView
             }
             current = candidate.superview
         }
