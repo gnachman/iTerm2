@@ -203,8 +203,13 @@
         return;
     }
     DLog(@"Wet add expectation");
+    // Hold the original strongly until its callback runs. This copy can match, and the match
+    // complete the original on the main thread, before this block runs; then nothing else may
+    // keep the original alive, and a weak reference would drop the callback (for the installer,
+    // a line it never types) while the callbacks of its successors still run.
+    iTermExpectation *original = expectation.original;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [expectation.original invokeUserWillExpectCallbackIfNeeded];
+        [original invokeUserWillExpectCallbackIfNeeded];
     });
 }
 

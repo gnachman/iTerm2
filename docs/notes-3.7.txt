@@ -2032,3 +2032,7 @@ Bug Fixes:
 - The Internet-Free shell integration install
   no longer sometimes hangs while installing
   the utilities, waiting at a “> ” prompt.
+- The Internet-Free shell integration install
+  for bash could finish without adding the line
+  that loads shell integration to your
+  .profile or .bash_profile.

@@ -1122,3 +1122,136 @@ final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }
 }
+
+// F-353: the dotfile step for bash. The rows sh prints for the line that starts the
+// here-document match both its own expectation and the next one in the same batch of output, so
+// the next one completes before the main thread gets around to typing its text.
+final class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
+    private static let launchHelper = "sh\nENV=/dev/null INPUTRC=/dev/null sh\n PS1='>> '; PS2='> '\n"
+    private static let bashDotfileAssignment = "IT2_INSTALLER_DOTFILE=$(if test -f ~/.bash_profile; then echo ~/.bash_profile; else echo ~/.profile; fi)\n"
+    private static let bashIf = "if ! grep iterm2_shell_integration \"$IT2_INSTALLER_DOTFILE\"  > /dev/null 2>&1; then\n"
+    private static let bashCat = "    cat <<-EOF >> \"$IT2_INSTALLER_DOTFILE\"\n\n"
+    private static let bashSource = "test -e ~/.iterm2_shell_integration.bash && source ~/.iterm2_shell_integration.bash || true\n"
+
+    private var controller: iTermShellIntegrationWindowController!
+    private var terminal: FakeShellIntegrationTerminal!
+
+    override func setUp() {
+        super.setUp()
+        terminal = FakeShellIntegrationTerminal(testCase: self)
+        controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
+        controller.delegate = terminal
+        XCTAssertNotNil(controller.window)
+        controller.shellIntegrationInstallerSendShellCommands(-1)
+    }
+
+    override func tearDown() {
+        controller.shellIntegrationInstallerCancelExpectations()
+        controller.window?.orderOut(nil)
+        controller = nil
+        terminal = nil
+        super.tearDown()
+    }
+
+    private func discover(parentProcess: String, shellPath: String, dotdirOutput: String? = nil) {
+        terminal.responses[ShellIntegrationOfflineInstallerTests.shellCommand] = "My shell is \(parentProcess) or \(shellPath), end"
+        if let dotdirOutput {
+            terminal.responses["echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"] = dotdirOutput
+        }
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        // Skip writing the script to get to the dotfile step.
+        controller.shellIntegrationInstallerSkipStage()
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+    }
+
+    private func dotfileCommandText() -> String {
+        return controller.shellIntegrationInstallerNextCommandForSendShellCommands() ?? ""
+    }
+
+    func testBashDotfileCommandTypesTheSourceLine() {
+        discover(parentProcess: "bash bash", shellPath: "/bin/zsh")
+        XCTAssertEqual(controller.shell, .bash)
+        XCTAssertEqual(dotfileCommandText(),
+                       Self.launchHelper + Self.bashDotfileAssignment + Self.bashIf + Self.bashCat +
+                       Self.bashSource + "EOF\nfi\nexit\nexit\n")
+    }
+
+    func testZshDotfileCommandTypesTheSourceLine() {
+        discover(parentProcess: "zsh -zsh", shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone, end")
+        XCTAssertEqual(controller.shell, .zsh)
+        XCTAssertEqual(dotfileCommandText(),
+                       Self.launchHelper +
+                       "if ! grep iterm2_shell_integration /Users/someone/.zshrc  > /dev/null 2>&1; then\n" +
+                       "    cat <<-EOF >> /Users/someone/.zshrc\n\n" +
+                       "test -e /Users/someone/.iterm2_shell_integration.zsh && source /Users/someone/.iterm2_shell_integration.zsh || true\n" +
+                       "EOF\nfi\nexit\nexit\n")
+    }
+
+    func testTcshDotfileCommandTypesTheSourceLine() {
+        discover(parentProcess: "tcsh -csh", shellPath: "/bin/zsh")
+        XCTAssertEqual(controller.shell, .tcsh)
+        XCTAssertEqual(dotfileCommandText(),
+                       Self.launchHelper +
+                       "if ! grep iterm2_shell_integration ~/.login  > /dev/null 2>&1; then\n" +
+                       "    cat <<-EOF >> ~/.login\n\n" +
+                       "test -e ~/.iterm2_shell_integration.tcsh && source ~/.iterm2_shell_integration.tcsh || true\n" +
+                       "EOF\nfi\nexit\nexit\n")
+    }
+
+    func testFishDotfileCommandTypesTheSourceLine() {
+        discover(parentProcess: "fish fish", shellPath: "/opt/homebrew/bin/fish")
+        XCTAssertEqual(controller.shell, .fish)
+        XCTAssertEqual(dotfileCommandText(),
+                       Self.launchHelper +
+                       "mkdir -p ~/.config/fish\n" +
+                       "if ! grep iterm2_shell_integration ~/.config/fish/config.fish  > /dev/null 2>&1; then\n" +
+                       "    cat <<-EOF >> ~/.config/fish/config.fish\n\n" +
+                       "test -e $HOME/.iterm2_shell_integration.fish ; and source $HOME/.iterm2_shell_integration.fish ; or true\n" +
+                       "EOF\nfi\nexit\nexit\n")
+    }
+
+    // xonsh and nushell load the script from where it was written, so there is no dotfile step.
+    func testXonshHasNoDotfileCommand() {
+        discover(parentProcess: "python3 xonsh", shellPath: "/opt/homebrew/bin/xonsh")
+        XCTAssertEqual(controller.shell, .xonsh)
+        XCTAssertEqual(dotfileCommandText(), "")
+    }
+
+    // sh echoes the line that starts the here-document and then the empty line after it. The
+    // first row answers that line's expectation and the second answers the next one, whose text
+    // is the source line, before the main thread has typed it. The source line must be typed
+    // anyway, and before EOF.
+    func testBashDotfileStepTypesTheSourceLineWhenItsExpectationIsAnsweredEarly() {
+        discover(parentProcess: "bash bash", shellPath: "/bin/zsh")
+        terminal.responseLines[Self.launchHelper + Self.bashDotfileAssignment] = [
+            ">> IT2_INSTALLER_DOTFILE=$(if test -f ~/.bash_profile; then echo ~/.bash_profile; else echo ~/.profile; fi)"
+        ]
+        terminal.responseLines[Self.bashIf] = [">> if ! grep iterm2_shell_integration \"$IT2_INSTALLER_DOTFILE\"  > /dev/null 2>&1; then"]
+        terminal.responseLines[Self.bashCat] = [">     cat <<-EOF >> \"$IT2_INSTALLER_DOTFILE\"", "> "]
+        terminal.responseLines[Self.bashSource] = ["> test -e ~/.iterm2_shell_integration.bash && source ~/.iterm2_shell_integration.bash || true"]
+        terminal.responseLines["EOF\n"] = ["> EOF"]
+        terminal.responseLines["fi\n"] = ["> fi", ">> "]
+        terminal.responseLines["exit\nexit\n"] = [">> exit"]
+        let discoveryCount = terminal.sentTexts.count
+
+        // In the app the button click's autorelease pool drains before any output arrives, so
+        // only the installer and the expect object keep the expectations alive. Do the same
+        // here.
+        autoreleasepool {
+            controller.shellIntegrationInstallerSendShellCommands(2)
+        }
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(discoveryCount)),
+                       [Self.launchHelper + Self.bashDotfileAssignment,
+                        Self.bashIf,
+                        Self.bashCat,
+                        Self.bashSource,
+                        "EOF\n",
+                        "fi\n",
+                        "exit\nexit\n"])
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+}
