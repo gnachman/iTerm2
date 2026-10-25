@@ -2037,3 +2037,7 @@ Bug Fixes:
   for bash could finish without adding the line
   that loads shell integration to your
   .profile or .bash_profile.
+- The Internet-Free shell integration install
+  no longer reports that it installed the
+  utilities when they failed to unpack, and
+  no longer garbles them on a busy computer.

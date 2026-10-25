@@ -215,6 +215,9 @@
             i += 1;
             if (stage < 2) {
                 step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.Step3Install", nil, [NSBundle mainBundle], @"Step 3. Install iTerm2 utility scripts.", @"Numbered step label for installing utility scripts");
+            } else if (stage == 2 && !_busy && _writeFailed) {
+                step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.InstallFailed", nil, [NSBundle mainBundle], @"🛑 The iTerm2 utility scripts were not installed. Check the terminal for errors, then select “Continue” to try again.", @"Shown when the command that installs the iTerm2 utility scripts reports that they could not be extracted");
+                indexToBold = lines.count;
             } else if (stage == 2 && !_busy) {
                 step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ContinueToInstall", nil, [NSBundle mainBundle], @"➡ Select “Continue” to install iTerm2 utility scripts.", @"Prompt to continue to the utility scripts install step");
                 indexToBold = lines.count;
