@@ -194,3 +194,74 @@ final class ConductorUploadNameReservationsTests: XCTestCase {
         XCTAssertTrue(reservations.reserved.isEmpty)
     }
 }
+
+// Picking an upload's remote name from stat results. Only a definite "not found" may count as a
+// free name; any other failure must stop the upload rather than risk overwriting a file.
+@MainActor
+final class ConductorUploadRemoteNameCheckTests: XCTestCase {
+    private enum FakeRemote {
+        case exists
+        case notFound
+        case failure(Error)
+    }
+
+    private func stat(_ remote: [String: FakeRemote]) -> (String) async throws -> Void {
+        return { path in
+            switch remote[path] ?? .notFound {
+            case .exists:
+                return
+            case .notFound:
+                throw SSHEndpointException.fileNotFound
+            case .failure(let error):
+                throw error
+            }
+        }
+    }
+
+    private func pickName(_ remote: [String: FakeRemote]) async throws -> String? {
+        let reservations = ConductorUploadNameReservations()
+        let stat = stat(remote)
+        return try await reservations.reserve(base: "/home/u/x.txt") { path in
+            try await ConductorUpload.remotePathExists(path, stat: stat)
+        }
+    }
+
+    func testNotFoundIsFree() async throws {
+        let name = try await pickName([:])
+        XCTAssertEqual(name, "/home/u/x.txt")
+    }
+
+    func testExistingFileIsSkipped() async throws {
+        let name = try await pickName(["/home/u/x.txt": .exists])
+        XCTAssertEqual(name, "/home/u/x.txt (2)")
+    }
+
+    func testPermissionErrorFailsInsteadOfChoosingTheName() async throws {
+        do {
+            let name = try await pickName(["/home/u/x.txt": .failure(SSHEndpointException.fileOperationFailed)])
+            XCTFail("Expected an error, got \(String(describing: name))")
+        } catch let error as ConductorUpload.NameCheckFailed {
+            XCTAssertEqual(error.path, "/home/u/x.txt")
+        }
+    }
+
+    func testConnectionErrorFailsInsteadOfChoosingTheName() async throws {
+        do {
+            let name = try await pickName(["/home/u/x.txt": .exists,
+                                           "/home/u/x.txt (2)": .failure(SSHEndpointException.connectionClosed)])
+            XCTFail("Expected an error, got \(String(describing: name))")
+        } catch let error as ConductorUpload.NameCheckFailed {
+            XCTAssertEqual(error.path, "/home/u/x.txt (2)")
+            XCTAssertTrue(error.localizedDescription.contains("x.txt (2)"))
+        }
+    }
+
+    func testFailedCheckLeavesNoReservation() async throws {
+        let reservations = ConductorUploadNameReservations()
+        let stat = stat(["/home/u/x.txt": .failure(SSHEndpointException.connectionClosed)])
+        _ = try? await reservations.reserve(base: "/home/u/x.txt") { path in
+            try await ConductorUpload.remotePathExists(path, stat: stat)
+        }
+        XCTAssertTrue(reservations.reserved.isEmpty)
+    }
+}
