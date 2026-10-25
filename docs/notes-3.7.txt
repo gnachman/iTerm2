@@ -2084,3 +2084,8 @@ Bug Fixes:
 - The “Learn more.” links on the first page of
   the shell integration installer now use the
   same font as the text around them.
+- With AI command suggestions off, the gray
+  completion the composer shows for a file name
+  with a space or other special character is
+  now escaped, so accepting it gives a working
+  command.

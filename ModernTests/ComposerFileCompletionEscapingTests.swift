@@ -91,6 +91,15 @@ final class ComposerFileCompletionEscapingTests: XCTestCase {
         XCTAssertEqual(popupValues(), [" a b"])
     }
 
+    // T-85: with AI off, explicitly requested completions are raw file names. The ghost text
+    // must be the escaped name, like the popup's row.
+    func testGhostTextForRawFileCompletionIsEscaped() {
+        let file = CompletionItem(value: " file.txt", detail: "my file.txt", kind: .file)
+        didFindCompletions([file], prefix: "show my")
+        XCTAssertEqual(popupValues(), ["\\ file.txt"])
+        XCTAssertEqual(textView.suggestion, "\\ file.txt")
+    }
+
     func testRawFileCompletionsAreStillEscaped() {
         let items = CompletionItem.shellEscapingFilenameCompletions([
             CompletionItem(value: "my file.txt", detail: nil, kind: .file),

@@ -792,9 +792,10 @@
                     prefix:(NSString *)prefix {
     DLog(@"didFindCompletions");
     // Escape filename completions.
+    NSArray<iTermCompletionItem *> *escapedFilenameCompletions =
+    [iTermCompletionItem shellEscapingFilenameCompletions:filenameCompletions];
     NSArray<iTermCompletionItem *> *completions =
-    [[iTermCompletionItem shellEscapingFilenameCompletions:filenameCompletions]
-     arrayByAddingObjectsFromArray:historySuggestions];
+    [escapedFilenameCompletions arrayByAddingObjectsFromArray:historySuggestions];
     if ([_historyWindowController.window isVisible]) {
         DLog(@"History window is visible so return");
         [self.textView setCompletions:@[] prefix:@""];
@@ -817,7 +818,7 @@
         return item.kind != iTermCompletionItemKindAiReplacement;
     }];
     NSArray<iTermCompletionItem *> *inlineFilenameCompletions =
-    [filenameCompletions filteredArrayUsingBlock:^BOOL(iTermCompletionItem *item) {
+    [escapedFilenameCompletions filteredArrayUsingBlock:^BOOL(iTermCompletionItem *item) {
         return item.kind != iTermCompletionItemKindAiReplacement;
     }];
     // Pick the shortest suggestion because otherwise it's hard to traverse a deep path since the
