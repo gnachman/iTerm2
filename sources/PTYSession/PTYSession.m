@@ -11014,6 +11014,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (tab) {
         [[tab realParentWindow] removeTab:tab];
     }
+    [_tmuxController forgetPerTabSettingsForWindow:windowId];
     [_tmuxController windowsChanged];
 }
 
