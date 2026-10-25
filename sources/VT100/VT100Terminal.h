@@ -141,13 +141,22 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 @property(nonatomic) VT100TerminalFramerRecoveryMode framerRecoveryMode;
 @property(nonatomic) NSInteger framerBoundaryNumber;
 
+// The parent depth of the connection being recovered while framerRecoveryMode is not none.
+@property(nonatomic) int framerRecoveryParentDepth;
+
 // An abandoned SSH Integration connection's ssh client may outlive it and keep printing
 // its framer's output, which outside a conductor hook would otherwise start framer
 // recovery (and type "recover" into the shell that owns the tty). This refuses recovery
-// for the children of the conductor at parentDepth (-1 for the outermost connection)
-// until a new connection hooks there (F-354).
-- (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth;
+// for the children of the conductor at parentDepth (-1 for the outermost connection) and
+// of every deeper conductor until a connection that wasn't abandoned hooks there (F-354,
+// F-459). clientUniqueIDs names the abandoned connections.
+- (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth
+                              abandonedClientUniqueIDs:(NSArray<NSString *> *)clientUniqueIDs;
 - (BOOL)framerRecoveryIsRefusedForChildrenOfConductorAtDepth:(int)parentDepth;
+// The session accepted a new connection's hook at this depth, so recovery is allowed there
+// again unless the hook belongs to an abandoned connection.
+- (void)allowFramerRecoveryForHookAsChildOfConductorAtDepth:(int)parentDepth
+                                             clientUniqueID:(NSString *)clientUniqueID;
 @property(nonatomic, readonly) BOOL isExecutingToken;
 
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c

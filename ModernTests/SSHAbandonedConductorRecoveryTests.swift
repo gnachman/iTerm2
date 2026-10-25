@@ -248,3 +248,358 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
     }
 }
 
+
+// MARK: - F-459: abandoning while the remote streams output
+
+// When it2ssh is killed while the remote is streaming output, the session has framed
+// output queued at every stage: bytes not yet parsed, tokens parsed (with the old
+// framing's depths) but not yet executed, and side effects requested but not yet
+// performed. Nothing in any of them may start recovery, start a conductor, or write to
+// the shell once the connection is abandoned.
+@MainActor
+final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
+    private var session: WriteCapturingSession!
+    private let rootID = "1234567890"
+    private let nestedID = "555"
+    private let recover = "recover".data(using: .utf8)!.base64EncodedString()
+
+    override func setUp() {
+        super.setUp()
+        session = WriteCapturingSession(synthetic: false)
+        let screen = session.screen
+        screen.delegate = session
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalEnabled = true
+            mutableState.terminal?.termType = "xterm"
+            screen.destructivelySetScreenWidth(80, height: 24, mutableState: mutableState)
+        })
+    }
+
+    override func tearDown() {
+        session = nil
+        super.tearDown()
+    }
+
+    // MARK: - Helpers
+
+    // Parses bytes the way the pty reader does, without executing the tokens.
+    private func parse(_ bytes: [UInt8]) -> [VT100Token] {
+        var tokens = [VT100Token]()
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            guard let terminal else {
+                return
+            }
+            bytes.withUnsafeBufferPointer { buf in
+                terminal.parser.putStreamData(buf.baseAddress, length: Int32(buf.count))
+            }
+            var vector = CVector()
+            CVectorCreate(&vector, 100)
+            _ = terminal.parser.addParsedTokens(to: &vector)
+            for i in 0..<CVectorCount(&vector) {
+                tokens.append(CVectorGetObject(&vector, i) as! VT100Token)
+            }
+            CVectorDestroy(&vector)
+        })
+        return tokens
+    }
+
+    private func parse(_ string: String) -> [VT100Token] {
+        return parse(Array(string.utf8))
+    }
+
+    // Executes tokens parsed earlier. `then` runs on the main thread after they execute
+    // but before the side effects they requested are performed.
+    private func execute(_ tokens: [VT100Token], then: (() -> Void)? = nil) {
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            for token in tokens {
+                terminal?.execute(token)
+            }
+            then?()
+        })
+        sync()
+    }
+
+    private func send(_ string: String) {
+        execute(parse(string))
+    }
+
+    private func sync() {
+        // Several times, so side effects that schedule more mutation get to finish.
+        for _ in 0..<4 {
+            session.screen.performBlock(joinedThreads: { _, _, _ in })
+        }
+    }
+
+    private func osc134(_ payload: String) -> String {
+        return "\u{1b}]134;:\(payload)\u{1b}\\"
+    }
+
+    private func hook(uniqueID: String) -> String {
+        return "\u{1b}P2000pnone \(uniqueID) Ym9vbA== - ZXhhbXBsZS5jb20=\n"
+    }
+
+    private func autopollReport(id: String) -> String {
+        return osc134("%autopoll \(id)") +
+            "$begin ps\r\n" +
+            "  PID COMMAND\r\n" +
+            "$begin cpu\r\n" +
+            "=1.14%\r\n" +
+            osc134("%end \(id)")
+    }
+
+    // What `yes` prints through the root conductor's framing.
+    private func framedYes(id: String, lines: Int) -> String {
+        return osc134("%output \(id) 100 -1 0") +
+            String(repeating: "y\r\n", count: lines) +
+            osc134("%end \(id)")
+    }
+
+    private func screenText() -> String {
+        return session.screen.compactLineDumpWithHistory()
+    }
+
+    private func forceUnhook(_ dcsID: String) {
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            XCTAssertTrue(terminal?.parser.forceUnhookDCSReturningSuccess(dcsID) ?? false)
+        })
+    }
+
+    private func hookRoot() -> Conductor? {
+        send(hook(uniqueID: rootID))
+        let conductor = session.conductor
+        XCTAssertNotNil(conductor)
+        XCTAssertEqual(conductor?.clientUniqueID, rootID)
+        session.writes.removeAll()
+        return conductor
+    }
+
+    private func abandonRoot() {
+        session.abandonSSH(throughClientUniqueID: rootID)
+    }
+
+    private func assertRecoveryNotStarted(file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertEqual(session.writes, [], file: file, line: line)
+        XCTAssertFalse(screenText().contains("Recovering"), screenText(), file: file, line: line)
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            XCTAssertEqual(terminal?.framerRecoveryMode, VT100TerminalFramerRecoveryMode.none,
+                           file: file, line: line)
+        })
+    }
+
+    // The local shell's prompt is drawn afterward, so the parser is not left hooked.
+    private func assertShellOutputIsDrawn(file: StaticString = #filePath, line: UInt = #line) {
+        send("local% ")
+        XCTAssertTrue(screenText().contains("local% "), screenText(), file: file, line: line)
+        XCTAssertEqual(session.writes, [], file: file, line: line)
+        XCTAssertNil(session.conductor, file: file, line: line)
+    }
+
+    // MARK: - Tests
+
+    // The QA repro: the root conductor streams `yes` output. Some of it was parsed while
+    // hooked but not yet executed when the connection is abandoned, and the rest (a frame
+    // cut off mid-line, then an autopoll report) arrives after the forced unhook.
+    func testStreamingOutputQueuedAtAbandonmentDoesNotRecover() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 500) +
+                           framedYes(id: "o2", lines: 500) +
+                           osc134("%output o3 100 -1 0") + "y\r\ny\r\ny")
+        abandonRoot()
+        execute(queued)
+        send("\r\ny\r\n" + osc134("%end o3") +
+             framedYes(id: "o4", lines: 50) +
+             autopollReport(id: "9001") +
+             osc134("%end 9001"))
+        assertRecoveryNotStarted()
+        XCTAssertNil(session.conductor)
+        assertShellOutputIsDrawn()
+    }
+
+    // The abandonment interrupts the parser in the middle of an OSC 134 line.
+    func testAbandonmentMidOSCDoesNotRecover() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 20) + "\u{1b}]134;:%outp")
+        abandonRoot()
+        execute(queued)
+        send("ut o2 100 -1 0\u{1b}\\" + "y\r\ny\r\n" + osc134("%end o2") + autopollReport(id: "9001"))
+        assertRecoveryNotStarted()
+        assertShellOutputIsDrawn()
+    }
+
+    // A framer wrapper parsed inside the root's framing has the depth of the root's
+    // children, not the refused outermost depth. It was parsed before the abandonment and
+    // executes after it.
+    func testWrapperParsedInsideAbandonedFramingDoesNotRecover() {
+        _ = hookRoot()
+        let queued = parse(osc134("%output o1 100 -1 0") +
+                           autopollReport(id: "9001") +
+                           osc134("%end o1"))
+        abandonRoot()
+        execute(queued)
+        assertRecoveryNotStarted()
+        assertShellOutputIsDrawn()
+    }
+
+    // The terminal executed framer output that starts recovery (the hook was already
+    // gone) and then the session abandoned the connection before the recovery's side
+    // effect ran.
+    func testRecoveryRequestedBeforeAbandonmentDoesNotBegin() {
+        let conductor = hookRoot()
+        forceUnhook(conductor?.dcsID ?? "")
+        let queued = parse(autopollReport(id: "9001"))
+        execute(queued, then: { [unowned self] in
+            self.abandonRoot()
+        })
+        assertRecoveryNotStarted()
+        // Later framer output is ignored too, and the shell's output is drawn.
+        send(autopollReport(id: "9002"))
+        assertRecoveryNotStarted()
+        assertShellOutputIsDrawn()
+    }
+
+    // Same as above, but Disconnect ended the connection.
+    func testRecoveryRequestedBeforeDisconnectDoesNotBegin() {
+        let conductor = hookRoot()
+        forceUnhook(conductor?.dcsID ?? "")
+        let queued = parse(autopollReport(id: "9001"))
+        execute(queued, then: {
+            conductor?.quit()
+        })
+        session.writes.removeAll()
+        sync()
+        assertRecoveryNotStarted()
+        send(autopollReport(id: "9002"))
+        assertRecoveryNotStarted()
+        assertShellOutputIsDrawn()
+    }
+
+    // A nested it2ssh's hook in the abandoned connection's output, parsed before the
+    // abandonment, must not start a conductor (which would write to the local shell) or
+    // lift the refusal.
+    func testStaleNestedHookParsedBeforeAbandonmentDoesNotStartConductor() {
+        _ = hookRoot()
+        let queued = parse(osc134("%output o1 100 -1 0") +
+                           hook(uniqueID: "888") +
+                           osc134("%end o1"))
+        abandonRoot()
+        execute(queued)
+        XCTAssertNil(session.conductor)
+        send(autopollReport(id: "9001"))
+        assertRecoveryNotStarted()
+        assertShellOutputIsDrawn()
+    }
+
+    // As above, but the terminal executed the stale hook before it learned of the
+    // abandonment, and the session abandoned the connection before the hook's side
+    // effect ran.
+    func testStaleNestedHookExecutedBeforeAbandonmentDoesNotStartConductor() {
+        _ = hookRoot()
+        let queued = parse(osc134("%output o1 100 -1 0") +
+                           hook(uniqueID: "888") +
+                           osc134("%end o1"))
+        execute(queued, then: { [unowned self] in
+            self.abandonRoot()
+        })
+        XCTAssertNil(session.conductor)
+        session.writes.removeAll()
+        send(autopollReport(id: "9001"))
+        assertRecoveryNotStarted()
+        assertShellOutputIsDrawn()
+    }
+
+    // The abandoned connection's own hook can't start a conductor or lift the refusal.
+    func testHookByAbandonedConnectionDoesNotLiftRefusal() {
+        _ = hookRoot()
+        abandonRoot()
+        sync()
+        send(hook(uniqueID: rootID))
+        XCTAssertNil(session.conductor)
+        send(autopollReport(id: "9001"))
+        assertRecoveryNotStarted()
+        assertShellOutputIsDrawn()
+    }
+
+    // A nested connection's abandonment refuses its own depth and deeper ones, while the
+    // root (still connected) can recover.
+    func testNestedAbandonmentLeavesRootRecoverable() {
+        let root = hookRoot()
+        send(osc134("%output out1 100 -1 0") + hook(uniqueID: nestedID) + osc134("%end out1"))
+        XCTAssertEqual(session.conductor?.clientUniqueID, nestedID)
+        session.abandonSSH(throughClientUniqueID: nestedID)
+        sync()
+        XCTAssertTrue(session.conductor === root)
+        session.writes.removeAll()
+        send(osc134("%output out2 100 -1 0") + autopollReport(id: "9001") + osc134("%end out2"))
+        XCTAssertEqual(session.writes, [])
+        forceUnhook(root?.dcsID ?? "")
+        send(autopollReport(id: "9002"))
+        XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
+    }
+
+    // A new connection's hook was executed before the terminal learned of the old one's
+    // abandonment, and the session handled the abandonment before the new hook. The new
+    // connection must still be able to recover.
+    func testNewConnectionHookedDuringAbandonmentCanRecover() {
+        let old = hookRoot()
+        forceUnhook(old?.dcsID ?? "")
+        let queued = parse(hook(uniqueID: "777"))
+        execute(queued, then: { [unowned self] in
+            self.abandonRoot()
+        })
+        let conductor = session.conductor
+        XCTAssertEqual(conductor?.clientUniqueID, "777")
+        forceUnhook(conductor?.dcsID ?? "")
+        session.writes.removeAll()
+        send(autopollReport(id: "9001"))
+        XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
+    }
+
+    // The connection lost sync and recovered, and the terminal is waiting for the
+    // recovered connection's boundary when that connection is abandoned.
+    func testAbandonmentWhileSyncingAfterRecoveryLeavesRecovery() {
+        let conductor = hookRoot()
+        forceUnhook(conductor?.dcsID ?? "")
+        send(autopollReport(id: "9001"))
+        XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
+        send(osc134("begin-recovery") +
+             osc134("recovery: version 1") +
+             osc134("recovery: login 100") +
+             osc134("recovery: dcsID d1") +
+             osc134("recovery: sshargs ZXhhbXBsZS5jb20=") +
+             osc134("recovery: boolArgs Ym9vbA==") +
+             osc134("recovery: clientUniqueID 4242") +
+             osc134("end-recovery"))
+        XCTAssertEqual(session.conductor?.clientUniqueID, "4242")
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            XCTAssertEqual(terminal?.framerRecoveryMode, VT100TerminalFramerRecoveryMode.syncing)
+        })
+
+        session.abandonSSH(throughClientUniqueID: "4242")
+        sync()
+        session.writes.removeAll()
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            XCTAssertEqual(terminal?.framerRecoveryMode, VT100TerminalFramerRecoveryMode.none)
+        })
+        send(autopollReport(id: "9002"))
+        XCTAssertEqual(session.writes, [])
+        assertShellOutputIsDrawn()
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            XCTAssertEqual(terminal?.framerRecoveryMode, VT100TerminalFramerRecoveryMode.none)
+        })
+    }
+
+    // After an abandonment a new connection hooks, loses sync, and recovers.
+    func testNewConnectionAfterStreamingAbandonmentCanRecover() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 100))
+        abandonRoot()
+        execute(queued)
+        send(hook(uniqueID: "777"))
+        let conductor = session.conductor
+        XCTAssertEqual(conductor?.clientUniqueID, "777")
+        forceUnhook(conductor?.dcsID ?? "")
+        session.writes.removeAll()
+        send(autopollReport(id: "9001"))
+        XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
+    }
+}

@@ -606,7 +606,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (dispatch_queue_t)terminalQueue;
 - (iTermTokenExecutorUnpauser *)terminalPause;
 - (void)terminalSendCapabilitiesReport;
-- (void)terminalDidHookSSHConductorWithParams:(nullable NSString *)token;
+// parentDepth is the depth of the conductor whose framing carried the hook, or -1.
+- (void)terminalDidHookSSHConductorWithParams:(nullable NSString *)token parentDepth:(int)parentDepth;
 - (void)terminalDidReadSSHConductorLine:(nullable NSString *)string depth:(int)depth;
 - (void)terminalDidUnhookSSHConductor;
 - (void)terminalDidBeginSSHConductorCommandWithIdentifier:(nullable NSString *)identifier
