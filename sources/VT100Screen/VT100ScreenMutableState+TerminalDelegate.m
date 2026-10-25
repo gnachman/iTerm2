@@ -3976,7 +3976,7 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     return @[token, uniqueID, boolArgs, sshargs, dcsid];
 }
 
-- (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
+- (void)terminalDidHookSSHConductorWithParams:(NSString *)params parentDepth:(int)parentDepth {
     NSArray<NSString *> *values = [self parseHookSSHConductorParameter:params];
     // values are the decoded conductor params (ssh target/args); log the count in the ring.
     RLog(@"%@", RLogRedact(values, @(values.count)));
@@ -4004,6 +4004,7 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
                                             boolArgs:boolArgs
                                              sshargs:sshargs
                                                dcsID:dcsID
+                                         parentDepth:parentDepth
                                        savedState:savedState];
     } name:@"did hook ssh"];
     [self.terminal resetForSSH];
@@ -4200,14 +4201,31 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
 }
 
 - (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth {
-    [self appendBannerMessage:@"Recovering ssh connection…"];
     self.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeRecovering;
+    self.terminal.framerRecoveryParentDepth = parentDepth;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_queue_t queue = _queue;
     // Urgent: opens the recovery handshake, which is strictly serial and pauses the token
     // executor per step. See -terminalHandleFramerRecoveryString:.
     [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        [delegate screenBeginFramerRecovery:parentDepth];
-        [unpauser unpause];
+        // The session may have abandoned this connection after this token was executed
+        // but before this ran (F-459). Then it refuses, and the framer output must be
+        // ignored instead. No token runs until the unpause, so none sees the stale mode.
+        const BOOL began = [delegate screenBeginFramerRecovery:parentDepth];
+        dispatch_async(queue, ^{
+            [weakSelf framerRecoveryDidBegin:began unpauser:unpauser];
+        });
     } name:@"begin framer recovery for child"];
+}
+
+- (void)framerRecoveryDidBegin:(BOOL)began unpauser:(iTermTokenExecutorUnpauser *)unpauser {
+    if (began) {
+        [self appendBannerMessage:@"Recovering ssh connection…"];
+    } else if (self.terminal.framerRecoveryMode == VT100TerminalFramerRecoveryModeRecovering) {
+        DLog(@"Framer recovery refused");
+        self.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
+    }
+    [unpauser unpause];
 }
 
 - (void)terminalHandleFramerRecoveryString:(NSString *)string {

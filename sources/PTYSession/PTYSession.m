@@ -813,6 +813,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     NSString *_disconnectedSSHClientUniqueID;
     // Watches local it2ssh processes so the session recovers when one dies (F-482).
     iTermSSHClientMonitor *_sshClientMonitor;
+    // Abandoned connections whose framer recovery must not begin, as decided on the main
+    // thread. A recovery requested before the terminal learns of the abandonment is
+    // refused here (F-459).
+    iTermFramerRecoveryRefusals *_framerRecoveryRefusals;
 
     __weak id<VT100ScreenMarkReading> _selectedScreenMark;
     NSMutableArray<PTYSessionHostState *> *_hostStack;
@@ -988,6 +992,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
         _sshClientMonitor = [[iTermSSHClientMonitor alloc] init];
+        _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directoryTracker = [[iTermSessionDirectoryTracker alloc] initWithVariablesScope:self.variablesScope];
         _directoryTracker.delegate = self;
@@ -1379,6 +1384,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_queuedConnectingSSH release];
     [_disconnectedSSHClientUniqueID release];
     [_sshClientMonitor release];
+    [_framerRecoveryRefusals release];
     [_hostStack release];
     [_defaultPointer release];
     [_originatingArrangement release];
@@ -20749,7 +20755,34 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                   boolArgs:(NSString *)boolArgs
                                    sshargs:(NSString *)sshargs
                                      dcsID:(NSString * _Nonnull)dcsID
+                               parentDepth:(int)parentDepth
                                 savedState:(NSDictionary *)savedState {
+    // The terminal executed this hook before it learned the connection carrying it was
+    // abandoned, or it is the abandoned connection's own. Starting a conductor would write
+    // to the shell that owns the tty (F-459).
+    const BOOL wasRefused = _framerRecoveryRefusals.hasRefusal;
+    if (![_framerRecoveryRefusals shouldAcceptHookAsChildOfConductorAtDepth:parentDepth
+                                                            clientUniqueID:uniqueID]) {
+        RLog(@"Ignore a hook from an abandoned connection at parent depth %d", parentDepth);
+        // Undo what accepting the hook did: the token is spent and the shell's terminal
+        // state comes back.
+        const BOOL claimed = [[iTermSecretServer instance] claim:token] != nil;
+        DLog(@"Claimed refused hook token: %@", @(claimed));
+        [_screen restoreSavedState:savedState];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [terminal.parser forceUnhookDCSReturningSuccess:dcsID];
+        }];
+        return;
+    }
+    if (wasRefused) {
+        // The terminal may have executed this hook before it learned of the abandonment
+        // and refused again afterward. This is a new connection, so it may recover.
+        NSString *uniqueIDCopy = [[uniqueID copy] autorelease];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [terminal allowFramerRecoveryForHookAsChildOfConductorAtDepth:parentDepth
+                                                           clientUniqueID:uniqueIDCopy];
+        }];
+    }
     iTermSecretClaim *claim = [[iTermSecretServer instance] claim:token];
     const BOOL localOrigin = (claim != nil);
 
@@ -20868,6 +20901,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // The abandoned connection's framer output (which carries its children's) arrives at its
     // parent's depth.
     const int parentDepth = target.parent ? target.parent.depth : -1;
+    NSMutableArray<NSString *> *abandonedClientUniqueIDs = [NSMutableArray array];
+    for (iTermConductor *conductor = _conductor; conductor; conductor = conductor.parent) {
+        if (conductor.clientUniqueID.length) {
+            [abandonedClientUniqueIDs addObject:conductor.clientUniqueID];
+        }
+        if (conductor == target) {
+            break;
+        }
+    }
+    // Refuse before anything else so a recovery that the terminal already requested can't
+    // begin once this connection is abandoned (F-459).
+    [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:parentDepth
+                                        abandonedClientUniqueIDs:abandonedClientUniqueIDs];
     while (_conductor) {
         iTermConductor *conductor = _conductor;
         const BOOL found = (conductor == target);
@@ -20888,7 +20934,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _connectingSSH = NO;
     [_queuedConnectingSSH release];
     _queuedConnectingSSH = nil;
-    [self forceUnhookAbandonedConductorDCS:dcsID refusingFramerRecoveryAtDepth:parentDepth];
+    [self forceUnhookAbandonedConductorDCS:dcsID
+             refusingFramerRecoveryAtDepth:parentDepth
+                  abandonedClientUniqueIDs:abandonedClientUniqueIDs];
 }
 
 static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID) {
@@ -21080,7 +21128,13 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     return _conductor.sshIdentity.compactDescription;
 }
 
-- (void)screenBeginFramerRecovery:(int)parentDepth {
+- (BOOL)screenBeginFramerRecovery:(int)parentDepth {
+    if ([_framerRecoveryRefusals isRefusedForChildrenOfConductorAtDepth:parentDepth]) {
+        // The terminal executed an abandoned connection's framer output before it learned
+        // of the abandonment. Recovering would type into the shell that owns the tty.
+        RLog(@"Refuse framer recovery for a child of depth %d of an abandoned connection", parentDepth);
+        return NO;
+    }
     // Preserve the it2 proxy state (nonce/socket/authorization) of the conductor being
     // recovered so it carries into the shim below. For a root single-hop recovery the
     // old conductor is unhooked (and released) before the shim exists, so retain it
@@ -21115,6 +21169,7 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     _conductor.delegate = self;
     [_conductor startRecovery];
     _shell.sshIntegrationActive = _conductor != nil;
+    return YES;
 }
 
 - (iTermConductorRecovery *)screenHandleFramerRecoveryString:(NSString * _Nonnull)string {
@@ -26650,11 +26705,14 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         [_disconnectedSSHClientUniqueID release];
         _disconnectedSSHClientUniqueID = [_conductor.clientUniqueID copy];
     }
+    NSArray<NSString *> *abandonedClientUniqueIDs = clientUniqueID.length ? @[ clientUniqueID ] : @[];
+    // The user ended this connection, so whatever its framer prints from now on must not
+    // start recovery (F-354), even if the terminal already requested it (F-459).
+    [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:parentDepth
+                                        abandonedClientUniqueIDs:abandonedClientUniqueIDs];
     [self unhookSSHConductor];
     [_sshWriteQueue setLength:0];
-    // The user ended this connection, so whatever its framer prints from now on must not
-    // start recovery (F-354).
-    [self refuseFramerRecoveryAtDepth:parentDepth];
+    [self refuseFramerRecoveryAtDepth:parentDepth abandonedClientUniqueIDs:abandonedClientUniqueIDs];
     if (dcsID.length) {
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -26685,18 +26743,23 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 // and keep printing its framer's output. Once unhooked, its framer's OSC 134 output is
 // ignored rather than starting recovery, which would type into the shell that owns the
 // tty. Anything else it prints is drawn.
-- (void)refuseFramerRecoveryAtDepth:(int)parentDepth {
+- (void)refuseFramerRecoveryAtDepth:(int)parentDepth
+          abandonedClientUniqueIDs:(NSArray<NSString *> *)abandonedClientUniqueIDs {
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         RLog(@"Refuse framer recovery for children of depth %d", parentDepth);
-        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth];
+        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth
+                                          abandonedClientUniqueIDs:abandonedClientUniqueIDs];
     }];
 }
 
-- (void)forceUnhookAbandonedConductorDCS:(NSString *)dcsID refusingFramerRecoveryAtDepth:(int)parentDepth {
+- (void)forceUnhookAbandonedConductorDCS:(NSString *)dcsID
+           refusingFramerRecoveryAtDepth:(int)parentDepth
+                abandonedClientUniqueIDs:(NSArray<NSString *> *)abandonedClientUniqueIDs {
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         // Refuse first so no output parsed after the unhook can start recovery.
         RLog(@"Refuse framer recovery for children of depth %d", parentDepth);
-        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth];
+        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth
+                                          abandonedClientUniqueIDs:abandonedClientUniqueIDs];
         if ([terminal.parser forceUnhookDCSReturningSuccess:dcsID]) {
             RLog(@"Forced unhook of abandoned conductor DCS %@", dcsID);
         }

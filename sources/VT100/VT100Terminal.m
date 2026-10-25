@@ -232,9 +232,9 @@ typedef struct {
     iTermEmulationLevel _vtLevel;
     VT100TerminalKeyReportingFlags _keyReportingFlags;
 
-    // Parent depths (plus one, so the outermost connection's -1 fits) whose children's
-    // framer output must not start recovery because their connection was abandoned (F-354).
-    NSMutableIndexSet *_framerRecoveryRefusedParentDepths;
+    // Connections whose framer output must not start recovery because they were
+    // abandoned (F-354, F-459).
+    iTermFramerRecoveryRefusals *_framerRecoveryRefusals;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -491,29 +491,36 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth {
-    if (parentDepth < -1) {
-        return;
+- (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth
+                              abandonedClientUniqueIDs:(NSArray<NSString *> *)clientUniqueIDs {
+    if (!_framerRecoveryRefusals) {
+        _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
     }
-    if (!_framerRecoveryRefusedParentDepths) {
-        _framerRecoveryRefusedParentDepths = [[NSMutableIndexSet alloc] init];
+    [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:parentDepth
+                                        abandonedClientUniqueIDs:clientUniqueIDs];
+    if (self.framerRecoveryMode != VT100TerminalFramerRecoveryModeNone &&
+        [_framerRecoveryRefusals isRefusedForChildrenOfConductorAtDepth:self.framerRecoveryParentDepth]) {
+        // A recovery for the abandoned connection began before it was abandoned. If it is
+        // still recovering, PTYSession refuses to start it, so stop treating its framer
+        // output as recovery lines. If it is syncing, the recovered connection is the one
+        // being abandoned: its hook is forced off, so don't wait for its recovery boundary
+        // (which a stale token could still deliver).
+        RLog(@"Abandon framer recovery for children of depth %d in mode %@",
+             self.framerRecoveryParentDepth, @(self.framerRecoveryMode));
+        self.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
+        self.framerBoundaryNumber = -1;
     }
-    [_framerRecoveryRefusedParentDepths addIndex:parentDepth + 1];
 }
 
 - (BOOL)framerRecoveryIsRefusedForChildrenOfConductorAtDepth:(int)parentDepth {
-    return parentDepth >= -1 && [_framerRecoveryRefusedParentDepths containsIndex:parentDepth + 1];
+    return [_framerRecoveryRefusals isRefusedForChildrenOfConductorAtDepth:parentDepth];
 }
 
-- (void)allowFramerRecoveryForChildrenOfConductorsAtOrBelowDepth:(int)parentDepth {
-    if (parentDepth < -1) {
-        return;
-    }
-    const NSUInteger first = parentDepth + 1;
-    const NSUInteger last = _framerRecoveryRefusedParentDepths.lastIndex;
-    if (last != NSNotFound && last >= first) {
-        [_framerRecoveryRefusedParentDepths removeIndexesInRange:NSMakeRange(first, last - first + 1)];
-    }
+- (void)allowFramerRecoveryForHookAsChildOfConductorAtDepth:(int)parentDepth
+                                             clientUniqueID:(NSString *)clientUniqueID {
+    const BOOL accepted = [_framerRecoveryRefusals shouldAcceptHookAsChildOfConductorAtDepth:parentDepth
+                                                                         clientUniqueID:clientUniqueID];
+    DLog(@"Allow framer recovery at depth %d for %@: %@", parentDepth, clientUniqueID, @(accepted));
 }
 
 - (void)resetForSSH {
@@ -3222,14 +3229,28 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self executeAPC:token];
             break;
 
-        case SSH_INIT:
-            // A new connection's framer output is its own, so it may recover again. Any
-            // refusal for deeper connections is stale too. An orphaned ssh client that
-            // could not be killed and still prints at this depth could start recovery
-            // again after this, but that requires it to outlive the new connection's setup.
-            [self allowFramerRecoveryForChildrenOfConductorsAtOrBelowDepth:token.sshInfo.valid ? token.sshInfo.depth - 1 : -1];
-            [self.delegate terminalDidHookSSHConductorWithParams:token.string];
+        case SSH_INIT: {
+            const int parentDepth = token.sshInfo.valid ? token.sshInfo.depth - 1 : -1;
+            // A new connection's framer output is its own, so it may recover again. A hook
+            // from an abandoned connection's stale output (one parsed inside its framing, or
+            // carrying its unique ID) must not start a conductor, which would write to the
+            // shell that owns the tty (F-459). An orphaned ssh client that could not be
+            // killed and still prints at this depth could start recovery again after a new
+            // connection hooks, but that requires it to outlive the new connection's setup.
+            if (_framerRecoveryRefusals &&
+                ![_framerRecoveryRefusals shouldAcceptHookAsChildOfConductorAtDepth:parentDepth
+                                                                    clientUniqueID:[iTermFramerRecoveryRefusals clientUniqueIDFromHookParameters:token.string]]) {
+                RLog(@"Ignore a hook from an abandoned connection at parent depth %d", parentDepth);
+                NSString *dcsID = [iTermFramerRecoveryRefusals dcsIDFromHookParameters:token.string];
+                if (dcsID.length) {
+                    // If it hooked the parser, the output that follows belongs to the shell.
+                    [self.parser forceUnhookDCSReturningSuccess:dcsID];
+                }
+                break;
+            }
+            [self.delegate terminalDidHookSSHConductorWithParams:token.string parentDepth:parentDepth];
             break;
+        }
 
         case SSH_LINE:
             [self.delegate terminalDidReadSSHConductorLine:token.string

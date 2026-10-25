@@ -634,8 +634,9 @@ Bug Fixes:
   showing output and ignored input.
 - An SSH Integration session now recovers on
   its own when its it2ssh process is killed,
-  and ends the ssh process that it2ssh left
-  logged in to the remote host. When iTerm2
+  even while the remote host is printing
+  output, and ends the ssh process that it2ssh
+  left logged in to the remote host. When iTerm2
   can’t watch it2ssh, for example because it
   ran on another host, it offers to disconnect
   once the prompt reappears.

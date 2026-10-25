@@ -487,6 +487,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                   boolArgs:(NSString * _Nonnull)boolArgs
                                    sshargs:(NSString * _Nonnull)sshargs
                                      dcsID:(NSString * _Nonnull)dcsID
+                               parentDepth:(int)parentDepth
                                 savedState:(NSDictionary * _Nonnull)savedState;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string depth:(int)depth;
 - (void)screenDidUnhookSSHConductor;
@@ -512,7 +513,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                    sshArgs:(NSString * _Nonnull)sshArgs;
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
 - (NSString * _Nonnull)screenSSHLocation;
-- (void)screenBeginFramerRecovery:(int)parentDepth;
+// Returns NO if the connection's framer output must not start recovery because the
+// connection was abandoned.
+- (BOOL)screenBeginFramerRecovery:(int)parentDepth;
 // Returns true when recovery completes
 - (iTermConductorRecovery * _Nullable)screenHandleFramerRecoveryString:(NSString * _Nonnull)string;
 - (void)screenFramerRecoveryDidFinish;

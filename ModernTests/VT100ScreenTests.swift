@@ -2133,7 +2133,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
         kittyDragAndDropContents.append(content)
     }
     
-    func screenDidHookSSHConductor(withToken token: String, uniqueID: String, boolArgs: String, sshargs: String, dcsID: String, savedState: [AnyHashable : Any]) {
+    func screenDidHookSSHConductor(withToken token: String, uniqueID: String, boolArgs: String, sshargs: String, dcsID: String, parentDepth: Int32, savedState: [AnyHashable : Any]) {
 
     }
     
@@ -2189,8 +2189,8 @@ class FakeSession: NSObject, VT100ScreenDelegate {
         return "localhost"
     }
     
-    func screenBeginFramerRecovery(_ parentDepth: Int32) {
-
+    func screenBeginFramerRecovery(_ parentDepth: Int32) -> Bool {
+        return true
     }
     
     func screenHandleFramerRecoveryString(_ string: String) -> iTerm2SharedARC.ConductorRecovery? {
