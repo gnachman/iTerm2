@@ -229,7 +229,7 @@ final class SSHClientMonitor: NSObject {
         }
     }
 
-    // Remembers it2ssh's ssh child so it can be hung up if it2ssh dies and leaves it
+    // Remembers it2ssh's ssh child so it can be killed if it2ssh dies and leaves it
     // running (F-351). it2ssh runs ssh as a child (not with exec) for the whole
     // connection, so it must be alive now. Records nothing unless exactly one child
     // is ssh.
@@ -264,16 +264,19 @@ final class SSHClientMonitor: NSObject {
         clients.removeValue(forKey: clientUniqueID)
     }
 
-    // Sends SIGHUP to the ssh client recorded for this connection if its it2ssh has
-    // exited and the very same ssh process is still running. Once the connection has
+    // Sends SIGKILL to the ssh client recorded for this connection if its it2ssh has
+    // exited and the very same ssh process is still running. SIGHUP and SIGTERM make
+    // ssh print "tcsetattr: Input/output error" because its process group is
+    // orphaned; SIGKILL leaves the session's tty alone. Once the connection has
     // been abandoned nothing else needs the record, so it is forgotten even when
-    // nothing is signaled (e.g., Disconnect from a hung remote with it2ssh alive). Without this it would
-    // stay logged in to the remote host on the session's tty. Never signals a
+    // nothing is signaled (e.g., Disconnect from a hung remote with it2ssh alive).
+    // Without this it would stay logged in to the remote host on the session's
+    // tty, and its remote conductor's output would keep arriving. Never signals a
     // process that can't be positively identified: the pid, start time, and
     // arguments must all match. Forgets the connection. Returns whether it signaled.
     @discardableResult
-    @objc(hangUpOrphanedSSHClientForClientUniqueID:)
-    func hangUpOrphanedSSHClient(clientUniqueID: String) -> Bool {
+    @objc(killOrphanedSSHClientForClientUniqueID:)
+    func killOrphanedSSHClient(clientUniqueID: String) -> Bool {
         guard let record = clients.removeValue(forKey: clientUniqueID) else {
             DLog("No ssh client recorded for \(clientUniqueID)")
             return false
@@ -296,8 +299,8 @@ final class SSHClientMonitor: NSObject {
             RLog("ssh client \(ssh) for \(clientUniqueID) may be a ControlMaster; leaving it alone")
             return false
         }
-        RLog("Hanging up orphaned ssh client \(ssh) for \(clientUniqueID)")
-        signaler(ssh.pid, SIGHUP)
+        RLog("Killing orphaned ssh client \(ssh) for \(clientUniqueID)")
+        signaler(ssh.pid, SIGKILL)
         return true
     }
 

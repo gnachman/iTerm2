@@ -197,9 +197,9 @@ final class SSHClientMonitorTests: XCTestCase {
 }
 
 // F-351: when a watched it2ssh dies, its ssh client is orphaned but still logged in
-// to the remote host. Recovery hangs it up, but only when it is positively the same
+// to the remote host. Recovery kills it, but only when it is positively the same
 // process that was it2ssh's child.
-final class SSHClientHangUpTests: XCTestCase {
+final class SSHClientKillTests: XCTestCase {
     private let it2sshArgs = ["bash", "/Users/me/.iterm2/it2ssh", "example.com"]
     private let sshArgs = ["/usr/bin/ssh", "-t", "--", "example.com", "exec", "sh"]
     private let t1 = Date(timeIntervalSince1970: 1001)
@@ -231,26 +231,26 @@ final class SSHClientHangUpTests: XCTestCase {
         monitor.recordSSHClient(ofIT2SSHProcessID: 20, clientUniqueID: "abc")
     }
 
-    func testHangsUpOrphanedSSHClient() {
+    func testKillsOrphanedSSHClient() {
         let inspector = makeInspector()
         let monitor = makeMonitor(inspector)
         watch(monitor)
         killIT2SSH(inspector)
-        XCTAssertTrue(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertEqual(signals.map { $0.0 }, [21])
-        XCTAssertEqual(signals.map { $0.1 }, [SIGHUP])
+        XCTAssertEqual(signals.map { $0.1 }, [SIGKILL])
         // Only once.
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertEqual(signals.count, 1)
     }
 
     // If it2ssh is alive, its ssh client isn't orphaned (e.g., Disconnect from a
     // hung remote) and must be left alone.
-    func testDoesNotHangUpWhileIT2SSHIsAlive() {
+    func testDoesNotKillWhileIT2SSHIsAlive() {
         let inspector = makeInspector()
         let monitor = makeMonitor(inspector)
         watch(monitor)
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -261,7 +261,7 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         killIT2SSH(inspector)
         inspector.processes[20] = .init(parent: 1, startTime: Date(timeIntervalSince1970: 9000), arguments: ["other"])
-        XCTAssertTrue(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertEqual(signals.map { $0.0 }, [21])
     }
 
@@ -272,7 +272,7 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         killIT2SSH(inspector)
         inspector.processes[21] = .init(parent: 1, startTime: Date(timeIntervalSince1970: 9000), arguments: sshArgs)
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -282,7 +282,7 @@ final class SSHClientHangUpTests: XCTestCase {
         let monitor = makeMonitor(inspector)
         watch(monitor)
         inspector.processes[20]?.startTime = nil
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -293,7 +293,7 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         killIT2SSH(inspector)
         inspector.listeners.insert(21)
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -303,7 +303,7 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         killIT2SSH(inspector)
         inspector.unknownSockets.insert(21)
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -335,7 +335,7 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         killIT2SSH(inspector)
         inspector.processes[21]?.arguments = ["/usr/bin/vim"]
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -345,7 +345,7 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         killIT2SSH(inspector)
         inspector.processes[21] = nil
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -356,7 +356,7 @@ final class SSHClientHangUpTests: XCTestCase {
         let monitor = makeMonitor(inspector)
         watch(monitor)
         killIT2SSH(inspector)
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -368,7 +368,7 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         killIT2SSH(inspector)
         inspector.processes[22]?.parent = 1
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
@@ -378,20 +378,20 @@ final class SSHClientHangUpTests: XCTestCase {
         watch(monitor)
         monitor.forgetSSHClient(clientUniqueID: "abc")
         killIT2SSH(inspector)
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         XCTAssertTrue(signals.isEmpty)
     }
 
     func testUnknownClientIsNotSignaled() {
         let monitor = makeMonitor(makeInspector())
-        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "nope"))
+        XCTAssertFalse(monitor.killOrphanedSSHClient(clientUniqueID: "nope"))
         XCTAssertTrue(signals.isEmpty)
     }
 
     // End to end with real processes: a fake it2ssh (bash) runs a fake ssh (sleep,
     // reached through a link named ssh), and is killed.
-    func testRealOrphanedSSHClientIsHungUp() throws {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("it2-hangup-\(getpid())-\(UUID().uuidString)")
+    func testRealOrphanedSSHClientIsKilled() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("it2-kill-\(getpid())-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer {
             try? FileManager.default.removeItem(at: dir)
@@ -460,7 +460,7 @@ final class SSHClientHangUpTests: XCTestCase {
         }
         source.resume()
         XCTAssertNotNil(inspector.startTime(of: sshPID), "the orphaned ssh is still running")
-        XCTAssertTrue(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(monitor.killOrphanedSSHClient(clientUniqueID: "abc"))
         wait(for: [sshExited], timeout: 60)
     }
 }
