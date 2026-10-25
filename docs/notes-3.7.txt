@@ -1931,3 +1931,7 @@ Bug Fixes:
   no longer types them into the shell as
   commands when the ~/.iterm2 folder is not
   writable.
+- Canceling the Internet-Free shell integration
+  install while it sends the utilities now
+  stops sending them right away instead of a
+  minute or more later.

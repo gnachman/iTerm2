@@ -453,6 +453,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     NSString *_termVariable;
 
+    // Pastes made by sendTextSlowly: that may not have finished, so stopSendingTextSlowly can
+    // stop them without touching the user's own pastes.
+    NSHashTable<PasteEvent *> *_slowlySentPasteEvents;
+
     // Highest note-model generation this session has ever installed. See -setSessionNoteModel:.
     NSInteger _sessionNoteGenerationFloor;
 
@@ -15831,7 +15835,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     event.chunkKey = @"";
     event.delayKey = @"";
     event.flags = kPasteFlagsDisableWarnings;
+    if (!_slowlySentPasteEvents) {
+        _slowlySentPasteEvents = [NSHashTable hashTableWithOptions:(NSPointerFunctionsWeakMemory |
+                                                                    NSPointerFunctionsObjectPointerPersonality)];
+    }
+    [_slowlySentPasteEvents addObject:event];
     [_pasteHelper tryToPasteEvent:event];
+}
+
+- (void)stopSendingTextSlowly {
+    NSHashTable<PasteEvent *> *events = _slowlySentPasteEvents;
+    if (events.count == 0) {
+        return;
+    }
+    DLog(@"Stop sending text slowly");
+    [_pasteHelper abortPasteEventsPassingTest:^BOOL(PasteEvent *event) {
+        return [events containsObject:event];
+    }];
+    [events removeAllObjects];
 }
 
 - (void)launchCoprocessWithCommand:(NSString *)command

@@ -7,6 +7,7 @@
 //
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "PasteContext.h"
@@ -283,6 +284,18 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
     _pasteContext = nil;
     if (!cancel) {
         [self dequeueEvents];
+    }
+}
+
+- (void)abortPasteEventsPassingTest:(BOOL (^NS_NOESCAPE)(PasteEvent *event))test {
+    // Remove the queued ones first, so that stopping the current one doesn't start one of them.
+    [_eventQueue removeObjectsPassingTest:^BOOL(id event) {
+        return [event isKindOfClass:[PasteEvent class]] && test(event);
+    }];
+    PasteEvent *current = _pasteContext.pasteEvent;
+    if (current && test(current)) {
+        RLog(@"Abort the paste in progress");
+        [self abortAndCancelPendingEvents:NO];
     }
 }
 
