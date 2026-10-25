@@ -499,6 +499,115 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         assertShellOutputIsDrawn()
     }
 
+    // F-553: the ssh client died partway through writing a frame header, so the last thing
+    // parsed while hooked is an OSC 134 that will never be terminated. The hook was waiting
+    // for the rest of it. Once the connection is abandoned, the local shell's output must
+    // not be taken as the rest of that OSC. It is drawn from its first line break on.
+    func testUnterminatedFrameHeaderBeforeAbandonmentDoesNotSwallowShellOutput() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 20) + "\u{1b}]134;:%output o2")
+        abandonRoot()
+        execute(queued)
+        send("\r\nlocal% ")
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+        assertRecoveryNotStarted()
+        XCTAssertNil(session.conductor)
+    }
+
+    // As above, but with only part of the OSC's introducer.
+    func testUnterminatedFrameHeaderIntroducerBeforeAbandonmentDoesNotSwallowShellOutput() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 20) + "\u{1b}]134")
+        abandonRoot()
+        execute(queued)
+        send("\r\nlocal% ")
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+        assertRecoveryNotStarted()
+    }
+
+    // The cut-off header arrives after the forced unhook (it was still in the pty when the
+    // connection was abandoned). The shell's output that follows is drawn from its first
+    // new line on.
+    func testUnterminatedFrameHeaderAfterAbandonmentDoesNotSwallowShellOutput() {
+        _ = hookRoot()
+        abandonRoot()
+        sync()
+        send(framedYes(id: "o1", lines: 5) + "\u{1b}]134;:%output o2")
+        send("\r\nlocal% ")
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+        assertRecoveryNotStarted()
+        XCTAssertNil(session.conductor)
+    }
+
+    // The shell's first output after the cut-off header is an escape sequence (zsh with
+    // shell integration reports the killed command's end), parsed after the forced unhook.
+    func testUnterminatedFrameHeaderInterruptedByShellOSCAfterAbandonment() {
+        _ = hookRoot()
+        abandonRoot()
+        sync()
+        send(framedYes(id: "o1", lines: 5) + "\u{1b}]134;:%output o2")
+        send("\u{1b}]0;title\u{07}local% ")
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+        XCTAssertFalse(screenText().contains("title"), screenText())
+        assertRecoveryNotStarted()
+    }
+
+    // As above, but the header was parsed while hooked, and the shell's output arrived but
+    // wasn't parsed yet when the forced unhook ran.
+    func testUnterminatedFrameHeaderInterruptedByShellOSCBeforeAbandonment() {
+        _ = hookRoot()
+        let queued = parse(framedYes(id: "o1", lines: 20) + "\u{1b}]134;:%output o2")
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            let bytes = Array("\u{1b}]0;title\u{07}local% ".utf8)
+            bytes.withUnsafeBufferPointer { buf in
+                terminal?.parser.putStreamData(buf.baseAddress, length: Int32(buf.count))
+            }
+        })
+        abandonRoot()
+        execute(queued)
+        send("\r\n")
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+        XCTAssertFalse(screenText().contains("title"), screenText())
+        assertRecoveryNotStarted()
+    }
+
+    // A framer reply that isn't a frame header may span lines (e.g., a Python traceback).
+    // Outside the hook it is still one OSC, not drawn.
+    func testMultilineFramerReplyOutsideHookIsNotDrawn() {
+        _ = hookRoot()
+        abandonRoot()
+        sync()
+        send(osc134("first line\r\nsecond line"))
+        send("\r\nlocal% ")
+        XCTAssertFalse(screenText().contains("second line"), screenText())
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+        assertRecoveryNotStarted()
+    }
+
+    // A reply may also start with % (e.g., an environment variable's value). Only the
+    // framer's notification headers end at a line break.
+    func testMultilineFramerReplyStartingWithPercentOutsideHookIsNotDrawn() {
+        _ = hookRoot()
+        abandonRoot()
+        sync()
+        send(osc134("%output-like value\r\nsecond line"))
+        send("\r\nlocal% ")
+        XCTAssertFalse(screenText().contains("second line"), screenText())
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+        assertRecoveryNotStarted()
+    }
+
+    // A forced unhook can happen while a live connection's frame header is still arriving
+    // (e.g., the hook was refused). The rest of the header is not drawn as text.
+    func testForcedUnhookKeepsFrameHeaderThatIsStillArriving() {
+        let conductor = hookRoot()
+        send("\u{1b}]134;:%output o2 100")
+        forceUnhook(conductor?.dcsID ?? "")
+        send(" -1 0\u{1b}\\")
+        XCTAssertFalse(screenText().contains("-1 0"), screenText())
+        XCTAssertFalse(screenText().contains("o2"), screenText())
+    }
+
     // A framer wrapper parsed inside the root's framing has the depth of the root's
     // children, not the refused outermost depth. It was parsed before the abandonment and
     // executes after it.

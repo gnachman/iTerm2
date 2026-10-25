@@ -67,7 +67,7 @@ final class TTYModes: NSObject {
 // group (and is killed anyway), so its tcsetattr fails. The tty is left without signals,
 // output processing, or flow control: output staircases and Control-C prints ^C.
 //
-// Modes are set through iTerm2's end of the pty, never by sending anything to the shell.
+// Modes are set by opening the pty's slave, never by sending anything to the shell.
 //
 // Some shells record the tty modes when a foreground job exits, even one killed by a
 // signal, and reapply them before every command. zsh does: update_job() records them in
@@ -225,7 +225,7 @@ final class TTYModeRepairer: NSObject {
             Self.copy(Self.sshRawLocalFlagsOutsideLineEditor, from: good.c_lflag, to: &current.c_lflag)
             Self.copy(Self.sshRawOutputFlags, from: good.c_oflag, to: &current.c_oflag)
             RLog("Restoring tty modes ssh changed (from \(goodModes == nil ? "defaults" : "snapshot"))")
-            if Self.set(fd, current, ifStill: original) {
+            if Self.set(fd, slave: ttyPath, current, ifStill: original) {
                 changedModesSinceCommandFinished = true
             }
         }
@@ -339,7 +339,7 @@ final class TTYModeRepairer: NSObject {
         Self.copyControlCharacter(VMIN, from: good, to: &current)
         Self.copyControlCharacter(VTIME, from: good, to: &current)
         RLog("Restoring tty modes the shell reapplied from ssh's raw mode because \(reason)")
-        guard Self.set(fd, current, ifStill: original) else {
+        guard Self.set(fd, slave: ttyPath, current, ifStill: original) else {
             return .unknown
         }
         return .repaired
@@ -422,13 +422,36 @@ final class TTYModeRepairer: NSObject {
     // Skips the change if the modes changed since they were read (e.g., a command that
     // just started made the tty raw itself). That narrows, but can't close, the window
     // between reading and writing. Returns whether the modes were set.
-    private static func set(_ fd: Int32, _ modes: termios, ifStill original: termios) -> Bool {
-        guard let now = Self.modes(fd), bytes(now) == bytes(original) else {
+    //
+    // The modes are set through the slave, never the master: on macOS setting them through
+    // the master discards the output waiting to be read and leaves a process that waits for
+    // that output to drain (zsh restores its modes with TCSADRAIN when a job ends) asleep
+    // until something else writes to the tty (F-553). Opening the slave doesn't make it a
+    // controlling tty, and iTerm2 isn't in the tty's session, so this can't stop iTerm2
+    // with SIGTTOU.
+    private static func set(_ masterFD: Int32,
+                            slave path: String,
+                            _ modes: termios,
+                            ifStill original: termios) -> Bool {
+        guard let now = Self.modes(masterFD), bytes(now) == bytes(original) else {
             RLog("tty modes changed while repairing them; leaving them alone")
             return false
         }
+        let slaveFD = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK | O_CLOEXEC)
+        guard slaveFD >= 0 else {
+            RLog("Can't open \(path) to repair its modes: \(String(cString: strerror(errno)))")
+            return false
+        }
+        defer {
+            close(slaveFD)
+        }
+        // The path could have been reused by another pty if the master closed meanwhile.
+        guard isMaster(masterFD, of: path) else {
+            RLog("The pty changed while repairing its modes; leaving them alone")
+            return false
+        }
         var modes = modes
-        if tcsetattr(fd, TCSANOW, &modes) != 0 {
+        if tcsetattr(slaveFD, TCSANOW, &modes) != 0 {
             RLog("tcsetattr failed: \(String(cString: strerror(errno)))")
             return false
         }
