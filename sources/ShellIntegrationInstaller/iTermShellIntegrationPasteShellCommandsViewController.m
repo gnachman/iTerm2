@@ -129,6 +129,12 @@
 - (void)setStage:(int)stage {
     _stage = stage;
     _writeFailed = NO;
+    _discoveryFoundHelperShell = NO;
+    [self update];
+}
+
+- (void)setDiscoveryFoundHelperShell:(BOOL)discoveryFoundHelperShell {
+    _discoveryFoundHelperShell = discoveryFoundHelperShell;
     [self update];
 }
 
@@ -176,6 +182,8 @@
     } else if (stage == 0) {
         if (_busy) {
             step = self.waitingText;
+        } else if (_discoveryFoundHelperShell) {
+            step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.DiscoveredHelperShell", nil, [NSBundle mainBundle], @"🛑 The terminal is in a helper shell that an earlier install left running, not in your own shell. Enter “exit” until your own shell’s prompt is back, then select “Continue” to try again.", @"Shown when discovering the shell finds a helper shell (with a “>> ” prompt) that a canceled shell integration install left running in the terminal, instead of the user's own shell");
         } else {
             step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ContinueToDiscover", nil, [NSBundle mainBundle], @"➡ Select “Continue” to discover.", @"Prompt to continue to the discover shell step");
         }

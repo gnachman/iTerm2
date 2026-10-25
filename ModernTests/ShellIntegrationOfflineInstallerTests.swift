@@ -502,7 +502,12 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
 }
 
 final class ShellIntegrationOfflineInstallerTests: XCTestCase {
-    static let shellCommand = "sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n"
+    static let shellCommand = "sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, ${IT2_INSTALLER_HELPER:+in an installer helper shell, }end'\n"
+    // The line that starts the outer helper sh, with the variable that marks it and the inner one.
+    static let outerHelperLaunch = "env IT2_INSTALLER_HELPER=1 sh"
+    static let launchHelper = outerHelperLaunch + "\nENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) sh\n PS1='>> '; PS2='> '\n"
+    // Asks the shell that printed a helper prompt after Cancel how many helpers deep it is.
+    static let helperDepthCommand = "echo \"it2-\"\"helper-depth-${IT2_INSTALLER_HELPER:-0}-\"\n"
     private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"
 
     private var controller: iTermShellIntegrationWindowController!
@@ -732,7 +737,53 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         terminal.run()
 
         let typed = Array(terminal.sentTexts.dropFirst(discoveryCount))
-        XCTAssertEqual(typed, ["sh\nENV=/dev/null INPUTRC=/dev/null sh\n PS1='>> '; PS2='> '\n"])
+        XCTAssertEqual(typed, [Self.launchHelper])
+    }
+
+    // Starts writing the script, whose helpers don't prompt, then cancels.
+    private func cancelWhileTheHelpersLaunch() -> Int {
+        discover(shellPath: "/bin/zsh", dotdirOutput: "My dotfiles go in /Users/someone, end")
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        XCTAssertEqual(terminal.sentTexts.last, Self.launchHelper)
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+        return terminal.sentTexts.count
+    }
+
+    // F-552: a “>> ” prompt after Cancel can be the user's own. Exits are typed only if the shell
+    // that printed it says it is two helpers deep.
+    func testCancelBeforeTheHelpersPromptDoesNotExitTheUserShellWithALookalikePrompt() {
+        let sentBefore = cancelWhileTheHelpersLaunch()
+        terminal.responses[Self.helperDepthCommand] = "it2-helper-depth-0-"
+
+        terminal.output(">> ")
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), [Self.helperDepthCommand])
+        XCTAssertFalse(controller.waitingForCanceledHelperLaunch)
+    }
+
+    // F-552: if only the inner helper started (say, the outer one was interrupted), two exits
+    // would end the user's shell, so none are typed.
+    func testCancelBeforeTheHelpersPromptDoesNotExitWhenOnlyOneHelperRuns() {
+        let sentBefore = cancelWhileTheHelpersLaunch()
+        terminal.responses[Self.helperDepthCommand] = "it2-helper-depth-1-"
+
+        terminal.output(">> ")
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), [Self.helperDepthCommand])
+    }
+
+    func testCancelBeforeTheHelpersPromptExitsBothHelpersWhenTheySayTheyAreTwoDeep() {
+        let sentBefore = cancelWhileTheHelpersLaunch()
+        terminal.responses[Self.helperDepthCommand] = "it2-helper-depth-2-"
+
+        terminal.output(">> ")
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), [Self.helperDepthCommand, "exit\nexit\n"])
     }
 
     func testSkipAfterDiscoveryUsesDiscoveredDotdir() {
@@ -1129,7 +1180,7 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     // and the line it read, then the command's output and the next prompt.
     private func handle(_ line: String) -> [String] {
         if depth == 0 {
-            if line == "sh" {
+            if line == ShellIntegrationOfflineInstallerTests.outerHelperLaunch {
                 depth = 1
                 prompt = "$ "
                 return [prompt]
@@ -1157,11 +1208,15 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             return [redraw, prompt]
         }
         var result = [redraw]
-        if line == "sh" || line.hasPrefix("ENV=/dev/null") {
+        if line == ShellIntegrationOfflineInstallerTests.outerHelperLaunch || line.hasPrefix("ENV=/dev/null") {
             depth += 1
             prompt = "$ "
         } else if line.hasPrefix(" PS1=") {
             prompt = ">> "
+        } else if line + "\n" == ShellIntegrationOfflineInstallerTests.shellCommand {
+            // macOS's sh is bash, and both helpers have IT2_INSTALLER_HELPER in their
+            // environment.
+            result.append("My shell is bash sh or /bin/zsh, in an installer helper shell, end")
         } else if line.contains(receiveUtilitiesCommandMarker) && receiveFails {
             // The redirection failed, so the read loop never runs and sh reads commands again.
             result.append("sh: .it2-utilities.b64: Permission denied")
@@ -1184,7 +1239,8 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
         } else if line.hasPrefix("echo ") {
             result.append(line.dropFirst("echo ".count)
                 .replacingOccurrences(of: "\"", with: "")
-                .replacingOccurrences(of: "$PS1", with: prompt))
+                .replacingOccurrences(of: "$PS1", with: prompt)
+                .replacingOccurrences(of: "${IT2_INSTALLER_HELPER:-0}", with: String(depth)))
         } else if line.hasPrefix("cd "), let answer = fakeConditionalEchoAnswer(line, fails: cdFails) {
             if cdFails {
                 result.append("sh: cd: \(line.dropFirst("cd ".count).prefix(while: { $0 != " " })): Not a directory")
@@ -1354,7 +1410,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
     }
 
     private var launchesTyped: Int {
-        return terminal.sentTexts.filter { $0.contains("ENV=/dev/null INPUTRC=/dev/null sh") }.count
+        return terminal.sentTexts.filter { $0.contains("ENV=/dev/null INPUTRC=/dev/null ") }.count
     }
 
     // F-544: Cancel while the archive is typed ends sh's read loop and, once sh says it is done,
@@ -1393,8 +1449,9 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
     }
 
     // F-544: until the helpers prompt, it isn't known that they run, so Cancel types nothing
-    // (exit could reach the user's shell).
-    func testCancelBeforeTheHelpersPromptTypesNothing() {
+    // (exit could reach the user's shell). F-552: once they prompt, as a shell slow to start a
+    // command lets them do well after Cancel, they are known to run and are exited.
+    func testCancelBeforeTheHelpersPromptExitsThemOnceTheyPrompt() {
         terminal.holdInputContaining = "ENV=/dev/null"
         controller.shellIntegrationInstallerSendShellCommands(1)
         terminal.run()
@@ -1402,11 +1459,162 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
 
         _ = controller.perform(Selector(("cancel:")), with: nil)
         terminal.run()
+        XCTAssertEqual(terminal.sentTexts.count, sentBefore)
+        XCTAssertTrue(controller.waitingForCanceledHelperLaunch)
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
+                       [ShellIntegrationOfflineInstallerTests.helperDepthCommand, "exit\nexit\n"])
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertFalse(controller.waitingForCanceledHelperLaunch)
+    }
+
+    private func waitUntilNotWaitingForCanceledHelperLaunch(_ controller: iTermShellIntegrationWindowController) {
+        let predicate = NSPredicate { object, _ in
+            !(object as! iTermShellIntegrationWindowController).waitingForCanceledHelperLaunch
+        }
+        wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: controller)], timeout: 10)
+    }
+
+    // F-552: if the helpers don't prompt in time, the installer stops waiting and still types
+    // nothing, even if a prompt shows up later.
+    func testCancelBeforeTheHelpersPromptTypesNothingIfTheyDoNotPromptInTime() {
+        controller.canceledHelperLaunchTimeout = 0
+        terminal.holdInputContaining = "ENV=/dev/null"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        let sentBefore = terminal.sentTexts.count
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        waitUntilNotWaitingForCanceledHelperLaunch(controller)
         terminal.releaseHeldInput()
         terminal.run()
 
         XCTAssertEqual(terminal.sentTexts.count, sentBefore)
+        XCTAssertEqual(terminal.helperDepth, 2)
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+    }
+
+    // A new installer window, as opened after Cancel closed this one, for the same session.
+    private func makeNextInstaller() -> iTermShellIntegrationWindowController {
+        let next = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
+        XCTAssertNotNil(next.window)
+        next.delegate = terminal
+        next.takeOverHelperShells(fromInstaller: controller)
+        next.shellIntegrationInstallerSendShellCommands(-1)
+        return next
+    }
+
+    // F-552: discovery in an installer opened after Cancel while the helpers launched waits for
+    // them to prompt and exit, then asks the user's shell.
+    func testDiscoveryAfterCancelBeforeTheHelpersPromptAsksTheUserShell() {
+        terminal.holdInputContaining = "ENV=/dev/null"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+        let sentBefore = terminal.sentTexts.count
+
+        let next = makeNextInstaller()
+        next.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+        XCTAssertEqual(terminal.sentTexts.count, sentBefore)
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
+                       [ShellIntegrationOfflineInstallerTests.helperDepthCommand,
+                        "exit\nexit\n",
+                        ShellIntegrationOfflineInstallerTests.shellCommand])
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(next.shell, .tcsh)
+        XCTAssertEqual(next.sendShellCommandsStage, 1)
+        next.shellIntegrationInstallerCancelExpectations()
+        next.window?.orderOut(nil)
+    }
+
+    // F-552: discovery inside helper shells the installer can't exit (they prompted too late)
+    // says so instead of taking macOS's sh, which is bash, for the user's shell.
+    func testDiscoveryInsideLeftoverHelpersDoesNotReportBash() {
+        controller.canceledHelperLaunchTimeout = 0
+        terminal.holdInputContaining = "ENV=/dev/null"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        waitUntilNotWaitingForCanceledHelperLaunch(controller)
+        terminal.releaseHeldInput()
+        terminal.run()
+        XCTAssertEqual(terminal.helperDepth, 2)
+        let sentBefore = terminal.sentTexts.count
+
+        let next = makeNextInstaller()
+        next.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
+                       [ShellIntegrationOfflineInstallerTests.shellCommand])
+        XCTAssertEqual(next.shell, .unknown)
+        XCTAssertEqual(next.sendShellCommandsStage, 0)
+        let steps = next.sendShellCommandsStepListField.stringValue
+        XCTAssertTrue(steps.contains("helper shell"), steps)
+        XCTAssertFalse(steps.contains("bash"), steps)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        next.shellIntegrationInstallerCancelExpectations()
+        next.window?.orderOut(nil)
+    }
+
+    // F-552: an installer opened after Cancel doesn't wait forever for the previous one to exit
+    // helpers whose answer never comes. It discovers after a while, finding out itself where it
+    // is.
+    func testDiscoveryDoesNotWaitForeverForThePreviousInstaller() {
+        terminal.archiveNeverEnds = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+        // The helpers never answer the command that asks whether they read commands again.
+        terminal.holdInputContaining = "helpers-$PS1-idle"
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+
+        let next = makeNextInstaller()
+        next.canceledHelperLaunchTimeout = 0
+        next.shellIntegrationInstallerSendShellCommands(0)
+        // Running the terminal drains the main queue, where the timeout fires.
+        terminal.run()
+
+        XCTAssertEqual(terminal.sentTexts.last, ShellIntegrationOfflineInstallerTests.shellCommand)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        next.shellIntegrationInstallerCancelExpectations()
+        next.window?.orderOut(nil)
+    }
+
+    // F-552: leaving the page while the helpers launch and starting over waits for them to
+    // prompt and exit before asking the user's shell.
+    func testDiscoveryAfterLeavingThePageBeforeTheHelpersPromptAsksTheUserShell() {
+        terminal.holdInputContaining = "ENV=/dev/null"
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        let sentBefore = terminal.sentTexts.count
+
+        controller.shellIntegrationInstallerBack()
+        controller.shellIntegrationInstallerSendShellCommands(-1)
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        terminal.run()
+        XCTAssertEqual(terminal.sentTexts.count, sentBefore)
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
+                       [ShellIntegrationOfflineInstallerTests.helperDepthCommand,
+                        "exit\nexit\n",
+                        ShellIntegrationOfflineInstallerTests.shellCommand])
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(controller.shell, .tcsh)
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
     }
 
     // F-543: Send Again while the archive is typed reuses the helpers rather than starting two
@@ -1594,7 +1802,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
     // See FakeShellIntegrationTerminal.defersMatchCompletions.
     class var defersMatchCompletions: Bool { false }
 
-    private static let launchHelper = "sh\nENV=/dev/null INPUTRC=/dev/null sh\n PS1='>> '; PS2='> '\n"
+    private static let launchHelper = ShellIntegrationOfflineInstallerTests.launchHelper
     private static let bashDotfileAssignment = "IT2_INSTALLER_DOTFILE=$(if test -f ~/.bash_profile; then echo ~/.bash_profile; else echo ~/.profile; fi)\n"
     private static let bashIf = "if ! grep iterm2_shell_integration \"$IT2_INSTALLER_DOTFILE\"  > /dev/null 2>&1; then\n"
     private static let bashCat = "    cat <<-EOF >> \"$IT2_INSTALLER_DOTFILE\"\n\n"

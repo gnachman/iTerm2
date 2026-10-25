@@ -20,6 +20,9 @@ NS_ASSUME_NONNULL_BEGIN
 // script was not written, or the utility scripts were not extracted. Cleared when the stage
 // changes.
 @property (nonatomic) BOOL writeFailed;
+// Discovery ran in a helper shell a canceled install left running rather than in the user's
+// shell. Cleared when the stage changes.
+@property (nonatomic) BOOL discoveryFoundHelperShell;
 // Exposed for testing.
 @property (nonatomic, readonly) NSTextField *stepListField;
 

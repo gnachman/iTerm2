@@ -107,6 +107,21 @@ static NSString *const iTermShellIntegrationHelperPromptRegex = @"^>> (?![\"'])"
 static NSString *const iTermShellIntegrationHelpersIdleCommand = @"echo \"it2-\"\"helpers-$PS1-idle\"\n";
 static NSString *const iTermShellIntegrationHelpersIdleRegex = @"it2-helpers->> -idle";
 
+// How long to wait after a cancel for helpers whose launch was typed to prompt, so they can be
+// exited. They prompt once the user's shell has run the line that starts them, which can take a
+// while: a heavy preexec hook or a busy machine delays it by seconds, not minutes. The longer
+// the wait, the likelier a “>> ” at the start of a row comes from something else the user does
+// after they are back at their own shell, and exits typed then would end it, so it is not much
+// longer than that. Waiting less only means the helpers are left running, as if never awaited.
+static const NSTimeInterval iTermShellIntegrationCanceledHelperLaunchTimeout = 30;
+
+// Asks a shell how many helper sh it is nested in (IT2_INSTALLER_HELPER, which each helper
+// launchHelperShellString starts sets one higher than its parent's). The empty quotes keep the
+// echo of the command from matching iTermShellIntegrationHelperDepthRegex. Typed into a shell
+// other than sh, it prints something else or an error.
+static NSString *const iTermShellIntegrationHelperDepthCommand = @"echo \"it2-\"\"helper-depth-${IT2_INSTALLER_HELPER:-0}-\"\n";
+static NSString *const iTermShellIntegrationHelperDepthRegex = @"it2-helper-depth-([0-9]+)-";
+
 // What iTerm2 knows about the helper sh processes the installer starts in the session. It is
 // updated from their output, never just from what was typed, because exit typed into the user's
 // own shell would end it. Text typed into a helper after a single-line command is read as the
@@ -175,6 +190,21 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // when the next command's expectation becomes active (which happens only on that match) they
     // are idle, even if the match's completion has not run yet.
     BOOL _lastTextIsIdleOnMatch;
+    // An installer for the same session that this one replaced, while it may still have helper
+    // shells to exit. See takeOverHelperShellsFromInstaller:.
+    iTermShellIntegrationWindowController *_previousInstaller;
+    // Identifies the current wait of awaitCanceledHelperLaunchTypingNewline:, for its timer.
+    NSUInteger _canceledHelperLaunchWaitID;
+    // See cancelHelpersIdleExpectation.
+    NSUInteger _helpersIdleExpectationGeneration;
+}
+
+- (instancetype)initWithWindow:(NSWindow *)window {
+    self = [super initWithWindow:window];
+    if (self) {
+        _canceledHelperLaunchTimeout = iTermShellIntegrationCanceledHelperLaunchTimeout;
+    }
+    return self;
 }
 
 #pragma mark - NSWindowController
@@ -550,13 +580,14 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     DLog(@"Wait for helper shells to become idle in state %@", @(_helperState));
     __weak __typeof(self) weakSelf = self;
     __block NSUInteger typedCount = NSNotFound;
+    const NSUInteger expectationGeneration = _helpersIdleExpectationGeneration;
     _helpersIdleExpectation =
     [[self.delegate shellIntegrationExpect] expectRegularExpression:regex
                                                               after:nil
                                                            deadline:nil
                                                          willExpect:^{
         __strong __typeof(self) strongSelf = weakSelf;
-        if (!strongSelf) {
+        if (!strongSelf || strongSelf->_helpersIdleExpectationGeneration != expectationGeneration) {
             return;
         }
         [strongSelf typeText:text];
@@ -575,20 +606,24 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             // can run after its callback), so they may be busy again. Its own commands track
             // them from here.
             DLog(@"Text was typed since the helpers became idle");
+            strongSelf->_exitHelpersWhenIdle = NO;
+            [strongSelf runAfterHelpersExit];
             return;
         }
-        [strongSelf helperShellsBecameIdle];
-        if (strongSelf->_exitHelpersWhenIdle) {
-            strongSelf->_exitHelpersWhenIdle = NO;
-            [strongSelf exitIdleHelperShells];
-            void (^afterExit)(void) = strongSelf->_afterHelpersExit;
-            strongSelf->_afterHelpersExit = nil;
-            if (afterExit) {
-                afterExit();
-            }
-        }
+        [strongSelf helperShellsBecameIdleAfterWaiting];
     }];
     return _helpersIdleExpectation;
+}
+
+// The helpers, which were awaited, read commands. Exit them if that is what was awaited.
+- (void)helperShellsBecameIdleAfterWaiting {
+    [self helperShellsBecameIdle];
+    if (!_exitHelpersWhenIdle) {
+        return;
+    }
+    _exitHelpersWhenIdle = NO;
+    [self exitIdleHelperShells];
+    [self runAfterHelpersExit];
 }
 
 // Leaves the helpers for the user's shell when it is known to be safe: right away if they are
@@ -599,13 +634,194 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         [self exitIdleHelperShells];
         return;
     }
-    if (_helperState == iTermShellIntegrationHelperStateLaunching && !_helpersIdleExpectation) {
-        // Their launch was not confirmed, so they may not be running.
+    if (_helperState == iTermShellIntegrationHelperStateLaunching) {
+        // Their launch was not confirmed, so they may not be running. Wait (for a while) to find
+        // out instead. A wait a step started for them (as for Send Again) has no time limit, so
+        // it is replaced. Its prompt may have gone by, so the new wait asks for another with an
+        // empty line, as that one did; that is harmless in the user's shell, too.
+        _exitHelpersWhenIdle = YES;
+        if (!_waitingForCanceledHelperLaunch) {
+            const BOOL replacing = (_helpersIdleExpectation != nil);
+            [self cancelHelpersIdleExpectation];
+            [self awaitCanceledHelperLaunchTypingNewline:replacing];
+        }
         return;
     }
     if ([self helpersIdleExpectation]) {
         _exitHelpersWhenIdle = YES;
     }
+}
+
+// Waits for helpers whose launch was typed but whose prompt has not been seen, as when Cancel is
+// clicked while the user's shell is slow to start them, so they can be exited. A “>> ” prompt
+// alone doesn't show how many helpers run: it could be the user's own prompt, or one helper
+// could have started without the other (say, after Control-C). So once a prompt shows up, the
+// shell that printed it is asked how many helpers it is nested in (IT2_INSTALLER_HELPER, see
+// launchHelperShellString), and the exits are typed only if that is how many were launched.
+// Asking is safe: in the user's shell the command prints something else, or an error.
+// After canceledHelperLaunchTimeout the wait ends without typing anything more. The timeout only
+// limits how long a prompt is trusted, so a slow machine can at worst leave the helpers running,
+// as if they had not been awaited.
+// If typeNewline, an empty line is typed once the wait is in place, to get a fresh prompt.
+- (void)awaitCanceledHelperLaunchTypingNewline:(BOOL)typeNewline {
+    DLog(@"Wait for the prompt of helper shells whose launch was canceled");
+    _canceledHelperLaunchWaitID += 1;
+    const NSUInteger waitID = _canceledHelperLaunchWaitID;
+    __weak __typeof(self) weakSelf = self;
+    // NSNotFound until the empty line, if any, is typed.
+    __block NSUInteger typedCount = typeNewline ? NSNotFound : _typedTextCount;
+    const NSUInteger expectationGeneration = _helpersIdleExpectationGeneration;
+    _helpersIdleExpectation =
+    [[self.delegate shellIntegrationExpect] expectRegularExpression:iTermShellIntegrationHelperPromptRegex
+                                                              after:nil
+                                                           deadline:nil
+                                                         willExpect:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!typeNewline ||
+            !strongSelf ||
+            strongSelf->_helpersIdleExpectationGeneration != expectationGeneration) {
+            return;
+        }
+        [strongSelf typeText:@"\n"];
+        typedCount = strongSelf->_typedTextCount;
+    }
+                                                         completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if (strongSelf->_typedTextCount != typedCount) {
+            // Nothing else is typed while this waits, but if something was, the prompt says
+            // nothing about where the helpers are now.
+            DLog(@"Text was typed while waiting for canceled helper shells to prompt");
+            [strongSelf endCanceledHelperLaunchWait];
+            return;
+        }
+        [strongSelf askCanceledHelpersForTheirDepth];
+    }];
+    _waitingForCanceledHelperLaunch = YES;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_canceledHelperLaunchTimeout * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf ||
+            !strongSelf->_waitingForCanceledHelperLaunch ||
+            strongSelf->_canceledHelperLaunchWaitID != waitID) {
+            // It ended, or a step took over the wait.
+            return;
+        }
+        DLog(@"Stop waiting for canceled helper shells");
+        [strongSelf endCanceledHelperLaunchWait];
+    });
+}
+
+// The second part of awaitCanceledHelperLaunchTypingNewline:, once a prompt was seen.
+- (void)askCanceledHelpersForTheirDepth {
+    DLog(@"Ask the shell that prompted how many helper shells it is in");
+    __weak __typeof(self) weakSelf = self;
+    // Typed only once the expectation is in place, so a fast answer can't go by unseen.
+    __block NSUInteger typedCount = NSNotFound;
+    const NSUInteger expectationGeneration = _helpersIdleExpectationGeneration;
+    _helpersIdleExpectation =
+    [[self.delegate shellIntegrationExpect] expectRegularExpression:iTermShellIntegrationHelperDepthRegex
+                                                              after:nil
+                                                           deadline:nil
+                                                         willExpect:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_helpersIdleExpectationGeneration != expectationGeneration) {
+            return;
+        }
+        [strongSelf typeText:iTermShellIntegrationHelperDepthCommand];
+        typedCount = strongSelf->_typedTextCount;
+    }
+                                                         completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        const NSInteger depth = captureGroups.count > 1 ? [captureGroups[1] integerValue] : 0;
+        if (strongSelf->_typedTextCount != typedCount || depth != [strongSelf helperShellLevels]) {
+            DLog(@"Not exiting canceled helper shells: depth %@ expected %@, typed since: %@",
+                 @(depth), @([strongSelf helperShellLevels]), @(strongSelf->_typedTextCount != typedCount));
+            [strongSelf endCanceledHelperLaunchWait];
+            return;
+        }
+        strongSelf->_helpersIdleExpectation = nil;
+        strongSelf->_waitingForCanceledHelperLaunch = NO;
+        [strongSelf helperShellsBecameIdleAfterWaiting];
+    }];
+}
+
+// Ends the wait of awaitCanceledHelperLaunchTypingNewline: without knowing about the helpers, typing nothing
+// more, and runs what waited for them to exit (such as discovery, which then finds out itself
+// whether it runs in one).
+- (void)endCanceledHelperLaunchWait {
+    [self cancelHelpersIdleExpectation];
+    _waitingForCanceledHelperLaunch = NO;
+    _helperState = iTermShellIntegrationHelperStateUnknown;
+    _helperShellDepth = 0;
+    _exitHelpersWhenIdle = NO;
+    [self runAfterHelpersExit];
+}
+
+- (void)runAfterHelpersExit {
+    void (^afterExit)(void) = _afterHelpersExit;
+    _afterHelpersExit = nil;
+    if (afterExit) {
+        afterExit();
+    }
+}
+
+// Ends the wait of awaitCanceledHelperLaunchTypingNewline: so a step can take over: it waits for the helpers as
+// for any launch in progress, which types a line to get a fresh prompt.
+- (void)takeOverCanceledHelperLaunchWait {
+    if (!_waitingForCanceledHelperLaunch) {
+        return;
+    }
+    DLog(@"A step takes over the wait for canceled helper shells");
+    [self cancelHelpersIdleExpectation];
+    _waitingForCanceledHelperLaunch = NO;
+}
+
+// Cancels _helpersIdleExpectation. Its willExpect callback may already be queued, so callbacks
+// check _helpersIdleExpectationGeneration and do nothing once it changed.
+- (void)cancelHelpersIdleExpectation {
+    _helpersIdleExpectationGeneration += 1;
+    if (_helpersIdleExpectation) {
+        [[self.delegate shellIntegrationExpect] cancelExpectation:_helpersIdleExpectation];
+        _helpersIdleExpectation = nil;
+    }
+}
+
+// Called by an installer that replaced this one when it stops waiting for this one's helpers:
+// this one gives up on them without typing anything more, so it can't type exits later, when
+// another installer may be using the session.
+- (void)abandonHelperShells {
+    DLog(@"Abandon helper shells");
+    [self cancelHelpersIdleExpectation];
+    _waitingForCanceledHelperLaunch = NO;
+    _exitHelpersWhenIdle = NO;
+    _afterHelpersExit = nil;
+    _helperState = iTermShellIntegrationHelperStateUnknown;
+    _helperShellDepth = 0;
+    [_previousInstaller abandonHelperShells];
+    _previousInstaller = nil;
+}
+
+// An installer, this one or one it replaced, that is waiting to exit helper shells, or nil.
+- (iTermShellIntegrationWindowController *)installerAwaitingHelperShellExit {
+    if (_helpersIdleExpectation && _exitHelpersWhenIdle) {
+        return self;
+    }
+    return [_previousInstaller installerAwaitingHelperShellExit];
+}
+
+- (void)takeOverHelperShellsFromInstaller:(iTermShellIntegrationWindowController *)previous {
+    _previousInstaller = [previous installerAwaitingHelperShellExit];
+}
+
+// Runs block once the helpers this installer waits to exit have exited or it stops waiting.
+- (void)performAfterHelperShellsExit:(void (^)(void))block {
+    _afterHelpersExit = [block copy];
 }
 
 // Starts the helper sh for a step, or reuses the ones already running. Text sent after this goes
@@ -617,6 +833,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     }
     _exitHelpersWhenIdle = NO;
     _afterHelpersExit = nil;
+    [self takeOverCanceledHelperLaunchWait];
     if (_helperState == iTermShellIntegrationHelperStateIdle) {
         DLog(@"Reuse idle helper shells");
         return @"";
@@ -852,6 +1069,40 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 - (NSString *)discoverShell:(BOOL)reallySend completion:(void (^)(NSString *shell, NSString *dotdir))completion {
     iTermExpectation *expectation = nil;
     if (reallySend) {
+        // An installer this one replaced may still be waiting to exit its helpers.
+        iTermShellIntegrationWindowController *previous = [_previousInstaller installerAwaitingHelperShellExit];
+        _previousInstaller = previous;
+        if (previous) {
+            DLog(@"Discover once the previous installer's helper shells exit");
+            __weak __typeof(self) weakSelf = self;
+            const NSUInteger generation = _cancellationGeneration;
+            __block BOOL done = NO;
+            // Runs once, when the previous installer is done or after a while, whichever comes
+            // first: its wait may be one with no time limit, for helpers that are gone. If they
+            // aren't, discovery says so.
+            void (^discover)(BOOL) = ^(BOOL timedOut) {
+                __strong __typeof(self) strongSelf = weakSelf;
+                if (done || !strongSelf || strongSelf->_cancellationGeneration != generation) {
+                    return;
+                }
+                done = YES;
+                if (timedOut) {
+                    DLog(@"Stop waiting for the previous installer");
+                }
+                [strongSelf->_previousInstaller abandonHelperShells];
+                strongSelf->_previousInstaller = nil;
+                [strongSelf discoverShell:YES completion:completion];
+            };
+            [previous performAfterHelperShellsExit:^{
+                discover(NO);
+            }];
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_canceledHelperLaunchTimeout * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                discover(YES);
+            });
+            [self.currentViewController setBusy:YES];
+            return @"";
+        }
         // Discovery asks the user's shell, so first leave any helpers a canceled step left
         // running, once that is known to be safe.
         [self exitHelperShellsWhenPossible];
@@ -870,13 +1121,22 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // The shell the commands are typed into is sh's parent, which need not be $SHELL (say, tcsh
     // started from a zsh login shell), so report its executable name and argv[0] too, or just
     // argv[0] where ps lacks ucomm. The line ends in a marker so a partially received line can't
-    // match.
-    NSString *result = @"sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, end'\n";
+    // match. It also says whether it runs in helper shells the installer started (see
+    // launchHelperShellString), as a canceled step can leave behind: their parent is sh, which
+    // on macOS is bash, so it would be taken for the user's shell.
+    NSString *result = @"sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, ${IT2_INSTALLER_HELPER:+in an installer helper shell, }end'\n";
     [self sendText:result
         reallySend:reallySend
-        afterRegex:@"^My shell is (.*) or (.*), end$"
+        afterRegex:@"^My shell is (.*) or (.*?), (in an installer helper shell, )?end$"
        expectation:&expectation
         completion:^(NSArray<NSString *> *captures) {
+        NSString *helperMarker = captures.count > 3 ? captures[3] : nil;
+        if ([helperMarker isKindOfClass:[NSString class]] && helperMarker.length > 0) {
+            DLog(@"Discovery ran in an installer helper shell");
+            self.shell = iTermShellIntegrationShellUnknown;
+            self.sendShellCommandsViewController.discoveryFoundHelperShell = YES;
+            return;
+        }
         NSString *shell = [iTermShellIntegrationWindowController shellNameForParentProcess:captures[1]
                                                                                      shell:captures[2]];
         if ([shell isEqualToString:@"zsh"]) {
@@ -993,10 +1253,14 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         // nushell needs the single line for another reason: reedline reads typeahead in bulk,
         // so of the three lines below only `sh` would reach sh and the other two would run in
         // nushell once sh exits. bash and zsh read a byte at a time and don't have this problem.
-        return @"sh -c 'ENV=/dev/null INPUTRC=/dev/null PS1=\">> \" PS2=\"> \" sh'\n";
+        return @"sh -c 'ENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) PS1=\">> \" PS2=\"> \" sh'\n";
     }
     // The first sh gives a known syntax for setting ENV, which an interactive sh would source.
-    return @"sh\nENV=/dev/null INPUTRC=/dev/null sh\n PS1='>> '; PS2='> '\n";
+    // IT2_INSTALLER_HELPER says how many helpers deep a shell is. It lets discovery tell that it
+    // runs in one (see discoverShell:completion:) and awaitCanceledHelperLaunchTypingNewline: how many to exit.
+    // env sets it in any shell. The inner sh adds one to what the line is read by, which is the
+    // outer sh, or (if that one was killed) a shell where it is unset, or one that rejects it.
+    return @"env IT2_INSTALLER_HELPER=1 sh\nENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) sh\n PS1='>> '; PS2='> '\n";
 }
 
 // The exits that end the helpers launchHelperShellString starts.
