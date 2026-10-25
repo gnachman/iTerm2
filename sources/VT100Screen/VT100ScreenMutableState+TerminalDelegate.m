@@ -4081,8 +4081,9 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
 
 - (void)terminalDidExecuteFlowControlledSSHOutputOfLength:(NSUInteger)length
                                          sendMilliseconds:(int64_t)sendMilliseconds
-                                                    flags:(int)flags {
-    [self.flowLedger frameDidExecuteWithLength:length];
+                                                    flags:(int)flags
+                                                    depth:(int)depth {
+    [self.flowLedger frameDidExecuteWithLength:length depth:depth];
 }
 
 - (void)terminalDidReadSSHPaneOutput:(NSData *)data

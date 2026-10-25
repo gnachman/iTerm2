@@ -79,6 +79,14 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
     [super dealloc];
 }
 
+- (void)setCarrierSendMilliseconds:(int64_t)carrierSendMilliseconds {
+    _controlParser.carrierSendMilliseconds = carrierSendMilliseconds;
+}
+
+- (int64_t)carrierSendMilliseconds {
+    return _controlParser.carrierSendMilliseconds;
+}
+
 - (void)forceUnhookDCS:(NSString *)uniqueID {
     @synchronized (self) {
         if (uniqueID == nil || [_controlParser shouldUnhook:uniqueID]) {
@@ -230,6 +238,9 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                         NSData *data = token.savedData;
                         [sshParser putStreamData:data.bytes
                                           length:data.length];
+                        // The child framer's frames travel in this one. Those that begin in it
+                        // left this framer's host when it was sent.
+                        sshParser.carrierSendMilliseconds = token.sshFlowControlled ? token.sshSendMilliseconds : 0;
                         const int start = CVectorCount(vector);
                         DLog(@"count before adding parsed tokens is %@", @(start));
                         [sshParser addParsedTokensToVector:vector];
@@ -255,9 +266,13 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                                 DLog(@"%@: Update ssh info in rewritten token %@ to %@", self, token, SSHInfoDescription(myInfo));
                                 switch (token.type) {
                                     case SSH_OUTPUT:
-                                        // A child parser emits SSH_OUTPUT only for a pane, whose
-                                        // output it keeps whole. It came from the child's framer.
-                                        assert(token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL);
+                                        // A child parser emits SSH_OUTPUT for a pane, whose output
+                                        // it keeps whole, and for its own framer's controlled
+                                        // frames, whose contents it already emitted (see below).
+                                        // Either came from the child's framer, and travelled in
+                                        // this frame.
+                                        assert(token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL ||
+                                               token.sshFlowControlled);
                                         token.sshInfo = childInfo;
                                         break;
                                     // Deliberate subset of VT100TokenTypeIsSSHMeta (see
@@ -309,6 +324,7 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                         isSignaling = YES;
                         VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
                         tempParser.encoding = encoding;
+                        tempParser.depth = self.depth;
                         NSData *data = [token.string dataUsingEncoding:encoding];
                         [tempParser putStreamData:data.bytes
                                            length:data.length];
@@ -435,10 +451,13 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 
         // Don't append the outer wrapper to the output. Earlier, it was unwrapped and the inner
         // tokens were already added. Pane output was not unwrapped, so it goes on at any depth.
+        // So does a controlled frame at any depth, after its contents, to count them as consumed
+        // for its own framer.
         if (token->type != DCS_TMUX_CODE_WRAP &&
             (token->type != SSH_OUTPUT ||
              self.depth == 0 ||
-             token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL)) {
+             token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL ||
+             token.sshFlowControlled)) {
             [token retain];
             CVectorAppend(vector, token);
         }
@@ -568,7 +587,10 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
         [_controlParser startConductorRecoveryModeWithID:dcsID clientUniqueID:clientUniqueID];
         _dcsHooked = YES;
         [self recoverWithConductorTree:tree];
-        _emitRecoveryToken = YES;
+        // Only the outermost parser's boundary ends recovery. A nested parser numbers its own from
+        // zero too, so its boundary would match the one the terminal waits for and resynchronize
+        // the conductors a second time, clearing their queues again.
+        _emitRecoveryToken = (self.depth == 0);
         return _nextBoundaryNumber++;
     }
 }

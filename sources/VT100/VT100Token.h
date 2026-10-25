@@ -499,6 +499,11 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 @property(nonatomic) BOOL sshFlowControlled;
 @property(nonatomic) int64_t sshSendMilliseconds;
 @property(nonatomic) int sshFlowFlags;
+// For an inner framer's controlled SSH_OUTPUT or SSH_IT2 under nested SSH Integration: when the
+// framer around it sent the frame that carried its first line, on that framer's clock, or 0 when
+// that frame was not flow-controlled or there is none. The difference from sshSendMilliseconds
+// is the inner frame's delay over its own hop, plus the clocks' offset.
+@property(nonatomic) int64_t sshCarrierSendMilliseconds;
 @property(nonatomic, strong, nullable) NSArray<VT100Token *> *subtokens;
 
 + (instancetype)token;

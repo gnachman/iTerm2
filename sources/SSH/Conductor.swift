@@ -100,6 +100,10 @@ class Conductor: NSObject, SSHIdentityProvider {
         // authorization grant/denial is persisted so the user is not re-prompted after a
         // relaunch (absent -> undecided -> prompt).
         var it2Proxy = IT2ProxyState()
+        // The framer may have flow control on: `flow on` was sent and not refused. It has no
+        // way to turn it off, so after a restart it needs a controller whatever the setting.
+        var flowMayBeOn = false
+        var framerVersion: Int?
 
         init(sshargs: String,
              varsToSend: [String: String],
@@ -155,7 +159,7 @@ class Conductor: NSObject, SSHIdentityProvider {
                framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
                modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
                homeDirectory, shell, pythonversion, uname, terminalConfiguration,
-               discoveredHostname, it2Proxy,
+               discoveredHostname, it2Proxy, flowMayBeOn, framerVersion,
                // Legacy, decode-only: the committed HEAD schema persisted the it2 proxy as
                // these two separate scalar keys before they were folded into it2Proxy. Kept
                // so init(from:) can migrate an old blob; encode() never writes them.
@@ -188,6 +192,8 @@ class Conductor: NSObject, SSHIdentityProvider {
                 _terminalConfiguration = try? container.decode(CodableNSDictionary?.self,
                                                                forKey: .terminalConfiguration)
                 discoveredHostname = try? container.decode(String?.self, forKey: .discoveredHostname)
+                flowMayBeOn = (try? container.decode(Bool.self, forKey: .flowMayBeOn)) ?? false
+                framerVersion = (try? container.decode(Int?.self, forKey: .framerVersion)) ?? nil
                 if let proxy = try? container.decode(IT2ProxyState.self, forKey: .it2Proxy) {
                     it2Proxy = proxy
                 } else {
@@ -231,6 +237,8 @@ class Conductor: NSObject, SSHIdentityProvider {
             try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
             try container.encode(discoveredHostname, forKey: .discoveredHostname)
             try container.encode(it2Proxy, forKey: .it2Proxy)
+            try container.encode(flowMayBeOn, forKey: .flowMayBeOn)
+            try container.encode(framerVersion, forKey: .framerVersion)
         }
     }
     let guid = UUID().uuidString
@@ -243,15 +251,29 @@ class Conductor: NSObject, SSHIdentityProvider {
         // Keep this in sync with the version reported by the recovery code in framer.py
         case v2 = 2
     }
-    private(set) var framerVersion: FramerVersion?
+    /// Saved with the conductor: after a restart, resynchronizing uses `reset2` only for a
+    /// framer known to understand it.
+    var framerVersion: FramerVersion? {
+        get { restorableState.framerVersion.flatMap { FramerVersion(rawValue: $0) } }
+        set { restorableState.framerVersion = newValue?.rawValue }
+    }
 
-    // Flow control; see Conductor+Flow.swift. In version 1 only the outermost conductor
-    // turns it on.
+    // Flow control; see Conductor+Flow.swift.
     static var flowControlAvailable: Bool {
         flowControlAvailableForTesting ?? iTermAdvancedSettingsModel.sshFlowControl()
     }
     static var flowControlAvailableForTesting: Bool?
+    /// Tests compare nested framers controlled with only the outermost one controlled.
+    static var nestedFlowControlAvailableForTesting: Bool?
     var flowController: FramerFlowController?
+    /// How long a command took to be answered, written to answered, on the flow clock.
+    struct RoundTrip: Equatable {
+        var time: TimeInterval
+        var seconds: TimeInterval
+    }
+    /// Recent round trips of commands with replies, for the flow control monitor, whether or not
+    /// flow control is on. The oldest first.
+    var roundTrips = [RoundTrip]()
     /// The status a completion gets when its command was aborted or canceled rather than
     /// answered.
     static let abortedStatus: Int32 = -2
@@ -259,15 +281,27 @@ class Conductor: NSObject, SSHIdentityProvider {
     var flowClockName: String?
     /// The flow control version the framer speaks: 1 has one flow, 2 a flow per source.
     var flowVersion = 1
-    /// Flow control is being turned back on after iTerm2 restarted, while the framer may still
-    /// be spending credit granted before then.
+    /// Flow control is being turned back on while the framer may still be spending credit
+    /// granted before: after iTerm2 restarted, or after a relayed grant was lost.
     var flowRestartingAfterRestore = false
+    /// `flow on` was sent and not yet answered.
+    var flowOnPending = false
+    /// `flow on`s aborted in a row, each sent again.
+    var flowOnRetries = 0
+    var flowMayBeOn: Bool {
+        get { restorableState.flowMayBeOn }
+        set { restorableState.flowMayBeOn = newValue }
+    }
+    /// Quit, failed or unhooked: its framer is gone or going.
+    private(set) var hasEnded = false
     var flowClock: () -> TimeInterval = Conductor.monotonicNow
     /// Tests drive ticks themselves.
     var flowTicksAutomatically = true
     var flowTimer: Timer?
     /// The delegate's ledger, once the controller is listening to it.
     var activeFlowLedger: FramerFlowLedger?
+    /// Nested conductors that will turn flow control on once this one runs version 2.
+    let flowChildrenWaiting = NSHashTable<Conductor>.weakObjects()
 
     @objc var sshargs: String {
         restorableState.sshargs
@@ -533,7 +567,7 @@ class Conductor: NSObject, SSHIdentityProvider {
     var stoppingPanes = Set<Int32>()
     /// Set for a conductor restored from saved state or recovery until it has resynchronized
     /// with its framer: commands sent before then can be lost, so panes wait to reattach.
-    private(set) var awaitingResynchronization = false
+    @objc private(set) var awaitingResynchronization = false
 
     @objc weak var delegate: ConductorDelegate? {
         didSet {
@@ -1353,6 +1387,10 @@ extension Conductor {
                     return "handleGetenv"
                 case .handleReset(let expected, let actual):
                     return "handleReset(\(expected), \(actual.string))"
+                case .handleResetMarker(let marker, _):
+                    return "handleResetMarker(\(marker))"
+                case .handleProbedReset(let code, let actual):
+                    return "handleProbedReset(\(code), \(actual.string))"
                 case .handleGetHostname:
                     return "handleGetHostname"
                 case .handleEphemeralCompletion:
@@ -1376,6 +1414,12 @@ extension Conductor {
             case handleNonFramerLogin
             case handleGetenv(String, StringArray)
             case handleReset(expected: String, lines: StringArray)
+            /// Skips replies until the one that spells `marker`, a `file stat` of "/" whose reply
+            /// echoes the path; everything before it answered earlier commands.
+            case handleResetMarker(marker: String, lines: StringArray)
+            /// The `reset2` sent right after a marker: its reply is the next one, so without the
+            /// code it is a framer that predates `reset2`.
+            case handleProbedReset(code: String, lines: StringArray)
             case handleGetHostname
             case handleEphemeralCompletion(StringArray, OneTimeClosure2<String, Int32, Void>)
 
@@ -1403,6 +1447,8 @@ extension Conductor {
                 case handleReset
                 case handleGetHostname
                 case handleEphemeralCompletion
+                case handleResetMarker
+                case handleProbedReset
             }
 
             private var rawValue: Int {
@@ -1437,6 +1483,10 @@ extension Conductor {
                     return RawValues.handleNonFramerLogin.rawValue
                 case .handleReset:
                     return RawValues.handleReset.rawValue
+                case .handleResetMarker:
+                    return RawValues.handleResetMarker.rawValue
+                case .handleProbedReset:
+                    return RawValues.handleProbedReset.rawValue
                 case .handleGetHostname:
                     return RawValues.handleGetHostname.rawValue
                 case .handleEphemeralCompletion:
@@ -1450,6 +1500,7 @@ extension Conductor {
                 switch self {
                 case .failIfNonzeroStatus, .fireAndForget, .it2Listen, .handleFramerLogin(_), .handlePoll(_, _),
                         .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset,
+                        .handleResetMarker, .handleProbedReset,
                         .handleGetHostname, .handleEphemeralCompletion:
                     break
                 case .handleCheckForPython(let value):
@@ -1510,6 +1561,10 @@ extension Conductor {
                     self = .handleGetHostname
                 case .handleEphemeralCompletion:
                     self = .handleEphemeralCompletion(StringArray(), .init({ _, _ in }))
+                case .handleResetMarker:
+                    self = .handleResetMarker(marker: "", lines: StringArray())
+                case .handleProbedReset:
+                    self = .handleProbedReset(code: "", lines: StringArray())
                 }
             }
         }
@@ -2005,10 +2060,17 @@ extension Conductor {
     }
 
     @objc func quit() {
+        hasEnded = true
+        flowMayBeOn = false
         stopFlowControl()
         abandonPanes()
         cancelAllRequests()
-        send(.quit, .fireAndForget)
+        if framing {
+            // The framer reads framer commands; the pre-framer `quit` means nothing to it.
+            framerQuit()
+        } else {
+            send(.quit, .fireAndForget)
+        }
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
         delegate?.conductorQuit()
         delegate?.conductorStateDidChange()
@@ -2021,6 +2083,9 @@ extension Conductor {
         log("abandon")
         // First, so nothing that canceling requests triggers can write.
         abandoned = true
+        // So an aborted `flow on` does not start flow control again.
+        hasEnded = true
+        flowMayBeOn = false
         stopFlowControl()
         abandonPanes()
         cancelAllRequests()
@@ -2060,7 +2125,9 @@ extension Conductor {
         sendKeys(data, highPriority: true)
     }
 
-    func sendKeys(_ data: Data, highPriority: Bool) {
+    /// `onAbort` runs if the keys were queued for the framer and the queue was dropped before
+    /// it answered.
+    func sendKeys(_ data: Data, highPriority: Bool, onAbort: (() -> Void)? = nil) {
         guard !abandoned else {
             log("Abandoned. Not sending keys.")
             return
@@ -2070,7 +2137,17 @@ extension Conductor {
             delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)
             return
         }
-        framerSend(data: data, pid: pid, highPriority: highPriority)
+        guard let onAbort else {
+            framerSend(data: data, pid: pid, highPriority: highPriority)
+            return
+        }
+        send(.framerSend(data, pid: pid),
+             highPriority: highPriority,
+             .handleEphemeralCompletion(StringArray(), .init({ _, status in
+                 if status == Self.abortedStatus {
+                     onAbort()
+                 }
+             })))
     }
 
     @objc
@@ -2540,6 +2617,40 @@ extension Conductor {
                 break
             }
             return
+        case .handleResetMarker(let marker, let lines):
+            switch result {
+            case .line(let message):
+                lines.strings.append(message)
+            case .end:
+                // The reply is a JSON record whose absolutePath is the marker.
+                if lines.strings.contains(where: { $0.contains("\"\(marker)\"") }) {
+                    log("Have received the reset marker")
+                } else {
+                    log("Skip a reply to an earlier command while waiting for the reset marker")
+                    lines.strings.removeAll()
+                    throw IgnoreCommandError()
+                }
+            case .abort, .sideChannelLine, .canceled:
+                break
+            }
+        case .handleProbedReset(let code, let lines):
+            switch result {
+            case .line(let message):
+                lines.strings.append(message)
+            case .end:
+                if lines.strings.contains(code) {
+                    log("The framer speaks reset2")
+                    framerVersion = .v2
+                } else {
+                    log("The framer predates reset2; reset it the old way")
+                    framerVersion = .v1
+                    // Ahead of the autopoll and registrations queued after the reset, which the
+                    // old reset would otherwise clear.
+                    send(.framerReset1, highPriority: true, .fireAndForget)
+                }
+            case .abort, .sideChannelLine, .canceled:
+                break
+            }
         case .handleReset(let code, let lines):
             switch result {
             case .line(let message):
@@ -2792,7 +2903,9 @@ extension Conductor {
 
     @objc(handleLine:depth:) func handle(line: String, depth: Int32) {
         log("[\(framedPID.map { String($0) } ?? "unframed")] handle input: \(line) depth=\(depth)")
-        if depth != self.depth && framing {
+        // A shallower depth is an ancestor's even when this one does not frame yet, as while it
+        // is being recovered: the parser only goes deeper below a framing conductor.
+        if (depth != self.depth && framing) || depth < self.depth {
             log("Pass line with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
             parent?.handle(line: line, depth: depth)
             return
@@ -2814,6 +2927,8 @@ extension Conductor {
 
     @objc func handleUnhook() {
         log("unhook")
+        hasEnded = true
+        flowMayBeOn = false
         stopFlowControl()
         abandonPanes()
         // Settle the state before notifying anyone, the way forceReturnToGroundState does.
@@ -2858,7 +2973,7 @@ extension Conductor {
             default:
                 expectFraming = false}
         }
-        if (!expectFraming && type == "f") || (framing && depth != self.depth) {
+        if (!expectFraming && type == "f") || (framing && depth != self.depth) || depth < self.depth {
             // The purpose of the type argument is so that a non-framing conductor with a framing
             // parent can know whether to handle end itself or to pass it on. The depth is not
             // useful for non-framing conductors since the parser is unaware of them.
@@ -2932,7 +3047,8 @@ extension Conductor {
             return
         }
         if pid == framedPID {
-            send(.quit, .fireAndForget)
+            // The framer reads framer commands; the pre-framer `quit` means nothing to it.
+            framerQuit()
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
             case .ground, .unhooked, .recovery, .recovered:
@@ -3546,7 +3662,7 @@ extension Conductor {
     }
 
     /// Every command written and not yet answered, oldest first.
-    private var contextsInFlight: [ExecutionContext] {
+    var contextsInFlight: [ExecutionContext] {
         switch state {
         case .executingPipeline(let context, let pending):
             return [context] + pending
@@ -3573,6 +3689,8 @@ extension Conductor {
 
     private func fail(_ reason: String) {
         DLog("FAIL: \(reason)")
+        hasEnded = true
+        flowMayBeOn = false
         stopFlowControl()
         abandonPanes()
         forceReturnToGroundState()

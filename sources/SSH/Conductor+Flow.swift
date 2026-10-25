@@ -14,6 +14,10 @@
 //  predates version 2 has one flow: pane output then counts as the leader's, consumed as soon
 //  as it is handed to the pane's session.
 //
+//  With nested SSH Integration every framer limits its own reads by its own credit, so each
+//  conductor runs a controller for its framer once its parent's runs version 2. A child's
+//  commands, grants included, reach its framer as keystrokes through its parent's.
+//
 
 import Foundation
 
@@ -24,10 +28,26 @@ extension Conductor {
     }
 
     /// Sent once the framer is running. An older framer fails it, and output stays
-    /// uncontrolled, as before.
+    /// uncontrolled, as before. A nested conductor waits until its parent's framer runs
+    /// version 2; with any older framer in the chain only the outermost one is controlled.
     func startFlowControlIfPossible() {
-        guard Self.flowControlAvailable, parent == nil else {
+        // A framer that may have flow control on needs a controller whatever the setting.
+        guard Self.flowControlAvailable || flowMayBeOn, !flowOnPending else {
             return
+        }
+        if let parent {
+            guard Self.nestedFlowControlAvailableForTesting ?? true else {
+                return
+            }
+            guard parent.framing, parent.depth + 1 == depth else {
+                DLog("The parent does not frame this conductor's output; no flow control")
+                return
+            }
+            guard parent.flowController != nil, parent.flowVersion >= 2 else {
+                DLog("Wait for the parent to run flow control version 2")
+                parent.flowChildrenWaiting.add(self)
+                return
+            }
         }
         // Listen before the framer can send a controlled frame: frames that follow the reply
         // in the stream can be parsed, and even executed, before the reply is handled here.
@@ -37,6 +57,8 @@ extension Conductor {
     }
 
     private func sendFlowOn(_ command: Command) {
+        flowOnPending = true
+        flowMayBeOn = true
         send(command, .handleEphemeralCompletion(StringArray(), .init({ [weak self] string, status in
             self?.flowOnDidReply(string, status: status, command: command)
         })))
@@ -45,15 +67,34 @@ extension Conductor {
     /// The reply's round trip becomes the controller's first sample once this returns (see
     /// flowCommandDidEnd). Nothing controlled had been sent yet, so it crossed an empty path.
     private func flowOnDidReply(_ reply: String, status: Int32, command: Command) {
+        flowOnPending = false
         if status == Self.abortedStatus {
-            // The connection ended or was reset before the framer answered. Whatever resets it
-            // turns flow control on again if it should.
+            // The connection ended, or the queue was reset before the framer answered. It may
+            // have read `flow on` and be waiting for grants, so while the connection lasts send
+            // it again; the new controller drains to learn what is in flight.
             DLog("flow on was aborted")
             stopFlowControl()
+            guard !hasEnded, flowOnRetries < Self.maxFlowOnRetries else {
+                return
+            }
+            flowOnRetries += 1
+            flowRestartingAfterRestore = true
+            // Not yet: this runs while the queue is being dropped, and whatever dropped it
+            // (a reset) sends next. Replies are matched by position, so `flow on` must follow
+            // the reset's command, which absorbs replies to the aborted ones.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !self.hasEnded, self.flowController == nil else {
+                    return
+                }
+                self.flowRestartingAfterRestore = true
+                self.startFlowControlIfPossible()
+            }
             return
         }
-        if status != 0, command == .framerFlowOn {
+        flowOnRetries = 0
+        if status != 0, command == .framerFlowOn, parent == nil {
             // A framer from an older iTerm2, found after a restart, speaks only version 1.
+            // Nested framers are controlled only when all of them speak version 2.
             DLog("The framer does not speak flow control version 2 (status \(status): \(reply))")
             sendFlowOn(.framerFlowOnVersion1)
             return
@@ -61,6 +102,8 @@ extension Conductor {
         guard status == 0, let (version, clock) = Self.flowVersionAndClock(fromReply: reply) else {
             DLog("The framer does not support flow control (status \(status): \(reply))")
             stopFlowControl()
+            flowMayBeOn = false
+            flowChildrenWaiting.removeAllObjects()
             return
         }
         let now = flowClock()
@@ -70,7 +113,7 @@ extension Conductor {
             // initial credit. A reset drain sets every count from what arrived, and samples
             // nothing until then.
             flowRestartingAfterRestore = false
-            flowController?.reset(now: now)
+            flowController?.reset(now: now, reason: "Flow control restarted with credit from before")
         }
     }
 
@@ -82,6 +125,7 @@ extension Conductor {
             DLog("Unrecognized flow control state in recovery: \(flow)")
             return
         }
+        flowMayBeOn = true
         startFlowController(version: version, clock: clock, recovering: true, now: flowClock())
     }
 
@@ -95,20 +139,21 @@ extension Conductor {
     /// After iTerm2 restarts, a conductor restored from its saved state has no controller,
     /// though its framer may still have flow control on and will stop once its leftover credit
     /// is spent. `flow on` again resets the framer's credit and starts a controller. Only the
-    /// outermost conductor uses flow control, and only the innermost one is told it
-    /// resynchronized, so this goes up the chain.
+    /// innermost conductor is told it resynchronized, so this restarts each one in the chain,
+    /// outermost first; each nested one waits for its parent's.
     func restartFlowControlAfterResynchronizing() {
-        var root = self
-        while let parent = root.parent {
-            root = parent
+        var chain = [self]
+        while let parent = chain.last?.parent {
+            chain.append(parent)
         }
-        guard root.flowController == nil else {
-            return
+        for conductor in chain.reversed() where conductor.flowController == nil {
+            DLog("Restart flow control after resynchronizing at depth \(conductor.depth)")
+            conductor.flowRestartingAfterRestore = true
+            conductor.startFlowControlIfPossible()
         }
-        DLog("Restart flow control after resynchronizing")
-        root.flowRestartingAfterRestore = true
-        root.startFlowControlIfPossible()
     }
+
+    static let maxFlowOnRetries = 3
 
     /// Parses "<version> <clock>", the reply to `flow on` and the value of `recovery: flow`.
     static func flowVersionAndClock(fromReply reply: String) -> (Int, String)? {
@@ -137,14 +182,19 @@ extension Conductor {
         activateFlowLedgerIfPossible()
         feedFlowController()
         scheduleFlowTick()
+        if version >= 2 {
+            let children = flowChildrenWaiting.allObjects
+            flowChildrenWaiting.removeAllObjects()
+            for child in children {
+                child.startFlowControlIfPossible()
+            }
+        }
     }
 
     // MARK: - Flows
 
-    /// The conductor whose framer `pid`'s pane belongs to runs flow control only if it is the
-    /// outermost one; a nested framer's output is not controlled on its own.
     private var paneFlowController: FramerFlowController? {
-        guard parent == nil, flowVersion >= 2 else {
+        guard flowVersion >= 2 else {
             return nil
         }
         return flowController
@@ -198,7 +248,7 @@ extension Conductor {
             return
         }
         activeFlowLedger = ledger
-        ledger.activate { [weak self] in
+        ledger.activate(depth: depth, owner: self) { [weak self] in
             MainActor.assumeIsolated {
                 self?.flowLedgerDidRecord()
             }
@@ -217,9 +267,9 @@ extension Conductor {
         guard let flowController, let ledger = activeFlowLedger else {
             return
         }
-        for event in ledger.takeEvents() {
+        for event in ledger.takeEvents(depth: depth) {
             switch event {
-            case let .arrived(time, code, sendMilliseconds, bytes, flags):
+            case let .arrived(time, code, sendMilliseconds, bytes, flags, carrierMilliseconds):
                 let flow: FramerFlowController.Flow
                 if code == FramerFlowLedger.it2Flow {
                     flow = .it2
@@ -233,7 +283,8 @@ extension Conductor {
                                               sendMilliseconds: sendMilliseconds,
                                               bytes: bytes,
                                               limited: flags & Self.flowFlagLimited != 0,
-                                              exempt: flags & Self.flowFlagExempt != 0)
+                                              exempt: flags & Self.flowFlagExempt != 0,
+                                              carrierMilliseconds: carrierMilliseconds == 0 ? nil : carrierMilliseconds)
                 if code > 0 && flowVersion < 2 {
                     // One flow: the pane's output is the leader's, and it leaves for the
                     // pane's session as soon as it arrives.
@@ -256,7 +307,8 @@ extension Conductor {
         flowController = nil
         flowClockName = nil
         flowRestartingAfterRestore = false
-        activeFlowLedger?.deactivate()
+        parent?.flowChildrenWaiting.remove(self)
+        activeFlowLedger?.deactivate(depth: depth, owner: self)
         activeFlowLedger = nil
         flowTimer?.invalidate()
         flowTimer = nil
@@ -281,7 +333,17 @@ extension Conductor {
             case (true, .pane(let pid)):
                 arguments = ["grant", String(pid), String(bytes)]
             }
-            write(Self.encode(arguments: arguments, isFramer: true, linePrefix: ""))
+            let line = Self.encode(arguments: arguments, isFramer: true, linePrefix: "")
+            if let parent {
+                // Relayed by the parent as keystrokes, ahead of its queued commands as a typed
+                // key is. The controller has counted the credit, so if the parent drops the
+                // send the inner framer would wait for it forever.
+                parent.sendKeys(Data((line + "\n").utf8), highPriority: true) { [weak self] in
+                    self?.flowGrantWasLost()
+                }
+            } else {
+                write(line, highPriority: true)
+            }
         case .drain:
             send(.framerDrain, highPriority: true, .fireAndForget)
         case .ping:
@@ -289,13 +351,34 @@ extension Conductor {
         }
     }
 
+    /// Turning flow control on again resets the framer's credit, and the new controller
+    /// drains to learn what is in flight.
+    private func flowGrantWasLost() {
+        guard flowController != nil else {
+            return
+        }
+        DLog("A relayed grant was lost. Restart flow control at depth \(depth)")
+        stopFlowControl()
+        flowRestartingAfterRestore = true
+        startFlowControlIfPossible()
+    }
+
     /// A command's reply ended and its handler accepted it. Its round trip is a sample
     /// unless it is part of a drain.
     func flowCommandDidEnd(_ context: ExecutionContext) {
-        guard let writtenAt = context.writtenAt, let flowController else {
+        guard let writtenAt = context.writtenAt else {
             return
         }
         let now = flowClock()
+        if context.command != .framerDrain {
+            // A drain's reply comes back behind everything the framer had sent, so it says
+            // nothing about the path.
+            roundTrips.append(RoundTrip(time: now, seconds: now - writtenAt))
+            roundTrips.removeAll { $0.time < now - 60 }
+        }
+        guard let flowController else {
+            return
+        }
         switch context.command {
         case .framerDrain:
             // It came back behind everything the framer had sent, so it is not a sample.
@@ -322,6 +405,10 @@ extension Conductor {
         activateFlowLedgerIfPossible()
         feedFlowController()
         let now = flowClock()
+        if let parent {
+            // This framer's output is the parent's leader's.
+            flowController.carrierWindow = parent.flowController?.window(of: .leader)
+        }
         flowController.tick(now: now)
         if flowController.wantsTicks(now: now) {
             scheduleFlowTick()

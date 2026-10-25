@@ -1,5 +1,6 @@
 
 #import "VT100Screen.h"
+#import <stdatomic.h>
 #import "VT100Screen+Private.h"
 #import "VT100Screen+Search.h"
 #import "VT100ScreenMutableState+RCDataSource.h"
@@ -54,6 +55,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
 @implementation VT100Screen {
+    // Read on the main thread, added to on the read thread.
+    _Atomic(long long) _bytesReceived;
     // Used for recording instant replay.
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
@@ -1937,7 +1940,12 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
 // Warning: this is called on PTYTask's thread.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    atomic_fetch_add_explicit(&_bytesReceived, length, memory_order_relaxed);
     [_mutableState threadedReadTask:buffer length:length];
+}
+
+- (long long)bytesReceived {
+    return atomic_load_explicit(&_bytesReceived, memory_order_relaxed);
 }
 
 - (long long)lastPromptLine {

@@ -803,6 +803,8 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
 @property(nonatomic, strong, nullable) NSCursor *defaultPointer;
 @property(nonatomic, readonly, nullable) iTermConductor *conductor;
+// An ssh integration connection that was nested is being recovered depth by depth.
+@property(nonatomic, readonly) BOOL isRecoveringNestedSSHConnection;
 // The conductor for the host this session's shell runs on: its own, or for a tmux pane, the
 // gateway's, since a pane never owns one. nil for a session on this Mac.
 @property(nonatomic, readonly, nullable) iTermConductor *hostConductor;

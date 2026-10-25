@@ -848,6 +848,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // it2ssh ran on another tty (e.g., inside tmux), so this session's tty isn't ssh's.
     BOOL _preSSHTTYIsElsewhere;
     iTermTTYModeRepairer *_ttyModeRepairer;
+    // Recovering an ssh integration connection: how deep it was, when it was nested. The outer
+    // framer's recovery knows nothing of a framer nested in it, so each depth is recovered in
+    // turn. Keys typed meanwhile are held for the innermost.
+    int _framerRecoveryTargetDepth;
+    NSMutableData *_keysHeldForFramerRecovery;
+    NSInteger _framerRecoveryAttempt;
 
     __weak id<VT100ScreenMarkReading> _selectedScreenMark;
     NSMutableArray<PTYSessionHostState *> *_hostStack;
@@ -1434,6 +1440,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_preSSHTTYModes release];
     [_preSSHTTYModesClientUniqueID release];
     [_ttyModeRepairer release];
+    [_keysHeldForFramerRecovery release];
     [_hostStack release];
     [_defaultPointer release];
     [_originatingArrangement release];
@@ -4721,11 +4728,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
      canBroadcast:(BOOL)canBroadcast
         reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
-    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
+    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH || _keysHeldForFramerRecovery) {
         if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
+        } else if (_keysHeldForFramerRecovery) {
+            [_keysHeldForFramerRecovery appendData:[string dataUsingEncoding:encoding]];
         } else if (_conductor.handlesKeystrokes) {
             [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         } else if (_connectingSSH) {
@@ -21501,6 +21510,8 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
         }
         return 0;
     }
+    // A connection ended: whatever was being recovered in it is gone.
+    [self cancelNestedFramerRecovery];
     BOOL found = NO;
     NSInteger count = 0;
     while (_conductor != nil && !found) {
@@ -21575,8 +21586,18 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     // carries any decided grant); an undecided prompt re-appears on the next command.
     [recovering resolveIT2AuthorizationFailClosed];
     if (parentDepth < 0) {
+        // How deep the connection was: its innermost framing conductor, or the depth a recovery
+        // already under way is bringing it back to.
+        iTermConductor *framing = _conductor;
+        while (framing && !framing.framing) {
+            framing = framing.parent;
+        }
+        const int depthBeforeRecovery = MAX(framing ? framing.depth : 0, _framerRecoveryTargetDepth);
         while (_conductor) {
             [self unhookSSHConductor];
+        }
+        if (depthBeforeRecovery > 0) {
+            [self beginNestedFramerRecoveryToDepth:depthBeforeRecovery];
         }
     }
     iTermConductor *previousConductor = [_conductor autorelease];
@@ -21622,6 +21643,126 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
 // some tokens may have been dropped during recovery.
 - (void)screenDidResynchronizeSSH {
     [_conductor didResynchronize];
+    [self continueNestedFramerRecovery];
+}
+
+#pragma mark - Nested framer recovery
+
+- (BOOL)isRecoveringNestedSSHConnection {
+    return _framerRecoveryTargetDepth > 0;
+}
+
+static const NSTimeInterval iTermNestedFramerRecoveryTimeout = 15;
+// How many times to wait again for a recovery that has answered but not yet resynchronized.
+static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
+
+- (void)beginNestedFramerRecoveryToDepth:(int)depth {
+    RLog(@"Recovering an ssh integration connection nested %d deep", depth);
+    _framerRecoveryTargetDepth = depth;
+    if (!_keysHeldForFramerRecovery) {
+        _keysHeldForFramerRecovery = [[NSMutableData alloc] init];
+    }
+    [self scheduleNestedFramerRecoveryTimeoutForChildOfDepth:-1 extensions:0];
+}
+
+// A depth finished resynchronizing. Recover the one nested in it, if the connection was deeper.
+- (void)continueNestedFramerRecovery {
+    if (_framerRecoveryTargetDepth <= 0) {
+        return;
+    }
+    const int depth = _conductor.depth;
+    if (!_conductor.framing || depth >= _framerRecoveryTargetDepth) {
+        [self finishNestedFramerRecovery];
+        return;
+    }
+    RLog(@"Recover the ssh integration connection nested in depth %d", depth);
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
+        // Output from the nested framer may have started its recovery already.
+        if (terminal.framerRecoveryMode == VT100TerminalFramerRecoveryModeNone) {
+            [mutableState terminalBeginFramerRecoveryForChildOfConductorAtDepth:depth];
+        }
+    }];
+    [self scheduleNestedFramerRecoveryTimeoutForChildOfDepth:depth extensions:0];
+}
+
+// `depth` is the conductor whose child is being recovered, or -1 for the outermost.
+- (void)scheduleNestedFramerRecoveryTimeoutForChildOfDepth:(int)depth extensions:(int)extensions {
+    const NSInteger attempt = ++_framerRecoveryAttempt;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermNestedFramerRecoveryTimeout * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf nestedFramerRecoveryAttempt:attempt
+                    didTimeOutForChildOfDepth:depth
+                                   extensions:extensions];
+    });
+}
+
+- (void)nestedFramerRecoveryAttempt:(NSInteger)attempt
+          didTimeOutForChildOfDepth:(int)depth
+                         extensions:(int)extensions {
+    if (attempt != _framerRecoveryAttempt || _framerRecoveryTargetDepth <= 0) {
+        // It finished, or moved on to a deeper connection.
+        return;
+    }
+    // Once the framer has answered, the session's conductor is the one made from its answer,
+    // which frames and waits for the parser to resynchronize. A slow link only delays that.
+    const BOOL answered = (_conductor.depth == depth + 1 &&
+                           _conductor.framing &&
+                           _conductor.awaitingResynchronization);
+    if (answered && extensions < iTermNestedFramerRecoveryMaximumExtensions) {
+        RLog(@"Recovery of the connection nested in depth %d answered; wait to resynchronize", depth);
+        [self scheduleNestedFramerRecoveryTimeoutForChildOfDepth:depth extensions:extensions + 1];
+        return;
+    }
+    if (depth < 0 || answered) {
+        // Don't tear down a recovery that is under way; just stop holding keys.
+        RLog(@"Recovery did not finish in time; stop holding keys");
+        [self cancelNestedFramerRecovery];
+        return;
+    }
+    if (_conductor.depth != depth + 1 || _conductor.framing) {
+        // Something else replaced the conductor being recovered, such as another recovery.
+        [self cancelNestedFramerRecovery];
+        return;
+    }
+    // No answer: the nested connection ended while the outer one was being recovered. Go back
+    // to the conductor it was nested in.
+    RLog(@"The connection nested in depth %d did not answer; give up on it", depth);
+    [self unhookSSHConductor];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
+        terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
+    }];
+    [self cancelNestedFramerRecovery];
+}
+
+// Recovered as deep as the connection was: what was typed meanwhile goes to the innermost.
+- (void)finishNestedFramerRecovery {
+    NSData *held = [[_keysHeldForFramerRecovery retain] autorelease];
+    [self cancelNestedFramerRecovery];
+    if (held.length == 0) {
+        return;
+    }
+    if (_conductor.handlesKeystrokes) {
+        [_conductor sendKeys:held];
+    } else {
+        [self writeData:held];
+    }
+}
+
+// The keys typed meanwhile were for a connection that is gone or not back, so they are dropped
+// rather than sent to another host.
+- (void)cancelNestedFramerRecovery {
+    if (_keysHeldForFramerRecovery.length > 0) {
+        RLog(@"Drop %@ bytes typed during ssh integration recovery", @(_keysHeldForFramerRecovery.length));
+    }
+    _framerRecoveryTargetDepth = 0;
+    _framerRecoveryAttempt += 1;
+    [_keysHeldForFramerRecovery release];
+    _keysHeldForFramerRecovery = nil;
 }
 
 - (void)screenFramerRecoveryDidFinish {
@@ -27150,6 +27291,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 - (void)conductorQuit {
     RLog(@"conductorQuit");
+    [self cancelNestedFramerRecovery];
     [self conductorWillDie];
     NSString *identity = _conductor.sshIdentity.description;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

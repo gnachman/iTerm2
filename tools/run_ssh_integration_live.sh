@@ -43,6 +43,10 @@ fi
 # these into the test process, where the harness reads ITERM2_SSH_LIVE to opt in.
 export TEST_RUNNER_ITERM2_SSH_LIVE=1
 export TEST_RUNNER_ITERM2_ONSCREEN_TESTS=1
+# A host reached over a path that can be throttled, for the diagnostic that floods through it.
+if [[ -n "${ITERM2_SSH_FAR_HOST:-}" ]]; then
+    export TEST_RUNNER_ITERM2_SSH_FAR_HOST="$ITERM2_SSH_FAR_HOST"
+fi
 
 cd "$PROJECT_DIR"
 echo "Running live ssh integration harness: $target"

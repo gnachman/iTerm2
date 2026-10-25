@@ -33,6 +33,14 @@
     [super dealloc];
 }
 
+- (void)setCarrierSendMilliseconds:(int64_t)carrierSendMilliseconds {
+    _dcsParser.carrierSendMilliseconds = carrierSendMilliseconds;
+}
+
+- (int64_t)carrierSendMilliseconds {
+    return _dcsParser.carrierSendMilliseconds;
+}
+
 - (BOOL)shouldUnhook:(NSString *)uniqueID {
     return [_dcsParser.uniqueID isEqualToString:uniqueID];
 }

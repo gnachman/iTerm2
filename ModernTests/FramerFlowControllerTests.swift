@@ -75,6 +75,114 @@ final class FramerFlowControllerTests: XCTestCase {
         XCTAssertEqual(c.queueingDelay(now: 2.08), 0)
     }
 
+    // MARK: - Delivery rate
+
+    // Output reaches the parser in bursts: whenever it waits for the token executor, what
+    // arrived meanwhile is read at once. Over a few milliseconds a burst looks like a fast link
+    // (live, 1.7 MB/s on a 20 KB/s one), and the rate, the windowed maximum of such samples,
+    // held the floor at 16 KB for seconds, close to a second of output that Ctrl-C waited out.
+    func testABurstAfterTheParserCatchesUpDoesNotLookLikeAFastLink() {
+        let (c, _) = makeController()
+        c.roundTripDidComplete(sentAt: 0, now: 0.01)
+        var t = 0.0
+        func steady(until end: TimeInterval) {
+            while t < end {
+                t += 0.05
+                execute(c, at: t, delay: 0.02, bytes: 1024, limited: true)  // 20 KB/s.
+                c.tick(now: t)
+            }
+        }
+        steady(until: 3)
+        for _ in 0..<4 {
+            t += 0.001
+            execute(c, at: t, delay: 0.02, bytes: 4096, limited: true)
+        }
+        steady(until: 6)
+        // Averaged over a quarter second, the burst still counts, but as a few times the link's
+        // rate, not the hundreds of KB/s a few milliseconds of it would show.
+        let rate = c.deliveryRate(now: t) ?? 0
+        XCTAssertLessThan(rate, 5 * 20 * 1024, "rate \(rate)")
+        XCTAssertLessThan(c.floor(now: t), 3 * 1024)
+    }
+
+    // MARK: - Nested framers
+
+    /// An inner framer's frame: it spent `hop` seconds before the outer framer sent the frame
+    /// carrying it, on a clock 3,000 s apart from the inner one's, and `beyond` more seconds
+    /// from there to arriving at `now`.
+    private func arriveCarried(_ c: Controller, at now: TimeInterval, hop: TimeInterval,
+                               beyond: TimeInterval, bytes: Int = 1000) {
+        let carrierSent = now - beyond
+        c.frameDidArrive(now: now,
+                         sendMilliseconds: sendMS(now: carrierSent, delay: hop),
+                         bytes: bytes, limited: false, exempt: false,
+                         carrierMilliseconds: Int64((carrierSent * 1000).rounded()) + 3_000_000)
+    }
+
+    // Its delay is its own hop's, however long the hops beyond hold it.
+    func testAnInnerFramesDelayIsMeasuredToItsCarrier() {
+        let (c, _) = makeController()
+        c.roundTripDidComplete(sentAt: 0, now: 0.1)
+        arriveCarried(c, at: 1.0, hop: 0.010, beyond: 0.050)
+        arriveCarried(c, at: 2.0, hop: 0.010, beyond: 0.850)
+        XCTAssertEqual(c.queueingDelay(now: 2.0)!, 0, accuracy: 0.002, "the outer hop's queue is not this one's")
+        // More than rttmin later, so the earlier reading has aged out.
+        arriveCarried(c, at: 2.2, hop: 0.210, beyond: 0.050)
+        XCTAssertEqual(c.queueingDelay(now: 2.2)!, 0.2, accuracy: 0.002, "a wait in the outer host's pty is")
+    }
+
+    // The hops beyond lengthen how long a change to the window takes to show, so the window
+    // changes no faster than that.
+    func testTheHopsBeyondLengthenTheFeedbackDelay() {
+        let (c, _) = makeController()
+        c.roundTripDidComplete(sentAt: 0, now: 0.1)
+        XCTAssertEqual(c.feedbackDelay(now: 0.1), 0.1, accuracy: 1e-9)
+        arriveCarried(c, at: 1.0, hop: 0.010, beyond: 0.050)
+        arriveCarried(c, at: 2.0, hop: 0.010, beyond: 0.350)
+        XCTAssertEqual(c.feedbackDelay(now: 2.0), 0.4, accuracy: 0.002)
+        // One frame that crossed quickly says little about the next.
+        arriveCarried(c, at: 2.1, hop: 0.010, beyond: 0.050)
+        XCTAssertEqual(c.feedbackDelay(now: 2.1), 0.4, accuracy: 0.002)
+        // Two rttmin of them do.
+        arriveCarried(c, at: 2.25, hop: 0.010, beyond: 0.050)
+        XCTAssertEqual(c.feedbackDelay(now: 2.25), 0.1, accuracy: 0.002)
+    }
+
+    // When the outer framer stops being controlled, frames stop carrying its time, and delays
+    // are read against another clock. The old baseline means nothing to them, and the new one
+    // may be taken mid-flood, so the controller resets and drains as after a silence.
+    func testSwitchingBetweenCarriedAndUncarriedReadingsResets() {
+        let (c, sent) = makeController()
+        c.roundTripDidComplete(sentAt: 0, now: 0.1)
+        arriveCarried(c, at: 1.0, hop: 0.010, beyond: 0.300)
+        XCTAssertEqual(sent.drains, 0, "the first reading is not a switch")
+        arrive(c, at: 1.1, delay: 0.060)
+        XCTAssertEqual(sent.drains, 1)
+        XCTAssertTrue(c.quarantined)
+        XCTAssertNil(c.queueingDelay(now: 1.1), "no baseline until the drain ends")
+        XCTAssertEqual(c.feedbackDelay(now: 1.1), 0.1, accuracy: 1e-9, "nor the hops beyond")
+    }
+
+    // An inner framer's output all travels in the outer framer's leader flow, so credit beyond
+    // what that carries would only wait in the outer host's pty.
+    func testAnInnerWindowIsCappedByWhatItsCarrierCarries() {
+        let (c, _) = makeController()
+        c.roundTripDidComplete(sentAt: 0, now: 0.1)
+        var t = 0.1
+        while t < 0.8 {
+            t += 0.025
+            execute(c, at: t, delay: 0.05, bytes: 8 * KB, limited: true)
+            c.tick(now: t)
+        }
+        XCTAssertGreaterThan(c.window, Double(16 * KB))
+        c.carrierWindow = Double(4 * KB)
+        t += 0.025
+        execute(c, at: t, delay: 0.05, bytes: 8 * KB, limited: true)
+        c.tick(now: t)
+        let headroom = (c.deliveryRate(now: t) ?? 0) * c.target(now: t)
+        XCTAssertEqual(c.window, max(Double(4 * KB) + headroom, c.floor(now: t)), accuracy: 1)
+    }
+
     func testFlowOnStartsWithTheInitialCredit() {
         let (c, sent) = makeController()
         XCTAssertEqual(c.granted, 8 * KB)
@@ -150,6 +258,26 @@ final class FramerFlowControllerTests: XCTestCase {
         // The late reply: the framer discarded its credit, then got the 4 KB grant.
         c.drainDidReply(now: 4.0)
         XCTAssertEqual(c.outstanding, 4 * KB)
+    }
+
+    // A drain is abandoned and another begins before the first one's reply comes. Each reply
+    // sets the count from what arrived; the second must not then be read against a count from
+    // before the first reset it, or the controller would think the framer short of credit by
+    // however much the first took back, and grant that much more than the window, for good.
+    func testTwoDrainsInFlightKeepTheCountRight() {
+        let (c, sent) = makeController()
+        c.valveDidOpen(now: 1.0)
+        execute(c, at: 1.5, delay: 0.5, bytes: 4 * KB)
+        c.tick(now: 3.5)  // Abandoned, and the window topped up.
+        XCTAssertEqual(sent.grants, [4 * KB])
+        c.valveDidOpen(now: 3.6)  // A second drain, with the first one's reply still to come.
+        XCTAssertTrue(c.isDraining)
+        // The framer read the first drain (zeroing its credit), the 4 KB grant, and the second
+        // drain (zeroing it again), and replied to both. It has no credit and nothing on the way.
+        c.drainDidReply(now: 4.0)
+        c.drainDidReply(now: 4.0)
+        XCTAssertEqual(c.granted, c.arrived)
+        XCTAssertEqual(c.outstanding, 0)
     }
 
     func testRecoveryIsAResetDrainWithoutADeadline() {
@@ -381,5 +509,37 @@ final class FramerFlowControllerTests: XCTestCase {
         c.flowDidEnd(.pane(7))
         XCTAssertNil(c.window(of: .pane(7)))
         XCTAssertEqual(c.outstanding, 8 * KB)
+    }
+
+    // The flow control monitor lists what the controller did that changes what it does next:
+    // here a silence after a flood, the reset drain it starts, and its completion.
+    func testItRecordsASilenceAndTheResetDrainThatFollows() {
+        let (c, _) = makeController()
+        c.roundTripDidComplete(sentAt: 0, now: 0.05)
+        for i in 1...20 {
+            arrive(c, at: Double(i) * 0.05, delay: 0.025, limited: true)
+        }
+        arrive(c, at: 5, delay: 0.025, limited: true)
+        c.drainDidReply(now: 5.2)
+        c.pingDidReply(roundTrip: 0.05, now: 5.3)
+        let descriptions = c.events.map(\.description)
+        XCTAssertEqual(descriptions.count, 5, "\(descriptions)")
+        XCTAssertTrue(descriptions[0].hasPrefix("No frame for 4.00 s after window-limited ones"), descriptions[0])
+        XCTAssertTrue(descriptions[1].hasPrefix("Reset drain began"), descriptions[1])
+        XCTAssertEqual(descriptions[2], "Drain replied after 0.20 s")
+        XCTAssertEqual(descriptions[3], "Ping replied in 0.050 s")
+        XCTAssertEqual(descriptions[4], "Drain ended after 0.30 s; granting again")
+        XCTAssertEqual(c.events.map(\.time), [5, 5, 5.2, 5.3, 5.3])
+    }
+
+    func testItKeepsTheLatestEvents() {
+        let (c, _) = makeController()
+        for i in 0..<100 {
+            c.valveDidOpen(now: Double(i))
+            c.drainDidReply(now: Double(i) + 0.5)
+            c.pingDidReply(roundTrip: 0.01, now: Double(i) + 0.6)
+        }
+        XCTAssertEqual(c.events.count, 40)
+        XCTAssertEqual(c.events.last?.time, 99.6)
     }
 }

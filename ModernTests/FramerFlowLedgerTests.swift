@@ -255,4 +255,123 @@ final class ConductorFlowLedgerTests: XCTestCase {
         }
         XCTAssertFalse(delegate.ledger.isActive)
     }
+
+    // MARK: - Nested connections
+
+    private func osc134(_ payload: String) -> [UInt8] {
+        return Array("\u{1b}]134;:\(payload)\u{1b}\\".utf8)
+    }
+
+    private func screenText(_ harness: TerminalTestHarness) -> String {
+        var result = ""
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            result = mutableState.currentGrid.compactLineDump()
+        })
+        return result
+    }
+
+    // Each depth's conductor listens for its own framer's frames: each is activated, recorded and
+    // taken on its own.
+    func testEachDepthIsRecordedApart() {
+        let ledger = FramerFlowLedger(clock: { 5 })
+        ledger.activate(depth: 0) {}
+        ledger.frameDidArrive(bytes: 10, sendMilliseconds: 99, flags: 1, flow: 0, depth: 1, carrierMilliseconds: 120)
+        XCTAssertFalse(ledger.isActive(depth: 1))
+        XCTAssertEqual(ledger.takeEvents(depth: 1), [], "nobody listens at depth 1")
+
+        let woke = expectation(description: "depth 1 woke")
+        ledger.activate(depth: 1) { woke.fulfill() }
+        ledger.frameDidArrive(bytes: 10, sendMilliseconds: 99, flags: 1, flow: 0, depth: 1, carrierMilliseconds: 120)
+        ledger.frameDidExecute(bytes: 10, depth: 1)
+        ledger.frameDidExecute(bytes: 30, depth: 0)
+        wait(for: [woke], timeout: 10)
+        XCTAssertEqual(ledger.takeEvents(depth: 1),
+                       [.arrived(time: 5, flow: 0, sendMilliseconds: 99, bytes: 10, flags: 1, carrierMilliseconds: 120),
+                        .executed(time: 5, bytes: 10)])
+        XCTAssertEqual(ledger.takeEvents(depth: 0), [.executed(time: 5, bytes: 30)])
+        ledger.deactivate(depth: 1)
+        XCTAssertTrue(ledger.isActive(depth: 0), "the outer conductor still listens")
+    }
+
+    // An inner framer's controlled frame, inside the outer framer's: each is recorded at its
+    // depth, the inner one with the time the outer framer sent its carrier, and both execute once
+    // the inner frame's contents have.
+    func testTheScreenRecordsEachDepthsFrames() throws {
+        let harness = TerminalTestHarness()
+        let ledger = FramerFlowLedger(clock: { 7 })
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.flowLedger = ledger
+        })
+        ledger.activate(depth: 0) {}
+        ledger.activate(depth: 1) {}
+        let hook = Array("\u{1b}P2000p0 boolargs -\n".utf8)
+        let inner = hook + osc134("%output in 200 -1 1 5000 1") + Array("hello".utf8) + osc134("%end in")
+        harness.send(hook)
+        harness.send(osc134("%output out 100 -1 0 9000 1") + inner + osc134("%end out"))
+        harness.sync()
+        XCTAssertEqual(ledger.takeEvents(depth: 1),
+                       [.arrived(time: 7, flow: 0, sendMilliseconds: 5000, bytes: 5, flags: 1, carrierMilliseconds: 9000),
+                        .executed(time: 7, bytes: 5)])
+        XCTAssertEqual(ledger.takeEvents(depth: 0),
+                       [.arrived(time: 7, flow: 0, sendMilliseconds: 9000, bytes: inner.count, flags: 1),
+                        .executed(time: 7, bytes: inner.count)])
+        XCTAssertTrue(screenText(harness).contains("hello"), "the inner output still reaches the screen")
+    }
+
+    // An inner frame's token only counts consumption: it is not more of the outer session's raw
+    // output, which is the outer frame's.
+    func testAnInnerFrameIsNotReadAsRawOutputTwice() {
+        let harness = TerminalTestHarness()
+        let ledger = FramerFlowLedger(clock: { 7 })
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.flowLedger = ledger
+        })
+        ledger.activate(depth: 0) {}
+        ledger.activate(depth: 1) {}
+        let hook = Array("\u{1b}P2000p0 boolargs -\n".utf8)
+        let inner = hook + osc134("%output in 200 -1 1 5000 1") + Array("once".utf8) + osc134("%end in")
+        harness.send(hook)
+        harness.send(osc134("%output out 100 -1 0 9000 1") + inner + osc134("%end out"))
+        harness.sync()
+        XCTAssertEqual(screenText(harness).components(separatedBy: "once").count - 1, 1)
+    }
+
+    // Today only the outermost conductor listens. A controlled inner frame then counts only for
+    // depth 0, and its text appears once.
+    func testWithOnlyTheOutermostListeningOnlyItsFramesCount() {
+        let harness = TerminalTestHarness()
+        let ledger = FramerFlowLedger(clock: { 7 })
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.flowLedger = ledger
+        })
+        ledger.activate(depth: 0) {}
+        let hook = Array("\u{1b}P2000p0 boolargs -\n".utf8)
+        let inner = hook + osc134("%output in 200 -1 1 5000 1") + Array("solo".utf8) + osc134("%end in")
+        harness.send(hook)
+        harness.send(osc134("%output out 100 -1 0 9000 1") + inner + osc134("%end out"))
+        harness.sync()
+        XCTAssertEqual(ledger.takeEvents(depth: 0),
+                       [.arrived(time: 7, flow: 0, sendMilliseconds: 9000, bytes: inner.count, flags: 1),
+                        .executed(time: 7, bytes: inner.count)])
+        XCTAssertEqual(ledger.takeEvents(depth: 1), [])
+        XCTAssertEqual(screenText(harness).components(separatedBy: "solo").count - 1, 1)
+    }
+
+    // A pane of the inner framer counts for the inner framer.
+    func testAnInnerPanesFramesCountAtItsDepth() {
+        let harness = TerminalTestHarness()
+        let ledger = FramerFlowLedger(clock: { 7 })
+        harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.flowLedger = ledger
+        })
+        ledger.activate(depth: 0) {}
+        ledger.activate(depth: 1) {}
+        let hook = Array("\u{1b}P2000p0 boolargs -\n".utf8)
+        let inner = hook + osc134("%output in 777 3 1 5000 1") + Array("pane".utf8) + osc134("%end in")
+        harness.send(hook)
+        harness.send(osc134("%output out 100 -1 0 9000 1") + inner + osc134("%end out"))
+        harness.sync()
+        XCTAssertEqual(ledger.takeEvents(depth: 1),
+                       [.arrived(time: 7, flow: 777, sendMilliseconds: 5000, bytes: 4, flags: 1, carrierMilliseconds: 9000)])
+    }
 }

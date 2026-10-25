@@ -146,14 +146,15 @@ final class SSHIntegrationLiveHarness: XCTestCase {
     /// A session running ssh integration to localhost, once its it2 proxy is live.
     /// `forwardAgent` lets an ssh started on the remote host authenticate with this Mac's agent,
     /// which a second hop needs: the remote shell has no agent of its own.
-    private func connect(forwardAgent: Bool = false,
+    private func connect(host: String = "localhost",
+                         forwardAgent: Bool = false,
                          loadShellIntegration: Bool = true,
                          sshOptions: String = "",
                          command: String? = nil,
                          file: StaticString = #filePath, line: UInt = #line) -> PTYSession? {
         var profile = baseProfile()
         profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue
-        profile[KEY_COMMAND_LINE] = sshOptions + (forwardAgent ? "-A localhost" : "localhost") + (command.map { " " + $0 } ?? "")
+        profile[KEY_COMMAND_LINE] = sshOptions + (forwardAgent ? "-A " : "") + host + (command.map { " " + $0 } ?? "")
         profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = loadShellIntegration
         guard let session = launch(profile: profile) else {
             XCTFail("could not launch", file: file, line: line)
@@ -437,13 +438,147 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         return "-o 'ProxyCommand=/usr/bin/env python3 \(proxy) %h %p \(bytesPerSecond)' "
     }
 
+    /// A link whose rate is read from `rateFile` (bytes per second; 0 is unlimited), so a test can
+    /// slow it down and speed it up, with `delay` seconds each way.
+    private func throttledOptions(rateFile: String, delay: TimeInterval) -> String {
+        let proxy = URL(fileURLWithPath: "\(#filePath)")
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("tests/throttle_proxy.py").path
+        return "-o 'ProxyCommand=/usr/bin/env python3 \(proxy) %h %p 0 --rate-file \(rateFile) --delay \(delay)' "
+    }
+
+    /// What `conductor`'s controller knows now, for a failure message.
+    private func flowState(_ conductor: Conductor) -> String {
+        guard let s = conductor.flowController?.snapshot(now: conductor.flowClock()) else {
+            return "no controller"
+        }
+        return "W=\(Int(s.window)) outstanding=\(s.outstanding) floor=\(Int(s.floor)) "
+            + "rttMin=\(s.rttMin) target=\(s.target) dq=\(s.queueingDelay.map { "\($0)" } ?? "nil") "
+            + "rate=\(s.deliveryRate.map { "\(Int($0))" } ?? "nil") slowStart=\(s.slowStart) "
+            + "drain=\(s.drain) stats=\(s.statistics)"
+    }
+
+    // Diagnostic, not a check: a flood through ITERM2_SSH_FAR_HOST, a host reached over a path
+    // that can be throttled (Network Link Conditioner does not shape loopback), printing the
+    // controller's state every second to see where it settles and why. Skips without the variable:
+    //   ITERM2_SSH_FAR_HOST=nlc-far ITERM2_ONSCREEN_TESTS=1 tools/run_tests_vm.sh --host vm2 \
+    //       -e ITERM2_SSH_FAR_HOST -- tools/run_ssh_integration_live.sh testAFloodThroughAFarHost
+    func testAFloodThroughAFarHost() throws {
+        guard let far = ProcessInfo.processInfo.environment["ITERM2_SSH_FAR_HOST"] else {
+            throw XCTSkip("Set ITERM2_SSH_FAR_HOST to a host reached over a throttled path")
+        }
+        Conductor.flowControlAvailableForTesting = true
+        addTeardownBlock { @MainActor in Conductor.flowControlAvailableForTesting = nil }
+        let session = try XCTUnwrap(connect(host: far))
+        let conductor = try XCTUnwrap(session.conductor)
+        waitUntil("flow control", timeout: commandTimeout) { conductor.flowController != nil }
+        session.writeTask("yes far-flood\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        let ms = { (v: TimeInterval?) in v.map { String(format: "%.0f", $0 * 1000) } ?? "-" }
+        var lastConsumed = conductor.flowController?.consumed ?? 0
+        for second in 1...60 {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 1))
+            guard let s = conductor.flowController?.snapshot(now: conductor.flowClock()) else {
+                print("FAR t=\(second) no controller")
+                continue
+            }
+            let rate = s.consumed >= lastConsumed ? s.consumed - lastConsumed : s.consumed
+            lastConsumed = s.consumed
+            print("FAR t=\(second) wall=\(String(format: "%.2f", Date().timeIntervalSince1970)) consumed/s=\(rate) W=\(Int(s.window)) notArrived=\(s.granted - s.arrived) "
+                  + "dq=\(ms(s.queueingDelay)) target=\(ms(s.target)) rttMin=\(ms(s.rttMin)) "
+                  + "costKB=\(ms(s.delayBaseline.costPerKilobyte)) rate=\(s.deliveryRate.map { Int($0) } ?? -1) "
+                  + "floor=\(Int(s.floor)) slowStart=\(s.slowStart) drain=\(s.drain) "
+                  + "decreases=\(s.statistics.decreases) drains=\(s.statistics.drains) recalls=\(s.statistics.creditRecalls) "
+                  + "busy=\(s.flows.first?.busy ?? false) waits=\(ms(s.flows.first?.consumptionDelay)) cap=\(s.flows.first?.cap.map { Int($0) } ?? -1)")
+        }
+        if let events = conductor.flowController?.events {
+            for event in events {
+                print(String(format: "FAR event %.2f ", event.time) + event.description)
+            }
+        }
+        print("FAR ctrl-c \(interrupt(session)) s")
+    }
+
+    // A flood over a fast link that is slowed down and then sped up again, as with Network Link
+    // Conditioner turned on and off: the window grows back to what the fast link carries.
+    func testTheWindowRecoversWhenTheLinkSpeedsUpAgain() throws {
+        Conductor.flowControlAvailableForTesting = true
+        addTeardownBlock { @MainActor in Conductor.flowControlAvailableForTesting = nil }
+        let rateFile = try makeRateFile()
+        let session = try XCTUnwrap(connect(sshOptions: throttledOptions(rateFile: rateFile, delay: 0.015)))
+        let conductor = try XCTUnwrap(session.conductor)
+        waitUntil("flow control", timeout: commandTimeout) { conductor.flowController != nil }
+        try slowDownAndSpeedUp(session, rateFile: rateFile, watching: [conductor])
+    }
+
+    // The same through two hops, with the outer one's link slowed and sped up, and the flood in
+    // the inner shell.
+    func testNestedWindowsRecoverWhenTheLinkSpeedsUpAgain() throws {
+        let rateFile = try makeRateFile()
+        let (session, outer, inner) = try connectTwoHops(outerOptions: throttledOptions(rateFile: rateFile,
+                                                                                        delay: 0.015))
+        try slowDownAndSpeedUp(session, rateFile: rateFile, watching: [outer, inner])
+    }
+
+    /// A rate file for throttledOptions(rateFile:delay:), unlimited for now.
+    private func makeRateFile() throws -> String {
+        let rateFile = (NSTemporaryDirectory() as NSString).appendingPathComponent("rate-\(UUID().uuidString)")
+        try "0".write(toFile: rateFile, atomically: true, encoding: .utf8)
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: rateFile) }
+        return rateFile
+    }
+
+    /// Floods `session` over a fast link, slows the link to 500 Kbit/s, speeds it up again, and
+    /// expects each conductor in `watching` to get back at least half its rate from before.
+    private func slowDownAndSpeedUp(_ session: PTYSession, rateFile: String, watching conductors: [Conductor],
+                                    file: StaticString = #filePath, line: UInt = #line) throws {
+        session.writeTask("yes link-speeds-up\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        func rates() -> [Double] {
+            let before = conductors.map { $0.flowController?.consumed ?? 0 }
+            let start = Date()
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 5))
+            let elapsed = Date().timeIntervalSince(start)
+            return zip(conductors, before).map { conductor, before in
+                let after = conductor.flowController?.consumed ?? 0
+                return Double(after >= before ? after - before : after) / elapsed
+            }
+        }
+        func states() -> String {
+            conductors.map { "depth \($0.depth): \(flowState($0))" }.joined(separator: "; ")
+        }
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 10))
+        let before = rates()
+        let statesBefore = states()
+
+        // 500 Kbit/s.
+        try "62500".write(toFile: rateFile, atomically: true, encoding: .utf8)
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 15))
+        let slow = rates()
+
+        try "0".write(toFile: rateFile, atomically: true, encoding: .utf8)
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 30))
+        let after = rates()
+        print("before \(before.map(Int.init)) B/s, throttled \(slow.map(Int.init)) B/s, after \(after.map(Int.init)) B/s")
+        for (index, conductor) in conductors.enumerated() {
+            XCTAssertLessThan(slow[index], 80_000, "depth \(conductor.depth): the throttle held: \(states())",
+                              file: file, line: line)
+            XCTAssertGreaterThan(after[index], before[index] / 2,
+                                 "depth \(conductor.depth): before \(Int(before[index])) B/s (\(statesBefore)), "
+                                 + "throttled \(Int(slow[index])) B/s, after \(Int(after[index])) B/s: \(states())",
+                                 file: file, line: line)
+        }
+    }
+
     /// Presses Ctrl-C in `session` and returns how long its prompt took to come back.
     private func interrupt(_ session: PTYSession) -> TimeInterval {
+        // A marker of its own, so a second Ctrl-C in a test is not answered by the first's.
+        let marker = "after-\(UUID().uuidString.prefix(8))"
         let interrupted = Date()
         session.writeTask("\u{3}")
-        session.writeTask("echo after-$((6*7))\r")
+        session.writeTask("echo \(marker)-$((6*7))\r")
         waitUntil("the prompt after Ctrl-C", timeout: 120) {
-            screenText(session).contains("after-42")
+            screenText(session).contains("\(marker)-42")
         }
         return Date().timeIntervalSince(interrupted)
     }
@@ -551,7 +686,10 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         }
         XCTAssertLessThan(client.received, 512 * 1024,
                           "the pane's output stopped at its window instead of piling up")
-        XCTAssertEqual(client.received, controller.backlog(of: .pane(pid)), "none of it was consumed")
+        // A frame counts as arrived when it is parsed and reaches the client a moment later.
+        waitUntil("all that arrived to reach the pane's client, none of it consumed", timeout: commandTimeout) {
+            client.received == controller.backlog(of: .pane(pid))
+        }
         let elapsed = interrupt(session)
         XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s to take effect")
         NSLog("Flow control live test with a stalled pane: it holds %d bytes; Ctrl-C took %.2f s",
@@ -1336,5 +1474,330 @@ final class SSHIntegrationLiveHarness: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(finished(poll)).status, 0)
         XCTAssertEqual(inner.it2Authorized, true)
         XCTAssertNil(outer.it2Authorized, "each hop decides for itself")
+    }
+
+    // MARK: - Flow control over two hops
+
+    /// `it2ssh localhost` inside an ssh integration session to localhost, each with the given
+    /// ssh options, once both conductors run flow control version 2.
+    private func connectTwoHops(outerOptions: String = "", innerOptions: String = "",
+                                file: StaticString = #filePath,
+                                line: UInt = #line) throws -> (PTYSession, Conductor, Conductor) {
+        let it2ssh = NSHomeDirectory() + "/.iterm2/it2ssh"
+        guard FileManager.default.isExecutableFile(atPath: it2ssh) else {
+            throw XCTSkip("\(it2ssh) is not installed (Install Shell Integration with utilities)")
+        }
+        Conductor.flowControlAvailableForTesting = true
+        addTeardownBlock { @MainActor in Conductor.flowControlAvailableForTesting = nil }
+        let session = try XCTUnwrap(connect(forwardAgent: true, sshOptions: outerOptions), file: file, line: line)
+        let outer = try XCTUnwrap(session.conductor, file: file, line: line)
+        waitUntil("the outer conductor's flow control", timeout: commandTimeout, file: file, line: line) {
+            outer.flowController != nil
+        }
+        session.writeTask("\(shellQuote(it2ssh)) \(innerOptions)localhost\r")
+        waitUntil("the inner connection's flow control", timeout: connectTimeout, file: file, line: line) {
+            guard let current = session.conductor, current !== outer, current.parent === outer else {
+                return false
+            }
+            return current.it2ProxyActive && current.flowController != nil
+        }
+        let inner = try XCTUnwrap(session.conductor, file: file, line: line)
+        XCTAssertEqual(outer.flowVersion, 2, file: file, line: line)
+        XCTAssertEqual(inner.flowVersion, 2, "the inner framer is controlled too", file: file, line: line)
+        return (session, outer, inner)
+    }
+
+    private func flowSummary(_ outer: Conductor, _ inner: Conductor) -> String {
+        let now = outer.flowClock()
+        func describe(_ c: Conductor) -> String {
+            guard let f = c.flowController else {
+                return "off"
+            }
+            return "window \(Int(f.window)) granted \(f.granted) consumed \(f.consumed) "
+                + "dq \(f.queueingDelay(now: now) ?? -1) feedback \(f.feedbackDelay(now: now)) "
+                + "carrier window \(f.carrierWindow.map { String(Int($0)) } ?? "none") \(f.statistics)"
+        }
+        return "outer: \(describe(outer)); inner: \(describe(inner))"
+    }
+
+    /// Floods the inner host's shell until its controller has seen `bytes`, then presses Ctrl-C
+    /// and returns how long the inner prompt took to come back.
+    private func floodThenInterrupt(_ session: PTYSession, _ outer: Conductor, _ inner: Conductor,
+                                    bytes: Int = 100_000) -> TimeInterval {
+        session.writeTask("yes inner-flood\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        waitUntil("the inner flood to get going", timeout: 90) {
+            (inner.flowController?.consumed ?? 0) > bytes
+        }
+        let elapsed = interrupt(session)
+        NSLog("Two-hop flow control: Ctrl-C took %.2f s; %@", elapsed, flowSummary(outer, inner))
+        return elapsed
+    }
+
+    // host1 far away, host2 near it, as with a bastion. The inner flood waits on host2, where
+    // Ctrl-C discards it, rather than in host1's pty and the slow hop's buffers. Half a second
+    // to a second.
+    func testCtrlCAtTheInnerPromptBehindASlowOuterHop() throws {
+        let (session, outer, inner) = try connectTwoHops(outerOptions: throttledOptions(bytesPerSecond: 20480))
+        let elapsed = floodThenInterrupt(session, outer, inner)
+        XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s: \(flowSummary(outer, inner))")
+        XCTAssertNotNil(inner.flowController?.carrierWindow, "the inner window follows the outer leader's")
+    }
+
+    // What the inner framer's flow control is for: with only the outer framer controlled, the
+    // inner flood fills host1's pty and the slow hop's buffers, and Ctrl-C waits for all of it
+    // (88 s when measured).
+    func testWithoutInnerFlowControlCtrlCWaitsBehindASlowOuterHop() throws {
+        Conductor.nestedFlowControlAvailableForTesting = false
+        addTeardownBlock { @MainActor in Conductor.nestedFlowControlAvailableForTesting = nil }
+        let it2ssh = NSHomeDirectory() + "/.iterm2/it2ssh"
+        guard FileManager.default.isExecutableFile(atPath: it2ssh) else {
+            throw XCTSkip("\(it2ssh) is not installed (Install Shell Integration with utilities)")
+        }
+        Conductor.flowControlAvailableForTesting = true
+        addTeardownBlock { @MainActor in Conductor.flowControlAvailableForTesting = nil }
+        let session = try XCTUnwrap(connect(forwardAgent: true, sshOptions: throttledOptions(bytesPerSecond: 20480)))
+        let outer = try XCTUnwrap(session.conductor)
+        waitUntil("the outer conductor's flow control", timeout: commandTimeout) { outer.flowController != nil }
+        session.writeTask("\(shellQuote(it2ssh)) localhost\r")
+        waitUntil("the inner connection", timeout: connectTimeout) {
+            guard let c = session.conductor, c !== outer else { return false }
+            return c.it2ProxyActive
+        }
+        let inner = try XCTUnwrap(session.conductor)
+        XCTAssertNil(inner.flowController)
+        session.writeTask("yes inner-flood\r")
+        addTeardownBlock { @MainActor in
+            session.writeTask("\u{3}")
+        }
+        let before = outer.flowController?.consumed ?? 0
+        waitUntil("the inner flood to get going", timeout: 90) {
+            (outer.flowController?.consumed ?? 0) > before + 100_000
+        }
+        let marker = "after-\(UUID().uuidString.prefix(8))"
+        session.writeTask("\u{3}")
+        session.writeTask("echo \(marker)-$((6*7))\r")
+        let deadline = Date(timeIntervalSinceNow: 15)
+        while Date() < deadline && !screenText(session).contains("\(marker)-42") {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.25))
+        }
+        XCTAssertFalse(screenText(session).contains("\(marker)-42"),
+                       "Ctrl-C took effect within 15 s without the inner framer controlled")
+    }
+
+    // host1 near, host2 far away.
+    func testCtrlCAtTheInnerPromptBehindASlowInnerHop() throws {
+        let (session, outer, inner) = try connectTwoHops(innerOptions: throttledOptions(bytesPerSecond: 20480))
+        let elapsed = floodThenInterrupt(session, outer, inner)
+        XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s: \(flowSummary(outer, inner))")
+    }
+
+    // A pane on the inner host whose session stops consuming holds back only itself, while the
+    // inner leader floods through both hops.
+    func testAStalledInnerPaneHoldsBackOnlyItself() throws {
+        let (session, outer, inner) = try connectTwoHops()
+        let client = StalledPaneClient()
+        var started: Int32?
+        inner.startPane(rows: 24, cols: 80, directory: "~", command: "exec yes stalled-inner-pane",
+                        client: client) { started = $0 }
+        waitUntil("the inner pane to start", timeout: commandTimeout) { started != nil }
+        let pid = try XCTUnwrap(started)
+        addTeardownBlock { @MainActor in inner.killPane(pid) }
+        let controller = try XCTUnwrap(inner.flowController)
+        waitUntil("the pane to use up its credit", timeout: commandTimeout) {
+            client.received > 0 && client.received >= (controller.granted(to: .pane(pid)) ?? 0)
+        }
+        let leaderBefore = controller.granted(to: .leader) ?? 0
+        session.writeTask("yes inner-flood\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        waitUntil("the inner leader to flood well past anything the pane could take", timeout: 90) {
+            (controller.granted(to: .leader) ?? 0) > leaderBefore + 4 * 1024 * 1024
+        }
+        XCTAssertLessThan(client.received, 512 * 1024,
+                          "the pane's output stopped at its window instead of piling up")
+        // A frame counts as arrived when it is parsed and reaches the client a moment later.
+        waitUntil("all that arrived to reach the pane's client, none of it consumed", timeout: commandTimeout) {
+            client.received == controller.backlog(of: .pane(pid))
+        }
+        let elapsed = interrupt(session)
+        XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s: \(flowSummary(outer, inner))")
+    }
+
+    // Ending the inner connection mid-flood leaves the outer one controlled, and the next inner
+    // connection is controlled again.
+    func testTheInnerConnectionEndsAndStartsAgainUnderFlowControl() throws {
+        let (session, outer, inner) = try connectTwoHops(outerOptions: throttledOptions(bytesPerSecond: 40960))
+        _ = floodThenInterrupt(session, outer, inner, bytes: 50_000)
+        session.writeTask("exit\r")
+        waitUntil("the outer conductor to be current again", timeout: commandTimeout) {
+            session.conductor === outer
+        }
+        XCTAssertNil(inner.flowController, "the ended conductor stopped its controller")
+        XCTAssertNotNil(outer.flowController)
+        var sessionLedger: FramerFlowLedger?
+        session.screen.performBlock(joinedThreads: { _, mutableState, _ in
+            sessionLedger = mutableState.flowLedger
+        })
+        let ledger = try XCTUnwrap(sessionLedger)
+        XCTAssertTrue(ledger.isActive(depth: 0))
+        XCTAssertFalse(ledger.isActive(depth: 1))
+
+        // The outer host still floods and stops at once.
+        session.writeTask("yes outer-flood\r")
+        let before = outer.flowController?.consumed ?? 0
+        waitUntil("the outer flood to get going", timeout: 60) {
+            (outer.flowController?.consumed ?? 0) > before + 50_000
+        }
+        let outerElapsed = interrupt(session)
+        XCTAssertLessThan(outerElapsed, 3, "Ctrl-C at the outer prompt took \(outerElapsed) s")
+
+        let it2ssh = NSHomeDirectory() + "/.iterm2/it2ssh"
+        session.writeTask("\(shellQuote(it2ssh)) localhost\r")
+        waitUntil("a new inner connection's flow control", timeout: connectTimeout) {
+            guard let current = session.conductor, current !== outer, current !== inner else {
+                return false
+            }
+            return current.it2ProxyActive && current.flowController != nil
+        }
+        let second = try XCTUnwrap(session.conductor)
+        XCTAssertTrue(ledger.isActive(depth: 1), "the successor listens at depth 1")
+        let elapsed = floodThenInterrupt(session, outer, second, bytes: 50_000)
+        XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s: \(flowSummary(outer, second))")
+    }
+
+    /// Recovers the connection as when the parser loses the conductor's hook (a terminal reset,
+    /// say), with no input to provoke output, and waits for a conductor at `depth` again.
+    private func recoverNested(_ session: PTYSession, toDepth depth: Int32, typing: String? = nil,
+                               timeout: TimeInterval = 30,
+                               file: StaticString = #filePath, line: UInt = #line) -> Conductor? {
+        let before = session.conductor
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            terminal?.parser.forceUnhookDCS(nil)
+        })
+        if let typing {
+            // Once recovery is under way: the session talks to a conductor that does not frame.
+            waitUntil("recovery to begin", timeout: timeout, file: file, line: line) {
+                session.conductor !== before && session.conductor?.framing == false
+            }
+            session.writeTask(typing)
+        }
+        var recovered: Conductor?
+        waitUntil("a recovered conductor at depth \(depth)", timeout: timeout, file: file, line: line) {
+            guard let c = session.conductor, c !== before, c.depth == depth, c.framing,
+                  !c.awaitingResynchronization else {
+                return false
+            }
+            recovered = c
+            return true
+        }
+        return recovered
+    }
+
+    // The flow control monitor (an advanced setting) shows the current session's connections,
+    // outermost first, sampled while a flood runs through both, and watching does not slow
+    // Ctrl-C. Closing its window turns the setting off. What the window drew is saved to a PNG
+    // named in the output, for a person to look at.
+    func testTheFlowControlMonitorShowsBothHops() throws {
+        let (session, outer, inner) = try connectTwoHops()
+        iTermAdvancedSettingsModel.setShowSSHFlowControlMonitor(true)
+        addTeardownBlock { @MainActor in iTermAdvancedSettingsModel.setShowSSHFlowControlMonitor(false) }
+        let monitor = FlowControlMonitor.instance
+        waitUntil("the monitor's window", timeout: commandTimeout) { monitor.isWindowVisible }
+        session.writeTask("yes inner-flood\r")
+        addTeardownBlock { @MainActor in session.writeTask("\u{3}") }
+        waitUntil("both hops to be sampled while the flood runs through them", timeout: 90) {
+            let connections = monitor.connections
+            return connections.map(\.guid) == [outer.guid, inner.guid]
+                && connections.allSatisfy { ($0.history.samples.last?.snapshot?.consumed ?? 0) > 200_000 }
+        }
+        let connections = monitor.connections
+        XCTAssertEqual(connections.map(\.depth), [outer.depth, inner.depth])
+        XCTAssertEqual(connections.map(\.reasonOff), [nil, nil])
+        let innerLatest = try XCTUnwrap(connections[1].history.samples.last?.snapshot)
+        XCTAssertNotNil(innerLatest.carrierWindow, "the inner hop shows what its carrier carries")
+        XCTAssertGreaterThan(connections[1].history.rate { $0.consumed }.compactMap(\.value).max() ?? 0, 0)
+
+        let view = try XCTUnwrap(monitor.monitorView)
+        let rep = try XCTUnwrap(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+        view.cacheDisplay(in: view.bounds, to: rep)
+        let path = (NSTemporaryDirectory() as NSString).appendingPathComponent("FlowControlMonitor-live.png")
+        try XCTUnwrap(rep.representation(using: .png, properties: [:])).write(to: URL(fileURLWithPath: path))
+        print("Wrote \(path)")
+
+        let elapsed = interrupt(session)
+        XCTAssertLessThan(elapsed, 3, "Ctrl-C took \(elapsed) s with the monitor open: \(flowSummary(outer, inner))")
+
+        view.window?.performClose(nil)
+        waitUntil("closing the window to turn the setting off", timeout: commandTimeout) {
+            !iTermAdvancedSettingsModel.showSSHFlowControlMonitor() && !monitor.isWindowVisible
+        }
+        XCTAssertTrue(monitor.connections.isEmpty, "it stopped sampling")
+    }
+
+    // The outer framer's recovery knows nothing of a framer nested in it, and an idle inner
+    // framer says nothing to start its own. iTerm2 remembers how deep the connection was and
+    // recovers each depth in turn, every time, with flow control at each.
+    func testANestedConnectionIsRecoveredEveryTime() throws {
+        for round in 0..<5 {
+            let (session, _, _) = try connectTwoHops()
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 2))
+            let inner = try XCTUnwrap(recoverNested(session, toDepth: 1), "round \(round)")
+            let outer = try XCTUnwrap(inner.parent)
+            waitUntil("flow control at both depths", timeout: commandTimeout) {
+                inner.flowController != nil && outer.flowController != nil
+            }
+            let elapsed = interrupt(session)
+            XCTAssertLessThan(elapsed, 5, "round \(round): the inner shell answers")
+            if round == 4 {
+                let floodElapsed = floodThenInterrupt(session, outer, inner, bytes: 50_000)
+                XCTAssertLessThan(floodElapsed, 10, "Ctrl-C took \(floodElapsed) s: \(flowSummary(outer, inner))")
+            }
+            close(session)
+        }
+    }
+
+    // Keys typed while the connection recovers belong to the inner shell. They wait for it
+    // rather than going to the outer framer's login, which is the inner framer.
+    func testKeysTypedDuringANestedRecoveryReachTheInnerShell() throws {
+        let (session, _, _) = try connectTwoHops()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 2))
+        let marker = "typed-\(UUID().uuidString.prefix(6))"
+        _ = try XCTUnwrap(recoverNested(session, toDepth: 1, typing: "echo \(marker)-$((6*7))\r"))
+        waitUntil("the typed command to run in the inner shell", timeout: commandTimeout) {
+            self.screenText(session).contains("\(marker)-42")
+        }
+    }
+
+    // If the inner connection is gone, its recovery gets no answer; iTerm2 gives up on it and
+    // the session is left at the outer host, working.
+    func testANestedRecoveryGivesUpWhenTheInnerConnectionIsGone() throws {
+        let (session, outer, inner) = try connectTwoHops()
+        // localhost: the inner login shell's parent is the inner framer, on this Mac.
+        let login = try XCTUnwrap(inner.framedPID)
+        let framer = try XCTUnwrap(parentPID(of: login))
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 1))
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            terminal?.parser.forceUnhookDCS(nil)
+        })
+        kill(framer, SIGKILL)
+        waitUntil("the session to settle at the outer host", timeout: 60) {
+            guard let c = session.conductor, c !== outer, c.depth == 0, c.framing,
+                  !c.awaitingResynchronization, !session.isRecoveringNestedSSHConnection else {
+                return false
+            }
+            return true
+        }
+        let elapsed = interrupt(session)
+        XCTAssertLessThan(elapsed, 5, "the outer host's shell answers")
+    }
+
+    private func parentPID(of pid: Int32) -> Int32? {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.stride
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else {
+            return nil
+        }
+        return info.kp_eproc.e_ppid
     }
 }

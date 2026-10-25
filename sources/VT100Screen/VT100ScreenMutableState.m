@@ -6203,18 +6203,21 @@ lengthExcludingInBandSignaling:0
 // token is then skipped when executed.
 - (void)handleFramesOnArrivalIn:(CVector *)vector {
     iTermFramerFlowLedger *ledger = self.flowLedger;
-    const BOOL recording = ledger.isActive;
     const int count = CVectorCount(vector);
     NSMutableArray<VT100Token *> *paneTokens = nil;
     for (int i = 0; i < count; i++) {
         VT100Token *token = CVectorGetObject(vector, i);
+        // Each depth's frames are counted for that depth's framer (nested SSH Integration).
+        const int depth = token.sshInfo.valid ? token.sshInfo.depth : 0;
         if (token.type == SSH_OUTPUT) {
             const BOOL isPane = token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL;
-            if (recording && token.sshFlowControlled) {
+            if (token.sshFlowControlled && [ledger isActiveForDepth:depth]) {
                 [ledger frameDidArriveWithLength:token.savedData.length
                                 sendMilliseconds:token.sshSendMilliseconds
                                            flags:token.sshFlowFlags
-                                            flow:isPane ? token.csi->p[0] : 0];
+                                            flow:isPane ? token.csi->p[0] : 0
+                                           depth:depth
+                             carrierMilliseconds:token.sshCarrierSendMilliseconds];
             }
             if (isPane && token.savedData) {
                 if (!paneTokens) {
@@ -6222,8 +6225,11 @@ lengthExcludingInBandSignaling:0
                 }
                 [paneTokens addObject:token];
             }
-        } else if (token.type == SSH_IT2 && recording) {
-            [self recordArrivalOfIT2Data:token.string ledger:ledger];
+        } else if (token.type == SSH_IT2 && [ledger isActiveForDepth:depth]) {
+            [self recordArrivalOfIT2Data:token.string
+                                  ledger:ledger
+                                   depth:depth
+                     carrierMilliseconds:token.sshCarrierSendMilliseconds];
         }
     }
     if (!paneTokens) {
@@ -6250,7 +6256,10 @@ lengthExcludingInBandSignaling:0
 
 // "<connid> data <base64> <send-ms> <flags>": it2 data under flow control (version 2). Credit
 // counts the decoded bytes.
-- (void)recordArrivalOfIT2Data:(NSString *)payload ledger:(iTermFramerFlowLedger *)ledger {
+- (void)recordArrivalOfIT2Data:(NSString *)payload
+                        ledger:(iTermFramerFlowLedger *)ledger
+                         depth:(int)depth
+           carrierMilliseconds:(int64_t)carrierMilliseconds {
     NSArray<NSString *> *parts = [payload componentsSeparatedByString:@" "];
     if (parts.count != 5 || ![parts[1] isEqualToString:@"data"]) {
         return;
@@ -6269,7 +6278,9 @@ lengthExcludingInBandSignaling:0
     [ledger frameDidArriveWithLength:length
                     sendMilliseconds:parts[3].longLongValue
                                flags:parts[4].intValue
-                                flow:iTermFramerFlowLedger.it2Flow];
+                                flow:iTermFramerFlowLedger.it2Flow
+                               depth:depth
+                 carrierMilliseconds:carrierMilliseconds];
 }
 
 // WARNING: This is called on PTYTask's thread.

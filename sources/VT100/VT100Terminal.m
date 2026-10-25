@@ -3275,12 +3275,19 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case SSH_OUTPUT:
             DLog(@"executing an ssh output token");
+            const int depth = token.sshInfo.valid ? token.sshInfo.depth : 0;
             if (token.sshFlowControlled) {
                 // A frame's decoded contents run before its SSH_OUTPUT token (see
                 // VT100Parser), so they have all executed by now.
                 [self.delegate terminalDidExecuteFlowControlledSSHOutputOfLength:token.savedData.length
                                                                 sendMilliseconds:token.sshSendMilliseconds
-                                                                           flags:token.sshFlowFlags];
+                                                                           flags:token.sshFlowFlags
+                                                                           depth:depth];
+            }
+            if (depth > 0 && token.csi->p[1] != SSH_OUTPUT_PANE_CHANNEL) {
+                // An inner framer's frame, kept only for the count above. Its bytes are part
+                // of the frame around it, which reads them as raw output.
+                break;
             }
             if (token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL) {
                 [self.delegate terminalDidReadSSHPaneOutput:token.savedData

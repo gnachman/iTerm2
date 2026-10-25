@@ -81,8 +81,19 @@ final class FramerFlowController {
         var silenceMinimum: TimeInterval = 2
         var silenceMultiplier = 4.0
         var rateBoundMultiplier = 2.0
+        /// A delivery rate sample spans at least this long. Output reaches the parser in bursts,
+        /// whenever it has waited for the token executor, and a burst read in a few milliseconds
+        /// would look like a link many times as fast.
+        var minimumRateInterval: TimeInterval = 0.25
         /// The most the framer reads from a source at once (framer.py FLOW_READ_SIZE).
         var frameSize = 4096
+        /// Credit is taken back with a drain when queueing delay exceeds the target this many
+        /// times over while the credit not yet arrived exceeds the window this many times over,
+        /// by at least `excessCreditMinimum`. A drain costs a round trip without grants, and after
+        /// an ordinary decrease the credit out is twice the window, so only far more is worth it.
+        var excessQueueingFactor = 4.0
+        var excessCreditFactor = 4.0
+        var excessCreditMinimum = 64.0 * 1024
     }
 
     /// Counters for logging and tests.
@@ -98,6 +109,88 @@ final class FramerFlowController {
         var roundTripSamples = 0
         /// Times a flow's share was capped because its session fell behind.
         var capDecreases = 0
+        /// Drains begun to take back credit granted for a faster path than there now is.
+        var creditRecalls = 0
+    }
+
+    /// Something the controller did that is rare and changes what it does next, for the flow
+    /// control monitor.
+    struct Event: Equatable {
+        var time: TimeInterval
+        var description: String
+    }
+
+    /// What the controller knows at one moment, for the flow control monitor. Taking one changes
+    /// nothing the controller later decides.
+    struct Snapshot {
+        enum Drain {
+            case idle
+            /// A drain was sent; waiting for its reply.
+            case draining
+            /// The drain came back; waiting for the ping that times the empty path.
+            case pinging
+        }
+
+        /// One frame's raw delay reading. One-way delays include the clocks' offset, so only
+        /// differences between them mean anything.
+        struct Reading {
+            var bytes: Int
+            var exempt: Bool
+            var oneWayDelay: TimeInterval
+        }
+
+        struct FlowState {
+            var flow: Flow
+            /// How much credit it may have outstanding.
+            var window: Double
+            /// Granted and not yet consumed.
+            var outstanding: Int
+            /// Arrived and not yet consumed.
+            var backlog: Int
+            var consumptionDelay: TimeInterval?
+            /// Its share's limit since its session fell behind.
+            var cap: Double?
+            /// Whether it was using its credit as of the last distribution.
+            var busy: Bool
+        }
+
+        /// W: how much credit may be outstanding across all flows.
+        var window: Double
+        var outstanding: Int
+        var granted: Int
+        var arrived: Int
+        var consumed: Int
+        /// The least window, and what an idle flow holds.
+        var floor: Double
+        /// The outer framer's leader window, for a nested framer.
+        var carrierWindow: Double?
+        var rttMin: TimeInterval
+        var target: TimeInterval
+        var feedbackDelay: TimeInterval
+        /// What the hops beyond a nested framer's add to its feedback.
+        var carrierDelay: TimeInterval
+        var queueingDelay: TimeInterval?
+        /// What queueing delay is measured from: the least delays by frame size, and the
+        /// correction for size they imply.
+        var delayBaseline: FrameDelayBaseline.Evaluation
+        /// Whether readings are corrected for size. Measured to a carrying frame, they hold no
+        /// transmission time.
+        var correctsForSize: Bool
+        var lastReading: Reading?
+        /// Bytes per second.
+        var deliveryRate: Double?
+        /// L: how far back the minimums look.
+        var baselineWindow: TimeInterval
+        var slowStart: Bool
+        var drain: Drain
+        var quarantined: Bool
+        /// Whether delays are measured to the carrying frame; nil before the first reading.
+        var measuresToCarrier: Bool?
+        var statistics: Statistics
+        /// The leader first.
+        var flows: [FlowState]
+        /// The most recent last.
+        var events: [Event]
     }
 
     private enum DrainState {
@@ -159,13 +252,32 @@ final class FramerFlowController {
     var consumed: Int { flows.values.reduce(0) { $0 + $1.consumed } }
     var outstanding: Int { granted - consumed }
 
-    private var base = WindowedExtreme(keepsMinimum: true)
+    /// What queueing delay is measured from.
+    private var delays = FrameDelayBaseline()
     private var roundTrip = WindowedExtreme(keepsMinimum: true)
     private var rate = WindowedExtreme(keepsMinimum: false)
     private var lastRoundTrip: TimeInterval
     private var lastRate: Double?
-    /// (time, owd) with owd increasing, for the minimum over the last rttmin.
-    private var recent = [(time: TimeInterval, owd: TimeInterval)]()
+    /// The last frame's delay reading, for the flow control monitor.
+    private var lastReading: Snapshot.Reading?
+    /// Recent events, for the flow control monitor; the most recent last.
+    private(set) var events = [Event]()
+    private static let eventsKept = 40
+    /// Raw readings, for the least over the last rttmin. They are corrected for size only when
+    /// compared, so that they and the baseline are always corrected alike.
+    private var recent = [(time: TimeInterval, delay: TimeInterval, bytes: Int)]()
+    /// The outer framer's leader window, when this controls a framer nested in it.
+    var carrierWindow: Double?
+    /// Whether delays are measured to a carrying frame's send time rather than to arrival; nil
+    /// before the first reading.
+    private var measuresToCarrier: Bool?
+    /// For frames measured to a carrier: how long after the carrier was sent the frame arrived,
+    /// least ever, and the most any reading in the last two rttmin exceeded that. The excess is
+    /// what the hops beyond this framer's add to its feedback now: their queue and transmission.
+    /// The most, since one frame that crossed quickly says little about the next.
+    private var carrierBase = WindowedExtreme(keepsMinimum: true)
+    private var carrierDelay: TimeInterval = 0
+    private var carrierExcesses = [(time: TimeInterval, excess: TimeInterval)]()
 
     private var slowStart = true
     private var lastDoubling: TimeInterval
@@ -237,55 +349,182 @@ final class FramerFlowController {
     }
 
     func rttMin(now: TimeInterval) -> TimeInterval {
-        roundTrip.value(now: now, window: baselineWindow) ?? lastRoundTrip
+        rttMin(now: now, peeking: false)
     }
 
     func target(now: TimeInterval) -> TimeInterval {
-        max(parameters.minimumTarget, rttMin(now: now))
+        target(now: now, peeking: false)
+    }
+
+    /// How long a change to the window takes to show in the delay: a round trip, and for an
+    /// inner framer's frames the time they now spend beyond its hop as well. The window grows
+    /// and shrinks at most once per this, or it would overshoot before seeing the result.
+    func feedbackDelay(now: TimeInterval) -> TimeInterval {
+        feedbackDelay(now: now, peeking: false)
     }
 
     /// Delivery rate in bytes per second, if measured.
     func deliveryRate(now: TimeInterval) -> Double? {
-        rate.value(now: now, window: baselineWindow) ?? lastRate
+        deliveryRate(now: now, peeking: false)
     }
 
     func floor(now: TimeInterval) -> Double {
-        guard let rate = deliveryRate(now: now) else {
-            return Double(parameters.initialCredit)
-        }
-        return min(max(rate * parameters.floorTime, parameters.floorMinimum), parameters.floorMaximum)
+        floor(now: now, peeking: false)
     }
 
     /// How often `tick` should run.
     func tickInterval(now: TimeInterval) -> TimeInterval {
-        max(parameters.minimumGrantInterval, rttMin(now: now) / parameters.grantIntervalRTTDivisor)
+        tickInterval(now: now, peeking: false)
     }
 
-    /// Queueing delay: the least any frame that arrived in the last rttmin waited.
+    private func tickInterval(now: TimeInterval, peeking: Bool) -> TimeInterval {
+        max(parameters.minimumGrantInterval, rttMin(now: now, peeking: peeking) / parameters.grantIntervalRTTDivisor)
+    }
+
+    /// Queueing delay: the least any frame that arrived in the last rttmin waited, or, if none
+    /// did and output is still flowing, what the last one waited.
     func queueingDelay(now: TimeInterval) -> TimeInterval? {
-        let horizon = now - rttMin(now: now)
-        recent.removeAll { $0.time < horizon }
-        guard let least = recent.first?.owd,
-              let base = base.value(now: now, window: baselineWindow) else {
-            return nil
-        }
-        return max(0, least - base)
+        queueingDelay(now: now, peeking: false)
     }
 
     /// How long a flow's bytes have been waiting for its session to consume them: the least
     /// any frame consumed in the last rttmin waited, or, if none was consumed, how long the
     /// oldest one has been waiting.
     func consumptionDelay(of flow: Flow, now: TimeInterval) -> TimeInterval? {
+        consumptionDelay(of: flow, now: now, peeking: false)
+    }
+
+    // Each derived value, computed either as the controller does, which ages out old readings,
+    // or, `peeking`, from copies, which leaves the controller exactly as it was. Windowed
+    // extremes rotate their buckets when read, so reading one at a time the controller would
+    // not have changes what it later decides.
+
+    private func extreme(_ keyPath: ReferenceWritableKeyPath<FramerFlowController, WindowedExtreme>,
+                         now: TimeInterval,
+                         peeking: Bool) -> Double? {
+        if peeking {
+            var copy = self[keyPath: keyPath]
+            return copy.value(now: now, window: baselineWindow)
+        }
+        return self[keyPath: keyPath].value(now: now, window: baselineWindow)
+    }
+
+    private func rttMin(now: TimeInterval, peeking: Bool) -> TimeInterval {
+        extreme(\.roundTrip, now: now, peeking: peeking) ?? lastRoundTrip
+    }
+
+    private func target(now: TimeInterval, peeking: Bool) -> TimeInterval {
+        max(parameters.minimumTarget, rttMin(now: now, peeking: peeking))
+    }
+
+    private func feedbackDelay(now: TimeInterval, peeking: Bool) -> TimeInterval {
+        rttMin(now: now, peeking: peeking) + carrierDelay
+    }
+
+    private func deliveryRate(now: TimeInterval, peeking: Bool) -> Double? {
+        extreme(\.rate, now: now, peeking: peeking) ?? lastRate
+    }
+
+    private func floor(now: TimeInterval, peeking: Bool) -> Double {
+        guard let rate = deliveryRate(now: now, peeking: peeking) else {
+            return Double(parameters.initialCredit)
+        }
+        return min(max(rate * parameters.floorTime, parameters.floorMinimum), parameters.floorMaximum)
+    }
+
+    /// Readings measured to a carrying frame hold none of their own transmission.
+    private var correctsForSize: Bool {
+        measuresToCarrier != true
+    }
+
+    private func queueingDelay(now: TimeInterval, peeking: Bool) -> TimeInterval? {
+        // On a slow link a flood's frames arrive farther apart than the round trip (4 KB at
+        // 60 KB/s takes 68 ms), so the last rttmin often holds none, and the controller would
+        // neither grow nor shrink the window on that tick. The last frame's reading stands then,
+        // while output is still flowing; a quiet session has none. (Taking the least of the last
+        // few frames instead would smooth out jitter, but a queue building up would show only
+        // several frames later, and Ctrl-C would wait that much longer.)
+        let horizon = now - rttMin(now: now, peeking: peeking)
+        let lastRound = recent.filter { $0.time >= horizon }
+        let readings: [(time: TimeInterval, delay: TimeInterval, bytes: Int)]
+        if !lastRound.isEmpty {
+            readings = lastRound
+        } else if let last = recent.last, last.time >= now - busyHorizon(now: now, peeking: peeking) {
+            readings = [last]
+        } else {
+            readings = []
+        }
+        if !peeking, let last = recent.last {
+            recent.removeAll { $0.time < min(horizon, last.time) }
+        }
+        let baseline = delays.evaluate(now: now, window: baselineWindow, corrects: correctsForSize)
+        guard let base = baseline.base,
+              let least = readings.map({ $0.delay - baseline.correction(forBytes: $0.bytes) }).min() else {
+            return nil
+        }
+        return max(0, least - base)
+    }
+
+    private func consumptionDelay(of flow: Flow, now: TimeInterval, peeking: Bool) -> TimeInterval? {
         guard var state = flows[flow] else {
             return nil
         }
-        let horizon = now - rttMin(now: now)
-        state.waits.removeAll { $0.time < horizon }
-        flows[flow] = state
-        if let least = state.waits.first?.wait {
+        let horizon = now - rttMin(now: now, peeking: peeking)
+        if !peeking {
+            state.waits.removeAll { $0.time < horizon }
+            flows[flow] = state
+        }
+        if let least = state.waits.first(where: { $0.time >= horizon })?.wait {
             return least
         }
         return state.oldestUnconsumed.map { now - $0.time }
+    }
+
+    func snapshot(now: TimeInterval) -> Snapshot {
+        let drain: Snapshot.Drain
+        switch drainState {
+        case .idle:
+            drain = .idle
+        case .draining:
+            drain = .draining
+        case .pinging:
+            drain = .pinging
+        }
+        let flowStates = flows.keys.sorted(by: Self.order).map { flow in
+            let state = flows[flow]!
+            return Snapshot.FlowState(flow: flow,
+                                      window: state.window,
+                                      outstanding: state.outstanding,
+                                      backlog: state.arrived - state.consumed,
+                                      consumptionDelay: consumptionDelay(of: flow, now: now, peeking: true),
+                                      cap: state.cap,
+                                      busy: state.busy)
+        }
+        return Snapshot(window: window,
+                        outstanding: outstanding,
+                        granted: granted,
+                        arrived: arrived,
+                        consumed: consumed,
+                        floor: floor(now: now, peeking: true),
+                        carrierWindow: carrierWindow,
+                        rttMin: rttMin(now: now, peeking: true),
+                        target: target(now: now, peeking: true),
+                        feedbackDelay: feedbackDelay(now: now, peeking: true),
+                        carrierDelay: carrierDelay,
+                        queueingDelay: queueingDelay(now: now, peeking: true),
+                        delayBaseline: delays.evaluate(now: now, window: baselineWindow,
+                                                       corrects: correctsForSize),
+                        correctsForSize: correctsForSize,
+                        lastReading: lastReading,
+                        deliveryRate: deliveryRate(now: now, peeking: true),
+                        baselineWindow: baselineWindow,
+                        slowStart: slowStart,
+                        drain: drain,
+                        quarantined: quarantined,
+                        measuresToCarrier: measuresToCarrier,
+                        statistics: statistics,
+                        flows: flowStates,
+                        events: events)
     }
 
     func window(of flow: Flow) -> Double? {
@@ -352,6 +591,10 @@ final class FramerFlowController {
     }
 
     /// A controlled frame reached iTerm2, sent at `sendMilliseconds` on the framer's clock.
+    /// Under nested SSH Integration, an inner framer's frame travels in the outer framer's, and
+    /// `carrierMilliseconds` is when the outer framer sent the one that carried its first line,
+    /// on that framer's clock. Its delay is then measured to there: this framer's hop alone,
+    /// including any wait in the outer host's pty, while the outer controller sees the rest.
     /// `limited` means the flow ran out of credit before it was sent; `exempt` means it came from
     /// the echo allowance. `now` must be on a clock that counts sleep, like CLOCK_MONOTONIC.
     func frameDidArrive(now: TimeInterval,
@@ -359,7 +602,8 @@ final class FramerFlowController {
                         sendMilliseconds: Int64,
                         bytes: Int,
                         limited: Bool,
-                        exempt: Bool) {
+                        exempt: Bool,
+                        carrierMilliseconds: Int64? = nil) {
         if endedFlows.contains(flow) {
             return
         }
@@ -390,7 +634,8 @@ final class FramerFlowController {
             // was paused or suspended, which can step its clock, or the path stalled. Either way
             // the baselines are suspect.
             statistics.silences += 1
-            reset(now: now)
+            reset(now: now, reason: String(format: "No frame for %.2f s after window-limited ones (threshold %.2f s)",
+                                           silence, silenceThreshold(now: now)))
             return
         }
         if let rateStart {
@@ -400,24 +645,43 @@ final class FramerFlowController {
             if limited {
                 rateWasLimited = true
             }
-            if now - rateStart >= rttMin(now: now) {
+            if now - rateStart >= max(rttMin(now: now), parameters.minimumRateInterval) {
                 takeRateSample(now: now, since: rateStart)
             }
         } else {
             rateStart = now
         }
         // A frame is seen once its last byte is in, so its reading includes the time to transmit
-        // it: 0.2 s for 4 KB at 20 KB/s. Small frames, such as echo, would then set a baseline
-        // that large ones never reach, and every large frame would look queued. Taking the
-        // transmission time out at the measured rate leaves roughly when its first byte came.
-        let transmission = deliveryRate(now: now).map { Double(bytes) / $0 } ?? 0
-        let owd = now - Double(sendMilliseconds) / 1000 - transmission
-        // The reading joins the baseline before dq is computed, so dq is never negative.
-        base.add(owd, now: now, window: baselineWindow)
-        while let last = recent.last, last.owd >= owd {
-            recent.removeLast()
+        // it; the baseline allows for that by frame size (see FrameDelayBaseline). Measured to a
+        // carrier, there is nothing to allow for: the carrier is the outer frame that held this
+        // frame's first line, so the reading holds none of its transmission.
+        let received = carrierMilliseconds.map { Double($0) / 1000 } ?? now
+        let carried = carrierMilliseconds != nil
+        if let measuresToCarrier, measuresToCarrier != carried {
+            // The outer framer's flow control started or stopped, and readings are now against
+            // another clock: the old baseline means nothing to them. As after a silence, a
+            // reset drain finds the empty path again.
+            self.measuresToCarrier = carried
+            reset(now: now, reason: carried ? "Delays are now measured to the carrying frame"
+                                            : "Delays are now measured on arrival")
+            return
         }
-        recent.append((now, owd))
+        measuresToCarrier = carried
+        if carrierMilliseconds != nil {
+            let lag = now - received
+            carrierBase.add(lag, now: now, window: baselineWindow)
+            let excess = max(0, lag - (carrierBase.value(now: now, window: baselineWindow) ?? lag))
+            let horizon = now - 2 * rttMin(now: now)
+            carrierExcesses.removeAll { $0.time < horizon }
+            carrierExcesses.append((now, excess))
+            carrierDelay = carrierExcesses.map(\.excess).max() ?? excess
+        }
+        let owd = received - Double(sendMilliseconds) / 1000
+        lastReading = Snapshot.Reading(bytes: bytes, exempt: exempt, oneWayDelay: owd)
+        delays.add(delay: owd, bytes: bytes, now: now, window: baselineWindow)
+        // Bounded here; queueingDelay keeps only the last rttmin.
+        recent.removeAll { $0.time < now - baselineWindow }
+        recent.append((now, owd, bytes))
     }
 
     /// The flow's session consumed `bytes` of its output, in the order it arrived.
@@ -470,12 +734,20 @@ final class FramerFlowController {
             return
         }
         let grantedWhenSent = unansweredDrains.removeFirst()
+        record(String(format: "Drain replied after %.2f s", now - drainSentAt), now: now)
         // The framer's credit was zero, everything it sent before replying has arrived, and a
         // grant sent after the drain (only once a drain was abandoned, or to a flow that began
         // since) reached it afterward.
         for flow in Array(flows.keys) {
             let state = flows[flow]!
-            flows[flow]!.granted = state.arrived + (state.granted - (grantedWhenSent[flow] ?? 0))
+            let corrected = state.arrived + (state.granted - (grantedWhenSent[flow] ?? 0))
+            flows[flow]!.granted = corrected
+            // A drain still unanswered was sent when the count was what it was before this
+            // correction. Shift its record with it, so that what it counts as granted since it
+            // was sent stays the same.
+            for i in unansweredDrains.indices where unansweredDrains[i][flow] != nil {
+                unansweredDrains[i][flow]! += corrected - state.granted
+            }
         }
         guard case .draining = drainState, unansweredDrains.isEmpty else {
             return
@@ -490,6 +762,7 @@ final class FramerFlowController {
             roundTripDidComplete(sentAt: now - roundTrip, now: now)
             return
         }
+        record(String(format: "Ping replied in %.3f s", roundTrip), now: now)
         quarantined = false
         quarantineEnd = now
         takeRoundTripSample(roundTrip, now: now)
@@ -499,15 +772,20 @@ final class FramerFlowController {
     /// The framer's safety valve fired: it granted itself credit, so the count is off.
     func valveDidOpen(now: TimeInterval) {
         statistics.valves += 1
+        record("The framer's safety valve opened", now: now)
         if case .idle = drainState {
             beginDrain(now: now, reset: false, sendCommand: true)
         }
     }
 
     /// Something invalidated the baselines, such as the Mac waking.
-    func reset(now: TimeInterval) {
-        base.reset()
+    func reset(now: TimeInterval, reason: String = "Reset requested") {
+        record("\(reason): reset" + (isDraining ? " (during a drain)" : ""), now: now)
+        delays.reset()
         recent.removeAll()
+        carrierBase.reset()
+        carrierDelay = 0
+        carrierExcesses.removeAll()
         rateBytes = 0
         rateStart = nil
         rateWasLimited = false
@@ -517,6 +795,13 @@ final class FramerFlowController {
         } else {
             drainIsReset = true
             quarantined = true
+        }
+    }
+
+    private func record(_ description: String, now: TimeInterval) {
+        events.append(Event(time: now, description: description))
+        if events.count > Self.eventsKept {
+            events.removeFirst(events.count - Self.eventsKept)
         }
     }
 
@@ -535,6 +820,16 @@ final class FramerFlowController {
             return
         }
         adjustWindow(now: now, elapsed: elapsed, windowLimited: windowLimited)
+        if !quarantined && creditIsExcessive(now: now) {
+            // The path slowed (a link throttled, a mobile network dropping back) and the window
+            // with it, but credit granted for the faster path cannot be taken back, and the
+            // framer would go on spending it: megabytes queued for a path carrying a few KB a
+            // second, with Ctrl-C waiting behind them. A drain zeroes what the framer has not
+            // spent, so only what is already on the way still has to arrive.
+            statistics.creditRecalls += 1
+            beginDrain(now: now, reset: false, sendCommand: true)
+            return
+        }
         if !quarantined && drainIsDue(now: now) {
             beginDrain(now: now, reset: false, sendCommand: true)
             return
@@ -570,8 +865,8 @@ final class FramerFlowController {
     /// How recently the framer must have run out of credit for the session to count as
     /// window-limited. On a path shorter than the grant cadence the framer cannot run out more
     /// often than grants arrive, so the round trip is stretched to two grant intervals.
-    private func activeHorizon(now: TimeInterval) -> TimeInterval {
-        max(rttMin(now: now), 2 * tickInterval(now: now))
+    private func activeHorizon(now: TimeInterval, peeking: Bool = false) -> TimeInterval {
+        max(rttMin(now: now, peeking: peeking), 2 * tickInterval(now: now, peeking: peeking))
     }
 
     /// How recently a flow must have run out of credit, or had output arrive, to count as busy.
@@ -579,10 +874,11 @@ final class FramerFlowController {
     /// bytes then wait behind up to a target of queue. On a slow path its frames also arrive
     /// far apart (4 KB takes 0.2 s at 20 KB/s, and longer when the path is shared), so the
     /// horizon adds two frames' transmission for each busy flow.
-    private func busyHorizon(now: TimeInterval) -> TimeInterval {
+    private func busyHorizon(now: TimeInterval, peeking: Bool = false) -> TimeInterval {
         let busy = max(1, flows.values.filter(\.busy).count)
-        let frames = deliveryRate(now: now).map { 2 * Double(busy * parameters.frameSize) / $0 } ?? 0
-        return max(activeHorizon(now: now), rttMin(now: now) + target(now: now)) + frames
+        let frames = deliveryRate(now: now, peeking: peeking).map { 2 * Double(busy * parameters.frameSize) / $0 } ?? 0
+        return max(activeHorizon(now: now, peeking: peeking),
+                   rttMin(now: now, peeking: peeking) + target(now: now, peeking: peeking)) + frames
     }
 
     /// Grants the flow what its window allows, if that is worth a grant.
@@ -680,10 +976,11 @@ final class FramerFlowController {
     }
 
     private func adjustWindow(now: TimeInterval, elapsed: TimeInterval, windowLimited: Bool) {
-        let rtt = rttMin(now: now)
+        let rtt = feedbackDelay(now: now)
         let target = target(now: now)
         if !slowStart && now - lastArrival > baselineWindow {
             // Idle for longer than L: probe again from the kept window.
+            record("Idle longer than L: slow start again", now: now)
             slowStart = true
             lastDoubling = now
         }
@@ -718,6 +1015,13 @@ final class FramerFlowController {
             upper = min(upper,
                         parameters.rateBoundMultiplier * rate * (rttMin(now: now) + target(now: now)))
         }
+        if let carrierWindow {
+            // Everything this framer sends travels in the outer framer's leader flow. Credit
+            // beyond what that carries, and a target's worth more for its own hop, would only
+            // wait in the outer host's pty.
+            let rate = deliveryRate(now: now) ?? 0
+            upper = min(upper, carrierWindow + rate * target(now: now))
+        }
         window = max(min(window, upper), floor(now: now))
     }
 
@@ -729,6 +1033,21 @@ final class FramerFlowController {
         // Outstanding credit alone is not evidence: an idle session always has it.
         return now - lastLimitedArrival <= parameters.heartbeatEvidence
             || Double(arrived - consumed) >= window / 4
+    }
+
+    /// Whether far more credit is out than the window allows while frames queue far beyond the
+    /// target: the path has slowed since the credit was granted.
+    private func creditIsExcessive(now: TimeInterval) -> Bool {
+        let notArrived = Double(granted - arrived)
+        guard notArrived > parameters.excessCreditFactor * window,
+              notArrived - window >= parameters.excessCreditMinimum,
+              let dq = queueingDelay(now: now),
+              dq > parameters.excessQueueingFactor * target(now: now) else {
+            return false
+        }
+        record(String(format: "Queueing %.0f ms against a target of %.0f ms, with %.0f KB not arrived for a window of %.0f KB: drain to take back credit",
+                      dq * 1000, target(now: now) * 1000, notArrived / 1024, window / 1024), now: now)
+        return true
     }
 
     private func drainIsDue(now: TimeInterval) -> Bool {
@@ -781,6 +1100,8 @@ final class FramerFlowController {
             statistics.resetDrains += 1
             quarantined = true
         }
+        record(reset ? "Reset drain began: no samples until it completes, which has no deadline"
+                     : "Drain began", now: now)
         drainState = .draining
         drainIsReset = reset
         drainSentAt = now
@@ -807,12 +1128,14 @@ final class FramerFlowController {
                            parameters.drainDeadlineRTTs * rttMin(now: now))
         if now - drainSentAt > deadline {
             statistics.abandonedDrains += 1
+            record(String(format: "Drain abandoned after %.2f s", now - drainSentAt), now: now)
             // Keep the old baseline and grant again. A late reply still resynchronizes.
             endDrain(now: now)
         }
     }
 
     private func endDrain(now: TimeInterval) {
+        record(String(format: "Drain ended after %.2f s; granting again", now - drainSentAt), now: now)
         drainState = .idle
         lastDrainLength = now - drainSentAt
         lastDrainEnd = now

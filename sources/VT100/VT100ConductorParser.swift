@@ -9,6 +9,9 @@ import Foundation
 
 @objc
 class VT100ConductorParser: NSObject, VT100DCSParserHook {
+    /// Under nested SSH Integration, when the outer framer sent the frame whose contents are
+    /// being parsed, if it was flow controlled; otherwise 0. Frames that begin in it take it.
+    @objc var carrierSendMilliseconds: Int64 = 0
     private var recoveryMode = false
     private var line = Data()
     private let uniqueID: String
@@ -337,6 +340,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 }
             }
             DLog("create builder with identifier \(builder.identifier)")
+            builder.carrierSendMilliseconds = carrierSendMilliseconds
             state = .output(builder: builder)
             return .canReadAgain
         }
@@ -369,6 +373,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         DLog("%it2 \(payload.semiVerboseDescription)")
         token.type = SSH_IT2
         token.string = payload
+        token.sshCarrierSendMilliseconds = carrierSendMilliseconds
         return .canReadAgain
     }
 
@@ -634,6 +639,9 @@ private class SSHOutputTokenBuilder {
     /// Under flow control: the framer's clock when it sent the frame, and its flow flags.
     private(set) var sendMilliseconds: Int64?
     private(set) var flowFlags: Int32 = 0
+    /// See VT100ConductorParser.carrierSendMilliseconds: taken when the frame's first line was
+    /// parsed.
+    var carrierSendMilliseconds: Int64 = 0
 
     enum Flavor: String {
         case output = "%output"
@@ -710,6 +718,7 @@ private class SSHOutputTokenBuilder {
             token.sshFlowControlled = true
             token.sshSendMilliseconds = sendMilliseconds
             token.sshFlowFlags = flowFlags
+            token.sshCarrierSendMilliseconds = carrierSendMilliseconds
         }
         return true
     }

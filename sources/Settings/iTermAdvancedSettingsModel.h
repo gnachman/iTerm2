@@ -613,6 +613,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openProfilesInNewWindow;
 + (NSString *)validCharactersInSSHUserNames;
 + (BOOL)sshFlowControl;
++ (BOOL)showSSHFlowControlMonitor;
++ (void)setShowSSHFlowControlMonitor:(BOOL)value;
 + (BOOL)vs16Supported;
 + (BOOL)vs16SupportedInPrimaryScreen;
 

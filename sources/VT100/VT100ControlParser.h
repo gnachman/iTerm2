@@ -21,6 +21,9 @@ NS_INLINE BOOL isc1(int c) {
 
 @interface VT100ControlParser : NSObject
 
+// See VT100DCSParser.
+@property(nonatomic) int64_t carrierSendMilliseconds;
+
 // If a DCS hook is present, returns a description of it for debug logging.
 @property(nonatomic, readonly) NSString *hookDescription;
 

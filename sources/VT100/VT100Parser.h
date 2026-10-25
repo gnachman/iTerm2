@@ -18,6 +18,9 @@
 @property(atomic, assign) NSStringEncoding encoding;
 @property(nonatomic, readonly) int streamLength;
 @property(atomic) BOOL literalMode;
+// When the frame of the outer framer whose contents this parses was sent, under nested SSH
+// Integration, if it was flow controlled; otherwise 0.
+@property(nonatomic) int64_t carrierSendMilliseconds;
 
 - (void)putStreamData:(const char *)bytes length:(int)length;
 - (void)clearStream;

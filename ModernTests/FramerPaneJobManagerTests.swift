@@ -129,6 +129,8 @@ final class FramerPaneJobManagerTests: XCTestCase {
     func testARestoredPaneReattachesOnceItsConductorResynchronizes() throws {
         let delegate = Delegate()
         let live = makeConductor(delegate)
+        // Answers below are not what a reset waits for, so use the reset that waits for none.
+        live.framerVersion = .v1
         let json = try XCTUnwrap(live.jsonValue)
         let restored = try XCTUnwrap(Conductor.create(json, delegate: delegate))
         let manager = try XCTUnwrap(FramerPaneJobManager(
