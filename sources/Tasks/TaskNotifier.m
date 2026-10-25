@@ -283,16 +283,20 @@ static int iTermTaskUnsafeFileDescriptor(id<iTermTask> task) {
     PtyTaskDebugLog(@"Begin remove task %p\n", (void*)task);
     PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
     pid_t pidToWaitOn = task.pidToWaitOn;
+    if (_monitors) {
+        [self reapPid:pidToWaitOn onceForTask:task];
+        if ([task hasCoprocess]) {
+            [self reapPid:[[task coprocess] pid] onceForTask:task];
+        }
+        [_monitors deregisterTask:task];
+        [tasksLock unlock];
+        return;
+    }
     if (pidToWaitOn > 0) {
         [self reapPid:pidToWaitOn];
     }
     if ([task hasCoprocess]) {
         [self reapPid:[[task coprocess] pid]];
-    }
-    if (_monitors) {
-        [_monitors deregisterTask:task];
-        [tasksLock unlock];
-        return;
     }
     [_tasks removeObject:task];
     tasksChanged = YES;
@@ -304,11 +308,34 @@ static int iTermTaskUnsafeFileDescriptor(id<iTermTask> task) {
     [self unblock];
 }
 
+- (void)deregisterTask:(id<iTermTask>)task completion:(void (^)(void))completion {
+    [self deregisterTask:task];
+    if (_monitors) {
+        [_monitors notifyWhenTaskStops:task completion:completion];
+        return;
+    }
+    // The select loop may still be servicing the task. Nothing waits for that today.
+    dispatch_async(dispatch_get_main_queue(), completion);
+}
+
 - (void)waitForPid:(pid_t)pid {
     [tasksLock lock];
     [self reapPid:pid];
     [tasksLock unlock];
     [self unblock];
+}
+
+// Call with tasksLock held. This runs from -[PTYTask dealloc], so the record lives in the task: a
+// weak reference to it can't be formed or loaded there.
+- (void)reapPid:(pid_t)pid onceForTask:(id<iTermTask>)task {
+    if (pid <= 0) {
+        return;
+    }
+    if (![task markPidHandedToReaper:pid]) {
+        DLog(@"pid %@ of %@ was already handed to the reaper", @(pid), task);
+        return;
+    }
+    [self reapPid:pid];
 }
 
 // Call with tasksLock held.

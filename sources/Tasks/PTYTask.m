@@ -73,6 +73,8 @@ static void HandleSigChld(int n) {
 
     dispatch_queue_t _jobManagerQueue;
     BOOL _isTmuxTask;
+    // Guarded by TaskNotifier's lock. See -markPidHandedToReaper:.
+    NSMutableIndexSet *_pidsHandedToReaper;
 }
 
 - (instancetype)init {
@@ -430,6 +432,21 @@ static void HandleSigChld(int n) {
         return;
     }
     [self.delegate threadedTaskBrokenPipe];
+}
+
+- (BOOL)markPidHandedToReaper:(pid_t)pid {
+    if ([_pidsHandedToReaper containsIndex:pid]) {
+        return NO;
+    }
+    if (!_pidsHandedToReaper) {
+        _pidsHandedToReaper = [[NSMutableIndexSet alloc] init];
+    }
+    [_pidsHandedToReaper addIndex:pid];
+    return YES;
+}
+
+- (void)deregisterWithCompletion:(void (^)(void))completion {
+    [[TaskNotifier sharedInstance] deregisterTask:self completion:completion];
 }
 
 // Main queue

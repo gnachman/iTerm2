@@ -158,6 +158,14 @@ class TokenExecutor: NSObject {
         budget.notifyWhenCapacityAvailable(on: queue, block)
     }
 
+    // Mutation queue, or the main queue in a joined block. Discards tokens read from the pty that
+    // haven't executed yet, such as a program's last output when its session restarts. Injected
+    // (high priority) tokens are kept.
+    @objc
+    func discardTokensFromPTY() {
+        impl.discardTokensFromPTY()
+    }
+
     // This takes ownership of vector.
     // You can call this on any queue.
     @objc
@@ -497,6 +505,18 @@ private class TokenExecutorImpl {
         assertQueue()
 #endif
         tokenQueue.removeAll()
+    }
+
+    func discardTokensFromPTY() {
+#if DEBUG
+        assertQueue()
+#endif
+        tokenQueue.removeAllNormalPriority()
+        if !isBackgroundSession && tokenQueue.isEmpty {
+            Self.activeSessionsWithTokens.mutableAccess { set in
+                set.remove(ObjectIdentifier(self))
+            }
+        }
     }
 
     // You can call this on any queue

@@ -227,6 +227,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 - (void)writeTask:(NSData*)data;
 
 - (void)stop;
+// Stops TaskNotifier from servicing this task, then calls `completion` on the main queue. With task
+// I/O monitors, that is once the task can no longer read into its delegate.
+- (void)deregisterWithCompletion:(void (^)(void))completion;
 
 // Called on any thread
 - (void)brokenPipe;

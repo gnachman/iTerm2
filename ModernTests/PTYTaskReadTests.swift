@@ -55,6 +55,17 @@ final class PTYTaskReadTests: XCTestCase {
         return task
     }
 
+    // TaskNotifier hands each of a task's pids to the reaper once, however many times the task is
+    // deregistered.
+    func testEachPidIsHandedToTheReaperOnce() throws {
+        let (read, write) = try makePipe()
+        defer { close(write) }
+        let task = try XCTUnwrap(makeTask(fd: read) as? iTermTask)
+        XCTAssertTrue(task.markPidHanded(toReaper: 123))
+        XCTAssertFalse(task.markPidHanded(toReaper: 123))
+        XCTAssertTrue(task.markPidHanded(toReaper: 456))
+    }
+
     private func makePipe() throws -> (read: Int32, write: Int32) {
         var fds: [Int32] = [-1, -1]
         guard pipe(&fds) == 0 else {

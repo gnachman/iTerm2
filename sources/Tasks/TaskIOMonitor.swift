@@ -574,6 +574,26 @@ final class TaskIOMonitorRegistry: NSObject {
         }
     }
 
+    // Any thread. Calls `completion` on the main queue once no monitor for `task` is running or
+    // stopping, so none can call into it again. Call after deregistering it, and don't register it
+    // again: that would be a monitor this doesn't wait for.
+    @objc(notifyWhenTaskStops:completion:)
+    func notifyWhenStopped(_ task: iTermTask, completion: @escaping () -> Void) {
+        let key = ObjectIdentifier(task)
+        let monitors = state.access { state in
+            it_assert(state.monitors[key] == nil, "\(task) is still registered")
+            return state.cancelling.values.filter { $0.task == key }.map { $0.monitor }
+        }
+        let group = DispatchGroup()
+        for monitor in monitors {
+            group.enter()
+            monitor.notifyWhenCancelled {
+                group.leave()
+            }
+        }
+        group.notify(queue: .main, execute: completion)
+    }
+
     // Any thread. See TaskIOMonitor.taskStateDidChange().
     @objc(unblockTask:)
     func unblock(_ task: iTermTask) {

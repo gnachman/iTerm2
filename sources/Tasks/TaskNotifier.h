@@ -40,6 +40,10 @@ extern NSString *const kCoprocessStatusChangeNotification;
 // Any thread. Runs `block` asynchronously on `queue` once hasReadCapacity may have become true. It
 // may run while there is still no capacity, so check again.
 - (void)notifyWhenReadCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block;
+// Called with TaskNotifier's lock held. Returns YES the first time it is called with `pid`, and NO
+// after that. A task is deregistered many times (by brokenPipe, a restart, -stop, and dealloc), and
+// a reaped pid may belong to another process, so each of a task's pids goes to the reaper once.
+- (BOOL)markPidHandedToReaper:(pid_t)pid;
 
 @end
 
@@ -57,6 +61,9 @@ typedef int (^iTermTaskNotifierSelect)(int nfds,
 
 - (void)registerTask:(id<iTermTask>)task;
 - (void)deregisterTask:(id<iTermTask>)task;
+// Deregisters `task`, then calls `completion` on the main queue. With task I/O monitors, that is once
+// nothing is servicing the task anymore, so it can't call into its delegate again.
+- (void)deregisterTask:(id<iTermTask>)task completion:(void (^)(void))completion;
 
 - (void)unblock;
 // Call after changing what `task`'s wantsRead, wantsWrite, or coprocess return.

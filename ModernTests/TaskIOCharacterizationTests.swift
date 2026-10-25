@@ -507,6 +507,13 @@ private final class FakeTask: NSObject, iTermTask {
         }
     }
 
+    // Guarded by TaskNotifier's lock.
+    private var pidsHandedToReaper = Set<pid_t>()
+
+    func markPidHanded(toReaper pid: pid_t) -> Bool {
+        return pidsHandedToReaper.insert(pid).inserted
+    }
+
     func didRegister() {
         let onMain = Thread.isMainThread
         signal.notify {
@@ -531,6 +538,8 @@ class TaskIOCharacterizationTests: XCTestCase {
     fileprivate var reapedPids = [pid_t]()
     // Pids the reaper stopped watching without reaping (for example, not a child).
     fileprivate var abandonedPids = [pid_t]()
+    // Pids handed to the reaper, in order. Empty when the notifier reaps with its dead pool.
+    fileprivate var reapRequests = [pid_t]()
     fileprivate let reapSignal = Signal()
 
     // Subclasses override this to reap with a ChildReaper instead of the dead pool.
@@ -565,7 +574,12 @@ class TaskIOCharacterizationTests: XCTestCase {
                 }
             }
         }
-        let reapPid: ((pid_t) -> Void)? = reaper.map { reaper in { pid in reaper.reap(pid) } }
+        let reapPid: ((pid_t) -> Void)? = reaper.map { reaper in
+            { [weak self] pid in
+                self?.reapSignal.notify { self?.reapRequests.append(pid) }
+                reaper.reap(pid)
+            }
+        }
         notifier = makeNotifier(coprocessChangeHandler: { [weak self] in
             guard let self else { return }
             coprocessChangeSignal.notify { self.coprocessChanges += 1 }
@@ -662,6 +676,24 @@ class TaskIOCharacterizationTests: XCTestCase {
         notifier.deregister(task)
         XCTAssertTrue(flush())
         withExtendedLifetime(pty) {}
+    }
+
+    // The completion runs on the main queue, whether or not the task was registered.
+    func testDeregisterCallsCompletionOnMainQueue() throws {
+        let (registered, registeredPTY) = try makeTask()
+        let (unregistered, unregisteredPTY) = try makeTask()
+        notifier.register(registered)
+        let completions = [registered, unregistered].map { task in
+            let completed = expectation(description: "Deregistered \(task)")
+            notifier.deregister(task) {
+                XCTAssertTrue(Thread.isMainThread)
+                completed.fulfill()
+            }
+            return completed
+        }
+        wait(for: completions, timeout: timeout)
+        XCTAssertTrue(flush())
+        withExtendedLifetime((registeredPTY, unregisteredPTY)) {}
     }
 
     // Documents current behavior: a task registered twice is still read once per iteration,
@@ -1406,6 +1438,54 @@ final class TaskIOMonitorCharacterizationTests: TaskIOCharacterizationWithChildR
         gate.signal()
         XCTAssertTrue(blocker.waitForReceived(count: 1))
         deregisterAndFlush(blocker, other)
+    }
+
+    // A task is deregistered again after its broken pipe did it: by a restarting session, by
+    // -stop, and when it is deallocated. The pid was handed to the reaper the first time and may
+    // belong to another process by now, so it must not be handed over again.
+    func testDeregisteringAgainDoesNotReapAgain() throws {
+        let pid = try spawn("/usr/bin/true", [])
+        let (task, pty) = try makeTask(pidToWaitOn: pid)
+        notifier.register(task)
+        deregisterAndFlush(task)
+        assertEventuallyReaped(pid)
+
+        let completed = expectation(description: "Deregistered")
+        notifier.deregister(task) {
+            completed.fulfill()
+        }
+        wait(for: [completed], timeout: timeout)
+        notifier.deregister(task)
+        reapSignal.notify {
+            XCTAssertEqual(reapRequests, [pid])
+        }
+        withExtendedLifetime(pty) {}
+    }
+
+    // Restarting a session waits for this before it resets the parser and starts a new task, so
+    // nothing the old task reads can reach the session afterwards.
+    func testDeregisterCompletionWaitsForReadInProgress() throws {
+        let (task, pty) = try makeTask()
+        let gate = DispatchSemaphore(value: 0)
+        task.setReadGate(gate)
+        notifier.register(task)
+        pty.writeToSlave(Data("a".utf8))
+        XCTAssertTrue(task.waitUntilBlockedInRead())
+
+        let completed = expectation(description: "Deregistered")
+        notifier.deregister(task) {
+            XCTAssertFalse(task.isBlockedInRead)
+            XCTAssertEqual(task.received, Data("a".utf8))
+            completed.fulfill()
+        }
+        // Queued on the main queue after anything deregistering queued there right away.
+        DispatchQueue.main.async {
+            task.setReadGate(nil)
+            gate.signal()
+        }
+        wait(for: [completed], timeout: timeout)
+        XCTAssertTrue(flush())
+        withExtendedLifetime(pty) {}
     }
 
     // When the task can't take more input, the monitor stops reading instead of blocking, and

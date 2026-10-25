@@ -618,6 +618,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Session should auto-restart after the pipe breaks.
     BOOL _shouldRestart;
+    // A restart is waiting for the old task to stop before starting the new program.
+    BOOL _newInstancePending;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
@@ -4148,6 +4150,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     _shell.sshIntegrationActive = NO;
 
+    if (_newInstancePending) {
+        // The new program hasn't started yet, so there is nothing to kill. It will start with the
+        // current command.
+        DLog(@"A restart is already pending");
+        return;
+    }
     if (_exited) {
         [self replaceTerminatedShellWithNewInstance];
     } else {
@@ -5235,7 +5243,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _shouldRestart = NO;
     RLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
     [self setExited:NO];
-    [_shell autorelease];
+    PTYTask *oldShell = [_shell autorelease];
     _shell = nil;
     [_logging stop];
 
@@ -5254,7 +5262,58 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_programStatusController removeAllRecords];
     [self clearTabStatus];
     [_tabStatusController programDidExit];
-    [self resetForRelaunch];
+    if ([TaskNotifier usesTaskIOMonitors]) {
+        [self startNewInstanceAfterTaskStops:oldShell];
+    } else {
+        [self resetForRelaunch];
+        [self startNewInstance];
+    }
+    [_naggingController willRecycleSession];
+    DLog(@"  replaceTerminatedShellWithNewInstance: return with terminalEnabled=%@", @(_screen.terminalEnabled));
+}
+
+// The old task's monitor may still be reading (for example, when the multiserver job manager reported
+// the broken pipe), so wait for it to stop before resetting the parser. Otherwise its last read
+// could reach the new program's parser. Whatever the old program sent that hasn't executed yet is
+// discarded: it might be what the user restarted to get away from.
+- (void)startNewInstanceAfterTaskStops:(PTYTask *)oldShell {
+    if (!oldShell) {
+        [self discardOutputAndResetForRelaunch];
+        [self startNewInstance];
+        return;
+    }
+    PTYTask *newShell = _shell;
+    oldShell.delegate = nil;
+    _newInstancePending = YES;
+    __weak __typeof(self) weakSelf = self;
+    [oldShell deregisterWithCompletion:^{
+        PTYSession *strongSelf = weakSelf;
+        if (strongSelf) {
+            strongSelf->_newInstancePending = NO;
+        }
+        // A session closed for good stops its task and clears the task's delegate. One whose
+        // closing can be undone still starts the program, as it would have before waiting, so a
+        // revive finds it running.
+        if (!strongSelf || strongSelf->_shell != newShell || newShell.delegate != strongSelf) {
+            RLog(@"Don't start a new instance in %@: the session changed while %@ stopped", strongSelf, oldShell);
+            return;
+        }
+        [strongSelf discardOutputAndResetForRelaunch];
+        [strongSelf startNewInstance];
+    }];
+}
+
+- (void)discardOutputAndResetForRelaunch {
+    _execDidFail = NO;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [mutableState.tokenExecutor discardTokensFromPTY];
+        [terminal resetForRelaunch];
+    }];
+}
+
+- (void)startNewInstance {
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
                    ssh:_sshState == iTermSSHStateProfile
@@ -5269,8 +5328,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             completion:^(BOOL ok) {
         [weakSelf.delegate sessionDidRestart:self];
     }];
-    [_naggingController willRecycleSession];
-    DLog(@"  replaceTerminatedShellWithNewInstance: return with terminalEnabled=%@", @(_screen.terminalEnabled));
 }
 
 - (void)lockScroll {

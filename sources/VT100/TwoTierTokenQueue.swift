@@ -135,6 +135,13 @@ class TwoTierTokenQueue {
         }
     }
 
+    // Removes the tokens that weren't added with high priority. Releasing them frees their budget
+    // slots.
+    func removeAllNormalPriority() {
+        DLog("remove all normal priority")
+        queues[1].removeAll()
+    }
+
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
         if gDebugLogging.boolValue {
             DLog("add \(tokenArray.count) tokens, highpri=\(highPriority)")
