@@ -32,4 +32,27 @@ final class SharedCounterTests: XCTestCase {
         let counter = KittyImageController.AutoincrementingNumber()
         assertUniqueWhenConcurrent { counter.allocate() }
     }
+
+    // The "last made" caches behind these must never hand back an object made for other input.
+    func testURLsMadeConcurrentlyMatchTheirInput() {
+        let mismatches = MutableAtomicObject(0)
+        DispatchQueue.concurrentPerform(iterations: 8) { i in
+            for j in 0..<2000 {
+                let expected = URL(string: "https://example.com/\(i)/\(j % 3)")!
+                let url = iTermURL(url: expected, identifier: "\(i)", target: nil)
+                let decoded = iTermURL(data: url.data, code: 0)
+                let attribute = iTermExternalAttribute(havingUnderlineColor: false,
+                                                       underlineColor: VT100TerminalColorValue(),
+                                                       url: url,
+                                                       blockIDList: nil,
+                                                       controlCode: nil,
+                                                       dualModeForeground: iTermDualModeColor(),
+                                                       dualModeBackground: iTermDualModeColor())
+                if url.url != expected || decoded?.url != expected || attribute?.url?.url != expected {
+                    mismatches.mutableAccess { $0 += 1 }
+                }
+            }
+        }
+        XCTAssertEqual(mismatches.value, 0)
+    }
 }

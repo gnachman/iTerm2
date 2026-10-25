@@ -33,13 +33,17 @@ class PathSniffer: NSObject {
     private let queue: DispatchQueue
     @objc weak var delegate: PathSnifferDelegate?
     private var acceptedRanges = [VT100GridCoordRange]()
-    private static var instances = [PathSniffer]()
+    // Keeps sniffers alive while stats are pending. Each sniffer works on its session's mutation
+    // queue, and sessions with queues of their own sniff at the same time, so this process-wide list
+    // is locked.
+    private static let instances = MutableAtomicObject([PathSniffer]())
+    // On `queue`. Stats pending.
     var count = 0 {
         didSet {
             if oldValue == 0 && count > 0 {
-                Self.instances.append(self)
+                Self.instances.mutableAccess { $0.append(self) }
             } else if oldValue > 0 && count == 0 {
-                Self.instances.remove(object: self)
+                Self.instances.mutableAccess { $0.remove(object: self) }
             }
         }
     }
@@ -91,6 +95,11 @@ extension PathSniffer {
         for candidate in pathExtractor.possiblePaths {
             stat(candidate)
         }
+    }
+
+    // How many sniffers are waiting for stats.
+    static var pendingCountForTesting: Int {
+        return instances.value.count
     }
 
     @objc var hasSideEffects: Bool { !remoteCandidates.isEmpty }

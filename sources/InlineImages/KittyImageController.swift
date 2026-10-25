@@ -25,12 +25,14 @@ protocol KittyImageControllerDelegate: AnyObject {
 class KittyImageController: NSObject {
     @objc weak var delegate: KittyImageControllerDelegate?
 
-    private class AutoincrementingNumber {
-        private var next = 0
+    // Any thread. Each session's mutation queue may allocate concurrently.
+    class AutoincrementingNumber {
+        private let next = iTermAtomicInt64Create()
+        deinit {
+            iTermAtomicInt64Free(next)
+        }
         func allocate() -> Int {
-            let value = next
-            next += 1
-            return value
+            return Int(iTermAtomicInt64Add(next, 1) - 1)
         }
     }
 

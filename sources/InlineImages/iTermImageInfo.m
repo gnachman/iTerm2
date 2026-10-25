@@ -102,8 +102,9 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
             queue = dispatch_queue_create("com.iterm2.LazyImageDecoding", DISPATCH_QUEUE_SERIAL);
         });
 
+        // `blocks` is shared by every instance, so it has a lock of its own.
         if (!_dictionary) {
-            @synchronized (self) {
+            @synchronized (blocks) {
                 if (_queuedBlock) {
                     // Move to the head of the queue.
                     NSUInteger index = [blocks indexOfObjectIdenticalTo:_queuedBlock];
@@ -135,12 +136,12 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
             });
         };
         _queuedBlock = [block copy];
-        @synchronized(self) {
+        @synchronized(blocks) {
             [blocks insertObject:_queuedBlock atIndex:0];
         }
         dispatch_async(queue, ^{
             void (^blockToRun)(void) = nil;
-            @synchronized(self) {
+            @synchronized(blocks) {
                 blockToRun = [blocks firstObject];
                 [blocks removeObjectAtIndex:0];
             }

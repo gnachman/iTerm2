@@ -124,13 +124,11 @@ class ButtonMark: iTermMark, ButtonMarkReading {
         }
     }
 
+    // Any thread. Each session's mutation queue may make marks concurrently.
     @objc static func generateID() -> Int {
-        defer {
-            nextId += 1
-        }
-        return nextId
+        return Int(iTermAtomicInt64Add(nextId, 1) - 1)
     }
-    private static var nextId = 0
+    private static let nextId = iTermAtomicInt64Create()
 
     @objc
     override init() {
