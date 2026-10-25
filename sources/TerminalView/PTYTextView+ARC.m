@@ -1595,10 +1595,14 @@ launchProfileInCurrentTerminal:(Profile *)profile
         _shellIntegrationInstallerWindow.window.isVisible) {
         return;
     }
+    iTermShellIntegrationWindowController *previous = _shellIntegrationInstallerWindow;
     _shellIntegrationInstallerWindow =
     [[iTermShellIntegrationWindowController alloc] initWithWindowNibName:@"iTermShellIntegrationWindowController"];
     [_shellIntegrationInstallerWindow.window makeKeyAndOrderFront:nil];
     _shellIntegrationInstallerWindow.delegate = self;
+    // A canceled install may have left helper shells that the previous installer still waits to
+    // exit.
+    [_shellIntegrationInstallerWindow takeOverHelperShellsFromInstaller:previous];
     [_shellIntegrationInstallerWindow.window center];
 }
 

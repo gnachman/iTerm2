@@ -2059,7 +2059,11 @@ Bug Fixes:
   minute or more later. Canceling a step or
   clicking Send Again now returns you to your
   own shell instead of leaving you inside the
-  installer’s helper shells at a “>> ” prompt.
+  installer’s helper shells at a “>> ” prompt,
+  even when your shell is slow to start them.
+  If you are still in one when you try again,
+  the installer says so instead of reporting
+  that you use bash.
 - An scp download that asks for a password no
   longer hangs if you open the Password Manager
   and close it without choosing a password.

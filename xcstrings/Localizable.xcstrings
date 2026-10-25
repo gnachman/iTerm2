@@ -175446,6 +175446,18 @@
         }
       }
     },
+    "ShellIntegrationInstaller.DiscoveredHelperShell" : {
+      "comment" : "Shown when discovering the shell finds a helper shell (with a “>> ” prompt) that a canceled shell integration install left running in the terminal, instead of the user's own shell",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🛑 The terminal is in a helper shell that an earlier install left running, not in your own shell. Enter “exit” until your own shell’s prompt is back, then select “Continue” to try again."
+          }
+        }
+      }
+    },
     "ShellIntegrationInstaller.Done" : {
       "comment" : "Message shown when shell integration install is complete",
       "extractionState" : "extracted_with_value",

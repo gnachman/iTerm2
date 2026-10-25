@@ -23,6 +23,17 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermShellIntegrationWindowController : NSWindowController<iTermShellIntegrationInstallerDelegate>
 @property (nonatomic, weak) id<iTermShellIntegrationWindowControllerDelegate> delegate;
 
+// How long to wait, after a cancel, for helper shells whose launch was typed but not yet seen to
+// prompt, so they can be exited. Once it passes nothing is typed. Settable for testing.
+@property (nonatomic) NSTimeInterval canceledHelperLaunchTimeout;
+// Exposed for testing: waiting, after a cancel, for launched helper shells to prompt.
+@property (nonatomic, readonly) BOOL waitingForCanceledHelperLaunch;
+
+// Call on a new installer for the same session as previous. Until helper shells that previous
+// left running have exited (or it stops waiting for them), discovery waits for them, so it asks
+// the user's shell rather than a helper.
+- (void)takeOverHelperShellsFromInstaller:(nullable iTermShellIntegrationWindowController *)previous;
+
 // Exposed for testing.
 @property (nonatomic, readonly) iTermShellIntegrationShell shell;
 @property (nullable, nonatomic, readonly, copy) NSString *dotdir;
