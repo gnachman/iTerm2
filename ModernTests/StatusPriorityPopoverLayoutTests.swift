@@ -25,7 +25,7 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-        let data = try Data(contentsOf: root.appendingPathComponent("sources/Localizable.xcstrings"))
+        let data = try Data(contentsOf: root.appendingPathComponent("xcstrings/Localizable.xcstrings"))
         let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         return try XCTUnwrap(json["strings"] as? [String: Any])
     }

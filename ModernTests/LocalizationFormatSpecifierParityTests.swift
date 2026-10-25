@@ -7,7 +7,7 @@
 //  ShellIntegrationInstaller.Discovered, which dropped the %@ for the detected
 //  shell name so Chinese users never saw which shell was found.
 //
-//  It reads the source catalog (sources/Localizable.xcstrings) directly, because
+//  It reads the source catalog (xcstrings/Localizable.xcstrings) directly, because
 //  the source language (en) is stored inline there rather than compiled to an
 //  en.lproj/Localizable.strings. Only plain single-value entries are compared;
 //  plural and substitution entries carry their own per-category structure and are
@@ -46,7 +46,7 @@ final class LocalizationFormatSpecifierParityTests: XCTestCase {
         return URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()   // ModernTests
             .deletingLastPathComponent()   // repo root
-            .appendingPathComponent("sources/Localizable.xcstrings")
+            .appendingPathComponent("xcstrings/Localizable.xcstrings")
     }
 
     // The plain string value of a localization, or nil if it uses plural variations
