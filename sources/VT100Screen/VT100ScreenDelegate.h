@@ -504,6 +504,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenDidReadRawSSHData:(NSData * _Nonnull)data;
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth;
 - (void)screenHandleIT2:(NSString * _Nullable)string depth:(int)depth;
+- (void)screenDidReceiveUnframedSSHPromptAtDepth:(int)depth;
 - (void)screenWillBeginSSHIntegration;
 - (void)screenBeginSSHIntegrationWithToken:(NSString * _Nonnull)token
                                   uniqueID:(NSString * _Nonnull)uniqueID

@@ -92,7 +92,16 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 
 - (BOOL)forceUnhookDCSReturningSuccess:(NSString *)uniqueID {
     @synchronized (self) {
-        if (!uniqueID.length || ![_controlParser shouldUnhook:uniqueID]) {
+        if (!uniqueID.length) {
+            return NO;
+        }
+        if (![_controlParser shouldUnhook:uniqueID]) {
+            // A nested conductor's hook belongs to the parser for its %output.
+            for (VT100Parser *child in _sshParsers.allValues) {
+                if ([child forceUnhookDCSReturningSuccess:uniqueID]) {
+                    return YES;
+                }
+            }
             return NO;
         }
         _dcsHooked = NO;
@@ -254,6 +263,7 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                                     case SSH_END:
                                     case SSH_TERMINATE:
                                     case SSH_IT2:
+                                    case SSH_UNFRAMED_PROMPT:
                                         // Meta-tokens, when emitted as the product of %output, belong
                                         // to the child but will not be properly marked up with ssh info.
                                         token.sshInfo = childInfo;
@@ -314,6 +324,7 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                     case SSH_RECOVERY_BOUNDARY:
                     case SSH_SIDE_CHANNEL:
                     case SSH_IT2:
+                    case SSH_UNFRAMED_PROMPT:
                         isSignaling = YES;
                         break;
 

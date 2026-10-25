@@ -126083,6 +126083,42 @@
         }
       }
     },
+    "PTYSession.SSHDisconnect" : {
+      "comment" : "Button that ends an SSH Integration connection",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Disconnect"
+          }
+        }
+      }
+    },
+    "PTYSession.SSHMayHaveEnded" : {
+      "comment" : "Announcement shown when a shell prompt appears while iTerm2 still thinks an SSH Integration connection is active, which suggests it2ssh was killed; placeholder is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It looks like the SSH connection to %@ ended unexpectedly. Disconnect to return to the shell that started it."
+          }
+        }
+      }
+    },
+    "PTYSession.SSHMayHaveEndedUnknownHost" : {
+      "comment" : "Announcement shown when a shell prompt appears while iTerm2 still thinks an SSH Integration connection to an unknown host is active, which suggests it2ssh was killed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It looks like the SSH connection ended unexpectedly. Disconnect to return to the shell that started it."
+          }
+        }
+      }
+    },
     "PTYSession.SSHSetupError" : {
       "comment" : "Banner shown when SSH environment setup fails",
       "extractionState" : "extracted_with_value",
