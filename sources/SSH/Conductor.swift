@@ -275,7 +275,7 @@ class Conductor: NSObject, SSHIdentityProvider {
     var parsedSSHArguments: ParsedSSHArguments {
         restorableState.parsedSSHArguments
     }
-    var depth: Int32 {
+    @objc var depth: Int32 {
         restorableState.depth
     }
     private var _parent: Conductor?
@@ -1822,6 +1822,23 @@ extension Conductor {
     }
 
     @objc func quit() {
+        cancelAllRequests()
+        send(.quit, .fireAndForget)
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
+        delegate?.conductorQuit()
+        delegate?.conductorStateDidChange()
+    }
+
+    // The it2ssh process behind this connection died, so nothing can be sent to the
+    // remote. Fail pending requests and forget the connection without writing
+    // anything or notifying the delegate; the caller unhooks.
+    @objc func abandon() {
+        log("abandon")
+        cancelAllRequests()
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
+    }
+
+    private func cancelAllRequests() {
         cancelEnqueuedRequests(where: { _ in true })
         switch state {
         case .willExecutePipeline(var contexts):
@@ -1838,10 +1855,6 @@ extension Conductor {
         }
         queue = []
         state = .ground
-        send(.quit, .fireAndForget)
-        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
-        delegate?.conductorQuit()
-        delegate?.conductorStateDidChange()
     }
 
     func eval(code: String) {

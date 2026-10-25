@@ -115,6 +115,7 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
         case SSH_END:
         case SSH_TERMINATE:
         case SSH_IT2:
+        case SSH_UNFRAMED_PROMPT:
         case DCS_SSH_HOOK:
         case SSH_OUTPUT:
         case SSH_RECOVERY_BOUNDARY:

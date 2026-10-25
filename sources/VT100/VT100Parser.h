@@ -22,7 +22,8 @@
 - (void)putStreamData:(const char *)bytes length:(int)length;
 - (void)clearStream;
 - (void)forceUnhookDCS:(NSString *)uniqueID;
-// Unhooks the DCS hook only if its unique ID matches. Returns whether a hook was removed.
+// Unhooks the DCS hook whose unique ID matches, whether it is this parser's or a nested
+// SSH conductor's. Returns whether a hook was removed.
 - (BOOL)forceUnhookDCSReturningSuccess:(NSString *)uniqueID;
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;

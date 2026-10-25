@@ -63,6 +63,33 @@ final class VT100ConductorForceUnhookTests: XCTestCase {
         XCTAssertEqual(text(parse(Array("local% ".utf8), parser: parser)), "")
     }
 
+    private func osc134(_ payload: String) -> [UInt8] {
+        return Array("\u{1b}]134;:\(payload)\u{1b}\\".utf8)
+    }
+
+    // A nested it2ssh dies on the remote host: its conductor's hook lives in the parser
+    // for the remote shell's %output, and Disconnect must be able to remove it.
+    func testForceUnhookNestedConductor() {
+        let (parser, _) = makeHookedParser()
+        var hook = osc134("%output out1 100 -1 0")
+        hook += Array("\u{1b}P2000pnone 555 Ym9vbA== - c3No\n".utf8)
+        hook += osc134("%end out1")
+        let hookToken = parse(hook, parser: parser).first { $0.type == DCS_SSH_HOOK }
+        let nestedID = hookToken?.string ?? ""
+        XCTAssertFalse(nestedID.isEmpty)
+
+        var output = osc134("%output out2 100 -1 0")
+        output += Array("hostA% ".utf8)
+        output += osc134("%end out2")
+        XCTAssertEqual(text(parse(output, parser: parser)), "")
+
+        XCTAssertTrue(parser.forceUnhookDCSReturningSuccess(nestedID))
+        output = osc134("%output out3 100 -1 0")
+        output += Array("hostA% ".utf8)
+        output += osc134("%end out3")
+        XCTAssertEqual(text(parse(output, parser: parser)), "hostA% ")
+    }
+
     func testForceUnhookIsIdempotent() {
         let (parser, dcsID) = makeHookedParser()
         XCTAssertTrue(parser.forceUnhookDCSReturningSuccess(dcsID))

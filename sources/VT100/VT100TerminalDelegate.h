@@ -625,6 +625,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth;
 - (void)terminalHandleIT2:(nullable NSString *)string depth:(int)depth;
+// A shell-integration prompt mark arrived outside the framing of the conductor at depth.
+- (void)terminalDidReceiveUnframedSSHPromptAtDepth:(int)depth;
 - (void)terminalUpdateEnv:(NSString *)value;
 - (void)terminalBeginSSHIntegeration:(nullable NSString *)args;
 - (void)terminalSendConductor:(NSString *)args;

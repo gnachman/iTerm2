@@ -3237,6 +3237,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                        depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
+        case SSH_UNFRAMED_PROMPT:
+            [self.delegate terminalDidReceiveUnframedSSHPromptAtDepth:token.sshInfo.valid ? token.sshInfo.depth : 0];
+            break;
+
         case DCS_BEGIN_SYNCHRONIZED_UPDATE:
             self.synchronizedUpdates = YES;
             break;
