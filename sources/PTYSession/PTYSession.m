@@ -21017,8 +21017,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     const pid_t foregroundProcessGroup = tcgetpgrp(fd);
     // Something started since then may have set the modes itself. Then only arm the
-    // repairer: it acts when a command starts with the shell's reapplied raw modes, which
-    // no program that wants a raw tty has.
+    // repairer: it acts when a command starts or the shell that ran it2ssh forks with the
+    // shell's reapplied raw modes, which no program that wants a raw tty has.
     const BOOL repairNow = [_sshClientMonitor mayRepairTTYWithForegroundProcessGroup:foregroundProcessGroup
                                                                      clientUniqueID:uniqueID];
     RLog(@"Repair tty modes now=%@ with process group %d in the foreground", @(repairNow), (int)foregroundProcessGroup);
@@ -21031,7 +21031,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
                                                 ttyPath:ttyPath
                                               goodModes:_preSSHTTYModes
-                                              repairNow:repairNow];
+                                              repairNow:repairNow
+                                         shellProcessID:[_sshClientMonitor shellProcessIDForClientUniqueID:uniqueID]];
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.ttyModeRepairer = repairer;
     }];

@@ -41,6 +41,11 @@ final class LiveShell {
         return masterFD
     }
 
+    /// The shell's process ID.
+    var processID: pid_t {
+        return childPID
+    }
+
     /// Whether the child process has exited.
     var hasExited: Bool {
         stateLock.lock(); defer { stateLock.unlock() }

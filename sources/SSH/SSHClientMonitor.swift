@@ -194,6 +194,8 @@ final class SSHClientMonitor: NSObject {
         // it2ssh's process group, and that of the shell that ran it.
         var processGroup: pid_t
         var shellProcessGroup: pid_t
+        // The shell that ran it, if known (F-541).
+        var shell: SSHClientProcessIdentity?
     }
     private var it2sshProcesses = [String: IT2SSHRecord]()
     private let inspector: SSHClientProcessInspecting
@@ -229,10 +231,16 @@ final class SSHClientMonitor: NSObject {
         }
         stopWatching(clientUniqueID: clientUniqueID)
         if let start = inspector.startTime(of: pid) {
+            let shellPID = inspector.parentPID(of: pid)
+            // A reparented it2ssh's parent is launchd, which is no shell.
+            let shell = shellPID > 1 ? inspector.startTime(of: shellPID).map {
+                SSHClientProcessIdentity(pid: shellPID, startTime: $0)
+            } : nil
             it2sshProcesses[clientUniqueID] = IT2SSHRecord(
                 identity: SSHClientProcessIdentity(pid: pid, startTime: start),
                 processGroup: inspector.processGroup(of: pid),
-                shellProcessGroup: inspector.processGroup(of: inspector.parentPID(of: pid)))
+                shellProcessGroup: inspector.processGroup(of: shellPID),
+                shell: shell)
         } else {
             it2sshProcesses.removeValue(forKey: clientUniqueID)
         }
@@ -387,6 +395,18 @@ final class SSHClientMonitor: NSObject {
             return 0
         }
         return record.shellProcessGroup
+    }
+
+    // The process ID of the shell that ran this connection's it2ssh with job control, if it
+    // is still running. 0 otherwise (F-541).
+    @objc(shellProcessIDForClientUniqueID:)
+    func shellProcessID(clientUniqueID: String) -> pid_t {
+        guard shellProcessGroup(clientUniqueID: clientUniqueID) > 0,
+              let shell = it2sshProcesses[clientUniqueID]?.shell,
+              inspector.startTime(of: shell.pid) == shell.startTime else {
+            return 0
+        }
+        return shell.pid
     }
 
     @objc(isWatchingClientUniqueID:)
