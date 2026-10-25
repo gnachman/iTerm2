@@ -140,6 +140,14 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 
 @property(nonatomic) VT100TerminalFramerRecoveryMode framerRecoveryMode;
 @property(nonatomic) NSInteger framerBoundaryNumber;
+
+// An abandoned SSH Integration connection's ssh client may outlive it and keep printing
+// its framer's output, which outside a conductor hook would otherwise start framer
+// recovery (and type "recover" into the shell that owns the tty). This refuses recovery
+// for the children of the conductor at parentDepth (-1 for the outermost connection)
+// until a new connection hooks there (F-354).
+- (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth;
+- (BOOL)framerRecoveryIsRefusedForChildrenOfConductorAtDepth:(int)parentDepth;
 @property(nonatomic, readonly) BOOL isExecutingToken;
 
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c

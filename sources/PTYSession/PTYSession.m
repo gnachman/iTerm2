@@ -20850,16 +20850,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_disconnectedSSHClientUniqueID release];
         _disconnectedSSHClientUniqueID = [target.clientUniqueID copy];
     }
+    // The abandoned connection's framer output (which carries its children's) arrives at its
+    // parent's depth.
+    const int parentDepth = target.parent ? target.parent.depth : -1;
     while (_conductor) {
         iTermConductor *conductor = _conductor;
         const BOOL found = (conductor == target);
         NSString *clientUniqueID = [[conductor.clientUniqueID copy] autorelease];
-        [conductor abandon];
-        [self unhookSSHConductor];
         if (clientUniqueID.length) {
-            // The dead it2ssh's ssh client would otherwise stay logged in (F-351).
+            // The dead it2ssh's ssh client would otherwise stay logged in (F-351). Kill it
+            // before unhooking so less of its remote conductor's output arrives unhooked.
             [_sshClientMonitor killOrphanedSSHClientForClientUniqueID:clientUniqueID];
         }
+        [conductor abandon];
+        [self unhookSSHConductor];
         if (found) {
             break;
         }
@@ -20869,7 +20873,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _connectingSSH = NO;
     [_queuedConnectingSSH release];
     _queuedConnectingSSH = nil;
-    [self forceUnhookAbandonedConductorDCS:dcsID];
+    [self forceUnhookAbandonedConductorDCS:dcsID refusingFramerRecoveryAtDepth:parentDepth];
 }
 
 static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID) {
@@ -26626,19 +26630,24 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     // hook off. This is a no-op if the hook is already gone.
     NSString *dcsID = [[_conductor.dcsID copy] autorelease];
     NSString *clientUniqueID = [[_conductor.clientUniqueID copy] autorelease];
+    const int parentDepth = _conductor.parent ? _conductor.parent.depth : -1;
     if (_conductor.parent == nil) {
         [_disconnectedSSHClientUniqueID release];
         _disconnectedSSHClientUniqueID = [_conductor.clientUniqueID copy];
     }
     [self unhookSSHConductor];
     [_sshWriteQueue setLength:0];
+    // The user ended this connection, so whatever its framer prints from now on must not
+    // start recovery (F-354).
+    [self refuseFramerRecoveryAtDepth:parentDepth];
     if (dcsID.length) {
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
             // If it2ssh is dead its ssh client would otherwise stay logged in (F-351).
             // This does nothing if it2ssh is alive or its ssh client already exited.
+            // Kill it before unhooking so less of its output arrives unhooked.
             [weakSelf killOrphanedSSHClientForClientUniqueID:clientUniqueID];
+            [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
         });
     }
 }
@@ -26651,6 +26660,28 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 - (void)forceUnhookAbandonedConductorDCS:(NSString *)dcsID {
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        if ([terminal.parser forceUnhookDCSReturningSuccess:dcsID]) {
+            RLog(@"Forced unhook of abandoned conductor DCS %@", dcsID);
+        }
+    }];
+}
+
+// The abandoned connection's ssh client may survive (e.g., it could not safely be killed)
+// and keep printing its framer's output. Once unhooked, its framer's OSC 134 output is
+// ignored rather than starting recovery, which would type into the shell that owns the
+// tty. Anything else it prints is drawn.
+- (void)refuseFramerRecoveryAtDepth:(int)parentDepth {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        RLog(@"Refuse framer recovery for children of depth %d", parentDepth);
+        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth];
+    }];
+}
+
+- (void)forceUnhookAbandonedConductorDCS:(NSString *)dcsID refusingFramerRecoveryAtDepth:(int)parentDepth {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        // Refuse first so no output parsed after the unhook can start recovery.
+        RLog(@"Refuse framer recovery for children of depth %d", parentDepth);
+        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth];
         if ([terminal.parser forceUnhookDCSReturningSuccess:dcsID]) {
             RLog(@"Forced unhook of abandoned conductor DCS %@", dcsID);
         }

@@ -231,6 +231,10 @@ typedef struct {
     NSNumber *_currentLiteral;
     iTermEmulationLevel _vtLevel;
     VT100TerminalKeyReportingFlags _keyReportingFlags;
+
+    // Parent depths (plus one, so the outermost connection's -1 fits) whose children's
+    // framer output must not start recovery because their connection was abandoned (F-354).
+    NSMutableIndexSet *_framerRecoveryRefusedParentDepths;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -485,6 +489,31 @@ static const int kMaxScreenRows = 4096;
                 modifyContent:YES];
     if (userInitiated || controlSequence) {
         [_delegate terminalRemoveProgramStatusRecords];
+    }
+}
+
+- (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth {
+    if (parentDepth < -1) {
+        return;
+    }
+    if (!_framerRecoveryRefusedParentDepths) {
+        _framerRecoveryRefusedParentDepths = [[NSMutableIndexSet alloc] init];
+    }
+    [_framerRecoveryRefusedParentDepths addIndex:parentDepth + 1];
+}
+
+- (BOOL)framerRecoveryIsRefusedForChildrenOfConductorAtDepth:(int)parentDepth {
+    return parentDepth >= -1 && [_framerRecoveryRefusedParentDepths containsIndex:parentDepth + 1];
+}
+
+- (void)allowFramerRecoveryForChildrenOfConductorsAtOrBelowDepth:(int)parentDepth {
+    if (parentDepth < -1) {
+        return;
+    }
+    const NSUInteger first = parentDepth + 1;
+    const NSUInteger last = _framerRecoveryRefusedParentDepths.lastIndex;
+    if (last != NSNotFound && last >= first) {
+        [_framerRecoveryRefusedParentDepths removeIndexesInRange:NSMakeRange(first, last - first + 1)];
     }
 }
 
@@ -2829,7 +2858,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case XTERMCC_FRAMER_WRAPPER:
             switch (self.framerRecoveryMode) {
                 case VT100TerminalFramerRecoveryModeNone:
-                    if (token.sshInfo.valid) {
+                    if ([self framerRecoveryIsRefusedForChildrenOfConductorAtDepth:token.sshInfo.valid ? token.sshInfo.depth : -1]) {
+                        // An abandoned connection's ssh client is still printing its framer's
+                        // output. Recovering would type into the shell that owns the tty, so
+                        // ignore it like any other unrecognized OSC.
+                        DLog(@"Ignore framer output from an abandoned connection");
+                    } else if (token.sshInfo.valid) {
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:token.sshInfo.depth];
                     } else {
                         // The token description can embed the wrapped conductor payload; log the type only in the ring.
@@ -3174,6 +3208,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case SSH_INIT:
+            // A new connection's framer output is its own, so it may recover again. Any
+            // refusal for deeper connections is stale too. An orphaned ssh client that
+            // could not be killed and still prints at this depth could start recovery
+            // again after this, but that requires it to outlive the new connection's setup.
+            [self allowFramerRecoveryForChildrenOfConductorsAtOrBelowDepth:token.sshInfo.valid ? token.sshInfo.depth - 1 : -1];
             [self.delegate terminalDidHookSSHConductorWithParams:token.string];
             break;
 

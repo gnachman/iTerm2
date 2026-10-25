@@ -1011,6 +1011,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Writes output as though a key was pressed. Does not broadcast. Supports tmux integration properly.
 - (void)writeTaskNoBroadcast:(NSString *)string;
 
+// Ends the SSH Integration connection with this it2ssh unique ID and every connection
+// nested in it without writing anything, because its it2ssh is gone. Removes its DCS hook.
+// If its ssh client outlives it, that client's framer output (OSC 134) is ignored rather
+// than starting recovery.
+- (void)abandonSSHThroughClientUniqueID:(NSString *)uniqueID NS_SWIFT_NAME(abandonSSH(throughClientUniqueID:));
+
 // Write with a particular encoding. If the encoding is just session.terminal.encoding then pass
 // NO for `forceEncoding` and the terminal's encoding will be used instead of `optionalEncoding`.
 - (void)writeTaskNoBroadcast:(NSString *)string
