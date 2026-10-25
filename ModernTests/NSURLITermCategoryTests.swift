@@ -43,6 +43,26 @@ final class NSURLITermCategoryTests: XCTestCase {
                        "https://example.com/?a=1&b=value&c=3")
     }
 
+    // T-102: a server decodes + in a query as a space, so “c++” must arrive as %2B%2B, and the
+    // characters that separate query items must not split the value.
+    func testURLByReplacingFormatSpecifier_QueryValueEscapesPlusAndSeparators() {
+        XCTAssertEqual(replacing("https://example.com/search?q=%@", with: "c++"),
+                       "https://example.com/search?q=c%2B%2B")
+        XCTAssertEqual(replacing("https://example.com/search?q=%@&x=1", with: "a&b=c d#e"),
+                       "https://example.com/search?q=a%26b%3Dc%20d%23e&x=1")
+    }
+
+    // T-102: the rest of the query keeps its own encoding, where + may mean a space.
+    func testURLByReplacingFormatSpecifier_QueryValueKeepsTheRestOfTheQuery() {
+        XCTAssertEqual(replacing("https://example.com/search?a=b+c&q=%@&d=%2B", with: "1+1"),
+                       "https://example.com/search?a=b+c&q=1%2B1&d=%2B")
+    }
+
+    func testURLByReplacingFormatSpecifier_QueryNameEscapesPlus() {
+        XCTAssertEqual(replacing("https://example.com/?a=1&%@=2", with: "c++"),
+                       "https://example.com/?a=1&c%2B%2B=2")
+    }
+
     func testURLByReplacingFormatSpecifier_QueryName() {
         XCTAssertEqual(replacing("https://example.com/?a=1&%@=2&c=3"),
                        "https://example.com/?a=1&value=2&c=3")

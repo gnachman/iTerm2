@@ -65,6 +65,19 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
     return [NSString stringWithFormat:@"%@://%@%@", components.scheme ?: @"?", host, path];
 }
 
+// Characters left as they are in a query item's name or value: those allowed in a query, less
+// the ones that separate items or that a server decodes as something else.
++ (NSCharacterSet *)it_queryItemAllowedCharacterSet {
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *mutableSet = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
+        [mutableSet removeCharactersInString:@"&=+#;"];
+        set = [mutableSet copy];
+    });
+    return set;
+}
+
 + (nullable NSURL *)urlByReplacingFormatSpecifier:(NSString *)formatSpecifier
                                          inString:(NSString *)string
                                         withValue:(NSString *)value {
@@ -77,28 +90,34 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
                                                             withString:placeholder];
     NSURLComponents *components = [[NSURLComponents alloc] initWithString:urlString];
 
+    // The query is edited in its percent-encoded form so the rest of it keeps its own encoding.
+    // The placeholder is hex digits, so it looks the same encoded. The value is encoded here
+    // because NSURLComponents leaves + unescaped in a query item, and servers decode + in a
+    // query as a space, so “c++” would be searched for as “c  ”.
+    NSString *encodedValue = [value stringByAddingPercentEncodingWithAllowedCharacters:[NSURL it_queryItemAllowedCharacterSet]] ?: @"";
+
     // Query item value?
     {
-        NSMutableArray<NSURLQueryItem *> *queryItems = [components.queryItems mutableCopy];
+        NSMutableArray<NSURLQueryItem *> *queryItems = [components.percentEncodedQueryItems mutableCopy];
         const NSUInteger i = [queryItems indexOfObjectPassingTest:^BOOL(NSURLQueryItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return [obj.value isEqualToString:placeholder];
         }];
         if (queryItems && i != NSNotFound) {
-            queryItems[i] = [NSURLQueryItem queryItemWithName:queryItems[i].name value:value];
-            components.queryItems = queryItems;
+            queryItems[i] = [NSURLQueryItem queryItemWithName:queryItems[i].name value:encodedValue];
+            components.percentEncodedQueryItems = queryItems;
             return components.URL;
         }
     }
 
     // Query item name?
     {
-        NSMutableArray<NSURLQueryItem *> *queryItems = [components.queryItems mutableCopy];
+        NSMutableArray<NSURLQueryItem *> *queryItems = [components.percentEncodedQueryItems mutableCopy];
         const NSUInteger i = [queryItems indexOfObjectPassingTest:^BOOL(NSURLQueryItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             return [obj.name isEqualToString:placeholder];
         }];
         if (queryItems && i != NSNotFound) {
-            queryItems[i] = [NSURLQueryItem queryItemWithName:value value:queryItems[i].value];
-            components.queryItems = queryItems;
+            queryItems[i] = [NSURLQueryItem queryItemWithName:encodedValue value:queryItems[i].value];
+            components.percentEncodedQueryItems = queryItems;
             return components.URL;
         }
     }

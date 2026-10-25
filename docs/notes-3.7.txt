@@ -1961,3 +1961,6 @@ Bug Fixes:
   current folder when it can’t open the
   ~/.iterm2 folder, as when a file has that
   name. It says they were not installed.
+- Search the Web for Selection now finds text
+  that contains a plus sign. Before, “c++” was
+  searched for as “c” followed by spaces.
