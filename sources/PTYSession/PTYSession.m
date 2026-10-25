@@ -23738,6 +23738,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return self.processInfoProvider;
 }
 
+- (id<PaneFocusFollowsMousePane>)statusBarFocusFollowsMousePane {
+    return self.view;
+}
+
 - (iTermFindDriver *)statusBarFindDriver {
     // Always use this session's find driver. For synthetic sessions (instant replay or filtering),
     // the synthetic session has taken ownership of the status bar view controller.

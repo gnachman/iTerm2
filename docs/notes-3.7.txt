@@ -1728,6 +1728,10 @@ Bug Fixes:
   pointer to a pane whose find field had focus
   no longer selects the whole query, so the next
   key you type doesn’t replace it.
+- With Focus Follows Mouse and “…even to views
+  like Search or Composer” on, the status bar’s
+  search field now takes focus when the pointer
+  moves over it, like the find bar does.
 - The donation link in the Settings and Edit
   Session title bars no longer truncates the
   window title.

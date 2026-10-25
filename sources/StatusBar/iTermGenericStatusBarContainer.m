@@ -7,6 +7,8 @@
 
 #import "iTermGenericStatusBarContainer.h"
 
+#import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
@@ -29,6 +31,7 @@
     if (self) {
         self.wantsLayer = YES;
         self.layer.masksToBounds = NO;
+        [self addFocusFollowsMouseTrackingArea];
     }
     return self;
 }
@@ -130,6 +133,46 @@
 
 - (void)redraw {
     [self setNeedsDisplay:YES];
+}
+
+#pragma mark - Focus follows mouse
+
+// The window's status bar is outside every pane, so it belongs to the session it shows.
+- (id<PaneFocusFollowsMousePane>)it_focusFollowsMouseOwningPane {
+    return [self.delegate genericStatusBarContainerFocusFollowsMousePane];
+}
+
+// No pane's tracking area covers the window's status bar, so focus follows mouse needs its own
+// to notice the pointer moving onto or off of it.
+- (void)addFocusFollowsMouseTrackingArea {
+    const NSTrackingAreaOptions options = (NSTrackingMouseEnteredAndExited |
+                                           NSTrackingMouseMoved |
+                                           NSTrackingActiveAlways |
+                                           NSTrackingEnabledDuringMouseDrag |
+                                           NSTrackingInVisibleRect);
+    [self addTrackingArea:[[NSTrackingArea alloc] initWithRect:NSZeroRect
+                                                       options:options
+                                                         owner:self
+                                                      userInfo:nil]];
+}
+
+- (void)mouseEntered:(NSEvent *)event {
+    DLog(@"mouseEntered %@", self);
+    [[iTermPaneFocusFollowsMouse shared] pointerMoved];
+}
+
+- (void)mouseExited:(NSEvent *)event {
+    DLog(@"mouseExited %@", self);
+    [[iTermPaneFocusFollowsMouse shared] pointerMoved];
+}
+
+- (void)mouseMoved:(NSEvent *)event {
+    iTermPaneFocusFollowsMouse *focusFollowsMouse = [iTermPaneFocusFollowsMouse shared];
+    id<PaneFocusFollowsMousePane> pane = self.it_focusFollowsMouseOwningPane;
+    if (pane && [focusFollowsMouse wantsPointerMovementFor:pane]) {
+        // Moving onto the search field happens without an entered event.
+        [focusFollowsMouse pointerMoved];
+    }
 }
 
 @end

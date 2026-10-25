@@ -2592,6 +2592,11 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     return [self.delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:YES];
 }
 
+// The window's status bar belongs to the session whose status bar it shows.
+- (id<PaneFocusFollowsMousePane>)genericStatusBarContainerFocusFollowsMousePane {
+    return [_statusBarViewController.delegate statusBarFocusFollowsMousePane];
+}
+
 @end
 
 BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void) {
