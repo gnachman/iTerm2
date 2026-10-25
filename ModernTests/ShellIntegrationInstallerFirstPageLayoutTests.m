@@ -30,6 +30,7 @@
 @property(nonatomic, readonly) NSView *view;
 @property(nonatomic, strong) NSButton *utilities;
 @property(nonatomic, strong) NSTextField *utilitiesLabel;
+@property(nonatomic, strong) NSTextField *descriptionLabel;
 @optional
 - (void)fitUtilitiesToContent;
 @end
@@ -131,6 +132,27 @@
 - (void)testUtilitiesFitInEveryLanguage {
     for (NSString *language in @[ @"en", @"de", @"ja", @"pt-BR", @"ru", @"zh-Hans" ]) {
         [self checkLanguage:language];
+    }
+}
+
+// T-94: the “Learn more.” links had no font, so they drew in Helvetica 12 instead of the
+// label's font.
+- (void)testLearnMoreLinksUseTheLabelFont {
+    NSViewController<ShellIntegrationFirstPageLayoutForTesting> *vc = [self loadViewController];
+    XCTAssertNotNil(vc.view);
+    for (NSTextField *label in @[ vc.descriptionLabel, vc.utilitiesLabel ]) {
+        NSAttributedString *string = label.attributedStringValue;
+        __block BOOL sawLink = NO;
+        [string enumerateAttributesInRange:NSMakeRange(0, string.length)
+                                   options:0
+                                usingBlock:^(NSDictionary<NSAttributedStringKey, id> *attrs, NSRange range, BOOL *stop) {
+            if (attrs[NSLinkAttributeName]) {
+                sawLink = YES;
+            }
+            XCTAssertEqualObjects(attrs[NSFontAttributeName], label.font,
+                                  @"%@", [string.string substringWithRange:range]);
+        }];
+        XCTAssertTrue(sawLink, @"%@", string.string);
     }
 }
 

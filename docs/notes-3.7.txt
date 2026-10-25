@@ -2081,3 +2081,6 @@ Bug Fixes:
 - Search the Web for Selection now finds text
   that contains a plus sign. Before, “c++” was
   searched for as “c” followed by spaces.
+- The “Learn more.” links on the first page of
+  the shell integration installer now use the
+  same font as the text around them.
