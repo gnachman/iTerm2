@@ -33,6 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSTextField *sendShellCommandsStepListField;
 // The command the helper sh runs in the utilities folder to receive and unpack the archive.
 @property (class, nonatomic, readonly) NSString *receiveUtilitiesCommand;
+// The command that makes the helper sh enter the utilities folder and says whether it did.
++ (NSString *)commandToEnterUtilitiesFolder:(NSString *)folder NS_SWIFT_NAME(commandToEnterUtilitiesFolder(_:));
 @end
 
 NS_ASSUME_NONNULL_END

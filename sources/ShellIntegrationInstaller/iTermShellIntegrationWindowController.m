@@ -293,6 +293,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return iTermShellIntegrationReceiveUtilitiesCommand;
 }
 
+// The archive is unpacked in the current directory, so the answer says whether cd worked (it
+// fails when ~/.iterm2 is a file, for example). The empty quotes keep the echo of the command
+// from looking like either answer.
++ (NSString *)commandToEnterUtilitiesFolder:(NSString *)folder {
+    return [NSString stringWithFormat:@"cd %@ && echo it2-\"\"cd-done || echo it2-\"\"cd-failed\n", folder];
+}
+
 - (BOOL)showingDownloadAndRunPage {
     return self.state == iTermShellIntegrationInstallationStateDownloadAndRunConfirm;
 }
@@ -1141,15 +1148,57 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"it2-mkdir-done"
                             expectation:expectation]];
-    [result appendString:[self sendText:[NSString stringWithFormat:@"cd %@; echo it2-\"\"cd-done\n", folder]
-                             reallySend:reallySend
-                             afterRegex:@"it2-cd-done"
-                            expectation:expectation]];
     NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"utilities" withExtension:@"tgz"];
+    // If cd fails, nothing more may be typed but the exits.
+    NSString *cdCommand = [iTermShellIntegrationWindowController commandToEnterUtilitiesFolder:folder];
     if (!url) {
         completion(NO);
         return result;
     }
+    if (!reallySend) {
+        [result appendString:cdCommand];
+        [result appendString:iTermShellIntegrationReceiveUtilitiesCommand];
+        [result appendString:[self encodedUtilitiesArchiveFromURL:url]];
+        [result appendString:self.exitHelperShellString];
+        return result;
+    }
+    // Whether to go on depends on sh's answer, so the rest is not chained after the command like
+    // the other texts: the answer's completion types it, or gives up.
+    __weak __typeof(self) weakSelf = self;
+    const NSUInteger generation = _cancellationGeneration;
+    [result appendString:[self sendText:cdCommand
+                             reallySend:YES
+                             afterRegex:@"it2-cd-(done|failed)"
+                            expectation:expectation
+                                didSend:nil
+                             completion:^(NSArray<NSString *> *captures) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_cancellationGeneration != generation) {
+            DLog(@"Not answering the utilities cd command after a cancel");
+            return;
+        }
+        if (![captures[1] isEqualToString:@"done"]) {
+            DLog(@"cd to the utilities folder failed");
+            // sh printed the answer, so it is reading commands.
+            [strongSelf helperShellsBecameIdle];
+            [strongSelf exitIdleHelperShells];
+            completion(NO);
+            return;
+        }
+        [strongSelf receiveUtilitiesArchiveFromURL:url completion:completion];
+    }]];
+    return result;
+}
+
+- (NSString *)encodedUtilitiesArchiveFromURL:(NSURL *)url {
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    NSString *encoded = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed)];
+    return [encoded stringByAppendingString:@"\nEOF\n"];
+}
+
+// Typed into the helper sh once it is in the utilities folder.
+- (void)receiveUtilitiesArchiveFromURL:(NSURL *)url
+                            completion:(void (^)(BOOL installed))completion {
     // The archive is hundreds of lines. Typed into a here-document, each line goes through sh's
     // line editor, which switches the tty between raw and canonical mode for every line, and on
     // a busy system lines got lost or spliced, most likely where input queued across a switch
@@ -1160,23 +1209,16 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // once sh says the loop is reading into a file it created, so none of it can reach sh's
     // prompt and run as a command. tar's exit status then says whether it arrived intact, since
     // gzip checks a CRC. OpenBSD has no base64 command, but it has b64decode.
-    NSData *data = [NSData dataWithContentsOfURL:url];
-    NSString *encoded = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed)];
-    NSString *archive = [encoded stringByAppendingString:@"\nEOF\n"];
-    if (!reallySend) {
-        [result appendString:iTermShellIntegrationReceiveUtilitiesCommand];
-        [result appendString:archive];
-        [result appendString:self.exitHelperShellString];
-        return result;
-    }
+    NSString *archive = [self encodedUtilitiesArchiveFromURL:url];
     // Whether to type the archive depends on sh's answer, so it is not chained after the
     // command like the other texts: the answer's completion types it, or gives up.
     __weak __typeof(self) weakSelf = self;
     const NSUInteger generation = _cancellationGeneration;
+    iTermExpectation *receiveExpectation = nil;
     [self sendText:iTermShellIntegrationReceiveUtilitiesCommand
         reallySend:YES
         afterRegex:@"it2-(receiving|cannot-receive)-utilities"
-       expectation:expectation
+       expectation:&receiveExpectation
            didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateReadingUtilities]
         completion:^(NSArray<NSString *> *captures) {
         __strong __typeof(self) strongSelf = weakSelf;
@@ -1204,7 +1246,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             completion([captures[1] isEqualToString:@"installed"]);
         }];
     }];
-    return result;
 }
 
 #pragma mark - Orchestration
