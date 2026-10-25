@@ -55,6 +55,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_files release];
     [_viewControllers release];
+    [_passwordCompletion release];
     [super dealloc];
 }
 
@@ -463,6 +464,23 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [_viewControllers removeObject:viewController];
 }
 
+// Calls the pending password completion, if any, at most once. The ivar is cleared before the
+// call so a reentrant delegate callback cannot run it a second time.
+- (void)finishPasswordManagerSelectionWithPassword:(NSString *)password {
+    void (^completion)(NSString *) = _passwordCompletion;
+    if (!completion) {
+        return;
+    }
+    _passwordCompletion = nil;
+    completion(password);
+    [completion release];
+}
+
+- (void)setPasswordManagerCompletionForTesting:(void (^)(NSString *password))completion {
+    [_passwordCompletion release];
+    _passwordCompletion = [completion copy];
+}
+
 #pragma mark - iTermPasswordManagerDelegate
 
 - (BOOL)iTermPasswordManagerCanEnterPassword {
@@ -470,10 +488,8 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
-    if (_passwordCompletion) {
-        _passwordCompletion(password);
-    }
-    _passwordCompletion = nil;
+    DLog(@"Password manager entered a password");
+    [self finishPasswordManagerSelectionWithPassword:password];
     _passwordManagerWindowController.delegate = nil;
     _passwordManagerWindowController = nil;
 }
@@ -491,7 +507,10 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)iTermPasswordManagerDidClose {
-    _passwordCompletion = nil;
+    // Closing without choosing a password cancels the request. The transfer waits on this
+    // completion, so it must be called exactly once (nil means cancel).
+    DLog(@"Password manager closed");
+    [self finishPasswordManagerSelectionWithPassword:nil];
     _passwordManagerWindowController.delegate = nil;
     _passwordManagerWindowController = nil;
 }

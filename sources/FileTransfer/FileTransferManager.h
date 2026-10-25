@@ -54,3 +54,10 @@
 - (void)removeAllUploads;
 
 @end
+
+// Exposed for tests.
+@interface FileTransferManager (Testing)
+- (void)setPasswordManagerCompletionForTesting:(void (^)(NSString *password))completion;
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast;
+- (void)iTermPasswordManagerDidClose;
+@end
