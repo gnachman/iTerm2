@@ -21,6 +21,11 @@ protocol SSHClientProcessInspecting {
     // Returns nil if the process does not exist.
     func startTime(of pid: pid_t) -> Date?
     func arguments(of pid: pid_t) -> [String]?
+    // Returns [] if unknown.
+    func childPIDs(of pid: pid_t) -> [pid_t]
+    // Whether the process listens on a unix-domain socket, as an ssh ControlMaster
+    // does. Returns nil if unknown.
+    func hasListeningUnixSocket(_ pid: pid_t) -> Bool?
 }
 
 struct SystemSSHClientProcessInspector: SSHClientProcessInspecting {
@@ -34,6 +39,45 @@ struct SystemSSHClientProcessInspector: SSHClientProcessInspecting {
 
     func arguments(of pid: pid_t) -> [String]? {
         return iTermLSOF.commandLineArguments(forProcess: pid, execName: nil)
+    }
+
+    func childPIDs(of pid: pid_t) -> [pid_t] {
+        var buffer = [pid_t](repeating: 0, count: 256)
+        let count = buffer.withUnsafeMutableBytes { pointer in
+            proc_listchildpids(pid, pointer.baseAddress, Int32(pointer.count))
+        }
+        // A full buffer may have dropped some children.
+        guard count > 0, Int(count) < buffer.count else {
+            return []
+        }
+        return Array(buffer.prefix(Int(count)))
+    }
+
+    func hasListeningUnixSocket(_ pid: pid_t) -> Bool? {
+        let size = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, nil, 0)
+        guard size > 0 else {
+            return nil
+        }
+        let stride = MemoryLayout<proc_fdinfo>.stride
+        var fds = [proc_fdinfo](repeating: proc_fdinfo(), count: Int(size) / stride)
+        let bytes = fds.withUnsafeMutableBytes { pointer in
+            proc_pidinfo(pid, PROC_PIDLISTFDS, 0, pointer.baseAddress, Int32(pointer.count))
+        }
+        // A full buffer may have dropped descriptors opened since it was sized.
+        guard bytes > 0, Int(bytes) < fds.count * stride else {
+            return nil
+        }
+        for fd in fds.prefix(Int(bytes) / stride) where fd.proc_fdtype == UInt32(PROX_FDTYPE_SOCKET) {
+            var info = socket_fdinfo()
+            let infoSize = Int32(MemoryLayout<socket_fdinfo>.size)
+            guard proc_pidfdinfo(pid, fd.proc_fd, PROC_PIDFDSOCKETINFO, &info, infoSize) == infoSize else {
+                return nil
+            }
+            if info.psi.soi_family == AF_UNIX && (Int32(info.psi.soi_options) & SO_ACCEPTCONN) != 0 {
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -108,12 +152,35 @@ final class SSHClientProcessLocator: NSObject {
     }
 }
 
+// An it2ssh and the ssh client it ran, as they were while it2ssh was alive (F-351).
+private struct SSHClientRecord {
+    var it2ssh: SSHClientProcessIdentity
+    var ssh: SSHClientProcessIdentity
+    var sshArguments: [String]
+}
+
 // Watches it2ssh processes and remembers which connections were already announced
 // as possibly dead. Main thread only.
 @objc(iTermSSHClientMonitor)
 final class SSHClientMonitor: NSObject {
+    private static let sshName = "ssh"
     private var sources = [String: DispatchSourceProcess]()
     private var announced = Set<String>()
+    private var clients = [String: SSHClientRecord]()
+    private let inspector: SSHClientProcessInspecting
+    private let signaler: (pid_t, Int32) -> Void
+
+    init(inspector: SSHClientProcessInspecting,
+         signaler: @escaping (pid_t, Int32) -> Void) {
+        self.inspector = inspector
+        self.signaler = signaler
+    }
+
+    override convenience init() {
+        self.init(inspector: SystemSSHClientProcessInspector()) { pid, signal in
+            kill(pid, signal)
+        }
+    }
 
     deinit {
         for source in sources.values {
@@ -132,6 +199,7 @@ final class SSHClientMonitor: NSObject {
             return false
         }
         stopWatching(clientUniqueID: clientUniqueID)
+        recordSSHClient(ofIT2SSHProcessID: pid, clientUniqueID: clientUniqueID)
         let source = DispatchSource.makeProcessSource(identifier: pid,
                                                       eventMask: .exit,
                                                       queue: .main)
@@ -159,6 +227,78 @@ final class SSHClientMonitor: NSObject {
         if let source = sources.removeValue(forKey: clientUniqueID) {
             source.cancel()
         }
+    }
+
+    // Remembers it2ssh's ssh child so it can be hung up if it2ssh dies and leaves it
+    // running (F-351). it2ssh runs ssh as a child (not with exec) for the whole
+    // connection, so it must be alive now. Records nothing unless exactly one child
+    // is ssh.
+    func recordSSHClient(ofIT2SSHProcessID pid: pid_t, clientUniqueID: String) {
+        clients.removeValue(forKey: clientUniqueID)
+        guard let it2sshStart = inspector.startTime(of: pid) else {
+            DLog("it2ssh \(pid) is gone; not recording its ssh client")
+            return
+        }
+        let candidates = inspector.childPIDs(of: pid).compactMap { child -> (SSHClientProcessIdentity, [String])? in
+            guard let args = inspector.arguments(of: child),
+                  let name = args.first,
+                  (name as NSString).lastPathComponent == Self.sshName,
+                  let start = inspector.startTime(of: child) else {
+                return nil
+            }
+            return (SSHClientProcessIdentity(pid: child, startTime: start), args)
+        }
+        guard candidates.count == 1, let (ssh, args) = candidates.first else {
+            RLog("Not recording an ssh client for it2ssh \(pid): \(candidates.count) candidates")
+            return
+        }
+        RLog("it2ssh \(pid) for \(clientUniqueID) runs ssh \(ssh)")
+        clients[clientUniqueID] = SSHClientRecord(it2ssh: SSHClientProcessIdentity(pid: pid, startTime: it2sshStart),
+                                                  ssh: ssh,
+                                                  sshArguments: args)
+    }
+
+    // The connection ended normally, so its ssh client exits on its own.
+    @objc(forgetSSHClientForClientUniqueID:)
+    func forgetSSHClient(clientUniqueID: String) {
+        clients.removeValue(forKey: clientUniqueID)
+    }
+
+    // Sends SIGHUP to the ssh client recorded for this connection if its it2ssh has
+    // exited and the very same ssh process is still running. Once the connection has
+    // been abandoned nothing else needs the record, so it is forgotten even when
+    // nothing is signaled (e.g., Disconnect from a hung remote with it2ssh alive). Without this it would
+    // stay logged in to the remote host on the session's tty. Never signals a
+    // process that can't be positively identified: the pid, start time, and
+    // arguments must all match. Forgets the connection. Returns whether it signaled.
+    @discardableResult
+    @objc(hangUpOrphanedSSHClientForClientUniqueID:)
+    func hangUpOrphanedSSHClient(clientUniqueID: String) -> Bool {
+        guard let record = clients.removeValue(forKey: clientUniqueID) else {
+            DLog("No ssh client recorded for \(clientUniqueID)")
+            return false
+        }
+        let ssh = record.ssh
+        guard inspector.startTime(of: ssh.pid) == ssh.startTime,
+              inspector.arguments(of: ssh.pid) == record.sshArguments else {
+            DLog("ssh client \(ssh) for \(clientUniqueID) is gone")
+            return false
+        }
+        // A live it2ssh is still ssh's parent (children are reparented when it exits),
+        // so a failure to read its start time can't make it look dead.
+        if inspector.startTime(of: record.it2ssh.pid) == record.it2ssh.startTime ||
+            inspector.parentPID(of: ssh.pid) == record.it2ssh.pid {
+            RLog("it2ssh \(record.it2ssh) for \(clientUniqueID) is alive; leaving its ssh client alone")
+            return false
+        }
+        // A ControlMaster may carry other sessions' connections.
+        guard inspector.hasListeningUnixSocket(ssh.pid) == false else {
+            RLog("ssh client \(ssh) for \(clientUniqueID) may be a ControlMaster; leaving it alone")
+            return false
+        }
+        RLog("Hanging up orphaned ssh client \(ssh) for \(clientUniqueID)")
+        signaler(ssh.pid, SIGHUP)
+        return true
     }
 
     @objc(isWatchingClientUniqueID:)

@@ -29,6 +29,20 @@ private final class FakeProcessInspector: SSHClientProcessInspecting {
     func arguments(of pid: pid_t) -> [String]? {
         return processes[pid]?.arguments
     }
+
+    func childPIDs(of pid: pid_t) -> [pid_t] {
+        return processes.filter { $0.value.parent == pid }.map { $0.key }.sorted()
+    }
+
+    var listeners = Set<pid_t>()
+    var unknownSockets = Set<pid_t>()
+
+    func hasListeningUnixSocket(_ pid: pid_t) -> Bool? {
+        if unknownSockets.contains(pid) {
+            return nil
+        }
+        return listeners.contains(pid)
+    }
 }
 
 final class SSHClientProcessLocatorTests: XCTestCase {
@@ -179,6 +193,275 @@ final class SSHClientMonitorTests: XCTestCase {
         }
         XCTAssertTrue(monitor.watch(processID: process.processIdentifier, clientUniqueID: "abc") {})
         XCTAssertFalse(monitor.shouldAnnounceUnframedPrompt(clientUniqueID: "abc"))
+    }
+}
+
+// F-351: when a watched it2ssh dies, its ssh client is orphaned but still logged in
+// to the remote host. Recovery hangs it up, but only when it is positively the same
+// process that was it2ssh's child.
+final class SSHClientHangUpTests: XCTestCase {
+    private let it2sshArgs = ["bash", "/Users/me/.iterm2/it2ssh", "example.com"]
+    private let sshArgs = ["/usr/bin/ssh", "-t", "--", "example.com", "exec", "sh"]
+    private let t1 = Date(timeIntervalSince1970: 1001)
+    private let t2 = Date(timeIntervalSince1970: 1002)
+    private var signals = [(pid_t, Int32)]()
+
+    // it2ssh (20) <- zsh (10), with ssh (21) as it2ssh's child.
+    private func makeInspector() -> FakeProcessInspector {
+        let inspector = FakeProcessInspector()
+        inspector.processes[10] = .init(parent: 1, startTime: t1, arguments: ["-zsh"])
+        inspector.processes[20] = .init(parent: 10, startTime: t1, arguments: it2sshArgs)
+        inspector.processes[21] = .init(parent: 20, startTime: t2, arguments: sshArgs)
+        return inspector
+    }
+
+    private func makeMonitor(_ inspector: FakeProcessInspector) -> SSHClientMonitor {
+        return SSHClientMonitor(inspector: inspector) { [weak self] pid, signal in
+            self?.signals.append((pid, signal))
+        }
+    }
+
+    // Simulates killing it2ssh: the ssh client is reparented to launchd.
+    private func killIT2SSH(_ inspector: FakeProcessInspector) {
+        inspector.processes[20] = nil
+        inspector.processes[21]?.parent = 1
+    }
+
+    private func watch(_ monitor: SSHClientMonitor) {
+        monitor.recordSSHClient(ofIT2SSHProcessID: 20, clientUniqueID: "abc")
+    }
+
+    func testHangsUpOrphanedSSHClient() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        XCTAssertTrue(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertEqual(signals.map { $0.0 }, [21])
+        XCTAssertEqual(signals.map { $0.1 }, [SIGHUP])
+        // Only once.
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertEqual(signals.count, 1)
+    }
+
+    // If it2ssh is alive, its ssh client isn't orphaned (e.g., Disconnect from a
+    // hung remote) and must be left alone.
+    func testDoesNotHangUpWhileIT2SSHIsAlive() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    // A process that reused it2ssh's pid doesn't make it look alive.
+    func testIT2SSHPIDReuseCountsAsDead() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        inspector.processes[20] = .init(parent: 1, startTime: Date(timeIntervalSince1970: 9000), arguments: ["other"])
+        XCTAssertTrue(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertEqual(signals.map { $0.0 }, [21])
+    }
+
+    // A process that reused the ssh client's pid must never be signaled.
+    func testSSHPIDReuseIsNotSignaled() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        inspector.processes[21] = .init(parent: 1, startTime: Date(timeIntervalSince1970: 9000), arguments: sshArgs)
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    // A failure to read a live it2ssh's start time must not make it look dead.
+    func testIT2SSHStillParentIsNotSignaled() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        inspector.processes[20]?.startTime = nil
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    // A ControlMaster may carry other sessions' connections.
+    func testControlMasterIsNotSignaled() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        inspector.listeners.insert(21)
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    func testUnknownSocketsAreNotSignaled() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        inspector.unknownSockets.insert(21)
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    // The real inspector tells a unix-socket listener from a process without one.
+    func testSystemInspectorFindsListeningUnixSocket() throws {
+        let inspector = SystemSSHClientProcessInspector()
+        let sleeper = Process()
+        sleeper.executableURL = URL(fileURLWithPath: "/bin/sleep")
+        sleeper.arguments = ["600"]
+        try sleeper.run()
+        defer {
+            sleeper.terminate()
+        }
+        XCTAssertEqual(inspector.hasListeningUnixSocket(sleeper.processIdentifier), false)
+
+        // This test process listens once the server is up.
+        let path = "/tmp/it2-listen-test-\(getpid())"
+        defer {
+            unlink(path)
+        }
+        let server = try XCTUnwrap(SecretServer(socketURL: URL(fileURLWithPath: path)))
+        try server.listen()
+        XCTAssertEqual(inspector.hasListeningUnixSocket(getpid()), true)
+    }
+
+    func testChangedArgumentsAreNotSignaled() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        inspector.processes[21]?.arguments = ["/usr/bin/vim"]
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    func testExitedSSHClientIsNotSignaled() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        inspector.processes[21] = nil
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    // Only a child that is ssh is recorded.
+    func testNonSSHChildIsNotRecorded() {
+        let inspector = makeInspector()
+        inspector.processes[21]?.arguments = ["/bin/cat"]
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    // With more than one candidate there's no telling which carried the connection.
+    func testAmbiguousChildrenAreNotRecorded() {
+        let inspector = makeInspector()
+        inspector.processes[22] = .init(parent: 20, startTime: t2, arguments: sshArgs)
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        killIT2SSH(inspector)
+        inspector.processes[22]?.parent = 1
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    func testForgottenClientIsNotSignaled() {
+        let inspector = makeInspector()
+        let monitor = makeMonitor(inspector)
+        watch(monitor)
+        monitor.forgetSSHClient(clientUniqueID: "abc")
+        killIT2SSH(inspector)
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    func testUnknownClientIsNotSignaled() {
+        let monitor = makeMonitor(makeInspector())
+        XCTAssertFalse(monitor.hangUpOrphanedSSHClient(clientUniqueID: "nope"))
+        XCTAssertTrue(signals.isEmpty)
+    }
+
+    // End to end with real processes: a fake it2ssh (bash) runs a fake ssh (sleep,
+    // reached through a link named ssh), and is killed.
+    func testRealOrphanedSSHClientIsHungUp() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("it2-hangup-\(getpid())-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let fakeSSH = dir.appendingPathComponent("ssh")
+        try FileManager.default.createSymbolicLink(at: fakeSSH, withDestinationURL: URL(fileURLWithPath: "/bin/sleep"))
+        let fakeIT2SSH = dir.appendingPathComponent("it2ssh")
+        // The trailing command keeps bash from exec'ing ssh in its place.
+        try "\"\(fakeSSH.path)\" 600\n:\n".write(to: fakeIT2SSH, atomically: true, encoding: .utf8)
+
+        let it2ssh = Process()
+        it2ssh.executableURL = URL(fileURLWithPath: "/bin/bash")
+        it2ssh.arguments = [fakeIT2SSH.path]
+        try it2ssh.run()
+        let inspector = SystemSSHClientProcessInspector()
+        var sshPID: pid_t = 0
+        var stopPolling = false
+        // Wait for bash to start the child.
+        let started = expectation(description: "ssh started")
+        func poll() {
+            if stopPolling {
+                return
+            }
+            if let child = inspector.childPIDs(of: it2ssh.processIdentifier).first,
+               inspector.arguments(of: child)?.first.map({ ($0 as NSString).lastPathComponent }) == "ssh" {
+                sshPID = child
+                started.fulfill()
+                return
+            }
+            DispatchQueue.main.async { poll() }
+        }
+        poll()
+        wait(for: [started], timeout: 60)
+        stopPolling = true
+        defer {
+            if it2ssh.isRunning {
+                it2ssh.terminate()
+            }
+        }
+        guard sshPID > 0 else {
+            XCTFail("fake ssh never started")
+            return
+        }
+        let sshStart = inspector.startTime(of: sshPID)
+        defer {
+            // Clean up only if the test failed to end the very same process.
+            if sshStart != nil && inspector.startTime(of: sshPID) == sshStart {
+                kill(sshPID, SIGKILL)
+            }
+        }
+
+        let monitor = SSHClientMonitor()
+        let it2sshExited = expectation(description: "it2ssh exited")
+        XCTAssertTrue(monitor.watch(processID: it2ssh.processIdentifier, clientUniqueID: "abc") {
+            it2sshExited.fulfill()
+        })
+        kill(it2ssh.processIdentifier, SIGKILL)
+        wait(for: [it2sshExited], timeout: 60)
+        it2ssh.waitUntilExit()
+
+        let sshExited = expectation(description: "ssh exited")
+        let source = DispatchSource.makeProcessSource(identifier: sshPID, eventMask: .exit, queue: .main)
+        source.setEventHandler {
+            sshExited.fulfill()
+            source.cancel()
+        }
+        source.resume()
+        XCTAssertNotNil(inspector.startTime(of: sshPID), "the orphaned ssh is still running")
+        XCTAssertTrue(monitor.hangUpOrphanedSSHClient(clientUniqueID: "abc"))
+        wait(for: [sshExited], timeout: 60)
     }
 }
 

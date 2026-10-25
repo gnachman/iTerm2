@@ -633,10 +633,12 @@ Bug Fixes:
   was killed. Previously the session stopped
   showing output and ignored input.
 - An SSH Integration session now recovers on
-  its own when its it2ssh process is killed.
-  When iTerm2 can’t watch it2ssh, for example
-  because it ran on another host, it offers to
-  disconnect once the prompt reappears.
+  its own when its it2ssh process is killed,
+  and ends the ssh process that it2ssh left
+  logged in to the remote host. When iTerm2
+  can’t watch it2ssh, for example because it
+  ran on another host, it offers to disconnect
+  once the prompt reappears.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
