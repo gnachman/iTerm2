@@ -88,7 +88,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Internal
 
-@property (class, atomic, readonly) BOOL performingJoinedBlock;
+// YES while the main queue runs a joined block for this state's mutation queue. Sessions that share
+// a queue share this.
+@property (atomic, readonly) BOOL performingJoinedBlock;
 @property (nonatomic) BOOL terminalEnabled;
 @property (nonatomic, readonly) VT100ScreenState *sanitizingAdapter;
 @property (atomic) BOOL performingSideEffect;

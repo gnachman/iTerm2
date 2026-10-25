@@ -114,14 +114,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 // ivar. We only redeclare it here with a covariant NSMutableArray type.
 @dynamic openAidStack;
 
-// performingJoinedBlock is now centralized in iTermGCD.
-// Provide convenience accessors for compatibility with existing callers.
-+ (BOOL)performingJoinedBlock {
-    return iTermGCD.performingJoinedBlock;
-}
-
-+ (void)setPerformingJoinedBlock:(BOOL)value {
-    [iTermGCD setPerformingJoinedBlock:value];
+- (BOOL)performingJoinedBlock {
+    return _joinState.performingJoinedBlock;
 }
 
 // Process-wide one-shot for the "AcceptOSC7 is off" warning, so restoring N
@@ -165,6 +159,7 @@ static BOOL sOSC7DisabledWarningShown;
         // _openAidStack is owned and initialized by the base class
         // (VT100ScreenState) so the base's openAidStack getter sees it.
         _queue = queue;
+        _joinState = [iTermGCD joinStateForQueue:queue];
         _executorUpdate = [[VT100ScreenTokenExecutorUpdate alloc] init];
         __weak __typeof(self) weakSelf = self;
         _executorUpdateScheduler = [[iTermPeriodicScheduler alloc] initWithQueue:queue period:1 / 120.0 block:^{
@@ -457,7 +452,7 @@ static BOOL sOSC7DisabledWarningShown;
             DLog(@"[side effects] dealloced %@", name);
             return;
         }
-        if (VT100ScreenMutableState.performingJoinedBlock) {
+        if (strongSelf.performingJoinedBlock) {
             sideEffect(delegate);
             [unpauser unpause];
             DLog(@"[side effects] Already performing %@", name);
@@ -561,7 +556,7 @@ static BOOL sOSC7DisabledWarningShown;
 
 - (void)setConfig:(VT100MutableScreenConfiguration *)config {
     DLog(@"%@ begin %@", self, config);
-    assert(VT100ScreenMutableState.performingJoinedBlock);
+    assert(self.performingJoinedBlock);
     if (config.desiredComposerRows.intValue != self.config.desiredComposerRows.intValue) {
         DLog(@"desiredComposerRows <- %@", config.desiredComposerRows);
     }
@@ -2273,7 +2268,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // Calling -screenUpdateDisplay: while joined erases the dirty bits which breaks syncing grid
 // content back to the main thread.
 - (void)redrawSoon {
-    if (VT100ScreenMutableState.performingJoinedBlock) {
+    if (self.performingJoinedBlock) {
         _screenNeedsUpdate = YES;
         return;
     }
@@ -5008,7 +5003,7 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
                                                                      offset:offset
                                                                         pwd:self.currentWorkingDirectory
                                                                       width:self.width
-                                                                      queue:[iTermGCD mutationQueue]];
+                                                                      queue:_queue];
     sniffer.delegate = self;
     [sniffer sniff];
     if (sniffer.hasSideEffects) {
@@ -6574,7 +6569,7 @@ lengthExcludingInBandSignaling:data.length
 #pragma mark - Cross-Thread Sync
 
 - (void)willSynchronize {
-    assert(VT100ScreenMutableState.performingJoinedBlock);
+    assert(self.performingJoinedBlock);
 
     if (self.currentGrid.isAnyCharDirty) {
         [_triggerEvaluator invalidateIdempotentTriggers];
@@ -6723,7 +6718,7 @@ lengthExcludingInBandSignaling:data.length
     DLog(@"%@", [NSThread callStackSymbols]);
     [iTermGCD assertMainQueueSafe];
 
-    if (VT100ScreenMutableState.performingJoinedBlock) {
+    if (self.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
         [self reallyPerformLightweightBlockWithJoinedThreads:block];
         return;
@@ -6749,7 +6744,7 @@ lengthExcludingInBandSignaling:data.length
 
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
 
-    if (iTermGCD.performingJoinedBlock) {
+    if (self.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
         [self reallyPerformBlockWithJoinedThreads:block delegate:delegate topmost:NO];
     } else {
@@ -6772,7 +6767,7 @@ lengthExcludingInBandSignaling:data.length
 - (void)performSynchroDanceWithBlock:(void (^)(void))block {
     assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()));
     DLog(@"begin");
-    [iTermGCD setMainQueueSafe:YES];
+    [iTermGCD setMainQueueSafe:YES onQueue:_queue];
 
     // Stop the token executor while we run `block`.
     DLog(@"Calling whilePaused:");
@@ -6781,7 +6776,7 @@ lengthExcludingInBandSignaling:data.length
         DLog(@"done waiting");
         block();
         DLog(@"block finished");
-        [iTermGCD setMainQueueSafe:NO];
+        [iTermGCD setMainQueueSafe:NO onQueue:_queue];
         DLog(@"unblock executor");
     }];
     DLog(@"returning");
@@ -6798,7 +6793,7 @@ lengthExcludingInBandSignaling:data.length
     // deadlock.
     // This get-and-set is not a data race because assignment to performingJoinedBlock only happens
     // on the main queue while joined.
-    const BOOL wasPerformingJoinedBlock = [iTermGCD setPerformingJoinedBlock:YES];
+    const BOOL wasPerformingJoinedBlock = [_joinState setPerformingJoinedBlock:YES];
 
     VT100ScreenState *oldState;
     if (!wasPerformingJoinedBlock) {
@@ -6847,13 +6842,13 @@ lengthExcludingInBandSignaling:data.length
         _screenNeedsUpdate = NO;
     }
 
-    [iTermGCD setPerformingJoinedBlock:wasPerformingJoinedBlock];
+    [_joinState setPerformingJoinedBlock:wasPerformingJoinedBlock];
     DLog(@"done");
 }
 
 - (void)loadConfigIfNeededFromDelegate:(id<VT100ScreenDelegate>)delegate {
     DLog(@"begin");
-    assert(VT100ScreenMutableState.performingJoinedBlock);
+    assert(self.performingJoinedBlock);
     VT100MutableScreenConfiguration *config = [delegate screenConfiguration];
     if (config.isDirty) {
         DLog(@"config is dirty");
@@ -6865,11 +6860,11 @@ lengthExcludingInBandSignaling:data.length
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
     DLog(@"begin");
-    const BOOL previousValue = [iTermGCD setPerformingJoinedBlock:YES];
+    const BOOL previousValue = [_joinState setPerformingJoinedBlock:YES];
     if (block) {
         block(self);
     }
-    [iTermGCD setPerformingJoinedBlock:previousValue];
+    [_joinState setPerformingJoinedBlock:previousValue];
 }
 
 - (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
@@ -7130,7 +7125,7 @@ lengthExcludingInBandSignaling:data.length
                 guidOfLastCommandMark:(NSString *)guidOfLastCommandMark
                   progenitorRCDataSource:(id<iTermResilientCoordinateDataSource>)progenitorRCDataSource
                        mainRCDataSource:(id<iTermResilientCoordinateDataSource>)mainRCDataSource {
-    assert(VT100ScreenMutableState.performingJoinedBlock);
+    assert(self.performingJoinedBlock);
     // Restoration deserializes fold marks straight into the tree at fresh coordinates, bypassing the
     // interactive create path, so the cached bottommost-fold line must be recomputed.
     _foldCacheDirty = YES;
@@ -7236,7 +7231,7 @@ lengthExcludingInBandSignaling:data.length
     // Pass 2: bind + resolve PROGENITORS' RCs against `self` (mutation pool).
     // The doppelganger pass below mirrors this for the main pool. Must run
     // inside the joined block so no main-thread observer interleaves.
-    assert(VT100ScreenMutableState.performingJoinedBlock);
+    assert(self.performingJoinedBlock);
 
     if (rcHolders.count == 0) {
         return;

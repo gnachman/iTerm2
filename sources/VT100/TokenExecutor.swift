@@ -109,9 +109,13 @@ class TokenExecutor: NSObject {
     private let budget = TokenBudget(capacity: Int(iTermAdvancedSettingsModel.bufferDepth()))
     private let impl: TokenExecutorImpl
     private let queue: DispatchQueue
-    private static let isTokenExecutorSpecificKey = DispatchSpecificKey<Bool>()
+    // Identifies an executor queue. Executors that share a queue share its token, so each may run
+    // tasks synchronously on it; an executor on another queue may not.
+    private final class QueueToken {}
+    private static let queueTokenKey = DispatchSpecificKey<QueueToken>()
+    private let queueToken: QueueToken
     private var onExecutorQueue: Bool {
-        return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
+        return DispatchQueue.getSpecific(key: Self.queueTokenKey) === queueToken
     }
     @objc var isBackgroundSession = false {
         didSet {
@@ -136,7 +140,14 @@ class TokenExecutor: NSObject {
          slownessDetector: SlownessDetector,
          queue: DispatchQueue) {
         self.queue = queue
-        queue.setSpecific(key: Self.isTokenExecutorSpecificKey, value: true)
+        // Main queue only, so two executors made for one queue can't both set its token.
+        it_assert(Thread.isMainThread, "TokenExecutor must be created on the main queue")
+        if let token = queue.getSpecific(key: Self.queueTokenKey) {
+            queueToken = token
+        } else {
+            queueToken = QueueToken()
+            queue.setSpecific(key: Self.queueTokenKey, value: queueToken)
+        }
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
                                  queue: queue)
