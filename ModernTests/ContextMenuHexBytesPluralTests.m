@@ -12,7 +12,7 @@
 //          NSLocalizedStringWithDefaultValue(@"ContextMenu.HexBytes", nil,
 //              [NSBundle mainBundle], @"%@ hex bytes", ...), @(data.length)];
 //
-//  The catalog entry sources/Localizable.xcstrings -> "ContextMenu.HexBytes" is
+//  The catalog entry xcstrings/Localizable.xcstrings -> "ContextMenu.HexBytes" is
 //  a bare stringUnit ("%@ hex bytes") with NO plural variations, unlike the
 //  sibling "PasteSpecial.BytesInLines" which uses "%1$#@bytes@ ..." plural
 //  substitutions. Two defects compound:
@@ -118,7 +118,7 @@ static NSDictionary *Utf8BytesCatalogEntry(void) {
     NSString *thisFile = [NSString stringWithUTF8String:__FILE__];
     NSString *repoRoot = [[thisFile stringByDeletingLastPathComponent]  // ModernTests
                           stringByDeletingLastPathComponent];           // repo root
-    NSString *path = [repoRoot stringByAppendingPathComponent:@"sources/Localizable.xcstrings"];
+    NSString *path = [repoRoot stringByAppendingPathComponent:@"xcstrings/Localizable.xcstrings"];
     NSData *data = [NSData dataWithContentsOfFile:path];
     if (!data) {
         return nil;
@@ -133,7 +133,7 @@ static NSDictionary *Utf8BytesCatalogEntry(void) {
 // fails and enumerates the missing plural.
 - (void)testUtf8BytesHasPluralVariations {
     NSDictionary *entry = Utf8BytesCatalogEntry();
-    XCTAssertNotNil(entry, @"could not load ContextMenu.Utf8Bytes from sources/Localizable.xcstrings via __FILE__=%s", __FILE__);
+    XCTAssertNotNil(entry, @"could not load ContextMenu.Utf8Bytes from xcstrings/Localizable.xcstrings via __FILE__=%s", __FILE__);
     NSDictionary *en = entry[@"localizations"][@"en"];
     XCTAssertNotNil(en, @"ContextMenu.Utf8Bytes has no English localization: %@", entry);
     NSDictionary *plural = en[@"variations"][@"plural"];
