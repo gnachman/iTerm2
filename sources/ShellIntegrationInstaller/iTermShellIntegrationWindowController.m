@@ -85,6 +85,17 @@ static NSString *const iTermShellIntegrationNuVerifyScriptCommandFormat =
     @"if test $? -eq 0 && test -s %1$@; then chmod +x %1$@; echo iTerm2-nu-script-\"\"written; else echo iTerm2-nu-script-\"\"missing; fi\n";
 static NSString *const iTermShellIntegrationNuVerifyScriptRegex = @"^iTerm2-nu-script-(written|missing)$";
 
+// Typed into the helper sh in the utilities folder. Prints it2-receiving-utilities, reads the
+// base64 archive from the tty up to a line that is just EOF into a file (with read, so not
+// through a line editor), extracts it, and prints it2-utilities-installed if tar succeeded or
+// it2-utilities-failed if not. The empty quotes keep the echo of the command from matching.
+static NSString *const iTermShellIntegrationReceiveUtilitiesCommand =
+    @"if command -v base64 >/dev/null 2>&1; then IT2_B64D='base64 -d'; else IT2_B64D='b64decode -r'; fi; "
+    @"echo it2-\"\"receiving-utilities; "
+    @"while IFS= read -r IT2_LINE && test \"$IT2_LINE\" != EOF; do printf '%s\\n' \"$IT2_LINE\"; done > .it2-utilities.b64; "
+    @"if $IT2_B64D < .it2-utilities.b64 | tar xfz -; then echo it2-\"\"utilities-installed; else echo it2-\"\"utilities-failed; fi; "
+    @"rm -f .it2-utilities.b64\n";
+
 typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     iTermShellIntegrationInstallationStateFirstPage,
     iTermShellIntegrationInstallationStateSecondPage,
@@ -772,7 +783,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)catToUtilities:(BOOL)reallySend
                  expectation:(inout iTermExpectation **)expectation
-                  completion:(void (^)(void))completion {
+                  completion:(void (^)(BOOL installed))completion {
     NSMutableString *result = [NSMutableString string];
     NSString *folder = [self.dotdir stringByAppendingPathComponent:@".iterm2"];
     [result appendString:[self switchToHelperShell:reallySend expectation:expectation]];
@@ -788,34 +799,40 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:@"it2-cd-done"
                             expectation:expectation]];
-    // OpenBSD has no base64 command, but it has b64decode. sh reads the here-document from the
-    // tty after this line, so the body can follow as soon as the line is echoed.
-    [result appendString:[self sendText:@"if command -v base64 >/dev/null 2>&1; then base64 -d; else b64decode -r; fi <<'EOF'| tar xfz -\n"
-                             reallySend:reallySend
-                             afterRegex:@"."
-                            expectation:expectation]];
     NSURL *url = [[NSBundle bundleForClass:self.class] URLForResource:@"utilities" withExtension:@"tgz"];
     if (!url) {
-        completion();
-        return nil;
+        completion(NO);
+        return result;
     }
+    // The archive is hundreds of lines. Typed into a here-document, each line goes through sh's
+    // line editor, which switches the tty between raw and canonical mode for every line, and on
+    // a busy system lines got lost or spliced, most likely where input queued across a switch
+    // overflowed the tty's input buffer. So a read loop in sh takes the lines instead: no line
+    // editor, and the tty stays in canonical mode, where a full input buffer makes the writer
+    // wait instead of dropping input. The loop stops at a line that is just EOF, which base64
+    // never produces (its lines are multiples of four characters). The archive is typed only
+    // once sh says the loop is about to read, so none of it can reach sh's prompt and run as a
+    // command. tar's exit status then says whether it arrived intact, since gzip checks a CRC.
+    // OpenBSD has no base64 command, but it has b64decode.
+    [result appendString:[self sendText:iTermShellIntegrationReceiveUtilitiesCommand
+                             reallySend:reallySend
+                             afterRegex:@"it2-receiving-utilities"
+                            expectation:expectation]];
     NSData *data = [NSData dataWithContentsOfURL:url];
     NSString *encoded = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed)];
-    [result appendString:[self sendText:encoded
+    __weak __typeof(self) weakSelf = self;
+    [result appendString:[self sendText:[encoded stringByAppendingString:@"\nEOF\n"]
                              reallySend:reallySend
-                             afterRegex:@"^> "
-                            expectation:expectation]];
-    [result appendString:[self sendText:@"\nEOF\n"
-                             reallySend:reallySend
-                             afterRegex:@"."
-                            expectation:expectation]];
-    [result appendString:[self sendText:self.exitHelperShellString
-                             reallySend:reallySend
-                             afterRegex:@"> EOF"
+                             afterRegex:@"it2-utilities-(installed|failed)"
                             expectation:expectation
                              completion:^(NSArray<NSString *> *captures) {
-        completion();
+        // sh printed the result, so it is reading commands again.
+        [weakSelf sendText:weakSelf.exitHelperShellString reallySend:YES];
+        completion([captures[1] isEqualToString:@"installed"]);
     }]];
+    if (!reallySend) {
+        [result appendString:self.exitHelperShellString];
+    }
     return result;
 }
 
@@ -860,10 +877,15 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     __weak __typeof(self) weakSelf = self;
     [result appendString:[self catToUtilities:reallySend
                                   expectation:&expectation
-                                   completion:^{
-        if (reallySend) {
-            [weakSelf.sendShellCommandsViewController setBusy:NO];
+                                   completion:^(BOOL installed) {
+        if (!reallySend) {
+            return;
+        }
+        [weakSelf.sendShellCommandsViewController setBusy:NO];
+        if (installed) {
             weakSelf.sendShellCommandsViewController.stage = 3;
+        } else {
+            weakSelf.sendShellCommandsViewController.writeFailed = YES;
         }
     }]];
     if (reallySend) {

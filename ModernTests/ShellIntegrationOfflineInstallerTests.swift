@@ -12,6 +12,11 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+// Part of the command with which the helper sh reads the utilities archive. The fakes' sh
+// answers it with it2-receiving-utilities, reads lines until one that is just EOF, and then
+// prints whether the archive extracted.
+private let receiveUtilitiesCommandMarker = "echo it2-\"\"receiving-utilities"
+
 private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
     let dryExpect = iTermExpect(dry: true)
     private var wetExpect: iTermExpect?
@@ -228,16 +233,17 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
 
     private func handleInHelper(_ line: String) -> [String] {
         if var heredoc {
-            let echo = "> " + line
+            let echo = (heredoc.path == nil ? "" : "> ") + line
             if line != "EOF" {
                 heredoc.lines.append(line)
                 self.heredoc = heredoc
-                return [echo, "> "]
+                return [echo, heredoc.path == nil ? "" : "> "]
             }
             self.heredoc = nil
             guard let path = heredoc.path else {
+                // The utilities archive was received.
                 lastStatus = 0
-                return [echo, ">> "]
+                return [line, "it2-utilities-installed", ">> "]
             }
             let directory = (path as NSString).deletingLastPathComponent
             guard createdDirectories.contains(directory) else {
@@ -270,9 +276,11 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
         } else if line.hasPrefix("cat <<'EOF' > ") {
             heredoc = (path: expand(String(line.dropFirst("cat <<'EOF' > ".count))), lines: [])
             prompt = "> "
-        } else if line.contains("<<'EOF'") {
+        } else if line.contains(receiveUtilitiesCommandMarker) {
+            // sh reads the archive from the tty with its line editor off, so there is no prompt.
+            result.append("it2-receiving-utilities")
             heredoc = (path: nil, lines: [])
-            prompt = "> "
+            prompt = ""
         } else if line.hasPrefix("if test $? -eq 0 && test -s ") {
             let written = lastStatus == 0 && !(files[Self.scriptPath] ?? "").isEmpty
             result.append(written ? "iTerm2-nu-script-written" : "iTerm2-nu-script-missing")
@@ -397,15 +405,16 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
 
     private func handleInHelper(_ line: String) -> [String] {
         if var heredoc {
-            let echo = "> " + line
+            let echo = (heredoc.path == nil ? "" : "> ") + line
             if line != "EOF" {
                 heredoc.lines.append(line)
                 self.heredoc = heredoc
-                return [echo, "> "]
+                return [echo, heredoc.path == nil ? "" : "> "]
             }
             self.heredoc = nil
             guard let path = heredoc.path else {
-                return [echo, ">> "]
+                // The utilities archive was received.
+                return [line, "it2-utilities-installed", ">> "]
             }
             let directory = (path as NSString).deletingLastPathComponent
             guard createdDirectories.contains(directory) else {
@@ -422,9 +431,11 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
         } else if line.hasPrefix("cat <<'EOF' > ") {
             heredoc = (path: String(line.dropFirst("cat <<'EOF' > ".count)), lines: [])
             prompt = "> "
-        } else if line.contains("<<'EOF'") {
+        } else if line.contains(receiveUtilitiesCommandMarker) {
+            // sh reads the archive from the tty with its line editor off, so there is no prompt.
+            result.append("it2-receiving-utilities")
             heredoc = (path: nil, lines: [])
-            prompt = "> "
+            prompt = ""
         } else if line.hasPrefix("chmod +x ") {
             let path = String(line.dropFirst("chmod +x ".count))
             if files[path] == nil {
@@ -968,8 +979,11 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     private var flushScheduled = false
     private var prompt = "> "
     private var heredocLines: [String]?
+    private var receivingUtilities = false
 
     private(set) var heredocBodies = [[String]]()
+    // Set to make tar fail to extract the utilities archive, as for one damaged on the way.
+    var extractionFails = false
 
     var helperIsRunning: Bool {
         return depth > 0
@@ -1034,6 +1048,11 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
                 heredocBodies.append(lines)
                 heredocLines = nil
                 prompt = ">> "
+                if receivingUtilities {
+                    receivingUtilities = false
+                    let answer = extractionFails ? "it2-utilities-failed" : "it2-utilities-installed"
+                    return [redraw, answer, prompt]
+                }
             } else {
                 lines.append(line)
                 heredocLines = lines
@@ -1046,6 +1065,12 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             prompt = "$ "
         } else if line.hasPrefix(" PS1=") {
             prompt = ">> "
+        } else if line.contains(receiveUtilitiesCommandMarker) {
+            // sh reads the archive from the tty with its line editor off, so there is no prompt.
+            result.append("it2-receiving-utilities")
+            heredocLines = []
+            receivingUtilities = true
+            prompt = ""
         } else if line.contains("<<'EOF'") {
             heredocLines = []
             prompt = "> "
@@ -1106,6 +1131,48 @@ final class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertGreaterThan(terminal.heredocBodies.first?.count ?? 0, 1)
         XCTAssertFalse(terminal.helperIsRunning)
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
+    }
+
+    private func encodedUtilitiesArchive() -> [String] {
+        let bundle = Bundle(for: iTermShellIntegrationWindowController.self)
+        guard let url = bundle.url(forResource: "utilities", withExtension: "tgz"),
+              let data = try? Data(contentsOf: url) else {
+            XCTFail("Missing bundled utilities archive")
+            return []
+        }
+        return data.base64EncodedString(options: [.lineLength76Characters, .endLineWithLineFeed])
+            .components(separatedBy: "\n")
+    }
+
+    // F-352: the archive is typed only once sh says it is reading it with its line editor off,
+    // and all of it arrives.
+    func testInstallUtilitiesSendsTheArchiveToAReaderWithoutALineEditor() {
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        let receive = terminal.sentTexts.firstIndex { $0.contains(receiveUtilitiesCommandMarker) }
+        XCTAssertNotNil(receive)
+        XCTAssertFalse(terminal.sentTexts.contains { $0.contains("<<'EOF'| tar") })
+        XCTAssertEqual(terminal.heredocBodies, [encodedUtilitiesArchive()])
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 3)
+        XCTAssertFalse(controller.sendShellCommandsWriteFailed)
+    }
+
+    // F-352: when the archive does not extract, the step says so instead of reporting success.
+    func testInstallUtilitiesReportsFailureWhenTheArchiveDoesNotExtract() {
+        terminal.extractionFails = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+        XCTAssertTrue(controller.sendShellCommandsWriteFailed)
+        let steps = controller.sendShellCommandsStepListField.stringValue
+        XCTAssertTrue(steps.contains("utility scripts were not installed"), steps)
+        XCTAssertFalse(steps.contains("Done!"), steps)
     }
 
     func testWholeInstallSendsBothHereDocumentsAndExitsTheHelper() {
