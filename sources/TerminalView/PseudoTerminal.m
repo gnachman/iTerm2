@@ -5669,6 +5669,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     if (!iTermWindowTypeIsCompact(effectiveWindowType)) {
         if (@available(macOS 26, *)) {
+            if ([iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                // These insets make room around the Tahoe pill. Sequoia-style tabs fill the bar
+                // edge to edge, as they do on earlier OS versions. Issue 12498.
+                return NSEdgeInsetsZero;
+            }
             switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
                 case TAB_STYLE_MINIMAL:
                 case TAB_STYLE_COMPACT:
