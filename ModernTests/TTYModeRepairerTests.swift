@@ -56,6 +56,23 @@ private final class PTYPair {
         setSlaveModes(modes)
     }
 
+    // Everything that can be read from the master without waiting.
+    func readAvailableFromMaster() -> [UInt8] {
+        var result = [UInt8]()
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        while true {
+            var pfd = pollfd(fd: master, events: Int16(POLLIN), revents: 0)
+            guard poll(&pfd, 1, 200) == 1 else {
+                return result
+            }
+            let n = read(master, &buffer, buffer.count)
+            guard n > 0 else {
+                return result
+            }
+            result.append(contentsOf: buffer[0..<n])
+        }
+    }
+
     // What zsh does before a command: reapply the modes it recorded, with ICANON and ECHO
     // forced on.
     func reapplyRecordedModesLikeZsh() {
@@ -150,6 +167,41 @@ final class TTYModeRepairerTests: XCTestCase {
         XCTAssertTrue(has(modes.c_oflag, OPOST))
         XCTAssertTrue(has(modes.c_iflag, IXON))
         XCTAssertTrue(has(modes.c_iflag, ICRNL))
+    }
+
+    // F-553: setting the modes through the pty's master discards the output still waiting
+    // to be read (on macOS a set-attributes ioctl on the master flushes the output queue)
+    // and doesn't wake a writer waiting for that queue to drain. zsh restores its tty
+    // modes with TCSADRAIN when the killed it2ssh's job ends, so it slept, and nothing it
+    // printed was drawn, until something else wrote to the tty.
+    func testRepairKeepsOutputWaitingToBeRead() throws {
+        let pty = try PTYPair()
+        pty.enterSSHRawMode()
+        let pending = Array("output from the remote".utf8)
+        XCTAssertEqual(write(pty.slave, pending, pending.count), pending.count)
+
+        let repairer = TTYModeRepairer()
+        repairer.repairAfterAbandonedSSH(fileDescriptor: { pty.master }, ttyPath: pty.path, goodModes: nil, repairNow: true, shellProcessID: 0)
+        XCTAssertTrue(has(pty.slaveModes.c_oflag, OPOST), "the repair must still happen")
+
+        XCTAssertEqual(pty.readAvailableFromMaster(), pending)
+    }
+
+    // The same for the repair when a command starts.
+    func testCommandStartRepairKeepsOutputWaitingToBeRead() throws {
+        let pty = try PTYPair()
+        pty.enterSSHRawMode()
+        let repairer = TTYModeRepairer()
+        repairer.repairAfterAbandonedSSH(fileDescriptor: { pty.master },
+                                         ttyPath: pty.path,
+                                         goodModes: TTYModes(path: pty.path, modes: goodModes),
+                                         repairNow: false, shellProcessID: 0)
+        pty.reapplyRecordedModesLikeZsh()
+        let pending = Array("prompt".utf8)
+        XCTAssertEqual(write(pty.slave, pending, pending.count), pending.count)
+        repairer.commandWillRun()
+        XCTAssertTrue(has(pty.slaveModes.c_oflag, OPOST), "the repair must still happen")
+        XCTAssertEqual(pty.readAvailableFromMaster(), pending)
     }
 
     func testRepairLeavesNonRawTTYAlone() throws {
