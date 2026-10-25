@@ -314,6 +314,44 @@ final class SSHClientKillTests: XCTestCase {
         XCTAssertEqual(monitor.shellProcessGroup(clientUniqueID: "abc"), 0)
     }
 
+    // F-541: the repairer watches the shell that ran it2ssh for forks, but only that
+    // process, and only if it2ssh ran with job control.
+    func testShellProcessIDIsTheRunningShellThatRanIT2SSH() {
+        let inspector = makeInspector()
+        inspector.groups[10] = 10
+        inspector.groups[20] = 20
+        let monitor = makeMonitor(inspector)
+        monitor.watch(processID: 20, clientUniqueID: "abc") {}
+        killIT2SSH(inspector)
+        XCTAssertEqual(monitor.shellProcessID(clientUniqueID: "abc"), 10)
+        XCTAssertEqual(monitor.shellProcessID(clientUniqueID: "other"), 0)
+        // The shell exited and its pid was reused.
+        inspector.processes[10]?.startTime = Date(timeIntervalSince1970: 5000)
+        XCTAssertEqual(monitor.shellProcessID(clientUniqueID: "abc"), 0)
+    }
+
+    // A reparented it2ssh's parent is launchd, which must never be watched.
+    func testNoShellProcessIDForReparentedIT2SSH() {
+        let inspector = makeInspector()
+        inspector.processes[20]?.parent = 1
+        inspector.groups[1] = 1
+        inspector.groups[20] = 20
+        let monitor = makeMonitor(inspector)
+        monitor.watch(processID: 20, clientUniqueID: "abc") {}
+        killIT2SSH(inspector)
+        XCTAssertEqual(monitor.shellProcessID(clientUniqueID: "abc"), 0)
+    }
+
+    func testNoShellProcessIDWithoutJobControl() {
+        let inspector = makeInspector()
+        inspector.groups[10] = 10
+        inspector.groups[20] = 10
+        let monitor = makeMonitor(inspector)
+        monitor.watch(processID: 20, clientUniqueID: "abc") {}
+        killIT2SSH(inspector)
+        XCTAssertEqual(monitor.shellProcessID(clientUniqueID: "abc"), 0)
+    }
+
     // An unknown parent (pid 0) must not count as iTerm2's own process group.
     func testSystemInspectorHasNoProcessGroupForInvalidPID() {
         let inspector = SystemSSHClientProcessInspector()
