@@ -397,6 +397,9 @@ private class TokenExecutorImpl {
     static let didUnpauseGloballyNotification = Notification.Name("didUnpauseGloballyNotification")
     private let terminal: VT100Terminal
     private let queue: DispatchQueue
+    // False when every session shares the one mutation queue. Then joining any session must pause
+    // them all, and background sessions yield to active ones, because they all run on that queue.
+    private let hasOwnQueue: Bool
     private let slownessDetector: SlownessDetector
     private var taskQueue = iTermTaskQueue()
     private var sideEffects = iTermTaskQueue()
@@ -461,6 +464,7 @@ private class TokenExecutorImpl {
          queue: DispatchQueue) {
         self.terminal = terminal
         self.queue = queue
+        hasOwnQueue = queue !== iTermGCD.mutationQueue()
         self.slownessDetector = slownessDetector
         sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: Self.foregroundSideEffectPeriod, action: { [weak self] in
             guard let self = self else {
@@ -572,7 +576,7 @@ private class TokenExecutorImpl {
     func whilePaused(_ block: () -> (), onExecutorQueue: Bool) {
         dispatchPrecondition(condition: .onQueue(.main))
         if gDebugLogging.boolValue { DLog("Incr pending pauses if \(iTermPreferences.maximizeThroughput())") }
-        var unpauser = iTermPreferences.maximizeThroughput() ? nil : TokenExecutor.globalPause()
+        var unpauser = iTermPreferences.maximizeThroughput() ? nil : pauseForJoin()
 
         let sema = DispatchSemaphore(value: 0)
         let sema2 = DispatchSemaphore(value: 0)
@@ -591,7 +595,7 @@ private class TokenExecutorImpl {
             // amount of time (until the current batch of tokens is done being executed).
             let timeout = 0.03
             if sema2.wait(timeout: .now() + timeout) == .timedOut {
-                unpauser = TokenExecutor.globalPause()
+                unpauser = pauseForJoin()
                 sema2.wait()
             }
         }
@@ -602,6 +606,19 @@ private class TokenExecutorImpl {
         }
         unpauser?.unpause()
         sema.signal()
+    }
+
+    // Main queue. Stops token execution so the queue gets to the join soon. A session with a queue
+    // of its own pauses only itself; on the shared queue, every session must stop.
+    private func pauseForJoin() -> Unpauser {
+        guard hasOwnQueue else {
+            return TokenExecutor.globalPause()
+        }
+        let newValue = iTermAtomicInt64Add(pauseCount, 1)
+        if newValue == 1 && gDebugLogging.boolValue {
+            DLog("Pause for join")
+        }
+        return Unpauser(self)
     }
 
     // Any queue
@@ -861,9 +878,10 @@ private class TokenExecutorImpl {
                     }
                 }
             }
-            if vectorHasNext && isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
-                // Avoid blocking the active session. If there were multiple mutation threads this
-                // would be unnecessary. Reschedule to resume processing once active sessions drain.
+            if vectorHasNext && !hasOwnQueue && isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
+                // Avoid blocking the active session, which shares this queue. A session with a
+                // queue of its own doesn't block anyone. Reschedule to resume processing once
+                // active sessions drain.
                 // Not after the group's last token: it is done, and returning here would skip
                 // counting its bytes (see the accumulation below), which flow control for a
                 // hidden workgroup peer depends on.
