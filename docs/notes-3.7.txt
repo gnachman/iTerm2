@@ -571,6 +571,11 @@ Bug Fixes:
 - Fixed a crash from a Smart Selection rule
   with no regular expression, for example in a
   hand-edited or Dynamic Profile.
+- Fixed a crash from a trigger in a Dynamic
+  Profile whose parameter has an unexpected
+  type, such as a list. A text parameter
+  written as a number, such as text to send, is
+  now used as text instead of being ignored.
 - Fixed memory corruption with the GPU renderer
   that could cause crashes after closing a
   session.

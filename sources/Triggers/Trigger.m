@@ -82,7 +82,14 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
     // regex as "", so treat a missing or non-string value the same way.
     trigger.regex = [NSString castFrom:dict[kTriggerRegexKey]] ?: @"";
     trigger.contentRegex = [NSString castFrom:dict[kTriggerContentRegexKey]];
-    trigger.param = dict[kTriggerParameterKey];
+    // Every trigger's parameter is a string or a number (a popup's tag). Anything else is
+    // malformed input that would crash code calling -intValue or string methods on it.
+    id param = dict[kTriggerParameterKey];
+    if ([param isKindOfClass:[NSString class]] || [param isKindOfClass:[NSNumber class]]) {
+        trigger.param = param;
+    } else if (param) {
+        RLog(@"Ignoring trigger parameter of unexpected class %@", NSStringFromClass([param class]));
+    }
     trigger.partialLine = [[NSNumber coerceFrom:dict[kTriggerPartialLineKey]] boolValue];
     trigger.disabled = [[NSNumber coerceFrom:dict[kTriggerDisabledKey]] boolValue];
     trigger->_matchType = [[NSNumber coerceFrom:dict[kTriggerMatchTypeKey]] unsignedIntegerValue];
@@ -388,7 +395,8 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
                                                                 absLine:(long long)absLine
                                                                   scope:(id<iTermTriggerScopeProvider>)scopeProvider
                                                        useInterpolation:(BOOL)useInterpolation {
-    NSString *p = [NSString castFrom:self.param] ?: @"";
+    // A hand-written trigger may give a number where a string is expected.
+    NSString *p = [NSString castFrom:self.param] ?: [[NSNumber castFrom:self.param] stringValue] ?: @"";
     return [self promisedValueOfInterpolatedString:p
               withBackreferencesReplacedWithValues:stringArray
                                            absLine:absLine
