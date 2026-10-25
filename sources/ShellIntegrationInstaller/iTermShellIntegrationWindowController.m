@@ -123,6 +123,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 @implementation iTermShellIntegrationWindowController {
     NSMutableArray<iTermExpectation *> *_pendingExpectations;
+    // Incremented by cancelAllExpectations, so a command whose typing was already queued when
+    // its expectation was canceled is not typed.
+    NSUInteger _cancellationGeneration;
 }
 
 #pragma mark - NSWindowController
@@ -277,12 +280,18 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     }
     
     __weak __typeof(self) weakSelf = self;
+    const NSUInteger generation = _cancellationGeneration;
     iTermExpectation *newExpectation =
     [self expectRegularExpression:regex
                             after:(*expectation).lastExpectation
                        willExpect:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_cancellationGeneration != generation) {
+            DLog(@"Not sending text for a canceled expectation");
+            return;
+        }
         if (text) {
-            [weakSelf.delegate shellIntegrationWindowControllerSendText:text];
+            [strongSelf.delegate shellIntegrationWindowControllerSendText:text];
         }
     }
                        completion:completion];
@@ -332,6 +341,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (void)cancelAllExpectations {
+    _cancellationGeneration += 1;
     [_pendingExpectations enumerateObjectsUsingBlock:^(iTermExpectation * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [[self.delegate shellIntegrationExpect] cancelExpectation:obj];
     }];
