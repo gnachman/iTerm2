@@ -11,6 +11,7 @@
 
 @protocol VT100ScreenConfiguration;
 @class iTermEchoProbe;
+@class iTermTTYModeRepairer;
 @protocol iTermEchoProbeDelegate;
 @protocol iTermLargeContentProvider;
 @protocol iTermOrderedToken;
@@ -60,6 +61,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL exited;
 @property (nonatomic, strong, readonly, nullable) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
+// Told when commands start and finish so it can fix tty modes a shell recorded while an
+// abandoned ssh had the tty in raw mode (F-460).
+@property (atomic, strong, nullable) iTermTTYModeRepairer *ttyModeRepairer;
 @property (nonatomic, weak, nullable) id<iTermEchoProbeDelegate> echoProbeDelegate;
 @property (nullable, nonatomic, strong) VT100ScreenState *mainThreadCopy;
 
