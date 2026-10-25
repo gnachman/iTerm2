@@ -1947,3 +1947,7 @@ Bug Fixes:
   example because of a permission error or a
   connection problem. The upload now fails with
   an error instead.
+- When an administrator turns off generative AI,
+  iTerm2 no longer uses Apple Intelligence for
+  AI chat, AI tab titles, or the command safety
+  check.
