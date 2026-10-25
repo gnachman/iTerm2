@@ -1956,3 +1956,8 @@ Bug Fixes:
   iTerm2 no longer uses Apple Intelligence for
   AI chat, AI tab titles, or the command safety
   check.
+- The Internet-Free shell integration install
+  no longer unpacks the utilities into the
+  current folder when it can’t open the
+  ~/.iterm2 folder, as when a file has that
+  name. It says they were not installed.

@@ -17,6 +17,17 @@ import XCTest
 // prints whether the archive extracted.
 private let receiveUtilitiesCommandMarker = "echo it2-\"\"receiving-utilities"
 
+// What sh prints for the installer's `cd folder && echo done || echo failed` line, or nil if the
+// line isn't one.
+private func fakeConditionalEchoAnswer(_ line: String, fails: Bool) -> String? {
+    guard let and = line.range(of: " && echo "),
+          let or = line.range(of: " || echo ", range: and.upperBound..<line.endIndex) else {
+        return nil
+    }
+    let answer = fails ? line[or.upperBound...] : line[and.upperBound..<or.lowerBound]
+    return answer.replacingOccurrences(of: "\"", with: "")
+}
+
 private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
     let dryExpect = iTermExpect(dry: true)
     private var wetExpect: iTermExpect?
@@ -316,7 +327,10 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
                 result.append("chmod: \(path): No such file or directory")
             }
             prompt = ">> "
-        } else if line.hasPrefix("mkdir ") || line.hasPrefix("cd "), let range = line.range(of: "; echo ") {
+        } else if line.hasPrefix("cd "), let answer = fakeConditionalEchoAnswer(line, fails: false) {
+            result.append(answer)
+            prompt = ">> "
+        } else if line.hasPrefix("mkdir "), let range = line.range(of: "; echo ") {
             result.append(line[range.upperBound...].replacingOccurrences(of: "\"", with: ""))
             prompt = ">> "
         } else if line.hasPrefix("sh -c 'ENV=/dev/null") {
@@ -466,7 +480,9 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
             if files[path] == nil {
                 result.append("chmod: \(path): No such file or directory")
             }
-        } else if line.hasPrefix("mkdir ") || line.hasPrefix("cd "), let range = line.range(of: "; echo ") {
+        } else if line.hasPrefix("cd "), let answer = fakeConditionalEchoAnswer(line, fails: false) {
+            result.append(answer)
+        } else if line.hasPrefix("mkdir "), let range = line.range(of: "; echo ") {
             result.append(line[range.upperBound...].replacingOccurrences(of: "\"", with: ""))
         } else if line.hasPrefix("sh -c 'ENV=/dev/null") {
             // A nested sh reads the typeahead a byte at a time, so it starts without losing any.
@@ -1030,6 +1046,8 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     // Set to make sh unable to create the file the archive goes into, as in a folder that is
     // not writable.
     var receiveFails = false
+    // Set to make cd into the utilities folder fail, as when ~/.iterm2 is a file.
+    var cdFails = false
     // Set to keep sh reading the archive, as while it is still being typed: the line that ends
     // the archive doesn't arrive, though one typed later does.
     var archiveNeverEnds = false
@@ -1167,6 +1185,11 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             result.append(line.dropFirst("echo ".count)
                 .replacingOccurrences(of: "\"", with: "")
                 .replacingOccurrences(of: "$PS1", with: prompt))
+        } else if line.hasPrefix("cd "), let answer = fakeConditionalEchoAnswer(line, fails: cdFails) {
+            if cdFails {
+                result.append("sh: cd: \(line.dropFirst("cd ".count).prefix(while: { $0 != " " })): Not a directory")
+            }
+            result.append(answer)
         } else if let range = line.range(of: "; echo ") {
             if line.hasPrefix("mkdir ") {
                 result.append("mkdir: \(line.dropFirst("mkdir ".count).prefix(while: { $0 != ";" })): File exists")
@@ -1280,6 +1303,28 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertFalse(terminal.sentTexts.contains { $0.contains(firstLine) })
         XCTAssertFalse(terminal.sentTexts.contains { $0.contains("\nEOF\n") })
         XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+        XCTAssertTrue(controller.sendShellCommandsWriteFailed)
+        let steps = controller.sendShellCommandsStepListField.stringValue
+        XCTAssertTrue(steps.contains("utility scripts were not installed"), steps)
+    }
+
+    // T-130: when sh can't enter the utilities folder (as when ~/.iterm2 is a file), nothing is
+    // received or unpacked in the folder it is in, the helpers exit, and the step says the
+    // utilities were not installed.
+    func testInstallUtilitiesStopsWhenCdFails() {
+        terminal.cdFails = true
+        controller.shellIntegrationInstallerSkipStage()
+        controller.shellIntegrationInstallerSendShellCommands(2)
+        terminal.run()
+
+        let firstLine = encodedUtilitiesArchive().first ?? ""
+        XCTAssertFalse(firstLine.isEmpty)
+        XCTAssertNotNil(terminal.sentTexts.firstIndex { $0.hasPrefix("cd ") })
+        XCTAssertNil(terminal.sentTexts.firstIndex { $0.contains(receiveUtilitiesCommandMarker) })
+        XCTAssertFalse(terminal.sentTexts.contains { $0.contains(firstLine) })
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
         XCTAssertEqual(controller.sendShellCommandsStage, 2)
         XCTAssertTrue(controller.sendShellCommandsWriteFailed)
         let steps = controller.sendShellCommandsStepListField.stringValue
@@ -1809,6 +1854,55 @@ final class ShellIntegrationReceiveUtilitiesCommandTests: XCTestCase {
             XCTAssertTrue(output.contains("it2-utilities-failed"), "\(shell): \(output)")
             XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [], shell)
         }
+    }
+
+    // T-130: runs the command that enters the utilities folder in `directory`.
+    private func runChangeToFolder(_ shell: String, in directory: URL) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: shell)
+        let command = iTermShellIntegrationWindowController.commandToEnterUtilitiesFolder(folder.path)
+        process.arguments = ["-i", "-c", command]
+        process.currentDirectoryURL = directory
+        process.environment = ["ENV": "/dev/null", "HOME": home.path, "PATH": "/usr/bin:/bin:/usr/sbin:/sbin"]
+        let output = Pipe()
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = output
+        process.standardError = output
+        try process.run()
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    func testChangeToFolderSaysDoneWhenItEntersTheFolder() throws {
+        for shell in Self.shells {
+            try makeFolder()
+            let output = try runChangeToFolder(shell, in: home)
+
+            XCTAssertTrue(output.contains("it2-cd-done"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-cd-failed"), "\(shell): \(output)")
+        }
+    }
+
+    // T-130: ~/.iterm2 is a file, so cd fails. It must not say it is done, or the archive would
+    // be unpacked in the folder sh is in.
+    func testChangeToFolderSaysFailedWhenTheFolderIsAFile() throws {
+        for shell in Self.shells {
+            try? FileManager.default.removeItem(at: home)
+            try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+            XCTAssertTrue(FileManager.default.createFile(atPath: folder.path, contents: Data("x".utf8)))
+            let output = try runChangeToFolder(shell, in: home)
+
+            XCTAssertTrue(output.contains("it2-cd-failed"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-cd-done"), "\(shell): \(output)")
+            try FileManager.default.removeItem(at: folder)
+        }
+    }
+
+    func testChangeToFolderCommandDoesNotContainItsAnswers() {
+        let command = iTermShellIntegrationWindowController.commandToEnterUtilitiesFolder("/x/.iterm2")
+        XCTAssertFalse(command.contains("it2-cd-done"))
+        XCTAssertFalse(command.contains("it2-cd-failed"))
     }
 
     // sh echoes the typed command, and the echo must not look like any of its answers.
