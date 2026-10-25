@@ -643,6 +643,24 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         XCTAssertEqual(controller.shell, .tcsh)
     }
 
+    // Once the mutation thread has picked up an expectation, typing its text is already queued
+    // for the main thread. Canceling before that runs must keep the text from being typed.
+    func testCancelKeepsAQueuedCommandFromBeingTyped() {
+        terminal.responses[Self.shellCommand] = "My shell is zsh -zsh or /bin/zsh, end"
+        controller.shellIntegrationInstallerSendShellCommands(0)
+        // As PTYSession's sync does: the copy adds the expectation and queues its text.
+        let wet = terminal.dryExpect.copy() as! iTermExpect
+        controller.shellIntegrationInstallerCancelExpectations()
+        let drained = XCTestExpectation(description: "Main queue drained")
+        DispatchQueue.main.async {
+            drained.fulfill()
+        }
+        wait(for: [drained], timeout: 10)
+
+        XCTAssertEqual(wet.expectations.count, 1)
+        XCTAssertEqual(terminal.sentTexts, [])
+    }
+
     func testSkipDoesNotBypassDiscovery() {
         controller.shellIntegrationInstallerSkipStage()
 
