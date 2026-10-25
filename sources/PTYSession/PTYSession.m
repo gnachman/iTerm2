@@ -20873,7 +20873,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [self unhookSSHConductor];
         if (clientUniqueID.length) {
             // The dead it2ssh's ssh client would otherwise stay logged in (F-351).
-            [_sshClientMonitor hangUpOrphanedSSHClientForClientUniqueID:clientUniqueID];
+            [_sshClientMonitor killOrphanedSSHClientForClientUniqueID:clientUniqueID];
         }
         if (found) {
             break;
@@ -26653,14 +26653,14 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
             [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
             // If it2ssh is dead its ssh client would otherwise stay logged in (F-351).
             // This does nothing if it2ssh is alive or its ssh client already exited.
-            [weakSelf hangUpOrphanedSSHClientForClientUniqueID:clientUniqueID];
+            [weakSelf killOrphanedSSHClientForClientUniqueID:clientUniqueID];
         });
     }
 }
 
-- (void)hangUpOrphanedSSHClientForClientUniqueID:(NSString *)clientUniqueID {
+- (void)killOrphanedSSHClientForClientUniqueID:(NSString *)clientUniqueID {
     if (clientUniqueID.length) {
-        [_sshClientMonitor hangUpOrphanedSSHClientForClientUniqueID:clientUniqueID];
+        [_sshClientMonitor killOrphanedSSHClientForClientUniqueID:clientUniqueID];
     }
 }
 
