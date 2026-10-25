@@ -236,6 +236,8 @@ private final class FakeTask: NSObject, iTermTask {
     private weak var notifier: TaskNotifier?
 
     let ownedFileDescriptor: OwnedFileDescriptor?
+    // Read instead of the file descriptor when set, like a tmux pane.
+    let inputQueue: TaskInputQueue?
     let pidToWaitOn: pid_t
     var pid: pid_t { 0 }
     var sshIntegrationActive: Bool { false }
@@ -258,11 +260,23 @@ private final class FakeTask: NSObject, iTermTask {
     private var _readsWithoutCapacity = 0
     private var _consumer: DispatchQueue?
     private var _slotsTaken = 0
+    // Like a tmux gateway's panes' unread output: reading stops while it is full, unless
+    // _ignoresOutputBudget is set (the gateway left tmux mode).
+    private var _outputBudget: ByteBudget?
+    private var _ignoresOutputBudget = false
 
     init(fd: OwnedFileDescriptor, notifier: TaskNotifier, pidToWaitOn: pid_t = 0) {
         ownedFileDescriptor = fd
+        inputQueue = nil
         self.notifier = notifier
         self.pidToWaitOn = pidToWaitOn
+    }
+
+    init(inputQueue: TaskInputQueue, notifier: TaskNotifier) {
+        ownedFileDescriptor = nil
+        self.inputQueue = inputQueue
+        self.notifier = notifier
+        pidToWaitOn = 0
     }
 
     private func locked<T>(_ block: () -> T) -> T {
@@ -284,6 +298,14 @@ private final class FakeTask: NSObject, iTermTask {
             _budget = budget
             _consumer = consumer
         }
+    }
+
+    func setOutputBudget(_ budget: ByteBudget?) {
+        locked { _outputBudget = budget }
+    }
+
+    func setIgnoresOutputBudget(_ value: Bool) {
+        locked { _ignoresOutputBudget = value }
     }
 
     // While set, processRead blocks until the semaphore is signaled.
@@ -391,7 +413,15 @@ private final class FakeTask: NSObject, iTermTask {
         var buffer = [UInt8](repeating: 0, count: 1024 * 4)
         var bytesRead = 0
         var broken = false
-        for _ in 0..<4 {
+        if let inputQueue {
+            // Like -[PTYTask processRead] for a tmux pane.
+            var endOfFile = ObjCBool(false)
+            bytesRead = buffer.withUnsafeMutableBytes { pointer in
+                inputQueue.read(into: pointer.baseAddress!, maxLength: pointer.count, endOfFile: &endOfFile)
+            }
+            broken = endOfFile.boolValue
+        }
+        for _ in 0..<4 where inputQueue == nil {
             let n = buffer.withUnsafeMutableBytes { pointer in
                 // Like PTYTask, treat a closed descriptor as a read error.
                 var n = -1
@@ -495,13 +525,25 @@ private final class FakeTask: NSObject, iTermTask {
         notifier?.unblockTask(self)
     }
 
-    var hasReadCapacity: Bool {
-        locked { _budget?.hasCapacity ?? true }
+    private var activeOutputBudget: ByteBudget? {
+        locked { _ignoresOutputBudget ? nil : _outputBudget }
     }
 
+    // Like -[PTYSession taskHasReadCapacity].
+    var hasReadCapacity: Bool {
+        guard locked({ _budget?.hasCapacity ?? true }) else {
+            return false
+        }
+        return activeOutputBudget?.hasCapacity ?? true
+    }
+
+    // Like -[PTYSession taskNotifyWhenReadCapacityAvailableOnQueue:block:].
     func notifyWhenReadCapacityAvailable(on queue: DispatchQueue!, block: (() -> Void)!) {
-        if let budget = locked({ _budget }) {
+        let budget = locked({ _budget })
+        if let budget, !budget.hasCapacity {
             budget.notifyWhenCapacityAvailable(on: queue, block)
+        } else if let outputBudget = activeOutputBudget, !outputBudget.hasCapacity {
+            outputBudget.notifyWhenCapacityAvailable(on: queue, block)
         } else {
             queue.async(execute: block)
         }
@@ -1561,6 +1603,203 @@ final class TaskIOMonitorCharacterizationTests: TaskIOCharacterizationWithChildR
         deregisterAndFlush(task)
         budget.release()
         XCTAssertEqual(task.received, Data("a".utf8))
+    }
+
+    // MARK: Input queues
+
+    // A task that reads from memory, like a tmux pane.
+    private func makeQueueTask() -> (FakeTask, TaskInputQueue) {
+        let queue = TaskInputQueue()
+        return (FakeTask(inputQueue: queue, notifier: notifier), queue)
+    }
+
+    // More than one read's worth, appended in pieces of several sizes, arrives whole and in order.
+    func testInputQueueBytesAreDeliveredInOrder() {
+        let (task, queue) = makeQueueTask()
+        notifier.register(task)
+        let expected = pattern(count: 64 * 1024)
+        var start = 0
+        var size = 1
+        while start < expected.count {
+            let end = min(expected.count, start + size)
+            queue.append(expected.subdata(in: start..<end))
+            start = end
+            size = size * 3 + 1
+        }
+        XCTAssertTrue(task.waitForReceived(count: expected.count))
+        XCTAssertEqual(task.received, expected)
+        deregisterAndFlush(task)
+    }
+
+    func testInputQueueBytesAppendedBeforeRegistrationAreRead() {
+        let (task, queue) = makeQueueTask()
+        queue.append(Data("abc".utf8))
+        notifier.register(task)
+        XCTAssertTrue(task.waitForReceived(count: 3))
+        XCTAssertEqual(task.received, Data("abc".utf8))
+        deregisterAndFlush(task)
+    }
+
+    func testInputQueueIsNotReadWhileWantsReadIsFalse() {
+        let (task, queue) = makeQueueTask()
+        task.setWantsRead(false)
+        notifier.register(task)
+        queue.append(Data("a".utf8))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.received, Data())
+
+        task.setWantsRead(true)
+        notifier.unblockTask(task)
+        XCTAssertTrue(task.waitForReceived(count: 1))
+        deregisterAndFlush(task)
+    }
+
+    func testInputQueueFullBudgetStopsReadingUntilThereIsRoom() {
+        let (task, queue) = makeQueueTask()
+        let budget = TokenBudget(capacity: 2)
+        task.setBudget(budget)
+        notifier.register(task)
+        // Wait for each read so every byte takes a slot of its own.
+        queue.append(Data("a".utf8))
+        XCTAssertTrue(task.waitForReceived(count: 1))
+        queue.append(Data("b".utf8))
+        XCTAssertTrue(task.waitForReceived(count: 2))
+        XCTAssertFalse(budget.hasCapacity)
+
+        queue.append(Data("c".utf8))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.received, Data("ab".utf8))
+
+        budget.release()
+        XCTAssertTrue(task.waitForReceived(count: 3))
+        XCTAssertEqual(task.received, Data("abc".utf8))
+        XCTAssertEqual(task.readsWithoutCapacity, 0)
+        deregisterAndFlush(task)
+    }
+
+    // A flood with a consumer that stops and starts loses and reorders nothing. The monitor must
+    // come back for bytes left in the queue when it stopped for lack of room.
+    func testInputQueueFloodWithStalledConsumer() {
+        let (task, queue) = makeQueueTask()
+        let budget = TokenBudget(capacity: 4)
+        let consumer = DispatchQueue(label: "TaskIOMonitorCharacterizationTests.consumer")
+        consumer.suspend()
+        task.setBudget(budget, consumer: consumer)
+        notifier.register(task)
+
+        let expected = pattern(count: 256 * 1024)
+        queue.append(expected)
+        XCTAssertTrue(task.waitForReadCalls(4))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.readCalls, 4)
+
+        consumer.resume()
+        XCTAssertTrue(task.waitForReceived(count: expected.count))
+        XCTAssertEqual(task.received, expected)
+        XCTAssertEqual(task.readsWithoutCapacity, 0)
+        deregisterAndFlush(task)
+    }
+
+    // Like a pipe whose write end closed: what was read is kept, and the task ends once.
+    func testClosingInputQueueCausesBrokenPipe() {
+        let (task, queue) = makeQueueTask()
+        notifier.register(task)
+        queue.append(Data("a".utf8))
+        XCTAssertTrue(task.waitForReceived(count: 1))
+        queue.close()
+        XCTAssertTrue(task.waitForBrokenPipe())
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.brokenPipeCalls, 1)
+        XCTAssertEqual(task.received, Data("a".utf8))
+    }
+
+    // Deregistered right after registering, possibly before it starts. Waiting for it to stop
+    // finishes either way, and nothing is read twice.
+    func testInputQueueTaskDeregisteredRightAwayStops() {
+        let (task, queue) = makeQueueTask()
+        queue.append(Data("a".utf8))
+        notifier.register(task)
+        let stopped = expectation(description: "Stopped")
+        notifier.deregister(task) {
+            stopped.fulfill()
+        }
+        wait(for: [stopped], timeout: timeout)
+        XCTAssertTrue(flush())
+        XCTAssertLessThanOrEqual(task.received.count, 1)
+    }
+
+    // Appends from another thread while the monitor reads arrive in order.
+    func testInputQueueConcurrentAppendsArriveInOrder() {
+        let (task, queue) = makeQueueTask()
+        notifier.register(task)
+        let expected = pattern(count: 128 * 1024)
+        DispatchQueue.global().async {
+            var start = 0
+            while start < expected.count {
+                let end = min(expected.count, start + 517)
+                queue.append(expected.subdata(in: start..<end))
+                start = end
+            }
+        }
+        XCTAssertTrue(task.waitForReceived(count: expected.count))
+        XCTAssertEqual(task.received, expected)
+        deregisterAndFlush(task)
+    }
+
+    // A tmux gateway stops reading while its panes have too much output waiting, and starts again
+    // once they have read enough of it.
+    func testGatewayWaitsForPanesToReadTheirOutput() throws {
+        let (gateway, pty) = try makeTask()
+        let budget = ByteBudget(capacity: 4)
+        gateway.setOutputBudget(budget)
+        let pane = TaskInputQueue()
+        pane.budget = budget
+        pane.append(Data("12345".utf8))
+        notifier.register(gateway)
+
+        pty.writeToSlave(Data("a".utf8))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(gateway.received, Data())
+
+        // Above the low watermark (half the capacity), so still waiting.
+        var buffer = [UInt8](repeating: 0, count: 5)
+        var endOfFile = ObjCBool(false)
+        _ = pane.read(into: &buffer, maxLength: 2, endOfFile: &endOfFile)
+        XCTAssertTrue(flush())
+        XCTAssertEqual(gateway.received, Data())
+
+        _ = pane.read(into: &buffer, maxLength: 1, endOfFile: &endOfFile)
+        XCTAssertTrue(gateway.waitForReceived(count: 1))
+        deregisterAndFlush(gateway)
+    }
+
+    // When the gateway leaves tmux mode its panes' output no longer limits it. Waking the budget
+    // makes the waiting monitor check again even though the budget is still full.
+    func testGatewayLeavingTmuxModeIsWokenUp() throws {
+        let (gateway, pty) = try makeTask()
+        let budget = ByteBudget(capacity: 4)
+        gateway.setOutputBudget(budget)
+        budget.take(10)
+        notifier.register(gateway)
+        pty.writeToSlave(Data("a".utf8))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(gateway.received, Data())
+
+        gateway.setIgnoresOutputBudget(true)
+        budget.wake()
+        XCTAssertTrue(gateway.waitForReceived(count: 1))
+        deregisterAndFlush(gateway)
+        budget.give(10)
+    }
+
+    // Once deregistered, the monitor no longer watches the queue.
+    func testDeregisteredInputQueueTaskIsNotRead() {
+        let (task, queue) = makeQueueTask()
+        notifier.register(task)
+        deregisterAndFlush(task)
+        queue.append(Data("a".utf8))
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.readCalls, 0)
     }
 
     // What `fd` refers to, or nil if it is not open. Comparing identities shows whether a number

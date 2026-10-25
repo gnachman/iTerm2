@@ -417,6 +417,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @end
 
 @interface PTYSession () <iTermKittyDnDBridgeDataSource>
+// Any thread. With task I/O monitors, a tmux gateway's panes count their unread output against
+// this, and the gateway stops reading while it is full. Made when the session first becomes a
+// gateway and kept, so a monitor waiting on it is never left with a stale one.
+@property (atomic, retain) iTermByteBudget *tmuxOutputBudget;
 @end
 
 // Background-drawing delegate used when rendering a screenshot. It forwards to the
@@ -572,6 +576,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     BOOL _tmuxWindowClosingByClientRequest;
     // This is the write end of a pipe for tmux clients. The read end is in TaskNotifier.
     NSFileHandle *_tmuxClientWritePipe;
+    // Used in place of _tmuxClientWritePipe with task I/O monitors. The task reads what is
+    // appended to it.
+    iTermTaskInputQueue *_tmuxPaneInputQueue;
     NSInteger _requestAttentionId;  // Last request-attention identifier
 
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
@@ -1403,6 +1410,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_composerManager release];
     [_tmuxClientWritePipe release];
+    [_tmuxPaneInputQueue close];
+    [_tmuxPaneInputQueue release];
+    [_tmuxOutputBudget release];
     [_arrangementGUID release];
     [_triggerWindowController release];
     [_hardStopDeadline release];
@@ -4637,6 +4647,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)setTmuxController:(TmuxController *)tmuxController {
     [_tmuxController autorelease];
     _tmuxController = [tmuxController retain];
+    _tmuxPaneInputQueue.budget = tmuxController.outputBudget;
     NSDictionary<NSString *, NSString *> *dict = [tmuxController userVarsForPane:self.tmuxPane];
     for (NSString *key in dict) {
         if (![key hasPrefix:@"user."]) {
@@ -4799,12 +4810,47 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_screen threadedReadTask:buffer length:length];
 }
 
+// A gateway also stops reading while its panes have too much output waiting. That holds back
+// everything tmux sends, including command replies, so it relies on every pane that is still open
+// draining its queue.
 - (BOOL)taskHasReadCapacity {
-    return [_screen threadedHasTokenCapacity];
+    if (![_screen threadedHasTokenCapacity]) {
+        return NO;
+    }
+    iTermByteBudget *budget = [self tmuxOutputBudgetIfGateway];
+    return !budget || budget.hasCapacity;
 }
 
 - (void)taskNotifyWhenReadCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block {
-    [_screen threadedNotifyWhenTokenCapacityAvailableOnQueue:queue block:block];
+    iTermByteBudget *budget = [self tmuxOutputBudgetIfGateway];
+    if (!budget || ![_screen threadedHasTokenCapacity]) {
+        [_screen threadedNotifyWhenTokenCapacityAvailableOnQueue:queue block:block];
+        return;
+    }
+    if (budget.hasCapacity) {
+        // The token executor was what was full, and it has drained since the caller checked.
+        // Waiting on the budget would wait for its low watermark, which reading doesn't need.
+        dispatch_async(queue, block);
+        return;
+    }
+    // The block checks again, and waits for the token executor next if it has to.
+    [budget notifyWhenCapacityAvailableOnQueue:queue block:block];
+    if (self.tmuxMode != TMUX_GATEWAY) {
+        // Gateway mode ended after the check above, and its wake may have come before the block
+        // was registered.
+        [budget wake];
+    }
+}
+
+// Any thread. Panes' unread output limits reading only while this is a tmux gateway.
+- (iTermByteBudget *)tmuxOutputBudgetIfGateway {
+    // Checked first because it's nil without task I/O monitors, which spares TaskNotifier's select
+    // loop the lock that tmuxMode takes.
+    iTermByteBudget *budget = self.tmuxOutputBudget;
+    if (!budget || self.tmuxMode != TMUX_GATEWAY) {
+        return nil;
+    }
+    return budget;
 }
 
 - (BOOL)haveResizedRecently {
@@ -10417,6 +10463,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     if (tmuxMode == TMUX_CLIENT) {
         _hasBeenTmuxClient = YES;
     }
+    if (tmuxMode != TMUX_GATEWAY) {
+        // The budget no longer limits reading, so a monitor waiting on it must check again.
+        [self.tmuxOutputBudget wake];
+    }
     if (tmuxMode == TMUX_GATEWAY) {
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             mutableState.isTmuxGateway = (tmuxMode == TMUX_GATEWAY);
@@ -10475,6 +10525,13 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)setUpTmuxPipe {
     assert(!_tmuxClientWritePipe);
+    assert(!_tmuxPaneInputQueue);
+    if ([TaskNotifier usesTaskIOMonitors]) {
+        _tmuxPaneInputQueue = [[iTermTaskInputQueue alloc] init];
+        _tmuxPaneInputQueue.budget = _tmuxController.outputBudget;
+        [_shell readTmuxPaneOutputFromQueue:_tmuxPaneInputQueue];
+        return;
+    }
     int fds[2];
     if (pipe(fds) < 0) {
         NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.FailedToCreatePipe", nil, [NSBundle mainBundle], @"Failed to create pipe: %s", @"Error shown when creating a pipe fails; placeholder is the system error string"), strerror(errno)];
@@ -10819,6 +10876,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_nameController formattingDescriptorDidChange];
     _tmuxController.ambiguousIsDoubleWidth = _treatAmbiguousWidthAsDoubleWidth;
     _tmuxController.unicodeVersion = _unicodeVersion;
+    if ([TaskNotifier usesTaskIOMonitors]) {
+        if (!self.tmuxOutputBudget) {
+            // Enough for the panes to keep busy, small enough that memory stays bounded and
+            // tmux's pause-after still sees a client that has fallen behind.
+            const NSInteger capacity = 1024 * 1024;
+            self.tmuxOutputBudget = [[[iTermByteBudget alloc] initWithCapacity:capacity] autorelease];
+        }
+        _tmuxController.outputBudget = self.tmuxOutputBudget;
+    }
 
     // We intentionally don't send anything to tmux yet. We wait to get a
     // begin-end pair from it to make sure everything is cool (we have a legit
@@ -11737,6 +11803,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
     if (_logging.style == iTermLoggingStyleRaw) {
         [_logging logData:data];
+    }
+
+    if (_tmuxPaneInputQueue) {
+        // The pane's task I/O monitor reads it from here.
+        [_tmuxPaneInputQueue appendData:data];
+        return;
     }
 
     // Send the bytes from %output in to the write end of a pipe. The data will come out

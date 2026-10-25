@@ -15,6 +15,7 @@
 @class iTermFramerPaneJobManager;
 @class iTermOwnedFileDescriptor;
 @class iTermProcessInfo;
+@class iTermTaskInputQueue;
 @protocol iTermTask;
 @class iTermWinSizeController;
 @class PTYTab;
@@ -185,6 +186,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // Makes this a tmux pane's task, reading the pane's %output from the read end of a pipe the
 // session writes to. Nothing is written to it. Registers the task.
 - (void)readTmuxPaneOutputFrom:(iTermOwnedFileDescriptor *)readEnd;
+// Like readTmuxPaneOutputFrom:, but the session appends the pane's %output to `inputQueue`. Only
+// for use with task I/O monitors, since TaskNotifier's select loop can't watch a queue.
+- (void)readTmuxPaneOutputFromQueue:(iTermTaskInputQueue *)inputQueue;
 
 // This is used by clients so they can initialize the TTY size once when the view size is known
 // for real. It is never assigned to by PTYTask.
@@ -208,6 +212,8 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // Testing only. Makes a task that reads from `fileDescriptor` and has no process. It is not
 // registered with TaskNotifier.
 - (instancetype)initForTestingWithFileDescriptor:(iTermOwnedFileDescriptor *)fileDescriptor;
+// Testing only. Like a tmux pane's task reading `inputQueue`, but not registered.
+- (instancetype)initForTestingWithInputQueue:(iTermTaskInputQueue *)inputQueue;
 
 - (BOOL)hasBrokenPipe;
 

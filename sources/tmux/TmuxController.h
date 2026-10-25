@@ -22,6 +22,7 @@
 @class VT100Token;
 @class PseudoTerminal;
 @class EquivalenceClassSet;
+@class iTermByteBudget;
 
 // Posted just before sessions change (names, addition, deletion)
 // Posted with the controller as object when the serverIsLocal determination first succeeds. A
@@ -63,6 +64,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 @interface TmuxController : NSObject
 
 @property(nonatomic, readonly) TmuxGateway *gateway;
+// With task I/O monitors, the panes' unread output counts against this. The gateway session stops
+// reading from tmux while it is full. Nil otherwise.
+@property(nonatomic, strong) iTermByteBudget *outputBudget;
 @property(nonatomic, retain) NSMutableDictionary *windowPositions;
 @property(nonatomic, copy) NSString *sessionName;
 @property(nonatomic, copy) NSArray<iTermTmuxSessionObject *> *sessionObjects;

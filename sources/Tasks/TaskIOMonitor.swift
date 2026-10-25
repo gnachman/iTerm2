@@ -11,6 +11,9 @@
 //  so closing the descriptor (for example, by -[Coprocess terminate]) waits until no source can use
 //  it, and its number can't be reused while one does.
 //
+//  A task with an input queue (a tmux pane) is read from memory instead. A user-data source,
+//  signaled whenever the queue becomes readable, takes the place of the read source.
+//
 
 import Foundation
 
@@ -95,7 +98,9 @@ final class TaskIOMonitor: NSObject {
     let queue: DispatchQueue
     private let queueKey = DispatchSpecificKey<Bool>()
     private let task: iTermTask
+    // -1 if the task reads from `inputQueue` or its descriptor was already closed.
     private let fd: Int32
+    private let inputQueue: TaskInputQueue?
     // Taken at registration so the descriptor can't be closed before the sources exist. start()
     // hands them to the read and write sources.
     private var pendingLeases: (read: OwnedFileDescriptor.Lease, write: OwnedFileDescriptor.Lease)?
@@ -111,23 +116,50 @@ final class TaskIOMonitor: NSObject {
     private var writeSource: Source?
     // A capacity-available callback is pending.
     private var awaitingReadCapacity = false
+    // From inputQueue.addReadabilityHandler, while the monitor is running.
+    private var readabilityToken: Int?
     private var coprocessIO: CoprocessIO?
     // Sources whose cancel handlers have not run yet, including ones no longer referenced above.
     private var liveSources = 0
 
     // `reap` is called with the pid of a coprocess that has ended. `coprocessDidChange` is called
     // after a coprocess that ended is removed from the task. Both are called on the monitor's queue.
-    init(task: iTermTask,
-         fileDescriptor: OwnedFileDescriptor,
-         reap: @escaping (pid_t) -> Void,
-         coprocessDidChange: @escaping () -> Void) {
-        self.task = task
+    convenience init(task: iTermTask,
+                     fileDescriptor: OwnedFileDescriptor,
+                     reap: @escaping (pid_t) -> Void,
+                     coprocessDidChange: @escaping () -> Void) {
+        var leases: (read: OwnedFileDescriptor.Lease, write: OwnedFileDescriptor.Lease)?
         if let read = fileDescriptor.lease(), let write = fileDescriptor.lease() {
-            pendingLeases = (read: read, write: write)
-            fd = read.fileDescriptor
-        } else {
-            fd = -1
+            leases = (read: read, write: write)
         }
+        self.init(task: task,
+                  leases: leases,
+                  inputQueue: nil,
+                  reap: reap,
+                  coprocessDidChange: coprocessDidChange)
+    }
+
+    // The task reads `inputQueue` instead of a file descriptor. It doesn't write to one either.
+    convenience init(task: iTermTask,
+                     inputQueue: TaskInputQueue,
+                     reap: @escaping (pid_t) -> Void,
+                     coprocessDidChange: @escaping () -> Void) {
+        self.init(task: task,
+                  leases: nil,
+                  inputQueue: inputQueue,
+                  reap: reap,
+                  coprocessDidChange: coprocessDidChange)
+    }
+
+    private init(task: iTermTask,
+                 leases: (read: OwnedFileDescriptor.Lease, write: OwnedFileDescriptor.Lease)?,
+                 inputQueue: TaskInputQueue?,
+                 reap: @escaping (pid_t) -> Void,
+                 coprocessDidChange: @escaping () -> Void) {
+        self.task = task
+        pendingLeases = leases
+        fd = leases?.read.fileDescriptor ?? -1
+        self.inputQueue = inputQueue
         self.reap = reap
         self.coprocessDidChange = coprocessDidChange
         queue = DispatchQueue(label: "com.iterm2.task-io", autoreleaseFrequency: .workItem)
@@ -137,13 +169,14 @@ final class TaskIOMonitor: NSObject {
     }
 
     override var description: String {
-        return "<TaskIOMonitor: \(Unmanaged.passUnretained(self).toOpaque()) fd=\(fd) task=\(task)>"
+        let input = inputQueue.map { "\($0)" } ?? "fd=\(fd)"
+        return "<TaskIOMonitor: \(Unmanaged.passUnretained(self).toOpaque()) \(input) task=\(task)>"
     }
 
     // False if the descriptor was already closed when the monitor was made, so it has nothing to
     // service.
-    var hasFileDescriptor: Bool {
-        return fd >= 0
+    var hasInput: Bool {
+        return fd >= 0 || inputQueue != nil
     }
 
     // Any thread. Starts servicing the task.
@@ -154,6 +187,11 @@ final class TaskIOMonitor: NSObject {
             }
             DLog("Start \(self)")
             state = .running
+            if let inputQueue {
+                startReadingQueue(inputQueue)
+                update()
+                return
+            }
             guard let leases = pendingLeases else {
                 // The registry doesn't register a monitor without a descriptor.
                 return
@@ -187,6 +225,10 @@ final class TaskIOMonitor: NSObject {
             pendingLeases?.read.release()
             pendingLeases?.write.release()
             pendingLeases = nil
+            if let readabilityToken {
+                inputQueue?.removeReadabilityHandler(readabilityToken)
+                self.readabilityToken = nil
+            }
             readSource?.cancel()
             writeSource?.cancel()
             coprocessIO?.cancel()
@@ -237,10 +279,10 @@ final class TaskIOMonitor: NSObject {
         }
     }
 
-    // The source holds `lease` until its cancel handler runs, after which it can't use the
-    // descriptor.
+    // The source holds `lease`, if any, until its cancel handler runs, after which it can't use
+    // the descriptor.
     private func makeSource(_ source: DispatchSourceProtocol,
-                            lease: OwnedFileDescriptor.Lease,
+                            lease: OwnedFileDescriptor.Lease?,
                             suspended: Bool,
                             handler: @escaping () -> Void) -> Source {
         dispatchPrecondition(condition: .onQueue(queue))
@@ -249,13 +291,46 @@ final class TaskIOMonitor: NSObject {
         source.setEventHandler(handler: handler)
         // Strongly captures the monitor, which keeps it alive until every source is done.
         source.setCancelHandler { [self] in
-            lease.release()
+            lease?.release()
             liveSources -= 1
             cancellation.leave()
         }
         let result = Source(source, suspended: suspended)
         source.activate()
         return result
+    }
+
+    // Makes the read source a user-data source that the queue signals when it becomes readable.
+    private func startReadingQueue(_ inputQueue: TaskInputQueue) {
+        dispatchPrecondition(condition: .onQueue(queue))
+        let signal = DispatchSource.makeUserDataOrSource(queue: queue)
+        readSource = makeSource(signal, lease: nil, suspended: false) { [weak self] in
+            self?.handleRead()
+        }
+        // The handler keeps the source alive until cancel() removes it. Signaling a cancelled
+        // source does nothing. Until a cancel() called from another queue runs, a monitor
+        // registered for the same task meanwhile could read too, as with a file descriptor, so
+        // wait for notifyWhenTaskStops before registering a task again.
+        readabilityToken = inputQueue.addReadabilityHandler {
+            signal.or(data: 1)
+        }
+        // For what was appended before the handler was added.
+        if inputQueue.isReadable {
+            signal.or(data: 1)
+        }
+    }
+
+    // A user-data source fires once for any number of signals, and only when signaled. Signal it
+    // again while the queue has more to read, so the read handler comes back for it once the
+    // source is next active.
+    private func signalIfInputQueueIsReadable() {
+        dispatchPrecondition(condition: .onQueue(queue))
+        guard state == .running,
+              inputQueue?.isReadable == true,
+              let signal = readSource?.source as? DispatchSourceUserDataOr else {
+            return
+        }
+        signal.or(data: 1)
     }
 
     // Reconciles the sources with the task's current state. Sources that may have work are
@@ -279,17 +354,25 @@ final class TaskIOMonitor: NSObject {
         guard state == .running else {
             return
         }
+        // A signal can arrive after an earlier read already took what it was for.
+        if let inputQueue, !inputQueue.isReadable {
+            return
+        }
         // Not reading while paused also means EOF isn't noticed until the task is unpaused.
         guard task.wantsRead else {
             readSource?.suspend()
+            signalIfInputQueueIsReadable()
             return
         }
         guard task.hasReadCapacity else {
             readSource?.suspend()
+            signalIfInputQueueIsReadable()
             awaitReadCapacity()
             return
         }
         task.processRead()
+        // processRead reads at most a few kilobytes. On end of file it deregistered the task.
+        signalIfInputQueueIsReadable()
         // processRead may have queued output for the coprocess.
         updateCoprocess()
     }
@@ -462,6 +545,9 @@ final class TaskIOMonitor: NSObject {
         guard state == .running else {
             return false
         }
+        if let inputQueue, readSource?.active == true, inputQueue.isReadable {
+            return true
+        }
         var pollfds = [pollfd]()
         func add(_ fd: Int32, _ source: Source?, _ events: Int32) {
             if let source, source.active {
@@ -487,7 +573,7 @@ final class TaskIOMonitor: NSObject {
 enum TaskIOMonitorRegistration: Int {
     case registered
     case alreadyRegistered
-    // The task has no open file descriptor, so it was not registered.
+    // The task has neither an input queue nor an open file descriptor, so it was not registered.
     case noFileDescriptor
 }
 
@@ -517,14 +603,21 @@ final class TaskIOMonitorRegistry: NSObject {
     func register(_ task: iTermTask) -> TaskIOMonitorRegistration {
         // The monitor leases the descriptor as it is made, so it can't be closed between this
         // check and the sources being created.
-        guard let fileDescriptor = task.ownedFileDescriptor else {
-            return .noFileDescriptor
-        }
-        let monitor = TaskIOMonitor(task: task,
+        let monitor: TaskIOMonitor
+        if let inputQueue = task.inputQueue {
+            monitor = TaskIOMonitor(task: task,
+                                    inputQueue: inputQueue,
+                                    reap: reap,
+                                    coprocessDidChange: coprocessDidChange)
+        } else if let fileDescriptor = task.ownedFileDescriptor {
+            monitor = TaskIOMonitor(task: task,
                                     fileDescriptor: fileDescriptor,
                                     reap: reap,
                                     coprocessDidChange: coprocessDidChange)
-        guard monitor.hasFileDescriptor else {
+        } else {
+            return .noFileDescriptor
+        }
+        guard monitor.hasInput else {
             return .noFileDescriptor
         }
         let added = state.mutableAccess { state in

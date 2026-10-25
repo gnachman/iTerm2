@@ -7,6 +7,7 @@ extern NSString *const kCoprocessStatusChangeNotification;
 
 @class Coprocess;
 @class iTermOwnedFileDescriptor;
+@class iTermTaskInputQueue;
 @class PTYTask;
 
 @protocol iTermTask<NSObject>
@@ -14,6 +15,9 @@ extern NSString *const kCoprocessStatusChangeNotification;
 // The task's file descriptor, or nil if there is none. Task I/O monitors lease it so it is not
 // closed while they watch it.
 @property (nonatomic, readonly) iTermOwnedFileDescriptor *ownedFileDescriptor;
+// What the task reads instead of its file descriptor, or nil. A tmux pane reads its output from
+// here when task I/O monitors are on. Only task I/O monitors use it.
+@property (nonatomic, readonly) iTermTaskInputQueue *inputQueue;
 
 @property (nonatomic, readonly) pid_t pid;
 @property (nonatomic, readonly) pid_t pidToWaitOn;

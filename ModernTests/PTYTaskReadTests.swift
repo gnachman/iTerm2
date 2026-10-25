@@ -163,4 +163,88 @@ final class PTYTaskReadTests: XCTestCase {
         XCTAssertEqual(delegate.events, [RecordingTaskDelegate.Event.read(payload)])
         XCTAssertFalse(task.hasBrokenPipe())
     }
+
+    // MARK: Input queues
+
+    private func makeTask(inputQueue: TaskInputQueue) -> PTYTask {
+        let task = PTYTask(forTestingWith: inputQueue)!
+        task.delegate = delegate
+        return task
+    }
+
+    func testInputQueueBytesAreRead() {
+        let queue = TaskInputQueue()
+        let task = makeTask(inputQueue: queue)
+        queue.append(Data("hello".utf8))
+
+        task.processRead()
+
+        XCTAssertEqual(delegate.events, [RecordingTaskDelegate.Event.read(Data("hello".utf8))])
+        XCTAssertFalse(task.hasBrokenPipe())
+        XCTAssertFalse(queue.isReadable)
+    }
+
+    // At most 4 KB per call, like reading a file descriptor.
+    func testInputQueueReadIsLimited() {
+        let queue = TaskInputQueue()
+        let task = makeTask(inputQueue: queue)
+        let payload = Data((0..<5000).map { UInt8($0 & 0xff) })
+        queue.append(payload)
+
+        task.processRead()
+        task.processRead()
+
+        XCTAssertEqual(delegate.events, [RecordingTaskDelegate.Event.read(payload.prefix(4096)),
+                                         .read(payload.suffix(from: 4096))])
+    }
+
+    func testClosedInputQueueIsBrokenPipe() {
+        let queue = TaskInputQueue()
+        let task = makeTask(inputQueue: queue)
+        queue.close()
+
+        task.processRead()
+
+        XCTAssertTrue(task.hasBrokenPipe())
+        XCTAssertEqual(delegate.events, [RecordingTaskDelegate.Event.brokenPipe])
+    }
+
+    // The session closing its pane's queue (as when it is deallocated) ends the task's input, like
+    // closing a pipe's write end. The task must still read to find that out.
+    func testQueueClosedBySessionIsReadAsEndOfFile() throws {
+        let queue = TaskInputQueue()
+        let task = makeTask(inputQueue: queue)
+        queue.close()
+
+        XCTAssertTrue(try XCTUnwrap(task as AnyObject as? iTermTask).wantsRead)
+        task.processRead()
+
+        XCTAssertTrue(task.hasBrokenPipe())
+    }
+
+    // Resizing a pane reports its new size to the session even though there is no tty to resize.
+    func testInputQueueTaskIsReadyForWindowSizes() throws {
+        let queue = TaskInputQueue()
+        let task = makeTask(inputQueue: queue)
+        let delegate = try XCTUnwrap(task as AnyObject as? WinSizeControllerDelegate)
+        XCTAssertTrue(delegate.winSizeControllerIsReady())
+
+        task.stop()
+
+        XCTAssertFalse(delegate.winSizeControllerIsReady())
+    }
+
+    // The task reads its queue only while it is open, and closing it closes the queue.
+    func testInputQueueTaskIOAllowedUntilClosed() throws {
+        let queue = TaskInputQueue()
+        let task = try XCTUnwrap(makeTask(inputQueue: queue) as? iTermTask)
+        XCTAssertTrue(task.inputQueue === queue)
+        XCTAssertTrue(task.wantsRead)
+        XCTAssertFalse(task.wantsWrite)
+
+        (task as! PTYTask).stop()
+
+        XCTAssertTrue(queue.isClosed)
+        XCTAssertFalse(task.wantsRead)
+    }
 }

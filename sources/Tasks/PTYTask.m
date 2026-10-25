@@ -110,6 +110,16 @@ static void HandleSigChld(int n) {
     return self;
 }
 
+- (instancetype)initForTestingWithInputQueue:(iTermTaskInputQueue *)inputQueue {
+    self = [self init];
+    if (self) {
+        iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:_jobManagerQueue];
+        jobManager.inputQueue = inputQueue;
+        self.jobManager = jobManager;
+    }
+    return self;
+}
+
 - (void)dealloc {
     RLog(@"Dealloc PTYTask %p", self);
     // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
@@ -171,6 +181,10 @@ static void HandleSigChld(int n) {
 
 - (iTermOwnedFileDescriptor *)ownedFileDescriptor {
     return self.jobManager.ownedFileDescriptor;
+}
+
+- (iTermTaskInputQueue *)inputQueue {
+    return [iTermTmuxJobManager castFrom:self.jobManager].inputQueue;
 }
 
 - (pid_t)pid {
@@ -332,6 +346,15 @@ static void HandleSigChld(int n) {
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
+- (void)readTmuxPaneOutputFromQueue:(iTermTaskInputQueue *)inputQueue {
+    ITAssertWithMessage([TaskNotifier usesTaskIOMonitors], @"Only task I/O monitors read input queues");
+    iTermTmuxJobManager *jobManager = [[iTermTmuxJobManager alloc] initWithQueue:self->_jobManagerQueue];
+    jobManager.inputQueue = inputQueue;
+    RLog(@"Configure %@ as tmux task reading %@", self, inputQueue);
+    _jobManager = jobManager;
+    [[TaskNotifier sharedInstance] registerTask:self];
+}
+
 - (void)setIoBuffer:(iTermIOBuffer *)ioBuffer {
     iTermChannelJobManager *jobManager = [[iTermChannelJobManager alloc] initWithQueue:_jobManagerQueue];
     jobManager.ioBuffer = ioBuffer;
@@ -470,9 +493,13 @@ static void HandleSigChld(int n) {
     char buffer[MAXRW * iterations];
     char *bufferPointer = buffer;
     __block BOOL broken = NO;
-    // Keeps the descriptor open while reading. Once it has been closed, it is treated like a read
-    // error.
-    if (![self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+    iTermTaskInputQueue *inputQueue = self.inputQueue;
+    if (inputQueue) {
+        // A tmux pane. A closed queue is like a pipe whose write end was closed.
+        bytesRead = (int)[inputQueue readInto:buffer maxLength:sizeof(buffer) endOfFile:&broken];
+    } else if (![self.ownedFileDescriptor withFileDescriptor:^(int fd) {
+        // Keeps the descriptor open while reading. Once it has been closed, it is treated like a
+        // read error.
         BOOL readFailed = NO;
         bytesRead = [self readFromFileDescriptor:fd into:bufferPointer iterations:iterations broken:&readFailed];
         broken = readFailed;
@@ -1047,6 +1074,10 @@ static void HandleSigChld(int n) {
 @implementation PTYTask(WinSizeControllerDelegate)
 
 - (BOOL)winSizeControllerIsReady {
+    if (self.inputQueue) {
+        // A tmux pane has no tty to resize, but the session still hears about new sizes.
+        return self.jobManager.ioAllowed;
+    }
     iTermOwnedFileDescriptor *owned = self.ownedFileDescriptor;
     return owned != nil && !owned.isClosed;
 }

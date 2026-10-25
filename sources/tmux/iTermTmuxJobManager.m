@@ -10,7 +10,11 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 
-@implementation iTermTmuxJobManager
+@implementation iTermTmuxJobManager {
+    // The task closed its end of the input queue. The session closing the queue only ends the
+    // input, which the task must still read to find out about, like a pipe's write end closing.
+    BOOL _inputQueueClosedByTask;
+}
 
 @synthesize tty = _tty;
 @synthesize queue = _queue;
@@ -29,14 +33,15 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p read-only-fd=%@ tty=%@>",
-            NSStringFromClass([self class]), self, self.ownedFileDescriptor, _tty];
+    return [NSString stringWithFormat:@"<%@: %p read-only-fd=%@ inputQueue=%@ tty=%@>",
+            NSStringFromClass([self class]), self, self.ownedFileDescriptor, self.inputQueue, _tty];
 }
 
 // Ties the descriptor's lifetime to this object's rather than to whoever else holds the wrapper.
 // A lease (such as a task I/O monitor's) still keeps it open until it is released.
 - (void)dealloc {
     [self.ownedFileDescriptor close];
+    [self.inputQueue close];
 }
 
 - (pid_t)serverPid {
@@ -57,6 +62,15 @@
 
 - (BOOL)closeFileDescriptor {
     @synchronized (self) {
+        iTermTaskInputQueue *inputQueue = self.inputQueue;
+        if (inputQueue) {
+            if (_inputQueueClosedByTask) {
+                return NO;
+            }
+            _inputQueueClosedByTask = YES;
+            [inputQueue close];
+            return YES;
+        }
         if (self.ownedFileDescriptor.isClosed) {
             return NO;
         }
@@ -102,6 +116,9 @@
 
 - (BOOL)ioAllowed {
     @synchronized (self) {
+        if (self.inputQueue) {
+            return !_inputQueueClosedByTask;
+        }
         return !self.ownedFileDescriptor.isClosed;
     }
 }
