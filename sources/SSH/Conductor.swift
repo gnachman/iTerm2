@@ -507,6 +507,8 @@ class Conductor: NSObject, SSHIdentityProvider {
     }
     /// Set at getshell when this connection should get it2; acted on by doFraming.
     private var pendingIT2Home: String?
+    /// Set at getshell with pendingIT2Home; see RemoteSetup.putIT2OnShellPath.
+    private var pendingIT2OnShellPath = false
 
     /// Git state for directories on this connection's host. See RemoteGitState.swift.
     private(set) lazy var remoteGitPollWorker = iTermRemoteGitPollWorker(runner: self)
@@ -2395,6 +2397,12 @@ extension Conductor {
         /// Mint the it2 socket and nonce and put IT2_SOCK, IT2_NONCE and IT2_PY in the shell's
         /// environment.
         var activateIT2: Bool
+        /// Have the framer put ~/.iterm2/bin first on the PATH it gives the login shell (whose
+        /// own login files may still reorder it: macOS's path_helper does). Only for an
+        /// interactive shell that gets the upload without the scripts (tcsh, macOS bash 3.2):
+        /// the injected scripts do it themselves, and a command gets it from
+        /// commandPuttingIT2OnPath.
+        var putIT2OnShellPath = false
     }
 
     /// it2 used to come only with injection, so with "Load shell integration automatically" off,
@@ -2414,7 +2422,8 @@ extension Conductor {
         let inject = shouldInjectShellIntegration && launchKind != .command && shellSupportsInjection
         return RemoteSetup(injectShellIntegration: inject,
                            uploadIT2: shouldInjectShellIntegration,
-                           activateIT2: true)
+                           activateIT2: true,
+                           putIT2OnShellPath: shouldInjectShellIntegration && launchKind != .command && !inject)
     }
 
     /// Queues the shell-integration scripts for upload with the other payloads.
@@ -2465,17 +2474,28 @@ extension Conductor {
         }
     }
 
+    /// Names the flag the framer reads in handle_login and handle_pane. Must match framer.py.
+    static let it2PutBinOnPathVariable = "IT2_PUT_BIN_ON_PATH"
+
     /// Mints the it2 socket and nonce and sends IT2_SOCK, IT2_NONCE and IT2_PY, now that the
     /// framer that binds the socket is about to start. They go by setenv to conductor.sh, which
     /// then execs the framer, so the framer and the login shell it starts inherit them. Only here,
     /// so a host without a usable Python never gets an IT2_SOCK that nothing listens on.
     private func activatePendingIT2() {
+        let putIT2OnShellPath = pendingIT2OnShellPath
+        pendingIT2OnShellPath = false
         guard let home = pendingIT2Home else {
             return
         }
         pendingIT2Home = nil
         var vars = [String: String]()
         activateIT2Proxy(home: home, env: &vars)
+        if putIT2OnShellPath {
+            // A flag, not a PATH: see activateIT2Proxy for why PATH can't go by setenv. The
+            // framer does the prepend when it starts the login shell, and drops the flag from
+            // that shell's environment.
+            vars[Self.it2PutBinOnPathVariable] = "1"
+        }
         for (key, value) in vars.sorted(by: { $0.key < $1.key }) {
             send(.setenv(key: key, value: value), .failIfNonzeroStatus)
         }
@@ -2857,6 +2877,7 @@ extension Conductor {
                     // Not yet: the socket only exists if the framer starts, which needs a usable
                     // Python, and that is checked next. See doFraming.
                     pendingIT2Home = home
+                    pendingIT2OnShellPath = setup.putIT2OnShellPath
                 } else {
                     RLog("No it2 socket for this connection: the remote home directory is unknown")
                 }

@@ -1038,7 +1038,9 @@ extension Conductor {
         // including the payload upload, and the resulting "command not found" errors escaped
         // the conductor parser onto the screen. ~/.iterm2/bin is put on PATH by the
         // shell-integration scripts instead, where the real PATH is in hand; exporting it there
-        // also reaches a hook's `sh -c`, which is the case this exists for.
+        // also reaches a hook's `sh -c`, which is the case this exists for. A shell the scripts
+        // aren't injected into (tcsh) gets it from the framer instead; see
+        // RemoteSetup.putIT2OnShellPath.
     }
 
     // AF_UNIX sun_path is 104 bytes on macOS and 108 on Linux; the remote OS is unknown,

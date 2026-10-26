@@ -18,6 +18,7 @@
 #
 #   python3 tests/injected_shell_it2_path_order_test.py
 
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -247,6 +248,55 @@ class FishTests(unittest.TestCase, PathOrderAssertions):
             f.write('set -gx PATH "$HOME/qa-fakebin" $PATH\n')
         results, out = fx.fish()
         self.assert_it2_first(fx, results, out)
+
+
+def load_framer():
+    spec = importlib.util.spec_from_file_location("framer_for_path_test",
+                                                  os.path.join(OTHER, "framer.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+TCSH = find_shell("tcsh")
+
+
+# tcsh can't be injected, so the conductor asks the framer to put ~/.iterm2/bin on the login
+# shell's PATH (IT2_PUT_BIN_ON_PATH). This starts tcsh with the environment the framer would
+# give it and checks that it2 is found by name. On macOS /etc/csh.login runs path_helper, which
+# moves the directory after the system ones, so this asserts it is found, not that it is first.
+@unittest.skipIf(TCSH is None, "tcsh is not installed")
+class TcshTests(unittest.TestCase):
+    def framer_environment(self, fx):
+        framer = load_framer()
+        saved = dict(os.environ)
+        try:
+            os.environ.clear()
+            os.environ.update(fx.env({"IT2_PUT_BIN_ON_PATH": "1"}))
+            return framer.login_shell_environment()
+        finally:
+            os.environ.clear()
+            os.environ.update(saved)
+
+    def test_it2_is_found_by_name(self):
+        fx = Fixture(self)
+        env = self.framer_environment(fx)
+        self.assertNotIn("IT2_PUT_BIN_ON_PATH", env)
+        probe = "\n".join([
+            'echo "RESULT_IT2=`which it2`"',
+            'echo "RESULT_RUN=`it2`"',
+            "sh -c 'echo \"RESULT_SH=$(command -v it2) $(it2)\"'",
+            "exit",
+            "",
+        ])
+        proc = subprocess.run(["-tcsh"], executable=TCSH, env=env, input=probe.encode("utf-8"),
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=60,
+                              cwd=fx.home)
+        out = proc.stdout.decode("utf-8", "replace")
+        it2 = os.path.join(fx.it2_bin, "it2")
+        self.assertIn("RESULT_IT2=" + it2, out)
+        self.assertIn("RESULT_RUN=ITERM2", out)
+        self.assertIn("RESULT_SH=%s ITERM2" % it2, out)
 
 
 @unittest.skipIf(BASH is None, "no injectable bash is installed")

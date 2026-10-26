@@ -901,6 +901,25 @@ def guess_login_shell():
         return path
     return "/bin/sh"
 
+def login_shell_environment():
+    """The framer's environment for a login shell it starts.
+
+    iTerm2 sets IT2_PUT_BIN_ON_PATH when the shell gets it2 uploaded to ~/.iterm2/bin but no
+    shell-integration script to put that directory on PATH (tcsh, which can't be injected).
+    PATH itself can't come from iTerm2: it arrives by setenv in conductor.sh, which needs its
+    own PATH, and the value is never re-expanded. So the prepend happens here, where the real
+    PATH is known. The flag is the framer's and is not passed on."""
+    env = dict(os.environ)
+    if env.pop("IT2_PUT_BIN_ON_PATH", None) != "1":
+        return env
+    bin_dir = os.path.join(os.path.expanduser("~"), ".iterm2", "bin")
+    if not os.path.isdir(bin_dir):
+        return env
+    path = env.get("PATH")
+    rest = [] if not path else [d for d in path.split(":") if d != bin_dir]
+    env["PATH"] = ":".join([bin_dir] + rest)
+    return env
+
 ## Process monitoring
 
 async def autopoll(delay):
@@ -1272,7 +1291,8 @@ async def handle_login(identifier, args):
     _, shell_name = os.path.split(login_shell)
     argv0 = "-" + shell_name
 
-    return await run_login_shell(identifier, login_shell, [argv0] + args, cwd, os.environ)
+    return await run_login_shell(identifier, login_shell, [argv0] + args, cwd,
+                                 login_shell_environment())
 
 async def run_login_shell(identifier, login_shell, argv, directory, environment):
     log(f'run_login_shell: dir={directory} command={login_shell} argv={argv}')
@@ -1347,7 +1367,7 @@ async def handle_pane(identifier, args):
     login_shell = guess_login_shell()
     _, shell_name = os.path.split(login_shell)
     argv = ["-" + shell_name] + (["-c", command] if command else [])
-    environment = dict(os.environ)
+    environment = login_shell_environment()
     environment.update(variables)
     try:
         proc = await Process.run_tty(

@@ -384,6 +384,43 @@ class LoginTests(CommandTestCase):
             self.assertIn(b"40 132", self.output(pid))
         self.run_async(body)
 
+    # A login shell that gets it2 without the shell-integration scripts (tcsh) has nothing else
+    # to put ~/.iterm2/bin on PATH, so the conductor asks the framer to with IT2_PUT_BIN_ON_PATH.
+    def login_path(self, flag, make_bin=True, path="/usr/bin:/bin"):
+        bin_dir = os.path.join(self.tmp, ".iterm2", "bin")
+        if make_bin:
+            os.makedirs(bin_dir)
+
+        out = []
+
+        async def body():
+            with env(HOME=self.tmp, IT2_PUT_BIN_ON_PATH=flag, PATH=path):
+                pid = await self.h.start("login", self.tmp,
+                                         'echo "PATH=[$PATH] FLAG=[${IT2_PUT_BIN_ON_PATH-unset}]"')
+            await self.h.wait_terminated(pid)
+            out.append(self.output(pid).decode())
+        self.run_async(body)
+        return bin_dir, out[0]
+
+    def test_flag_puts_it2_bin_first_on_the_login_shells_path(self):
+        bin_dir, out = self.login_path("1")
+        self.assertIn("PATH=[%s:/usr/bin:/bin]" % bin_dir, out)
+        self.assertIn("FLAG=[unset]", out, "the flag is the framer's, not the shell's")
+
+    def test_flag_moves_it2_bin_to_the_front_without_duplicating_it(self):
+        bin_dir = os.path.join(self.tmp, ".iterm2", "bin")
+        _, out = self.login_path("1", path="/usr/bin:%s:/bin" % bin_dir)
+        self.assertIn("PATH=[%s:/usr/bin:/bin]" % bin_dir, out)
+
+    def test_no_flag_leaves_path_alone(self):
+        _, out = self.login_path(None)
+        self.assertIn("PATH=[/usr/bin:/bin]", out)
+
+    def test_flag_without_the_directory_leaves_path_alone(self):
+        _, out = self.login_path("1", make_bin=False)
+        self.assertIn("PATH=[/usr/bin:/bin]", out)
+        self.assertIn("FLAG=[unset]", out)
+
     def test_window_size_change_skips_processes_without_a_pty(self):
         class NoPty:
             pane = False
