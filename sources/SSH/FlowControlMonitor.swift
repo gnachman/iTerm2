@@ -187,7 +187,7 @@ final class FlowControlMonitor: NSObject {
         case .aborted:
             return "Off: “flow on” was aborted and not sent again."
         case nil:
-            return "Off: flow control has not been tried on this connection."
+            return "Off: flow control is not running on this connection."
         }
     }
 }
