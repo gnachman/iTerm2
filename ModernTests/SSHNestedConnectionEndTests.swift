@@ -210,6 +210,31 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertTrue(session.screen.compactLineDumpWithHistory().contains("hostA% "))
     }
 
+    // MARK: - F-708
+
+    // A nested it2ssh whose arguments can't be read: its conductor is told to quit at once.
+    // The inner it2ssh's EndSSH must be answered and the outer connection must carry on.
+    func testUnreadableNestedHookEndsAndLeavesParentLive() {
+        let root = hookFramingRoot()
+        // Boolean arguments that are not UTF-8.
+        send(framed("out1", "\u{1b}P2000pnone \(nestedID) /w== - ZXhhbXBsZS5jb20=\n"))
+        assertRootIsLive(root)
+        let quit = "quit".data(using: .utf8)!.base64EncodedString()
+        XCTAssertTrue(Self.relayedPayloads(session.writes.joined()).contains { $0.contains(quit) },
+                      "the inner conductor is told to quit: \(session.writes)")
+        session.writes.removeAll()
+
+        send(framed("out2", endSSH(nestedID)))
+        assertRootIsLive(root)
+        XCTAssertTrue(session.writes.contains("\u{03}\n"), "\(session.writes)")
+        send(framed("out3", "hostA% "))
+        XCTAssertTrue(session.screen.compactLineDumpWithHistory().contains("hostA% "))
+        session.writes.removeAll()
+        root.forceReturnToGroundState()
+        root.sendKeys("ls\r".data(using: .utf8)!)
+        XCTAssertFalse(session.writes.isEmpty, "keys reach the outer connection")
+    }
+
     // F-787: under an outer connection without a framer, a nested conductor has the outer's
     // depth. Its late unhook after Disconnect still isn't the outer's end.
     func testDisconnectedConnectionUnderNonFramingParentLeavesParentLive() {
