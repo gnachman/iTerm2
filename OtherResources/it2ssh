@@ -3,8 +3,10 @@
 set -euo pipefail
 unset OS_ACTIVITY_DT_MODE
 
+# ssh prints its usage and fails, which would end this script (set -e, pipefail) with ssh's
+# status before it reached `exit 1`.
 if [ "$#" -eq 0 ]; then
-    ssh 2>&1 | sed -e 's/usage: ssh/usage: it2ssh/' >&2
+    ssh 2>&1 | sed -e 's/usage: ssh/usage: it2ssh/' >&2 || true
     exit 1
 fi
 
@@ -71,10 +73,19 @@ if [[ "${1:-}" == "--no-shell-integration" ]]; then
     SEND_CONDUCTOR_PARAMS="v=3;si=0"
     shift
     if [ "$#" -eq 0 ]; then
-        ssh 2>&1 | sed -e 's/usage: ssh/usage: it2ssh [--no-shell-integration]/' >&2
+        ssh 2>&1 | sed -e 's/usage: ssh/usage: it2ssh [--no-shell-integration]/' >&2 || true
         exit 1
     fi
 fi
+
+# Anywhere ssh would read an option (among the options, or right after the host, where ssh
+# reads options too unless they were ended with --) the flag can only be a misplaced it2ssh
+# option. Going ahead would quietly load shell integration after all, so refuse. Elsewhere it is
+# a word of the remote command.
+misplaced_flag() {
+    echo "it2ssh: --no-shell-integration must be the first argument, before any ssh options and the host." >&2
+    exit 1
+}
 
 requote() {
   printf "%q " "$@"
@@ -90,6 +101,7 @@ ARGS_ALLOWED=1
 EXPECT_VALUE=0
 BOOLEAN_ARGS=$("$SSH" 2>&1 | tr -d '\n' | sed -e 's/^[^[]*\[-*\([a-z0-9A-Z]*\).*/\1/' || true)
 HAS_T=0
+SAW_DDASH=0
 
 while [[ $# -gt 0 ]]; do
     if [[ $EXPECT_VALUE == 1 ]]; then
@@ -99,6 +111,9 @@ while [[ $# -gt 0 ]]; do
         if [[ $HOSTNAME == "" ]]; then
             HOSTNAME="$1"
         else
+            if [[ $SAW_DDASH == 0 && ${#COMMAND[@]} == 0 && "$1" == "--no-shell-integration" ]]; then
+                misplaced_flag
+            fi
             COMMAND+=("$1")
         fi
     else
@@ -106,6 +121,13 @@ while [[ $# -gt 0 ]]; do
             -N|-n|-f|-G)
                 echo "it2sh is meant for interactive use via SSH only and is not compatible with the $1 argument."
                 exit 1
+                ;;
+            --)
+                ARGS_ALLOWED=0
+                SAW_DDASH=1
+                ;;
+            --no-shell-integration)
+                misplaced_flag
                 ;;
             -t)
                 HAS_T=1
@@ -120,9 +142,6 @@ while [[ $# -gt 0 ]]; do
                     EXPECT_VALUE=1
                 fi
                 USER_ARGS+=("$1")
-                ;;
-            --)
-                ARGS_ALLOWED=0
                 ;;
             *)
                 ARGS_ALLOWED=0

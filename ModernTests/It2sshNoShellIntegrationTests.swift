@@ -24,36 +24,54 @@ final class It2sshNoShellIntegrationTests: XCTestCase {
         try? FileManager.default.removeItem(at: root)
     }
 
-    /// Runs the real it2ssh with a fake ssh, returning the arguments ssh was given.
-    private func sshArguments(_ arguments: [String]) throws -> [String] {
+    private var record: URL {
+        return root.appendingPathComponent("args")
+    }
+
+    /// Runs the real it2ssh (the copy the app bundles) with a fake ssh, returning its exit status
+    /// and standard error.
+    @discardableResult
+    private func runIt2ssh(_ arguments: [String]) throws -> (status: Int32, stderr: String) {
         let fakeSSH = root.appendingPathComponent("ssh")
-        let record = root.appendingPathComponent("args")
-        // NUL-separated so arguments with newlines survive. Prints nothing, as `ssh` with no host
-        // would print its usage; it2ssh only greps that for boolean options.
+        // NUL-separated so arguments with newlines survive. With no arguments it prints a usage
+        // line and fails, as `ssh` with no host does; it2ssh greps that for boolean options.
         try """
             #!/bin/sh
-            [ "$#" -eq 0 ] && exit 0
+            [ "$#" -eq 0 ] && { echo 'usage: ssh [-46] destination' >&2; exit 255; }
             for a in "$@"; do printf '%s\\0' "$a"; done > '\(record.path)'
             """.write(to: fakeSSH, atomically: false, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: fakeSSH.path)
+        // it2ssh's usage comes from plain `ssh`, found on PATH.
+        let bin = root.appendingPathComponent("bin")
+        try FileManager.default.createDirectory(at: bin, withIntermediateDirectories: true)
+        try? FileManager.default.createSymbolicLink(at: bin.appendingPathComponent("ssh"),
+                                                    withDestinationURL: fakeSSH)
         let it2ssh = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("submodules/iTerm2-shell-integration/utilities/it2ssh")
+            .appendingPathComponent("OtherResources/Utilities/it2ssh")
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [it2ssh.path] + arguments
         process.environment = ["HOME": root.appendingPathComponent("home").path,
                                "SSH": fakeSSH.path,
                                "TERM": "xterm-256color",
-                               "PATH": "/usr/bin:/bin"]
+                               "PATH": bin.path + ":/usr/bin:/bin"]
         let input = Pipe()
+        let errors = Pipe()
         process.standardInput = input
         process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
+        process.standardError = errors
         try process.run()
         // it2ssh reads until a blank line after ssh exits.
         input.fileHandleForWriting.write(Data("\n".utf8))
         try input.fileHandleForWriting.close()
+        let errorData = errors.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
+        return (process.terminationStatus, String(decoding: errorData, as: UTF8.self))
+    }
+
+    /// Runs the real it2ssh with a fake ssh, returning the arguments ssh was given.
+    private func sshArguments(_ arguments: [String]) throws -> [String] {
+        try runIt2ssh(arguments)
         let data = try Data(contentsOf: record)
         return String(decoding: data, as: UTF8.self).split(separator: "\0", omittingEmptySubsequences: false)
             .dropLast().map(String.init)
@@ -90,5 +108,36 @@ final class It2sshNoShellIntegrationTests: XCTestCase {
         let remote = try XCTUnwrap(args.last)
         XCTAssertFalse(remote.contains("si=0"), remote)
         XCTAssertTrue(try reportedSSHArgs(remote).contains("--no-shell-integration"))
+    }
+
+    // After --, ssh reads no options after the host either, so there it is the remote command.
+    func testFlagAfterTheHostFollowingDoubleDashIsTheRemoteCommand() throws {
+        let args = try sshArguments(["--", "host", "--no-shell-integration"])
+        let remote = try XCTUnwrap(args.last)
+        XCTAssertFalse(remote.contains("si=0"), remote)
+        XCTAssertTrue(try reportedSSHArgs(remote).contains("--no-shell-integration"))
+    }
+
+    // ssh's usage exits 255, which used to end it2ssh (set -e, pipefail) before its `exit 1`.
+    func testUsageExitsOne() throws {
+        for arguments in [[], ["--no-shell-integration"]] {
+            let result = try runIt2ssh(arguments)
+            XCTAssertEqual(result.status, 1, "\(arguments)")
+            XCTAssertTrue(result.stderr.contains("usage: it2ssh"), "\(arguments): \(result.stderr)")
+            XCTAssertFalse(FileManager.default.fileExists(atPath: record.path), "never connects")
+        }
+    }
+
+    // Where ssh would read an option, the flag can only be a misplaced it2ssh option: refuse it
+    // rather than quietly load shell integration after all.
+    func testMisplacedFlagIsRefused() throws {
+        for arguments in [["host", "--no-shell-integration"],
+                          ["-p", "2222", "--no-shell-integration", "host"]] {
+            let result = try runIt2ssh(arguments)
+            XCTAssertEqual(result.status, 1, "\(arguments)")
+            XCTAssertTrue(result.stderr.contains("--no-shell-integration must be the first argument"),
+                          "\(arguments): \(result.stderr)")
+            XCTAssertFalse(FileManager.default.fileExists(atPath: record.path), "\(arguments) never connects")
+        }
     }
 }
