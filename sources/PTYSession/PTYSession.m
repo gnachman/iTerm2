@@ -27039,11 +27039,13 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         return;
     }
     RLog(@"Send %@ bytes typed after an ssh connection ended to the shell that took over", @(keys.length));
-    if (_conductor.handlesKeystrokes) {
-        [_conductor sendKeys:keys];
-    } else {
-        [self writeData:keys];
-    }
+    [self writeKeysForShellThatTookOver:keys];
+}
+
+// The same way the newline for it2ssh went, so a deferred newline isn't overtaken.
+- (void)writeKeysForShellThatTookOver:(NSData *)keys {
+    NSString *string = [[[NSString alloc] initWithData:keys encoding:NSISOLatin1StringEncoding] autorelease];
+    [self writeTaskNoBroadcast:string encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:NO];
 }
 
 - (void)rememberDisconnectedSSHClientUniqueID:(NSString *)clientUniqueID {
