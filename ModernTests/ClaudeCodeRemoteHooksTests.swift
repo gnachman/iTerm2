@@ -154,6 +154,31 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         XCTAssertEqual(files.writes, [])
     }
 
+    // A host that can't be told apart from this Mac (no token, a "0:" token from a Mac whose
+    // identity couldn't be computed, or a version this Mac doesn't implement) might be this Mac,
+    // so neither install nor uninstall edits its settings (QA finding F-815).
+    func testInstallAndUninstallRefuseAHostOfUnknownIdentity() async throws {
+        for token in [nil, "0:", "99:abc", "garbage"] as [String?] {
+            let files = try makeFiles()
+            files.token = token
+            let installed = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
+            XCTAssertEqual(installed, .identityUnknown, String(describing: token))
+            files.files[settingsPath] = try ClaudeCodeHookSettings.serialized(
+                ["hooks": ["Stop": [["hooks": [["type": "command", "command": command]]]]]])
+            let uninstalled = await Hooks.uninstall(files: files, settingsPath: settingsPath, home: home)
+            XCTAssertEqual(uninstalled, .hostIdentityUnknown, String(describing: token))
+            XCTAssertEqual(files.writes, [], String(describing: token))
+        }
+    }
+
+    // A Linux host says so ("1:" with no value), which is a positive "not this Mac".
+    func testANonMacHostIsEdited() async throws {
+        let files = try makeFiles()
+        files.token = "1:"
+        let result = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(result, .installed)
+    }
+
     // No wrapper means a hook would fail on every event: the shell there could not be set up by
     // ssh integration (tcsh, for one). Say so rather than install something that cannot run.
     func testInstallWithoutTheWrapperIsRefused() async throws {

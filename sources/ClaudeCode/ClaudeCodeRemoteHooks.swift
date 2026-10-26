@@ -170,6 +170,8 @@ enum ClaudeCodeRemoteHooks {
         case installed
         /// The host is this Mac (ssh to localhost): its settings belong to the local install.
         case thisMac
+        /// The host's machine identity couldn't be read, so it might be this Mac.
+        case identityUnknown
         /// ~/.iterm2/bin/it2 is not there, so every hook would fail.
         case it2Missing
         case unreadable
@@ -185,9 +187,33 @@ enum ClaudeCodeRemoteHooks {
         return trimmed + "/.iterm2/bin/it2"
     }
 
-    /// Whether the host is this Mac, reached over ssh (localhost, or this Mac by another name).
+    enum HostIdentity: Equatable {
+        /// This Mac reached over ssh (localhost, or this Mac by another name).
+        case thisMac
+        /// Positively another machine.
+        case elsewhere
+        /// The machine token couldn't be read (no answer, a Mac that couldn't compute it, or a
+        /// version this Mac doesn't implement). It might be this Mac.
+        case unknown
+    }
+
+    static func hostIdentity(files: ClaudeCodeRemoteFiles) async -> HostIdentity {
+        switch iTermMachineIdentity.locality(forToken: await files.machineToken()) {
+        case .localhost:
+            return .thisMac
+        case .remote:
+            return .elsewhere
+        case .unknown:
+            return .unknown
+        @unknown default:
+            return .unknown
+        }
+    }
+
+    /// Whether the host is known to be this Mac, reached over ssh. False when that couldn't be
+    /// told, so callers that edit the host's files must use hostIdentity instead.
     static func hostIsThisMac(files: ClaudeCodeRemoteFiles) async -> Bool {
-        return iTermMachineIdentity.locality(forToken: await files.machineToken()) == .localhost
+        return await hostIdentity(files: files) == .thisMac
     }
 
     static func install(files: ClaudeCodeRemoteFiles,
@@ -196,9 +222,16 @@ enum ClaudeCodeRemoteHooks {
                         descriptor: AgentHookDescriptor = .claudeCode) async -> InstallResult {
         // The local install owns this Mac's settings, and adopting its entries would replace the
         // local hook command with the remote wrapper.
-        if await hostIsThisMac(files: files) {
+        switch await hostIdentity(files: files) {
+        case .thisMac:
             RLog("Remote hook install refused: the host is this Mac")
             return .thisMac
+        case .unknown:
+            // It might be this Mac, whose settings the remote install must not touch.
+            RLog("Remote hook install refused: could not tell whether the host is this Mac")
+            return .identityUnknown
+        case .elsewhere:
+            break
         }
         guard await files.isExecutable(wrapperPath(home: home)) else {
             RLog("Remote hook install refused: the it2 wrapper is missing on the host")
@@ -281,9 +314,15 @@ enum ClaudeCodeRemoteHooks {
                           descriptor: AgentHookDescriptor = .claudeCode) async -> ClaudeCodeUninstallHooksResult {
         // As in install: this Mac's settings belong to the local uninstall, which has already
         // handled them. Nothing to do here.
-        if await hostIsThisMac(files: files) {
+        switch await hostIdentity(files: files) {
+        case .thisMac:
             RLog("Remote hook uninstall skipped: the host is this Mac")
             return .success
+        case .unknown:
+            RLog("Remote hook uninstall refused: could not tell whether the host is this Mac")
+            return .hostIdentityUnknown
+        case .elsewhere:
+            break
         }
         let settings: [String: Any]
         switch await files.read(settingsPath) {

@@ -53324,6 +53324,18 @@
         }
       }
     },
+    "ClaudeCode.RemoteHookIdentityUnknown" : {
+      "comment" : "Detail shown during uninstall when iTerm2 could not determine whether a remote host is this Mac, so it made no changes there; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it left Claude Code’s settings there unchanged."
+          }
+        }
+      }
+    },
     "ClaudeCode.RemoteHookMalformed" : {
       "comment" : "Detail shown when the Claude Code settings on a remote host are not valid JSON during uninstall; the value is the host",
       "extractionState" : "extracted_with_value",
@@ -54946,6 +54958,18 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%@ is already always allowed to use the iTerm2 API. You can change that in Settings > General > Magic > API access over ssh."
+          }
+        }
+      }
+    },
+    "ClaudeCodeOnboarding.RemoteIdentityUnknown" : {
+      "comment" : "Shown when the remote install could not determine whether the ssh host is this Mac, so it made no changes; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it didn’t change Claude Code’s settings there. Reconnect and try again."
           }
         }
       }

@@ -183,6 +183,8 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             return String(localized: "ClaudeCode.RemoteHookMalformed", defaultValue: "Claude Code\u{2019}s settings on \(host) couldn\u{2019}t be parsed as JSON.", comment: "Detail shown when the Claude Code settings on a remote host are not valid JSON during uninstall; the value is the host")
         case .writeFailed:
             return String(localized: "ClaudeCode.RemoteHookWriteFailed", defaultValue: "Couldn\u{2019}t write Claude Code\u{2019}s settings on \(host).", comment: "Detail shown when the Claude Code settings on a remote host could not be written during uninstall; the value is the host")
+        case .hostIdentityUnknown:
+            return String(localized: "ClaudeCode.RemoteHookIdentityUnknown", defaultValue: "iTerm2 couldn\u{2019}t tell whether \(host) is this Mac, so it left Claude Code\u{2019}s settings there unchanged.", comment: "Detail shown during uninstall when iTerm2 could not determine whether a remote host is this Mac, so it made no changes there; the value is the host")
         case .unreadable, .success:
             return String(localized: "ClaudeCode.RemoteHookUnreadable", defaultValue: "Couldn\u{2019}t read Claude Code\u{2019}s settings on \(host).", comment: "Detail shown when the Claude Code settings on a remote host could not be read, or the host disconnected, during uninstall; the value is the host")
         @unknown default:
@@ -208,7 +210,8 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
                 detail = String(localized: "ClaudeCode.HookMalformed", defaultValue: "\(settingsPath) couldn\u{2019}t be parsed as JSON. Open it in a text editor and check it for syntax errors.", comment: "Detail shown when the Claude Code settings file is not valid JSON; the interpolated value is the absolute path to settings.json")
             case .writeFailed:
                 detail = String(localized: "ClaudeCode.HookWriteFailed", defaultValue: "Could not write to \(settingsPath) — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be written; the interpolated value is the absolute path to settings.json")
-            case .success:
+            case .success, .hostIdentityUnknown:
+                // The local uninstall never reports hostIdentityUnknown.
                 detail = ""
             @unknown default:
                 detail = ""

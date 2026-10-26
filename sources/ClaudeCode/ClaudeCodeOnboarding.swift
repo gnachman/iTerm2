@@ -17,6 +17,9 @@ enum ClaudeCodeUninstallHooksResult: Int {
     case unreadable
     case malformed
     case writeFailed
+    /// A remote host's machine identity couldn't be read, so it might be this Mac and its
+    /// settings were left alone.
+    case hostIdentityUnknown
 }
 
 // Outcome of merging our hooks into settings.json during Install. An existing
@@ -1903,6 +1906,8 @@ class ClaudeCodeOnboarding: NSObject {
             return nil
         case .thisMac:
             return String(localized: "ClaudeCodeOnboarding.RemoteIsThisMac", defaultValue: "\(host) is this Mac. Claude Code here is set up by the Install Hook step instead.", comment: "Shown when the remote install was attempted on an ssh connection back to this Mac; the value is the host")
+        case .identityUnknown:
+            return String(localized: "ClaudeCodeOnboarding.RemoteIdentityUnknown", defaultValue: "iTerm2 couldn\u{2019}t tell whether \(host) is this Mac, so it didn\u{2019}t change Claude Code\u{2019}s settings there. Reconnect and try again.", comment: "Shown when the remote install could not determine whether the ssh host is this Mac, so it made no changes; the value is the host")
         case .it2Missing:
             return String(localized: "ClaudeCodeOnboarding.RemoteIt2Missing", defaultValue: "SSH Integration couldn\u{2019}t set up the it2 command on \(host), so the hook would have nothing to run. This happens when the login shell there is not one SSH Integration supports: zsh, bash, fish, or xonsh.", comment: "Shown when the remote host lacks the uploaded it2 wrapper; the value is the host")
         case .unreadable:
