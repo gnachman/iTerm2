@@ -843,6 +843,9 @@ Bug Fixes:
   tells you when files in it couldn’t be read
   and were left out, instead of reporting
   success with no mention of the missing files.
+- An SSH Integration download that fails or is
+  stopped no longer leaves an empty or partial
+  hidden file in your Downloads folder.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
