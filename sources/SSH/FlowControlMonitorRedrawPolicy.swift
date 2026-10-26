@@ -22,7 +22,8 @@ struct FlowControlMonitorRedrawPolicy {
             var arrived: Int?
             var consumed: Int?
             var statistics: FramerFlowController.Statistics?
-            var eventCount: Int?
+            /// When the latest event happened; the controller keeps only the last few.
+            var lastEvent: TimeInterval?
             var lastRoundTrip: TimeInterval?
         }
 
@@ -44,7 +45,7 @@ struct FlowControlMonitorRedrawPolicy {
                                           arrived: snapshot?.arrived,
                                           consumed: snapshot?.consumed,
                                           statistics: snapshot?.statistics,
-                                          eventCount: snapshot?.events.count,
+                                          lastEvent: snapshot?.events.last?.time,
                                           lastRoundTrip: connection.roundTrips.last?.time)
             }
             self.received = received.last?.value
