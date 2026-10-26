@@ -437,7 +437,7 @@ class PTYSessionPeerPort: NSObject {
         invalidated = true
         for identifier in peers.keys where identifier != leader {
             peers[identifier]?.then { session in
-                if keepingPeersInTabs && session.delegate != nil {
+                if keepingPeersInTabs && Self.isInATab(session) {
                     RLog("PTYSessionPeerPort.invalidate: keeping peer \(identifier) guid=\(session.guid) in its tab")
                     return
                 }
@@ -447,12 +447,25 @@ class PTYSessionPeerPort: NSObject {
         peers = [:]
     }
 
+    /// Whether a peer is shown in a tab. A buried peer that was shown keeps that tab as its
+    /// delegate, so the tab is asked: closing a buried peer through the tab would close the tab,
+    /// leader and all, when the leader is its only session (QA finding F-713).
+    private static func isInATab(_ session: PTYSession) -> Bool {
+        guard let delegate = session.delegate else {
+            return false
+        }
+        guard let tab = delegate as? PTYTab else {
+            return true
+        }
+        return tab.sessions().contains { $0 === session }
+    }
+
     /// A buried peer is terminated. One in a tab is closed through the tab, which closes the
     /// tab (and its window) if it was the tab's only session. That happens when the teardown
     /// could not swap the leader back in because the leader itself is what ended. Terminating it
     /// in place would leave its tab, and maybe its window, with no session.
     private static func end(peer session: PTYSession, identifier: String) {
-        guard session.delegate != nil else {
+        guard isInATab(session) else {
             RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\(session.guid) exited=\(session.exited)")
             session.terminate()
             return
@@ -463,7 +476,7 @@ class PTYSessionPeerPort: NSObject {
             guard let session else {
                 return
             }
-            if let delegate = session.delegate {
+            if Self.isInATab(session), let delegate = session.delegate {
                 // Soft: a tmux pane on the server is left alone.
                 delegate.softClose(session)
             } else {
