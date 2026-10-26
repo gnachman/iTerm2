@@ -427,7 +427,9 @@ extension Conductor: ConductorFileTransferDelegate {
                                       allowDirectories: false)
             try? await rm(remoteZipPath, recursive: false)
         } catch {
-            fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: true))
+            // Only zip() throws here. Its permission errors come from making the archive in the
+            // remote home folder, not from reading the folder, so they get the generic reason.
+            fileTransfer.fail(reason: error.localizedDescription)
         }
     }
 
