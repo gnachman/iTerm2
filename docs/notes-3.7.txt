@@ -835,7 +835,8 @@ Bug Fixes:
 - The notification for a failed download or
   upload now names the file and gives the
   reason, instead of showing only an error such
-  as “File not found”.
+  as “File not found”. Canceling a transfer no
+  longer reports it as failed.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.

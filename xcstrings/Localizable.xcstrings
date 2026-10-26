@@ -162022,7 +162022,7 @@
     },
     "SCPFile.CanceledByUser" : {
       "comment" : "Error shown when the user cancels an SCP transfer",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -186894,7 +186894,7 @@
     },
     "TerminalFile.Canceled" : {
       "comment" : "Error shown when the user cancels a download",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

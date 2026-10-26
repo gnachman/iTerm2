@@ -91,9 +91,16 @@ class iTermBrowserDownload: TransferrableFile {
     
     override func stop() {
         FileTransferManager.sharedInstance().transferrableFileWillStop(self)
-        wkDownload.cancel()
         state = .failed
         status = .cancelling
+        wkDownload.cancel { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self, self.status == .cancelling else {
+                    return
+                }
+                FileTransferManager.sharedInstance().transferrableFileDidStopTransfer(self)
+            }
+        }
     }
     
     override func localPath() -> String? {
