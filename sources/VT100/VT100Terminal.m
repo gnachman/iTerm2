@@ -227,6 +227,10 @@ typedef struct {
     int _sgrStackSize;
     BOOL _isScreenLike;
     BOOL _receivingMultipartFile;
+    BOOL receivingFile_;
+    // While receivingFile_ is set, the file is not wanted (the user declined it or the terminal
+    // is not trusted), so its payload is dropped instead of being saved or drawn.
+    BOOL _discardingFile;
 
     NSNumber *_currentLiteral;
     iTermEmulationLevel _vtLevel;
@@ -237,7 +241,11 @@ typedef struct {
     iTermFramerRecoveryRefusals *_framerRecoveryRefusals;
 }
 
-@synthesize receivingFile = receivingFile_;
+// A file whose payload is being discarded does not count: there is no download to abort.
+- (BOOL)receivingFile {
+    return receivingFile_ && !_discardingFile;
+}
+
 @synthesize graphicRendition = graphicRendition_;
 
 #define DEL  0x7f
@@ -286,6 +294,7 @@ static const int kMaxScreenRows = 4096;
 - (void)stopReceivingFile {
     DLog(@"%@", [NSThread callStackSymbols]);
     receivingFile_ = NO;
+    _discardingFile = NO;
 }
 
 - (void)setEncoding:(NSStringEncoding)encoding {
@@ -426,6 +435,7 @@ static const int kMaxScreenRows = 4096;
     self.protectedMode = VT100TerminalProtectedModeNone;
     self.allowColumnMode = NO;
     receivingFile_ = NO;
+    _discardingFile = NO;
     _copyMode = VT100TerminalCopyModeNone;
     _encoding = _canonicalEncoding;
     _parser.encoding = _canonicalEncoding;
@@ -1922,16 +1932,23 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     if (receivingFile_) {
         DLog(@"receiving file, might not execute token");
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
-            [_delegate terminalDidReceiveBase64FileData:token.string ?: @""];
+            if (!_discardingFile) {
+                [_delegate terminalDidReceiveBase64FileData:token.string ?: @""];
+            }
             return;
         } else if (token->type == VT100_ASCIISTRING ||
                    token->type == VT100_MIXED_ASCII_CR_LF ||
                    token->type == VT100_GANG) {
-            [_delegate terminalDidReceiveBase64FileData:[token stringForAsciiData]];
+            if (!_discardingFile) {
+                [_delegate terminalDidReceiveBase64FileData:[token stringForAsciiData]];
+            }
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
-            [_delegate terminalDidFinishReceivingFile];
+            if (!_discardingFile) {
+                [_delegate terminalDidFinishReceivingFile];
+            }
             receivingFile_ = NO;
+            _discardingFile = NO;
             return;
         } else if (_receivingMultipartFile) {
             DLog(@"Receiving multipart file so allow %@ to proceed as usual", token);
@@ -1944,8 +1961,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // can legitimately interleave between a download's body tokens, so they must not
             // abort it. (SSH_IT2 was the token that made a shared predicate worthwhile.)
             RLog(@"Unexpected field receipt end");
-            [_delegate terminalFileReceiptEndedUnexpectedly];
+            if (!_discardingFile) {
+                [_delegate terminalFileReceiptEndedUnexpectedly];
+            }
             receivingFile_ = NO;
+            _discardingFile = NO;
         }
     } else if (_copyMode != VT100TerminalCopyModeNone) {
         DLog(@"Token type=%@ copyMode=%@ receivingFile=%@", @(token->type), @(_copyMode), @(receivingFile_));
@@ -4221,24 +4241,32 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                  type:type
                                             forceWide:forceWide
                                            completion:^(BOOL ok) {
-                  if (ok) {
-                      [weakSelf startReceivingFile];
-                  }
+            [weakSelf didConfirmFile:ok];
         }];
     } else {
         [_delegate terminalWillReceiveFileNamed:name
                                          ofSize:[dict[@"size"] integerValue]
                                      completion:^(BOOL ok) {
-            if (ok) {
-                [weakSelf startReceivingFile];
-            }
+            [weakSelf didConfirmFile:ok];
         }];
     }
 }
 
-- (void)startReceivingFile {
-    RLog(@"Start file receipt");
+- (void)didConfirmFile:(BOOL)ok {
+    if (ok) {
+        [self startReceivingFileDiscarding:NO];
+    } else if (!_receivingMultipartFile) {
+        // A declined file's payload still follows, so it is consumed and dropped rather than
+        // drawn as text (F-720). A multipart file's parts are control sequences of their own,
+        // so nothing of them is drawn.
+        [self startReceivingFileDiscarding:YES];
+    }
+}
+
+- (void)startReceivingFileDiscarding:(BOOL)discard {
+    RLog(@"Start file receipt discard=%@", @(discard));
     receivingFile_ = YES;
+    _discardingFile = discard;
 }
 
 - (NSArray *)keyValuePairInToken:(VT100Token *)token {
@@ -4443,7 +4471,7 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             [self executeFileCommandWithValue:value];
         } else {
             // Enter multitoken mode to avoid showing the base64 gubbins of the image.
-            receivingFile_ = YES;
+            [self startReceivingFileDiscarding:YES];
             [_delegate terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
     } else if ([key isEqualToString:@"Block"]) {
@@ -4479,12 +4507,15 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             [_delegate terminalInvalidateCustomButtons];
         }
     } else if ([key isEqualToString:@"FilePart"]) {
-        if ([_delegate terminalIsTrusted]) {
+        if ([_delegate terminalIsTrusted] && !_discardingFile) {
             [_delegate terminalDidReceiveBase64FileData:value];
         }
     } else if ([key isEqualToString:@"FileEnd"]) {
-        [_delegate terminalDidFinishReceivingFile];
+        if (!_discardingFile) {
+            [_delegate terminalDidFinishReceivingFile];
+        }
         receivingFile_ = NO;
+        _discardingFile = NO;
     } else if ([key isEqualToString:@"Copy"]) {
         RLog(@"Handling Copy key with value of length %@", @(value.length));
         if ([_delegate terminalIsTrusted]) {
