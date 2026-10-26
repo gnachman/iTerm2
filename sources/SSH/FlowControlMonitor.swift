@@ -43,6 +43,8 @@ final class FlowControlMonitor: NSObject {
     private var timer: Timer?
     private var windowController: FlowControlMonitorWindowController?
     private var observer: NSObjectProtocol?
+    private var redrawPolicy = FlowControlMonitorRedrawPolicy()
+    private var occlusionObserver: NSObjectProtocol?
 
     /// Call once at launch.
     @objc func start() {
@@ -80,6 +82,16 @@ final class FlowControlMonitor: NSObject {
         }
         if windowController == nil {
             let windowController = FlowControlMonitorWindowController()
+            occlusionObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.didChangeOcclusionStateNotification,
+                object: windowController.window,
+                queue: .main) { _ in
+                    MainActor.assumeIsolated {
+                        // Catch up at once when it can be seen again.
+                        FlowControlMonitor.instance.redrawPolicy.invalidate()
+                        FlowControlMonitor.instance.sample()
+                    }
+                }
             windowController.userDidClose = {
                 // Closing the window is how to turn it off. Stop now rather than when the
                 // setting's change is noticed.
@@ -89,6 +101,7 @@ final class FlowControlMonitor: NSObject {
             self.windowController = windowController
         }
         windowController?.showWindow(nil)
+        redrawPolicy.invalidate()
         sample()
     }
 
@@ -98,6 +111,10 @@ final class FlowControlMonitor: NSObject {
         histories.removeAll()
         received.removeAll()
         connections.removeAll()
+        if let occlusionObserver {
+            NotificationCenter.default.removeObserver(occlusionObserver)
+        }
+        occlusionObserver = nil
         let windowController = self.windowController
         self.windowController = nil
         windowController?.userDidClose = nil
@@ -143,10 +160,21 @@ final class FlowControlMonitor: NSObject {
                        roundTrips: conductor.roundTrips)
         }
         self.connections = connections
-        windowController?.update(session: session,
-                                 connections: connections,
-                                 received: session.flatMap { received[$0.guid] } ?? [],
-                                 now: now)
+        guard let windowController, let window = windowController.window else {
+            return
+        }
+        let sessionReceived = session.flatMap { received[$0.guid] } ?? []
+        let activity = FlowControlMonitorRedrawPolicy.Activity(sessionName: session?.name,
+                                                               connections: connections,
+                                                               received: sessionReceived)
+        let visible = window.occlusionState.contains(.visible) && !window.isMiniaturized
+        guard redrawPolicy.shouldRedraw(activity, visible: visible, now: now) else {
+            return
+        }
+        windowController.update(session: session,
+                                connections: connections,
+                                received: sessionReceived,
+                                now: now)
     }
 
     /// The conductor and those it is nested in, innermost first.

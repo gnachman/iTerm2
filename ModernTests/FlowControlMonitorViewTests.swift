@@ -113,6 +113,62 @@ final class FlowControlMonitorViewTests: XCTestCase {
         XCTAssertEqual(closedByPerson, 1)
     }
 
+    // MARK: - When the window redraws
+
+    private func activity(consumed: Int, events: Int = 0) -> FlowControlMonitorRedrawPolicy.Activity {
+        let c = Controller(now: 0, recovering: false) { _ in }
+        c.roundTripDidComplete(sentAt: 0, now: 0.05)
+        if consumed > 0 {
+            c.frameDidArrive(now: 0.1, sendMilliseconds: 100, bytes: consumed, limited: false, exempt: false)
+            c.flowDidConsume(.leader, bytes: consumed, now: 0.1)
+        }
+        for i in 0..<events {
+            c.valveDidOpen(now: 0.2 + Double(i))
+            c.drainDidReply(now: 0.3 + Double(i))
+        }
+        var history = FlowControlHistory()
+        history.record(c.snapshot(now: 1), at: 1)
+        let connection = FlowControlMonitor.Connection(guid: "outer", depth: 0, name: "host", reasonOff: nil,
+                                                       flowVersion: 2, clockName: "boottime",
+                                                       history: history, roundTrips: [])
+        return .init(sessionName: "zsh", connections: [connection], received: [])
+    }
+
+    // Nothing changing: once a second, so the time axis still moves, rather than on every sample.
+    func testAnIdleMonitorRedrawsOnceASecond() {
+        var policy = FlowControlMonitorRedrawPolicy()
+        let idle = activity(consumed: 0)
+        var redraws = 0
+        var t = 0.0
+        while t < 10 {
+            if policy.shouldRedraw(idle, visible: true, now: t) {
+                redraws += 1
+            }
+            t += 0.1
+        }
+        XCTAssertEqual(redraws, 10)
+    }
+
+    // Output arriving, or something the controller did, redraws at once.
+    func testAChangeRedrawsAtOnce() {
+        var policy = FlowControlMonitorRedrawPolicy()
+        XCTAssertTrue(policy.shouldRedraw(activity(consumed: 0), visible: true, now: 0))
+        XCTAssertFalse(policy.shouldRedraw(activity(consumed: 0), visible: true, now: 0.1))
+        XCTAssertTrue(policy.shouldRedraw(activity(consumed: 4096), visible: true, now: 0.2))
+        XCTAssertTrue(policy.shouldRedraw(activity(consumed: 4096, events: 1), visible: true, now: 0.3))
+        XCTAssertFalse(policy.shouldRedraw(activity(consumed: 4096, events: 1), visible: true, now: 0.4))
+    }
+
+    // A window that can't be seen never redraws, and catches up once it can.
+    func testAHiddenWindowDoesNotRedraw() {
+        var policy = FlowControlMonitorRedrawPolicy()
+        XCTAssertFalse(policy.shouldRedraw(activity(consumed: 0), visible: false, now: 0))
+        XCTAssertFalse(policy.shouldRedraw(activity(consumed: 4096), visible: false, now: 5))
+        XCTAssertTrue(policy.shouldRedraw(activity(consumed: 4096), visible: true, now: 5.1))
+        policy.invalidate()
+        XCTAssertTrue(policy.shouldRedraw(activity(consumed: 4096), visible: true, now: 5.2))
+    }
+
     // Shell > Close (Cmd-W) sends closeCurrentSession:. The panel must take it, closing itself
     // as its close button would, or it goes on to the terminal window behind and closes a
     // session there.
