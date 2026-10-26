@@ -65865,6 +65865,48 @@
         }
       }
     },
+    "ConductorFileTransfer.CouldNotMoveIntoPlace" : {
+      "comment" : "Error shown when a finished SSH Integration download cannot be moved to its final location. The first argument is the destination path and the second is the system’s description of the error.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Download wurde abgeschlossen, konnte aber nicht als „%1$@“ gespeichert werden: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The download finished but couldn’t be saved as “%1$@”: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロードは完了しましたが、“%1$@”として保存できませんでした: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O download foi concluído, mas não foi possível salvá-lo como “%1$@”: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузка завершена, но не удалось сохранить файл как «%1$@»: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载已完成，但无法保存为“%1$@”：%2$@"
+          }
+        }
+      }
+    },
     "ConductorFileTransfer.CouldNotOpen" : {
       "comment" : "Error shown when the local file for an SSH Integration download cannot be opened; the argument is its path",
       "extractionState" : "extracted_with_value",
@@ -163536,16 +163578,16 @@
       "comment" : "Reason shown when an SSH Integration download fails because the remote file's permissions do not allow reading it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The file couldn’t be read because you don’t have permission to read it on the remote host."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Datei konnte nicht gelesen werden, da Sie auf dem Remote-Host keine Leseberechtigung für sie haben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The file couldn’t be read because you don’t have permission to read it on the remote host."
           }
         },
         "ja" : {
@@ -163704,16 +163746,16 @@
       "comment" : "Error shown when a file operation on an SSH endpoint fails because a component of the remote path is a file rather than a folder",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Part of the path on the remote host is not a folder."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ein Teil des Pfads auf dem Remote-Host ist kein Ordner."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Part of the path on the remote host is not a folder."
           }
         },
         "ja" : {
@@ -163746,16 +163788,16 @@
       "comment" : "Error shown when a file operation on an SSH endpoint fails because the permissions of the remote file or folder do not allow it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "You don’t have permission to access this file on the remote host."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sie haben auf dem Remote-Host keine Berechtigung, auf diese Datei zuzugreifen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You don’t have permission to access this file on the remote host."
           }
         },
         "ja" : {
@@ -163830,16 +163872,16 @@
       "comment" : "Reason shown when an SSH Integration upload fails because the remote destination folder's permissions do not allow writing to it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The file couldn’t be saved because you don’t have permission to write to the destination folder on the remote host."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Datei konnte nicht gespeichert werden, da Sie auf dem Remote-Host keine Schreibberechtigung für den Zielordner haben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The file couldn’t be saved because you don’t have permission to write to the destination folder on the remote host."
           }
         },
         "ja" : {
@@ -205655,16 +205697,16 @@
       "comment" : "Size column of a file in the Downloads or Uploads menu; the first argument is how many bytes have been transferred (for example “1.2 MB”) and the second is the size of the file",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ of %2$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ von %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@"
           }
         },
         "ja" : {
