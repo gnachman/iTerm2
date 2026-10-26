@@ -2451,7 +2451,9 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
 // first may not apply; ask anyway, with the workgroup warning. QA finding F-618.
 + (BOOL)closingEndsTmuxWorkgroup:(NSArray<PTYSession *> *)sessions {
     const BOOL anyTmuxMember = [sessions anyWithBlock:^BOOL(PTYSession *session) {
-        return session.isTmuxClient && session.workgroupInstance != nil;
+        // A filter or Instant Replay shows the member through a stand-in.
+        PTYSession *live = session.liveSession ?: session;
+        return live.isTmuxClient && live.workgroupInstance != nil;
     }];
     return anyTmuxMember && [iTermWorkgroupInstance closeCascadeWarningForSessions:sessions] != nil;
 }

@@ -38,6 +38,20 @@ final class TmuxWorkgroupCloseConfirmationTests: WorkgroupEntryTestBase {
         XCTAssertTrue(PseudoTerminal.closingEndsTmuxWorkgroup([split]))
     }
 
+    // With Find > Filter (or Instant Replay) open, Cmd-W closes the stand-in that shows the member.
+    // QA finding F-801.
+    func testClosingAFilteredTmuxMemberMustBeConfirmed() throws {
+        let split = try enterRootWithSplit()
+        split.setTmuxPane(1)
+        tmuxSessions.append(split)
+        let standIn = PTYSession(synthetic: true)!
+        standIn.live = split
+        XCTAssertTrue(PseudoTerminal.closingEndsTmuxWorkgroup([standIn]))
+        XCTAssertNotNil(iTermWorkgroupInstance.closeCascadeWarning(forSessions: [standIn]),
+                        "the confirmation says the workgroup will end")
+        standIn.live = nil
+    }
+
     // Local members ask as they always have, according to their profiles.
     func testClosingALocalMemberIsUnchanged() throws {
         let split = try enterRootWithSplit()

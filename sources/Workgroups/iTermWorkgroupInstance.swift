@@ -175,7 +175,9 @@ final class iTermWorkgroupInstance: NSObject {
     // set already covers the whole workgroup, or no member is a
     // workgroup session).
     @objc(closeCascadeWarningForSessions:)
-    static func closeCascadeWarning(forSessions closingSessions: [PTYSession]) -> String? {
+    static func closeCascadeWarning(forSessions sessionsToClose: [PTYSession]) -> String? {
+        // A filter or Instant Replay shows a member through a stand-in; closing it closes the member.
+        let closingSessions = sessionsToClose.map { $0.live ?? $0 }
         let closingIDs = Set(closingSessions.map { ObjectIdentifier($0) })
         var instancesByID: [ObjectIdentifier: iTermWorkgroupInstance] = [:]
         for session in closingSessions {
