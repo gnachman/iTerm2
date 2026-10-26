@@ -1890,7 +1890,8 @@ extension Conductor {
     }
 
     private func cancelAllRequests() {
-        cancelEnqueuedRequests(where: { _ in true })
+        // Not a quit that is already queued: only one is sent (F-781).
+        cancelEnqueuedRequests(where: { $0 != .quit && $0 != .framerQuit })
         switch state {
         case .willExecutePipeline(var contexts):
             for i in 0..<contexts.count {
@@ -1904,8 +1905,13 @@ extension Conductor {
         default:
             break
         }
-        queue = []
+        // A quit already queued (the login shell exited) is the only one sent, so it stays
+        // and goes out now (F-781).
+        queue = queue.filter { !$0.canceled && ($0.command == .quit || $0.command == .framerQuit) }
         state = .ground
+        if !queue.isEmpty {
+            dequeue()
+        }
     }
 
     func eval(code: String) {

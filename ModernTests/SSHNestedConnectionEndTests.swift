@@ -389,6 +389,23 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertEqual(delegate.written.components(separatedBy: quit).count - 1, 1, delegate.written)
     }
 
+    // F-781: Disconnect while the quit sent for the login shell's exit still waits in the
+    // queue must not cancel it, since no other quit is sent.
+    func testQuitWaitingInQueueSurvivesDisconnect() {
+        let delegate = RecordingConductorDelegate()
+        let conductor = makeFramingConductor(delegate)
+        deliverAutopollEOF(to: conductor)
+        drain(conductor)
+        // Something in flight that nothing can be pipelined behind.
+        conductor.send(.framerAutopoll, .fireAndForget)
+        delegate.written = ""
+        conductor.handleTerminate(loginShellPID, code: 0, depth: conductor.depth)
+        conductor.quit()
+        drain(conductor)
+        let quit = "quit".data(using: .utf8)!.base64EncodedString()
+        XCTAssertEqual(delegate.written.components(separatedBy: quit).count - 1, 1, delegate.written)
+    }
+
     // The payloads of the framer `send` commands in what was written, decoded the way
     // framer.py does.
     private static func relayedPayloads(_ written: String) -> [String] {
