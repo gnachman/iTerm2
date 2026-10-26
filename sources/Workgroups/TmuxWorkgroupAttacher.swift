@@ -38,6 +38,8 @@ final class TmuxWorkgroupAttacher: NSObject {
     /// This connection's client, as tmux reports it; names it as a lock holder. Nil until known.
     private(set) var identity: TmuxWorkgroupCommands.ClientIdentity?
     private var hiddenPaneOffer: TmuxWorkgroupHiddenPaneOffer?
+    /// Leaders of instances to adopt whose panes have no session yet. See adoptWhenLeaderHasSession.
+    private var leaderPanesAwaitingSessions = Set<Int>()
 
     /// For TmuxController, which lists windows with this option to recognize parked ones.
     @objc static var parkedOptionName: String {
@@ -311,7 +313,8 @@ final class TmuxWorkgroupAttacher: NSObject {
         let instanceID = adoption.instanceID
         guard let controller,
               let leader = controller.session(forWindowPane: Int32(adoption.leaderPaneID)) else {
-            RLog("TmuxWorkgroupAttacher: leader %\(adoption.leaderPaneID) of instance \(instanceID) has no session here; not adopting")
+            RLog("TmuxWorkgroupAttacher: leader %\(adoption.leaderPaneID) of instance \(instanceID) has no session here; adopting it once it has one")
+            adoptWhenLeaderHasSession(paneID: adoption.leaderPaneID)
             return
         }
         guard leader.workgroupInstance == nil else {
@@ -362,8 +365,37 @@ final class TmuxWorkgroupAttacher: NSObject {
         RLog("TmuxWorkgroupAttacher: adopted \(instanceID) with workgroup \(adoption.workgroup.uniqueIdentifier), members \(members.keys.sorted()), peers \(peers.keys.sorted()), \(adoption.activeConfigID) in view")
     }
 
+    /// A leader's window may not be open, e.g. when attaching opened the tmux Dashboard instead of
+    /// the windows because there were too many. Read the state again once the leader's pane has a
+    /// session, which adopts the instance if nothing else has. Once per pane at a time.
+    func adoptWhenLeaderHasSession(paneID: Int) {
+        guard let controller, leaderPanesAwaitingSessions.insert(paneID).inserted else {
+            return
+        }
+        controller.whenPaneRegistered(Int32(paneID)) { [weak self] session in
+            guard let self else {
+                return
+            }
+            self.leaderPanesAwaitingSessions.remove(paneID)
+            guard session != nil else {
+                // Detached.
+                return
+            }
+            RLog("TmuxWorkgroupAttacher: leader %\(paneID) has a session now; reading workgroup state again")
+            self.refresh()
+        }
+    }
+
     private func choose(instance: TmuxWorkgroupState.Instance, candidates: [iTermWorkgroup]) {
         guard !declined.contains(instance.instanceID) else {
+            return
+        }
+        // Ask only once the leader can be adopted, or the question would come again when its
+        // window opens. Position 0 is the root.
+        if let leaderPaneID = instance.paneForPosition[0],
+           controller?.session(forWindowPane: Int32(leaderPaneID)) == nil {
+            RLog("TmuxWorkgroupAttacher: leader %\(leaderPaneID) of instance \(instance.instanceID) has no session here; asking which workgroup it is once it has one")
+            adoptWhenLeaderHasSession(paneID: leaderPaneID)
             return
         }
         // iTermWarning offers at most seven buttons, one of which declines.
