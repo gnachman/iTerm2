@@ -107,12 +107,17 @@ enum ClaudeCodeRemotePython {
 @MainActor
 final class ConductorClaudeCodeRemoteFiles: ClaudeCodeRemoteFiles {
     /// A framer request that is aborted never completes, so every call has a deadline.
-    static let deadline: TimeInterval = 30
+    nonisolated static let deadline: TimeInterval = 30
+    /// For questions asked before showing a dialog, where waiting the full deadline would leave
+    /// the user looking at nothing. A late answer is treated as no answer.
+    nonisolated static let confirmationCheckDeadline: TimeInterval = 3
 
     private weak var conductor: Conductor?
+    private let deadline: TimeInterval
 
-    init(conductor: Conductor) {
+    init(conductor: Conductor, deadline: TimeInterval = ConductorClaudeCodeRemoteFiles.deadline) {
         self.conductor = conductor
+        self.deadline = deadline
     }
 
     func read(_ path: String) async -> ClaudeCodeRemoteRead {
@@ -140,6 +145,22 @@ final class ConductorClaudeCodeRemoteFiles: ClaudeCodeRemoteFiles {
         guard let conductor, conductor.framing else {
             return nil
         }
+        return await Self.awaitAnswer(deadline: deadline) { finish in
+            conductor.framerExecPythonStatements(statements: statements) { ok, output in
+                DispatchQueue.main.async {
+                    if !ok {
+                        DLog("Remote python failed: \(output)")
+                    }
+                    finish(ok ? output : nil)
+                }
+            }
+        }
+    }
+
+    /// What `start` delivers, or nil if it delivers nothing within `deadline` seconds. `start`'s
+    /// callback must be called on the main queue; only its first call counts.
+    static func awaitAnswer(deadline: TimeInterval,
+                            start: (@escaping (String?) -> Void) -> Void) async -> String? {
         return await withCheckedContinuation { continuation in
             var resumed = false
             let finish = { (value: String?) in
@@ -149,17 +170,10 @@ final class ConductorClaudeCodeRemoteFiles: ClaudeCodeRemoteFiles {
                 resumed = true
                 continuation.resume(returning: value)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + Self.deadline) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + deadline) {
                 finish(nil)
             }
-            conductor.framerExecPythonStatements(statements: statements) { ok, output in
-                DispatchQueue.main.async {
-                    if !ok {
-                        DLog("Remote python failed: \(output)")
-                    }
-                    finish(ok ? output : nil)
-                }
-            }
+            start(finish)
         }
     }
 }

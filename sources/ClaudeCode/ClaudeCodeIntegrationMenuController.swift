@@ -74,12 +74,17 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         preparingUninstall = true
         Task { @MainActor [weak self] in
             // A host that is this Mac is left out of the dialog and the removal, as Install
-            // refuses it.
+            // refuses it. The check has a short deadline so the dialog appears promptly; a host
+            // that doesn't answer in time stays in the dialog, and the removal itself checks
+            // again and leaves it alone if it still can't tell.
             let hosts = await ClaudeCodeUninstallTargets.excludingThisMac(candidates) { [weak self] host in
                 guard let conductor = self?.liveConductor(forHost: host) else {
                     return false
                 }
-                return await ClaudeCodeRemoteHooks.hostIsThisMac(files: ConductorClaudeCodeRemoteFiles(conductor: conductor))
+                let files = ConductorClaudeCodeRemoteFiles(
+                    conductor: conductor,
+                    deadline: ConductorClaudeCodeRemoteFiles.confirmationCheckDeadline)
+                return await ClaudeCodeRemoteHooks.hostIsThisMac(files: files)
             }
             self?.preparingUninstall = false
             self?.confirmAndUninstall(settingsPath: settingsPath, hosts: hosts)

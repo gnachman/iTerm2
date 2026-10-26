@@ -154,6 +154,22 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         XCTAssertEqual(files.writes, [])
     }
 
+    // Uninstall's this-Mac check before its confirmation uses a short deadline, so a wedged
+    // connection can't leave the menu item doing nothing for half a minute (QA finding F-814).
+    // An answer that never comes is nil at the deadline, which the check treats as unknown and
+    // keeps the host in the dialog.
+    func testAnAnswerThatNeverComesIsNilAtTheDeadline() async {
+        let start = Date()
+        let value = await ConductorClaudeCodeRemoteFiles.awaitAnswer(deadline: 0.1) { _ in }
+        XCTAssertNil(value)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 10)
+        let answered = await ConductorClaudeCodeRemoteFiles.awaitAnswer(deadline: 30) { finish in
+            finish("1:abc")
+        }
+        XCTAssertEqual(answered, "1:abc")
+        XCTAssertLessThan(ConductorClaudeCodeRemoteFiles.confirmationCheckDeadline, 5)
+    }
+
     // A host that can't be told apart from this Mac (no token, a "0:" token from a Mac whose
     // identity couldn't be computed, or a version this Mac doesn't implement) might be this Mac,
     // so neither install nor uninstall edits its settings (QA finding F-815).
