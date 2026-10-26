@@ -228,8 +228,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // runs as a side effect (see the long-form comment in
     // -[VT100ScreenMutableState mutateColorMap:]). That can re-enter here via
     // sessionViewDidChangeEffectiveAppearance → loadColorsFromProfile while
-    // performingSideEffect is YES. mutateColorMap already schedules a paused
-    // side effect for the main-thread copy, so running inline is safe.
+    // performingSideEffect is YES, where a plain join would assert.
     [self performBlockWithJoinedThreadsReentrantSafe:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState setColorsFromDictionary:dict harmonize:harmonize];
     }];
@@ -1725,19 +1724,40 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     [_mutableState performLightweightBlockWithJoinedThreads:block];
 }
 
-// Skips running side effects if it's already in a side effect. This is harder to reason about
-// since you don't know whether side effects will run first. Only call this if you know what you're
-// doing.
+// Like performBlockWithJoinedThreads:, but may also be called from inside one of this screen's
+// unpaused side effects, where that method asserts. If already joined, the block runs right away.
+//
+// Why the other method forbids it: a normal join first runs every side effect still waiting in the
+// queue, then runs its block against the newest state. A join made from inside a side effect can't
+// do that (side effects don't nest, so the waiting ones stay queued until the current one returns),
+// so its block runs before side effects that were queued earlier. Anything the block does on the
+// main thread therefore happens ahead of them. The join itself also runs ahead of them: on the way
+// out it syncs the main-thread copy to the newest state (screenRestoreState:), syncs expect, and may
+// call screenUpdateDisplay:. The waiting side effects then run against that newer state.
+//
+// The rules for a block passed here:
+// 1. It may change mutable state. For example, mutableState.echoProbeDelegate = delegate.
+// 2. It may enqueue side effects. They go to the back of the queue and run in order. For example,
+//    -[VT100ScreenMutableState setColor:forKey:] changes the mutation-queue color map and enqueues a
+//    paused side effect (token execution stops until it runs) that updates the main-thread copy.
+// 3. It must not act on the main thread directly: no calls to the delegate, the session, views,
+//    windows or other UI, and nothing that posts notifications or redraws. For example, calling
+//    [delegate screenSetWindowTitle:] here could set a title that a waiting side effect then
+//    overwrites with an older one. Enqueue a side effect instead.
+// 4. It must not read mutableState.mainThreadCopy expecting it to reflect the waiting side effects.
+//    They haven't run yet. (Reads through the screen see the shared mutable state during the block.)
+//
+// Callers today: setColorsFromDictionary:harmonize:, setColor:forKey: (AppKit can change the
+// appearance during a side effect), and setEchoProbeDelegate: (broadcast password input, issue
+// 11914).
 - (void)performBlockWithJoinedThreadsReentrantSafe:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                                          VT100ScreenMutableState *mutableState,
                                                                          id<VT100ScreenDelegate> delegate))block {
     DLog(@"%@", [NSThread callStackSymbols]);
-    if (!_mutableState.performingSideEffect ||
-        _mutableState.performingPausedSideEffect) {
-        block(_mutableState.terminal, _mutableState, _mutableState.sideEffectPerformer.sideEffectPerformingScreenDelegate);
-    } else {
-        [_mutableState performBlockWithJoinedThreads:block];
-    }
+    // The join can drop the last owner of this screen's session.
+    [[self retain] autorelease];
+    [_mutableState performBlockWithJoinedThreads:block];
+    [self assertStateRestoredAfterJoin];
 }
 
 // Once this screen's outermost join ends, the delegate must have switched the main-thread copy back
@@ -1752,9 +1772,9 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
     DLog(@"%@", [NSThread callStackSymbols]);
-    // We don't want to allow joining inside a side-effect because that causes side-effects to run
-    // out of order (joining runs remaining side-effects immediately, which is out of order since
-    // the current one isn't done yet).
+    // We don't want to allow joining inside a side-effect because the block would run ahead of
+    // side-effects that were queued earlier and haven't run yet. See
+    // performBlockWithJoinedThreadsReentrantSafe: for details.
     assert(!_mutableState.performingSideEffect ||
            _mutableState.performingPausedSideEffect);
     // The join can drop the last owner of this screen's session.

@@ -25,6 +25,17 @@ class VT100ScreenTests: XCTestCase {
         return screen
     }
 
+    // The reentrant-safe variant used to run its block inline, without joining, whenever it was
+    // not inside a side effect, racing with token execution.
+    func testReentrantSafeJoinActuallyJoins() {
+        let screen = fiveByFourScreenWithThreeLinesOneWrapped()
+        var joined = false
+        screen.performBlock(joinedThreadsReentrantSafe: { _, mutableState, _ in
+            joined = mutableState.performingJoinedBlock
+        })
+        XCTAssertTrue(joined)
+    }
+
     private func fiveByNineScreenWithEmptyLineAtTop() -> VT100Screen {
         let screen = VT100Screen()
         session.screen = screen
