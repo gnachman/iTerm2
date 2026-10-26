@@ -57,6 +57,72 @@ final class WorkgroupUsageTests: XCTestCase {
         XCTAssertEqual(report.bars[1].clampedFraction, 0.0, accuracy: 1e-9)
     }
 
+    // A command whose output hit the 1 MiB cap must say so, and the report
+    // alert must not try to show a megabyte of text. QA finding F-375.
+    func test_decode_outputAtCapSaysItWasCutOff() throws {
+        let data = Data(repeating: UInt8(ascii: "y"), count: WorkgroupUsageToolbarItem.maximumOutputSize)
+        let report = WorkgroupUsageToolbarItem.decode(data: data)
+        XCTAssertEqual(report.reportable, true)
+        XCTAssertTrue(report.diagnostic?.hasPrefix("(The command’s output was cut off at") ?? false)
+    }
+
+    func test_decode_shortGarbageIsNotCalledCutOff() throws {
+        let report = WorkgroupUsageToolbarItem.decode(data: Data("y\ny\n".utf8))
+        XCTAssertEqual(report.diagnostic, "y\ny\n")
+    }
+
+    func test_displayedReport_capsHugeReports() {
+        let huge = String(repeating: "y\n", count: 500_000)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(huge)
+        XCTAssertLessThan(shown.count, WorkgroupUsageToolbarItem.maximumDisplayedReportLength + 200)
+        XCTAssertTrue(shown.hasPrefix(String(huge.prefix(40))))
+        XCTAssertEqual(WorkgroupUsageToolbarItem.displayedReport("short"), "short")
+    }
+
+    // 2000 characters of `yes` output is about 1000 lines, which still made
+    // the alert taller than the screen. QA finding F-388.
+    func test_displayedReport_capsManyShortLines() {
+        let huge = String(repeating: "y\n", count: 500_000)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(huge)
+        let lineCount = shown.split(separator: "\n", omittingEmptySubsequences: false).count
+        // Allow for the blank line and truncation note appended after the cap.
+        XCTAssertLessThanOrEqual(lineCount, WorkgroupUsageToolbarItem.maximumDisplayedReportRows + 2)
+        XCTAssertTrue(shown.hasPrefix("y\ny\ny\n"))
+        XCTAssertNotEqual(shown, huge)
+    }
+
+    // In Swift "\r\n" is one Character, so it must still count as a line break.
+    func test_displayedReport_capsManyCRLFLines() {
+        let huge = String(repeating: "y\r\n", count: 500_000)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(huge)
+        let lineCount = shown.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline).count
+        XCTAssertLessThanOrEqual(lineCount, WorkgroupUsageToolbarItem.maximumDisplayedReportRows + 2)
+    }
+
+    // A long line counts as the rows it wraps to.
+    func test_displayedReport_countsWrappedRows() {
+        let perRow = WorkgroupUsageToolbarItem.assumedCharactersPerRow
+        let maxRows = WorkgroupUsageToolbarItem.maximumDisplayedReportRows
+        // Well under the character cap, but 20 + 10 * 2 = 40 rows.
+        let shortLines = Array(repeating: "a", count: 20)
+        let longLines = Array(repeating: String(repeating: "x", count: perRow * 2), count: 10)
+        let report = (shortLines + longLines).joined(separator: "\n")
+        XCTAssertLessThan(report.count, WorkgroupUsageToolbarItem.maximumDisplayedReportLength)
+        let shown = WorkgroupUsageToolbarItem.displayedReport(report)
+        let rows = shown.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { max(1, ($0.count + perRow - 1) / perRow) }
+            .reduce(0, +)
+        // Allow for the blank line and truncation note appended after the cap.
+        XCTAssertLessThanOrEqual(rows, maxRows + 2)
+        XCTAssertTrue(shown.hasPrefix(shortLines.joined(separator: "\n") + "\n" + longLines[0]))
+    }
+
+    func test_displayedReport_keepsReportThatFits() {
+        let lines = (0..<WorkgroupUsageToolbarItem.maximumDisplayedReportRows).map { "line \($0)" }
+        let report = lines.joined(separator: "\n")
+        XCTAssertEqual(WorkgroupUsageToolbarItem.displayedReport(report), report)
+    }
+
     // MARK: - Bundled parser script
 
     // Resolve the shipped parser from the source tree so the test
@@ -153,6 +219,25 @@ final class WorkgroupUsageTests: XCTestCase {
         let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
         XCTAssertEqual(report.reportable, true)
         XCTAssertTrue(report.diagnostic?.contains("\"weird\"") ?? false)
+    }
+
+    // Control bytes such as ESC and BS (claude's colored stderr) must be
+    // escaped too, or the item shows “Unreadable usage data” instead of the
+    // script's message. QA finding F-245.
+    func test_script_controlBytesInDiagnosticStayValidJSON() throws {
+        let data = try runScript(
+            fixture: "weird output line \u{1b}[31mboom\u{08}\u{1b}[0m \u{01}\u{7f}\n")
+        let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
+        XCTAssertEqual(report.reportable, true)
+        XCTAssertTrue(report.diagnostic?.contains("\u{1b}[31mboom\u{08}") ?? false)
+    }
+
+    func test_script_controlBytesInUsageLineStayValidJSON() throws {
+        let data = try runScript(
+            fixture: "Current session: 5% used \u{00b7} resets \u{1b}[1msoon\u{1b}[0m\n")
+        let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
+        XCTAssertEqual(report.bars.count, 1)
+        XCTAssertEqual(report.bars.first?.detail, "resets \u{1b}[1msoon\u{1b}[0m")
     }
 
     // Expected environment states must NOT be reportable (otherwise users

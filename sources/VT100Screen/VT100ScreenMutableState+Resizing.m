@@ -62,6 +62,8 @@
 }
 
 - (void)restorePreferredCursorPositionIfPossible {
+    [self.primaryGrid restoreSavedScrollRegionIfPossible];
+    [self.altGrid restoreSavedScrollRegionIfPossible];
     VT100Grid *grid = self.currentGrid;
     const VT100GridCoord preferred = grid.preferredCursorPosition;
     const long long restoredCursorAbsLine = self.restoredCursorAbsLine;

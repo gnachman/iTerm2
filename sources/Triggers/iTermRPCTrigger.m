@@ -6,6 +6,7 @@
 //
 
 #import "iTermRPCTrigger.h"
+#import "DebugLogging.h"
 #import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermScriptFunctionCall.h"
@@ -57,7 +58,11 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    NSString *invocation = self.param;
+    NSString *invocation = [NSString castFrom:self.param];
+    if (!invocation) {
+        DLog(@"Not invoking: parameter is not a string: %@", self.param);
+        return YES;
+    }
 
     NSMutableArray<NSArray<NSNumber *> *> *captureRangeArray = [NSMutableArray array];
     for (NSInteger i = 0; i < stringArray.count; i++) {

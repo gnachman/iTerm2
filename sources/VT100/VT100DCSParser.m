@@ -532,7 +532,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                 token.string = _uniqueID;
             }
 
-            _hook = [[VT100ConductorParser alloc] initWithUniqueID:_uniqueID];
+            VT100ConductorParser *conductorParser = [[VT100ConductorParser alloc] initWithUniqueID:_uniqueID];
+            conductorParser.carrierSendMilliseconds = _carrierSendMilliseconds;
+            _hook = conductorParser;
             _hookFinished = NO;
         }
         break;
@@ -549,6 +551,13 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             _hookFinished = NO;
             break;
         }
+    }
+}
+
+- (void)setCarrierSendMilliseconds:(int64_t)carrierSendMilliseconds {
+    _carrierSendMilliseconds = carrierSendMilliseconds;
+    if ([_hook isKindOfClass:[VT100ConductorParser class]]) {
+        ((VT100ConductorParser *)_hook).carrierSendMilliseconds = carrierSendMilliseconds;
     }
 }
 
@@ -708,7 +717,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID clientUniqueID:(NSString *)clientUniqueID {
     // Put the state machine in the passthrough mode.
     char *fakeControlSequence = "\eP2000p";
     for (int i = 0; fakeControlSequence[i]; i++) {
@@ -716,7 +725,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 
     // Replace the hook with one in recovery mode.
-    _hook = [VT100ConductorParser newRecoveryModeInstanceWithUniqueID:dcsID];
+    VT100ConductorParser *conductorParser = [VT100ConductorParser newRecoveryModeInstanceWithUniqueID:dcsID clientUniqueID:clientUniqueID];
+    conductorParser.carrierSendMilliseconds = _carrierSendMilliseconds;
+    _hook = conductorParser;
     _uniqueID = [dcsID copy];
     DLog(@"dcs parser code injected and parser hooked.");
 }

@@ -1,0 +1,43 @@
+#!/bin/sh
+# Runs the it2 CLI from a stable path on PATH.
+#
+# iTerm2 uploads this wrapper to ~/.iterm2/bin/it2 on a host reached through SSH Integration,
+# and Install Shell Integration & Utilities installs it there on any host, this Mac included.
+# The interpreter it names goes to ~/.iterm2/it2.<hash>.py, the same path the
+# shell-integration scripts materialize the embedded copy to, so the mechanisms agree. A real
+# executable rather than the shell function the scripts define, because that function only
+# exists in an interactive shell: a Claude Code hook runs through `sh -c` and an agent's Bash
+# tool does too, and neither would see it.
+#
+# The scripts put ~/.iterm2/bin first on PATH, so this decides which it2 runs:
+#   - Over SSH Integration (IT2_SOCK is set, even when the host is this Mac): the Python it2,
+#     the only one that speaks through the connection.
+#   - Otherwise, iTerm2's native it2 if it is on PATH, which iTerm2 does for local sessions.
+#     It is recognized by where it lives, an app bundle's Contents/Resources/utilities, and
+#     never by name: the open-source `it2` (pip or Homebrew) that iTerm2's supplanted does not
+#     speak iTerm2's protocol.
+#   - Otherwise the Python it2. In a remote tmux pane it finds its connection through tmux.
+#
+# IT2_PY is injected per connection and names the copy that matches THIS iTerm2. The
+# fallback is the hash of it2.py, substituted by this directory's Makefile when it builds
+# it2-wrapper from source/it2-wrapper.in, so the wrapper still works in a shell that did not
+# get the injected environment.
+if [ -z "${IT2_SOCK:-}" ]; then
+  set -f
+  saved_ifs=$IFS
+  IFS=:
+  for dir in $PATH; do
+    case "$dir" in
+      *.app/Contents/Resources/utilities|*.app/Contents/Resources/utilities/)
+        if [ -f "$dir/it2" ] && [ -x "$dir/it2" ]; then
+          IFS=$saved_ifs
+          set +f
+          exec "$dir/it2" "$@"
+        fi
+        ;;
+    esac
+  done
+  IFS=$saved_ifs
+  set +f
+fi
+exec python3 "${IT2_PY:-$HOME/.iterm2/it2.9ec2bce60a6b86bf.py}" "$@"

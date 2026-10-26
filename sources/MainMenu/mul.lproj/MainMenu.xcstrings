@@ -10963,6 +10963,48 @@
         }
       }
     },
+    "Lk3-Ly-Lt2.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Lock Location\"; ObjectID = \"Lk3-Ly-Lt2\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position sperren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lock Location"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置をロック"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear localização"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заблокировать положение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁定位置"
+          }
+        }
+      }
+    },
     "LR1-f6-Fa9.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"New Window with Current Profile\"; ObjectID = \"LR1-f6-Fa9\";",
       "extractionState" : "extracted_with_value",
@@ -13941,6 +13983,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将标签页添加到新标签页组中…"
+          }
+        }
+      }
+    },
+    "Tgl-bT-sh7.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Show Toolbar\"; ObjectID = \"Tgl-bT-sh7\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symbolleiste anzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Toolbar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ツールバーを表示"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar barra de ferramentas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывать панель инструментов"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示工具栏"
           }
         }
       }

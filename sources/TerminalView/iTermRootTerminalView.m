@@ -1200,9 +1200,18 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)setSubtitle:(NSString *)subtitle {
+    NSString *const previousSubtitle = _windowTitleLabel.subtitle ?: @"";
     [self setWindowTitleLabelToString:_windowTitleLabel.windowTitle
                              subtitle:subtitle
                                  icon:_windowTitleLabel.windowIcon];
+    // The label's frame is one line tall without a subtitle and two with one.
+    // When the subtitle changes while the title stays the same (as in a new
+    // window, whose title is set before its session's path is known), nothing
+    // else lays the label out again, so a new subtitle line would be clipped.
+    if (!_windowTitleLabel.hidden &&
+        ![previousSubtitle isEqualToString:subtitle ?: @""]) {
+        [self layoutWindowPaneDecorations];
+    }
 }
 
 // The attributes that decide how wide the name draws. Color and truncation do
@@ -2581,6 +2590,11 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (NSColor *)genericStatusBarContainerBackgroundColor {
     return [self.delegate rootTerminalViewTabBarBackgroundColorIgnoringTabColor:YES];
+}
+
+// The window's status bar belongs to the session whose status bar it shows.
+- (id<PaneFocusFollowsMousePane>)genericStatusBarContainerFocusFollowsMousePane {
+    return [_statusBarViewController.delegate statusBarFocusFollowsMousePane];
 }
 
 @end

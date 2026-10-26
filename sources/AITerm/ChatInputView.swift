@@ -53,6 +53,20 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     // keystroke so runtime orchestration toggles are reflected immediately.
     var orchestrationEnabledProvider: (() -> Bool)?
     private let mentionPicker = ChatMentionPickerController()
+    // While an @-mention is being composed, every session also shows a
+    // "Select this Session" button so the user can pick one by clicking it
+    // instead of hunting through the picker. Fulfilled when one is clicked.
+    private var mentionSessionPromise: iTermPromise<PTYSession>?
+    // Called after a session was picked by clicking its button, or when the
+    // user clicks a session's Reveal Chat button. Either can happen with focus
+    // elsewhere (or, for a chat in a session's sidebar, from another tab). The
+    // host brings the chat back into view so the input can retake focus.
+    var revealForMentionSelection: (() -> Void)?
+    // Set when the user dismisses a mention with Escape so that moving the
+    // view between windows or moving the caret doesn't reopen it. Typing
+    // clears it.
+    private var mentionDismissed = false
+    private weak var observedWindow: NSWindow?
 
     var stoppable = false {
         didSet {
@@ -106,6 +120,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.placeholder = String(localized: "ChatInputView.Placeholder", defaultValue: "Type a message…", comment: "Placeholder in the chat input field")
         inputTextFieldContainer.isEnabled = false
         inputTextFieldContainer.textView.delegate = self
+        inputTextFieldContainer.textView.textStorage?.delegate = self
         inputTextFieldContainer.textView.onDropFileURLs = { [weak self] urls in
             self?.handleTextViewFileDrop(urls) ?? false
         }
@@ -192,6 +207,12 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        if let mentionSessionPromise {
+            SessionSelector.cancel(mentionSessionPromise)
+        }
     }
 
     // intentionally no `intrinsicContentSize` override — that property is
@@ -312,6 +333,10 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         if hintLabel.frame != hintFrame {
             hintLabel.frame = hintFrame
         }
+        // Whether the hint fits depends on the field's width.
+        if !stoppable {
+            hintLabel.isHidden = shouldHideHintLabel()
+        }
     }
 
     private func setupDragAndDrop() {
@@ -319,7 +344,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     }
 
     func clear() {
-        mentionPicker.hide()
+        hideMentionPicker()
         stringValue = ""
         attachmentsView.files.removeAll()
         updateAttachmentsView()
@@ -413,24 +438,33 @@ class ChatInputView: NSView, NSTextFieldDelegate {
     private func shouldHideHintLabel() -> Bool {
         let textView = inputTextFieldContainer.textView
         let text = textView.string
+        let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
 
+        let textWidth: CGFloat
         if text.isEmpty {
-            return false
+            // The placeholder is drawn instead, inset 5pt from the left
+            // edge. A long one (e.g., the @-mention hint) can run under the
+            // hint label.
+            guard let placeholder = inputTextFieldContainer.placeholder,
+                  !placeholder.isEmpty else {
+                return false
+            }
+            textWidth = 5 + ceil((placeholder as NSString).size(withAttributes: [.font: font]).width)
+        } else {
+            guard let layoutManager = textView.layoutManager,
+                  let textContainer = textView.textContainer else {
+                return true
+            }
+
+            let usedRect = layoutManager.usedRect(for: textContainer)
+            let lineHeight = layoutManager.defaultLineHeight(for: font)
+
+            if usedRect.height > lineHeight * 1.5 {
+                return true
+            }
+            textWidth = usedRect.width
         }
 
-        guard let layoutManager = textView.layoutManager,
-              let textContainer = textView.textContainer else {
-            return !text.isEmpty
-        }
-
-        let usedRect = layoutManager.usedRect(for: textContainer)
-        let lineHeight = layoutManager.defaultLineHeight(for: textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize))
-
-        if usedRect.height > lineHeight * 1.5 {
-            return true
-        }
-
-        let textWidth = usedRect.width
         let hintWidth = hintLabel.intrinsicContentSize.width
         let availableWidth = textView.bounds.width
 
@@ -598,7 +632,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             inputTextFieldContainer.stringValue
         }
         set {
-            mentionPicker.hide()
+            hideMentionPicker()
             inputTextFieldContainer.stringValue = newValue
             updateSendButtonEnabled()
             heightDidChange()
@@ -612,7 +646,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
             inputTextFieldContainer.attributedStringValue
         }
         set {
-            mentionPicker.hide()
+            hideMentionPicker()
             inputTextFieldContainer.attributedStringValue = newValue
             updateSendButtonEnabled()
             heightDidChange()
@@ -637,6 +671,7 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         inputTextFieldContainer.placeholder = orchestration
             ? String(localized: "ChatInputView.PlaceholderMention", defaultValue: "Type a message, or @ to mention a session…", comment: "Placeholder in the chat input field when @-mentions are available")
             : String(localized: "ChatInputView.Placeholder", defaultValue: "Type a message…", comment: "Placeholder in the chat input field")
+        updateSendButtonEnabled()
     }
 
     private func revealSelectedRange() {
@@ -704,11 +739,17 @@ extension ChatInputView: NSTextViewDelegate {
                 mentionPicker.commitSelection()
                 return true
             case #selector(NSResponder.cancelOperation(_:)):
-                mentionPicker.hide()
+                endMentionComposition()
                 return true
             default:
                 break
             }
+        } else if mentionSessionPromise != nil,
+                  commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+            // The popup hides itself when nothing matches, but the session
+            // buttons are still up; Escape should take them down too.
+            endMentionComposition()
+            return true
         }
         if commandSelector == #selector(NSResponder.insertNewline(_:))
             && !iTermApplication.shared().it_modifierFlags.contains(.shift)
@@ -726,6 +767,7 @@ extension ChatInputView: NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         updateSendButtonEnabled()
         heightDidChange()
+        mentionDismissed = false
         updateMentionPicker()
         delegate?.textDidChange()
     }
@@ -793,8 +835,17 @@ extension ChatInputView {
 
     private func updateMentionPicker() {
         guard orchestrationEnabledProvider?() == true,
-              window != nil,
+              !mentionDismissed,
+              !isHiddenOrHasHiddenAncestor,
               let context = mentionQueryContext() else {
+            hideMentionPicker()
+            return
+        }
+        startMentionSessionSelectorIfNeeded()
+        guard window != nil else {
+            // Out of the window (e.g., a sidebar chat whose tab isn't
+            // selected): the popup would float unanchored, but the mention is
+            // still being composed, so leave the session buttons up.
             mentionPicker.hide()
             return
         }
@@ -802,13 +853,112 @@ extension ChatInputView {
             mentionPicker.update(query: context.query)
         } else {
             mentionPicker.show(anchorView: inputTextFieldContainer,
-                               query: context.query) { [weak self] guid, displayName in
-                self?.insertMention(guid: guid, displayName: displayName)
+                               query: context.query) { [weak self] choice in
+                self?.insertMention(choice)
             }
         }
     }
 
-    private func insertMention(guid: String, displayName: String) {
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        // Only track real moves to a new window. Leaving the window (a
+        // sidebar chat in a tab that isn't selected) keeps the mention alive.
+        guard let newWindow, newWindow !== observedWindow else {
+            return
+        }
+        if let observedWindow {
+            NotificationCenter.default.removeObserver(self,
+                                                      name: NSWindow.willCloseNotification,
+                                                      object: observedWindow)
+        }
+        observedWindow = newWindow
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(windowWillClose(_:)),
+                                               name: NSWindow.willCloseNotification,
+                                               object: newWindow)
+    }
+
+    @objc private func windowWillClose(_ notification: Notification) {
+        // Closing only orders the window out, so the view never leaves it.
+        // Don't leave session buttons up for a chat nobody can see.
+        endMentionComposition()
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil, let observedWindow {
+            // The view may next land in a different window (e.g., its tab was
+            // moved), so stop listening to the old one.
+            NotificationCenter.default.removeObserver(self,
+                                                      name: NSWindow.willCloseNotification,
+                                                      object: observedWindow)
+            self.observedWindow = nil
+        }
+        updateMentionPicker()
+    }
+
+    override func viewDidHide() {
+        super.viewDidHide()
+        // E.g., the sidebar chat was toggled off.
+        endMentionComposition()
+    }
+
+    // Stops offering the mention until the user types again: on Escape, or
+    // when the chat goes away or can't be seen.
+    func endMentionComposition() {
+        mentionDismissed = true
+        hideMentionPicker()
+    }
+
+    // Hides the popup and takes down the session buttons.
+    private func hideMentionPicker() {
+        mentionPicker.hide()
+        if let mentionSessionPromise {
+            self.mentionSessionPromise = nil
+            SessionSelector.cancel(mentionSessionPromise)
+        }
+    }
+
+    private func startMentionSessionSelectorIfNeeded() {
+        guard mentionSessionPromise == nil else {
+            return
+        }
+        let promise = SessionSelector.select(
+            terminal: nil,
+            reason: String(localized: "ChatInputView.MentionSessionReason",
+                           defaultValue: "Mention this session in AI chat?",
+                           comment: "Prompt shown over each session while the user types an @-mention in the AI chat, letting them pick the session to mention by clicking it"),
+            reveal: { [weak self] in
+                // Take the user back to the half-typed mention. Coming back
+                // into the window reopens the picker list.
+                self?.revealForMentionSelection?()
+                self?.makeTextViewFirstResponder()
+            })
+        mentionSessionPromise = promise
+        promise.then { [weak self] session in
+            guard let self, self.mentionSessionPromise === promise else {
+                return
+            }
+            self.mentionSessionPromise = nil
+            // Insert before revealing so that moving back into the window
+            // doesn't find a half-typed mention and restart the picker. Same
+            // token the picker inserts: the reload-durable stableID.
+            self.insertMention(ChatMentionPickerController.Choice(
+                guid: session.stableID,
+                displayName: ChatMentionDisplay.displayName(for: session),
+                symbolName: ChatMentionDisplay.symbolName(for: session)))
+            self.revealForMentionSelection?()
+            self.makeTextViewFirstResponder()
+        }
+        promise.catchError { [weak self] _ in
+            guard let self, self.mentionSessionPromise === promise else {
+                return
+            }
+            self.mentionSessionPromise = nil
+        }
+    }
+
+    private func insertMention(_ choice: ChatMentionPickerController.Choice) {
         let tv = inputTextFieldContainer.textView
         guard let context = mentionQueryContext() else {
             return
@@ -819,10 +969,11 @@ extension ChatInputView {
         let color = resolvedMentionColor()
         let mention = NSMutableAttributedString(
             attributedString: ChatSessionMentionAttachment.attributedString(
-                guid: guid,
-                displayName: displayName,
+                guid: choice.guid,
+                displayName: choice.displayName,
                 font: font,
-                color: color))
+                color: color,
+                symbolName: choice.symbolName))
         // A trailing space so the next keystroke isn't swallowed into the token.
         mention.append(NSAttributedString(string: " ",
                                           attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
@@ -851,7 +1002,6 @@ extension ChatInputView {
         guard let storage = textView.textStorage, storage.length > 0 else {
             return
         }
-        let font = textView.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
         let color = resolvedMentionColor()
         let fullRange = NSRange(location: 0, length: storage.length)
         var ranges: [NSRange] = []
@@ -859,7 +1009,8 @@ extension ChatInputView {
             guard let mention = value as? ChatSessionMentionAttachment else {
                 return
             }
-            mention.renderImage(font: font, color: color)
+            mention.renderImage(font: mentionFont(in: storage, at: range.location),
+                                color: color)
             ranges.append(range)
         }
         guard !ranges.isEmpty else {
@@ -872,6 +1023,18 @@ extension ChatInputView {
         }
     }
 
+    // The font a token is drawn in: the font of its own character, which the
+    // Font menu and Font panel change along with the text around it.
+    private func mentionFont(in storage: NSTextStorage, at location: Int) -> NSFont {
+        return storage.attribute(.font, at: location, effectiveRange: nil) as? NSFont
+            ?? inputTextFieldContainer.textView.font
+            ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+    }
+
+    var textViewForTesting: ChatInputTextView {
+        inputTextFieldContainer.textView
+    }
+
     // The session-link color baked into the token image, resolved for the text
     // view's current appearance so the frozen image matches light/dark.
     private func resolvedMentionColor() -> NSColor {
@@ -880,5 +1043,37 @@ extension ChatInputView {
             color = NSColor.linkColor.usingColorSpace(.sRGB) ?? NSColor.linkColor
         }
         return color
+    }
+}
+
+// The token images bake in a font, so when the font of a token's character
+// changes (e.g. Format > Font > Bigger, or a size picked in the Font panel)
+// re-render the token so it stays the size of the text around it. Runs before
+// the layout manager is told about the edit, so the new image bounds are laid
+// out with it.
+extension ChatInputView: NSTextStorageDelegate {
+    func textStorage(_ textStorage: NSTextStorage,
+                     didProcessEditing editedMask: NSTextStorageEditActions,
+                     range editedRange: NSRange,
+                     changeInLength delta: Int) {
+        guard editedMask.contains(.editedAttributes),
+              editedRange.location != NSNotFound,
+              NSMaxRange(editedRange) <= textStorage.length else {
+            return
+        }
+        var color: NSColor?
+        textStorage.enumerateAttribute(.attachment, in: editedRange) { value, range, _ in
+            guard let mention = value as? ChatSessionMentionAttachment else {
+                return
+            }
+            let font = mentionFont(in: textStorage, at: range.location)
+            guard mention.renderedFont != font else {
+                return
+            }
+            if color == nil {
+                color = resolvedMentionColor()
+            }
+            mention.renderImage(font: font, color: color ?? NSColor.linkColor)
+        }
     }
 }

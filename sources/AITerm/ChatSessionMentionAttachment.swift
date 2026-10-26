@@ -26,6 +26,9 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     // a different symbol so the three kinds are visually distinct.
     let symbolName: String
 
+    // The font the current image was rendered for.
+    private(set) var renderedFont: NSFont?
+
     init(guid: String, displayName: String, symbolName: String = SFSymbol.terminal.rawValue) {
         self.guid = guid
         self.displayName = displayName
@@ -63,6 +66,7 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     // token is a rasterized image, so callers must invoke this again when the
     // effective appearance changes or the baked link color goes stale.
     func renderImage(font: NSFont, color: NSColor) {
+        renderedFont = font
         let metrics = VerticalMetrics(font: font, displayName: displayName)
         let image = Self.tokenImage(displayName: displayName,
                                     font: font,
@@ -234,7 +238,7 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     }
 }
 
-// Single source of truth for how a terminal session is named in chat mentions:
+// Single source of truth for how a session is named and iconed in chat mentions:
 // the @-mention picker, the inserted token, and the rendered message bubbles all
 // go through this so they stay consistent. A session inside a workgroup is
 // prefixed with its component/role (e.g. "Diff", "Code Review", "Chat") so peers
@@ -251,6 +255,31 @@ enum ChatMentionDisplay {
             }
         }
         return nil
+    }
+
+    // The chip icon for a session mention: a globe for a browser session,
+    // otherwise a terminal.
+    static func symbolName(for session: PTYSession) -> String {
+        return session.isBrowserSession() ? SFSymbol.globe.rawValue : SFSymbol.terminal.rawValue
+    }
+
+    // The chip icon for a token: window ("win:"), tab ("tab:"), or session.
+    // Matches the window/tab/pane glyphs used elsewhere (the Companion app's
+    // session tree): macwindow / folder / terminal. A session token (a
+    // stableID or guid) is resolved with `resolve` so a browser session gets
+    // the globe; one that no longer resolves falls back to the terminal.
+    static func symbolName(forToken token: String,
+                           resolve: (String) -> PTYSession? = { iTermController.sharedInstance()?.anySession(forReference: $0) }) -> String {
+        if token.hasPrefix("win:") {
+            return SFSymbol.macwindow.rawValue
+        }
+        if token.hasPrefix("tab:") {
+            return SFSymbol.folder.rawValue
+        }
+        if let session = resolve(token) {
+            return symbolName(for: session)
+        }
+        return SFSymbol.terminal.rawValue
     }
 
     // The user-facing name for a session mention: "Role: title", or just "Role"

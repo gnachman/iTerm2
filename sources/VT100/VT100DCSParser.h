@@ -70,6 +70,10 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 
 @interface VT100DCSParser : NSObject
 
+// When the outer framer sent the frame whose contents are being parsed, under nested SSH
+// Integration; passed to an SSH Integration hook. See VT100ConductorParser.
+@property(nonatomic) int64_t carrierSendMilliseconds;
+
 // Indicates if a hook is present. All input should be sent to the DCS Parser
 // while hooked.
 @property(nonatomic, readonly) BOOL isHooked;
@@ -94,7 +98,7 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 // Forwarded to the tmux hook, if that is what is hooked. See VT100TmuxParser.
 - (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
 
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID;
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID clientUniqueID:(nullable NSString *)clientUniqueID;
 - (void)cancelConductorRecoveryMode;
 
 @end

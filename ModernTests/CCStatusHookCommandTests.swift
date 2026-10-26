@@ -383,8 +383,11 @@ final class CCStatusHookCommandTests: XCTestCase {
         return ["hooks": hooks]
     }
 
+    /// The instance these tests act as: the one that installed `installed`.
+    private var dotDir: String { (installed as NSString).deletingLastPathComponent }
+
     private func healthy(_ settings: [String: Any], executables: Set<String>) -> Bool {
-        return ClaudeCodeOnboarding.hooksHealthy(inSettings: settings, environment: env) {
+        return ClaudeCodeOnboarding.hooksHealthy(inSettings: settings, environment: env, dotDir: dotDir) {
             executables.contains($0)
         }
     }
@@ -442,12 +445,17 @@ final class CCStatusHookCommandTests: XCTestCase {
                     let isExecutable = { (path: String) in executables.contains(path) }
                     let healthy = ClaudeCodeOnboarding.hooksHealthy(inSettings: settings(command: command),
                                                                     environment: environment,
+                                                                    dotDir: dotDir,
                                                                     isExecutable: isExecutable)
                     let action = ClaudeCodeOnboarding.existingHookAction(command,
                                                                          ccStatusPath: installed,
                                                                          environment: environment,
                                                                          isExecutable: isExecutable)
-                    XCTAssertTrue(healthy || action != .keep,
+                    // Another instance's entry is never ours to keep: Reinstall leaves it
+                    // and adds this instance's own beside it (mergedHooks).
+                    let ours = ClaudeCodeOnboarding.hookCommand(command, belongsToDotDir: dotDir,
+                                                                environment: environment)
+                    XCTAssertTrue(healthy || action != .keep || !ours,
                                   "\(command) is unhealthy but kept with \(environment) and \(executables)")
                 }
             }

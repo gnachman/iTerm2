@@ -33,6 +33,14 @@
     [super dealloc];
 }
 
+- (void)setCarrierSendMilliseconds:(int64_t)carrierSendMilliseconds {
+    _dcsParser.carrierSendMilliseconds = carrierSendMilliseconds;
+}
+
+- (int64_t)carrierSendMilliseconds {
+    return _dcsParser.carrierSendMilliseconds;
+}
+
 - (BOOL)shouldUnhook:(NSString *)uniqueID {
     return [_dcsParser.uniqueID isEqualToString:uniqueID];
 }
@@ -213,8 +221,8 @@
     [_dcsParser setTmuxServerMayOmitEndGuardBeforeExit:mayOmit];
 }
 
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
-    [_dcsParser startConductorRecoveryModeWithID:dcsID];
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID clientUniqueID:(NSString *)clientUniqueID {
+    [_dcsParser startConductorRecoveryModeWithID:dcsID clientUniqueID:clientUniqueID];
 }
 
 - (void)cancelConductorRecoveryMode {

@@ -17,6 +17,7 @@
 #import "VT100GridTypes.h"
 
 @class iTermAttributedStringBuilder;
+@class iTermBoxedBackgroundColorRun;
 @class iTermButtonPillInfo;
 @class iTermColorMap;
 @class iTermExternalAttribute;
@@ -73,6 +74,14 @@ iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreat
                                                                                   unsigned int imageID,
                                                                                   unsigned int placementID,
                                                                                   CGFloat virtualOffset);
+// sourceFrame is the part of the image the placement shows, in points with the origin at the
+// bottom. Invalid when the cell falls entirely in the letterbox padding around the image.
+iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreateForSourceFrame(NSRect sourceFrame,
+                                                                                                VT100GridSize placementSize,
+                                                                                                NSSize cellSize,
+                                                                                                VT100GridCoord sourceCoord,
+                                                                                                NSPoint point,
+                                                                                                CGFloat virtualOffset);
 iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermKittyImageDraw *> *draws,
                                                                   unsigned int placementID,
                                                                   unsigned int imageID);
@@ -93,6 +102,22 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 // check, and the Metal glyph keys must all agree on this or the Metal renderer shapes a
 // box-drawing or image string (issue 13073).
 BOOL iTermScreenCharCanHostSpacingMark(const screen_char_t *base, BOOL useNativePowerlineGlyphs);
+
+// The smallest x position among the characters in `range`. Underlines and
+// strikethroughs start here. On a bidi line positions are visual, so for a
+// right-to-left run the range's first character is drawn rightmost.
+CGFloat iTermLeftmostStringPosition(const CGFloat *positions, NSRange range);
+
+// Combines adjacent background runs whose text can be drawn together when the
+// text color does not depend on the background color. Runs that differ in
+// `selected` or `isMatch` are normally kept apart because those change the
+// text color. On a bidi line (`bidi` YES) they are combined too, because
+// shaping each part separately breaks an Arabic word's joining at a selection
+// edge; the caller must then decide selection and match colors per cell. The
+// combined run is marked selected (or a match) only if all its parts are.
+// Runs beneath faint text are never combined.
+NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocessedForeground(NSArray<iTermBoxedBackgroundColorRun *> *runs,
+                                                                                            BOOL bidi);
 NSColor *iTermTextDrawingHelperTextColorForMatch(NSColor *bgColor);
 
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
@@ -502,6 +527,9 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 - (NSArray<iTermButtonPillInfo *> *)buttonPillInfos;
 - (NSRange)rangeOfVisibleRows;
 - (VT100GridCoord)coordinateByTransformingScreenCoordinateForRTL:(VT100GridCoord)nominal;
+// copyModeCursorCoord is logical. This is where it is drawn: the same line,
+// with the column mapped through the line's bidi table.
+- (VT100GridCoord)visualCopyModeCursorCoord;
 - (void)didFinishSetup;
 
 // Configure cached metrics for offscreen rendering without calling delegate methods.

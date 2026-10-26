@@ -97,6 +97,32 @@ final class SessionListTests: XCTestCase {
         XCTAssertTrue(channel.disconnected, "run() should disconnect the client")
     }
 
+    // Variable values arrive JSON-encoded, and iTerm2 escapes "/" as "\/". The
+    // name and tty must be decoded, not just stripped of their quotes, or the
+    // escapes leak into the output.
+    func testSessionListDecodesJSONEscapes() throws {
+        let vr = ITMVariableResponse()
+        vr.status = .ok
+        vr.valuesArray.add(#""say \"hi\" \\ there""#)
+        vr.valuesArray.add(#""\/dev\/ttys001""#)
+        let varMessage = ITMServerOriginatedMessage()
+        varMessage.id_p = 2
+        varMessage.variableResponse = vr
+
+        let channel = FakeChannel()
+        channel.responses = [
+            listResponse(id: 1, sessionId: "sess-1", title: "My Title"),
+            varMessage,
+        ]
+        let capture = OutputCapture()
+
+        var command = try Session.List.parse([])
+        try command.run(capture.context(channel: channel))
+
+        let columns = ["sess-1", #"say "hi" \ there"#, "My Title", "0x0", "/dev/ttys001"]
+        XCTAssertEqual(capture.out, [columns.joined(separator: "\t")])
+    }
+
     // --format replaces the columns with the interpolated string, evaluated in the
     // session's context, and skips the variable request the columns need. A probe
     // in the app context first checks that iterm2.interpolate exists.
@@ -244,5 +270,24 @@ final class SessionListTests: XCTestCase {
         let body = "\\(f(x: \"a)\")) \"\\(g(y: \"\\(h(z: \"q\"))\"))"
         let expected = "\"\\(f(x: \"a)\")) \\\"\\(g(y: \"\\(h(z: \"q\"))\"))\""
         XCTAssertEqual(swiftyStringLiteral(body), expected)
+    }
+
+    // iTerm2 sends each value as JSON, and its encoder escapes "/" as "\/". Trimming the quotes
+    // left those escapes in the output: \/dev\/ttys040. Seen over SSH Integration.
+    func testValuesAreDecodedNotJustTrimmed() throws {
+        let vr = ITMVariableResponse()
+        vr.status = .ok
+        vr.valuesArray.add(#""say \"hi\" \u00e9""#)
+        vr.valuesArray.add(#""\/dev\/ttys040""#)
+        let message = ITMServerOriginatedMessage()
+        message.id_p = 2
+        message.variableResponse = vr
+
+        let channel = FakeChannel()
+        channel.responses = [listResponse(id: 1, sessionId: "sess-1", title: "T"), message]
+        let capture = OutputCapture()
+        var command = try Session.List.parse([])
+        try command.run(capture.context(channel: channel))
+        XCTAssertEqual(capture.out, ["sess-1\tsay \"hi\" \u{e9}\tT\t0x0\t/dev/ttys040"])
     }
 }

@@ -43,6 +43,7 @@ NSString *const kReloadAllProfiles = @"kReloadAllProfiles";
 NSString *const iTermProfileModelNewWindowMenuItemIdentifierPrefix = @"NewWindow:";
 NSString *const iTermProfileModelNewTabMenuItemIdentifierPrefix = @"NewTab:";
 NSString *const iTermProfileDidChange = @"iTermProfileDidChange";
+NSString *const iTermProfileModelDidCreateTmuxProfileNotification = @"iTermProfileModelDidCreateTmuxProfileNotification";
 
 // Set to true if a bookmark was changed automatically due to migration to a new
 // standard.
@@ -189,7 +190,11 @@ static NSInteger gLessLoggingCount;
                          forKey:KEY_SCROLLBACK_LINES];
         [self addBookmark:tmuxProfile];
         [self postChangeNotification];
-        profile = tmuxProfile;
+        NSString *guid = tmuxProfile[KEY_GUID];
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermProfileModelDidCreateTmuxProfileNotification
+                                                            object:guid];
+        // An observer may have changed it (adding triggers, say), so return what is stored now.
+        profile = [self bookmarkWithGuid:guid] ?: tmuxProfile;
     }
     if (profile.profileIsBrowser) {
         MutableProfile *sanitized = [[profile mutableCopy] autorelease];

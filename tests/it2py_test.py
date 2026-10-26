@@ -108,6 +108,8 @@ def test_happy_path():
     check(captured.get("hello_type") == "H", "expected HELLO frame, got %r" % captured.get("hello_type"))
     check(captured.get("hello", {}).get("argv") == ["session", "list"], "argv forwarded: %r" % captured.get("hello"))
     check(captured.get("hello", {}).get("nonce") == "secret", "nonce forwarded")
+    check(captured.get("hello", {}).get("protocol") == it2mod.PROTOCOL_VERSION,
+          "protocol version sent: %r" % captured.get("hello"))
     check(result.stdout == "hello world\n", "stdout mismatch: %r" % result.stdout)
     check(result.stderr == "a warning\n", "stderr mismatch: %r" % result.stderr)
     check(result.returncode == 7, "exit code mismatch: %r" % result.returncode)
@@ -243,12 +245,37 @@ def test_recv_exact_total_deadline_bounds_slow_trickle():
         t.join(timeout=2)
 
 
+class _FakeStdin:
+    """Stands in for sys.stdin: .buffer.read() and .isatty(), with None meaning unreadable."""
+    def __init__(self, data, isatty):
+        self._data = data
+        self._isatty = isatty
+        self.buffer = self
+
+    def isatty(self):
+        return self._isatty
+
+    def read(self, n=-1):
+        if self._data is None:
+            raise OSError("closed")
+        if n is None or n < 0:
+            return self._data
+        return self._data[:n]
+
+
 def _hex(s):
     return s.encode("utf-8").hex()
 
 
-def _client_line(name, control="1", created=100):
-    return "IT2CLIENT\t%s\t%s\t%s" % (name, control, created)
+def _client_line(name, control="1", created=100, session=None):
+    line = "IT2CLIENT\t%s\t%s\t%s" % (name, control, created)
+    if session is not None:
+        line += "\t%s" % session
+    return line
+
+
+def _pane_session_line(session):
+    return "IT2PANESESSION\t%s" % session
 
 
 def _option_line(name, record_json):
@@ -291,13 +318,147 @@ def test_parse_tmux_client_records():
 
 
 def test_tmux_query_uses_one_invocation_with_real_tabs():
-    args = it2mod.tmux_query_arguments("/tmp/od,d,socket")
+    args = it2mod.tmux_query_arguments("/tmp/od,d,socket", "")
     check(args[:3] == ["tmux", "-S", "/tmp/od,d,socket"], "socket passed through verbatim")
     check(";" in args, "both commands run in one tmux client")
     fmt = args[args.index("-F") + 1]
-    check(fmt == "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}",
+    check(fmt == "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}\t#{client_session}",
           "format: %r" % fmt)
     check("\\t" not in fmt, "tmux does not interpret backslash escapes in formats")
+    check("display-message" not in args, "no pane, nothing to ask about it")
+
+
+def test_tmux_query_asks_which_session_holds_the_pane():
+    args = it2mod.tmux_query_arguments("/tmp/s", "%7")
+    check("display-message" in args, "the pane's session is asked for in the same invocation")
+    i = args.index("display-message")
+    check(args[i:i + 4] == ["display-message", "-p", "-t", "%7"], "targets the pane: %r" % args[i:i + 4])
+    check(args[i + 4] == "IT2PANESESSION\t#{session_id}", "format: %r" % args[i + 4])
+
+
+def test_client_showing_the_pane_is_preferred_over_the_newest():
+    # The 2026-09-28 failure. Two iTerm2 connections attached to one server, each driving a
+    # different tmux session. The pane lives in $9, held by the OLDER client; the newer one
+    # cannot place it. Newest-first alone sent every call to the wrong connection, which
+    # answered "No session is showing that tmux pane".
+    output = "\n".join([
+        _client_line("/dev/pts/3", created=100, session="$9"),
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/3", '{"nonce":"holds-the-pane","sock":"/a.sock"}'),
+        _option_line("/dev/pts/4", '{"nonce":"newest","sock":"/b.sock"}'),
+        _pane_session_line("$9"),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check(records[0] == {"nonce": "holds-the-pane", "sock": "/a.sock"},
+          "the client attached to the pane's session goes first: %r" % records)
+    # The other is kept as a fallback rather than dropped: it may still be reachable when the
+    # preferred one's socket is gone.
+    check(len(records) == 2 and records[1]["nonce"] == "newest", "others still offered: %r" % records)
+
+
+def test_newest_first_still_breaks_ties_within_the_preferred_group():
+    # A window can be linked into two sessions, so two clients can both hold the pane.
+    output = "\n".join([
+        _client_line("/dev/pts/3", created=100, session="$9"),
+        _client_line("/dev/pts/4", created=200, session="$9"),
+        _option_line("/dev/pts/3", '{"nonce":"older"}'),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+        _pane_session_line("$9"),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer", "older"],
+          "newest first among clients that can all place it: %r" % records)
+
+
+def test_falls_back_to_newest_when_the_pane_session_is_unknown():
+    # Old tmux, a stale TMUX_PANE, or a display-message that failed: no IT2PANESESSION line.
+    # The previous rule is the fallback, not an error.
+    output = "\n".join([
+        _client_line("/dev/pts/3", created=100, session="$9"),
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/3", '{"nonce":"older"}'),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer", "older"],
+          "unknown pane session falls back to newest first: %r" % records)
+
+
+def test_only_the_hook_command_reads_stdin():
+    # Reading stdin for every command hangs the ones that do not expect it: stdin is often an
+    # inherited pipe that never reaches EOF. This was not hypothetical -- making it
+    # unconditional made `it2 session list` time out in this very file.
+    check(it2mod.wants_stdin(["handle-agent-hook"]), "the hook reads its payload")
+    check(it2mod.wants_stdin(["handle-agent-hook", "--agent", "codex"]), "with arguments")
+    check(not it2mod.wants_stdin(["session", "list"]), "session list must not drain stdin")
+    check(not it2mod.wants_stdin([]), "no command, nothing to read")
+    check(not it2mod.wants_stdin(["--version"]), "a bare flag is not a stdin command")
+
+
+def test_stdin_is_read_when_not_a_tty():
+    # A hook's payload arrives on stdin. Without this a remote `it2 handle-agent-hook` has
+    # nothing to act on, which is the whole reason 3b exists.
+    payload = b'{"hook_event_name":"PreToolUse"}'
+    data = it2mod.read_stdin_payload(_FakeStdin(payload, isatty=False))
+    check(data == payload, "got %r" % data)
+
+
+def test_stdin_is_not_read_from_a_tty():
+    # An interactive `it2 session list` must not block waiting for the user to type EOF.
+    check(it2mod.read_stdin_payload(_FakeStdin(b"ignored", isatty=True)) is None,
+          "a tty must not be drained")
+
+
+def test_stdin_is_capped():
+    big = b"x" * (it2mod.MAX_STDIN_BYTES + 5000)
+    data = it2mod.read_stdin_payload(_FakeStdin(big, isatty=False))
+    check(len(data) == it2mod.MAX_STDIN_BYTES, "capped to %d, got %d" % (it2mod.MAX_STDIN_BYTES, len(data)))
+
+
+def test_stdin_unreadable_is_not_fatal():
+    # A closed or broken stdin must degrade to "no payload", not kill the command.
+    check(it2mod.read_stdin_payload(_FakeStdin(None, isatty=False)) is None,
+          "an unreadable stdin yields no payload")
+
+
+def test_env_allowlist_sends_only_what_is_listed():
+    env = {"TMUX": "/tmp/s,1,0", "TMUX_PANE": "%3", "TERM_SESSION_ID": "w0t0p0:ABC",
+           "IT2_SUITE": "alt7", "IT2_PY": "/home/u/.iterm2/it2.abc.py",
+           "AWS_SECRET_ACCESS_KEY": "nope", "PATH": "/usr/bin"}
+    sent = it2mod.allowed_environment(env)
+    check(sorted(sent) == ["IT2_PY", "IT2_SUITE", "TERM_SESSION_ID", "TMUX", "TMUX_PANE"],
+          "allowlist leaked or dropped: %r" % sorted(sent))
+    check("AWS_SECRET_ACCESS_KEY" not in sent, "secrets must never cross the wire")
+    check(sent["TMUX_PANE"] == "%3", "values pass through")
+
+
+def test_env_allowlist_omits_absent_variables():
+    sent = it2mod.allowed_environment({"TMUX": "/tmp/s,1,0"})
+    check(sent == {"TMUX": "/tmp/s,1,0"}, "absent names must not appear as empty: %r" % sent)
+
+
+def test_records_survive_a_partial_query():
+    # A stale $TMUX_PANE makes display-message fail, so tmux exits nonzero after the earlier
+    # commands have already printed. The records must survive that: the pane going away does
+    # not mean no iTerm2 is attached.
+    output = "\n".join([
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer"], "partial output still parses: %r" % records)
+
+
+def test_no_client_holds_the_pane():
+    # iTerm2 is attached, but to a session that does not contain this pane. Every record is a
+    # fallback; none is preferred.
+    output = "\n".join([
+        _client_line("/dev/pts/4", created=200, session="$10"),
+        _option_line("/dev/pts/4", '{"nonce":"newer"}'),
+        _pane_session_line("$9"),
+    ]) + "\n"
+    records = it2mod.parse_tmux_client_records(output)
+    check([r["nonce"] for r in records] == ["newer"], "still offered as a fallback: %r" % records)
 
 
 def test_connect_to_iterm2_tries_candidates_in_order():
@@ -331,15 +492,84 @@ def test_connect_to_iterm2_tries_candidates_in_order():
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+def _write_file(path, contents, mode=0o644):
+    with open(path, "w") as f:
+        f.write(contents)
+    os.chmod(path, mode)
+
+
+def test_reexec_path():
+    tmpdir = tempfile.mkdtemp()
+    try:
+        own = os.path.join(tmpdir, "it2.aaaa.py")
+        other = os.path.join(tmpdir, "it2.bbbb.py")
+        _write_file(own, "")
+        _write_file(other, "")
+        link = os.path.join(tmpdir, "link.py")
+        os.symlink(own, link)
+        check(it2mod.reexec_path({"py": other}, own, {}) == other, "a different copy is used")
+        check(it2mod.reexec_path({"py": own}, own, {}) is None, "not this file")
+        check(it2mod.reexec_path({"py": link}, own, {}) is None, "not this file by another name")
+        check(it2mod.reexec_path({}, own, {}) is None, "no py: keep running")
+        check(it2mod.reexec_path({"py": 7}, own, {}) is None, "not a string")
+        check(it2mod.reexec_path({"py": "it2.bbbb.py"}, own, {}) is None, "relative paths are refused")
+        check(it2mod.reexec_path({"py": os.path.join(tmpdir, "gone.py")}, own, {}) is None,
+              "a copy that is not there (upload pending, cleaned up) is not run")
+        check(it2mod.reexec_path({"py": other}, own, {it2mod.REEXEC_GUARD_NAME: "1"}) is None,
+              "only once")
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def test_record_py_is_reexeced_with_the_same_argv_and_stdin():
+    # A pane whose tmux server froze an old IT2_PY: the attached controller's record names the
+    # copy its connection uploaded, and that copy is the one that runs the command.
+    tmpdir = tempfile.mkdtemp()
+    try:
+        sock_path = os.path.join(tmpdir, "live.sock")
+        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        server.bind(sock_path)
+        server.listen(4)
+        marker = os.path.join(tmpdir, "marker.json")
+        copy = os.path.join(tmpdir, "it2.cccc.py")
+        _write_file(copy, "\n".join([
+            "import json, os, sys",
+            "json.dump({'argv': sys.argv[1:], 'stdin': sys.stdin.read(),",
+            "           'py': os.environ.get('IT2_PY'),",
+            "           'guard': os.environ.get('%s')}, open(%r, 'w'))" % (it2mod.REEXEC_GUARD_NAME, marker),
+            "sys.exit(42)",
+            ""]))
+        record = json.dumps({"sock": sock_path, "nonce": "n", "py": copy})
+        output = "\n".join([_client_line("/dev/pts/1"), _option_line("/dev/pts/1", record)])
+        bindir = os.path.join(tmpdir, "bin")
+        os.mkdir(bindir)
+        _write_file(os.path.join(bindir, "tmux"), "#!/bin/sh\ncat <<'EOF'\n%s\nEOF\n" % output, 0o755)
+        env = dict(os.environ, TMUX="%s,1,$0" % os.path.join(tmpdir, "tmux.sock"), TMUX_PANE="%0",
+                   PATH=bindir + os.pathsep + os.environ.get("PATH", ""), IT2_PY="/stale/it2.py")
+        env.pop("IT2_SOCK", None)
+        env.pop(it2mod.REEXEC_GUARD_NAME, None)
+        result = subprocess.run([sys.executable, IT2, "handle-agent-hook", "--x"], env=env,
+                                input="payload", capture_output=True, text=True, timeout=10)
+        server.close()
+        check(result.returncode == 42, "the record's copy ran: %r %r" % (result.returncode, result.stderr))
+        try:
+            seen = json.load(open(marker))
+        except (OSError, ValueError):
+            seen = {}
+        check(seen.get("argv") == ["handle-agent-hook", "--x"], "same argv: %r" % seen)
+        check(seen.get("stdin") == "payload", "stdin untouched before the exec: %r" % seen)
+        check(seen.get("py") == copy, "IT2_PY names the copy, not the stale value: %r" % seen)
+        check(seen.get("guard") == "1", "guarded against a second exec: %r" % seen)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 def main():
-    test_happy_path()
-    test_disconnect_without_exit()
-    test_broken_stdout_pipe_no_shutdown_traceback()
-    test_write_raw_broken_pipe_before_first_write()
-    test_recv_exact_total_deadline_bounds_slow_trickle()
-    test_parse_tmux_client_records()
-    test_tmux_query_uses_one_invocation_with_real_tabs()
-    test_connect_to_iterm2_tries_candidates_in_order()
+    # Every test_ function, so a new test cannot be written and then silently never run.
+    tests = [value for name, value in sorted(globals().items())
+             if name.startswith("test_") and callable(value)]
+    for test in tests:
+        test()
     print("PASS" if _ok else "FAILED")
     return 0 if _ok else 1
 

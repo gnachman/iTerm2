@@ -49,7 +49,11 @@ let package = Package(
                 "it2core",
                 "ProtobufRuntime"
             ],
-            path: "Tests/it2coreTests"
+            path: "Tests/it2coreTests",
+            resources: [
+                // Recorded hook payloads for AgentHookScenarioTests.
+                .copy("Resources/agent-hooks")
+            ]
         )
     ]
 )

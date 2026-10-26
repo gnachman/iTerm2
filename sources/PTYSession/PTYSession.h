@@ -630,6 +630,18 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 
 @property(nonatomic, readonly) int tmuxPane;
 
+// A tmux client session for a pane in a parked window (a workgroup peer). It has no tab;
+// TmuxController keeps it in its buried registry and routes its pane's output to it. It leaves that
+// state when it is adopted into a tab.
+@property(nonatomic, readonly) BOOL isTmuxBuried;
+// Whether the session has ever been buried, i.e. its pane has been parked: a workgroup peer.
+@property(nonatomic, readonly) BOOL hasBeenTmuxBuried;
+// For a session created without a tab for a parked pane.
+- (void)markTmuxBuried;
+// Takes a tmux client session out of its tab (whose layout no longer has its pane) and keeps it
+// alive, buried, for its pane.
+- (void)buryTmuxClientSession;
+
 // FinalTerm
 @property(nonatomic, readonly, nullable) NSArray *autocompleteSuggestionsForCurrentCommand;
 @property(nonatomic, readonly, nullable) NSString *currentCommand;
@@ -649,6 +661,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, nullable) NSString *badgeLabel;
 @property(nonatomic, readonly, nullable) NSString *subtitle;
 @property(nonatomic, readonly, nullable) iTermSessionTabStatus *tabStatus;
+// True while a status from a saved arrangement is being adopted, so the change is a
+// restoration rather than news.
+@property(nonatomic, readonly) BOOL tabStatusIsBeingRestored;
 // The session's OSC 7501 records, or nil if the program never reported any.
 // Never creates one, so views can ask about every session cheaply.
 @property(nonatomic, readonly, nullable) iTermProgramStatusController *programStatusControllerIfPresent;
@@ -780,11 +795,26 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, nullable) id<ExternalSearchResultsController> externalSearchResultsController;
 @property(nonatomic, readonly, nullable) SSHIdentity *sshIdentity;
 @property(nonatomic, readonly, nullable) NSArray<iTermSSHReconnectionInfo *> *sshCommandLineSequence;
+// The ssh hops to replay when the program about to be launched connects through SSH Integration:
+// the first gives its directory, the rest are jumped to from there. See Duplicate Session.
+- (void)setPendingJumpsForNextLaunch:(NSArray<iTermSSHReconnectionInfo *> *)jumps;
 @property(nonatomic, readonly, nullable) id<ProcessInfoProvider> processInfoProvider;
 @property(nonatomic, readonly) BOOL shouldShowAutoComposer;
 @property(nonatomic, readonly) NSString *regularExpressonForNonLowPrecisionSmartSelectionRulesCombined;
 @property(nonatomic, strong, nullable) NSCursor *defaultPointer;
 @property(nonatomic, readonly, nullable) iTermConductor *conductor;
+// An ssh integration connection that was nested is being recovered depth by depth.
+@property(nonatomic, readonly) BOOL isRecoveringNestedSSHConnection;
+// The conductor for the host this session's shell runs on: its own, or for a tmux pane, the
+// gateway's, since a pane never owns one. nil for a session on this Mac.
+@property(nonatomic, readonly, nullable) iTermConductor *hostConductor;
+
+// A framer pane (a workgroup peer running as a pane of its leader's framer) started running
+// `command` (its launch command, which a restart reuses) as `pid` on the leader's host. A pane
+// adopted after it was stranded has no launch command.
+- (void)framerPaneDidStartWithCommand:(nullable NSString *)command remotePID:(pid_t)pid;
+// The terminal identity variables a framer pane's program gets on the remote host.
+- (NSDictionary<NSString *, NSString *> *)framerPaneEnvironment;
 @property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, strong) iTermRunningRemoteCommand *runningRemoteCommand;
 @property(nonatomic, readonly) iTermSessionModeHandler *modeHandler;
@@ -803,6 +833,10 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // limited internally because propagation triggers a relayout.
 @property(nonatomic, strong, nullable) NSColor *browserBackgroundColor;
 
+// Keeps a browser session's web view from inheriting the Minimal theme's
+// page-derived appearance (see iTermBrowserWebViewAppearance).
+- (void)updateBrowserWebViewAppearance;
+
 // The page background color to use for the minimal-theme browser tint, or nil to use
 // the profile color. Non-nil only for a browser session that has reported a page color
 // while the minimal tab style is active. Single source of the minimal-browser tint
@@ -820,6 +854,16 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, strong) PTYSessionSwiftState *swiftState;
 
 #pragma mark - methods
+
+// Decide IT2_APP_PATH for a new job's environment, in place.
+//
+// The variable names the iTerm2 that the it2 CLI asks for a cookie by AppleScript, which
+// only matters when several builds share a bundle identifier. Exposed as a class method so
+// the rule can be tested without building a session; see SessionIT2AppPathTests.
++ (void)applyIT2AppPathTo:(NSMutableDictionary *)env
+                suiteName:(nullable NSString *)suiteName
+           settingEnabled:(BOOL)settingEnabled
+               bundlePath:(NSString *)bundlePath;
 
 + (BOOL)arrangement:(NSDictionary *)arrangement
          passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure;
@@ -862,6 +906,16 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // distinct conductors (even sharing an ssh display name) get distinct announcements and
 // cannot cross-cancel each other's prompt. Exposed for testing.
 + (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid;
+
+#if DEBUG
+// Presses button `index` of the it2 authorization announcement for conductor `guid`, exactly as a
+// click would. Development builds only, for the ssh integration live harness, which has no other
+// way to answer the prompt. Returns NO when no such announcement is pending.
+- (BOOL)debugAnswerIT2AuthorizationForConductorGUID:(NSString *)guid selection:(int)index;
+// Presses button `index` of the announcement with `identifier`, as a click would. Returns NO when
+// there is none. For harnesses.
+- (BOOL)debugSelectAction:(int)index ofAnnouncementWithIdentifier:(NSString *)identifier;
+#endif
 
 // Register the contents in the arrangement so that if the session is later
 // restored from an arrangement with the same guid as |arrangement|, the
@@ -1003,6 +1057,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Writes output as though a key was pressed. Does not broadcast. Supports tmux integration properly.
 - (void)writeTaskNoBroadcast:(NSString *)string;
+
+// Ends the SSH Integration connection with this it2ssh unique ID and every connection
+// nested in it without writing anything, because its it2ssh is gone. Removes its DCS hook.
+// If its ssh client outlives it, that client's framer output (OSC 134) is ignored rather
+// than starting recovery.
+- (void)abandonSSHThroughClientUniqueID:(NSString *)uniqueID NS_SWIFT_NAME(abandonSSH(throughClientUniqueID:));
 
 // Write with a particular encoding. If the encoding is just session.terminal.encoding then pass
 // NO for `forceEncoding` and the terminal's encoding will be used instead of `optionalEncoding`.
@@ -1163,6 +1223,9 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Call refresh on the textview and schedule a timer if anything is blinking.
 - (void)refresh;
+// The cheap job refresh an inactive session gets on each display update: applies the process
+// cache's answer for this session's job if it has one, and leaves the job alone if it does not.
+- (void)refreshForegroundJobFromCacheIfAvailable;
 
 // Force a jiggle (re-layout) of the session view so triggers have a chance to fire.
 - (void)setNeedsJiggle:(BOOL)needsJiggle;

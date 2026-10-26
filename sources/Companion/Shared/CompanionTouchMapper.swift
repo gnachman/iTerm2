@@ -73,14 +73,30 @@ struct CompanionTouchMapper {
 
     /// The continuous (unquantized, unclamped) encoded-image pixel under a touch.
     func imagePoint(viewPoint: CGPoint, viewSize: CGSize) -> CGPoint? {
+        return Self.imagePoint(viewPoint: viewPoint, viewSize: viewSize, imageSize: imageSize)
+    }
+
+    /// The encoded-image pixel under `viewPoint` in a view of `viewSize` that shows
+    /// an image of `imageSize` aspect-fit. Needs no cell geometry, so it also maps
+    /// touches on a web page. Nil for degenerate sizes.
+    static func imagePoint(viewPoint: CGPoint, viewSize: CGSize, imageSize: CGSize) -> CGPoint? {
+        guard let pixelsPerPoint = imagePixelsPerViewPoint(viewSize: viewSize, imageSize: imageSize) else {
+            return nil
+        }
+        let scale = 1 / pixelsPerPoint
+        let offsetX = (viewSize.width - imageSize.width * scale) / 2
+        let offsetY = (viewSize.height - imageSize.height * scale) / 2
+        return CGPoint(x: (viewPoint.x - offsetX) / scale, y: (viewPoint.y - offsetY) / scale)
+    }
+
+    /// How many encoded-image pixels one view point spans when the image is shown
+    /// aspect-fit, for converting a drag distance. Nil for degenerate sizes.
+    static func imagePixelsPerViewPoint(viewSize: CGSize, imageSize: CGSize) -> CGFloat? {
         guard imageSize.width > 0, imageSize.height > 0,
               viewSize.width > 0, viewSize.height > 0 else {
             return nil
         }
-        let scale = min(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
-        let offsetX = (viewSize.width - imageSize.width * scale) / 2
-        let offsetY = (viewSize.height - imageSize.height * scale) / 2
-        return CGPoint(x: (viewPoint.x - offsetX) / scale, y: (viewPoint.y - offsetY) / scale)
+        return 1 / min(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
     }
 
     /// The inverse: the view-space point of a grid corner, for placing selection

@@ -45,9 +45,10 @@ final class iTermBrowserSessionTitle: NSObject {
     }
 
     // Title-component menu items that are meaningless for a browser session (it has no
-    // job, tty, host, user, working directory, command line, or terminal size).
+    // job, tty, host, user, working directory, command line, or terminal size, and it
+    // is never AI-titled).
     static let terminalOnlyComponents: iTermTitleComponents = [
-        .job, .workingDirectory, .TTY, .user, .host, .commandLine, .size
+        .job, .workingDirectory, .TTY, .user, .host, .commandLine, .size, .AI
     ]
 
     // Whether a Session Title component menu item should be hidden for a profile.

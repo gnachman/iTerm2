@@ -18,6 +18,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "NSDate+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSWindow+iTerm.h"
 #import "SessionView.h"
@@ -488,19 +489,86 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     _windowType = self.windowType;
 }
 
+// The view in the content view that has keyboard focus, or nil. For a text field being edited
+// this is the field, not the window's shared field editor, which does not move with it.
+- (NSView *)focusedViewInContentView {
+    NSResponder *responder = self.window.firstResponder;
+    NSTextView *textView = [NSTextView castFrom:responder];
+    if (textView.isFieldEditor) {
+        responder = [NSView castFrom:textView.delegate];
+    }
+    NSView *view = [NSView castFrom:responder];
+    if (view && [view isDescendantOf:self.contentView]) {
+        return view;
+    }
+    return nil;
+}
+
+// Puts back the caret and selection that a text field's field editor had before it moved to a new
+// window. Ranges that no longer fit the text are dropped.
+- (void)restoreSelectedRanges:(NSArray<NSValue *> *)ranges inFieldEditorFor:(NSView *)view {
+    if (ranges.count == 0) {
+        return;
+    }
+    NSTextView *editor = [NSTextView castFrom:self.window.firstResponder];
+    if (!editor.isFieldEditor || editor.delegate != (id)view) {
+        return;
+    }
+    const NSUInteger length = editor.string.length;
+    NSMutableArray<NSValue *> *valid = [NSMutableArray array];
+    for (NSValue *value in ranges) {
+        if (NSMaxRange(value.rangeValue) <= length) {
+            [valid addObject:value];
+        }
+    }
+    if (valid.count == 0) {
+        return;
+    }
+    DLog(@"Restore selection %@ in field editor for %@", valid, view);
+    editor.selectedRanges = valid;
+}
+
 - (void)updateWindowForWindowType:(iTermWindowType)windowType {
     if (_willClose) {
         return;
     }
     NSRect frame = self.window.frame;
     NSString *title = [self.window.title copy];
+    // A new window replaces the old one when the title bar comes or goes. Closing the old window
+    // leaves no key window, so the replacement must take over as key or typing goes nowhere and
+    // menu items that act on the current window (including Window Style itself) are disabled.
+    const BOOL wasKey = self.window.isKeyWindow;
+    // The content view moves to the new window, so a view inside it that had focus (the find bar,
+    // the composer, a tool) can keep it.
+    NSView *previousFocus = [self focusedViewInContentView];
+    // Making a text field first responder selects all its text, so remember the caret and
+    // selection in its field editor to put them back. Otherwise the next keystroke would replace
+    // the text (such as the find bar's query) instead of continuing it.
+    NSTextView *previousFieldEditor = [NSTextView castFrom:self.window.firstResponder];
+    NSArray<NSValue *> *previousSelectedRanges = nil;
+    if (previousFocus && previousFieldEditor.isFieldEditor) {
+        previousSelectedRanges = [previousFieldEditor.selectedRanges copy];
+    }
     const BOOL changed = [self replaceWindowWithWindowOfType:windowType];
     [self.window setFrame:frame display:YES];
-    [self.window orderFront:nil];
+    if (changed && wasKey) {
+        DLog(@"Make the replacement window key");
+        [self.window makeKeyAndOrderFront:nil];
+    } else {
+        [self.window orderFront:nil];
+    }
     [self.contentView layoutSubviews];
     self.window.title = title;
 
     if (changed) {
+        // The new window's first responder is the window itself, so keys would not reach the
+        // session even once it is key.
+        if (previousFocus && previousFocus.window == self.window) {
+            [self.window makeFirstResponder:previousFocus];
+            [self restoreSelectedRanges:previousSelectedRanges inFieldEditorFor:previousFocus];
+        } else {
+            [self.window makeFirstResponder:self.currentSession.mainResponder];
+        }
         [self forceFrame:frame];
         // Title bar visibility may have changed, so update active pane borders
         // to recalculate which corners should be rounded.

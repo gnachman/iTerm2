@@ -64,6 +64,8 @@ static const NSTimeInterval iTermRemoteDataFileSyncRemoteReadTimeout = 5.0;
 - (void)saveLocalUserDefaultsToRemotePrefsInteractive:(BOOL)interactive;
 @end
 
+NSString *const iTermRemotePreferencesSavedPrefsDidChangeNotification = @"iTermRemotePreferencesSavedPrefsDidChangeNotification";
+
 @implementation iTermRemotePreferences {
     // Guarded by @synchronized(self): the background save assigns savedRemotePrefs.
     NSDictionary *_savedRemotePrefs;
@@ -118,6 +120,13 @@ static const NSTimeInterval iTermRemoteDataFileSyncRemoteReadTimeout = 5.0;
         _savedRemotePrefs = [savedRemotePrefs copy];
         _savedRemotePrefsAfterMigrations = nil;
     }
+    // Saving writes the folder without changing any local default, so observers of user defaults
+    // would not otherwise learn that local and saved prefs may now agree. This can run on the save
+    // queue, so post on the main thread.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermRemotePreferencesSavedPrefsDidChangeNotification
+                                                            object:self];
+    });
 }
 
 // What local prefs are compared against to decide whether they need copying to the folder.

@@ -289,6 +289,7 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
         if (error) {
             *error = [SIGError errorWithCode:SIGErrorCodeNoCertificate];
         }
+        return NO;
     }
 
     NSMutableArray<SIGCertificate *> *certs = [NSMutableArray array];
@@ -332,16 +333,25 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
     if (!algorithm) {
         return NO;
     }
+    // The verification algorithm passes the key to Security APIs that crash on NULL.
+    SecKeyRef publicKey = _certificates.firstObject.publicKey.secKey;
+    if (!publicKey) {
+        if (error) {
+            *error = [SIGError errorWithCode:SIGErrorCodeInputMalformedCertificate
+                                      detail:@"Could not get the public key from the signing certificate"];
+        }
+        return NO;
+    }
     if (_signature2Data) {
         return [algorithm verifyInputStream:_payload2InputStream
                               signatureData:_signature2Data
-                                  publicKey:_certificates.firstObject.publicKey.secKey
+                                  publicKey:publicKey
                                       error:error];
     }
 #if ENABLE_SIGARCHIVE_MIGRATION_VALIDATION
     return [algorithm verifyInputStream:_payloadInputStream
                           signatureData:_signatureData
-                              publicKey:_certificates.firstObject.publicKey.secKey
+                              publicKey:publicKey
                                   error:error];
 #else
     if (error) {

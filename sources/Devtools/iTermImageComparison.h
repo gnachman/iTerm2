@@ -8,6 +8,8 @@ typedef struct {
     double variance;
     NSUInteger totalPixels;
     NSUInteger differentPixels;
+    // YES if a diff image path was given and the diff image could not be saved there.
+    BOOL diffImageWriteFailed;
 } iTermImageComparisonResult;
 
 @interface iTermImageComparison : NSObject

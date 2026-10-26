@@ -38,6 +38,7 @@ class ChatListModel: ChatListDataSource {
         }
         self.database = database
         self.chatStorage = chats
+        backfillModelVendors()
     }
 
     // MARK: - Chat-level operations
@@ -418,7 +419,69 @@ class ChatListModel: ChatListDataSource {
         }
     }
 
+    struct SessionKindMismatchError: LocalizedError {
+        var linkingAsBrowser: Bool
+        var errorDescription: String? {
+            if linkingAsBrowser {
+                return String(localized: "ChatListModel.TerminalCannotBeBrowser",
+                              defaultValue: "A terminal session cannot be linked as a web browser.",
+                              comment: "Error shown when trying to link a terminal session to an AI chat in the web browser slot")
+            }
+            return String(localized: "ChatListModel.BrowserCannotBeTerminal",
+                          defaultValue: "A web browser session cannot be linked as a terminal.",
+                          comment: "Error shown when trying to link a web browser session to an AI chat in the terminal slot")
+        }
+    }
+
+    /// Whether `reference` (a guid or stableID) names a live browser session.
+    /// Returns nil when it does not resolve to a live session. A session never
+    /// changes kind, so a resolved answer stays correct for its lifetime.
+    static func isBrowserSession(reference: String) -> Bool? {
+        return iTermController.sharedInstance()?.anySession(forReference: reference)?.isBrowserSession()
+    }
+
+    /// Put each guid in the slot matching its session's kind, so a browser
+    /// session is never linked as a terminal (or vice versa), including when the
+    /// caller swapped them. A guid that does not resolve to a live session stays
+    /// in the slot the caller put it in unless a live session of that kind
+    /// claims the slot. `isBrowser` looks up a session's kind (nil if it is not
+    /// live); tests inject it.
+    static func sessionGuidsByKind(
+        terminal: String?,
+        browser: String?,
+        isBrowser: (String) -> Bool? = { isBrowserSession(reference: $0) }
+    ) -> (terminal: String?, browser: String?) {
+        // Classify each input once, against the original values.
+        let terminalKind = terminal.flatMap(isBrowser)
+        let browserKind = browser.flatMap(isBrowser)
+        let terminalResult: String?
+        if terminalKind == false {
+            terminalResult = terminal
+        } else if browserKind == false {
+            terminalResult = browser
+        } else if terminalKind == nil {
+            terminalResult = terminal
+        } else {
+            terminalResult = nil
+        }
+        let browserResult: String?
+        if browserKind == true {
+            browserResult = browser
+        } else if terminalKind == true {
+            browserResult = terminal
+        } else if browserKind == nil {
+            browserResult = browser
+        } else {
+            browserResult = nil
+        }
+        return (terminalResult, browserResult)
+    }
+
     func setTerminalGuid(for chatID: String, to guid: String?) throws {
+        if let guid, Self.isBrowserSession(reference: guid) == true {
+            DLog("Refusing to link browser session \(guid) as the terminal of chat \(chatID)")
+            throw SessionKindMismatchError(linkingAsBrowser: false)
+        }
         if let i = index(of: chatID) {
             if guid != nil {
                 it_assert(chatStorage[i].orchestrationEnabled == false,
@@ -431,6 +494,10 @@ class ChatListModel: ChatListDataSource {
     }
 
     func setBrowserGuid(for chatID: String, to guid: String?) throws {
+        if let guid, Self.isBrowserSession(reference: guid) == false {
+            DLog("Refusing to link terminal session \(guid) as the browser of chat \(chatID)")
+            throw SessionKindMismatchError(linkingAsBrowser: true)
+        }
         if let i = index(of: chatID) {
             if guid != nil {
                 it_assert(chatStorage[i].orchestrationEnabled == false,
@@ -490,9 +557,115 @@ class ChatListModel: ChatListDataSource {
             return
         }
         var temp = chatStorage[i]
+        temp.modelVendor = Self.vendorForNewPin(modelName: modelName,
+                                                previousName: temp.modelName,
+                                                previousVendor: temp.modelVendor)
         temp.modelName = modelName
         try chatStorage.set(at: i, temp)
         postMetadataChange()
+    }
+
+    // Moves a chat stamped with a cloud vendor, or with none, to
+    // manualModelPinVendor when its pinned name is now a manual model that is not
+    // at its vendor's public API host (for example, its URL was moved from
+    // api.openai.com to a local server, or a manual model was added with the name
+    // of a chat's unresolved pin).
+    // Called before each turn, so once a turn may have gone to that server, a later
+    // removal of the model fails instead of sending the history to the old vendor.
+    // It never changes any other stamp: an Ollama or manual-model stamp stays as
+    // it is, so editing a model back and forth can't strand a chat on a vendor it
+    // no longer resolves within.
+    func refreshModelVendor(chatID: String) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        let manual = Int(LLMMetadata.manualModelPinVendor.rawValue)
+        guard temp.modelVendor != manual,
+              temp.modelVendor != Int(iTermAIVendor.llama.rawValue),
+              LLMMetadata.inferredVendor(forPinnedModelNamed: temp.modelName) == LLMMetadata.manualModelPinVendor else {
+            return
+        }
+        temp.modelVendor = manual
+        try chatStorage.set(at: i, temp)
+        postMetadataChange()
+    }
+
+    // The vendor to store with a chat's new model pin. Re-pinning the same name
+    // keeps a local (Ollama) vendor, so a local pin whose tag is gone, or whose
+    // name a cloud model now shares, stays local. Likewise a manual-model pin
+    // (LLMMetadata.manualModelPinVendor) whose manual model is no longer
+    // configured. Otherwise the new name's vendor when it can be told (which also
+    // picks up an edit to a manual model's API or URL). A name that doesn't
+    // resolve right now keeps the previous vendor when it is the same pin or the
+    // chat was local.
+    static func vendorForNewPin(modelName: String?,
+                                previousName: String?,
+                                previousVendor: Int?) -> Int? {
+        guard let modelName else {
+            return nil
+        }
+        let llama = Int(iTermAIVendor.llama.rawValue)
+        if modelName == previousName, previousVendor == llama {
+            return llama
+        }
+        let manual = Int(LLMMetadata.manualModelPinVendor.rawValue)
+        if modelName == previousName, previousVendor == manual,
+           !LLMMetadata.manualModels().contains(where: { $0.name == modelName }) {
+            return manual
+        }
+        if let vendor = LLMMetadata.inferredVendor(forPinnedModelNamed: modelName) {
+            return Int(vendor.rawValue)
+        }
+        if LLMMetadata.model(named: modelName) != nil {
+            return nil
+        }
+        return modelName == previousName || previousVendor == llama ? previousVendor : nil
+    }
+
+    /// Side-effect-free lookup of the vendor the chat's model pin belongs to
+    /// (Chat.modelVendor), nil when unknown.
+    func modelVendor(forChatID chatID: String) -> iTermAIVendor? {
+        return (chatStorage.first { $0.id == chatID }?.modelVendor)
+            .flatMap { iTermAIVendor(rawValue: UInt($0)) }
+    }
+
+    // Chats pinned before Chat.modelVendor existed have a model name but no
+    // vendor. Stamp the vendor wherever the name still says which vendor it is
+    // (see LLMMetadata.inferredVendor), so the pin keeps routing to that vendor if
+    // the name stops resolving later. Names that say nothing are left alone and
+    // keep the legacy behavior. A stored cloud vendor that disagrees with what the
+    // name now says (an older build changed the chat's model without updating the
+    // vendor) is corrected, or cleared when the name now resolves to a model that
+    // is deliberately left unstamped; a stored Ollama or manual-model vendor is
+    // never changed, so a pin whose model is gone keeps failing rather than
+    // moving to a same-named model elsewhere.
+    private func backfillModelVendors() {
+        let failsClosed = [Int(iTermAIVendor.llama.rawValue),
+                           Int(LLMMetadata.manualModelPinVendor.rawValue)]
+        for i in 0..<chatStorage.count {
+            var chat = chatStorage[i]
+            guard !failsClosed.contains(where: { $0 == chat.modelVendor }), let name = chat.modelName else {
+                continue
+            }
+            let newVendor: Int?
+            if let vendor = LLMMetadata.inferredVendor(forPinnedModelNamed: name) {
+                newVendor = Int(vendor.rawValue)
+            } else if chat.modelVendor != nil, LLMMetadata.model(named: name) != nil {
+                newVendor = nil
+            } else {
+                continue
+            }
+            guard newVendor != chat.modelVendor else {
+                continue
+            }
+            chat.modelVendor = newVendor
+            do {
+                try chatStorage.set(at: i, chat)
+            } catch {
+                DLog("Failed to backfill the model vendor of chat \(chat.id): \(error)")
+            }
+        }
     }
 
     /// Stamp the protocol a chat's wire-fragment blobs are frozen to (the iTermAIAPI

@@ -15,6 +15,7 @@
 
 @class iTermFontTable;
 @class iTermTmuxClientTracker;
+@class iTermTmuxWorkgroupAttacher;
 @class iTermVariableScope;
 @class PTYSession;
 @class PTYTab;
@@ -23,6 +24,10 @@
 @class EquivalenceClassSet;
 
 // Posted just before sessions change (names, addition, deletion)
+// Posted with the controller as object when the serverIsLocal determination first succeeds. A
+// pane session fetches its pane pid only for a local server and asks once, when it becomes a
+// client; if locality had not settled by then, this is its cue to ask again.
+extern NSNotificationName const kTmuxControllerServerLocalityDidBecomeKnown;
 extern NSString *const kTmuxControllerSessionsWillChange;
 // Posted when sessions change (names, addition, deletion)
 extern NSString *const kTmuxControllerSessionsDidChange;
@@ -113,6 +118,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 // and cached, a single unlucky lookup used to mark a local server remote for the life of the
 // connection. Cheap and a no-op once the answer is known.
 - (void)refreshServerLocalityIfUnknown;
+// The reply to loadServerPID: "<socket path>,<pid>" on tmux 2.2+, bare "<pid>" below that.
+// Exposed so tests can drive the locality determination without a gateway.
+- (void)didLoadServerIdentity:(NSString *)response;
 @property(nonatomic, readonly) NSString *defaultTerminal;
 @property(nonatomic) NSRect initialWindowHint;
 @property(nonatomic, readonly) BOOL detached;
@@ -169,6 +177,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
 // Call `block` when a window pane with `wp` is registered. If one is already registered, it will be called asynchronously.
 - (void)whenPaneRegistered:(int)wp call:(void (^)(PTYSession<iTermTmuxControllerSession> *))block;
+// Calls `block` with the next pane session to be registered, such as when the user shows a hidden
+// window. Never called if none ever is.
+- (void)whenAnyPaneRegisteredCall:(void (^)(PTYSession<iTermTmuxControllerSession> *))block;
 
 - (PTYSession<iTermTmuxControllerSession> *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;
@@ -201,6 +212,14 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)windowPane:(int)wp
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
+
+// Fetch layouts from tmux and apply them (re-sync the UI with tmux).
+- (void)refreshLayoutsFromTmux;
+
+// Apply a layout made by moving a divider. Like windowPane:resizedBy:horizontally:, it counts as an
+// outstanding window resize until tmux's layouts come back, so a later drag isn't built from a
+// layout this one is about to replace.
+- (void)setLayoutInWindow:(int)window toLayoutWithMovedDivider:(NSString *)layout;
 
 // If completion is nonnull it will be called with the new window pane or -1 on error.
 - (void)splitWindowPane:(int)wp
@@ -316,6 +335,26 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
                 vSpacing:(CGFloat)vs
                   window:(int)window;
 - (BOOL)windowIsHidden:(int)windowId;
+// A window holding a parked workgroup peer (see TmuxWorkgroupState). It is never opened as a tab
+// and is not offered as a hidden window.
+- (BOOL)isParkedWindow:(int)windowId;
+
+// Sessions for panes in parked windows (workgroup peers). They have no tab, so they hold no window
+// refcount; -sessionForWindowPane: finds them, so their pane's output reaches them as usual.
+- (void)registerBuriedSession:(PTYSession<iTermTmuxControllerSession> *)session withPane:(int)windowPane;
+- (void)deregisterBuriedSession:(PTYSession<iTermTmuxControllerSession> *)session withPane:(int)windowPane;
+// Removes and returns the buried session for a pane, e.g. to adopt it into a tab.
+- (PTYSession<iTermTmuxControllerSession> *)takeBuriedSessionForPane:(int)windowPane;
+- (NSArray<PTYSession<iTermTmuxControllerSession> *> *)buriedSessions;
+// Keeps a parked window's buried sessions the size of their panes. NO if the window is not parked.
+- (BOOL)parkedWindow:(int)windowId layoutDidChange:(NSString *)layout;
+// A parked window closed: ends the buried sessions whose panes went with it.
+- (void)parkedWindowDidClose:(int)windowId;
+// Re-reads one window's layout and applies it as a %layout-change would. tmux 3.2 sends no
+// %layout-change when swap-pane moves a pane between windows.
+- (void)refreshLayoutOfWindow:(int)windowId;
+// Adopts the workgroups on the server; nil until the initial windows are open.
+@property(nonatomic, readonly) iTermTmuxWorkgroupAttacher *workgroupAttacher;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;
 - (NSArray<PTYSession<iTermTmuxControllerSession> *> *)clientSessions;
 

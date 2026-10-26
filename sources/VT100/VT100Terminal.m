@@ -231,6 +231,10 @@ typedef struct {
     NSNumber *_currentLiteral;
     iTermEmulationLevel _vtLevel;
     VT100TerminalKeyReportingFlags _keyReportingFlags;
+
+    // Connections whose framer output must not start recovery because they were
+    // abandoned (F-354, F-459).
+    iTermFramerRecoveryRefusals *_framerRecoveryRefusals;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -486,6 +490,38 @@ static const int kMaxScreenRows = 4096;
     if (userInitiated || controlSequence) {
         [_delegate terminalRemoveProgramStatusRecords];
     }
+}
+
+- (void)refuseFramerRecoveryForChildrenOfConductorAtDepth:(int)parentDepth
+                              abandonedClientUniqueIDs:(NSArray<NSString *> *)clientUniqueIDs {
+    if (!_framerRecoveryRefusals) {
+        _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
+    }
+    [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:parentDepth
+                                        abandonedClientUniqueIDs:clientUniqueIDs];
+    if (self.framerRecoveryMode != VT100TerminalFramerRecoveryModeNone &&
+        [_framerRecoveryRefusals isRefusedForChildrenOfConductorAtDepth:self.framerRecoveryParentDepth]) {
+        // A recovery for the abandoned connection began before it was abandoned. If it is
+        // still recovering, PTYSession refuses to start it, so stop treating its framer
+        // output as recovery lines. If it is syncing, the recovered connection is the one
+        // being abandoned: its hook is forced off, so don't wait for its recovery boundary
+        // (which a stale token could still deliver).
+        RLog(@"Abandon framer recovery for children of depth %d in mode %@",
+             self.framerRecoveryParentDepth, @(self.framerRecoveryMode));
+        self.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
+        self.framerBoundaryNumber = -1;
+    }
+}
+
+- (BOOL)framerRecoveryIsRefusedForChildrenOfConductorAtDepth:(int)parentDepth {
+    return [_framerRecoveryRefusals isRefusedForChildrenOfConductorAtDepth:parentDepth];
+}
+
+- (void)allowFramerRecoveryForHookAsChildOfConductorAtDepth:(int)parentDepth
+                                             clientUniqueID:(NSString *)clientUniqueID {
+    const BOOL accepted = [_framerRecoveryRefusals shouldAcceptHookAsChildOfConductorAtDepth:parentDepth
+                                                                         clientUniqueID:clientUniqueID];
+    DLog(@"Allow framer recovery at depth %d for %@: %@", parentDepth, clientUniqueID, @(accepted));
 }
 
 - (void)resetForSSH {
@@ -1820,7 +1856,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         return;
     }
     if (token.sshInfo.valid &&
-        token.sshInfo.channel >= 0) {
+        token.sshInfo.channel >= 0 &&
+        token->type != SSH_OUTPUT) {
         DLog(@"Token is from an ssh side-channel");
         // A side-channel produced output. Ignore anything that isn't plaintext to make parsing easy.
         VT100Token *wrapped = [[VT100Token alloc] init];
@@ -2829,7 +2866,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case XTERMCC_FRAMER_WRAPPER:
             switch (self.framerRecoveryMode) {
                 case VT100TerminalFramerRecoveryModeNone:
-                    if (token.sshInfo.valid) {
+                    if ([self framerRecoveryIsRefusedForChildrenOfConductorAtDepth:token.sshInfo.valid ? token.sshInfo.depth : -1]) {
+                        // An abandoned connection's ssh client is still printing its framer's
+                        // output. Recovering would type into the shell that owns the tty, so
+                        // ignore it like any other unrecognized OSC.
+                        DLog(@"Ignore framer output from an abandoned connection");
+                    } else if (token.sshInfo.valid) {
                         [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:token.sshInfo.depth];
                     } else {
                         // The token description can embed the wrapped conductor payload; log the type only in the ring.
@@ -3173,9 +3215,28 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self executeAPC:token];
             break;
 
-        case SSH_INIT:
-            [self.delegate terminalDidHookSSHConductorWithParams:token.string];
+        case SSH_INIT: {
+            const int parentDepth = token.sshInfo.valid ? token.sshInfo.depth - 1 : -1;
+            // A new connection's framer output is its own, so it may recover again. A hook
+            // from an abandoned connection's stale output (one parsed inside its framing, or
+            // carrying its unique ID) must not start a conductor, which would write to the
+            // shell that owns the tty (F-459). An orphaned ssh client that could not be
+            // killed and still prints at this depth could start recovery again after a new
+            // connection hooks, but that requires it to outlive the new connection's setup.
+            if (_framerRecoveryRefusals &&
+                ![_framerRecoveryRefusals shouldAcceptHookAsChildOfConductorAtDepth:parentDepth
+                                                                    clientUniqueID:[iTermFramerRecoveryRefusals clientUniqueIDFromHookParameters:token.string]]) {
+                RLog(@"Ignore a hook from an abandoned connection at parent depth %d", parentDepth);
+                NSString *dcsID = [iTermFramerRecoveryRefusals dcsIDFromHookParameters:token.string];
+                if (dcsID.length) {
+                    // If it hooked the parser, the output that follows belongs to the shell.
+                    [self.parser forceUnhookDCSReturningSuccess:dcsID];
+                }
+                break;
+            }
+            [self.delegate terminalDidHookSSHConductorWithParams:token.string parentDepth:parentDepth];
             break;
+        }
 
         case SSH_LINE:
             [self.delegate terminalDidReadSSHConductorLine:token.string
@@ -3214,6 +3275,26 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case SSH_OUTPUT:
             DLog(@"executing an ssh output token");
+            const int depth = token.sshInfo.valid ? token.sshInfo.depth : 0;
+            if (token.sshFlowControlled) {
+                // A frame's decoded contents run before its SSH_OUTPUT token (see
+                // VT100Parser), so they have all executed by now.
+                [self.delegate terminalDidExecuteFlowControlledSSHOutputOfLength:token.savedData.length
+                                                                sendMilliseconds:token.sshSendMilliseconds
+                                                                           flags:token.sshFlowFlags
+                                                                           depth:depth];
+            }
+            if (depth > 0 && token.csi->p[1] != SSH_OUTPUT_PANE_CHANNEL) {
+                // An inner framer's frame, kept only for the count above. Its bytes are part
+                // of the frame around it, which reads them as raw output.
+                break;
+            }
+            if (token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL) {
+                [self.delegate terminalDidReadSSHPaneOutput:token.savedData
+                                                        pid:token.csi->p[0]
+                                                      depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
+                break;
+            }
             [self.delegate terminalDidReadRawSSHData:token.savedData
                                                  pid:token.csi->p[0]
                                              channel:token.csi->p[1]];
@@ -3235,6 +3316,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case SSH_IT2:
             [self.delegate terminalHandleIT2:token.string
                                        depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
+            break;
+
+        case SSH_UNFRAMED_PROMPT:
+            [self.delegate terminalDidReceiveUnframedSSHPromptAtDepth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case DCS_BEGIN_SYNCHRONIZED_UPDATE:
@@ -4498,7 +4583,7 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             NSString *scale = [[NSString stringWithFormat:@"%0.2f", floatScale] stringByCompactingFloatingPointString];
             NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@;%@\033\\",
                            height, width, scale];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReportAllowedInTmux:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"SetWindowFrame"]) {
         // Malformed or non-finite payloads are ignored rather than collapsing
@@ -4515,7 +4600,7 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
                            VT100TerminalCompactFloat(NSMinY(f)),
                            VT100TerminalCompactFloat(NSWidth(f)),
                            VT100TerminalCompactFloat(NSHeight(f))];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReportAllowedInTmux:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"ReportScreenFrames"]) {
         if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport:YES]) {
@@ -4530,7 +4615,7 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
             }
             NSString *s = [NSString stringWithFormat:@"\033]1337;ScreenFrames=%@\033\\",
                            [frames componentsJoinedByString:@";"]];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [_delegate terminalSendReportAllowedInTmux:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"UnicodeVersion"]) {
         if ([value hasPrefix:@"push"]) {

@@ -161,6 +161,77 @@ final class PaneFocusFollowsMouseIntegrationTests: XCTestCase {
         XCTAssertNil(target(atCenterOf: label))
     }
 
+    // Gives the session a status bar holding only a search field and returns the field. With one
+    // status bar per window (the default) it is in the window, outside every pane.
+    private func showStatusBarSearchField() -> NSSearchField {
+        let savedSeparate = iTermPreferences.bool(forKey: kPreferenceKeySeparateStatusBarsPerPane)
+        iTermPreferences.setBool(false, forKey: kPreferenceKeySeparateStatusBarsPerPane)
+        addTeardownBlock {
+            iTermPreferences.setBool(savedSeparate, forKey: kPreferenceKeySeparateStatusBarsPerPane)
+        }
+        guard let componentClass = NSClassFromString("iTermStatusBarSearchFieldComponent") as? iTermStatusBarBaseComponent.Type else {
+            it_fatalError("No search field component")
+        }
+        let component = componentClass.init(configuration: [.knobValues: [String: Any]()],
+                                            scope: session.genericScope)
+        let layout = iTermStatusBarLayout(components: [component],
+                                          advancedConfiguration: iTermStatusBarAdvancedConfiguration())
+        session.setSessionSpecificProfileValues([KEY_SHOW_STATUS_BAR: true,
+                                                 KEY_STATUS_BAR_LAYOUT: layout.dictionaryValue()])
+        fixture.window.contentView?.layoutSubtreeIfNeeded()
+        guard let field = Self.searchField(in: fixture.window.contentView) else {
+            it_fatalError("No status bar search field")
+        }
+        return field
+    }
+
+    private static func searchField(in view: NSView?) -> NSSearchField? {
+        guard let view, !view.isHidden else {
+            return nil
+        }
+        if let field = view as? NSSearchField {
+            return field
+        }
+        for subview in view.subviews {
+            if let field = searchField(in: subview) {
+                return field
+            }
+        }
+        return nil
+    }
+
+    func testSharedStatusBarSearchFieldIsInTheCurrentSessionsPane() {
+        let field = showStatusBarSearchField()
+        XCTAssertFalse(field.isDescendant(of: sessionView))
+        XCTAssertTrue(PaneFocusFollowsMouseAppEnvironment.sessionView(atWindowPoint: fixture.center(of: field),
+                                                                      in: fixture.window) === sessionView)
+        XCTAssertTrue(PaneFocusFollowsMouseAppEnvironment().pane(containing: field) === sessionView)
+    }
+
+    func testSharedStatusBarSearchFieldTakesFocus() {
+        let field = showStatusBarSearchField()
+        XCTAssertTrue(target(atCenterOf: field) === field)
+    }
+
+    // Moving over the window's status bar has to reach focus follows mouse, since no pane's
+    // tracking area covers it.
+    func testSharedStatusBarTracksPointerMovement() {
+        let field = showStatusBarSearchField()
+        guard let containerClass = NSClassFromString("iTermGenericStatusBarContainer") else {
+            it_fatalError("No container class")
+        }
+        var container: NSView? = field.superview
+        while let view = container, !view.isKind(of: containerClass) {
+            container = view.superview
+        }
+        guard let container else {
+            it_fatalError("No status bar container")
+        }
+        XCTAssertTrue(container.trackingAreas.contains { area in
+            area.owner === container && area.options.contains(.mouseMoved) && area.options.contains(.mouseEnteredAndExited)
+        })
+    }
+
     func testFindBarNamesItsSearchField() {
         // MinimalFindView isn't visible to Swift.
         let findViewClass = NSClassFromString("MinimalFindView") as! NSView.Type

@@ -316,6 +316,13 @@ struct Fingerprint {
 final class AITabTitleGenerator {
     static let instance = AITabTitleGenerator()
 
+    // Whether AI tab titles may run at all: the feature's own setting, and the
+    // administrator's GenerativeAIAllowed lockout. The model is on-device, but the
+    // lockout is meant to block all generative AI.
+    static var isEnabled: Bool {
+        return iTermAdvancedSettingsModel.aiGeneratedTabTitles() && iTermAdvancedSettingsModel.generativeAIAllowed()
+    }
+
     // Longest title we will hand back. Tabs are narrow, and an over-long reply
     // is usually the model having ignored the length guide.
     private static let maximumTitleLength = 40
@@ -393,7 +400,7 @@ final class AITabTitleGenerator {
     /// screen may still be unchanged or not worth naming.
     func shouldAttempt(forSessionID sessionID: String) -> Bool {
         dispatchPrecondition(condition: .onQueue(.main))
-        guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+        guard Self.isEnabled else {
             return false
         }
         guard mayStartGeneration(sessionID) else {
@@ -435,7 +442,7 @@ final class AITabTitleGenerator {
                       context: () -> AITabTitleContext,
                       completion: @escaping (String?) -> Void) {
         dispatchPrecondition(condition: .onQueue(.main))
-        guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+        guard Self.isEnabled else {
             return
         }
         guard mayStartGeneration(sessionID) else {

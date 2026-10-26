@@ -132,6 +132,10 @@ NSString *const iTermTmuxWindowCacheDidChange = @"iTermTmuxWindowCacheDidChange"
                 if ([controller window:window.number] != nil) {
                     return;
                 }
+                // A parked workgroup peer's window is not something to open.
+                if ([controller isParkedWindow:window.number]) {
+                    return;
+                }
                 [results addObject:[[iTermTmuxWindowCacheWindowInfo alloc] initWitCacheWindow:window
                                                                                       session:session
                                                                                    clientName:client.identifier]];

@@ -27,19 +27,79 @@ enum TmuxOwnership {
     static let recordTag = "c_"
     /// Distinguishes list-clients lines from show-options lines in the combined output.
     static let clientLinePrefix = "IT2CLIENT"
+    /// Marks the one line naming the tmux session that holds the caller's pane.
+    static let paneSessionLinePrefix = "IT2PANESESSION"
+
+    /// A $TMUX value supplied on the command line with --tmux, when the caller gave one.
+    ///
+    /// Set once by the command driver (runParsedCommand) before the command runs, because a
+    /// caller that passes --tmux may not have TMUX in its own environment: a hook spawned with a
+    /// trimmed environment, a peer launched from elsewhere, or a test. Without this such a call
+    /// addresses the right pane but picks its socket from the inherited IT2_SUITE, which is a
+    /// different instance whenever the two disagree.
+    static var explicitTMUX: String?
+
+    /// A $TMUX_PANE supplied on the command line with --tmux-pane, when the caller gave one.
+    /// Set alongside explicitTMUX; see that property.
+    static var explicitTmuxPane: String?
+
+    /// Which $TMUX_PANE to believe, by the same rule as effectiveTMUX.
+    static func effectivePane(explicit: String?, environment: [String: String]) -> String? {
+        return effectiveTMUX(explicit: explicit,
+                             environment: ["TMUX": environment["TMUX_PANE"] ?? ""])
+    }
+
+    /// Which $TMUX value to believe: an explicit --tmux beats the environment, and an empty
+    /// value counts as absent on both sides.
+    static func effectiveTMUX(explicit: String?, environment: [String: String]) -> String? {
+        for candidate in [explicit, environment["TMUX"]] {
+            if let candidate, !candidate.isEmpty {
+                return candidate
+            }
+        }
+        return nil
+    }
 
     /// The records of the iTerm2 clients currently attached to the tmux server that
     /// `environment` says this process is inside, most recently attached first. Empty when not
     /// inside tmux, when the server cannot be asked, or when no attached client has advertised.
     static func advertisedRecords(environment: [String: String]) -> [[String: String]] {
-        guard let tmux = environment["TMUX"], !tmux.isEmpty,
+        guard let tmux = effectiveTMUX(explicit: explicitTMUX, environment: environment),
               let server = TmuxAddress.server(inTMUX: tmux) else {
             return []
         }
-        guard let output = queryServer(socketPath: server.socketPath) else {
+        guard let output = queryServer(socketPath: server.socketPath,
+                                       pane: effectivePane(explicit: explicitTmuxPane,
+                                                           environment: environment)) else {
             return []
         }
         return records(inServerOutput: output)
+    }
+
+    /// Pick which advertised iTerm2 to talk to, from `records` in the caller's order (newest
+    /// attacher first), skipping advertisers whose socket is gone: that iTerm2 quit without its
+    /// record being pruned, and the next one down may well be live.
+    ///
+    /// Returns the record AND the socket path together, deliberately. The socket and the
+    /// AppleScript cookie target have to come from the same advertiser: choosing them separately
+    /// is how a call connects to one instance and then asks another for a cookie, which the first
+    /// rejects, so the command fails with "Authentication failed" having done nothing.
+    ///
+    /// Records without a suite are skipped, which also excludes a remote record (sock/nonce), as
+    /// that names a framer socket rather than a local instance.
+    static func chooseRecord(_ records: [[String: String]],
+                             socketPathForSuite: (String) -> String,
+                             socketExists: (String) -> Bool) -> (record: [String: String], socketPath: String)? {
+        for record in records {
+            guard let suite = record["suite"], !suite.isEmpty else {
+                continue
+            }
+            let candidate = socketPathForSuite(suite)
+            if socketExists(candidate) {
+                return (record, candidate)
+            }
+        }
+        return nil
     }
 
     /// Parse the combined output of
@@ -53,10 +113,22 @@ enum TmuxOwnership {
         // client_control_mode (very old tmux prints nothing for an unknown format) is accepted;
         // only an explicit 0 rejects.
         var attachedAt = [String: Int]()
+        var clientSession = [String: String]()
         var recordsByClient = [String: [String: String]]()
+        var paneSession: String?
         for line in output.split(separator: "\n", omittingEmptySubsequences: true) {
+            if line.hasPrefix(paneSessionLinePrefix + "\t") {
+                paneSession = String(line.dropFirst(paneSessionLinePrefix.count + 1))
+                    .trimmingCharacters(in: .whitespaces)
+                continue
+            }
             if line.hasPrefix(clientLinePrefix + "\t") {
                 let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
+                // Absent on tmux too old for #{client_session}; then nothing is preferred and
+                // the newest-attacher order stands on its own.
+                if fields.count >= 5, !fields[4].isEmpty {
+                    clientSession[String(fields[1])] = String(fields[4])
+                }
                 guard fields.count >= 4 else {
                     continue
                 }
@@ -91,10 +163,26 @@ enum TmuxOwnership {
             recordsByClient[name] = record
         }
         // Newest attach first; name as a tiebreaker so the order is deterministic.
-        let ordered = attachedAt.keys.sorted { lhs, rhs in
+        var ordered = attachedAt.keys.sorted { lhs, rhs in
             let l = attachedAt[lhs]!
             let r = attachedAt[rhs]!
             return l != r ? l > r : lhs < rhs
+        }
+        // Then float the clients attached to the session holding this pane. Only those can
+        // place it: a client on another session of the same server answers "no session is
+        // showing that tmux pane" however recently it attached. Newest-first was the whole
+        // rule before, which is why creating a second tmux session silently redirected every
+        // call to a connection that could not serve it (2026-09-28). The others stay as
+        // fallbacks rather than being dropped, since the preferred client's socket may be gone.
+        if let paneSession, !paneSession.isEmpty {
+            // Swift's sort is not stable, so carry the existing position rather than relying
+            // on it: newest-first must still hold within each group.
+            let position = Dictionary(uniqueKeysWithValues: ordered.enumerated().map { ($1, $0) })
+            ordered.sort { lhs, rhs in
+                let lp = clientSession[lhs] == paneSession ? 0 : 1
+                let rp = clientSession[rhs] == paneSession ? 0 : 1
+                return lp != rp ? lp < rp : position[lhs]! < position[rhs]!
+            }
         }
         return ordered.compactMap { recordsByClient[$0] }
     }
@@ -128,19 +216,29 @@ enum TmuxOwnership {
     /// The tmux invocation, as argv after the socket. One process for both queries: tmux runs a
     /// `;`-separated command sequence in a single client. The format uses real tab characters,
     /// since tmux does not interpret backslash escapes in a format string.
-    static func queryArguments(socketPath: String) -> [String] {
-        let format = [clientLinePrefix, "#{client_name}", "#{client_control_mode}", "#{client_created}"]
+    static func queryArguments(socketPath: String, pane: String?) -> [String] {
+        // client_session is what lets the caller reach the connection that can actually place
+        // its pane: one server can have several attached control-mode clients, each driving a
+        // DIFFERENT tmux session, and only the one attached to the pane's session can show it.
+        let format = [clientLinePrefix, "#{client_name}", "#{client_control_mode}",
+                      "#{client_created}", "#{client_session}"]
             .joined(separator: "\t")
-        return ["tmux", "-S", socketPath, "list-clients", "-F", format, ";", "show-options", "-g"]
+        var arguments = ["tmux", "-S", socketPath, "list-clients", "-F", format, ";",
+                         "show-options", "-g"]
+        if let pane, !pane.isEmpty {
+            arguments += [";", "display-message", "-p", "-t", pane,
+                          paneSessionLinePrefix + "\t#{session_id}"]
+        }
+        return arguments
     }
 
     /// Run the query and return its stdout, or nil if tmux cannot be run, fails, or does not
     /// answer promptly. A server that has stopped responding must not make every it2 call hang,
     /// so the read happens on another thread and the wait is bounded; on timeout the client is
     /// killed and the pane's own environment is a good enough answer.
-    private static func queryServer(socketPath: String) -> String? {
+    private static func queryServer(socketPath: String, pane: String?) -> String? {
         return runCapturingStdout(executable: "/usr/bin/env",
-                                  arguments: queryArguments(socketPath: socketPath),
+                                  arguments: queryArguments(socketPath: socketPath, pane: pane),
                                   timeout: 2)
     }
 

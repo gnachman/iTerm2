@@ -149,6 +149,10 @@
     VT100GridCoord offset = self.offset;
     for (iTermTmuxLayoutBuilderNode *obj in _children) {
         obj.offset = offset;
+        if ([obj isKindOfClass:[iTermTmuxLayoutBuilderInteriorNode class]]) {
+            // The child placed its children before its own offset was known.
+            [(iTermTmuxLayoutBuilderInteriorNode *)obj updateOffsets];
+        }
         if (_verticalDividers) {
             offset.x += obj.size.width + 1;
         } else {

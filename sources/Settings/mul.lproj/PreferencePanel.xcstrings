@@ -2258,7 +2258,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザ"
+            "value" : "ユーザー"
           }
         },
         "pt-BR" : {
@@ -3331,6 +3331,48 @@
         }
       }
     },
+    "7MO-8Z-Pic.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"Show menu bar icon\"; ObjectID = \"7MO-8Z-Pic\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menüleistensymbol anzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show menu bar icon"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーアイコンを表示"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar ícone na barra de menus"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывать значок в строке меню"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示菜单栏图标"
+          }
+        }
+      }
+    },
     "7nl-48-Eh3.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"AI Chat (no function calling)\"; ObjectID = \"7nl-48-Eh3\";",
       "extractionState" : "extracted_with_value",
@@ -3488,7 +3530,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Значок:"
+            "value" : "Бейдж:"
           }
         },
         "zh-Hans" : {
@@ -9026,7 +9068,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Etiquetas:"
+            "value" : "Tags:"
           }
         },
         "ru" : {
@@ -21475,6 +21517,48 @@
         }
       }
     },
+    "bS4-Tc-6yH.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Bell sound:\"; ObjectID = \"bS4-Tc-6yH\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaltonklang:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bell sound:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ベルの音:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Som da campainha:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Звук сигнала:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "铃声音效："
+          }
+        }
+      }
+    },
     "BuS-g8-Dfb.title" : {
       "comment" : "Class = \"NSTextFieldCell\"; title = \"seconds\"; ObjectID = \"BuS-g8-Dfb\";",
       "extractionState" : "extracted_with_value",
@@ -24362,7 +24446,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Введите текст значка"
+            "value" : "Введите текст бейджа"
           }
         },
         "zh-Hans" : {
@@ -29666,7 +29750,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Значок:"
+            "value" : "Бейдж:"
           }
         },
         "zh-Hans" : {
@@ -30128,7 +30212,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Справка по синтаксису"
+            "value" : "Синтаксис"
           }
         },
         "zh-Hans" : {
@@ -30188,7 +30272,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Rückgängig“ kann eine geschlossene Sitzung für bis zu so viele Sekunden wiederherstellen:"
+            "value" : "Sekunden, in denen „Rückgängig“ eine geschlossene Sitzung wiederherstellen kann:"
           }
         },
         "en" : {
@@ -33278,7 +33362,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Введите текст значка (интерполированная строка)"
+            "value" : "Введите текст бейджа (интерполированная строка)"
           }
         },
         "zh-Hans" : {
@@ -34129,6 +34213,48 @@
         }
       }
     },
+    "MtC-QF-N2i.placeholderString" : {
+      "comment" : "Class = \"NSTextFieldCell\"; placeholderString = \"Interpolated string to show in menu bar (global scope)\"; ObjectID = \"MtC-QF-N2i\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interpolierte Zeichenfolge für die Menüleiste (global)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Interpolated string to show in menu bar (global scope)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーに表示する補間文字列（グローバルスコープ）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "String interpolada a mostrar na barra de menus (escopo global)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интерполированный текст в строке меню (глобально)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要在菜单栏中显示的内插字符串（全局作用域）"
+          }
+        }
+      }
+    },
     "NbC-dp-wjc.title" : {
       "comment" : "Class = \"NSButtonCell\"; title = \"Each tab may have its own window title\"; ObjectID = \"NbC-dp-wjc\";",
       "extractionState" : "extracted_with_value",
@@ -34587,6 +34713,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "备用鼠标滚动是一项响应滚轮/滚动手势发送方向键的功能。如果你希望在备用屏幕模式下始终开启，请启用此选项。"
+          }
+        }
+      }
+    },
+    "nN8-UW-Jff.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"API access over ssh…\"; ObjectID = \"nN8-UW-Jff\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API access over ssh…"
           }
         }
       }
@@ -38876,7 +39014,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Значок представляет собой текст, который отображается в правом верхнем углу сессии."
+            "value" : "Бейдж представляет собой текст, который отображается в правом верхнем углу сессии."
           }
         },
         "zh-Hans" : {
@@ -40663,6 +40801,48 @@
         }
       }
     },
+    "tXe-jL-3Kg.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"…even to views like Search or Composer\"; ObjectID = \"tXe-jL-3Kg\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…auch zu Ansichten wie Suche oder Composer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "…even to views like Search or Composer"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…検索やコンポーザーなどのビューにも"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…mesmo para visualizações como Busca ou Compositor"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…даже к таким элементам, как поиск или Композитор"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…包括搜索或 Composer 等视图"
+          }
+        }
+      }
+    },
     "tyx-QN-l9J.ibShadowedToolTip" : {
       "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"If this is on then transparency can be toggled window-by-window under View>Use Transparency\"; ObjectID = \"tyx-QN-l9J\";",
       "extractionState" : "extracted_with_value",
@@ -41024,7 +41204,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Etiquetas >"
+            "value" : "Tags >"
           }
         },
         "ru" : {
@@ -42003,6 +42183,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他："
+          }
+        }
+      }
+    },
+    "uzZ-ah-yKW.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Menu bar icon:\"; ObjectID = \"uzZ-ah-yKW\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menüleistensymbol:"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Menu bar icon:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーアイコン:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ícone da barra de menus:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Значок в строке меню:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "菜单栏图标："
           }
         }
       }
@@ -43028,7 +43250,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Значок:"
+            "value" : "Бейдж:"
           }
         },
         "zh-Hans" : {

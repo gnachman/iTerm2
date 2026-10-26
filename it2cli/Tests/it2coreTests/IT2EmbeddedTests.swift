@@ -39,3 +39,50 @@ final class IT2EmbeddedTests: XCTestCase {
         XCTAssertEqual(err(), ["No aliases defined in config file"])
     }
 }
+// MARK: - stdin and environment reach a command (3b)
+
+/// The wire carries a remote command's stdin and an allowlisted slice of its environment. These
+/// pin that IT2Embedded actually hands both to the IT2Context a command reads, rather than
+/// stopping at the boundary. The equivalent gap one layer up is what made the PATH regression
+/// possible: every unit test passed while the integration was wrong.
+final class IT2EmbeddedStdinEnvTests: XCTestCase {
+    private func contextSeenBy(arguments: [String],
+                               stdin: Data,
+                               environment: [String: String]) -> IT2Context? {
+        var captured: IT2Context?
+        IT2Context.captureForTesting = { captured = $0 }
+        defer { IT2Context.captureForTesting = nil }
+        _ = IT2Embedded.run(arguments: arguments,
+                            io: IT2IO(stdout: { _ in }, stderr: { _ in }),
+                            channel: FakeChannel(),
+                            originIdentifier: "conductor-A",
+                            stdin: stdin,
+                            environment: environment)
+        return captured
+    }
+
+    func testStdinReachesTheContext() throws {
+        let payload = Data(#"{"hook_event_name":"Stop"}"#.utf8)
+        let context = try XCTUnwrap(contextSeenBy(arguments: ["--version"],
+                                                  stdin: payload,
+                                                  environment: [:]))
+        XCTAssertEqual(context.stdin(), payload)
+    }
+
+    func testEnvironmentReachesTheContext() throws {
+        let context = try XCTUnwrap(contextSeenBy(arguments: ["--version"],
+                                                  stdin: Data(),
+                                                  environment: ["TMUX_PANE": "%3"]))
+        XCTAssertEqual(context.environment["TMUX_PANE"], "%3")
+    }
+
+    // A remote context must not fall back to the Mac's own environment: that would make a
+    // remote command address a local session.
+    func testTheMacsEnvironmentIsNotVisibleToARemoteCommand() throws {
+        let context = try XCTUnwrap(contextSeenBy(arguments: ["--version"],
+                                                  stdin: Data(),
+                                                  environment: ["TMUX_PANE": "%3"]))
+        XCTAssertEqual(context.environment, ["TMUX_PANE": "%3"],
+                       "only what came over the wire: \(context.environment)")
+    }
+}

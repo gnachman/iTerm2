@@ -138,7 +138,7 @@ extension App {
 
             if result.resultOneOfCase == .getPreferenceResult,
                let getResult = result.getPreferenceResult {
-                let version = getResult.jsonValue?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) ?? "unknown"
+                let version = getResult.jsonValue.map { jsonStringValue($0) } ?? "unknown"
                 ctx.out("iTerm2 version: \(version)")
             } else {
                 ctx.out("iTerm2 version: unknown")
@@ -204,7 +204,7 @@ extension App {
                     throw IT2Error.apiError("Could not get theme")
                 }
 
-                let attributes = trimJSONQuotes(val)
+                let attributes = jsonStringValue(val)
                 ctx.out("Current theme: \(attributes)")
             }
         }
@@ -282,7 +282,7 @@ extension App {
                    vr.valuesArray_Count > 0,
                    let name = vr.valuesArray.object(at: 0) as? String,
                    name != "null" {
-                    ctx.out("Session name: \(name.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))")
+                    ctx.out("Session name: \(jsonStringValue(name))")
                 }
             } else {
                 ctx.out("No current session")

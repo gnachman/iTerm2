@@ -159,6 +159,60 @@ final class FloatingPaneDropTests: XCTestCase {
         XCTAssertEqual(tab(source).tiledSessions(), [first, second])
     }
 
+    /// QA finding F-050: docking the active float by dragging it onto a tiled pane (Control held)
+    /// keeps focus on it, even when another float would otherwise take over as active.
+    func testDockingAFloatByDragKeepsItActiveWhenAnotherFloatExists() {
+        guard let first = tab(source).tiledSessions()?.first,
+              let controller = MovePaneController.sharedInstance() else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = source.split(first, vertically: true)
+        _ = source.addFloat(frame: floatFrame)
+        let front = source.addFloat(frame: NSRect(x: 200, y: 150, width: 300, height: 200))
+        tab(source).setActiveSession(first)
+        tab(source).setActiveSession(front)
+        XCTAssertTrue(tab(source).activeSession === front, "test setup: the front float is active")
+
+        controller.movePane(front)
+        defer {
+            controller.exitMovePaneMode()
+        }
+        XCTAssertTrue(controller.drop(in: second, half: .eastHalf, at: .zero))
+
+        XCTAssertEqual(tab(source).tiledSessions()?.count, 3, "the float was docked")
+        XCTAssertTrue(tab(source).activeSession === front, "the docked pane keeps focus")
+    }
+
+    /// QA finding F-257: a workgroup member must not become a float, so dropping it on a float in
+    /// another tab is refused, as swapping it with a float is.
+    func testAWorkgroupMemberIsNotDroppedAsAFloat() {
+        guard let first = tab(source).tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let member = source.split(first, vertically: true)
+        let root = iTermWorkgroupSessionConfig(uniqueIdentifier: "root", parentID: nil, kind: .root,
+                                               profileGUID: nil, command: "", urlString: "",
+                                               toolbarItems: [], displayName: "Main")
+        let workgroup = iTermWorkgroup(uniqueIdentifier: "wg", name: "WG", sessions: [root])
+        guard let instance = iTermWorkgroupInstance.enter(workgroup: workgroup,
+                                                          on: member,
+                                                          spawner: FakeWorkgroupSpawner()) else {
+            XCTFail("Could not enter the workgroup")
+            return
+        }
+        defer {
+            iTermWorkgroupController.instance.exit(on: member)
+        }
+        XCTAssertTrue(member.workgroupInstance === instance, "test setup: the pane is a workgroup member")
+        _ = destination.addFloat(frame: floatFrame)
+
+        XCTAssertFalse(drop(member, in: destination, visual: NSPoint(x: 100, y: 120)))
+        XCTAssertEqual(tab(source).tiledSessions(), [first, member], "the member stays where it was")
+        XCTAssertEqual(tab(destination).floatingSessions()?.count, 1)
+    }
+
     func testDropIsRefusedWhenTheDestinationLayoutIsLocked() {
         let float = source.addFloat(frame: floatFrame)
         destination.terminal.perform(NSSelectorFromString("toggleLayoutLocked:"), with: nil)

@@ -67,6 +67,7 @@ NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCha
 NSString *const iTermApplicationInputMethodEditorDidOpen = @"iTermApplicationInputMethodEditorDidOpen";
 NSString *const iTermApplicationInputMethodEditorDidClose = @"iTermApplicationInputMethodEditorDidClose";
 
+NSString *const iTermApplicationIsUIElementDidChange = @"iTermApplicationIsUIElementDidChange";
 NSString *const iTermApplicationWillShowModalWindow = @"iTermApplicationWillShowModalWindow";
 NSString *const iTermApplicationDidCloseModalWindow = @"iTermApplicationDidCloseModalWindow";
 
@@ -973,6 +974,8 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         });
     }
     [[iTermAIMenuBarStatusController sharedInstance] refresh];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationIsUIElementDidChange
+                                                        object:self];
 }
 
 - (NSArray<NSWindow *> *)orderedWindowsPlusVisibleHotkeyPanels {

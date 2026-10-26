@@ -11,6 +11,8 @@
 
 @protocol VT100ScreenConfiguration;
 @class iTermEchoProbe;
+@class iTermTTYModeRepairer;
+@class iTermFramerFlowLedger;
 @protocol iTermEchoProbeDelegate;
 @protocol iTermLargeContentProvider;
 @protocol iTermOrderedToken;
@@ -60,6 +62,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL exited;
 @property (nonatomic, strong, readonly, nullable) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
+// Told when commands start and finish so it can fix tty modes a shell recorded while an
+// abandoned ssh had the tty in raw mode (F-460).
+@property (atomic, strong, nullable) iTermTTYModeRepairer *ttyModeRepairer;
 @property (nonatomic, weak, nullable) id<iTermEchoProbeDelegate> echoProbeDelegate;
 @property (nullable, nonatomic, strong) VT100ScreenState *mainThreadCopy;
 
@@ -452,6 +457,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 @property (nonatomic) BOOL hasMuteCoprocess;
 @property (nonatomic) BOOL suppressAllOutput;
 
+// Shared with the session's conductor, which reads what flow-controlled frames arrived and
+// executed. Set once when the session is created; used on the PTY and mutation threads.
+@property (atomic, strong, nullable) iTermFramerFlowLedger *flowLedger;
+// Set on a workgroup peer's session whose program is a pane of its leader's framer: everything
+// its token executor runs is recorded here, so the leader's flow control learns when this
+// session has consumed the pane's output.
+@property (atomic, strong, nullable) iTermFramerFlowLedger *consumptionLedger;
+
 // Kind of the most-recently-opened OSC 133;A / 133;P. The delegate methods
 // for `terminalCommandDidStart` and friends consult this to decide whether
 // the matching B closes a real command read (.initial) or a non-input
@@ -523,6 +536,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)pruneAidRegistry;
 
 - (void)threadedReadTask:(char *)buffer length:(int)length;
+- (void)flushParserAsynchronously;
 - (void)addTokens:(CVector)vector
       lengthTotal:(int)lengthTotal
 lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
@@ -619,7 +633,7 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 
 #pragma mark - SSH
 
-- (NSString *)sshEndBannerTerminatingCount:(NSInteger)count newLocation:(NSString *)sshLocation;
+- (NSString *)sshEndBannerTerminatingCount:(NSInteger)count newLocation:(NSString * _Nullable)sshLocation;
 
 #pragma mark - DVR
 

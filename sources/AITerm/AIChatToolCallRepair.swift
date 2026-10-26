@@ -30,13 +30,17 @@
 // change.
 enum AIChatToolCallRepair {
     // The output body used to stand in for a tool call whose result never
-    // arrived (an abandoned `.ask`, or a parked request cleared on the next
-    // user message). Shared with ChatAgent.translate so the live reload path
-    // and the repair pass emit identical filler text.
+    // arrived (an abandoned `.ask`, a parked request cleared on the next user
+    // message, or a restart mid-call). The transcript can't tell these apart,
+    // and the usual one is a user who sent a new message instead of answering
+    // the permission prompt, so the text must fit all of them and must not
+    // nudge the model into running a command the user passed over.
     static let interruptedToolCallOutput =
-        "[iTerm2 was restarted before this tool call completed. "
-        + "The call did not finish; assume no side effects took place "
-        + "and re-issue if needed.]"
+        "[This tool call did not complete. Usually this means the user "
+        + "moved on without answering the request for permission to run it. "
+        + "It may also have been interrupted, for example by iTerm2 "
+        + "restarting. Its effects are unknown. Do not run it again unless "
+        + "the user asks.]"
 
     // Repair both orphan directions a rebuilt prompt can contain: a tool_result
     // with no matching tool_use, and a tool_use with no matching tool_result.

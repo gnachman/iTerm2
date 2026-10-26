@@ -577,6 +577,14 @@ class CockpitWindowController: NSWindowController {
         composerVC.makeFirstResponder()
     }
 
+    // Shell > Close (Cmd-W) is wired to closeCurrentSession: rather than
+    // performClose:, so without this the menu item is disabled while the
+    // cockpit is key and Cmd-W can't close it.
+    @objc(closeCurrentSession:)
+    func closeCurrentSession(_ sender: Any?) {
+        window?.performClose(sender)
+    }
+
     // MARK: - Toolbar actions
 
     // Give the settings item a real bordered button (so the popover has
@@ -924,6 +932,9 @@ class CockpitWindowController: NSWindowController {
         // Display names of chips whose targets no longer exist (their
         // tab or window was closed). They're skipped, not fatal.
         var skippedNames: [String] = []
+        // Chip guids of those gone targets, removed from the composer after
+        // the send so later sends don't skip them again.
+        var goneChipGuids = Set<String>()
         if chipTokens.isEmpty {
             guard !command.isEmpty else { return }
             sessions = selectedRowSessions()
@@ -949,6 +960,7 @@ class CockpitWindowController: NSWindowController {
                 return
             case .send(let skipped):
                 skippedNames = skipped
+                goneChipGuids = Self.chipGuids(forTokens: unknown)
             }
             sessions = resolved
         }
@@ -964,17 +976,83 @@ class CockpitWindowController: NSWindowController {
             return
         }
         DLog("Cockpit sent command to \(sent) session(s)")
+        if let remaining = Self.removingChips(goneChipGuids,
+                                              from: composerVC.attributedStringValue,
+                                              selection: composerVC.composerSelectedRange) {
+            DLog("Cockpit dropping chips for gone targets \(goneChipGuids)")
+            isSyncingTargets = true
+            composerVC.replace(NSRange(location: 0, length: composerVC.attributedStringValue.length),
+                               with: remaining.text)
+            // A selection send leaves the field as it was, selection included.
+            composerVC.composerSelectedRange = remaining.selection
+            isSyncingTargets = false
+            // The replace evaluated the picker with the caret at the end of
+            // the field; evaluate it again for the restored selection.
+            updateMentionPicker()
+        }
         if Self.clearsComposerAfterSend(selectedText: selectedText) {
             clearCommandView()
         }
-        let sentMessage = String(localized: "Cockpit.SentToSessions", defaultValue: "Sent to \(sent) sessions", comment: "Cockpit status; %lld is the number of sessions a command was sent to")
+        setCockpitStatus(Self.sentStatus(sent: sent, skippedNames: skippedNames),
+                         isError: !skippedNames.isEmpty)
+    }
+
+    // The status after a send. Naming skipped targets is one localized
+    // string so every language gets complete, punctuated sentences.
+    static func sentStatus(sent: Int, skippedNames: [String]) -> String {
         guard !skippedNames.isEmpty else {
-            setCockpitStatus(sentMessage, isError: false)
-            return
+            return String(localized: "Cockpit.SentToSessions", defaultValue: "Sent to \(sent) sessions", comment: "Cockpit status; %lld is the number of sessions a command was sent to")
         }
         let list = skippedNames.joined(separator: ", ")
-        let skippedMessage = String(localized: "Cockpit.SkippedGoneTargets", defaultValue: "Skipped targets that no longer exist: \(list)", comment: "Cockpit status appended after the sent count when some @mention targets were closed; the placeholder is a comma-separated list of session, tab, or window names")
-        setCockpitStatus(sentMessage + " " + skippedMessage, isError: true)
+        return String(localized: "Cockpit.SentToSessionsSkippingGoneTargets", defaultValue: "Sent to \(sent) sessions. Skipped targets that no longer exist: \(list)", comment: "Cockpit status after a send that skipped @mention targets that were closed; the number is how many sessions got the command and the second placeholder is a comma-separated list of session, tab, or window names")
+    }
+
+    // The chip guids for target tokens ("@<guid>", as chipTokensAndCommand
+    // makes them).
+    static func chipGuids(forTokens tokens: [String]) -> Set<String> {
+        return Set(tokens.map { $0.hasPrefix("@") ? String($0.dropFirst()) : $0 })
+    }
+
+    // `attributed` without the mention chips whose guid is in `guids`
+    // (each with the space after it), and `selection` moved to cover the
+    // same remaining text, or nil when it holds none of them.
+    static func removingChips(_ guids: Set<String>,
+                              from attributed: NSAttributedString,
+                              selection: NSRange) -> (text: NSAttributedString, selection: NSRange)? {
+        guard !guids.isEmpty else {
+            return nil
+        }
+        let ns = attributed.string as NSString
+        var doomedRanges: [NSRange] = []
+        attributed.enumerateAttribute(.attachment,
+                                      in: NSRange(location: 0, length: attributed.length),
+                                      options: []) { value, range, _ in
+            if let mention = value as? ChatSessionMentionAttachment, guids.contains(mention.guid) {
+                var doomed = range
+                if NSMaxRange(doomed) < ns.length && ns.character(at: NSMaxRange(doomed)) == 0x20 {
+                    doomed.length += 1
+                }
+                doomedRanges.append(doomed)
+            }
+        }
+        guard !doomedRanges.isEmpty else {
+            return nil
+        }
+        let result = NSMutableAttributedString(attributedString: attributed)
+        for range in doomedRanges.reversed() {
+            result.deleteCharacters(in: range)
+        }
+        // Where `position` lands once the doomed ranges are gone.
+        func adjusted(_ position: Int) -> Int {
+            var removedBefore = 0
+            for range in doomedRanges where range.location < position {
+                removedBefore += min(position, NSMaxRange(range)) - range.location
+            }
+            return position - removedBefore
+        }
+        let start = adjusted(selection.location)
+        let end = adjusted(NSMaxRange(selection))
+        return (result, NSRange(location: start, length: end - start))
     }
 
     enum ChipSendPlan: Equatable {
@@ -1095,7 +1173,7 @@ class CockpitWindowController: NSWindowController {
                 displayName: target.name,
                 font: font,
                 color: NSColor.linkColor,
-                symbolName: symbolName(forToken: target.token)))
+                symbolName: ChatMentionDisplay.symbolName(forToken: target.token)))
             result.append(NSAttributedString(string: " ",
                                              attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
         }
@@ -1178,36 +1256,23 @@ class CockpitWindowController: NSWindowController {
             mentionPicker.update(query: context.query)
         } else {
             mentionPicker.show(anchorView: composerVC.completionAnchorView,
-                               query: context.query) { [weak self] guid, displayName in
-                self?.insertMention(guid: guid, displayName: displayName)
+                               query: context.query) { [weak self] choice in
+                self?.insertMention(choice)
             }
         }
     }
 
-    // The chip icon for a target token: window, tab, or (default)
-    // session. Matches the window/tab/pane glyphs used elsewhere (the
-    // Companion app's session tree): macwindow / folder / terminal.
-    private func symbolName(forToken token: String) -> String {
-        if token.hasPrefix("win:") {
-            return SFSymbol.macwindow.rawValue
-        }
-        if token.hasPrefix("tab:") {
-            return SFSymbol.folder.rawValue
-        }
-        return SFSymbol.terminal.rawValue
-    }
-
     // Replace the first at-mention run with an atomic chip token.
-    private func insertMention(guid: String, displayName: String) {
+    private func insertMention(_ choice: ChatMentionPickerController.Choice) {
         guard let range = firstMentionContext()?.range ?? activeMentionRange else { return }
         let font = profileASCIIFont()
         let mention = NSMutableAttributedString(
             attributedString: ChatSessionMentionAttachment.attributedString(
-                guid: guid,
-                displayName: displayName,
+                guid: choice.guid,
+                displayName: choice.displayName,
                 font: font,
                 color: NSColor.linkColor,
-                symbolName: symbolName(forToken: guid)))
+                symbolName: choice.symbolName))
         mention.append(NSAttributedString(string: " ",
                                           attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
         composerVC.replace(range, with: mention)

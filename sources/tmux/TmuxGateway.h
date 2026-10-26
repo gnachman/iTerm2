@@ -19,7 +19,13 @@ typedef NS_OPTIONS(int, kTmuxGatewayCommandOptions) {
     kTmuxGatewayCommandWantsData = (1 << 1),
 
     // If this exact command was sent and has been pending for a while, offer to detach.
-    kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate = (1 << 2)
+    kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate = (1 << 2),
+
+    // With kTmuxGatewayCommandShouldTolerateErrors: tmux may refuse the command because of its
+    // state, but should always be able to run it, so an error saying it couldn't (a parse error,
+    // an unknown flag) is a bug in iTerm2 and is reported. Don't use this on commands that are
+    // expected to fail that way, such as the phony command or probes for newer tmux features.
+    kTmuxGatewayCommandReportMalformedCommandErrors = (1 << 3)
 };
 
 @class TmuxController;
@@ -121,6 +127,10 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 - (instancetype)init NS_UNAVAILABLE;
 
 - (BOOL)versionAtLeastDecimalNumberWithString:(NSString *)string;
+
+// Whether tmux's error text for a command means it couldn't run the command at all (iTerm2 sent a
+// bad command) rather than refusing it because of the server's state.
++ (BOOL)errorIndicatesMalformedCommand:(NSString *)error;
 // YES until the server is known to be 1.9 or later. See the delegate method of the same name.
 - (BOOL)serverMayOmitEndGuardBeforeExit;
 
@@ -144,6 +154,15 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
    responseSelector:(SEL)selector
      responseObject:(id)obj
               flags:(int)flags;
+
+// Send a guarded command: a single `if -F` whose two branches are each exactly one command (see
+// TmuxWorkgroupCommands). tmux replies with two blocks, the `if` and then the branch it ran. The
+// target gets the branch's reply, or nil if the branch failed or the `if` itself failed (e.g. its
+// -t target is gone), in which case no branch ran. Errors are tolerated.
+- (void)sendGuardedCommand:(NSString *)command
+            responseTarget:(id)target
+          responseSelector:(SEL)selector
+            responseObject:(id)obj;
 
 - (void)sendCommandList:(NSArray *)commandDicts;
 // Set initial to YES when notifications should be accepted after the last

@@ -36,6 +36,16 @@ struct Chat: Codable {
     // so a chat keeps its provider across restarts.
     var modelName: String?
 
+    // The vendor (iTermAIVendor raw value) modelName belongs to, stamped whenever
+    // modelName is set. A pinned name that later stops resolving (e.g. an Ollama
+    // tag that was removed) is resolved only within this vendor, so the chat is
+    // never sent to a different vendor. nil for a chat pinned before this was
+    // stored whose vendor could not be inferred. It may also be
+    // LLMMetadata.manualModelPinVendor (1000), which is not a real vendor: the
+    // pin is a manual model on a non-Ollama API. Stored as a raw Int, not
+    // iTermAIVendor, so this struct stays Foundation-only (see blobProtocol).
+    var modelVendor: Int?
+
     // The protocol (iTermAIAPI raw value) this chat's wire-fragment blobs are
     // frozen to, stamped on the first blob capture. nil means the chat has not
     // been blob-migrated yet (a legacy chat, or one created before this feature):

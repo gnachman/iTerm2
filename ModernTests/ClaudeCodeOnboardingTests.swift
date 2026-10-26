@@ -23,6 +23,12 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class ClaudeCodeOnboardingTests: XCTestCase {
+    // Our hook entries have to live in THIS instance's dot dir to count as ours; a path
+    // elsewhere belongs to another install and must be left alone.
+    private var dotDir: String {
+        return FileManager.default.homeDirectoryDotDir() ?? "/tmp/no-dot-dir"
+    }
+
 
     // MARK: - parseCLAUDE_CONFIG_DIR
 
@@ -98,7 +104,7 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         let settings: [String: Any] = [
             "hooks": [
                 "Stop": [
-                    ["hooks": [["type": "command", "command": "/x/y/cc-status"]]]
+                    ["hooks": [["type": "command", "command": "\(dotDir)/cc-status"]]]
                 ]
             ]
         ]
@@ -115,7 +121,7 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
             "hooks": [
                 "Stop": [
                     ["hooks": [
-                        ["type": "command", "command": "/x/y/cc-status"],
+                        ["type": "command", "command": "\(dotDir)/cc-status"],
                         ["type": "command", "command": "/usr/local/bin/other-hook"],
                     ]]
                 ]
@@ -136,8 +142,9 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
     }
 
     func testStripRemovesWrapperButKeepsCompoundCommand() {
-        let wrapper = "[ -x \"$HOME/x/cc-status\" ] || exit 0; exec \"$HOME/x/cc-status\""
-        let compound = "$HOME/x/cc-status && /usr/local/bin/notify"
+        // In this instance's dot dir: another instance's entries are never ours to strip.
+        let wrapper = "[ -x \"\(dotDir)/cc-status\" ] || exit 0; exec \"\(dotDir)/cc-status\""
+        let compound = "\(dotDir)/cc-status && /usr/local/bin/notify"
         let redirect = "echo done > /tmp/cc-status"
         let settings: [String: Any] = [
             "hooks": [
@@ -167,18 +174,18 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
     // which is also what the next launch's reconcile reads. After a strip it
     // must report exactly the commands left behind, or the menu flips back.
     func testInstalledStateAfterStrip() {
-        let compound = "~/.config/iterm2/cc-status && say done"
+        let compound = "\(dotDir)/cc-status && say done"
         func settings(_ commands: [String]) -> [String: Any] {
             let entries = commands.map { ["type": "command", "command": $0] }
             return ["hooks": ["Stop": [["hooks": entries]], "Notification": [["hooks": entries]]]]
         }
 
-        let removed = makeTempSettings(settings(["/x/y/cc-status", "/usr/local/bin/other-hook"]))
+        let removed = makeTempSettings(settings(["\(dotDir)/cc-status", "/usr/local/bin/other-hook"]))
         XCTAssertTrue(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: removed))
         XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: removed), .success)
         XCTAssertFalse(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: removed))
 
-        let kept = makeTempSettings(settings(["/x/y/cc-status", compound]))
+        let kept = makeTempSettings(settings(["\(dotDir)/cc-status", compound]))
         XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: kept), .success)
         XCTAssertTrue(ClaudeCodeOnboarding.hooksInstalled(atSettingsURL: kept))
         let remaining = readJSON(kept).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:))
@@ -216,7 +223,7 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
             "model": "opus",
             "hooks": [
                 "Stop": [
-                    ["hooks": [["type": "command", "command": "/x/y/cc-status"]]]
+                    ["hooks": [["type": "command", "command": "\(dotDir)/cc-status"]]]
                 ]
             ]
         ]
@@ -263,7 +270,11 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         return url
     }
 
-    private let mergeCCStatusPath = "/Users/test/.config/iterm2/cc-status"
+    // In this instance's dot dir, or the merge would treat the entries it writes as another
+    // install's.
+    private var mergeCCStatusPath: String {
+        return (dotDir as NSString).appendingPathComponent("cc-status")
+    }
 
     private func merge(_ url: URL) -> ClaudeCodeInstallHooksResult {
         return ClaudeCodeOnboarding.mergeCCStatusHooks(intoSettingsURL: url,
@@ -295,6 +306,63 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         XCTAssertEqual(merge(url), .success)
         let commands = readJSON(url).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:)) ?? []
         XCTAssertEqual(commands.count, ClaudeCodeOnboarding.hookEventNames.count)
+    }
+
+    // Writing through a dangling symlink replaces the link with a regular
+    // file. An atomic write over the link used to carry the link's own mode
+    // (0755) to the new file, making settings.json executable. It must get
+    // the mode any newly created file gets.
+    func testMergeThroughDanglingSymlinkCreatesFileWithDefaultMode() throws {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cc-merge-dangling-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(at: dir) }
+        let claudeDir = dir.appendingPathComponent(".claude")
+        try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
+        let link = claudeDir.appendingPathComponent("settings.json")
+        try FileManager.default.createSymbolicLink(atPath: link.path,
+                                                   withDestinationPath: "../dotfiles/settings.json")
+        let reference = claudeDir.appendingPathComponent("reference")
+        try Data("{}".utf8).write(to: reference)
+
+        XCTAssertEqual(merge(link), .success)
+
+        let attributes = try FileManager.default.attributesOfItem(atPath: link.path)
+        XCTAssertEqual(attributes[.type] as? FileAttributeType, .typeRegular)
+        let mode = (attributes[.posixPermissions] as? NSNumber)?.intValue
+        let expected = (try FileManager.default.attributesOfItem(atPath: reference.path)[.posixPermissions] as? NSNumber)?.intValue
+        XCTAssertEqual(mode, expected)
+        XCTAssertEqual((mode ?? 0) & 0o111, 0, "settings.json is executable")
+        let commands = readJSON(link).map(ClaudeCodeOnboarding.ccStatusCommands(inSettings:)) ?? []
+        XCTAssertEqual(commands.count, ClaudeCodeOnboarding.hookEventNames.count)
+        // No temporary file left behind.
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: claudeDir.path).sorted(),
+                       ["reference", "settings.json"])
+    }
+
+    // When the dangling link's directory isn't writable, the error shown to
+    // the user must name settings.json, not the hidden temporary file the
+    // write goes through.
+    func testMergeThroughDanglingSymlinkInReadOnlyDirectoryNamesSettingsFile() throws {
+        try XCTSkipIf(geteuid() == 0, "root can write to a mode 500 directory")
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("cc-merge-dangling-ro-\(UUID().uuidString)")
+        let claudeDir = dir.appendingPathComponent(".claude")
+        try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
+        addTeardownBlock {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: claudeDir.path)
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let link = claudeDir.appendingPathComponent("settings.json")
+        try FileManager.default.createSymbolicLink(atPath: link.path,
+                                                   withDestinationPath: "../nowhere/settings.json")
+        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: claudeDir.path)
+
+        guard case .writeFailed(let description) = merge(link) else {
+            XCTFail("Expected writeFailed")
+            return
+        }
+        XCTAssertTrue(description.contains("\u{201C}settings.json\u{201D}"), description)
+        XCTAssertFalse(description.contains(".settings.json."), description)
     }
 
     func testMergeLeavesUnreadableFileUntouched() throws {
@@ -351,6 +419,18 @@ final class ClaudeCodeOnboardingTests: XCTestCase {
         let url = makeTempSettingsBytes(original)
         XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .malformed)
         XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
+    }
+
+    // An empty or whitespace-only settings.json has no hooks to remove, and
+    // Install accepts it, so Uninstall must not call it unparseable. Nothing
+    // to change means the file is left as it was.
+    func testStripEmptyFileIsSuccessAndUntouched() {
+        for original in ["", "  \n\t\n"] {
+            let url = makeTempSettingsBytes(original)
+            XCTAssertEqual(ClaudeCodeOnboarding.stripCCStatusHooks(fromSettingsURL: url), .success,
+                           "for \(original.debugDescription)")
+            XCTAssertEqual(try? String(contentsOf: url, encoding: .utf8), original)
+        }
     }
 
     // MARK: - stripStaleCCStatusHooks (Install into a changed directory)

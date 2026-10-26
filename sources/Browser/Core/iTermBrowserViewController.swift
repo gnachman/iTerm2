@@ -526,6 +526,19 @@ extension iTermBrowserViewController {
         browserManager.loadURL(urlString)
     }
 
+    /// Loads text typed into an address field outside the toolbar, such as the
+    /// one in iTerm2 Buddy.
+    func loadTypedText(_ text: String) {
+        guard let urlString = urlStringForTypedText(text) else {
+            return
+        }
+        loadURL(urlString)
+    }
+
+    func stopLoading() {
+        browserManager.stop()
+    }
+
     // MARK: - Password
 
     @objc(enterPassword:)

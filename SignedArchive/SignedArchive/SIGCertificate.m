@@ -16,6 +16,9 @@
 }
 
 - (instancetype)initWithSecCertificate:(SecCertificateRef)secCertificate {
+    if (!secCertificate) {
+        return nil;
+    }
     self = [super init];
     if (self) {
         _secCertificate = secCertificate;
@@ -36,7 +39,11 @@
 }
 
 - (void)dealloc {
-    CFRelease(_secCertificate);
+    // initWithData: returns nil without a certificate when the data is malformed, and
+    // CFRelease(NULL) crashes.
+    if (_secCertificate) {
+        CFRelease(_secCertificate);
+    }
 }
 
 - (SIGKey *)publicKey {
@@ -60,7 +67,7 @@
 }
 
 - (NSString *)name {
-    CFStringRef value;
+    CFStringRef value = NULL;
     const OSStatus status = SecCertificateCopyCommonName(_secCertificate,
                                                          &value);
     NSString *string = (__bridge_transfer NSString *)value;
@@ -75,34 +82,46 @@
     NSString *value = (__bridge_transfer NSString *)SecCertificateCopyLongDescription(NULL,
                                                                                       _secCertificate,
                                                                                       &error);
-    if (value == NULL || error != NULL) {
+    if (error) {
+        CFRelease(error);
+        return nil;
+    }
+    if (value == NULL) {
         return nil;
     }
     return value;
 }
 
 - (NSDate *)expirationDate {
-    CFArrayRef keys = CFArrayCreate(NULL, (const void **)&kSecOIDInvalidityDate, 1, &kCFTypeArrayCallBacks);
-    CFDictionaryRef result = SecCertificateCopyValues(_secCertificate, keys, NULL);
-    NSDate *date = nil;
-    if (result != NULL) {
-        CFDictionaryRef invalidityDateDictionary = CFDictionaryGetValue(result, kSecOIDInvalidityDate);
-        if (invalidityDateDictionary) {
-            CFTypeRef value = CFDictionaryGetValue(invalidityDateDictionary, kSecPropertyKeyValue);
-            date = (__bridge NSDate *)value;
-        }
-        CFRelease(result);
+    // The validity period's Not After date. Its value is a CFNumber of seconds since the
+    // reference date.
+    NSArray *keys = @[ (__bridge id)kSecOIDX509V1ValidityNotAfter ];
+    NSDictionary *values = (__bridge_transfer NSDictionary *)SecCertificateCopyValues(_secCertificate,
+                                                                                    (__bridge CFArrayRef)keys,
+                                                                                    NULL);
+    NSDictionary *property = values[(__bridge id)kSecOIDX509V1ValidityNotAfter];
+    if (![property isKindOfClass:[NSDictionary class]]) {
+        return nil;
     }
-    CFRelease(keys);
-
-    return date;
+    id value = property[(__bridge id)kSecPropertyKeyValue];
+    if ([value isKindOfClass:[NSDate class]]) {
+        return value;
+    }
+    if ([value isKindOfClass:[NSNumber class]]) {
+        return [NSDate dateWithTimeIntervalSinceReferenceDate:[value doubleValue]];
+    }
+    return nil;
 }
 
 - (NSData *)serialNumber {
     CFErrorRef error = NULL;
     NSData *value = (__bridge_transfer NSData *)SecCertificateCopySerialNumberData(_secCertificate,
                                                                                    &error);
-    if (value == NULL || error != NULL) {
+    if (error) {
+        CFRelease(error);
+        return nil;
+    }
+    if (value == NULL) {
         return nil;
     }
     return value;
@@ -119,11 +138,11 @@
     SecCertificateRef secCertificate = (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
 
     CFDataRef subjectContent = SecCertificateCopyNormalizedSubjectSequence(secCertificate);
-
-    const BOOL result = CFEqual(subjectContent, name);
-    if (subjectContent) {
-        CFRelease(subjectContent);
+    if (!subjectContent) {
+        return NO;
     }
+    const BOOL result = CFEqual(subjectContent, name);
+    CFRelease(subjectContent);
     return result;
 }
 
@@ -135,15 +154,19 @@
               (__bridge_transfer NSString *)SecCopyErrorMessageString(err, NULL));
         return NO;
     }
+    BOOL found = NO;
     for (NSInteger i = 0; i < CFArrayGetCount(array); i++) {
         if ([self certificateInArray:array atIndex:i hasName:name]) {
-            return YES;
+            found = YES;
+            break;
         }
     }
-    return NO;
+    CFRelease(array);
+    return found;
 }
 
-+ (SecCertificateRef)secCertificateWithName:(CFDataRef)name {
+// Returns a +1 reference that the caller must release, or NULL.
++ (SecCertificateRef)copySecCertificateWithName:(CFDataRef)name {
     if (name == NULL) {
         return NULL;
     }
@@ -159,13 +182,16 @@
     }
 
     CFArrayRef array = (CFArrayRef)result;
+    SecCertificateRef found = NULL;
     for (NSInteger i = 0; i < CFArrayGetCount(array); i++) {
         if ([SIGCertificate certificateInArray:array atIndex:i hasName:name]) {
-            return (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
+            found = (SecCertificateRef)CFArrayGetValueAtIndex(array, i);
+            CFRetain(found);
+            break;
         }
     }
-
-    return NULL;
+    CFRelease(array);
+    return found;
 }
 
 - (SIGCertificate *)issuer {
@@ -176,12 +202,14 @@
     if (!issuerName) {
         return nil;
     }
-    SecCertificateRef secCertificate = [SIGCertificate secCertificateWithName:issuerName];
+    SecCertificateRef secCertificate = [SIGCertificate copySecCertificateWithName:issuerName];
     CFRelease(issuerName);
     if (secCertificate == NULL) {
         return nil;
     }
-    return [[SIGCertificate alloc] initWithSecCertificate:secCertificate];
+    SIGCertificate *issuer = [[SIGCertificate alloc] initWithSecCertificate:secCertificate];
+    CFRelease(secCertificate);
+    return issuer;
 }
 
 - (BOOL)isEqual:(id)object {

@@ -70,15 +70,24 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
 
     // MARK: - Error Page Generation
     
+    // `title` is plain text. `message` is HTML whose untrusted parts are already escaped.
+    // Every other substitution is escaped here, including ORIGINAL_URL, which the page's
+    // script reads from an attribute rather than having it pasted into JavaScript.
     private func generateErrorHTML(title: String, message: String, originalURL: String?) -> String {
-        let urlDisplay = originalURL ?? ""
-        let urlDisplayHTML = urlDisplay.isEmpty ? "" : "<div class=\"error-url\">\(urlDisplay)</div>"
-        
+        let escapedURL = (originalURL ?? "").escapedForHTML
+        let urlDisplayHTML = escapedURL.isEmpty ? "" : "<div class=\"error-url\">\(escapedURL)</div>"
+
         let substitutions = [
-            "TITLE": title,
+            "TITLE": title.escapedForHTML,
             "MESSAGE": message,
             "URL_DISPLAY": urlDisplayHTML,
-            "ORIGINAL_URL": originalURL ?? ""
+            "ORIGINAL_URL": escapedURL,
+            "TRY_AGAIN": String(localized: "BrowserErrorPage.TryAgain",
+                                defaultValue: "Try Again",
+                                comment: "Button on the browser’s page-load error page that reloads the page").escapedForHTML,
+            "DETAILS": String(localized: "BrowserErrorPage.Details",
+                              defaultValue: "Check your internet connection and try reloading the page.",
+                              comment: "Footer text on the browser’s page-load error page").escapedForHTML
         ]
         
         return iTermBrowserTemplateLoader.loadTemplate(named: "error-page",
@@ -128,8 +137,9 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
                 return (String(localized: "BrowserErrorHandler.PageCannotLoadTitle", defaultValue: "Page Can’t Be Loaded", comment: "Error title: page cannot be loaded"), String(localized: "BrowserErrorHandler.PageCannotLoadMessage", defaultValue: "An error occurred while loading this page. \(error.localizedDescription)", comment: "Error message: generic page load failure"), nil)
             }
         }()
+        // tuple.2 (from sslErrorDetails) is already HTML with its untrusted parts escaped.
         return (title: tuple.0,
-                message: "<strong>" + tuple.1 + "</strong><br/><br/>" + (tuple.2 ?? error.localizedDescription))
+                message: "<strong>" + tuple.1.escapedForHTML + "</strong><br/><br/>" + (tuple.2 ?? error.localizedDescription.escapedForHTML))
     }
 }
 
@@ -164,7 +174,7 @@ func sslErrorDetails(from error: Error) -> String? {
         // Certificate chain subjects
         let subjects = certificateSubjects(from: trust)
         if !subjects.isEmpty {
-            lines.append(String(localized: "BrowserErrorHandler.CertificateChain", defaultValue: "Certificate chain:", comment: "Label preceding the list of certificates in the chain"))
+            lines.append(String(localized: "BrowserErrorHandler.CertificateChain", defaultValue: "Certificate chain:", comment: "Label preceding the list of certificates in the chain").escapedForHTML)
             for (idx, s) in subjects.enumerated() {
                 lines.append("  [\(idx)] \(s.escapedForHTML)")
             }

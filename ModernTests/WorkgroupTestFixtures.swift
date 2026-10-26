@@ -30,11 +30,6 @@ class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
     private(set) var sessionsByConfigID: [String: PTYSession] = [:]
     private(set) var records: [SpawnRecord] = []
 
-    // workgroupInstanceID forwarded to each spawn call. Tests can read
-    // this to assert that the same per-entry UUID is propagated to
-    // every spawn (peers, splits, tabs, nested peers).
-    private(set) var workgroupInstanceIDsByConfigID: [String: String] = [:]
-
     // Tests that need a spy/subclass instead of the default
     // PTYSession can replace this. Defaults to a plain non-synthetic
     // PTYSession.
@@ -78,9 +73,7 @@ class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
     }
 
     func spawnPeer(parent: PTYSession,
-                   config: iTermWorkgroupSessionConfig,
-                   workgroupInstanceID: String) -> iTermPromise<PTYSession> {
-        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
+                   config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
         if pendingPeerConfigIDs.contains(config.uniqueIdentifier) {
             records.append(SpawnRecord(kind: .peer, parent: parent, config: config, session: nil))
             return iTermPromise<PTYSession> { seal in
@@ -95,21 +88,17 @@ class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
 
     func spawnSplit(parent: PTYSession,
                     config: iTermWorkgroupSessionConfig,
-                    settings: SplitSettings,
-                    workgroupInstanceID: String) -> PTYSession? {
+                    settings: SplitSettings) -> PTYSession? {
         let session = makeSession()
         sessionsByConfigID[config.uniqueIdentifier] = session
-        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
         records.append(SpawnRecord(kind: .split, parent: parent, config: config, session: session))
         return session
     }
 
     func spawnTab(parent: PTYSession,
-                  config: iTermWorkgroupSessionConfig,
-                  workgroupInstanceID: String) -> PTYSession? {
+                  config: iTermWorkgroupSessionConfig) -> PTYSession? {
         let session = makeSession()
         sessionsByConfigID[config.uniqueIdentifier] = session
-        workgroupInstanceIDsByConfigID[config.uniqueIdentifier] = workgroupInstanceID
         records.append(SpawnRecord(kind: .tab, parent: parent, config: config, session: session))
         return session
     }
@@ -151,8 +140,7 @@ final class TerminateDuringSpawnSpawner: FakeWorkgroupSpawner {
 
     override func spawnSplit(parent: PTYSession,
                              config: iTermWorkgroupSessionConfig,
-                             settings: SplitSettings,
-                             workgroupInstanceID: String) -> PTYSession? {
+                             settings: SplitSettings) -> PTYSession? {
         if let provider = terminateTarget, let target = provider() {
             terminateTarget = nil
             NotificationCenter.default.post(
@@ -161,8 +149,7 @@ final class TerminateDuringSpawnSpawner: FakeWorkgroupSpawner {
         }
         return super.spawnSplit(parent: parent,
                                 config: config,
-                                settings: settings,
-                                workgroupInstanceID: workgroupInstanceID)
+                                settings: settings)
     }
 }
 
@@ -178,8 +165,7 @@ final class TerminateDuringPeerSpawnSpawner: FakeWorkgroupSpawner {
     var terminateTarget: (() -> PTYSession?)?
 
     override func spawnPeer(parent: PTYSession,
-                            config: iTermWorkgroupSessionConfig,
-                            workgroupInstanceID: String) -> iTermPromise<PTYSession> {
+                            config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
         if let provider = terminateTarget, let target = provider() {
             terminateTarget = nil
             NotificationCenter.default.post(
@@ -187,8 +173,7 @@ final class TerminateDuringPeerSpawnSpawner: FakeWorkgroupSpawner {
                 object: target)
         }
         return super.spawnPeer(parent: parent,
-                               config: config,
-                               workgroupInstanceID: workgroupInstanceID)
+                               config: config)
     }
 }
 
@@ -355,8 +340,9 @@ enum WGFix {
     }
 
     static func wrap(name: String,
-                     sessions: [iTermWorkgroupSessionConfig]) -> iTermWorkgroup {
-        return iTermWorkgroup(uniqueIdentifier: newID(),
+                     sessions: [iTermWorkgroupSessionConfig],
+                     uniqueIdentifier: String = newID()) -> iTermWorkgroup {
+        return iTermWorkgroup(uniqueIdentifier: uniqueIdentifier,
                               name: name,
                               sessions: sessions)
     }

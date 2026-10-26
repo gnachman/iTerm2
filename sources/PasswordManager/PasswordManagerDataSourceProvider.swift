@@ -14,7 +14,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     @objc static let forBrowser = PasswordManagerDataSourceProvider(browser: true)
     // Posted with the provider as the object when `authenticated` goes from true to false:
     // a failed or cancelled prompt, or a screen lock. Every open window locks then.
-    static let didRevokeAuthenticationNotification = Notification.Name("iTermPasswordManagerDidRevokeAuthentication")
+    @objc static let didRevokeAuthenticationNotification = Notification.Name("iTermPasswordManagerDidRevokeAuthentication")
     @objc private(set) var authenticated = false {
         didSet {
             if oldValue && !authenticated {

@@ -114,12 +114,12 @@ class iTermRenderingComparer: NSObject {
 
         guard let profile = ProfileModel.sharedInstance()?.defaultProfile() else {
             fputs("ERROR: No default profile found\n", stderr)
-            NSApp.terminate(nil)
+            terminate(status: 1)
             return
         }
         guard let guid = profile[KEY_GUID] as? String else {
             fputs("ERROR: Default profile has no GUID\n", stderr)
-            NSApp.terminate(nil)
+            terminate(status: 1)
             return
         }
 
@@ -132,10 +132,9 @@ class iTermRenderingComparer: NSObject {
         let legacyImage: NSImage
         do {
             legacyImage = try renderLegacy(rows: rows, columns: columns, guid: guid, profile: profile, data: data)
-            legacyImage.saveAsPNG(to: legacyPath)
         } catch {
             fputs("ERROR: Legacy render failed: \(error)\n", stderr)
-            NSApp.terminate(nil)
+            terminate(status: 1)
             return
         }
 
@@ -145,31 +144,95 @@ class iTermRenderingComparer: NSObject {
             gpuImage = try renderGPU(rows: rows, columns: columns, guid: guid, profile: profile, data: data)
         } catch {
             fputs("ERROR: GPU render failed: \(error)\n", stderr)
-            NSApp.terminate(nil)
+            terminate(status: 1)
             return
         }
 
-        // Compare
-        let result = iTermImageComparison.compare(legacyImage, with: gpuImage, diffImagePath: diffPath)
+        let report = saveAndCompare(legacyImage: legacyImage,
+                                    gpuImage: gpuImage,
+                                    paths: Paths(legacy: legacyPath, gpu: gpuPath, diff: diffPath))
+        for line in report.errors {
+            fputs(line + "\n", stderr)
+        }
+        for line in report.output {
+            print(line)
+        }
+        terminate(status: report.exitStatus)
+    }
 
-        // Save GPU image
-        gpuImage.saveAsPNG(to: gpuPath)
+    struct Paths {
+        var legacy: String
+        var gpu: String
+        var diff: String
+    }
 
-        // Output results
-        print("COMPARE_RENDERING: legacy: \(legacyPath) gpu: \(gpuPath) diff: \(diffPath)")
-        print("PIXELS_TOTAL: \(result.totalPixels)")
-        print("PIXELS_DIFFERENT: \(result.differentPixels)")
-        print(String(format: "PERCENT_DIFFERENT: %.2f", result.percentDifferent))
-        print(String(format: "MAX_DIFFERENCE: %.4f", result.maxDifference))
-        print("To view:\nimgcat \(legacyPath) \(gpuPath) \(diffPath)")
+    struct Report {
+        // Lines for stderr.
+        var errors = [String]()
+        // Lines for stdout.
+        var output = [String]()
+        var exitStatus: Int32 = 0
+    }
 
-        let pass = result.percentDifferent < 0.1
-        print("RESULT: \(pass ? "PASS" : "FAIL")")
+    /// Saves both images and their diff, compares them, and describes the result. Not localized:
+    /// this is command-line tool output.
+    static func saveAndCompare(legacyImage: NSImage, gpuImage: NSImage, paths: Paths) -> Report {
+        var report = Report()
+        if !legacyImage.saveAsPNG(to: paths.legacy) {
+            report.errors.append("ERROR: Could not save the legacy image to \(paths.legacy)")
+        }
+        if !gpuImage.saveAsPNG(to: paths.gpu) {
+            report.errors.append("ERROR: Could not save the GPU image to \(paths.gpu)")
+        }
+        let result = iTermImageComparison.compare(legacyImage, with: gpuImage, diffImagePath: paths.diff)
+        if result.diffImageWriteFailed.boolValue {
+            report.errors.append("ERROR: Could not save the diff image to \(paths.diff)")
+        }
 
-        // Use NSApp.terminate instead of exit() so macOS properly clears its
-        // window restoration crash tracking. A raw exit() causes macOS to show
-        // a "unexpectedly quit while reopening windows" alert on next launch.
+        let saved = report.errors.isEmpty
+        if saved {
+            report.output.append("COMPARE_RENDERING: legacy: \(paths.legacy) gpu: \(paths.gpu) diff: \(paths.diff)")
+        }
+        report.output.append("PIXELS_TOTAL: \(result.totalPixels)")
+        report.output.append("PIXELS_DIFFERENT: \(result.differentPixels)")
+        report.output.append(String(format: "PERCENT_DIFFERENT: %.2f", result.percentDifferent))
+        report.output.append(String(format: "MAX_DIFFERENCE: %.4f", result.maxDifference))
+        if saved {
+            report.output.append("To view:\nimgcat \(paths.legacy) \(paths.gpu) \(paths.diff)")
+            let pass = result.percentDifferent < 0.1
+            report.output.append("RESULT: \(pass ? "PASS" : "FAIL")")
+        } else {
+            report.output.append("RESULT: ERROR: could not save the images")
+            report.exitStatus = 1
+        }
+        return report
+    }
+
+    private static var exitStatus: Int32 = 0
+
+    // Use NSApp.terminate instead of exit() so macOS properly clears its
+    // window restoration crash tracking. A raw exit() causes macOS to show
+    // a "unexpectedly quit while reopening windows" alert on next launch.
+    // NSApp.terminate always exits with status 0, so a nonzero status is
+    // applied by an atexit handler, which runs only after AppKit has
+    // finished terminating.
+    private static func terminate(status: Int32) {
+        if status != 0 {
+            exitStatus = status
+            atexit {
+                fflush(stdout)
+                fflush(stderr)
+                _exit(iTermRenderingComparer.exitStatus)
+            }
+        }
         NSApp.terminate(nil)
+        if status != 0 {
+            // Termination was cancelled. Don't leave the handler to change
+            // the status of a later, unrelated quit.
+            fflush(stdout)
+            fflush(stderr)
+            _exit(status)
+        }
     }
 
     // MARK: - Private

@@ -13,7 +13,7 @@ Wire protocol (this client <-> framer socket), length-prefixed frames:
     [1 byte type][4 byte big-endian payload length][payload]
 
 Upstream (client -> iTerm2):
-    'H' HELLO   json: {nonce, argv, cwd, term, isatty, cols, rows}
+    'H' HELLO   json: {protocol, nonce, argv, cwd, term, isatty, cols, rows, env, stdin}
     'C' CANCEL  empty  (SIGINT; used by long-running/monitor commands)
 
 Downstream (iTerm2 -> client):
@@ -25,6 +25,7 @@ Requires only the Python standard library and Python 3.7+ (guaranteed present:
 the framer this talks to already runs under it).
 """
 
+import base64
 import json
 import os
 import signal
@@ -35,6 +36,11 @@ import sys
 import time
 
 HELLO = b"H"
+# Sent in the HELLO. iTerm2 serves this version and older, and refuses a newer client with an
+# explanation instead of running it half understood. Bump it, together with the app's
+# ConductorIT2Demux.protocolVersion, when the HELLO gains something a command cannot run
+# correctly without. A HELLO with no "protocol" predates the field and counts as older.
+PROTOCOL_VERSION = 1
 CANCEL = b"C"
 STDOUT = ord("O")
 STDERR = ord("E")
@@ -203,18 +209,30 @@ TMUX_IT2_CLIENT_RECORD_TAG = "c_"
 # Marks list-clients lines in the combined query output so they cannot be confused with
 # show-options lines.
 TMUX_CLIENT_LINE_PREFIX = "IT2CLIENT"
+# Marks the one line naming the tmux session that holds this pane.
+TMUX_PANE_SESSION_LINE_PREFIX = "IT2PANESESSION"
 
 
-def tmux_query_arguments(socket_path):
-    """argv for one tmux invocation that lists attached clients and dumps global options.
+def tmux_query_arguments(socket_path, pane):
+    """argv for one tmux invocation: the attached clients, the global options, and which
+    tmux session holds `pane` (skipped when there is no pane).
 
-    A bare ";" argument separates commands in a sequence, so both run in one client. The
-    format carries real tab characters: tmux does not interpret backslash escapes in a
+    A bare ";" argument separates commands in a sequence, so they all run in one client. The
+    formats carry real tab characters: tmux does not interpret backslash escapes in a
     format string.
+
+    client_session is what lets the caller reach the connection that can actually place its
+    pane. A tmux server can have several attached control-mode clients, each driving a
+    DIFFERENT tmux session over its own ssh connection, and only the one attached to the
+    pane's session can show it.
     """
     fmt = "\t".join([TMUX_CLIENT_LINE_PREFIX, "#{client_name}", "#{client_control_mode}",
-                     "#{client_created}"])
-    return ["tmux", "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
+                     "#{client_created}", "#{client_session}"])
+    args = ["tmux", "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
+    if pane:
+        args += [";", "display-message", "-p", "-t", pane,
+                 TMUX_PANE_SESSION_LINE_PREFIX + "\t#{session_id}"]
+    return args
 
 
 def parse_tmux_client_records(output):
@@ -226,14 +244,23 @@ def parse_tmux_client_records(output):
     malformed is skipped: a record is advisory and must not take down the lookup for the
     well-formed ones next to it.
     """
-    attached_at = {}   # client name -> attach time, attached control-mode clients only
-    records = {}       # client name -> record dict
+    attached_at = {}      # client name -> attach time, attached control-mode clients only
+    client_session = {}   # client name -> the tmux session it is attached to
+    records = {}          # client name -> record dict
+    pane_session = None   # the tmux session holding this pane, when it could be determined
     for line in output.splitlines():
+        if line.startswith(TMUX_PANE_SESSION_LINE_PREFIX + "\t"):
+            pane_session = line.split("\t", 1)[1].strip()
+            continue
         if line.startswith(TMUX_CLIENT_LINE_PREFIX + "\t"):
             fields = line.split("\t")
             if len(fields) < 4:
                 continue
             name, control_mode, created = fields[1], fields[2], fields[3]
+            # Absent on tmux too old for #{client_session}; then nothing is preferred and
+            # the newest-attacher order below stands on its own.
+            if len(fields) >= 5 and fields[4]:
+                client_session[name] = fields[4]
             # A missing client_control_mode (very old tmux prints nothing for an unknown
             # format) is accepted; only an explicit 0 rejects.
             if control_mode == "0":
@@ -263,6 +290,16 @@ def parse_tmux_client_records(output):
             records[name] = record
     # Newest attach first; name as a tiebreaker so the order is deterministic.
     ordered = sorted(attached_at, key=lambda n: (-attached_at[n], n))
+    # Then float the clients attached to the session that holds this pane. Only those can
+    # place it: a client attached to another session of the same server will answer "no
+    # session is showing that tmux pane" however recently it attached. Newest-first was the
+    # whole rule before, which is why creating a second tmux session silently redirected
+    # every call to a connection that could not serve it (2026-09-28).
+    #
+    # A stable sort, so newest-first still orders within each group, and the others stay as
+    # fallbacks rather than being dropped: the preferred client's socket may be gone.
+    if pane_session:
+        ordered.sort(key=lambda n: 0 if client_session.get(n) == pane_session else 1)
     return [records[n] for n in ordered if n in records]
 
 
@@ -294,13 +331,16 @@ def tmux_advertised_client_records():
         return []
     try:
         result = subprocess.run(
-            tmux_query_arguments(socket_path),
+            tmux_query_arguments(socket_path, os.environ.get("TMUX_PANE", "")),
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
             timeout=2)
     except (OSError, subprocess.SubprocessError):
         return []
-    if result.returncode != 0:
-        return []
+    # Parse whatever came back, even on a nonzero exit. The pane query is part of the same
+    # invocation, so a stale or closed $TMUX_PANE makes tmux exit nonzero, and bailing here
+    # would throw away the client records the earlier commands already printed -- turning a
+    # pane that merely went away into "no iTerm2 is attached". Errors go to stderr, which is
+    # discarded, and the parser skips anything it does not recognize.
     return parse_tmux_client_records(result.stdout.decode("utf-8", "replace"))
 
 
@@ -311,14 +351,64 @@ def connect_to_iterm2(candidates):
     a socket is never paired with another connection's nonce. A refused or missing
     socket moves on to the next candidate; the pane's own environment is normally last.
     """
+    sock, candidate = connect_to_candidate(candidates)
+    if sock is None:
+        return None, candidate
+    nonce = candidate.get("nonce")
+    return sock, (nonce if isinstance(nonce, str) else "")
+
+
+# Set in the environment of a re-exec, so a copy that disagrees about which file it is cannot
+# bounce back and forth.
+REEXEC_GUARD_NAME = "IT2_REEXECED"
+
+
+def reexec_path(candidate, own_path, env):
+    """The interpreter to hand this invocation to, or None to keep running this one.
+
+    A tmux pane inherits IT2_PY from the tmux server, frozen when whichever connection started
+    it. That copy may be older or newer than the iTerm2 now attached, so each controller's
+    record names the it2.py ITS connection uploaded as "py", and once a connection is chosen
+    the matching copy runs the command. Version and connection are then chosen together.
+
+    Only an absolute path to a file that exists, is not this file, and only once.
+    """
+    path = candidate.get("py")
+    if not isinstance(path, str) or not os.path.isabs(path):
+        return None
+    if env.get(REEXEC_GUARD_NAME):
+        return None
+    try:
+        if os.path.realpath(path) == os.path.realpath(own_path):
+            return None
+    except (OSError, ValueError):
+        return None
+    if not os.path.isfile(path):
+        return None
+    return path
+
+
+def reexec(path, argv, env):
+    """Replace this process with `path` running `argv`. Returns only if exec failed."""
+    child_env = dict(env)
+    child_env[REEXEC_GUARD_NAME] = "1"
+    # So the copy reports itself, not the server's stale value, to the app.
+    child_env["IT2_PY"] = path
+    interpreter = sys.executable or "python3"
+    try:
+        os.execve(interpreter, [interpreter, path] + list(argv), child_env)
+    except OSError:
+        pass
+
+
+def connect_to_candidate(candidates):
+    """Like connect_to_iterm2, but returns the whole record that accepted: (socket, record)
+    or (None, error)."""
     last_error = None
     for candidate in candidates:
         path = candidate.get("sock")
         if not isinstance(path, str) or not path:
             continue
-        nonce = candidate.get("nonce")
-        if not isinstance(nonce, str):
-            nonce = ""
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             sock.connect(path)
@@ -329,8 +419,71 @@ def connect_to_iterm2(candidates):
             except OSError:
                 pass
             continue
-        return sock, nonce
+        return sock, candidate
     return None, last_error
+
+
+# Stdin is forwarded whole in the HELLO frame, so it has to be bounded. A Claude Code
+# PostToolUse payload can carry a large tool result, so this is generous; the framer's own frame
+# cap is 16 MiB, well above it.
+MAX_STDIN_BYTES = 1024 * 1024
+
+# The only variables sent to iTerm2. An allowlist, not a filter: the environment of a remote
+# shell holds credentials, tokens and paths that have no business crossing to the Mac, and the
+# app needs exactly these to address a session.
+#   TMUX, TMUX_PANE  - which tmux pane this is, for pane addressing
+#   TERM_SESSION_ID  - the session, when iTerm2 forked the job itself
+#   IT2_SUITE        - which iTerm2 instance
+#   IT2_PY           - which interpreter this connection uploaded
+ALLOWED_ENV_NAMES = ("TMUX", "TMUX_PANE", "TERM_SESSION_ID", "IT2_SUITE", "IT2_PY")
+
+
+def allowed_environment(env):
+    """The allowlisted subset of `env`. Absent names are omitted rather than sent empty, so the
+    app can tell "unset" from "set to nothing"."""
+    return {name: env[name] for name in ALLOWED_ENV_NAMES if name in env}
+
+
+# The only subcommand whose payload arrives on stdin. Reading stdin for ANY command would hang
+# the ones that do not expect it: stdin is often an inherited pipe that never reaches EOF (a
+# script, a test harness, a program that keeps its end open), and read() would block forever.
+# Found exactly that way -- `it2 session list` timed out in tests/it2py_test.py the moment this
+# was unconditional.
+STDIN_CONSUMING_COMMANDS = ("handle-agent-hook",)
+
+
+def wants_stdin(argv):
+    """Whether this invocation's command reads a payload from stdin."""
+    for argument in argv:
+        if argument.startswith("-"):
+            continue
+        return argument in STDIN_CONSUMING_COMMANDS
+    return False
+
+
+def read_stdin_payload(stream):
+    """Stdin's bytes when it is not a tty, else None.
+
+    A hook is invoked with its payload on stdin, so a remote `it2 handle-agent-hook` needs it.
+    An interactive invocation must never be drained: `it2 handle-agent-hook` typed at a prompt
+    would block until the user sent EOF. Unreadable stdin is not an error; the command simply
+    has no payload.
+
+    Only called for a command in STDIN_CONSUMING_COMMANDS; see wants_stdin.
+    """
+    try:
+        if stream is None or stream.isatty():
+            return None
+    except (OSError, ValueError):
+        return None
+    try:
+        buffer = getattr(stream, "buffer", stream)
+        data = buffer.read(MAX_STDIN_BYTES)
+    except (OSError, ValueError):
+        return None
+    if not data:
+        return None
+    return data
 
 
 def main():
@@ -343,15 +496,28 @@ def main():
         return 2
 
     try:
-        sock, nonce = connect_to_iterm2(candidates)
+        sock, candidate = connect_to_candidate(candidates)
+        if sock is not None:
+            path = reexec_path(candidate, os.path.abspath(__file__), os.environ)
+            if path:
+                # Connected only to learn which record answers; the copy connects for itself.
+                # Stdin has not been touched yet, so it reaches the copy intact.
+                sock.close()
+                reexec(path, sys.argv[1:], os.environ)
+                # The exec failed. Carry on as this copy rather than fail the command.
+                sock, candidate = connect_to_candidate(candidates)
     except KeyboardInterrupt:
         return 130
     if sock is None:
-        eprint("it2: cannot reach iTerm2 (%s)\n" % nonce)
+        eprint("it2: cannot reach iTerm2 (%s)\n" % candidate)
         return 2
+    nonce = candidate.get("nonce")
+    if not isinstance(nonce, str):
+        nonce = ""
 
     cols, rows = terminal_size()
     hello = {
+        "protocol": PROTOCOL_VERSION,
         "nonce": nonce,
         "argv": sys.argv[1:],
         "cwd": safe_getcwd(),
@@ -359,7 +525,14 @@ def main():
         "isatty": safe_isatty(),
         "cols": cols,
         "rows": rows,
+        "env": allowed_environment(os.environ),
     }
+    # In the HELLO itself, not a later frame: startCommand launches the command as soon as HELLO
+    # arrives, so anything sent afterwards would race it.
+    if wants_stdin(sys.argv[1:]):
+        stdin_payload = read_stdin_payload(sys.stdin)
+        if stdin_payload is not None:
+            hello["stdin"] = base64.b64encode(stdin_payload).decode("ascii")
     try:
         send_frame(sock, HELLO, json.dumps(hello))
     except OSError as e:

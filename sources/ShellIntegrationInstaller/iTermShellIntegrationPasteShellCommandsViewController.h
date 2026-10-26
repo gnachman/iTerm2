@@ -16,9 +16,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) int stage;
 @property (nonatomic) iTermShellIntegrationShell shell;
 @property (nonatomic) BOOL installUtilities;
-// The last attempt to write the shell integration script reported that the file was not
-// written. Cleared when the stage changes.
+// The last attempt at the current stage's step reported that it failed: the shell integration
+// script was not written, or the utility scripts were not extracted. Cleared when the stage
+// changes.
 @property (nonatomic) BOOL writeFailed;
+// Discovery ran in a helper shell a canceled install left running rather than in the user's
+// shell. Cleared when the stage changes.
+@property (nonatomic) BOOL discoveryFoundHelperShell;
+// Exposed for testing.
+@property (nonatomic, readonly) NSTextField *stepListField;
 
 - (void)update;
 

@@ -52,6 +52,10 @@ struct IT2ProxyState: Equatable {
         var nonce: String?
         var socketPath: String?
         var authorized: Bool?
+        /// The remote it2.py this connection told its login shell to run (IT2_PY). Kept rather
+        /// than recomputed: after an upgrade restores the connection, the new build's hash was
+        /// never uploaded to this host.
+        var pyPath: String?
     }
     var persisted: Persisted
 
@@ -59,8 +63,8 @@ struct IT2ProxyState: Equatable {
     // (the "Remote host can control iTerm2" menu). A TRANSIENT runtime flag: it lives OUTSIDE
     // `persisted`, so it is carried by value across an in-process SSH recovery (adopt ->
     // ConductorRecovery -> init(recovery:)) but is never written to disk. On state restoration
-    // the framer is relaunched and it2Listen re-runs, re-establishing it from that status
-    // rather than restoring it stale. That it is not persisted is now structural (this field
+    // the conductor sends it2Listen again once it resynchronizes (the framer answers that it
+    // already listens), re-establishing it from that status rather than restoring it stale. That it is not persisted is now structural (this field
     // is simply not part of `persisted`), not a CodingKeys allowlist to keep in sync.
     var listenSucceeded: Bool
 
@@ -74,6 +78,7 @@ struct IT2ProxyState: Equatable {
     var nonce: String? { get { persisted.nonce } set { persisted.nonce = newValue } }
     var socketPath: String? { get { persisted.socketPath } set { persisted.socketPath = newValue } }
     var authorized: Bool? { get { persisted.authorized } set { persisted.authorized = newValue } }
+    var pyPath: String? { get { persisted.pyPath } set { persisted.pyPath = newValue } }
 }
 
 extension IT2ProxyState: Codable {
@@ -108,6 +113,76 @@ struct IT2ClientContext {
     var isatty: Bool
     var cols: Int
     var rows: Int
+    /// The bytes the remote it2 read from its stdin, when its command takes a payload there.
+    /// Nil when there was none; a hook's JSON arrives this way.
+    var stdin: Data?
+    /// The allowlisted slice of the remote's environment. See IT2ClientContext.allowedEnvNames.
+    var environment: [String: String]
+
+    /// The only environment variables accepted from a remote host.
+    ///
+    /// An allowlist, applied here as well as in it2.py. The remote's environment holds
+    /// credentials, tokens and paths that have no business reaching the Mac, and a remote host
+    /// is not a trust boundary we control: it2.py filtering is a courtesy, this is the rule.
+    /// PATH in particular must never arrive this way.
+    static let allowedEnvNames: Set<String> = ["TMUX", "TMUX_PANE", "TERM_SESSION_ID",
+                                               "IT2_SUITE", "IT2_PY"]
+
+    /// `environment` reduced to the allowlist.
+    static func filteredEnvironment(_ raw: [String: String]) -> [String: String] {
+        return raw.filter { allowedEnvNames.contains($0.key) }
+    }
+}
+
+// What a remote it2 call does before running, given the API setting and the connection's
+// authorization state.
+//
+// A Claude Code hook must never block and never complain. It fires on every tool call, so
+// waiting on the authorization prompt stalls the agent, and printing an error puts the same text
+// in its transcript over and over. A hook that cannot run yet therefore completes at once,
+// successfully and silently; while the decision is still open it also raises the prompt, so that
+// once the user answers, the NEXT hook succeeds. An interactive command keeps the old behaviour:
+// it waits for the prompt and reports a denial, which is useful to a person who typed it.
+enum IT2RunPolicy: Equatable {
+    /// Ask (or use the cached answer), then run or report a denial.
+    case authorizeThenRun
+    /// Interactive command with the API off: say why.
+    case reportAPIDisabled
+    /// Hook that cannot run and has nothing to ask: finish with 0 and no output.
+    case succeedSilently
+    /// Hook on a connection with no decision yet: raise the prompt, but finish now.
+    case promptThenSucceedSilently
+
+    /// The only commands that must never block. Matches it2.py's STDIN_CONSUMING_COMMANDS so the
+    /// two ends agree on what a hook is.
+    static let nonBlockingCommands: Set<String> = ["handle-agent-hook"]
+
+    /// Whether this invocation is a hook. The first non-flag argument names the command, the same
+    /// rule it2.py's wants_stdin uses.
+    static func isNonBlockingHook(argv: [String]) -> Bool {
+        guard let command = argv.first(where: { !$0.hasPrefix("-") }) else {
+            return false
+        }
+        return nonBlockingCommands.contains(command)
+    }
+
+    static func decide(argv: [String], apiEnabled: Bool, decision: Bool?) -> IT2RunPolicy {
+        let hook = isNonBlockingHook(argv: argv)
+        guard apiEnabled else {
+            return hook ? .succeedSilently : .reportAPIDisabled
+        }
+        guard hook else {
+            return .authorizeThenRun
+        }
+        switch decision {
+        case .none:
+            return .promptThenSucceedSilently
+        case .some(true):
+            return .authorizeThenRun
+        case .some(false):
+            return .succeedSilently
+        }
+    }
 }
 
 // A handle that stops an in-flight command (e.g. `monitor --follow`).
@@ -124,6 +199,24 @@ protocol IT2Cancellable: AnyObject {
 // Do NOT add main-only work (e.g. reading `connections`) to sendLine or the off-main race this
 // coalescing refactor removed comes back.
 final class ConductorIT2Demux {
+    /// The HELLO protocol this build speaks. it2.py sends its own as "protocol"; a client that
+    /// omits it predates the field and is served. Bump this, and it2.py's PROTOCOL_VERSION with
+    /// it, when the HELLO gains something a command cannot run correctly without.
+    static let protocolVersion = 1
+
+    /// Whether a HELLO's "protocol" value is one this build can serve.
+    static func canServe(protocolValue: Any?) -> Bool {
+        guard let protocolValue else {
+            return true
+        }
+        guard let number = protocolValue as? NSNumber,
+              CFGetTypeID(number) != CFBooleanGetTypeID(),
+              let version = Int(exactly: number) else {
+            return false
+        }
+        return version <= protocolVersion
+    }
+
     // Runs argv and streams results. Returns a handle to cancel the run.
     typealias RunFunction = (_ argv: [String],
                              _ context: IT2ClientContext,
@@ -348,11 +441,36 @@ final class ConductorIT2Demux {
             return
         }
         let argv = (object["argv"] as? [Any])?.compactMap { $0 as? String } ?? []
+        // After the nonce, so an unauthenticated caller learns nothing. A newer client may rely
+        // on fields this build would silently ignore, so refuse it rather than run it half
+        // understood.
+        guard Self.canServe(protocolValue: object["protocol"]) else {
+            logger("it2 HELLO protocol \(String(describing: object["protocol"])) is newer than \(Self.protocolVersion) for \(connid)")
+            if IT2RunPolicy.isNonBlockingHook(argv: argv) {
+                // A hook never complains; see IT2RunPolicy.
+                finish(connid, code: 0)
+                return
+            }
+            sendLine(connid, IT2FrameType.stderr, String(localized: "IT2Proxy.NewerProtocol", defaultValue: "it2: this it2 is newer than the iTerm2 it is connected to. Upgrade iTerm2.", comment: "Error when a remote it2 client speaks a newer protocol than this iTerm2 understands"))
+            finish(connid, code: 2)
+            return
+        }
+        // Undecodable stdin is not fatal: the command simply has no payload, which is a better
+        // outcome than refusing to run it.
+        let stdin = (object["stdin"] as? String).flatMap { Data(base64Encoded: $0) }
+        let rawEnvironment = (object["env"] as? [String: Any])?
+            .compactMapValues { $0 as? String } ?? [:]
         let context = IT2ClientContext(cwd: object["cwd"] as? String ?? "",
                                        term: object["term"] as? String ?? "",
                                        isatty: object["isatty"] as? Bool ?? false,
                                        cols: object["cols"] as? Int ?? 0,
-                                       rows: object["rows"] as? Int ?? 0)
+                                       rows: object["rows"] as? Int ?? 0,
+                                       stdin: stdin,
+                                       environment: IT2ClientContext.filteredEnvironment(rawEnvironment))
+        // There is otherwise no way to tell from outside whether a payload crossed the wire: a
+        // hook with nothing usable in it exits silently by design. Names only, never values:
+        // these are allowlisted but still came from a remote host.
+        DLog("it2 HELLO conn=\(connid) argv=\(argv) stdin=\(stdin?.count ?? 0) bytes env=\(context.environment.keys.sorted())")
         conn.cancellable = run(argv,
                                context,
                                { [weak self] line in self?.sendLine(connid, IT2FrameType.stdout, line) },
@@ -401,6 +519,13 @@ final class ConductorIT2Demux {
             }
         }
         flushBatch()
+    }
+
+    /// Whether `connid` is still open, i.e. its command has not finished. For tests: a command
+    /// held on the authorization prompt keeps its connection open, and one that completed does
+    /// not, which is the property "hooks never block" is about.
+    func hasOpenConnection(_ connid: String) -> Bool {
+        return connections[connid] != nil
     }
 
     private func finish(_ connid: String, code: Int32) {
@@ -474,6 +599,27 @@ final class IT2RunCancel: IT2Cancellable {
 }
 
 extension Conductor {
+    /// Overrides the Python API setting for the it2 run path, for tests only. The real setting is
+    /// a global preference, and flipping it from a test would leak into every other test and into
+    /// the user's own suite.
+    static var it2APIEnabledForTesting: Bool?
+
+    /// Test seams for the always-allow grant check. The real check downloads a file through the
+    /// framer, and on a conductor with no framer that awaits a reply that never comes, so a test
+    /// using it would hang rather than fail.
+    static var hostGrantStoreForTesting: IT2HostGrantStore?
+    static var hostGrantVerifierForTesting: ((IT2HostGrant, String) async -> Bool)?
+
+    /// The grant store every conductor path uses. One accessor, so no path can bypass the test
+    /// store: minting once wrote to the shared store directly while checking used the seam.
+    static var hostGrantStore: IT2HostGrantStore {
+        return hostGrantStoreForTesting ?? .shared
+    }
+
+    /// Replaces the in-process it2 runner, for tests only, so a test can see which origin a
+    /// remote command would run with. Returns the exit code.
+    static var it2RunForTesting: ((_ argv: [String], _ originIdentifier: String, _ originSessionID: String?) -> Int32)?
+
     // Single source of the origin label for this connection, used for both the Script
     // Console attribution (originDisplayName) and the user-facing authorization
     // announcement, so the console entry and the permission prompt can never diverge.
@@ -518,18 +664,25 @@ extension Conductor {
         }
         let identifier = clientUniqueID
         let displayName = it2DisplayName
+        // Read through a closure, not captured once: the delegate is replaced across an SSH
+        // recovery, and a GUID captured when the demux was built would name a session that no
+        // longer exists. Weak, so the demux cannot keep the conductor alive.
+        let originSessionID: () -> String? = { [weak self] in self?.delegate?.guid }
         let demux = ConductorIT2Demux(
             nonce: { [weak self] in self?.it2Nonce },
             send: { [weak self] connid, data in self?.it2Send(connid: connid, data: data) },
             close: { [weak self] connid in self?.it2Close(connid: connid) },
-            // The 2nd parameter is the IT2ClientContext (cwd/term/isatty/cols/rows) the demux
-            // parses from HELLO and the demux tests assert is delivered here. It is
-            // intentionally dropped ('_') for now: iTermInProcessIt2.run below forwards only
-            // argv. THIS is the one place to wire it when remote sizing/cwd/TERM lands -- pass
-            // it into iTermInProcessIt2.run and honor it there; the wire (it2.py) and the demux
-            // delivery are already in place.
-            run: { [weak self] argv, _, stdoutSink, stderrSink, completionSink in
+            // The 2nd parameter is the IT2ClientContext the demux parses from HELLO. Its stdin
+            // and (allowlisted) environment are forwarded below, because a command whose payload
+            // arrives on stdin -- a Claude Code hook -- cannot work without them. The sizing
+            // fields (cwd/term/cols/rows) are still unused; this is the place to wire them.
+            run: { [weak self] argv, clientContext, stdoutSink, stderrSink, completionSink in
                 let cancel = IT2RunCancel()
+                // A remote command with no explicit target addresses this session. Logged
+                // because a nil here is the difference between "landed on the right tab" and
+                // "landed on whatever was focused", and nothing else would show which.
+                let resolvedOriginSessionID = originSessionID()
+                self?.DLog("it2 run argv=\(argv) originSession=\(resolvedOriginSessionID ?? "(none)")")
                 // The demux requires stderr/completion on the main thread. The guard/deny
                 // paths below run inline during the (main-thread) run() call, so marshal
                 // through a fresh main-loop turn; deferring also avoids re-entering the
@@ -541,21 +694,46 @@ extension Conductor {
                     finish(1)
                     return cancel
                 }
-                guard iTermAPIHelper.isEnabled() else {
+                let isHook = IT2RunPolicy.isNonBlockingHook(argv: argv)
+                switch IT2RunPolicy.decide(argv: argv,
+                                           apiEnabled: Conductor.it2APIEnabledForTesting ?? iTermAPIHelper.isEnabled(),
+                                           decision: self.it2Authorized) {
+                case .reportAPIDisabled:
                     emitStderr(String(localized: "IT2Proxy.APINotEnabled", defaultValue: "The iTerm2 Python API is not enabled (Settings > General > Magic).", comment: "Error when the iTerm2 Python API is disabled"))
                     finish(2)
                     return cancel
+                case .succeedSilently:
+                    self.DLog("it2 hook not run (API off or access denied); completing silently")
+                    finish(0)
+                    return cancel
+                case .promptThenSucceedSilently:
+                    // Raise the prompt and let the answer be cached, but do not hold the hook
+                    // for it: the agent would stall until the user noticed. The next hook after
+                    // the user answers runs normally.
+                    self.DLog("it2 hook on an undecided connection; prompting without blocking")
+                    self.authorizeIT2(callerTmuxPane: clientContext.environment["TMUX_PANE"]) { _ in }
+                    finish(0)
+                    return cancel
+                case .authorizeThenRun:
+                    break
                 }
                 // it2-over-ssh always requires an explicit per-connection grant; the
                 // local "allow all apps to connect" setting deliberately does not apply
                 // to a remote reaching back in over the conductor channel.
-                self.authorizeIT2 { granted in
+                self.authorizeIT2(callerTmuxPane: clientContext.environment["TMUX_PANE"]) { granted in
                     guard !cancel.isCancelled else {
                         // Remote disconnected while the prompt was up; nothing to run.
                         finish(1)
                         return
                     }
                     guard granted else {
+                        // The decision can flip between the policy check and here (the user
+                        // answered "deny" to a prompt another call raised). A hook still stays
+                        // quiet about it.
+                        if isHook {
+                            finish(0)
+                            return
+                        }
                         emitStderr(String(localized: "IT2Proxy.PermissionDenied", defaultValue: "Permission denied: iTerm2 API access was not granted for this session.", comment: "Error when the user has not granted it2-over-ssh API access"))
                         finish(1)
                         return
@@ -564,9 +742,16 @@ extension Conductor {
                     // lets the demux's joiner coalesce+flush on main -- so no per-line main hop
                     // here. completion must still marshal to main: finish() drains the queue and
                     // touches `connections` (main-only).
+                    if let runForTesting = Conductor.it2RunForTesting {
+                        finish(runForTesting(argv, identifier, resolvedOriginSessionID))
+                        return
+                    }
                     iTermInProcessIt2.run(withArguments: argv,
                                           originIdentifier: identifier,
                                           originDisplayName: displayName,
+                                          originSessionID: resolvedOriginSessionID,
+                                          stdinData: clientContext.stdin,
+                                          environment: clientContext.environment,
                                           stdoutHandler: { line in stdoutSink(line) },
                                           stderrHandler: { line in stderrSink(line) },
                                           cancellationHandler: { cancelBlock in cancel.setCancelBlock(cancelBlock) },
@@ -584,18 +769,18 @@ extension Conductor {
     // prior run) short-circuits; otherwise a single in-session announcement is presented
     // and its answer is fanned out (via an iTermPromise) to every concurrent it2 command
     // so they share one prompt. Must be called on the main thread.
-    func authorizeIT2(then completion: @escaping (Bool) -> Void) {
+    func authorizeIT2(callerTmuxPane: String? = nil, then completion: @escaping (Bool) -> Void) {
         if let decided = it2Authorized {
             completion(decided)
             return
         }
-        let promise = it2AuthPromise ?? makeIT2AuthorizationPromise()
+        let promise = it2AuthPromise ?? makeIT2AuthorizationPromise(callerTmuxPane: callerTmuxPane)
         promise.then { value in
             completion(value.boolValue)
         }
     }
 
-    private func makeIT2AuthorizationPromise() -> iTermPromise<NSNumber> {
+    private func makeIT2AuthorizationPromise(callerTmuxPane: String?) -> iTermPromise<NSNumber> {
         let promise = iTermPromise<NSNumber> { [weak self] seal in
             guard let self else {
                 seal.fulfill(NSNumber(value: false))
@@ -610,21 +795,122 @@ extension Conductor {
                 self.resolveIT2Authorization(false, persist: false)
                 return
             }
-            delegate.conductorRequestIT2Authorization(guid: self.guid,
-                                                      displayName: self.it2DisplayName) { [weak self] granted, remember in
-                self?.resolveIT2Authorization(granted, persist: remember)
+            // A host the user chose to always allow: read its half of the grant back before
+            // bothering them. Only when that fails do we ask.
+            if let grant = Conductor.hostGrantStore.grant(forHost: self.sshIdentity.stringIdentifier),
+               let home = self.homeDirectory {
+                // Hold the seal while the file is read, so a match can resolve it and a teardown
+                // in the meantime can fail it closed. No announcement is on screen yet, so the
+                // orphan-dismissal hazard described below does not apply until one is presented.
+                self.it2AuthSeal = seal
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    let verified: Bool
+                    if let verifier = Conductor.hostGrantVerifierForTesting {
+                        verified = await verifier(grant, home)
+                    } else {
+                        verified = await self.hostGrantVerifies(grant, home: home)
+                    }
+                    // Resolved while reading (torn down, say): nothing left to decide, and no
+                    // prompt should appear for a connection that is gone.
+                    guard self.it2AuthSeal != nil else {
+                        return
+                    }
+                    if verified {
+                        self.resolveIT2Authorization(true, persist: true)
+                        return
+                    }
+                    guard let delegate = self.delegate else {
+                        self.resolveIT2Authorization(false, persist: false)
+                        return
+                    }
+                    // Fall back to asking. Release the seal and take it back after presenting,
+                    // for the same reason as the direct path below.
+                    self.it2AuthSeal = nil
+                    self.presentIT2AuthorizationPrompt(delegate: delegate, seal: seal, callerTmuxPane: callerTmuxPane)
+                }
+                return
             }
-            // Assign the seal AFTER presenting: queueAnnouncement synchronously dismisses
-            // any orphan announcement with the same identifier, whose completion(-2)
-            // re-enters resolveIT2Authorization. Assigning only now keeps that orphan
-            // dismissal from resolving this fresh, not-yet-shown prompt.
-            self.it2AuthSeal = seal
+            self.presentIT2AuthorizationPrompt(delegate: delegate, seal: seal, callerTmuxPane: callerTmuxPane)
         }
         it2AuthPromise = promise
         promise.then { [weak self] _ in
             self?.it2AuthPromise = nil  // release the transient promise once resolved
         }
         return promise
+    }
+
+    private func presentIT2AuthorizationPrompt(delegate: ConductorDelegate, seal: iTermPromiseSeal, callerTmuxPane: String?) {
+        delegate.conductorRequestIT2Authorization(guid: guid,
+                                                  displayName: it2DisplayName,
+                                                  callerTmuxPane: callerTmuxPane) { [weak self] granted, remember, alwaysForHost in
+            self?.resolveIT2Authorization(granted, persist: remember)
+            if granted && alwaysForHost {
+                self?.mintHostGrant()
+            }
+        }
+        // Assign the seal AFTER presenting: queueAnnouncement synchronously dismisses
+        // any orphan announcement with the same identifier, whose completion(-2)
+        // re-enters resolveIT2Authorization. Assigning only now keeps that orphan
+        // dismissal from resolving this fresh, not-yet-shown prompt.
+        it2AuthSeal = seal
+    }
+
+    /// Whether the host's half of `grant` matches. Any failure to read it (the file is gone,
+    /// the host was rebuilt, the transfer failed) is simply "no", which falls back to asking.
+    ///
+    /// A mismatch does not delete the Mac's record. A transient read error would otherwise wipe
+    /// a valid grant, and a genuinely stale one is replaced the next time the user picks Always
+    /// Allow, since adding a grant replaces any existing record for that host.
+    ///
+    /// A grant made before the host kept one file per grant is in the old single file.
+    func hostGrantVerifies(_ grant: IT2HostGrant, home: String) async -> Bool {
+        guard IT2GrantToken.isHex(grant.id) else {
+            DLog("it2 host grant for \(grant.host) has a malformed id")
+            return false
+        }
+        for path in [IT2GrantToken.remoteRelativePath(id: grant.id), IT2GrantToken.legacyRemoteRelativePath] {
+            do {
+                let data = try await download("\(home)/\(path)", chunk: nil, uniqueID: nil)
+                let verified = IT2GrantToken.verify(fileContents: String(decoding: data, as: UTF8.self),
+                                                    against: grant)
+                DLog("it2 host grant for \(grant.host) in \(path): \(verified ? "verified" : "does not match")")
+                if verified {
+                    return true
+                }
+            } catch {
+                DLog("it2 host grant for \(grant.host) could not be read from \(path): \(error)")
+            }
+        }
+        return false
+    }
+
+    /// Give this host a grant so future connections are allowed without asking. The host keeps
+    /// the secret; the Mac records only its hash, and only once the host has it, so a failed
+    /// write cannot leave a record that would make every connection read a file that is not
+    /// there before asking anyway.
+    func mintHostGrant() {
+        let host = sshIdentity.stringIdentifier
+        let token = IT2GrantToken.mint()
+        // This Mac's previous grant for the host, which the new one replaces there too.
+        let previous = Conductor.hostGrantStore.grant(forHost: host)?.id
+        framerExecPythonStatements(statements: IT2GrantToken.remoteWriteStatements(id: token.id,
+                                                                                   secret: token.secret,
+                                                                                   replacing: previous)) { [weak self] ok, output in
+            guard ok else {
+                // Host names stay out of RLog, which ships in user-submitted debug logs.
+                RLog("Could not write the it2 grant to the remote host")
+                self?.DLog("it2 grant write to \(host) failed: \(output)")
+                return
+            }
+            Conductor.hostGrantStore.add(IT2HostGrant(host: host,
+                                                      id: token.id,
+                                                      secretSHA256: IT2GrantToken.sha256Hex(token.secret),
+                                                      granted: Date()))
+            self?.DLog("it2 host grant minted for \(host)")
+        }
     }
 
     // Resolve the single pending authorization prompt exactly once (nil-guarded via the
@@ -672,12 +958,18 @@ extension Conductor {
     // this record on its server so a program in a pane can find the connection currently showing
     // it, instead of the one that happened to start the server (see TmuxController's
     // advertiseIT2Client). Nil until activateIT2Proxy has minted them. The keys are what it2.py
-    // reads back.
+    // reads back. "py" names the interpreter this connection uploaded; it2.py re-execs it so the
+    // client version and the connection are chosen together. Absent for a connection restored
+    // from before it was recorded, and it2.py then just keeps running itself.
     @objc var it2ClientRecord: [String: String]? {
         guard let socketPath = it2SocketPath, let nonce = it2Nonce else {
             return nil
         }
-        return ["sock": socketPath, "nonce": nonce]
+        var record = ["sock": socketPath, "nonce": nonce]
+        if let pyPath = it2Proxy.pyPath {
+            record["py"] = pyPath
+        }
+        return record
     }
 
     // Checkmark state for the menu item: whether this connection currently has an explicit
@@ -696,6 +988,11 @@ extension Conductor {
     // passed the gate (e.g. a running `monitor --follow`) are unaffected by a revoke; only
     // subsequent commands see the new decision. Must be called on the main thread.
     @objc func setIT2AuthorizationFromMenu(_ granted: Bool) {
+        if !granted {
+            // Otherwise an always-allow grant would re-allow this host on its very next
+            // connection, and switching it off here would seem not to have worked.
+            Conductor.hostGrantStore.remove(host: sshIdentity.stringIdentifier)
+        }
         it2Authorized = granted
         // No-op when no prompt is pending; otherwise dismisses the on-screen announcement and
         // fulfills the shared promise so every concurrent it2 command unblocks with `granted`.
@@ -704,10 +1001,10 @@ extension Conductor {
 
     // Activate the it2 CLI proxy for this session: mint the auth nonce + a remote
     // socket path and inject IT2_SOCK/IT2_NONCE into the login shell's environment,
-    // so the remote it2 (materialized by the shell-integration scripts) can find and
-    // authenticate to the socket. framer binds the socket once framing starts (see
-    // it2Listen in doFraming). Called from the shell-integration path, which is what
-    // provides `it2` on the remote and implies we will frame.
+    // so the remote it2 (uploaded to ~/.iterm2/bin, materialized by the shell-integration
+    // scripts, or installed by hand) can find and authenticate to the socket. framer binds
+    // the socket once framing starts (see it2Listen in doFraming). Called at getshell for
+    // every connection with a known home, injected or not; see Conductor.remoteSetup.
     //
     // The socket lives in a dedicated directory under the user's home (framer
     // creates it 0700 before binding), not in a shared world-writable place: the
@@ -721,6 +1018,24 @@ extension Conductor {
         it2SocketPath = socketPath
         env["IT2_SOCK"] = socketPath
         env["IT2_NONCE"] = nonce
+        // Name the interpreter THIS iTerm2 uploaded. Several builds can have written copies to
+        // the same host, each under its own content hash, and the wrapper's built-in fallback
+        // only knows the hash it was built with.
+        let pyPath = iTermRemoteIt2.remotePyPath(home: home, hash: iTermRemoteIt2.bundledPyHash)
+        it2Proxy.pyPath = pyPath
+        env["IT2_PY"] = pyPath
+        // PATH is deliberately NOT set here. These variables reach the remote through a
+        // `setenv` conductor command, and conductor.sh's handler does `export ${name}=${value}`
+        // in its OWN process, which needs PATH for awk, head, grep, base64, tar, stty and dd.
+        // A prepend cannot be expressed through that channel either: the value is not
+        // re-expanded, so a literal $PATH stays literal, and this dictionary never carries a
+        // PATH to extend in the first place.
+        //
+        // Sending an absolute PATH here broke every conductor command issued after getshell,
+        // including the payload upload, and the resulting "command not found" errors escaped
+        // the conductor parser onto the screen. ~/.iterm2/bin is put on PATH by the
+        // shell-integration scripts instead, where the real PATH is in hand; exporting it there
+        // also reaches a hook's `sh -c`, which is the case this exists for.
     }
 
     // AF_UNIX sun_path is 104 bytes on macOS and 108 on Linux; the remote OS is unknown,
@@ -729,12 +1044,14 @@ extension Conductor {
     // fire-and-forget, so that failure would be silent. Fall back to a short /tmp path in
     // that case (the framer still creates its parent 0700 and binds the socket 0600, and
     // the random directory name resists pre-creation) so it2 keeps working there.
-    private static func it2SocketPath(home: String) -> String {
+    static func it2SocketPath(home: String) -> String {
         let name = it2RandomHex(byteCount: 8) + ".sock"
         let homePath = "\(home)/.iterm2/it2/\(name)"
         if homePath.utf8.count <= 100 {
             return homePath
         }
+        // Rare enough, and visible enough in /tmp, that a debug log should say why.
+        RLog("it2 socket for a home of \(home.utf8.count) bytes would exceed the socket path limit; using /tmp")
         return "/tmp/.it2-\(it2RandomHex(byteCount: 4))/\(name)"
     }
 

@@ -91,6 +91,27 @@ class iTermMachineIdentity: NSObject {
         return "1:\(value)"
     }
 
+    // Python statements, run through the framer's runpy, that return the token the host they run
+    // on would send: "1:<hmac>" on a Mac, "1:" (a positive "not this machine") elsewhere, and "0:"
+    // when a Mac's identity cannot be computed. Kept here so the key and the algorithm live in one
+    // place.
+    static func pythonStatementsReturningToken() -> String {
+        return """
+        import hashlib, hmac, subprocess, sys
+        if sys.platform != "darwin":
+            return "1:"
+        try:
+            u = subprocess.run(["/usr/sbin/sysctl", "-n", "kern.bootsessionuuid"],
+                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                               timeout=5).stdout.decode("utf-8", "replace").strip()
+        except Exception:
+            return "0:"
+        if not u:
+            return "0:"
+        return "1:" + hmac.new(b"\(hmacKey)", u.encode("utf-8"), hashlib.sha256).hexdigest()
+        """
+    }
+
     // kern.bootsessionuuid is fixed for the life of the process, so both the
     // syscall and the HMAC over it happen once. This is on the path of every OSC 7
     // report (roughly once per prompt in every session), so neither should repeat.

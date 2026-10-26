@@ -68,12 +68,13 @@
     return [_delegate.writtenStrings componentsJoinedByString:@""];
 }
 
-// One list-windows record in the -listWindowsDetailedFormat field order (tmux 2.4+).
+// One list-windows record in the -listWindowsDetailedFormat field order (tmux 3.2+). The last
+// field, @iterm2_wg_parked, is empty: the window holds no parked workgroup peer.
 - (NSString *)recordForWindow:(int)wid width:(int)width height:(int)height {
     NSString *layout = [NSString stringWithFormat:@"af3d,%dx%d,0,0,%d", width, height, wid];
     return [@[ @"s", [NSString stringWithFormat:@"@%d", wid], @"zsh",
                [@(width) stringValue], [@(height) stringValue],
-               layout, @"*", @"1", layout, @"off" ] componentsJoinedByString:@"\t"];
+               layout, @"*", @"1", layout, @"off", @"" ] componentsJoinedByString:@"\t"];
 }
 
 - (NSUInteger)locationOf:(NSString *)needle in:(NSString *)haystack {

@@ -175,6 +175,8 @@ actor CompanionSession {
         case .aiAvailabilityChanged: "aiAvailabilityChanged"
         case .macStatusChanged: "macStatusChanged"
         case .modalAlertAnswerRejected: "modalAlertAnswerRejected"
+        case .browserEditingChanged: "browserEditingChanged"
+        case .browserNavigationChanged: "browserNavigationChanged"
         }
     }
 

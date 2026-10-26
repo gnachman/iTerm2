@@ -53,7 +53,8 @@ class iTermBrowserSourceHandler: NSObject, iTermBrowserPageHandler {
             // Fallback content if no source is pending
             htmlContent = iTermBrowserTemplateLoader.loadTemplate(named: "view-source",
                                                                   type: "html",
-                                                                  substitutions: ["SOURCE": String(localized: "BrowserSourceHandler.NoSourceAvailable", defaultValue: "No source available", comment: "Shown in view-source when no page source is available")])
+                                                                  substitutions: ["SOURCE": String(localized: "BrowserSourceHandler.NoSourceAvailable", defaultValue: "No source available", comment: "Shown in view-source when no page source is available"),
+                                                                                  "URL": ""])
         }
         
         let data = htmlContent.data(using: .utf8) ?? Data()

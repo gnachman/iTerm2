@@ -11,6 +11,7 @@
 #import <XCTest/XCTest.h>
 
 #import "iTermPasteSpecialWindowController.h"
+#import "NSStringITerm.h"
 
 @interface PasteSpecialStatsLabelTests : XCTestCase
 @end
@@ -37,6 +38,24 @@
     XCTAssertTrue([s containsString:@"byte"], @"got: %@", s);
     XCTAssertFalse([s containsString:@"bytes"], @"got: %@", s);
     XCTAssertTrue([s containsString:@"lines"], @"got: %@", s);
+}
+
+// F-303: the label counted lines with -numberOfLines, which NSString(iTermTextDataSource)
+// overrides with a split on LF, so CR-converted text read as one line and a trailing LF
+// added a line.
+- (void)testPreviewLineCountHandlesCRAndTrailingNewline {
+    XCTAssertEqualObjects([iTermPasteSpecialWindowController statsLabelStringForPreviewString:@"1\r2\r3\r4\r5\r"],
+                          [iTermPasteSpecialWindowController statsLabelStringForByteCount:10 lineCount:5]);
+    XCTAssertEqualObjects([iTermPasteSpecialWindowController statsLabelStringForPreviewString:@"1\n2\n3\n4\n5\n"],
+                          [iTermPasteSpecialWindowController statsLabelStringForByteCount:10 lineCount:5]);
+}
+
+- (void)testLineCount {
+    XCTAssertEqual([@"" it_lineCount], 0u);
+    XCTAssertEqual([@"abc" it_lineCount], 1u);
+    XCTAssertEqual([@"a\nb" it_lineCount], 2u);
+    XCTAssertEqual([@"a\r\nb\r\n" it_lineCount], 2u);
+    XCTAssertEqual([@"a\n\nb" it_lineCount], 3u);
 }
 
 @end

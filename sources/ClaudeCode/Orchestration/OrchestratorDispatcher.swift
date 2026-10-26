@@ -765,6 +765,15 @@ final class OrchestratorDispatcher {
         }
     }
 
+    // The name a re-bound tmux watcher takes from its reattached pane, unless
+    // the pane doesn't have a real name yet.
+    nonisolated static func reboundName(_ name: String, previous: String) -> String {
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return previous
+        }
+        return name
+    }
+
     @MainActor
     private func pendingTmuxWatchers() -> [WorkgroupWatcher] {
         return watchers.filter { pendingTmuxWatcherIDs.contains($0.watcherID) }
@@ -785,12 +794,16 @@ final class OrchestratorDispatcher {
             // workgroup and role names derive from the old session, so they
             // name a workgroup the snapshot no longer lists. Take them from the
             // new session, as list_workgroups does, so list_watches and
-            // status_update match what the model sees.
+            // status_update match what the model sees. The pane's window
+            // opens before the pane has its name (it is a blank " " until
+            // tmux reports the title), so keep the old names over a blank one.
             if let context = WorkgroupIntrospection.context(for: session) {
                 watchers[i].workgroupID = context.workgroupID
-                watchers[i].workgroupName = context.workgroupName
+                watchers[i].workgroupName = Self.reboundName(context.workgroupName,
+                                                             previous: watchers[i].workgroupName)
                 watchers[i].roleID = context.roleID
-                watchers[i].roleName = context.roleName
+                watchers[i].roleName = Self.reboundName(context.roleName,
+                                                        previous: watchers[i].roleName)
             }
             // Seed from the session itself rather than a lookup by its new
             // stableID, so the first status it posts is never a transition. A
@@ -2675,11 +2688,30 @@ final class OrchestratorDispatcher {
     @MainActor
     private func promptForWatchScreenRead(
         resolved: WorkgroupIntrospection.ResolvedTarget) async -> Bool {
-        let summary = "This watch reads \(Self.watcherTargetLabel(role: resolved.roleName, workgroup: resolved.workgroupName, workgroupID: resolved.workgroupID))'s screen repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?"
+        let summary = Self.watchScreenReadConsentText(role: resolved.roleName,
+                                                      workgroup: resolved.workgroupName,
+                                                      workgroupID: resolved.workgroupID)
         return await awaitPermission(
             workgroupID: WorkgroupIntrospection.watchApprovalWorkgroupID,
             workgroupName: resolved.workgroupName,
             summary: summary)
+    }
+
+    // The body of the watch screen-read consent prompt. A standalone session is
+    // named by its role alone; a session in a real workgroup also names the
+    // workgroup (the same distinction watcherTargetLabel draws), each as a
+    // complete sentence so translators can reorder it.
+    nonisolated static func watchScreenReadConsentText(role: String,
+                                                       workgroup: String,
+                                                       workgroupID: String) -> String {
+        if isSyntheticWorkgroup(id: workgroupID) {
+            return String(localized: "OrchestratorDispatcher.WatchScreenReadConsent",
+                          defaultValue: "This watch reads \(role)’s screen repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?",
+                          comment: "Body of a prompt asking the user to let an AI chat’s watch read a terminal session’s screen on a timer. The placeholder is the session’s name, such as -zsh. View Contents and Ask are the names of a setting and its value.")
+        }
+        return String(localized: "OrchestratorDispatcher.WatchScreenReadConsentInWorkgroup",
+                      defaultValue: "This watch reads the screen of \(role) in \(workgroup) repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?",
+                      comment: "Body of a prompt asking the user to let an AI chat’s watch read a terminal session’s screen on a timer. The first placeholder is the session’s role name and the second is the name of the workgroup it belongs to. View Contents and Ask are the names of a setting and its value.")
     }
 
     // Whether this chat may currently READ THE SCREEN for a specific watcher.
@@ -3664,8 +3696,9 @@ final class OrchestratorDispatcher {
                 throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) is busy (status: \(sessionState.rawValue)). Wait until it returns to idle before starting a review.")
             }
             // Reloading kills+relaunches the session, which requires a
-            // restartable session and the cached review command template.
-            guard resolved.session.isRestartable(),
+            // restartable session (or a tmux member, whose pane is
+            // respawned) and the cached review command template.
+            guard resolved.session.canRelaunchWorkgroupMember,
                   resolved.session.codeReviewRawCommand != nil else {
                 throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) can't be reloaded to start a fresh review.")
             }

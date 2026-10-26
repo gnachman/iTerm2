@@ -2360,8 +2360,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         return 0;
     }
     const int y1 = wrappedLineRange.location;
-    const int y2 = VT100GridRangeMax(wrappedLineRange);
-    
+    // Exclusive end.
+    const int y2 = wrappedLineRange.location + wrappedLineRange.length;
+
     int startLine = y1;
     const NSInteger firstBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:y1
                                                                               width:width
@@ -2370,20 +2371,22 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         return 0;
     }
 
-    int lastLine = y2;
-    const NSInteger lastBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:y2
-                                                                             width:width
-                                                                         remainder:&lastLine];
-    if (lastBlockIndex == NSNotFound) {
-        return 0;
+    int endLine = y2;
+    NSInteger lastBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:y2
+                                                                       width:width
+                                                                   remainder:&endLine];
+    const BOOL endIsInBuffer = (lastBlockIndex != NSNotFound);
+    if (!endIsInBuffer) {
+        // The range runs to the end of the buffer.
+        lastBlockIndex = _lineBlocks.count - 1;
     }
 
     NSInteger sum = 0;
     for (NSInteger i = firstBlockIndex; i <= lastBlockIndex; i++) {
         NSInteger size = [_lineBlocks[i] sizeFromLine:startLine width:width];
         startLine = 0;
-        if (i == lastBlockIndex) {
-            size -= [_lineBlocks[i] sizeFromLine:lastLine width:width];
+        if (i == lastBlockIndex && endIsInBuffer) {
+            size -= [_lineBlocks[i] sizeFromLine:endLine width:width];
         }
         sum += size;
     }

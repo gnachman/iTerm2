@@ -621,7 +621,7 @@ iTermCommandInfoViewControllerDelegate>
          fromOffscreenCommandLine:(BOOL)fromOffscreenCommandLine {
     long long overflow = self.dataSource.totalScrollbackOverflow;
     const int line = absoluteLineNumber - overflow;
-    const VT100GridRange lineRange = [self lineRangeForMark:mark];
+    const VT100GridRange lineRange = [self.dataSource lineRangeOfOutputForCommandMark:mark];
     NSString *directory = [self.dataSource workingDirectoryOnLine:line];
     id<VT100RemoteHostReading> remoteHost = [self.dataSource remoteHostOnLine:line];
     const NSPoint point = [self convertPoint:windowPoint
@@ -632,7 +632,7 @@ iTermCommandInfoViewControllerDelegate>
                                            date:date
                                       directory:directory
                                      remoteHost:remoteHost
-                                     outputSize:[self.dataSource numberOfCellsUsedInRange:lineRange]
+                                     outputSize:[self.dataSource numberOfCellsUsedInOutputForCommandMark:mark]
                                     outputLines:[self.dataSource numberOfRawLinesInRange:lineRange]
                                   outputPromise:outputPromise
                                  outputProgress:outputProgress
@@ -644,13 +644,6 @@ iTermCommandInfoViewControllerDelegate>
 
 - (VT100GridCoordRange)coordRangeForMark:(id<VT100ScreenMarkReading>)mark {
     return [self.dataSource textViewRangeOfOutputForCommandMark:mark];
-}
-
-- (VT100GridRange)lineRangeForMark:(id<VT100ScreenMarkReading>)mark {
-    const VT100GridCoordRange coordRange = [self coordRangeForMark:mark];
-    const int location = MAX(0, coordRange.start.y);
-    const int length = MAX(0, coordRange.end.y - coordRange.start.y + 1);
-    return VT100GridRangeMake(location, length);
 }
 
 - (iTermRenegablePromise<NSString *> *)promisedOutputForMark:(id<VT100ScreenMarkReading>)mark
@@ -931,6 +924,13 @@ iTermCommandInfoViewControllerDelegate>
     [self.quickLookController showWithSourceRect:screenRect controller:self.window.delegate];
 }
 
++ (VT100GridCoord)lookUpAnchorForLogicalWordRange:(VT100GridCoordRange)logicalRange
+                                       dataSource:(id<iTermTextDataSource>)dataSource {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:dataSource];
+    extractor.supportBidi = [iTermPreferences bidiEnabled];
+    return [extractor visualRangeForLogical:logicalRange].start;
+}
+
 - (void)showDefinitionForWordAt:(NSPoint)clickPoint {
     if (clickPoint.y < 0) {
         return;
@@ -962,7 +962,12 @@ iTermCommandInfoViewControllerDelegate>
                                                   coords:nil
                                        deduplicateDECDHL:YES];
     if (word.length) {
-        NSPoint point = [self pointForCoord:range.coordRange.start];
+        // The word range is logical, but the highlight and popover must sit
+        // where the word is drawn, which differs on a reordered RTL line.
+        const VT100GridCoord anchor =
+            [PTYTextView lookUpAnchorForLogicalWordRange:range.coordRange
+                                              dataSource:self.dataSource];
+        NSPoint point = [self pointForCoord:anchor];
         point.y += self.lineHeight;
         NSDictionary *attributes = [word attributesAtIndex:0 effectiveRange:nil];
         if (attributes[NSFontAttributeName]) {
@@ -1590,10 +1595,14 @@ launchProfileInCurrentTerminal:(Profile *)profile
         _shellIntegrationInstallerWindow.window.isVisible) {
         return;
     }
+    iTermShellIntegrationWindowController *previous = _shellIntegrationInstallerWindow;
     _shellIntegrationInstallerWindow =
     [[iTermShellIntegrationWindowController alloc] initWithWindowNibName:@"iTermShellIntegrationWindowController"];
     [_shellIntegrationInstallerWindow.window makeKeyAndOrderFront:nil];
     _shellIntegrationInstallerWindow.delegate = self;
+    // A canceled install may have left helper shells that the previous installer still waits to
+    // exit.
+    [_shellIntegrationInstallerWindow takeOverHelperShellsFromInstaller:previous];
     [_shellIntegrationInstallerWindow.window center];
 }
 
@@ -1601,6 +1610,10 @@ launchProfileInCurrentTerminal:(Profile *)profile
 
 - (void)shellIntegrationWindowControllerSendText:(NSString *)text {
     [self.delegate sendTextSlowly:text];
+}
+
+- (void)shellIntegrationWindowControllerStopSendingText {
+    [self.delegate stopSendingTextSlowly];
 }
 
 - (iTermExpect *)shellIntegrationExpect {

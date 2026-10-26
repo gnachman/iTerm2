@@ -5669,6 +5669,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     if (!iTermWindowTypeIsCompact(effectiveWindowType)) {
         if (@available(macOS 26, *)) {
+            if ([iTermAdvancedSettingsModel useSequoiaStyleTabs]) {
+                // These insets make room around the Tahoe pill. Sequoia-style tabs fill the bar
+                // edge to edge, as they do on earlier OS versions. Issue 12498.
+                return NSEdgeInsetsZero;
+            }
             switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
                 case TAB_STYLE_MINIMAL:
                 case TAB_STYLE_COMPACT:
@@ -8368,15 +8373,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab;
 }
 
-- (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem {
-    NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
+// The appearance for context menus in the tab bar, which should match the
+// window rather than the system when the two differ.
+- (NSAppearance *)tabBarContextMenuAppearance {
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         NSColor *bgColor = [self.window.ptyWindow it_terminalWindowDecorationBackgroundColor];
         NSAppearanceName appearanceName = bgColor.perceivedBrightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua;
-        rootMenu.appearance = [NSAppearance appearanceNamed:appearanceName];
-    } else {
-        rootMenu.appearance = self.window.appearance;
+        return [NSAppearance appearanceNamed:appearanceName];
     }
+    return self.window.appearance;
+}
+
+- (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem {
+    NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
+    rootMenu.appearance = [self tabBarContextMenuAppearance];
 
     BOOL (^addSelect)(void) = ^{
         NSMenuItem *item;
@@ -9575,6 +9585,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
     menu.autoenablesItems = NO;  // contextual actions are always applicable
+    menu.appearance = [self tabBarContextMenuAppearance];
     const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
     NSString *closeAfterTitle = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelow", nil, [NSBundle mainBundle], @"Close Tabs Below", @"Menu item that closes tabs below the current one")
                                                         : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsToTheRight", nil, [NSBundle mainBundle], @"Close Tabs to the Right", @"Menu item that closes tabs to the right");
@@ -10928,8 +10939,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     const NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;
     minSize.width += decorationSize.width + internalDecorationSize.width;
     minSize.height += decorationSize.height + internalDecorationSize.height;
-    minSize.width = MAX(minSize.width, self.window.minSize.width);
-    minSize.height = MAX(minSize.height, self.window.minSize.height);
+    minSize = [iTermSetWindowFrameRequest minimumFrameSizeForContentMinimum:minSize
+                                                              windowMinSize:self.window.minSize
+                                                                  styleMask:self.window.styleMask];
 
     NSArray<NSValue *> *screenFrames = [[NSScreen screens] mapWithBlock:^id _Nullable(NSScreen *screen) {
         return [NSValue valueWithRect:screen.visibleFrame];
@@ -15101,8 +15113,17 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (void)reallyDuplicateWindow {
-    NSDictionary *arrangement = [self arrangementExcludingTmuxTabs:NO includingContents:NO];
-    [[iTermController sharedInstance] tryOpenArrangement:arrangement named:nil asTabsInWindow:nil];
+    [[iTermController sharedInstance] tryOpenArrangement:[self arrangementForDuplicateWindow]
+                                                   named:nil
+                                          asTabsInWindow:nil];
+}
+
+- (NSDictionary *)arrangementForDuplicateWindow {
+    // The copy is a different window, so it must not take this one's Lock Location. Locked to
+    // this window's frame, it would open on top of it and snap back there when moved.
+    return [self arrangementWithTabs:[self tabsToEncodeExcludingTmux:NO]
+                   includingContents:NO
+                representsThisWindow:NO];
 }
 
 - (void)createDuplicateOfTab:(PTYTab *)theTab {

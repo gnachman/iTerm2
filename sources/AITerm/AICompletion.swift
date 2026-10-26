@@ -24,7 +24,8 @@ class AICompletion {
             return
         }
         let (prompt, prefix) = request.aiPrompt(history: history,
-                                                files: files.map { $0.value },
+                                                files: promptFilenames(files: files,
+                                                                       wordPrefix: request.prefix),
                                                 prefix: request.prefix)
         let conversation =
         AIConversation(
@@ -84,6 +85,13 @@ class AICompletion {
         }
     }
 
+    // The names of the file completions as the prompt describes them. A file
+    // completion's value is only the rest of the word being typed, so the
+    // prompt would otherwise call a suffix like “ror.log” a filename.
+    static func promptFilenames(files: [CompletionItem], wordPrefix: String) -> [String] {
+        return files.map { wordPrefix + $0.value }
+    }
+
     // Expand {{FILE}} in an AI suggestion once per file completion.
     //
     // A file completion item's value is only the text to insert after the word
@@ -95,6 +103,10 @@ class AICompletion {
     // The one exception is an append whose remainder begins with {{FILE}}: it is
     // inserted directly after the partially-typed word, so only the suffix
     // belongs there.
+    //
+    // The model may also write the directory the user typed before the
+    // placeholder (`rm logs/{{FILE}}` for a typed `logs/er`). There the name
+    // without that directory is substituted, so it isn't doubled.
     static func expandingFilePlaceholder(in completion: CompletionItem,
                                          files: [CompletionItem],
                                          wordPrefix: String) -> [CompletionItem] {
@@ -103,7 +115,6 @@ class AICompletion {
             .sorted {
                 $0.value < $1.value
             }.map { (file: CompletionItem) -> CompletionItem in
-                let fullName = shellEscapedFilename(wordPrefix + file.value)
                 var value = completion.value
                 if continuesTypedWord {
                     value = shellEscapedFilename(file.value) + String(value.dropFirst(filePlaceholder.count))
@@ -112,11 +123,57 @@ class AICompletion {
                 // replacing the whole value with the bare filename. For a
                 // replacement (`rm {{FILE}}`) the verb must be preserved so the
                 // accepted command is `rm error.log`, not just `error.log`.
-                value = value.replacingOccurrences(of: filePlaceholder, with: fullName)
+                value = substitutingFilePlaceholder(in: value,
+                                                    wordPrefix: wordPrefix,
+                                                    suffix: file.value)
                 return CompletionItem(value: value,
                                       detail: completion.detail,
                                       kind: completion.kind)
             }
+    }
+
+    // Replace each {{FILE}} with the escaped full name, or with the name minus
+    // its directory when the text right before the placeholder already ends
+    // with that directory.
+    private static func substitutingFilePlaceholder(in value: String,
+                                                    wordPrefix: String,
+                                                    suffix: String) -> String {
+        let fullName = shellEscapedFilename(wordPrefix + suffix)
+        let directoryEnd = wordPrefix.lastIndex(of: "/").map { wordPrefix.index(after: $0) }
+        let directory = directoryEnd.map { String(wordPrefix[..<$0]) } ?? ""
+        let directoryForms = directory.isEmpty ? [] : Set([directory, shellEscapedFilename(directory)])
+        let nameInDirectory = directoryEnd.map {
+            shellEscapedFilename(String(wordPrefix[$0...]) + suffix)
+        } ?? fullName
+        var result = ""
+        var rest = Substring(value)
+        while let range = rest.range(of: filePlaceholder) {
+            let before = rest[..<range.lowerBound]
+            result += before
+            let alreadyHasDirectory = directoryForms.contains {
+                startsWord(result, withDirectory: $0)
+            }
+            result += alreadyHasDirectory ? nameInDirectory : fullName
+            rest = rest[range.upperBound...]
+        }
+        result += rest
+        return result
+    }
+
+    // True when `text` ends with `directory` and that directory begins a shell
+    // word (optionally after `./`), so `backup/logs/` doesn't count as `logs/`.
+    private static func startsWord(_ text: String, withDirectory directory: String) -> Bool {
+        guard text.hasSuffix(directory) else {
+            return false
+        }
+        var before = text.dropLast(directory.count)
+        if before.hasSuffix("./") {
+            before = before.dropLast(2)
+        }
+        guard let last = before.last else {
+            return true
+        }
+        return last.isWhitespace || last == "\"" || last == "'" || last == "="
     }
 
     private static func shellEscapedFilename(_ name: String) -> String {
@@ -262,6 +319,11 @@ class CompletionItem: NSObject {
     @objc let value: String
     @objc let detail: String?
     @objc let kind: Kind
+    // True when `value` is already the exact text to insert, so it must not be
+    // shell-escaped again. The composer's early result is built from escaped
+    // filenames (or a history entry) and then comes back alongside the raw file
+    // completions when AI suggestions are on.
+    @objc let valueIsFinal: Bool
 
     @objc(iTermCompletionItemKind) enum Kind: Int {
         case file
@@ -279,17 +341,44 @@ class CompletionItem: NSObject {
     }
 
     @objc(initWithValue:detail:kind:)
-    init(value: String, detail: String?, kind: Kind) {
+    convenience init(value: String, detail: String?, kind: Kind) {
+        self.init(value: value, detail: detail, kind: kind, valueIsFinal: false)
+    }
+
+    @objc(initWithValue:detail:kind:valueIsFinal:)
+    init(value: String, detail: String?, kind: Kind, valueIsFinal: Bool) {
         #if DEBUG
         it_assert(!(detail ?? "").contains("<iTermCompletionItem"))
         #endif
         self.value = value
         self.detail = detail
         self.kind = kind
+        self.valueIsFinal = valueIsFinal
     }
 
     @objc
     func mapValue(_ closure: (String) -> (String)) -> CompletionItem {
-        return CompletionItem(value: closure(value), detail: detail, kind: kind)
+        return CompletionItem(value: closure(value), detail: detail, kind: kind, valueIsFinal: valueIsFinal)
+    }
+
+    // Returns a copy whose value will not be escaped again.
+    @objc
+    func withFinalValue() -> CompletionItem {
+        return CompletionItem(value: value, detail: detail, kind: kind, valueIsFinal: true)
+    }
+
+    // Shell-escapes the values of filename completions. AI items arrive already
+    // escaped by the model and items marked valueIsFinal were escaped earlier, so
+    // both are left alone to avoid doubling their backslashes.
+    @objc(shellEscapingFilenameCompletions:)
+    static func shellEscapingFilenameCompletions(_ items: [CompletionItem]) -> [CompletionItem] {
+        return items.map { item in
+            if item.valueIsFinal || item.kind == .aiSuggestion || item.kind == .aiReplacement {
+                return item
+            }
+            return item.mapValue { filename in
+                (filename as NSString).withBackslashEscapedShellCharacters(includingNewlines: true)
+            }
+        }
     }
 }

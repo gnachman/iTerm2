@@ -75,6 +75,27 @@ class ChatBroker {
 
     // MARK: - Chat creation
 
+    // A new chat pinned to `modelName`, with the pin's vendor stamped the way
+    // ChatListModel.setModel stamps it. Without the stamp, an empty chat pinned to
+    // a manual model on a local server would, once that model was removed or
+    // renamed, send its first message to a cloud vendor instead of failing (see
+    // LLMMetadata.manualModelPinVendor).
+    static func makeChat(title: String,
+                         terminalSessionGuid: String?,
+                         browserSessionGuid: String?,
+                         permissions: String,
+                         modelName: String?) -> Chat {
+        var chat = Chat(title: title,
+                        terminalSessionGuid: terminalSessionGuid,
+                        browserSessionGuid: browserSessionGuid,
+                        permissions: permissions,
+                        modelName: modelName)
+        chat.modelVendor = ChatListModel.vendorForNewPin(modelName: modelName,
+                                                         previousName: nil,
+                                                         previousVendor: nil)
+        return chat
+    }
+
     func create(chatWithTitle title: String,
                 terminalSessionGuid: String?,
                 browserSessionGuid: String?,
@@ -82,12 +103,17 @@ class ChatBroker {
                 initialMessages: [Message]) throws -> String {
         ensureServiceRunning()
 
+        // A session's kind is fixed, so file each guid under the kind it really is
+        // regardless of which slot the caller used.
+        let (terminalSessionGuid, browserSessionGuid) = ChatListModel.sessionGuidsByKind(
+            terminal: terminalSessionGuid,
+            browser: browserSessionGuid)
         let rce = RemoteCommandExecutor.instance
-        let chat = Chat(title: title,
-                        terminalSessionGuid: terminalSessionGuid,
-                        browserSessionGuid: browserSessionGuid,
-                        permissions: permissions,
-                        modelName: AITermController.provider?.model.name)
+        let chat = Self.makeChat(title: title,
+                                 terminalSessionGuid: terminalSessionGuid,
+                                 browserSessionGuid: browserSessionGuid,
+                                 permissions: permissions,
+                                 modelName: AITermController.provider?.model.name)
         let permissionsDict = rce.permissionsDict(encoded: permissions) ?? rce.defaultPermissions(
             chatID: chat.id,
             terminalGuid: terminalSessionGuid,

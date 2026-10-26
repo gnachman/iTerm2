@@ -17,6 +17,12 @@ public class ConductorRecovery: NSObject {
     @objc let clientUniqueID: String
     @objc let parent: Conductor?
     @objc let version: Int
+    /// "1 <clock>" when the framer has flow control on.
+    let flow: String?
+    /// The framer's panes, still running, whose sessions will reattach.
+    let panes: [Int32]
+    /// What the recovering conductor kept for panes no session had claimed.
+    var unclaimedPanes = [Int32: UnclaimedPane]()
     // it2-over-ssh proxy state carried across recovery from the pre-recovery conductor so
     // the proxy keeps working (and the user is not re-prompted) after reattaching. NOT
     // re-read from the framer: the nonce/socket could be, but the authorization grant is a
@@ -31,6 +37,8 @@ public class ConductorRecovery: NSObject {
          boolArgs: String,
          clientUniqueID: String,
          version: Int,
+         flow: String?,
+         panes: [Int32] = [],
          parent: Conductor?,
          it2Proxy: IT2ProxyState) {
         self.pid = pid
@@ -40,6 +48,8 @@ public class ConductorRecovery: NSObject {
         self.boolArgs = boolArgs
         self.clientUniqueID = clientUniqueID
         self.version = version
+        self.flow = flow
+        self.panes = panes
         self.parent = parent
         self.it2Proxy = it2Proxy
     }

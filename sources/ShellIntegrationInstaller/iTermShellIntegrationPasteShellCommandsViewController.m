@@ -7,6 +7,8 @@
 
 #import "iTermShellIntegrationPasteShellCommandsViewController.h"
 
+#import "DebugLogging.h"
+
 @interface iTermShellIntegrationPasteShellCommandsViewController ()
 
 @property (nonatomic, strong) IBOutlet NSTextField *textField;
@@ -24,6 +26,95 @@
 
 @implementation iTermShellIntegrationPasteShellCommandsViewController {
     BOOL _busy;
+    // The step list's height in the nib, which is the least it ever gets.
+    CGFloat _minimumStepListHeight;
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [self fitBottomButtonsToTitles];
+    [self fitPreviewCommandButtonsToTitles:@[ self.previewCommandTitle, self.sendAgainTitle ]];
+}
+
+- (NSString *)previewCommandTitle {
+    return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.PreviewCommand", nil, [NSBundle mainBundle], @"Preview Command", @"Button to preview the command that will be sent");
+}
+
+- (NSString *)sendAgainTitle {
+    return NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.SendAgain", nil, [NSBundle mainBundle], @"Send Again", @"Button to send the preview command again");
+}
+
+// The preview buttons beside the step list get their titles in -update, and a translation can be
+// wider than the English. Widen them to fit the widest title they can show, keeping their right
+// edge, and narrow the step list beside them if they would otherwise overlap it.
+- (void)fitPreviewCommandButtonsToTitles:(NSArray<NSString *> *)titles {
+    NSTextField *field = self.textField;
+    CGFloat neededWidth = 0;
+    for (NSButton *button in self.previewCommandButtons) {
+        NSString *savedTitle = button.title;
+        for (NSString *title in titles) {
+            button.title = title;
+            neededWidth = MAX(neededWidth, ceil(button.cell.cellSize.width));
+        }
+        button.title = savedTitle;
+    }
+    for (NSButton *button in self.previewCommandButtons) {
+        NSRect frame = button.frame;
+        if (neededWidth <= NSWidth(frame)) {
+            continue;
+        }
+        DLog(@"Widen preview command button from %@ to %@", @(NSWidth(frame)), @(neededWidth));
+        // Keep the nib's spacing between the step list and the buttons.
+        const CGFloat gap = field ? NSMinX(frame) - NSMaxX(field.frame) : 0;
+        frame.origin.x = NSMaxX(frame) - neededWidth;
+        frame.size.width = neededWidth;
+        button.frame = frame;
+        if (field && NSMaxX(field.frame) > NSMinX(frame) - gap) {
+            NSRect fieldFrame = field.frame;
+            fieldFrame.size.width = NSMinX(frame) - gap - NSMinX(fieldFrame);
+            field.frame = fieldFrame;
+        }
+    }
+}
+
+// A translation of Cancel, Skip or Continue can be wider than the English. Widen any that need it
+// and lay the row out again from the right edge, keeping the spacing from the nib.
+- (void)fitBottomButtonsToTitles {
+    NSButton *continueButton = self.continueButton;
+    NSView *view = self.view;
+    if (!continueButton || !view) {
+        return;
+    }
+    NSMutableArray<NSButton *> *row = [NSMutableArray array];
+    for (NSView *subview in view.subviews) {
+        if ([subview isKindOfClass:[NSButton class]] &&
+            NSMinY(subview.frame) == NSMinY(continueButton.frame) &&
+            NSMinX(subview.frame) > NSWidth(view.bounds) / 3) {
+            [row addObject:(NSButton *)subview];
+        }
+    }
+    [row sortUsingComparator:^NSComparisonResult(NSButton *lhs, NSButton *rhs) {
+        return [@(NSMinX(rhs.frame)) compare:@(NSMinX(lhs.frame))];
+    }];
+    if (row.count == 0) {
+        return;
+    }
+    // Spacing between adjacent buttons in the nib, right to left.
+    NSMutableArray<NSNumber *> *gaps = [NSMutableArray array];
+    for (NSUInteger i = 1; i < row.count; i++) {
+        [gaps addObject:@(NSMinX(row[i - 1].frame) - NSMaxX(row[i].frame))];
+    }
+    CGFloat maxX = NSMaxX(row.firstObject.frame);
+    for (NSUInteger i = 0; i < row.count; i++) {
+        NSButton *button = row[i];
+        NSRect frame = button.frame;
+        frame.size.width = MAX(NSWidth(frame), ceil(button.cell.cellSize.width));
+        frame.origin.x = maxX - NSWidth(frame);
+        button.frame = frame;
+        if (i < gaps.count) {
+            maxX = NSMinX(frame) - gaps[i].doubleValue;
+        }
+    }
 }
 
 - (void)setShell:(iTermShellIntegrationShell)shell {
@@ -38,12 +129,22 @@
 - (void)setStage:(int)stage {
     _stage = stage;
     _writeFailed = NO;
+    _discoveryFoundHelperShell = NO;
+    [self update];
+}
+
+- (void)setDiscoveryFoundHelperShell:(BOOL)discoveryFoundHelperShell {
+    _discoveryFoundHelperShell = discoveryFoundHelperShell;
     [self update];
 }
 
 - (void)setWriteFailed:(BOOL)writeFailed {
     _writeFailed = writeFailed;
     [self update];
+}
+
+- (NSTextField *)stepListField {
+    return self.textField;
 }
 
 - (NSString *)waitingText {
@@ -81,6 +182,8 @@
     } else if (stage == 0) {
         if (_busy) {
             step = self.waitingText;
+        } else if (_discoveryFoundHelperShell) {
+            step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.DiscoveredHelperShell", nil, [NSBundle mainBundle], @"🛑 The terminal is in a helper shell that an earlier install left running, not in your own shell. Enter “exit” until your own shell’s prompt is back, then select “Continue” to try again.", @"Shown when discovering the shell finds a helper shell (with a “>> ” prompt) that a canceled shell integration install left running in the terminal, instead of the user's own shell");
         } else {
             step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ContinueToDiscover", nil, [NSBundle mainBundle], @"➡ Select “Continue” to discover.", @"Prompt to continue to the discover shell step");
         }
@@ -120,6 +223,9 @@
             i += 1;
             if (stage < 2) {
                 step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.Step3Install", nil, [NSBundle mainBundle], @"Step 3. Install iTerm2 utility scripts.", @"Numbered step label for installing utility scripts");
+            } else if (stage == 2 && !_busy && _writeFailed) {
+                step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.InstallFailed", nil, [NSBundle mainBundle], @"🛑 The iTerm2 utility scripts were not installed. Check the terminal for errors, then select “Continue” to try again.", @"Shown when the command that installs the iTerm2 utility scripts reports that they could not be extracted");
+                indexToBold = lines.count;
             } else if (stage == 2 && !_busy) {
                 step = NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.ContinueToInstall", nil, [NSBundle mainBundle], @"➡ Select “Continue” to install iTerm2 utility scripts.", @"Prompt to continue to the utility scripts install step");
                 indexToBold = lines.count;
@@ -189,17 +295,62 @@
         [attributedString appendAttributedString:as];
     }];
     self.textField.attributedStringValue = attributedString;
+    [self sizeStepListToFit];
     NSString *preview = [self.shellInstallerDelegate shellIntegrationInstallerNextCommandForSendShellCommands];
     NSArray<NSButton *> *buttons = self.previewCommandButtons;
     for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
         buttons[i].hidden = unavailable || (i != stage) || preview == nil;
         if (_busy && i == stage) {
-            [buttons[i] setTitle:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.SendAgain", nil, [NSBundle mainBundle], @"Send Again", @"Button to send the preview command again")];
+            [buttons[i] setTitle:self.sendAgainTitle];
         } else {
-            [buttons[i] setTitle:NSLocalizedStringWithDefaultValue(@"ShellIntegrationInstaller.PreviewCommand", nil, [NSBundle mainBundle], @"Preview Command", @"Button to preview the command that will be sent")];
+            [buttons[i] setTitle:self.previewCommandTitle];
         }
     }
     self.previewTextView.string = preview ?: @"";
+}
+
+// A step can wrap (a long message, or a translation), so grow the step list to fit its text instead
+// of clipping the steps after it. The controls above the list's bottom edge move up with its top
+// and the view grows by the same amount, so the buttons at the bottom stay where they are.
+- (void)sizeStepListToFit {
+    NSTextField *field = self.textField;
+    NSView *view = field.superview;
+    if (!field || !view) {
+        return;
+    }
+    if (_minimumStepListHeight == 0) {
+        _minimumStepListHeight = NSHeight(field.frame);
+    }
+    const NSRect fieldFrame = field.frame;
+    const NSRect measureBounds = NSMakeRect(0, 0, NSWidth(fieldFrame), CGFLOAT_MAX);
+    const CGFloat fittingHeight = ceil([field.cell cellSizeForBounds:measureBounds].height);
+    const CGFloat delta = MAX(_minimumStepListHeight, fittingHeight) - NSHeight(fieldFrame);
+    if (delta == 0) {
+        return;
+    }
+    DLog(@"Resize step list by %@ to fit text needing %@", @(delta), @(fittingHeight));
+    const BOOL autoresizes = view.autoresizesSubviews;
+    view.autoresizesSubviews = NO;
+    NSRect viewFrame = view.frame;
+    viewFrame.size.height += delta;
+    // Keep the view's top edge where it is.
+    viewFrame.origin.y -= delta;
+    view.frame = viewFrame;
+    view.autoresizesSubviews = autoresizes;
+    for (NSView *subview in view.subviews) {
+        if (subview == field) {
+            continue;
+        }
+        if (NSMinY(subview.frame) >= NSMinY(fieldFrame)) {
+            NSRect frame = subview.frame;
+            frame.origin.y += delta;
+            subview.frame = frame;
+        }
+    }
+    NSRect newFieldFrame = fieldFrame;
+    newFieldFrame.size.height += delta;
+    field.frame = newFieldFrame;
+    [self.shellInstallerDelegate shellIntegrationInstallerContentSizeDidChange];
 }
 
 - (NSArray<NSButton *> *)previewCommandButtons {

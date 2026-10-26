@@ -30,7 +30,7 @@ final class LocalizationHygieneTests: XCTestCase {
     }
 
     private func mainStrings() throws -> [String: Any] {
-        let json = try loadCatalog("sources/Localizable.xcstrings")
+        let json = try loadCatalog("xcstrings/Localizable.xcstrings")
         return json["strings"] as! [String: Any]
     }
 

@@ -24,6 +24,9 @@ static const int kLinuxSetPaletteMode = -1;
 // If this is APC ... ST instead of OSC ... ST, use this for the mode since APC doesn't have modes.
 static const int kAPCMode = -2;
 
+// OSC 134 wraps the SSH Integration framer's output.
+static const int kXtermParserFramerWrapperMode = 134;
+
 // This parser operates as a state machine. Each state has a corresponding
 // method that implements a hand-build parser.
 typedef enum {
@@ -144,12 +147,44 @@ typedef enum {
     return kXtermParserFinishedState;
 }
 
++ (BOOL)isFramerHeaderPayload:(const unsigned char *)bytes length:(NSUInteger)length {
+    // The notifications framer.py sends with send_esc. Its other OSC 134 payloads are command
+    // replies (e.g., an environment variable's value or a Python traceback), which may hold
+    // anything, including line breaks and a leading %.
+    static const char *const keywords[] = {
+        ":%output", ":%autopoll", ":%end", ":%notif", ":%terminate", ":%ping", ":%it2"
+    };
+    for (size_t i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
+        const size_t keywordLength = strlen(keywords[i]);
+        if (length < keywordLength || memcmp(bytes, keywords[i], keywordLength) != 0) {
+            continue;
+        }
+        if (length == keywordLength || bytes[keywordLength] == ' ') {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// Whether the string so far is an SSH framer notification header in an OSC 134. Headers
+// are one line with nothing nested in them.
++ (BOOL)isCutOffFramerHeaderWithMode:(int)mode data:(NSData *)data {
+    return (mode == kXtermParserFramerWrapperMode &&
+            [self isFramerHeaderPayload:data.bytes length:data.length]);
+}
+
 // Read the next characters and append them to data. Various substrings may end parsing:
 //   ESC ]                This is ignored
 //   ESC \ or BEL         Finishes parsing
 //   ESC <anything else>  Fails
 //   File= KVP code       Finish prior to true end of OSC
 //   CAN or SUB           Fails
+//
+// In an SSH framer notification header (OSC 134 ;:%output and the like), which the framer
+// never splits across lines or interrupts, these fail without being consumed, so they are
+// parsed normally afterward (F-553):
+//   CR or LF
+//   ESC <anything but \>
 //
 // When 8-bit control sequences are supported, the following behaviors are added:
 //   C1 ST                Finished parsing
@@ -170,7 +205,13 @@ typedef enum {
             switch (c) {
                 case VT100CC_ESC:
                     if (iTermParserTryConsume(context, &c)) {
-                        if (c == ']') {
+                        if (c != '\\' && [self isCutOffFramerHeaderWithMode:mode data:data]) {
+                            // Another escape sequence (e.g., the local shell's OSC 133)
+                            // interrupted a frame header whose ssh connection died. Abandon
+                            // the header and let the ESC begin a fresh sequence (F-553).
+                            iTermParserBacktrackBy(context, 2);
+                            nextState = kXtermParserFailedState;
+                        } else if (c == ']') {
                             append = NO;
                             nextState = kXtermParserParsingStringState;
                         } else if (c == '\\') {
@@ -208,6 +249,20 @@ typedef enum {
                 case VT100CC_CAN:
                 case VT100CC_SUB:
                     nextState = kXtermParserFailedState;
+                    break;
+
+                case '\r':
+                case '\n':
+                    if ([self isCutOffFramerHeaderWithMode:mode data:data]) {
+                        // The SSH framer never puts a line break in a frame header. This
+                        // one was cut off when its ssh connection died, so what follows is
+                        // someone else's output (e.g., the local shell's). Abandon the OSC
+                        // and let the line break be parsed normally (F-553).
+                        iTermParserBacktrackBy(context, 1);
+                        nextState = kXtermParserFailedState;
+                    } else {
+                        nextState = kXtermParserParsingStringState;
+                    }
                     break;
 
                 case VT100CC_BEL:
@@ -304,7 +359,7 @@ typedef enum {
                @(117): @(XTERMCC_RESET_HIGHLIGHT_COLOR),
                @(119): @(XTERMCC_RESET_HIGHLIGHT_FOREGROUND_COLOR),
                @133: @(XTERMCC_FINAL_TERM),
-               @134: @(XTERMCC_FRAMER_WRAPPER),
+               @(kXtermParserFramerWrapperMode): @(XTERMCC_FRAMER_WRAPPER),
                @1337: @(XTERMCC_SET_KVP),
                @7501: @(XTERMCC_PROGRAM_STATUS),
                @21337: @(XTERMCC_SET_TAB_STATUS),

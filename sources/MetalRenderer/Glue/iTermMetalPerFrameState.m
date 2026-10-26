@@ -366,8 +366,9 @@ typedef struct {
     _cursorInfo.hdrBrightness = drawingHelper.hdrCursorBrightness;
     _cursorInfo.password = drawingHelper.passwordInput;
     _cursorInfo.copyMode = drawingHelper.copyMode;
-    _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
-                                                         drawingHelper.copyModeCursorCoord.y - _visibleRange.start.y);
+    const VT100GridCoord visualCopyModeCursorCoord = drawingHelper.visualCopyModeCursorCoord;
+    _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(visualCopyModeCursorCoord.x,
+                                                         visualCopyModeCursorCoord.y - _visibleRange.start.y);
     _cursorInfo.copyModeCursorSelecting = drawingHelper.copyModeSelecting;
     VT100GridCoord cursorCoord = [drawingHelper coordinateByTransformingScreenCoordinateForRTL:VT100GridCoordMake(textView.dataSource.cursorX - 1,
                                                                                                                   textView.dataSource.cursorY - 1)];

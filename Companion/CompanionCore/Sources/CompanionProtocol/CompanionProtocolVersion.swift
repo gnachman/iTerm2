@@ -139,7 +139,23 @@ public enum CompanionProtocolVersion {
     /// the new client message with an error it never has cause to receive (the
     /// phone only answers alerts a mac told it about). minimumPeer stays at 11.
     /// Each side self-gates on `modalAlertRevision`.
-    public static let current = 14
+    ///
+    /// Revision 15 makes a streamed web browser session interactive. The stream
+    /// config gains `isBrowser`; the phone sends `browserTap` and `browserScroll`
+    /// for a browser stream, and the mac pushes `browserEditingChanged` so the
+    /// phone raises its keyboard when a text field on the page has focus. Typed
+    /// keys keep using `sendKey`, which a revision-15 mac delivers to the page.
+    /// For browser controls, the phone sends `browserGoBack`, `browserGoForward`,
+    /// `browserReload`, `browserStopLoading`, and `browserLoad`, and the mac
+    /// pushes `browserNavigationChanged` with the page's address, title, and
+    /// history state.
+    /// Additive and backward-compatible: the config field decodes as false on an
+    /// older mac, the new client messages decode as `.unsupported` on an older
+    /// mac (the phone only sends them to a mac at this revision), and the mac
+    /// sends `browserEditingChanged` and `browserNavigationChanged` only to a
+    /// phone at this revision.
+    /// minimumPeer stays at 11. Each side self-gates on `browserInputRevision`.
+    public static let current = 15
 
     /// The oldest peer revision this build accepts. Raised to 11 (lockstep with
     /// `current`) for the sharded resolver: peers older than revision 11 stay on
@@ -220,6 +236,14 @@ public enum CompanionProtocolVersion {
     /// timeouts while the mac reports itself blocked, only for a mac at least
     /// here.
     public static let modalAlertRevision = 14
+
+    /// The first revision that carries browser input: `isBrowser` in the stream
+    /// config, the `browserTap` and `browserScroll` client messages, the
+    /// `browserEditingChanged` host event, and `sendKey` delivery to a web page.
+    /// The phone offers tap, scroll, and keyboard input on a browser stream only
+    /// for a mac at least here; the mac sends `browserEditingChanged` only to a
+    /// phone at least here.
+    public static let browserInputRevision = 15
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {

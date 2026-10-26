@@ -218,6 +218,9 @@ class MenuItemPopupView: NSView {
                                   comment: "Placeholder shown in the menu-item picker when no item is selected")
         let newComboView = SearchableComboView(SearchableComboViewGroup.fromMainMenu(),
                                                defaultTitle: defaultTitle)
+        // SearchableComboView only shows its default title after a failed selection, so a
+        // freshly made one is blank. Show the placeholder until something is selected.
+        newComboView.setTitle(defaultTitle)
         newComboView.frame = self.bounds
         newComboView.delegate = comboView?.delegate
         addSubview(newComboView)

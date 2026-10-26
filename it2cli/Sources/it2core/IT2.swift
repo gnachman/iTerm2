@@ -32,6 +32,7 @@ struct IT2: ParsableCommand {
             ClearShortcut.self,
             ConfigPath.self,
             ConfigReload.self,
+            HandleAgentHook.self,
             LoadCommand.self,
             LsShortcut.self,
             Monitor.self,
@@ -121,6 +122,12 @@ func runParsedCommand(_ command: ParsableCommand, _ context: IT2Context) throws 
         let name = it2RootSubcommandName(for: command)
             ?? type(of: command).configuration.commandName ?? "this command"
         throw IT2Error.invalidArgument(it2RemoteForbiddenMessage(name))
+    }
+    // Let an explicit --tmux steer socket selection as well as pane addressing. Done here, at
+    // the one choke point, so a command reached by delegation (alias, shortcuts) gets it too.
+    if let addressable = command as? TmuxAddressableCommand {
+        TmuxOwnership.explicitTMUX = addressable.tmuxOptions.tmux
+        TmuxOwnership.explicitTmuxPane = addressable.tmuxOptions.tmuxPane
     }
     if var runnable = command as? IT2Runnable {
         try runnable.run(context)

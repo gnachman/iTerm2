@@ -116,8 +116,10 @@ enum WorkgroupPresets {
             // PTYSession.wrappedCommandForCodeReview to a temp file
             // holding the user-editable system prompt (Settings >
             // General > AI > Prompts), defaulting to the bundled
-            // code-review-system-prompt.txt.
-            command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(codeReviewSystemPromptFile)' --settings '\\(iterm2.appBundlePath)/Contents/Resources/code-review-settings.txt'",
+            // code-review-system-prompt.txt. `codeReviewSettingsFile` is
+            // the bundled code-review-settings.txt, or for a peer on a
+            // remote host, a copy written there.
+            command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(codeReviewSystemPromptFile)' --settings '\\(codeReviewSettingsFile)'",
             urlString: "",
             toolbarItems: [.modeSwitcher,
                            .reload(WorkgroupToolbarShortcut.reloadDefault),

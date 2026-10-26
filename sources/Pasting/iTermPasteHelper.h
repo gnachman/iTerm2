@@ -17,6 +17,8 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 @class iTermStatusBarViewController;
 @class iTermVariableScope;
 @class PasteContext;
+@class iTermNumberOfSpacesAccessoryViewController;
+@class iTermWarning;
 
 @protocol iTermPasteHelperDelegate <NSObject>
 
@@ -116,6 +118,11 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 // Remove all queued events and pending pastes, and hide the paste indicator if shown.
 - (void)abort;
 
+// Stop the pastes for which `test` returns YES and leave the others alone. Queued ones are
+// removed. If the one in progress passes, it stops where it is, as when the user cancels it from
+// the paste indicator, and whatever is queued after it goes ahead.
+- (void)abortPasteEventsPassingTest:(BOOL (^NS_NOESCAPE)(PasteEvent *event))test;
+
 - (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled;
 
 // Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
@@ -146,5 +153,8 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
                         spacesPerTab:(int)spacesPerTab
                             progress:(void (^)(NSInteger))progress;
 - (void)tryToPasteEvent:(PasteEvent *)pasteEvent;
+
+// The warning shown before pasting text that contains tabs. Visible for testing.
++ (iTermWarning *)pasteWithTabsWarningWithAccessoryController:(iTermNumberOfSpacesAccessoryViewController *)accessoryController;
 
 @end

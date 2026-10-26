@@ -1479,9 +1479,12 @@ void TurnOnDebugLoggingAutomatically(void) {
     // app actually accesses the local network. Without this, users may find that commands like
     // `ping 10.0.0.1` fail with "No route to host" until they reboot. Probing every launch is
     // silent once a decision exists and lets us recover after a TCC reset or OS upgrade (issue
-    // 12956).
-    DLog(@"Prompt for local network permission");
-    [[iTermLocalNetworkPermissionPrompter shared] prompt];
+    // 12956). Not for a unit test host: it needs no local network, and the prompt would sit
+    // unanswered on a machine running tests unattended.
+    if (![NSApp isRunningUnitTests]) {
+        DLog(@"Prompt for local network permission");
+        [[iTermLocalNetworkPermissionPrompter shared] prompt];
+    }
 
     // Bookmarks must be loaded for this to work since it needs to know if the hotkey's profile
     // exists.
@@ -1603,6 +1606,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     // When running an isolated instance via -suite, overlay the suite name on
     // the dock icon so it's obvious which instance this dock icon belongs to.
     [iTermSuiteDockTileView configureDockTileIfNeeded];
+    [[iTermFlowControlMonitor instance] start];
 
     // Record whether the previous shutdown ran to completion. +lastShutdownWasClean
     // returns NO if the process was killed (e.g. SIGKILL by the logout/reboot
@@ -1769,6 +1773,8 @@ void TurnOnDebugLoggingAutomatically(void) {
                 [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
                 _postRestorationStepsFinished = YES;
                 [self maybeReportSessionRestorationComplete];
+                // Like orphaned job servers, remote panes no restored session claims.
+                [[iTermFramerPaneStrandedFinder sharedInstance] restorationDidSettle];
             } else {
                 [[NSNotificationCenter defaultCenter] addObserver:self
                                                          selector:@selector(itermDidDecodeWindowRestorableState:)
@@ -1779,6 +1785,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     } else {
         [self restoreBuriedSessionsState];
         [[WorkgroupRestorationCoordinator sharedInstance] reconstructReadyAnchors];
+        [[iTermFramerPaneStrandedFinder sharedInstance] restorationDidSettle];
         if (_restorableStateController) {
             [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
                 _postRestorationStepsFinished = YES;
@@ -1827,6 +1834,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     // the migrated (now-flagged) state this launch rather than next launch.
     [iTermClaudeCodeOnboarding migrateExitTriggersToLeaderOnlyIfNeeded];
     [iTermClaudeCodeOnboarding reconcileTriggersCache];
+    // A tmux profile created later gets the triggers if they are installed elsewhere.
+    [iTermClaudeCodeOnboarding observeTmuxProfileCreation];
 
     // Sticky claudeCodeIntegrationCompleted flag was added after
     // 3.7.0beta1/beta2 shipped; users who installed the
@@ -2000,6 +2009,7 @@ static iTermKeyEventReplayer *gReplayer;
         [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphansWithCompletion:nil];
         _postRestorationStepsFinished = YES;
         [self maybeReportSessionRestorationComplete];
+        [[iTermFramerPaneStrandedFinder sharedInstance] restorationDidSettle];
     }
 }
 
@@ -3888,11 +3898,9 @@ static iTermKeyEventReplayer *gReplayer;
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [term currentSession];
     PTYTab *tab = [term tabForSession:session];
-    NSString *reason = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
-    NSString *message;
-    if (reason) {
-        message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GPURenderer.OffBecause", nil, [NSBundle mainBundle], @"GPU rendering is off in the current session because %@", @"Explanation that GPU rendering is off; %@ is the reason"), reason];
-    } else {
+    // The reason is a complete sentence that says GPU rendering is off and why.
+    NSString *message = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
+    if (!message) {
         message = NSLocalizedStringWithDefaultValue(@"GPURenderer.Enabled", nil, [NSBundle mainBundle], @"GPU rendering is enabled for the current session.", @"Message that GPU rendering is enabled");
     }
     [iTermWarning showWarningWithTitle:message

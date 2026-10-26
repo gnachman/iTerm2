@@ -12,10 +12,12 @@
                 <outlet property="_bracketedPasteMode" destination="6tG-RX-FWF" id="zO4-l1-qcR"/>
                 <outlet property="_chunkSizeLabel" destination="e6w-C2-mnH" id="AiR-gz-exx"/>
                 <outlet property="_chunkSizeSlider" destination="VoL-gQ-ZeY" id="gmS-gk-4p4"/>
+                <outlet property="_chunkSizeTitle" destination="7Se-3J-8sc" id="Qw3-Ck-T1t"/>
                 <outlet property="_convertNewlines" destination="FKu-pE-gGN" id="lPd-34-hJ2"/>
                 <outlet property="_convertUnicodePunctuation" destination="C2O-DY-y76" id="Omr-LF-Lqw"/>
                 <outlet property="_delayBetweenChunksLabel" destination="l9P-RY-F8r" id="EMT-5p-KWq"/>
                 <outlet property="_delayBetweenChunksSlider" destination="sHW-Ak-i7W" id="a8I-OM-vZc"/>
+                <outlet property="_delayBetweenChunksTitle" destination="2C3-w2-XRv" id="Dl4-Tt-W2x"/>
                 <outlet property="_escapeShellCharsWithBackslash" destination="jfQ-7z-viz" id="nXK-uy-Mmm"/>
                 <outlet property="_icuRegexHelpLabel" destination="omm-tD-wpW" id="5Io-oV-tOL"/>
                 <outlet property="_regex" destination="CaF-jG-U6l" id="gi2-21-Rqr"/>
@@ -257,7 +259,7 @@
                             </connections>
                         </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XlA-dp-B6g">
-                            <rect key="frame" x="-2" y="66" width="78" height="17"/>
+                            <rect key="frame" x="-2" y="66" width="240" height="17"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Transforms" id="IOU-ld-y0b">
                                 <font key="font" metaFont="systemBold"/>
@@ -342,7 +344,7 @@
                     </connections>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Cx6-wX-Vh5">
-                    <rect key="frame" x="256" y="143" width="182" height="11"/>
+                    <rect key="frame" x="256" y="143" width="188" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Use $1, $2, etc. for capture groups" id="tpG-Jk-bWC">
                         <font key="font" metaFont="miniSystem"/>
@@ -351,7 +353,7 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oYz-Zc-dnj">
-                    <rect key="frame" x="256" y="131" width="182" height="11"/>
+                    <rect key="frame" x="256" y="131" width="188" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Respects vim escape sequences" id="a9K-ff-GBV">
                         <font key="font" metaFont="miniSystem"/>
@@ -360,7 +362,7 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="omm-tD-wpW">
-                    <rect key="frame" x="66" y="142" width="182" height="12"/>
+                    <rect key="frame" x="66" y="142" width="186" height="12"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="ICU regular expression syntax" id="Iuq-a0-6jh">
                         <font key="font" metaFont="miniSystem"/>

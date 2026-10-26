@@ -202,11 +202,11 @@ extension Session {
             if resp.submessageOneOfCase == .variableResponse,
                let vr = resp.variableResponse,
                vr.status == ITMVariableResponse_Status.ok {
-                if vr.valuesArray_Count > 0, let n = vr.valuesArray.object(at: 0) as? String, n != "null" {
-                    name = n.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                if vr.valuesArray_Count > 0, let n = vr.valuesArray.object(at: 0) as? String {
+                    name = decodeJSONString(n) ?? ""
                 }
-                if vr.valuesArray_Count > 1, let t = vr.valuesArray.object(at: 1) as? String, t != "null" {
-                    tty = t.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                if vr.valuesArray_Count > 1, let t = vr.valuesArray.object(at: 1) as? String {
+                    tty = decodeJSONString(t) ?? ""
                 }
             }
             return (name, tty)
@@ -898,7 +898,7 @@ extension Session {
 // MARK: - session add-clipping
 
 extension Session {
-    struct AddClipping: ParsableCommand, IT2Runnable {
+    struct AddClipping: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "add-clipping",
             abstract: "Add a clipping to a session (e.g., a code review comment)."
@@ -913,35 +913,24 @@ extension Session {
         @Argument(help: "Clipping detail.")
         var detail: String
 
-        @Option(name: .shortAndLong, help: "Target session ID (default: active).")
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
         var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
 
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
-            let sessionId = try client.resolveSessionId(session)
-
-            let invoke = ITMInvokeFunctionRequest()
-            let sessionContext = ITMInvokeFunctionRequest_Session()
-            sessionContext.sessionId = sessionId
-            invoke.session = sessionContext
-            invoke.invocation = try "iterm2.add_clipping(type: \(jsonString(type)), title: \(jsonString(title)), detail: \(jsonString(detail)))"
-
-            let request = ITMClientOriginatedMessage()
-            request.id_p = client.nextId()
-            request.invokeFunctionRequest = invoke
-
-            let response = try client.send(request)
-            guard response.submessageOneOfCase == .invokeFunctionResponse,
-                  let invokeResp = response.invokeFunctionResponse else {
-                throw IT2Error.apiError("No invoke function response")
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           ctx: ctx) else {
+                return
             }
-
-            if invokeResp.dispositionOneOfCase == .error {
-                let reason = invokeResp.error?.errorReason ?? "unknown"
-                throw IT2Error.apiError("Add clipping failed: \(reason)")
-            }
+            _ = try client.invoke(
+                try "iterm2.add_clipping(type: \(jsonString(type)), title: \(jsonString(title)), detail: \(jsonString(detail)))",
+                sessionID: sessionId,
+                failure: "Add clipping failed")
         }
 
         private func jsonString(_ s: String) throws -> String {
@@ -957,41 +946,29 @@ extension Session {
 // MARK: - session archive-clippings
 
 extension Session {
-    struct ArchiveClippings: ParsableCommand, IT2Runnable {
+    struct ArchiveClippings: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "archive-clippings",
             abstract: "Archive a session's clippings, clearing the live list and adding a history entry."
         )
 
-        @Option(name: .shortAndLong, help: "Target session ID (default: active).")
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
         var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
 
         func run(_ ctx: IT2Context) throws {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
-            let sessionId = try client.resolveSessionId(session)
-
-            let invoke = ITMInvokeFunctionRequest()
-            let sessionContext = ITMInvokeFunctionRequest_Session()
-            sessionContext.sessionId = sessionId
-            invoke.session = sessionContext
-            invoke.invocation = "iterm2.archive_clippings()"
-
-            let request = ITMClientOriginatedMessage()
-            request.id_p = client.nextId()
-            request.invokeFunctionRequest = invoke
-
-            let response = try client.send(request)
-            guard response.submessageOneOfCase == .invokeFunctionResponse,
-                  let invokeResp = response.invokeFunctionResponse else {
-                throw IT2Error.apiError("No invoke function response")
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           ctx: ctx) else {
+                return
             }
-
-            if invokeResp.dispositionOneOfCase == .error {
-                let reason = invokeResp.error?.errorReason ?? "unknown"
-                throw IT2Error.apiError("Archive clippings failed: \(reason)")
-            }
+            _ = try client.invoke("iterm2.archive_clippings()",
+                                  sessionID: sessionId,
+                                  failure: "Archive clippings failed")
         }
     }
 }
@@ -1009,7 +986,7 @@ extension Session {
         @Argument(help: "Variable name.")
         var variable: String
 
-        @Argument(help: "Value to set.")
+        @Argument(help: "Value to set: JSON, or else a plain string.")
         var value: String
 
         @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
@@ -1032,7 +1009,7 @@ extension Session {
 
             let setEntry = ITMVariableRequest_Set()
             setEntry.name = variable
-            setEntry.value = value
+            setEntry.value = Self.jsonValue(value)
             varReq.setArray.add(setEntry)
 
             let request = ITMClientOriginatedMessage()
@@ -1048,6 +1025,17 @@ extension Session {
                 throw IT2Error.apiError("Set variable failed with status \(varResp.status.rawValue)")
             }
             ctx.out("Set \(variable) = \(value)")
+        }
+
+        /// The API takes the value as JSON and ignores one that doesn't parse, so a
+        /// value that is already JSON (a quoted string, number, object, ...) goes as
+        /// is and anything else is sent as a JSON string.
+        static func jsonValue(_ value: String) -> String {
+            if let data = value.data(using: .utf8),
+               (try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)) != nil {
+                return value
+            }
+            return jsonString(value)
         }
     }
 }
@@ -1096,6 +1084,13 @@ extension Session {
 }
 
 // MARK: - session set-status
+
+/// The two states of the tab's progress ring a status update can ask for. Spelled the same way
+/// in the set_session_status built-in.
+enum ProgressOption: String, ExpressibleByArgument {
+    case running
+    case stopped
+}
 
 // The options for setting a session status, shared by `it2 session set-status`
 // and the top-level `it2 set-status` shortcut so the two cannot drift.
@@ -1158,6 +1153,14 @@ struct SetStatusOptions: ParsableArguments {
         """)
     var json = false
 
+    @Option(name: .long, help: """
+        Draw or stop the tab’s progress ring: running or stopped. For a \
+        program that reports through hooks but does not emit the progress \
+        protocol (OSC 9;4) itself. Applied the way the terminal applies the \
+        protocol, so an expiring status sees the ring stop.
+        """)
+    var progress: ProgressOption?
+
     @Option(name: .long, help: "Expire this status by itself when an event happens. The only value is “progress-end”: the session reported through the progress protocol (OSC 9;4) that the operation running when the status was set has ended.")
     var expiresOn: String?
 
@@ -1187,6 +1190,9 @@ struct SetStatusOptions: ParsableArguments {
         }
         if let detail {
             args.append("detail: \(jsonString(detail))")
+        }
+        if let progress {
+            args.append("progress: \(jsonString(progress.rawValue))")
         }
         if let backgroundTasks {
             args.append("background_tasks: \(backgroundTasks)")

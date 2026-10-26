@@ -88,7 +88,7 @@
 
 - (void)testSetLayoutWhileAttachedSendsSelectLayout {
     [_controller setLayoutInWindow:4 toLayout:@"tiled"];
-    XCTAssertTrue([[self written] containsString:@"select-layout -t @4 tiled"], @"%@", [self written]);
+    XCTAssertTrue([[self written] containsString:@"select-layout -t @4 \"tiled\""], @"%@", [self written]);
 }
 
 - (void)testResizeFloatingPaneWhileAttachedSendsMoveAndResize {
@@ -168,6 +168,22 @@
     [self detachAndClearWrites];
     XCTAssertNoThrow([_controller didCreateWindowWithCommand:@"new-window"]);
     XCTAssertEqualObjects([self written], @"");
+}
+
+// Dropping a dragged divider in a leftover window. Nothing may be counted as outstanding either,
+// or a later reattach would wait for replies that never come.
+- (void)testSetLayoutWithMovedDividerAfterDetachDoesNotThrow {
+    [self detachAndClearWrites];
+    XCTAssertNoThrow([_controller setLayoutInWindow:4 toLayoutWithMovedDivider:@"aafd,120x40,0,0,0"]);
+    XCTAssertEqualObjects([self written], @"");
+    XCTAssertFalse([_controller hasOutstandingWindowResize]);
+}
+
+- (void)testRefreshLayoutsAfterDetachDoesNotThrow {
+    [self detachAndClearWrites];
+    XCTAssertNoThrow([_controller refreshLayoutsFromTmux]);
+    XCTAssertEqualObjects([self written], @"");
+    XCTAssertFalse([_controller hasOutstandingWindowResize]);
 }
 
 @end

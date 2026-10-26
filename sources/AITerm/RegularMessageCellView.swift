@@ -292,10 +292,18 @@ class RegularMessageCellView: MessageCellView, ChatFindableCellView {
 
     static func cellHeight(for rendition: MessageRendition,
                            tableViewWidth: CGFloat) -> CGFloat {
+        return cellHeight(for: rendition,
+                          maxBubbleWidth: maxBubbleWidth(tableViewWidth: tableViewWidth))
+    }
+
+    // Height of a cell configured with configure(with:maxBubbleWidth:). This
+    // mirrors layout(), which positions subviews by frame, so the cell has no
+    // constraints and its fittingSize is zero.
+    static func cellHeight(for rendition: MessageRendition,
+                           maxBubbleWidth maxBubble: CGFloat) -> CGFloat {
         guard case .regular(let regular) = rendition.flavor else {
             return 0
         }
-        let maxBubble = maxBubbleWidth(tableViewWidth: tableViewWidth)
         let textContentWidth = max(0, maxBubble - textHorizontalPadding * 2)
         let textHeight = ceil(measureText(regular.attributedString,
                                           contentWidth: textContentWidth))

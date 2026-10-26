@@ -291,6 +291,35 @@ static PreferencePanel *gSessionsPreferencePanel;
 
 @implementation iTermPrefsFieldEditor
 
+// A text field's field editor is ahead of PreferencePanel in the responder chain and would claim
+// Find… for itself even though it has no find panel. Let Settings focus its search field instead.
+- (BOOL)shouldForwardFindPanelAction {
+    if (self.usesFindPanel || self.usesFindBar) {
+        return NO;
+    }
+    return [self.window.delegate respondsToSelector:@selector(performFindPanelAction:)];
+}
+
+- (void)performFindPanelAction:(id)sender {
+    if ([self shouldForwardFindPanelAction]) {
+        [(id)self.window.delegate performFindPanelAction:sender];
+        return;
+    }
+    [super performFindPanelAction:sender];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(performFindPanelAction:) &&
+        [self shouldForwardFindPanelAction]) {
+        id<NSMenuItemValidation> delegate = (id<NSMenuItemValidation>)self.window.delegate;
+        if ([delegate respondsToSelector:@selector(validateMenuItem:)]) {
+            return [delegate validateMenuItem:menuItem];
+        }
+        return YES;
+    }
+    return [super validateMenuItem:menuItem];
+}
+
 - (BOOL)isFieldEditor {
     return YES;
 }
@@ -640,7 +669,10 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     }
 #endif
     if (addVC) {
-        iTermDonateViewController *vc = [[iTermDonateViewController alloc] init];
+        // The window already has the size and title it opens with.
+        const CGFloat maxTextWidth = [iTermDonateViewController maxTextWidthForWindowWidth:NSWidth(self.window.frame)
+                                                                                     title:self.window.title];
+        iTermDonateViewController *vc = [[iTermDonateViewController alloc] initWithMaxTextWidth:maxTextWidth];
         [self.window addTitlebarAccessoryViewController:vc];
     }
 
@@ -1115,10 +1147,39 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                                         object:nil];
 }
 
+// Settings is a panel, so the terminal window behind it stays main. Without this, Edit > Find >
+// Find… fell through to the main window and opened the terminal's find bar.
+- (BOOL)canFocusSearchFieldForFindPanelAction:(id)sender {
+    if ([sender respondsToSelector:@selector(tag)] &&
+        [sender tag] != NSFindPanelActionShowFindPanel) {
+        return NO;
+    }
+    NSSearchField *searchField = self.searchField;
+    return searchField != nil && searchField.window == self.window;
+}
+
+- (IBAction)performFindPanelAction:(id)sender {
+    if (![self canFocusSearchFieldForFindPanelAction:sender]) {
+        DLog(@"Ignore find panel action from %@", sender);
+        return;
+    }
+    NSSearchField *searchField = self.searchField;
+    NSText *editor = [NSText castFrom:self.window.firstResponder];
+    if (editor && editor.delegate == (id)searchField) {
+        // Already editing the search field. Refocusing would end and restart editing.
+        [editor selectAll:nil];
+        return;
+    }
+    [self.window makeFirstResponder:searchField];
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (menuItem.action == @selector(toggleIndicateNonDefaultValues:)) {
         menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] ? NSControlStateValueOn: NSControlStateValueOff;
         return YES;
+    }
+    if (menuItem.action == @selector(performFindPanelAction:)) {
+        return [self canFocusSearchFieldForFindPanelAction:menuItem];
     }
     return YES;
 }

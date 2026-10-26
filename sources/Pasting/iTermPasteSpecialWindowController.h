@@ -28,5 +28,6 @@ typedef void (^iTermPasteSpecialCompletionBlock)(PasteEvent *pasteEvent);
 
 // Localized "N bytes in M lines." with each count pluralized independently. Exposed for testing.
 + (NSString *)statsLabelStringForByteCount:(NSInteger)byteCount lineCount:(NSInteger)lineCount;
++ (NSString *)statsLabelStringForPreviewString:(NSString *)string;
 
 @end

@@ -75,6 +75,17 @@ final class iTermArrangementTrustGateTests: XCTestCase {
         XCTAssertTrue(summary.findings.contains { $0.contains("1 custom command") })
     }
 
+    /// F-052: a session started with a command saves it as both its Program and its profile's
+    /// Custom Command. That is one command, not two.
+    func testProgramAndCustomCommandForOneSessionCountOnce() {
+        let program: [String: Any] = ["Type": "Command", "Command": "/bin/sleep 1003"]
+        let bookmark: [String: Any] = ["Custom Command": "Yes", "Command": "/bin/sleep 1003"]
+        let arrangement = [window(tabs: [splitter(subviews: [sessionView(bookmark: bookmark, program: program),
+                                                             sessionView(bookmark: bookmark, program: program)])])]
+        let summary = RiskAnalyzer.analyze(windows: arrangement)
+        XCTAssertTrue(summary.findings.contains { $0.contains("2 custom commands") }, "\(summary.findings)")
+    }
+
     func testShellLauncherProgramIsNotReportedAsCommand() {
         let program: [String: Any] = ["Type": "Shell Launcher"]
         let arrangement = [window(tabs: [sessionView(program: program)])]

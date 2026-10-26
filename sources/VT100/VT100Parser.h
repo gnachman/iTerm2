@@ -18,10 +18,16 @@
 @property(atomic, assign) NSStringEncoding encoding;
 @property(nonatomic, readonly) int streamLength;
 @property(atomic) BOOL literalMode;
+// When the frame of the outer framer whose contents this parses was sent, under nested SSH
+// Integration, if it was flow controlled; otherwise 0.
+@property(nonatomic) int64_t carrierSendMilliseconds;
 
 - (void)putStreamData:(const char *)bytes length:(int)length;
 - (void)clearStream;
 - (void)forceUnhookDCS:(NSString *)uniqueID;
+// Unhooks the DCS hook whose unique ID matches, whether it is this parser's or a nested
+// SSH conductor's. Returns whether a hook was removed.
+- (BOOL)forceUnhookDCSReturningSuccess:(NSString *)uniqueID;
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;
 
@@ -29,7 +35,8 @@
 // is known to be 1.9 or later; see VT100TmuxParser. Thread-safe.
 - (void)setTmuxServerMayOmitEndGuardBeforeExit:(BOOL)mayOmit;
 
-- (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree;
+// clientUniqueID is the unique ID of the it2ssh that hooked this parser, or nil if unknown.
+- (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree clientUniqueID:(NSString *)clientUniqueID;
 - (void)cancelConductorRecoveryMode;
 
 // CVector was created for this method. Because so many VT100Token*s are created and destroyed,

@@ -123,6 +123,11 @@ class SocketConnection {
 
     // MARK: - Private
 
+    /// The advertised record this process connected through, or nil when it did not use one.
+    /// Read by CookieAuth so the AppleScript cookie target names the same iTerm2 as the socket.
+    /// Set once, by socketPath(), which connect() calls before any credential is requested.
+    private(set) static var chosenAdvertisedRecord: [String: String]?
+
     private static func socketPath() -> String {
         let appSupport = NSSearchPathForDirectoriesInDomains(
             .applicationSupportDirectory, .userDomainMask, true
@@ -133,16 +138,14 @@ class SocketConnection {
         }
         // Inside a tmux pane, the iTerm2 instances attached to the server have each said which
         // suite they run under, newest attacher first; those beat the value the pane inherited
-        // (see TmuxOwnership). An advertised suite whose socket is gone is skipped: its iTerm2
-        // quit without the record being pruned, and the next one down may well be live.
-        for record in TmuxOwnership.advertisedRecords(environment: environment) {
-            guard let suite = record["suite"], !suite.isEmpty else {
-                continue
-            }
-            let candidate = path(forSuite: suite)
-            if FileManager.default.fileExists(atPath: candidate) {
-                return candidate
-            }
+        // (see TmuxOwnership). The chosen record is remembered so CookieAuth asks THAT instance
+        // for a cookie: the socket and the cookie target must come from one advertiser, or the
+        // handshake fails against an instance that did not issue the cookie.
+        if let chosen = TmuxOwnership.chooseRecord(TmuxOwnership.advertisedRecords(environment: environment),
+                                                   socketPathForSuite: path(forSuite:),
+                                                   socketExists: { FileManager.default.fileExists(atPath: $0) }) {
+            chosenAdvertisedRecord = chosen.record
+            return chosen.socketPath
         }
         return path(forSuite: environment["IT2_SUITE"] ?? "iTerm2")
     }

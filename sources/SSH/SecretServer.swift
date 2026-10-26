@@ -7,6 +7,23 @@
 
 import Foundation
 
+// The result of redeeming a secret.
+@objc(iTermSecretClaim)
+class SecretClaim: NSObject {
+    // The nearest ancestors of the process that fetched the secret, nearest first.
+    // When it2ssh fetched it locally, it2ssh is among them.
+    @objc let clientAncestors: [SSHClientProcessIdentity]
+    // The modes of the fetching process's controlling tty when it fetched the secret.
+    // it2ssh fetches it before it starts ssh, so these are the modes ssh will change
+    // (F-460).
+    @objc let ttyModes: TTYModes?
+
+    init(clientAncestors: [SSHClientProcessIdentity], ttyModes: TTYModes?) {
+        self.clientAncestors = clientAncestors
+        self.ttyModes = ttyModes
+    }
+}
+
 @objc(iTermSecretServer)
 class SecretServer: NSObject {
     enum Exception: Error {
@@ -16,7 +33,10 @@ class SecretServer: NSObject {
     }
     private let socketURL: URL
     private let unixSocket: iTermSocket
-    private var secrets = Set<String>()
+    // Accessed from the accept queue and the main thread.
+    private let mutex = Mutex()
+    // Maps each outstanding secret to what was learned about the process that fetched it.
+    private var secrets = [String: SecretClaim]()
     private static let defaultURLBase = URL(fileURLWithPath: FileManager.default.homeDirectoryDotDir() ?? NSHomeDirectory())
     private static let defaultURL = defaultURLBase.appendingPathComponents(["sockets", "secrets"])
     @objc static let instance = SecretServer(socketURL: defaultURL)
@@ -51,12 +71,21 @@ class SecretServer: NSObject {
         }
     }
 
-    @objc func check(_ secret: String) -> Bool {
-        if secrets.contains(secret) {
-            secrets.remove(secret)
-            return true
+    // Returns nil if the secret is not valid. Each secret can be claimed only once.
+    @objc func claim(_ secret: String) -> SecretClaim? {
+        return mutex.sync {
+            return secrets.removeValue(forKey: secret)
         }
-        return false
+    }
+
+    private func peerPID(_ fd: Int32) -> pid_t {
+        var pid: pid_t = 0
+        var length = socklen_t(MemoryLayout<pid_t>.size)
+        guard getsockopt(fd, SOL_LOCAL, LOCAL_PEERPID, &pid, &length) == 0 else {
+            DLog("LOCAL_PEERPID failed: \(String(cString: strerror(errno)))")
+            return 0
+        }
+        return pid
     }
 
     private func didAccept(_ fd: Int32) {
@@ -65,7 +94,15 @@ class SecretServer: NSObject {
             guard let secret = makeSecret() else {
                 return
             }
-            secrets.insert(secret)
+            // Record the peer's ancestry and tty modes now, while it is still connected.
+            let pid = peerPID(fd)
+            let ancestors = SSHClientProcessLocator.shared.ancestors(ofPeer: pid)
+            let ttyModes = TTYModes.ofControllingTTY(ofProcessID: pid)
+            DLog("Secret requested by a process with ancestors \(ancestors) on \(ttyModes?.path ?? "no tty")")
+            let claim = SecretClaim(clientAncestors: ancestors, ttyModes: ttyModes)
+            mutex.sync {
+                secrets[secret] = claim
+            }
             try? ObjCTry {
                 fileHandle.write(secret.data(using: .utf8)!)
             }

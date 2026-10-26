@@ -17,6 +17,7 @@
 @protocol PTYTrackingChildWindow;
 @class URLAction;
 @protocol iTermContentNavigationShortcutView;
+@protocol iTermTextDataSource;
 @class iTermProgress;
 @class iTermBlurredScreenshotSelectionRegion;
 
@@ -249,6 +250,12 @@ typedef NS_ENUM(NSUInteger, iTermContentNavigationAction) {
 
 // Cancels a batched render operation.
 - (void)cancelBatchedRender:(id)token;
+
+// Look Up draws its highlight starting at this cell: the leftmost visual cell
+// of the given logical word range (the range's start unless the line is
+// bidi-reordered).
++ (VT100GridCoord)lookUpAnchorForLogicalWordRange:(VT100GridCoordRange)logicalRange
+                                       dataSource:(id<iTermTextDataSource>)dataSource;
 
 @end
 

@@ -1,8 +1,9 @@
 #!/bin/sh
 # Manual testing: point ~/.codex/hooks.json at this script. Codex passes no
-# arguments of its own, and cc-status needs --agent codex to take any of the
+# arguments of its own, and the hook needs --agent codex to take any of the
 # Codex paths, so the flag has to come from somewhere; a wrapper is the one
-# form that works no matter how Codex parses the "command" string.
+# form that works no matter how Codex parses the "command" string. cc-status is
+# a shim for `it2 handle-agent-hook`; running it2 directly is equivalent.
 #
 # codex-hooks.json next to this file is a ready-made config. Substitute your
 # checkout path and install it:

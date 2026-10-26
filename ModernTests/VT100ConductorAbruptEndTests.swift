@@ -156,9 +156,54 @@ final class VT100ConductorAbruptEndTests: XCTestCase {
         let parser = VT100Parser()
         parser.encoding = String.Encoding.utf8.rawValue
         let tree: NSDictionary = [NSNumber(value: 100): ["dcs-id", NSDictionary()] as NSArray]
-        _ = parser.startConductorRecoveryMode(withID: "dcs-id", tree: tree as! [AnyHashable: Any])
+        _ = parser.startConductorRecoveryMode(withID: "dcs-id", tree: tree as! [AnyHashable: Any], clientUniqueID: nil)
         let tokens = parse(endSSH(clientUniqueID) + Array("local% ".utf8), parser: parser)
         assertUnhookedAndEnded(tokens, localText: "local% ")
+    }
+
+    // A restored session knows its it2ssh's unique ID from the restored conductor. With
+    // it, an EndSSH that cuts off a %output frame unhooks, as it does before restoration.
+    func testEndSSHInTruncatedOutputFrameInRecoveryModeWithKnownIDUnhooks() {
+        let parser = VT100Parser()
+        parser.encoding = String.Encoding.utf8.rawValue
+        let tree: NSDictionary = [NSNumber(value: 100): ["dcs-id", NSDictionary()] as NSArray]
+        _ = parser.startConductorRecoveryMode(withID: "dcs-id",
+                                              tree: tree as! [AnyHashable: Any],
+                                              clientUniqueID: clientUniqueID)
+        let tokens = parse(osc134("%output out1 100 -1 0") + Array("T66LI".utf8) +
+                           endSSH(clientUniqueID) + Array("local% ".utf8),
+                           parser: parser)
+        assertUnhookedAndEnded(tokens, localText: "local% ")
+    }
+
+    // When the outermost conductor isn't framing, the nested it2ssh hooks the top-level
+    // parser directly, so the outermost it2ssh's ID must not be required there.
+    func testEndSSHInRecoveryModeWithNonFramingRootUnhooks() {
+        let parser = VT100Parser()
+        parser.encoding = String.Encoding.utf8.rawValue
+        let inner: NSDictionary = [NSNumber(value: 100): ["inner", NSDictionary()] as NSArray]
+        let tree: NSDictionary = [NSNumber(value: 0): ["outer", inner] as NSArray]
+        _ = parser.startConductorRecoveryMode(withID: "outer",
+                                              tree: tree as! [AnyHashable: Any],
+                                              clientUniqueID: "outer-it2ssh")
+        // The EndSSH carries the inner it2ssh's ID.
+        let tokens = parse(endSSH(clientUniqueID) + Array("local% ".utf8), parser: parser)
+        assertUnhookedAndEnded(tokens, localText: "local% ")
+    }
+
+    // A nested it2ssh's EndSSH relayed inside %output still doesn't unhook a restored
+    // session's parser.
+    func testOtherEndSSHInOutputFrameInRecoveryModeDoesNotUnhook() {
+        let parser = VT100Parser()
+        parser.encoding = String.Encoding.utf8.rawValue
+        let tree: NSDictionary = [NSNumber(value: 100): ["dcs-id", NSDictionary()] as NSArray]
+        _ = parser.startConductorRecoveryMode(withID: "dcs-id",
+                                              tree: tree as! [AnyHashable: Any],
+                                              clientUniqueID: clientUniqueID)
+        let tokens = parse(osc134("%output out1 100 -1 0") + endSSH("nested") +
+                           Array("still framed".utf8) + osc134("%end out1"),
+                           parser: parser)
+        XCTAssertFalse(tokens.contains { $0.type == SSH_UNHOOK }, types(tokens))
     }
 
     // An EndSSH inside a cut-off %output frame can be split across reads.

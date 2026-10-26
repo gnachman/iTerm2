@@ -14,7 +14,7 @@
 import AppKit
 import Foundation
 
-final class CompanionTerminalFrameSource: CompanionFrameSource {
+final class CompanionTerminalFrameSource: CompanionLiveFrameSource {
     private let session: PTYSession
 
     init(session: PTYSession) {
@@ -29,7 +29,7 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
     /// frame spans widthExcludingRightGutter, which includes the horizontal side
     /// margins (includeMargins:false only drops the top/bottom margin), so the grid
     /// starts leftMargin pixels in; topMargin is 0.
-    var cellGeometry: CompanionCellGeometry {
+    var cellGeometry: CompanionCellGeometry? {
         let s = scale
         let charWidth = Double(session.textview?.charWidth ?? 0)
         let lineHeight = Double(session.textview?.lineHeight ?? 0)
@@ -61,6 +61,16 @@ final class CompanionTerminalFrameSource: CompanionFrameSource {
     /// Whether the session reports mouse-wheel events to the program right now
     /// (profile enable-mouse-reporting + allow-mouse-wheel + a wheel-reporting mode).
     var scrollWheelReporting: Bool { session.scrollWheelReportingEnabled }
+
+    /// Any visual change: grid content (screenContentsLastChangedAt, bumped under
+    /// every renderer) OR a redraw request that does not change content, such as a
+    /// selection or cursor change (lastRedrawRequestedAt).
+    var contentLastChangedAt: TimeInterval {
+        max(session.screenContentsLastChangedAt, session.view?.lastRedrawRequestedAt ?? 0)
+    }
+
+    func tick() {
+    }
 
     func renderCurrentScreen() -> CGImage? {
         guard let textview = session.textview, textview.frame.width > 0 else {

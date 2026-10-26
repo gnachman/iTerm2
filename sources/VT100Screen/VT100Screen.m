@@ -1,5 +1,6 @@
 
 #import "VT100Screen.h"
+#import <stdatomic.h>
 #import "VT100Screen+Private.h"
 #import "VT100Screen+Search.h"
 #import "VT100ScreenMutableState+RCDataSource.h"
@@ -54,6 +55,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
 @implementation VT100Screen {
+    // Read on the main thread, added to on the read thread.
+    _Atomic(long long) _bytesReceived;
     // Used for recording instant replay.
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
@@ -920,7 +923,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     const NSInteger numberOfScrollbackLines = self.numberOfScrollbackLines;
     if (range.location < numberOfScrollbackLines) {
         historyRange.location = range.location;
-        historyRange.length = numberOfScrollbackLines - range.location;
+        historyRange.length = MIN(range.length, numberOfScrollbackLines - range.location);
 
         screenRange.location = 0;
         screenRange.length = range.length - historyRange.length;
@@ -1419,6 +1422,75 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return [_state rangeOfOutputForCommandMark:mark];
 }
 
+- (VT100GridRange)lineRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    return [self lineRangeOfOutputForCoordRange:[self rangeOfOutputForCommandMark:mark]];
+}
+
+- (VT100GridRange)lineRangeOfOutputForCoordRange:(VT100GridCoordRange)coordRange {
+    // The coord range is half-open. When it ends at column 0, which is where
+    // the next prompt begins, its last line holds none of the output. Output
+    // with no trailing newline shares that line with the prompt and is not
+    // counted, which matches what Copy Output selects.
+    const int location = MAX(0, coordRange.start.y);
+    const int endY = coordRange.end.x > 0 ? coordRange.end.y + 1 : coordRange.end.y;
+    const int length = MAX(0, endY - location);
+    return VT100GridRangeMake(location, length);
+}
+
+- (NSInteger)numberOfCellsUsedInOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    const VT100GridCoordRange coordRange = [self rangeOfOutputForCommandMark:mark];
+    const VT100GridRange lineRange = [self lineRangeOfOutputForCoordRange:coordRange];
+    const NSInteger count = [self numberOfCellsUsedInRange:lineRange];
+    if (lineRange.length == 0 || coordRange.end.x != 0) {
+        return count;
+    }
+    const int lastLine = VT100GridRangeMax(lineRange);
+    if (coordRange.end.y != lastLine + 1) {
+        return count;
+    }
+    const NSInteger padding = [self numberOfPromptSPCellsOnLine:lastLine];
+    DLog(@"Output for %@ has %@ cells including %@ of PROMPT_SP padding",
+         mark, @(count), @(padding));
+    return MAX(0, count - padding);
+}
+
+// When output does not end in a newline, zsh's PROMPT_SP writes its inverse
+// eol mark (% or #) after it and then pads with spaces until the line wraps,
+// so the next prompt begins on a new line. That leaves the output's last line
+// soft-wrapped into the prompt's line, ending in the mark and the padding.
+// Returns the number of those cells on |line|, or 0 if it does not look like
+// that. Spaces before the mark belong to the output and are not included.
+- (NSInteger)numberOfPromptSPCellsOnLine:(int)line {
+    ScreenCharArray *sca = [self screenCharArrayForLine:line];
+    if (sca.eol != EOL_SOFT) {
+        return 0;
+    }
+    const screen_char_t *chars = sca.line;
+    NSInteger result = 0;
+    int i = sca.length - 1;
+    // Skip the padding. Nulls are not counted as used cells, so they are
+    // skipped without being included.
+    while (i >= 0 && !chars[i].complexChar && !chars[i].image && (chars[i].code == ' ' || chars[i].code == 0)) {
+        if (chars[i].code == ' ') {
+            result += 1;
+        }
+        i -= 1;
+    }
+    if (i < 0) {
+        return 0;
+    }
+    const screen_char_t c = chars[i];
+    const BOOL isEOLMark = (c.inverse &&
+                            !c.complexChar &&
+                            !c.image &&
+                            (c.code == '%' || c.code == '#'));
+    if (!isEOLMark) {
+        // Without the mark, the spaces could be the command's own output.
+        return 0;
+    }
+    return result + 1;
+}
+
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                    startPtr:(long long *)startAbsLineNumber {
     return [_state stringLineAsStringAtAbsoluteLineNumber:absoluteLineNumber startPtr:startAbsLineNumber];
@@ -1868,7 +1940,12 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 
 // Warning: this is called on PTYTask's thread.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    atomic_fetch_add_explicit(&_bytesReceived, length, memory_order_relaxed);
     [_mutableState threadedReadTask:buffer length:length];
+}
+
+- (long long)bytesReceived {
+    return atomic_load_explicit(&_bytesReceived, memory_order_relaxed);
 }
 
 - (long long)lastPromptLine {

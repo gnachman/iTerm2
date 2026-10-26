@@ -172,6 +172,83 @@ final class ConductorIT2CommandTests: XCTestCase {
                   shouldInjectShellIntegration: false, parent: nil)
     }
 
+    // MARK: - IT2_SOCK only when it can work
+
+    /// Feeds `lines` and an exit status to the handler for `command`, as the remote's answer.
+    @MainActor
+    private func answer(_ conductor: Conductor, _ command: Conductor.Command,
+                        _ handler: Conductor.ExecutionContext.Handler, lines: [String], status: UInt8 = 0) throws {
+        let context = Conductor.ExecutionContext(command: command, handler: handler)
+        for line in lines {
+            try conductor.update(executionContext: context, result: .line(line))
+        }
+        try conductor.update(executionContext: context, result: .end(status))
+    }
+
+    // The socket needs the framer, which needs Python. getshell comes first, so it only notes
+    // that it2 should be set up; the socket, nonce and IT2_* come when framing starts.
+    @MainActor
+    func testNoSocketUntilFramingStarts() throws {
+        let conductor = makeConductor()
+        conductor.delegate = FakeIT2AuthDelegate()
+        try answer(conductor, .getshell, .handleGetShell(Conductor.StringArray()), lines: ["/bin/zsh\n/home/u\nzsh 5.9"])
+        XCTAssertNil(conductor.it2Nonce, "nothing to bind to yet")
+        XCTAssertNil(conductor.it2SocketPath)
+
+        try answer(conductor, .pythonversion, .handleCheckForPython(Conductor.StringArray()), lines: ["Python 3.12.1"])
+        XCTAssertNotNil(conductor.it2Nonce, "framing starts, so the socket will exist")
+        XCTAssertTrue(conductor.it2SocketPath?.hasPrefix("/home/u/") == true)
+    }
+
+    // No usable Python, no framer, so nothing would ever listen: no IT2_SOCK.
+    @MainActor
+    func testNoSocketWithoutAUsablePython() throws {
+        for answer in [["Python 2.7.18"], ["sh: python3: not found"]] {
+            let conductor = makeConductor()
+            conductor.delegate = FakeIT2AuthDelegate()
+            try self.answer(conductor, .getshell, .handleGetShell(Conductor.StringArray()), lines: ["/bin/zsh\n/home/u\nzsh 5.9"])
+            try self.answer(conductor, .pythonversion, .handleCheckForPython(Conductor.StringArray()), lines: answer,
+                            status: answer[0].hasPrefix("Python") ? 0 : 1)
+            XCTAssertNil(conductor.it2Nonce, "\(answer)")
+        }
+    }
+
+    // MARK: - The interpreter a record names
+
+    // A tmux -CC controller publishes this record, and it2.py re-execs the "py" it names, so a
+    // pane runs the interpreter that matches the connection it reaches rather than whatever
+    // IT2_PY the tmux server froze into its environment.
+    @MainActor
+    func testClientRecordNamesTheInterpreterThisConnectionInjected() throws {
+        let conductor = makeConductor()
+        var env = [String: String]()
+        conductor.activateIT2Proxy(home: "/home/u", env: &env)
+        let record = try XCTUnwrap(conductor.it2ClientRecord)
+        XCTAssertEqual(record["py"], try XCTUnwrap(env["IT2_PY"]))
+        XCTAssertEqual(record["sock"], env["IT2_SOCK"])
+        XCTAssertEqual(record["nonce"], env["IT2_NONCE"])
+    }
+
+    // After an app upgrade restores this connection, the record must still name what was
+    // uploaded THEN: the new build's hash was never sent to this host.
+    func testInterpreterPathIsPersisted() throws {
+        var state = makeRestorableState(it2Nonce: "n", it2Authorized: nil)
+        state.it2Proxy.pyPath = "/home/u/.iterm2/it2.0123456789abcdef.py"
+        let data = try JSONEncoder().encode(state)
+        let decoded = try JSONDecoder().decode(Conductor.RestorableState.self, from: data)
+        XCTAssertEqual(decoded.it2Proxy.pyPath, "/home/u/.iterm2/it2.0123456789abcdef.py")
+    }
+
+    // Saved before the field existed: no "py" in the record, and it2.py then keeps running itself.
+    @MainActor
+    func testClientRecordOmitsInterpreterWhenUnknown() throws {
+        let conductor = makeConductor()
+        conductor.it2SocketPath = "/home/u/.iterm2/it2/x.sock"
+        conductor.it2Nonce = "n"
+        let record = try XCTUnwrap(conductor.it2ClientRecord)
+        XCTAssertNil(record["py"])
+    }
+
     // The it2 proxy state must actually survive an SSH recovery. adopt copies it from the
     // retiring conductor onto the recovery shim (handleRecovery reads it off the shim),
     // and init(recovery:) then carries it into the post-recovery conductor that validates
@@ -197,7 +274,7 @@ final class ConductorIT2CommandTests: XCTestCase {
         // handleRecovery reads the shim's fields into ConductorRecovery; init(recovery:)
         // copies them into the post-recovery conductor.
         let recovery = ConductorRecovery(pid: 123, dcsID: "dcs", tree: [:], sshargs: "localhost",
-                                         boolArgs: "", clientUniqueID: "cid", version: 2, parent: nil,
+                                         boolArgs: "", clientUniqueID: "cid", version: 2, flow: nil, parent: nil,
                                          it2Proxy: shim.it2Proxy)
         let recovered = Conductor(recovery: recovery)
         XCTAssertEqual(recovered.it2Nonce, "the-nonce")
@@ -294,6 +371,266 @@ final class ConductorIT2CommandTests: XCTestCase {
         XCTAssertNil(granted2, "answering c1 must not resolve c2")
     }
 
+    // MARK: - Hooks never block (3d), through the REAL run closure
+
+    /// A hook's HELLO, framed and wrapped as the demux receives it from framer.
+    @MainActor
+    private func hookHello(connid: String, nonce: String) -> String {
+        let json: [String: Any] = ["nonce": nonce, "argv": ["handle-agent-hook"], "cwd": "/",
+                                   "term": "xterm", "isatty": false, "cols": 80, "rows": 24]
+        let payload = try! JSONSerialization.data(withJSONObject: json)
+        var frame = Data([UInt8(ascii: "H")])
+        withUnsafeBytes(of: UInt32(payload.count).bigEndian) { frame.append(contentsOf: $0) }
+        frame.append(payload)
+        return "\(connid) data \(frame.base64EncodedString())"
+    }
+
+    private func pumpMain() {
+        let done = expectation(description: "main")
+        DispatchQueue.main.async { done.fulfill() }
+        wait(for: [done], timeout: 2)
+    }
+
+    // The whole point: a hook on a connection the user has not decided about yet must finish
+    // straight away, not wait for them to notice the prompt. The prompt is still raised so the
+    // NEXT hook can run.
+    @MainActor
+    func testUndecidedHookFinishesAtOnceAndStillPrompts() {
+        Conductor.it2APIEnabledForTesting = true
+        defer { Conductor.it2APIEnabledForTesting = nil }
+        let delegate = FakeIT2AuthDelegate()
+        let conductor = makeConductor()
+        conductor.delegate = delegate
+        conductor.it2Nonce = "nonce-1"
+
+        let demux = conductor.it2DemuxForHandling()
+        demux.handle("c1 open")
+        demux.handle(hookHello(connid: "c1", nonce: "nonce-1"))
+        pumpMain()
+
+        XCTAssertFalse(demux.hasOpenConnection("c1"),
+                       "the hook must complete before anyone answers the prompt")
+        XCTAssertTrue(delegate.hasPendingPrompt(guid: conductor.guid),
+                      "and the prompt must still have been raised")
+    }
+
+    // Denied is the user's decision; a hook must not repeat it on every tool call.
+    @MainActor
+    func testDeniedHookFinishesSilentlyWithoutPrompting() {
+        Conductor.it2APIEnabledForTesting = true
+        defer { Conductor.it2APIEnabledForTesting = nil }
+        let delegate = FakeIT2AuthDelegate()
+        let conductor = makeConductor()
+        conductor.delegate = delegate
+        conductor.it2Nonce = "nonce-1"
+        conductor.it2Authorized = false
+
+        let demux = conductor.it2DemuxForHandling()
+        demux.handle("c1 open")
+        demux.handle(hookHello(connid: "c1", nonce: "nonce-1"))
+        pumpMain()
+
+        XCTAssertFalse(demux.hasOpenConnection("c1"), "finished, not held")
+        XCTAssertFalse(delegate.hasPendingPrompt(guid: conductor.guid), "no nagging")
+    }
+
+    @MainActor
+    func testHookWithTheAPIOffFinishesSilently() {
+        Conductor.it2APIEnabledForTesting = false
+        defer { Conductor.it2APIEnabledForTesting = nil }
+        let delegate = FakeIT2AuthDelegate()
+        let conductor = makeConductor()
+        conductor.delegate = delegate
+        conductor.it2Nonce = "nonce-1"
+
+        let demux = conductor.it2DemuxForHandling()
+        demux.handle("c1 open")
+        demux.handle(hookHello(connid: "c1", nonce: "nonce-1"))
+        pumpMain()
+
+        XCTAssertFalse(demux.hasOpenConnection("c1"),
+                       "API off must finish the hook rather than leave it hanging")
+        XCTAssertFalse(delegate.hasPendingPrompt(guid: conductor.guid))
+    }
+
+    // The control for the tests above. An interactive command on an undecided connection IS held
+    // open waiting for the prompt; without this, "the hook's connection closed" could just mean
+    // every connection closes in a test.
+    @MainActor
+    func testUndecidedInteractiveCommandIsHeldForThePrompt() {
+        Conductor.it2APIEnabledForTesting = true
+        defer { Conductor.it2APIEnabledForTesting = nil }
+        let delegate = FakeIT2AuthDelegate()
+        let conductor = makeConductor()
+        conductor.delegate = delegate
+        conductor.it2Nonce = "nonce-1"
+
+        let json: [String: Any] = ["nonce": "nonce-1", "argv": ["session", "list"], "cwd": "/",
+                                   "term": "xterm", "isatty": true, "cols": 80, "rows": 24]
+        let payload = try! JSONSerialization.data(withJSONObject: json)
+        var frame = Data([UInt8(ascii: "H")])
+        withUnsafeBytes(of: UInt32(payload.count).bigEndian) { frame.append(contentsOf: $0) }
+        frame.append(payload)
+
+        let demux = conductor.it2DemuxForHandling()
+        demux.handle("c1 open")
+        demux.handle("c1 data \(frame.base64EncodedString())")
+        pumpMain()
+
+        XCTAssertTrue(demux.hasOpenConnection("c1"), "held until the user answers")
+        XCTAssertTrue(delegate.hasPendingPrompt(guid: conductor.guid))
+    }
+
+    // Under the user's home when it fits a socket address (104 bytes on macOS, 108 on Linux);
+    // otherwise a private random directory in /tmp.
+    @MainActor
+    func testIT2SocketPath() {
+        let ordinary = Conductor.it2SocketPath(home: "/home/u")
+        XCTAssertTrue(ordinary.hasPrefix("/home/u/.iterm2/it2/"), ordinary)
+        XCTAssertTrue(ordinary.hasSuffix(".sock"))
+        let longHome = "/net/" + String(repeating: "d", count: 80)
+        let fallback = Conductor.it2SocketPath(home: longHome)
+        XCTAssertTrue(fallback.hasPrefix("/tmp/.it2-"), fallback)
+        XCTAssertLessThanOrEqual(fallback.utf8.count, 100)
+    }
+
+    // The prompt goes where the user is looking: the pane the it2 ran in, which its request names.
+    @MainActor
+    func testPromptRequestNamesTheCallersPane() {
+        Conductor.it2APIEnabledForTesting = true
+        defer { Conductor.it2APIEnabledForTesting = nil }
+        let delegate = FakeIT2AuthDelegate()
+        let conductor = makeConductor()
+        conductor.delegate = delegate
+        conductor.it2Nonce = "nonce-1"
+
+        let json: [String: Any] = ["nonce": "nonce-1", "argv": ["session", "list"], "cwd": "/",
+                                   "term": "xterm", "isatty": true, "cols": 80, "rows": 24,
+                                   "env": ["TMUX": "/tmp/tmux-1/default,1,0", "TMUX_PANE": "%7"]]
+        let payload = try! JSONSerialization.data(withJSONObject: json)
+        var frame = Data([UInt8(ascii: "H")])
+        withUnsafeBytes(of: UInt32(payload.count).bigEndian) { frame.append(contentsOf: $0) }
+        frame.append(payload)
+
+        let demux = conductor.it2DemuxForHandling()
+        demux.handle("c1 open")
+        demux.handle("c1 data \(frame.base64EncodedString())")
+        pumpMain()
+
+        XCTAssertEqual(delegate.callerTmuxPanes, ["%7"])
+    }
+
+    // MARK: - Always Allow This Host (3d), through the real authorization path
+
+    private final class MemoryGrantBacking: IT2HostGrantBacking {
+        var data: Data?
+        func loadGrantData() -> Data? { data }
+        func saveGrantData(_ data: Data?) { self.data = data }
+    }
+
+    /// A conductor with a grant on record for its own host, and a verifier whose answer the test
+    /// chooses. Returns the conductor, its fake delegate and an expectation fulfilled when the
+    /// verifier is consulted.
+    @MainActor
+    private func conductorWithGrant(verifies: Bool,
+                                    home: String? = "/home/u") -> (Conductor, FakeIT2AuthDelegate, XCTestExpectation) {
+        let store = IT2HostGrantStore(backing: MemoryGrantBacking())
+        let conductor = makeConductor()
+        store.add(IT2HostGrant(host: conductor.sshIdentity.stringIdentifier,
+                               id: "id", secretSHA256: "hash", granted: Date()))
+        Conductor.hostGrantStoreForTesting = store
+        let consulted = expectation(description: "verifier consulted")
+        consulted.isInverted = (home == nil)
+        Conductor.hostGrantVerifierForTesting = { _, _ in
+            consulted.fulfill()
+            return verifies
+        }
+        let delegate = FakeIT2AuthDelegate()
+        conductor.delegate = delegate
+        conductor.homeDirectory = home
+        return (conductor, delegate, consulted)
+    }
+
+    @MainActor
+    private func clearGrantSeams() {
+        Conductor.hostGrantStoreForTesting = nil
+        Conductor.hostGrantVerifierForTesting = nil
+    }
+
+    // The point of the grant: a host the user always allows is let in without asking.
+    @MainActor
+    func testAVerifiedGrantAllowsWithoutPrompting() {
+        defer { clearGrantSeams() }
+        let (conductor, delegate, consulted) = conductorWithGrant(verifies: true)
+        var granted: Bool?
+        conductor.authorizeIT2 { granted = $0 }
+        wait(for: [consulted], timeout: 2)
+        pumpMain()
+        XCTAssertEqual(granted, true)
+        XCTAssertFalse(delegate.hasPendingPrompt(guid: conductor.guid), "no prompt for a granted host")
+        XCTAssertEqual(conductor.it2Authorized, true, "cached for the rest of the connection")
+    }
+
+    // The file is gone, the host was rebuilt, or it does not match: fall back to asking rather
+    // than denying outright.
+    @MainActor
+    func testAFailedGrantFallsBackToThePrompt() {
+        defer { clearGrantSeams() }
+        let (conductor, delegate, consulted) = conductorWithGrant(verifies: false)
+        var granted: Bool?
+        conductor.authorizeIT2 { granted = $0 }
+        wait(for: [consulted], timeout: 2)
+        pumpMain()
+        XCTAssertNil(granted, "still waiting on the user")
+        XCTAssertTrue(delegate.hasPendingPrompt(guid: conductor.guid))
+
+        delegate.answer(guid: conductor.guid, granted: true)
+        XCTAssertEqual(granted, true, "and the prompt still decides it")
+    }
+
+    // Without a remote home there is no path to read, so do not try; just ask.
+    @MainActor
+    func testNoRemoteHomeSkipsTheCheck() {
+        defer { clearGrantSeams() }
+        let (conductor, delegate, notConsulted) = conductorWithGrant(verifies: true, home: nil)
+        conductor.authorizeIT2 { _ in }
+        wait(for: [notConsulted], timeout: 0.2)
+        XCTAssertTrue(delegate.hasPendingPrompt(guid: conductor.guid))
+    }
+
+    // Concurrent calls on one connection must cause one read, not one per call.
+    @MainActor
+    func testConcurrentCallsShareOneCheck() {
+        defer { clearGrantSeams() }
+        let store = IT2HostGrantStore(backing: MemoryGrantBacking())
+        let conductor = makeConductor()
+        store.add(IT2HostGrant(host: conductor.sshIdentity.stringIdentifier,
+                               id: "id", secretSHA256: "hash", granted: Date()))
+        Conductor.hostGrantStoreForTesting = store
+        var reads = 0
+        let done = expectation(description: "check finished")
+        Conductor.hostGrantVerifierForTesting = { _, _ in
+            reads += 1
+            done.fulfill()
+            return true
+        }
+        // Held for the whole test: Conductor.delegate is weak, and a released delegate makes the
+        // authorization fail closed, which is correct but not what this test is about.
+        let delegate = FakeIT2AuthDelegate()
+        conductor.delegate = delegate
+        conductor.homeDirectory = "/home/u"
+
+        var results = [Bool]()
+        conductor.authorizeIT2 { results.append($0) }
+        conductor.authorizeIT2 { results.append($0) }
+        conductor.authorizeIT2 { results.append($0) }
+        wait(for: [done], timeout: 2)
+        pumpMain()
+        XCTAssertEqual(reads, 1, "one read for all three calls")
+        XCTAssertEqual(results, [true, true, true])
+        withExtendedLifetime(delegate) {}
+    }
+
     // Exercises PTYSession's REAL announcement keying (not the test fake): the identifier
     // is derived from the conductor's guid, so two conductors sharing an ssh display name
     // but with distinct guids get distinct announcements and cannot cross-cancel.
@@ -311,22 +648,27 @@ final class ConductorIT2CommandTests: XCTestCase {
 // as queueAnnouncement -> dismissAnnouncementWithIdentifier does. The identifier is
 // derived from the guid the conductor passes, so distinct guids do not collide.
 private final class FakeIT2AuthDelegate: NSObject, ConductorDelegate {
-    private var announcements: [String: (Bool, Bool) -> Void] = [:]
+    private var announcements: [String: (Bool, Bool, Bool) -> Void] = [:]
+    private(set) var callerTmuxPanes: [String?] = []
     private func identifier(_ guid: String) -> String { "IT2Authorization-\(guid)" }
 
-    func conductorRequestIT2Authorization(guid: String, displayName: String,
-                                          completion: @escaping (Bool, Bool) -> Void) {
+    func conductorRequestIT2Authorization(guid: String, displayName: String, callerTmuxPane: String?,
+                                          completion: @escaping (Bool, Bool, Bool) -> Void) {
+        callerTmuxPanes.append(callerTmuxPane)
         // queueAnnouncement dismisses any existing same-identifier prompt, firing its
         // completion as a -2 dismiss => (granted:false, remember:false).
-        announcements.removeValue(forKey: identifier(guid))?(false, false)
+        announcements.removeValue(forKey: identifier(guid))?(false, false, false)
         announcements[identifier(guid)] = completion
     }
     func conductorDismissIT2AuthorizationPrompt(guid: String) {
-        announcements.removeValue(forKey: identifier(guid))?(false, false)
+        announcements.removeValue(forKey: identifier(guid))?(false, false, false)
+    }
+    func hasPendingPrompt(guid: String) -> Bool {
+        return announcements[identifier(guid)] != nil
     }
     // Simulate the user explicitly answering (Allow/Deny) the prompt for `guid`.
     func answer(guid: String, granted: Bool) {
-        announcements.removeValue(forKey: identifier(guid))?(granted, true)
+        announcements.removeValue(forKey: identifier(guid))?(granted, true, false)
     }
 
     func conductorWrite(string: String) {}

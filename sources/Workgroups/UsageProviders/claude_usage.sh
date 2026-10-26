@@ -32,8 +32,11 @@
 # whole input, rejoining lines with a literal \n so a multi-line
 # diagnostic stays one valid JSON string. Truncation is done by the caller
 # on line boundaries (never mid-byte) so UTF-8 stays intact.
+# Other control characters (ESC, BS, and so on, as in colored stderr) are
+# written as \u00XX: JSON forbids them raw.
 json_escape() {
     awk '
+    BEGIN { for (i = 1; i < 32; i++) ctl[sprintf("%c", i)] = i; ctl[sprintf("%c", 127)] = 127 }
     { if (NR > 1) buf = buf "\n" $0; else buf = $0 }
     END {
         gsub(/\r/, "", buf)
@@ -45,6 +48,7 @@ json_escape() {
             else if (c == "\"") out = out "\\\""
             else if (c == "\n") out = out "\\n"
             else if (c == "\t") out = out "\\t"
+            else if (c in ctl) out = out sprintf("\\u%04x", ctl[c])
             else out = out c
         }
         printf "%s", out
@@ -109,6 +113,7 @@ function jsonesc(s,   out, i, c) {
         c = substr(s, i, 1)
         if (c == "\\") out = out "\\\\"
         else if (c == "\"") out = out "\\\""
+        else if (c in ctl) out = out sprintf("\\u%04x", ctl[c])
         else out = out c
     }
     return out
@@ -118,7 +123,12 @@ function trim(s) {
     sub(/[ \t]+$/, "", s)
     return s
 }
-BEGIN { n = 0 }
+BEGIN {
+    n = 0
+    # Control characters (such as ESC from colored output) must be escaped.
+    for (i = 1; i < 32; i++) ctl[sprintf("%c", i)] = i
+    ctl[sprintf("%c", 127)] = 127
+}
 {
     line = $0
     # Must look like a usage line.

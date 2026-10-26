@@ -173,6 +173,9 @@ final class OrchestratorTmuxWatchReattachTests: XCTestCase {
     // otherwise the model can't match the watch to anything it can see.
     func testReboundWatchNamesTheReattachedPanesWorkgroup() async throws {
         let reattached = try XCTUnwrap(PTYSession(synthetic: false))
+        // A fresh session's name is a blank " ", which the rebind ignores
+        // (see testReboundWatchKeepsItsNamesWhenThePaneNameIsStillBlank).
+        reattached.genericScope.setValue("new pane name", forVariableNamed: iTermVariableKeySessionName)
         var held = watcher(id: "w", sessionRef: "old-stable-id", tmuxPane: paneIdentity)
         held.workgroupID = WorkgroupIntrospection.syntheticWorkgroupIDPrefix + "old-stable-id"
         held.workgroupName = "old pane name"
@@ -197,6 +200,7 @@ final class OrchestratorTmuxWatchReattachTests: XCTestCase {
         XCTAssertEqual(rebound.workgroupID, context.workgroupID,
                        "the persisted watch names the workgroup the snapshot lists the pane under")
         XCTAssertEqual(rebound.workgroupName, context.workgroupName)
+        XCTAssertEqual(rebound.workgroupName, "new pane name")
         XCTAssertEqual(rebound.roleID, context.roleID)
         XCTAssertEqual(rebound.roleName, context.roleName)
 
@@ -219,6 +223,40 @@ final class OrchestratorTmuxWatchReattachTests: XCTestCase {
         XCTAssertEqual(fired.workgroupID, context.workgroupID,
                        "the status_update names the workgroup the snapshot lists the pane under")
         XCTAssertEqual(fired.roleName, context.roleName)
+    }
+
+    // F-332: the reattached pane's window opens before the pane has its name,
+    // so at rebind its session name is a blank " ". The watch must keep its
+    // old names rather than show a blank workgroup and role.
+    func testReboundWatchKeepsItsNamesWhenThePaneNameIsStillBlank() throws {
+        let reattached = try XCTUnwrap(PTYSession(synthetic: false))
+        reattached.genericScope.setValue(" ", forVariableNamed: iTermVariableKeySessionName)
+        XCTAssertEqual(reattached.name, " ")
+        var held = watcher(id: "w", sessionRef: "old-stable-id", tmuxPane: paneIdentity)
+        held.workgroupID = WorkgroupIntrospection.syntheticWorkgroupIDPrefix + "old-stable-id"
+        held.workgroupName = "host.local"
+        held.roleName = "host.local"
+        try listModel.setWatchers([held], forChatID: chatID)
+        var tmuxAttached = false
+        _ = makeDispatcher(lookup: { ref in
+            tmuxAttached && ref == reattached.stableID ? reattached : nil
+        }, tmuxLookup: { _ in tmuxAttached ? reattached : nil })
+
+        tmuxAttached = true
+        postTmuxWindowDidOpen()
+
+        let rebound = try XCTUnwrap(persisted().first)
+        XCTAssertEqual(rebound.sessionGUID, reattached.stableID)
+        XCTAssertEqual(rebound.workgroupID,
+                       WorkgroupIntrospection.syntheticWorkgroupIDPrefix + reattached.stableID)
+        XCTAssertEqual(rebound.workgroupName, "host.local")
+        XCTAssertEqual(rebound.roleName, "host.local")
+    }
+
+    func testReboundNameKeepsPreviousOnlyForBlankNames() {
+        XCTAssertEqual(OrchestratorDispatcher.reboundName(" ", previous: "old"), "old")
+        XCTAssertEqual(OrchestratorDispatcher.reboundName("", previous: "old"), "old")
+        XCTAssertEqual(OrchestratorDispatcher.reboundName("new", previous: "old"), "new")
     }
 
     // A held .idle watcher must not get a screen-escalation backstop while it

@@ -131,8 +131,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)terminalReportVariableNamed:(NSString *)variable;
 
-// Sends a report.
+// Sends a report. Not sent for a tmux integration client, since tmux answers most reports itself.
 - (void)terminalSendReport:(nullable NSData *)report;
+
+// Sends a report that tmux doesn't answer, for a tmux integration client too. The caller must have
+// checked terminalShouldSendReport:YES (or the coalescible variant).
+- (void)terminalSendReportAllowedInTmux:(nullable NSData *)report;
 
 // Sends an OSC 4 color query report (tmux-aware).
 // For tmux clients running 3.6+, this routes through the tmux controller.
@@ -602,7 +606,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (dispatch_queue_t)terminalQueue;
 - (iTermTokenExecutorUnpauser *)terminalPause;
 - (void)terminalSendCapabilitiesReport;
-- (void)terminalDidHookSSHConductorWithParams:(nullable NSString *)token;
+// parentDepth is the depth of the conductor whose framing carried the hook, or -1.
+- (void)terminalDidHookSSHConductorWithParams:(nullable NSString *)token parentDepth:(int)parentDepth;
 - (void)terminalDidReadSSHConductorLine:(nullable NSString *)string depth:(int)depth;
 - (void)terminalDidUnhookSSHConductor;
 - (void)terminalDidBeginSSHConductorCommandWithIdentifier:(nullable NSString *)identifier
@@ -618,9 +623,22 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)terminalDidReadRawSSHData:(nullable NSData *)data
                               pid:(int)pid
                           channel:(int)channel;
+// The contents of a flow-controlled frame have executed: `length` bytes the framer at `depth`
+// sent at `sendMilliseconds` on its clock, with flow `flags`. Called before the frame's own
+// handling.
+- (void)terminalDidExecuteFlowControlledSSHOutputOfLength:(NSUInteger)length
+                                         sendMilliseconds:(int64_t)sendMilliseconds
+                                                    flags:(int)flags
+                                                    depth:(int)depth;
+// Output of a pane process (SSH_OUTPUT_PANE_CHANNEL) started by the conductor at `depth`.
+- (void)terminalDidReadSSHPaneOutput:(nullable NSData *)data
+                                 pid:(int)pid
+                               depth:(int)depth;
 
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth;
 - (void)terminalHandleIT2:(nullable NSString *)string depth:(int)depth;
+// A shell-integration prompt mark arrived outside the framing of the conductor at depth.
+- (void)terminalDidReceiveUnframedSSHPromptAtDepth:(int)depth;
 - (void)terminalUpdateEnv:(NSString *)value;
 - (void)terminalBeginSSHIntegeration:(nullable NSString *)args;
 - (void)terminalSendConductor:(NSString *)args;

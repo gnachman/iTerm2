@@ -320,8 +320,32 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical {
     VT100GridCoordRange visual;
 
+    const VT100GridCoord last = [self predecessorOfCoord:logical.end];
+    if (_supportBidi && VT100GridCoordCompare(logical.start, last) != NSOrderedDescending) {
+        // A reordered range need not be drawn in one run (for example, a URL
+        // ending in right-to-left text), so its logical first and last cells
+        // are not necessarily its visual edges. Bound every cell on the first
+        // and last rows instead.
+        if (last.y == logical.start.y) {
+            const VT100GridRange columns = [self visualColumnSpanOnLine:last.y
+                                                            fromLogical:logical.start.x
+                                                                through:last.x];
+            return VT100GridCoordRangeMake(columns.location, last.y,
+                                           VT100GridRangeMax(columns) + 1, last.y);
+        }
+        // Rows wrap within the column window, like predecessorOfCoord:.
+        const VT100GridRange first = [self visualColumnSpanOnLine:logical.start.y
+                                                      fromLogical:logical.start.x
+                                                          through:[self xLimit] - 1];
+        const VT100GridRange lastColumns = [self visualColumnSpanOnLine:last.y
+                                                            fromLogical:_logicalWindow.location
+                                                                through:last.x];
+        return VT100GridCoordRangeMake(first.location, logical.start.y,
+                                       VT100GridRangeMax(lastColumns) + 1, last.y);
+    }
+
     VT100GridCoord a = [self visualCoordForLogical:logical.start];
-    VT100GridCoord b = [self visualCoordForLogical:[self predecessorOfCoord:logical.end]];
+    VT100GridCoord b = [self visualCoordForLogical:last];
 
     // Convert back to half-open range with start <= end.
     if (VT100GridCoordCompare(a, b) == NSOrderedDescending) {
@@ -339,6 +363,21 @@ const NSInteger kLongMaximumWordLength = 100000;
 - (VT100GridWindowedRange)visualWindowedRangeForLogical:(VT100GridWindowedRange)logical {
     VT100GridWindowedRange visual = logical;
     visual.coordRange = [self visualRangeForLogical:logical.coordRange];
+    if (_supportBidi && logical.columnWindow.length > 0) {
+        // The column window is in logical columns. On a reordered row the
+        // range can be drawn outside it (for example, across a tmux pane
+        // divider), so widen it to cover where the range is drawn. Otherwise
+        // a hit test against the visual range misses its own cells.
+        int left = logical.columnWindow.location;
+        int right = left + logical.columnWindow.length;
+        left = MIN(left, visual.coordRange.start.x);
+        right = MAX(right, visual.coordRange.start.x + 1);
+        if (visual.coordRange.end.x > 0) {
+            left = MIN(left, visual.coordRange.end.x - 1);
+            right = MAX(right, visual.coordRange.end.x);
+        }
+        visual.columnWindow = VT100GridRangeMake(left, right - left);
+    }
     return visual;
 }
 
@@ -352,6 +391,17 @@ const NSInteger kLongMaximumWordLength = 100000;
         return logical;
     }
     return VT100GridCoordMake([bidi visualForLogical:logical.x], logical.y);
+}
+
+// The smallest range of visual columns containing logical columns
+// [firstX, lastX] on line y.
+- (VT100GridRange)visualColumnSpanOnLine:(int)y
+                             fromLogical:(int)firstX
+                                 through:(int)lastX {
+    iTermBidiDisplayInfo *bidi = [_dataSource screenCharArrayForLine:y].bidiInfo;
+    return [iTermBidiDisplayInfo visualColumnSpanForLogicalStartX:firstX
+                                                             endX:MAX(firstX, lastX + 1)
+                                                             info:bidi];
 }
 
 // Make characterAt: much faster when called with the same line number over and over again. Assumes

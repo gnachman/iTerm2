@@ -46,6 +46,11 @@ enum iTermWorkgroupEntryMechanism: Int {
 final class iTermWorkgroupController: NSObject {
     @objc static let instance = iTermWorkgroupController()
 
+    /// Posted after a session enters a workgroup. The object is the session; the user info holds
+    /// the workgroup's unique identifier under workgroupIDKey.
+    static let didEnterNotification = Notification.Name("iTermWorkgroupControllerDidEnter")
+    static let workgroupIDKey = "workgroupID"
+
     // Active workgroup instances keyed by instanceUniqueIdentifier.
     // The key is a stable string minted at entry time, so an entry
     // stays reachable no matter what happens to its sessions: exit
@@ -132,6 +137,9 @@ final class iTermWorkgroupController: NSObject {
             instances[instance.instanceUniqueIdentifier] = instance
             session.delegate?.sessionDidChangeDesiredToolbarItems(session)
             checkConsistency()
+            NotificationCenter.default.post(name: Self.didEnterNotification,
+                                            object: session,
+                                            userInfo: [Self.workgroupIDKey: workgroup.uniqueIdentifier])
             return true
         }
     }
@@ -258,6 +266,8 @@ final class iTermWorkgroupController: NSObject {
                gitBase: String,
                peerSessionsByConfigID: [String: PTYSession],
                nonPeerSessionsByConfigID: [String: PTYSession],
+               tmuxBinding: TmuxWorkgroupBinding? = nil,
+               nestedActiveIdentifiers: [String: String] = [:],
                spawner: WorkgroupSessionSpawner = DefaultWorkgroupSessionSpawner()) -> iTermWorkgroupInstance? {
         if let existing = registeredInstance(on: leader) {
             return existing
@@ -272,16 +282,6 @@ final class iTermWorkgroupController: NSObject {
         // built on distinct sessions, so give it a fresh identity; the
         // next save re-reads the ID from the live instance, so
         // re-saving stays consistent.
-        //
-        // Known limitation: reattached members' shells still carry
-        // ITERM_WORKGROUP_ID=<persisted id> — the env var is injected
-        // only at launch and a running shell's environment can't be
-        // rewritten — so after the rename an external tool reading it
-        // from an adopted member resolves to the OTHER live instance
-        // (the one that kept the persisted ID). Freshly spawned peers
-        // in the adopted copy get the new ID. Tolerated: colliding
-        // restores are rare and the alternative (evicting the live
-        // instance) strands sessions.
         let resolvedID: String
         if instances[instanceUniqueIdentifier] != nil {
             resolvedID = iTermWorkgroupInstance.mintInstanceUniqueIdentifier()
@@ -297,6 +297,8 @@ final class iTermWorkgroupController: NSObject {
             gitBase: gitBase,
             peerSessionsByConfigID: peerSessionsByConfigID,
             nonPeerSessionsByConfigID: nonPeerSessionsByConfigID,
+            tmuxBinding: tmuxBinding,
+            nestedActiveIdentifiers: nestedActiveIdentifiers,
             spawner: spawner) else {
             RLog("iTermWorkgroupController: failed to adopt \(workgroup.uniqueIdentifier)")
             return nil

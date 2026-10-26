@@ -12,6 +12,7 @@
 
 @class Coprocess;
 @class iTermIOBuffer;
+@class iTermFramerPaneJobManager;
 @class iTermProcessInfo;
 @protocol iTermTask;
 @class iTermWinSizeController;
@@ -171,6 +172,10 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic, readonly) BOOL passwordInput;
 @property(nonatomic) unichar pendingHighSurrogate;
 @property(nonatomic, copy) NSNumber *tmuxClientProcessID;
+// The pid process info is looked up under: the tmux pane pid when this task stands for a tmux
+// pane, otherwise the task's own. Both the cached and the fetched lookups (PTYTask+ProcessInfo)
+// use it.
+@property(nonatomic, readonly) pid_t processInfoPID;
 // This is used by tmux clients as a way to route data from %output in to the taskNotifier. Like
 // the name says you can't write to it.
 @property(atomic) int readOnlyFileDescriptor;
@@ -186,6 +191,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 // This is used by channels. It takes care of handling IO and this is the one strong reference to the ioBuffer.
 @property(nonatomic, strong) iTermIOBuffer *ioBuffer;
+
+// Set when the program is a pane of another session's framer, with no local process.
+@property(nonatomic, strong) iTermFramerPaneJobManager *framerPaneJobManager;
 
 + (NSMutableDictionary *)mutableEnvironmentDictionary;
 
@@ -207,6 +215,10 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
             completion:(void (^)(void))completion;
 
 - (void)writeTask:(NSData*)data;
+
+// Drops whatever was passed to -writeTask: but not yet written to the pty. Returns the
+// number of bytes dropped.
+- (NSUInteger)discardPendingWrites;
 
 - (void)stop;
 

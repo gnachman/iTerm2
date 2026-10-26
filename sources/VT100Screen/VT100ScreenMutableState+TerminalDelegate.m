@@ -728,16 +728,30 @@ typedef struct {
 
 - (void)terminalSendReport:(NSData *)report {
     DLog(@"begin %@", report);
-    if (!self.config.isTmuxClient && report) {
-        DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
-        [self willSendReport];
-        __weak __typeof(self) weakSelf = self;
-        [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            DLog(@"begin side-effect");
-            [delegate screenSendReportData:report];
-            [weakSelf didSendReport:delegate];
-        } name:@"send report"];
+    if (self.config.isTmuxClient) {
+        DLog(@"Not sending report for tmux client");
+        return;
     }
+    [self sendReport:report];
+}
+
+- (void)terminalSendReportAllowedInTmux:(NSData *)report {
+    DLog(@"begin %@", report);
+    [self sendReport:report];
+}
+
+- (void)sendReport:(NSData *)report {
+    if (!report) {
+        return;
+    }
+    DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
+    [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"begin side-effect");
+        [delegate screenSendReportData:report];
+        [weakSelf didSendReport:delegate];
+    } name:@"send report"];
 }
 
 - (void)terminalSendOSC4Report:(NSData *)report {
@@ -2833,6 +2847,8 @@ typedef struct {
 // output<D>
 - (void)terminalCommandDidEnd {
     DLog(@"begin");
+    // The command line was read and the command is starting.
+    [self.ttyModeRepairer commandWillRun];
     [self closeVerifiedOSC7Window];
     [self invalidatePendingPromptState];
     [self commandDidEnd];
@@ -2879,6 +2895,7 @@ typedef struct {
 - (void)terminalReturnCodeOfLastCommandWas:(NSNumber * _Nullable)returnCode
                                        aid:(NSString * _Nullable)aid {
     RLog(@"begin returnCode=%@ aid=%@", returnCode, aid);
+    [self.ttyModeRepairer commandDidFinish];
     [self invalidatePendingPromptState];
     if (aid != nil && self.marksByAid[aid] != nil) {
         RLog(@"terminalReturnCodeOfLastCommandWas: routing to close-by-aid path "
@@ -2959,6 +2976,7 @@ typedef struct {
     NSInteger latestKnownVersion = [latestVersionByShell[shell ?: @""] integerValue];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
+        [delegate screenDidReportShellIntegrationVersion:versionNumber shell:shell];
         if (shell) {
             DLog(@"shell=%@", shell);
             [delegate screenDidDetectShell:shell];
@@ -3962,7 +3980,7 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     return @[token, uniqueID, boolArgs, sshargs, dcsid];
 }
 
-- (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
+- (void)terminalDidHookSSHConductorWithParams:(NSString *)params parentDepth:(int)parentDepth {
     NSArray<NSString *> *values = [self parseHookSSHConductorParameter:params];
     // values are the decoded conductor params (ssh target/args); log the count in the ring.
     RLog(@"%@", RLogRedact(values, @(values.count)));
@@ -3990,6 +4008,7 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
                                             boolArgs:boolArgs
                                              sshargs:sshargs
                                                dcsID:dcsID
+                                         parentDepth:parentDepth
                                        savedState:savedState];
     } name:@"did hook ssh"];
     [self.terminal resetForSSH];
@@ -4060,6 +4079,27 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     } name:@"read raw ssh"];
 }
 
+- (void)terminalDidExecuteFlowControlledSSHOutputOfLength:(NSUInteger)length
+                                         sendMilliseconds:(int64_t)sendMilliseconds
+                                                    flags:(int)flags
+                                                    depth:(int)depth {
+    [self.flowLedger frameDidExecuteWithLength:length depth:depth];
+}
+
+- (void)terminalDidReadSSHPaneOutput:(NSData *)data
+                                 pid:(int)pid
+                               depth:(int)depth {
+    if (!data) {
+        return;
+    }
+    DLog(@"Add side effect to handle pane output %@ for pid %d", data.shortDebugString, pid);
+    // Urgent: it is another session's output, and that session is on screen exactly when this
+    // one (its workgroup's leader) is not.
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReadSSHPaneOutput:data pid:pid depth:depth];
+    } name:@"read pane output"];
+}
+
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth {
     [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidTerminateSSHProcess:pid code:code depth:depth];
@@ -4075,6 +4115,13 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     [self addUrgentSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenHandleIT2:string depth:depth];
     } name:@"handle it2"];
+}
+
+- (void)terminalDidReceiveUnframedSSHPromptAtDepth:(int)depth {
+    DLog(@"terminalDidReceiveUnframedSSHPromptAtDepth:%@", @(depth));
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReceiveUnframedSSHPromptAtDepth:depth];
+    } name:@"unframed ssh prompt"];
 }
 
 - (void)terminalBeginSSHIntegeration:(NSString *)args {
@@ -4117,13 +4164,17 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     NSString *encodedBA = _sshIntegrationFlags[2];
     NSString *sshArgs = _sshIntegrationFlags[3];
     _sshIntegrationFlags = nil;
+    // it2ssh loads shell integration on the host unless it was run with --no-shell-integration,
+    // which it reports as si=0. An older it2ssh never sends si, so it gets the default.
+    const BOOL injectShellIntegration = ![params[@"si"] isEqualToString:@"0"];
     // Urgent: this is the handshake that starts the conductor, and it pauses the token
     // executor until it runs.
     [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenBeginSSHIntegrationWithToken:token
                                             uniqueID:uniqueID
                                            encodedBA:encodedBA
-                                             sshArgs:sshArgs];
+                                             sshArgs:sshArgs
+                              injectShellIntegration:injectShellIntegration];
         [unpauser unpause];
     } name:@"send conductor"];
 }
@@ -4179,14 +4230,31 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
 }
 
 - (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth {
-    [self appendBannerMessage:@"Recovering ssh connection…"];
     self.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeRecovering;
+    self.terminal.framerRecoveryParentDepth = parentDepth;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_queue_t queue = _queue;
     // Urgent: opens the recovery handshake, which is strictly serial and pauses the token
     // executor per step. See -terminalHandleFramerRecoveryString:.
     [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        [delegate screenBeginFramerRecovery:parentDepth];
-        [unpauser unpause];
+        // The session may have abandoned this connection after this token was executed
+        // but before this ran (F-459). Then it refuses, and the framer output must be
+        // ignored instead. No token runs until the unpause, so none sees the stale mode.
+        const BOOL began = [delegate screenBeginFramerRecovery:parentDepth];
+        dispatch_async(queue, ^{
+            [weakSelf framerRecoveryDidBegin:began unpauser:unpauser];
+        });
     } name:@"begin framer recovery for child"];
+}
+
+- (void)framerRecoveryDidBegin:(BOOL)began unpauser:(iTermTokenExecutorUnpauser *)unpauser {
+    if (began) {
+        [self appendBannerMessage:@"Recovering ssh connection…"];
+    } else if (self.terminal.framerRecoveryMode == VT100TerminalFramerRecoveryModeRecovering) {
+        DLog(@"Framer recovery refused");
+        self.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
+    }
+    [unpauser unpause];
 }
 
 - (void)terminalHandleFramerRecoveryString:(NSString *)string {
@@ -4201,10 +4269,20 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
         iTermConductorRecovery *recovery = [delegate screenHandleFramerRecoveryString:string];
         if (recovery) {
             weakSelf.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeSyncing;
+            // The outermost conductor's it2ssh hooked the top-level parser. Its unique ID
+            // lets the parser recognize that it2ssh's EndSSH even mid-frame.
+            iTermConductor *rootConductor = recovery.parent;
+            while (rootConductor.parent) {
+                rootConductor = rootConductor.parent;
+            }
+            NSString *clientUniqueID = rootConductor ? rootConductor.clientUniqueID : recovery.clientUniqueID;
             // Drop tokens until we get a SSH_RECOVERY_BOUNDARY with the right boundary number.
             weakSelf.terminal.framerBoundaryNumber = [weakSelf.terminal.parser startConductorRecoveryModeWithID:recovery.dcsID
-                                                                                                           tree:recovery.tree];
+                                                                                                           tree:recovery.tree
+                                                                                                 clientUniqueID:clientUniqueID.length ? clientUniqueID : nil];
             [delegate screenFramerRecoveryDidFinish];
+            // Resynchronizing should not wait for the host to print something.
+            [weakSelf flushParserAsynchronously];
             dispatch_async(queue, ^{
                 [weakSelf appendBanner:@"ssh connection recovered!" andUnpause:unpauser];
             });

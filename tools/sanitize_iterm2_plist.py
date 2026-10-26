@@ -48,6 +48,8 @@ TOP-LEVEL keys
                                            urlString/displayName/name
   CodeReviewSavedPrompts ................. JSON Data: prompt name/text
   StatusPriorityEntries .................. JSON Data: status "pattern"
+  NoSyncIT2HostGrants .................... JSON Data: "host" (user@host of each
+                                           remote host always allowed to use it2)
   Coprocess MRU, NoSyncCoprocessCommandsToIgnoreErrorOutput,
     FileDropCoprocess, UrlHandlerCommand   user shell commands
   NoSyncKnownHosts ....................... user@host:port list
@@ -271,6 +273,7 @@ CONTENT_KEYS = {
     "Last Directory SSH Identity": REDACT_V,  # SSHIdentity: host/hostname/username
     "hostname": REDACT_V,
     "username": REDACT_V,
+    "host": REDACT_V,                     # user@host, e.g. in NoSyncIT2HostGrants
     # Array of JSON Data blobs (SSHReconnectionInfo: ssh args + directory).
     # Removed rather than redacted: redact_value would empty the Data, which
     # fails to decode on restore anyway.
@@ -350,6 +353,7 @@ CONTENT_KEYS = {
     "Workgroups": JSON_V,
     "CodeReviewSavedPrompts": JSON_V,
     "StatusPriorityEntries": JSON_V,
+    "NoSyncIT2HostGrants": JSON_V,
 }
 
 # Lower-sensitivity labels, only redacted with --aggressive.

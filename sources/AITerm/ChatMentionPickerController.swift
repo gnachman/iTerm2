@@ -24,7 +24,13 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
     final class Node {
         enum Kind { case window, tab, session }
         let kind: Kind
-        let title: String
+        // The row's name. A chip made from the row is labeled with this.
+        let name: String
+        // The keyboard shortcut that activates the window or tab, shown
+        // after the name in the picker only. It belongs to the row's
+        // current position and goes stale once the window or tab moves
+        // or closes, so a chip never carries it.
+        let shortcut: String?
         let session: PTYSession?
         var children: [Node]
         // For container rows (window / real tab) whose selection is
@@ -33,10 +39,17 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         // "tab:<uid>"); nil for session rows and non-addressable groups.
         let containerToken: String?
 
-        init(kind: Kind, title: String, session: PTYSession?, children: [Node],
+        // What the picker row shows.
+        var title: String {
+            guard let shortcut else { return name }
+            return "\(name)  \(shortcut)"
+        }
+
+        init(kind: Kind, title: String, shortcut: String? = nil, session: PTYSession?, children: [Node],
              containerToken: String? = nil) {
             self.kind = kind
-            self.title = title
+            self.name = title
+            self.shortcut = shortcut
             self.session = session
             self.children = children
             self.containerToken = containerToken
@@ -55,7 +68,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
     private weak var highlightedSessionView: NSView?
     private weak var highlightOverlay: NSView?
     private var roots: [Node] = []
-    private var onChoose: ((_ guid: String, _ displayName: String) -> Void)?
+    private var onChoose: ((Choice) -> Void)?
     private weak var anchorView: NSView?
     private weak var hostWindow: NSWindow?
     private(set) var isVisible = false
@@ -135,7 +148,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
 
     func show(anchorView: NSView,
               query: String,
-              onChoose: @escaping (_ guid: String, _ displayName: String) -> Void) {
+              onChoose: @escaping (Choice) -> Void) {
         self.anchorView = anchorView
         self.hostWindow = anchorView.window
         self.onChoose = onChoose
@@ -192,19 +205,39 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         guard row >= 0, let node = outlineView.item(atRow: row) as? Node else {
             return
         }
-        if let session = node.session {
-            let choose = onChoose
-            hide()
-            // Insert the reload-durable stableID so the user's @mention keeps
-            // resolving after a shell reload rotates the session's guid.
-            choose?(session.stableID, ChatMentionDisplay.displayName(for: session))
+        guard let choice = Self.choice(for: node,
+                                       allowsContainerSelection: allowsContainerSelection) else {
             return
         }
-        if allowsContainerSelection, let token = node.containerToken {
-            let choose = onChoose
-            hide()
-            choose?(token, node.title)
+        let choose = onChoose
+        hide()
+        choose?(choice)
+    }
+
+    // What a committed row turns into: the chip's token, its label, and the
+    // SF Symbol drawn before the label.
+    struct Choice {
+        let guid: String
+        let displayName: String
+        let symbolName: String
+    }
+
+    // The chip a committed row becomes, or nil if the row can't be picked.
+    static func choice(for node: Node,
+                       allowsContainerSelection: Bool) -> Choice? {
+        if let session = node.session {
+            // Insert the reload-durable stableID so the user's @mention keeps
+            // resolving after a shell reload rotates the session's guid.
+            return Choice(guid: session.stableID,
+                          displayName: ChatMentionDisplay.displayName(for: session),
+                          symbolName: ChatMentionDisplay.symbolName(for: session))
         }
+        if allowsContainerSelection, let token = node.containerToken {
+            return Choice(guid: token,
+                          displayName: node.name,
+                          symbolName: ChatMentionDisplay.symbolName(forToken: token))
+        }
+        return nil
     }
 
     // A node the user is allowed to pick: always a session; also a
@@ -277,7 +310,8 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
                 if !paneNodes.isEmpty {
                     let shortcut = tabShortcut(index: index, count: tabs.count, glyphs: tabGlyphs)
                     tabNodes.append(Node(kind: .tab,
-                                         title: appendShortcut(tab.title, shortcut),
+                                         title: tab.title,
+                                         shortcut: shortcut,
                                          session: nil,
                                          children: paneNodes,
                                          containerToken: "tab:\(Int(tab.uniqueId))"))
@@ -288,18 +322,14 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
                 let shortcut = windowShortcut(number: Int(term.number), glyphs: windowGlyphs)
                 let windowToken = term.terminalGuid.map { "win:\($0)" }
                 windowNodes.append(Node(kind: .window,
-                                        title: appendShortcut(base, shortcut),
+                                        title: base,
+                                        shortcut: shortcut,
                                         session: nil,
                                         children: tabNodes,
                                         containerToken: windowToken))
             }
         }
         return windowNodes
-    }
-
-    private static func appendShortcut(_ title: String, _ shortcut: String?) -> String {
-        guard let shortcut else { return title }
-        return "\(title)  \(shortcut)"
     }
 
     // The glyph string for a switch-tab/switch-window modifier preference tag

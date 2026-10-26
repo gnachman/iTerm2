@@ -99,6 +99,11 @@ struct LLMProvider {
         if model.name.contains("llama") {
             return "Llama"
         }
+        // A self-hosted server or gateway: its host name says more than
+        // “Unknown Platform” (for example, in “Error from <host>: …”).
+        if let host = parsedModelURL?.host, !host.isEmpty {
+            return host
+        }
 
         return String(localized: "LLMProvider.UnknownPlatform", defaultValue: "Unknown Platform", comment: "Display name for an unrecognized AI provider")
     }

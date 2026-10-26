@@ -105,6 +105,9 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     // $HOST, and must not override the verified host. Atomic because the main
     // thread reads it to skip notifying us on every write. See issue 13117.
     atomic_bool _verifiedOSC7WindowOpen;
+    // Held while parsing and queueing tokens, so they are queued in the order they were parsed
+    // when something besides the pty's thread parses (see -flushParserAsynchronously).
+    NSLock *_parseLock;
 }
 
 // Implemented by the superclass (VT100ScreenState), which owns the backing
@@ -182,6 +185,7 @@ static BOOL sOSC7DisabledWarningShown;
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithQueue:queue];
         _postTriggerActions = [NSMutableArray array];
+        _parseLock = [[NSLock alloc] init];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
         const int defaultWidth = 80;
@@ -3456,9 +3460,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                      self.lastPromptLine - self.cumulativeScrollbackOverflow,
                      RLogRedact(mark, mark.redactedDescription),
                      RLogRedact(command, @(command.length)));
+                // Capture the date outside the block: the block is replayed on the
+                // main-thread doppelganger later, and both must agree.
+                NSDate *startDate = [NSDate date];
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
                     VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                     mark.firstLineOfCommand = firstLine;
+                    mark.startDate = startDate;
                     mark.fullCommand = command;
                     mark.commandRange = commandRange;
                     mark.outputStart = outputStart;
@@ -5054,12 +5062,16 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
         return;
     }
     __weak __typeof(self) weakSelf = self;
+    // Captured outside the block so the doppelganger, which replays the block
+    // later, gets the same start date as the progenitor.
+    NSDate *startDate = [NSDate date];
     [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
         if (!screenMark) {
             return;
         }
         [weakSelf setCommand:command startingAt:startAbsCoord inMark:screenMark];
+        screenMark.startDate = startDate;
     }];
 }
 
@@ -6128,6 +6140,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // WARNING: This is called on PTYTask's thread.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    [_parseLock lock];
     // Pass the input stream to the parser.
     [self.terminal.parser putStreamData:buffer length:length];
 
@@ -6137,14 +6150,137 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     int nonSignalingLength = [self.terminal.parser addParsedTokensToVector:&vector];
 
     if (CVectorCount(&vector) == 0) {
+        // The parser holds all of it, such as the start of an escape sequence. The executor
+        // will never hear of these bytes, so count them now: a pane's flow control waits for
+        // every byte it sent to be consumed. The parser holds only a few bytes at a time.
+        [self.consumptionLedger frameDidExecuteWithLength:length];
         CVectorDestroy(&vector);
+        [_parseLock unlock];
         return;
     }
+    [self handleFramesOnArrivalIn:&vector];
 
     [self addTokens:vector
         lengthTotal:length
 lengthExcludingInBandSignaling:nonSignalingLength
        highPriority:NO];
+    [_parseLock unlock];
+}
+
+// Queues what the parser has to say without new input. After it enters conductor recovery mode
+// that is the boundary token that ends recovery, which otherwise waits for the host to print
+// something, which an idle host may not do for a long time. Off the mutation queue because
+// queueing can wait for the mutation queue to make room.
+- (void)flushParserAsynchronously {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        [weakSelf flushParser];
+    });
+}
+
+- (void)flushParser {
+    [_parseLock lock];
+    CVector vector;
+    CVectorCreate(&vector, 1);
+    [self.terminal.parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        [_parseLock unlock];
+        return;
+    }
+    [self handleFramesOnArrivalIn:&vector];
+    // No bytes were read, but the executor ignores an empty batch.
+    [self addTokens:vector
+        lengthTotal:1
+lengthExcludingInBandSignaling:0
+       highPriority:NO];
+    [_parseLock unlock];
+}
+
+// WARNING: This is called on PTYTask's thread, before addTokens can block on a full queue.
+// Flow control counts a frame as arrived here. A workgroup peer's pane output leaves here too,
+// for the pane's own session, rather than waiting its turn behind this session's output; its
+// token is then skipped when executed.
+- (void)handleFramesOnArrivalIn:(CVector *)vector {
+    iTermFramerFlowLedger *ledger = self.flowLedger;
+    const int count = CVectorCount(vector);
+    NSMutableArray<VT100Token *> *paneTokens = nil;
+    for (int i = 0; i < count; i++) {
+        VT100Token *token = CVectorGetObject(vector, i);
+        // Each depth's frames are counted for that depth's framer (nested SSH Integration).
+        const int depth = token.sshInfo.valid ? token.sshInfo.depth : 0;
+        if (token.type == SSH_OUTPUT) {
+            const BOOL isPane = token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL;
+            if (token.sshFlowControlled && [ledger isActiveForDepth:depth]) {
+                [ledger frameDidArriveWithLength:token.savedData.length
+                                sendMilliseconds:token.sshSendMilliseconds
+                                           flags:token.sshFlowFlags
+                                            flow:isPane ? token.csi->p[0] : 0
+                                           depth:depth
+                             carrierMilliseconds:token.sshCarrierSendMilliseconds];
+            }
+            if (isPane && token.savedData) {
+                if (!paneTokens) {
+                    paneTokens = [NSMutableArray array];
+                }
+                [paneTokens addObject:token];
+            }
+        } else if (token.type == SSH_IT2 && [ledger isActiveForDepth:depth]) {
+            [self recordArrivalOfIT2Data:token.string
+                                  ledger:ledger
+                                   depth:depth
+                     carrierMilliseconds:token.sshCarrierSendMilliseconds];
+        }
+    }
+    if (!paneTokens) {
+        return;
+    }
+    NSMutableArray<NSArray *> *outputs = [NSMutableArray arrayWithCapacity:paneTokens.count];
+    for (VT100Token *token in paneTokens) {
+        [outputs addObject:@[ token.savedData,
+                              @(token.csi->p[0]),
+                              @(token.sshInfo.valid ? token.sshInfo.depth : 0) ]];
+        token.type = VT100_SKIP;
+    }
+    DLog(@"Hand %@ pane frames to their sessions on arrival", @(outputs.count));
+    // Urgent: it is another session's output, and that session is on screen exactly when this
+    // one (its workgroup's leader) is not.
+    [self addUrgentSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        for (NSArray *output in outputs) {
+            [delegate screenDidReadSSHPaneOutput:output[0]
+                                             pid:[output[1] intValue]
+                                           depth:[output[2] intValue]];
+        }
+    } name:@"read pane output"];
+}
+
+// "<connid> data <base64> <send-ms> <flags>": it2 data under flow control (version 2). Credit
+// counts the decoded bytes.
+- (void)recordArrivalOfIT2Data:(NSString *)payload
+                        ledger:(iTermFramerFlowLedger *)ledger
+                         depth:(int)depth
+           carrierMilliseconds:(int64_t)carrierMilliseconds {
+    NSArray<NSString *> *parts = [payload componentsSeparatedByString:@" "];
+    if (parts.count != 5 || ![parts[1] isEqualToString:@"data"]) {
+        return;
+    }
+    NSString *base64 = parts[2];
+    NSUInteger padding = 0;
+    if ([base64 hasSuffix:@"=="]) {
+        padding = 2;
+    } else if ([base64 hasSuffix:@"="]) {
+        padding = 1;
+    }
+    const NSInteger length = (NSInteger)(base64.length / 4 * 3) - (NSInteger)padding;
+    if (length < 0) {
+        return;
+    }
+    [ledger frameDidArriveWithLength:length
+                    sendMilliseconds:parts[3].longLongValue
+                               flags:parts[4].intValue
+                                flow:iTermFramerFlowLedger.it2Flow
+                               depth:depth
+                 carrierMilliseconds:carrierMilliseconds];
 }
 
 // WARNING: This is called on PTYTask's thread.
@@ -6427,9 +6563,22 @@ lengthExcludingInBandSignaling:data.length
 
 - (BOOL)shouldPopulateRTLState {
     if (self.terminal.softAlternateScreenMode && iTermAdvancedSettingsModel.disableBidiInAlternateScreen) {
-        return NO;
+        // The setting may have been turned on while the alternate grid already
+        // had bidi tables. Run the pass once more so populateRTLState drops them;
+        // otherwise rows keep drawing reordered while selection treats them as
+        // unreordered.
+        return self.currentGrid == self.altGrid && [self gridHasBidiInfo:self.currentGrid];
     }
     return self.linebuffer.lastRawLine.metadata.rtlFound || self.currentGrid.mayContainRTL;
+}
+
+- (BOOL)gridHasBidiInfo:(VT100Grid *)grid {
+    for (int i = 0; i < grid.size.height; i++) {
+        if ([grid bidiInfoForLine:i] != nil) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 // Set the RTL status for all cells in the primary grid. This may require modifying the last line
@@ -6754,6 +6903,11 @@ lengthExcludingInBandSignaling:data.length
         }
         lineBuffer.delegate = self;
         self.linebuffer = lineBuffer;
+        if (!reattached) {
+            // Only a program that is still running expects its scroll region back.
+            [self.primaryGrid discardSavedScrollRegion];
+            [self.altGrid discardSavedScrollRegion];
+        }
     }
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
         if (isArchive) {
@@ -6889,18 +7043,17 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)appendRestoredBanner:(NSString *)message {
-    // Record the cursor position and append the message.
-    const int yBefore = self.currentGrid.cursor.y;
-
     [self appendBannerMessage:message];
 
-    const int delta = self.currentGrid.cursor.y - yBefore;
-    // Update the preferred cursor position if needed.
-    if (self.currentGrid.preferredCursorPosition.y >= 0 && self.currentGrid.preferredCursorPosition.y + 1 < self.currentGrid.size.height) {
-        VT100GridCoord coord = self.currentGrid.preferredCursorPosition;
-        coord.y = MAX(0, MIN(self.currentGrid.size.height - 1, coord.y + delta));
-        self.currentGrid.preferredCursorPosition = coord;
-    }
+    // The banner leaves the preferred cursor position on its own last row and
+    // the cursor at the start of the row after it, which is where the restored
+    // session's output belongs. Adding the banner's height to the preferred
+    // position instead would count the rows above it twice, leaving a blank row
+    // when the cursor had been mid-line or the banner wrapped.
+    DLog(@"Banner appended. Preferred cursor position %@ -> cursor %@",
+         VT100GridCoordDescription(self.currentGrid.preferredCursorPosition),
+         VT100GridCoordDescription(self.currentGrid.cursor));
+    self.currentGrid.preferredCursorPosition = self.currentGrid.cursor;
 }
 
 - (void)appendBannerMessage:(NSString *)message {
@@ -7670,7 +7823,7 @@ lengthExcludingInBandSignaling:data.length
     if (count == 1) {
         preamble = @"ssh exited";
     } else if (count > 1) {
-        preamble = [NSString stringWithFormat:@"%@ ssh sessions ended.", @(count)];
+        preamble = [NSString stringWithFormat:@"%@ ssh sessions ended", @(count)];
     }
     if (sshLocation) {
         return [NSString stringWithFormat:@"%@ — now at %@.", preamble, sshLocation];
@@ -8518,6 +8671,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)tokenExecutorDidExecuteWithLengthTotal:(NSInteger)lengthTotal
                 lengthExcludingInBandSignaling:(NSInteger)lengthExcludingInBandSignaling
                                     throughput:(NSInteger)throughput {
+    [self.consumptionLedger frameDidExecuteWithLength:lengthTotal];
     [_executorUpdate addBytesExecutedTotal:lengthTotal
                   excludingInBandSignaling:lengthExcludingInBandSignaling];
     _executorUpdate.estimatedThroughput = throughput;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Problem viewing file</title>
+    <title>{{PAGE_TITLE}}</title>
     <style>
         {{COMMON_CSS}}
         
@@ -93,9 +93,9 @@
 <body>
     <div class="error-container">
         <div class="error-icon"></div>
-        <h1 class="error-title">Could not display file</h1>
-        <p class="error-message">No connection to <strong>{{HOST}}</strong> using ssh integration could be found. Please connect to it in a terminal window and try again.</p>
-        <button class="button retry-button" onclick="window.location.reload()">Try Again</button>
+        <h1 class="error-title">{{HEADING}}</h1>
+        <p class="error-message">{{MESSAGE}}</p>
+        <button class="button retry-button" onclick="window.location.reload()">{{TRY_AGAIN}}</button>
     </div>
     
     <script>

@@ -73,6 +73,14 @@ NS_ASSUME_NONNULL_BEGIN
                   interactive:(BOOL)interactive
                    completion:(void (^)(NSString * _Nullable value))completion;
 
+// Same, in an arbitrary shell rather than the account's login shell, such as
+// the one a profile runs. iTermShellRunModeLoginInteractive sources the login
+// files too, the way they are for a shell iTerm2 starts in a session.
+- (void)runCommand:(NSString *)command
+           inShell:(NSString *)shell
+              mode:(iTermShellRunMode)mode
+        completion:(void (^)(NSString * _Nullable value))completion;
+
 - (void)findCompletionsWithPrefix:(NSString *)prefix
                     inDirectories:(NSArray<NSString *> *)directories
                               pwd:(NSString *)pwd

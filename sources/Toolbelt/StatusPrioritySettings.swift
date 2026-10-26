@@ -314,14 +314,82 @@ private final class StatusPriorityPopover: NSObject {
         let popover = NSPopover()
         popover.contentViewController = vc
         popover.behavior = .semitransient
-        popover.contentSize = NSSize(width: 280, height: 322)
+        popover.contentSize = vc.view.frame.size
         popover.show(relativeTo: positioningRect, of: positioningView, preferredEdge: edge)
         self.popover = popover
     }
 }
 
-private final class StatusPriorityViewController: NSViewController, CRUDTableViewControllerDelegate {
-    static let notifyColumnWidth: CGFloat = 44
+/// Sizes the priority popover to fit its localized titles. English fits the
+/// minimum size; longer translations widen the popover, the Notify column, or
+/// the instructions. Internal for testing.
+struct StatusPriorityPopoverLayout {
+    static let minimumWidth: CGFloat = 280
+    static let minimumHeight: CGFloat = 322
+    static let margin: CGFloat = 10
+    static let minimumNotifyColumnWidth: CGFloat = 44
+    static let minimumLabelHeight: CGFloat = 48
+    // Room a table header cell needs around its text.
+    private static let headerPadding: CGFloat = 10
+
+    let width: CGFloat
+    let height: CGFloat
+    let notifyColumnWidth: CGFloat
+    let labelHeight: CGFloat
+
+    init(notifyTitle: String, checkboxTitles: [String], instructions: String) {
+        let widestCheckbox = checkboxTitles.map {
+            ceil(NSButton(checkboxWithTitle: $0, target: nil, action: nil).fittingSize.width)
+        }.max() ?? 0
+        width = max(Self.minimumWidth, widestCheckbox + 2 * Self.margin)
+
+        let headerCell = NSTableHeaderCell(textCell: notifyTitle)
+        let headerFont = headerCell.font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        let headerTextWidth = (notifyTitle as NSString).size(withAttributes: [.font: headerFont]).width
+        notifyColumnWidth = max(Self.minimumNotifyColumnWidth, ceil(headerTextWidth + Self.headerPadding))
+
+        let label = Self.makeInstructionsLabel(instructions)
+        label.preferredMaxLayoutWidth = width - 2 * Self.margin
+        labelHeight = max(Self.minimumLabelHeight, ceil(label.fittingSize.height))
+
+        height = Self.minimumHeight + labelHeight - Self.minimumLabelHeight
+    }
+
+    static func makeInstructionsLabel(_ text: String) -> NSTextField {
+        let label = NSTextField(wrappingLabelWithString: text)
+        label.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        return label
+    }
+}
+
+// Internal for testing.
+final class StatusPriorityViewController: NSViewController, CRUDTableViewControllerDelegate {
+    /// The popover's user-visible titles. Tests pass translations in.
+    struct Titles {
+        var instructions: String
+        var showStatusInTabSubtitle: String
+        var mergeWorkgroups: String
+        var notify: String
+
+        static var localized: Titles {
+            Titles(instructions: String(localized: "StatusPriority.InstructionsLabel", defaultValue: "Statuses are sorted by priority. Items near the top have higher priority. Drag to reorder. Click to edit.", comment: "Instructional label at the top of the status priority settings"),
+                   showStatusInTabSubtitle: String(localized: "StatusPriority.ShowStatusInTabSubtitle", defaultValue: "Show status in tab subtitle", comment: "Checkbox to show status in the tab subtitle"),
+                   mergeWorkgroups: String(localized: "StatusPriority.MergeWorkgroups", defaultValue: "Merge workgroup statuses", comment: "Checkbox to merge workgroup statuses"),
+                   notify: String(localized: "StatusPriority.NotifyColumn", defaultValue: "Notify", comment: "Title of the Notify table column"))
+        }
+    }
+
+    private let titles: Titles
+    private var notifyColumnWidth = StatusPriorityPopoverLayout.minimumNotifyColumnWidth
+
+    init(titles: Titles = .localized) {
+        self.titles = titles
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        it_fatalError("init(coder:) has not been implemented")
+    }
 
     typealias CRUDState = [StatusPriorityEntry]
 
@@ -336,19 +404,27 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
     }
 
     override func loadView() {
-        let width: CGFloat = 280
-        let height: CGFloat = 322
-        let margin: CGFloat = 10
+        let instructions = titles.instructions
+        let subtitleTitle = titles.showStatusInTabSubtitle
+        let mergeTitle = titles.mergeWorkgroups
+        let notifyTitle = titles.notify
+        let layout = StatusPriorityPopoverLayout(notifyTitle: notifyTitle,
+                                                 checkboxTitles: [subtitleTitle, mergeTitle],
+                                                 instructions: instructions)
+        notifyColumnWidth = layout.notifyColumnWidth
+
+        let width = layout.width
+        let height = layout.height
+        let margin = StatusPriorityPopoverLayout.margin
         let segmentHeight: CGFloat = 24
-        let labelHeight: CGFloat = 48
+        let labelHeight = layout.labelHeight
         let toggleHeight: CGFloat = 18
         let toggleGap: CGFloat = 8
 
         let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
 
         // Instructional label at top
-        let label = NSTextField(wrappingLabelWithString: String(localized: "StatusPriority.InstructionsLabel", defaultValue: "Statuses are sorted by priority. Items near the top have higher priority. Drag to reorder. Click to edit.", comment: "Instructional label at the top of the status priority settings"))
-        label.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        let label = StatusPriorityPopoverLayout.makeInstructionsLabel(instructions)
         label.textColor = .secondaryLabelColor
         label.frame = NSRect(x: margin,
                              y: height - margin - labelHeight,
@@ -361,7 +437,7 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         // affecting the colored dot or this priority list’s meaning.
         // Pinned to the bottom with the other per-popover switch.
         let toggleY = margin
-        let toggle = NSButton(checkboxWithTitle: String(localized: "StatusPriority.ShowStatusInTabSubtitle", defaultValue: "Show status in tab subtitle", comment: "Checkbox to show status in the tab subtitle"),
+        let toggle = NSButton(checkboxWithTitle: subtitleTitle,
                               target: self,
                               action: #selector(showSubtitleToggleChanged(_:)))
         toggle.state = iTermUserDefaults.showSessionStatusInTabSubtitle ? .on : .off
@@ -376,7 +452,7 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         // directly above the subtitle toggle so both per-popover switches are
         // grouped together.
         let mergeToggleY = toggleY + toggleHeight + toggleGap
-        let mergeToggle = NSButton(checkboxWithTitle: String(localized: "StatusPriority.MergeWorkgroups", defaultValue: "Merge workgroup statuses", comment: "Checkbox to merge workgroup statuses"),
+        let mergeToggle = NSButton(checkboxWithTitle: mergeTitle,
                                    target: self,
                                    action: #selector(mergeWorkgroupsToggleChanged(_:)))
         mergeToggle.state = StatusPrioritySettings.shared.mergeWorkgroups ? .on : .off
@@ -417,10 +493,10 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         tv.addTableColumn(patternColumn)
 
         let notifyColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Notify"))
-        notifyColumn.title = String(localized: "StatusPriority.NotifyColumn", defaultValue: "Notify", comment: "Title of the Notify table column")
-        notifyColumn.width = StatusPriorityViewController.notifyColumnWidth
-        notifyColumn.minWidth = StatusPriorityViewController.notifyColumnWidth
-        notifyColumn.maxWidth = StatusPriorityViewController.notifyColumnWidth
+        notifyColumn.title = notifyTitle
+        notifyColumn.width = notifyColumnWidth
+        notifyColumn.minWidth = notifyColumnWidth
+        notifyColumn.maxWidth = notifyColumnWidth
         tv.addTableColumn(notifyColumn)
 
         scrollView.documentView = tv
@@ -450,7 +526,7 @@ private final class StatusPriorityViewController: NSViewController, CRUDTableVie
         guard let tv = tableView, let scrollView = tv.enclosingScrollView else { return }
         let patternColumn = tv.tableColumns[0]
         let spacing = tv.intercellSpacing.width * CGFloat(tv.numberOfColumns)
-        let newWidth = scrollView.contentSize.width - Self.notifyColumnWidth - spacing
+        let newWidth = scrollView.contentSize.width - notifyColumnWidth - spacing
         patternColumn.width = newWidth
     }
 

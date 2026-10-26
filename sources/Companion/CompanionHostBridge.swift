@@ -43,9 +43,16 @@ final class CompanionHostBridge {
     /// One live video stream and the main-thread timer driving it.
     private final class StreamContext {
         let streamer: CompanionSessionStreamer
+        let source: CompanionLiveFrameSource
+        /// Browser streams have no text grid, so selection tracking is skipped.
+        let isBrowser: Bool
         let guid: String
         let timer: Timer
         var lastChange: TimeInterval
+        /// The page editing state last pushed to the phone (browser streams only).
+        var lastSentBrowserEditing: Bool?
+        /// The page navigation state last pushed to the phone (browser streams only).
+        var lastSentBrowserNavigation: CompanionBrowserNavigationState?
         /// Last selection pushed to the phone, to detect changes (mac-side or phone)
         /// and push a selectionRange so it can reload affected history tiles.
         var lastSentSelectionRange: CompanionSelectionRange?
@@ -59,8 +66,15 @@ final class CompanionHostBridge {
         /// The half-open range last applied for the drag, so an unchanged move is a
         /// no-op (no re-begin, no selectionRange flood).
         var lastAppliedCharRange: (start: VT100GridAbsCoord, end: VT100GridAbsCoord)?
-        init(streamer: CompanionSessionStreamer, guid: String, timer: Timer, lastChange: TimeInterval) {
+        init(streamer: CompanionSessionStreamer,
+             source: CompanionLiveFrameSource,
+             isBrowser: Bool,
+             guid: String,
+             timer: Timer,
+             lastChange: TimeInterval) {
             self.streamer = streamer
+            self.source = source
+            self.isBrowser = isBrowser
             self.guid = guid
             self.timer = timer
             self.lastChange = lastChange
@@ -570,6 +584,23 @@ final class CompanionHostBridge {
                  requestID: requestID)
         case .grantAutoProvideConsent(let chatID):
             handleGrantAutoProvideConsent(chatID: chatID)
+        case .browserTap(let streamID, let x, let y):
+            handleBrowserTap(streamID: streamID, imagePoint: CGPoint(x: x, y: y))
+        case .browserScroll(let streamID, let x, let y, let deltaX, let deltaY):
+            handleBrowserScroll(streamID: streamID,
+                                imagePoint: CGPoint(x: x, y: y),
+                                deltaX: deltaX,
+                                deltaY: deltaY)
+        case .browserGoBack(let streamID):
+            browserController(streamID: streamID)?.browserBack(self)
+        case .browserGoForward(let streamID):
+            browserController(streamID: streamID)?.browserForward(self)
+        case .browserReload(let streamID):
+            browserController(streamID: streamID)?.browserReload(self)
+        case .browserStopLoading(let streamID):
+            browserController(streamID: streamID)?.stopLoading()
+        case .browserLoad(let streamID, let text):
+            browserController(streamID: streamID)?.loadTypedText(text)
         }
     }
 
@@ -624,7 +655,8 @@ final class CompanionHostBridge {
         // width lock. This single check covers full screen, width-locked, and
         // non-resizable window types authoritatively, so a width-locked session
         // cannot be resized from the phone even if its button was left enabled.
-        guard session.companionSessionCanResizeWindow() else {
+        // A browser has no cell grid to resize to.
+        guard !session.isBrowserSession(), session.companionSessionCanResizeWindow() else {
             return
         }
         let clampedColumns = Int32(min(max(columns, 1), 4096))
@@ -644,6 +676,19 @@ final class CompanionHostBridge {
             DLog("sendKey: no session for guid \(guid); dropping key \(event.key)")
             return
         }
+        if session.isBrowserSession() {
+            // A web page has no key mapper or PTY; type into the page directly.
+            guard let webView = session.view?.browserViewController?.webView else {
+                DLog("sendKey: browser session \(guid) has no web view; dropping key \(event.key)")
+                return
+            }
+            CompanionBrowserInput.send(event, to: webView)
+            // Typing moves the insertion point, so redraw it promptly.
+            for context in streams.values where context.guid == guid {
+                (context.source as? CompanionBrowserFrameSource)?.checkEditingSoon()
+            }
+            return
+        }
         // Route every key - including ordinary typed text, one event per character -
         // through the session's key mapper rather than writing text literally. The
         // mapper is the only thing that knows the current key-reporting mode, so a
@@ -659,6 +704,87 @@ final class CompanionHostBridge {
             session.injectSynthesizedKeyEvent(keyEvent,
                                               literalText: CompanionKeyEvent.literalFallback(for: keyEvent))
         }
+    }
+
+    // MARK: Browser input
+
+    /// The browser frame source and web view of a browser stream, or nil if the
+    /// stream is gone or not a browser stream.
+    private func browserTarget(streamID: UInt32) -> (CompanionBrowserFrameSource, iTermBrowserWebView)? {
+        guard let source = streams[streamID]?.source as? CompanionBrowserFrameSource,
+              let webView = source.browserWebView else {
+            DLog("No browser target for stream \(streamID)")
+            return nil
+        }
+        return (source, webView)
+    }
+
+    /// Click the page where the phone was tapped. The point is in the pixels of the
+    /// frames the phone shows, so it is mapped back through their scale.
+    private func handleBrowserTap(streamID: UInt32, imagePoint: CGPoint) {
+        guard let (source, webView) = browserTarget(streamID: streamID),
+              let point = source.webViewPoint(imagePoint: imagePoint) else {
+            return
+        }
+        DLog("Companion browser tap stream=\(streamID) at \(point)")
+        CompanionBrowserInput.click(webView, at: point)
+        source.checkEditingSoon()
+    }
+
+    private func handleBrowserScroll(streamID: UInt32, imagePoint: CGPoint, deltaX: Double, deltaY: Double) {
+        guard let (source, webView) = browserTarget(streamID: streamID),
+              let point = source.webViewPoint(imagePoint: imagePoint),
+              let scale = source.frameScale, scale > 0 else {
+            return
+        }
+        CompanionBrowserInput.scroll(webView, at: point, deltaX: deltaX / scale, deltaY: deltaY / scale)
+        // Scrolling moves the insertion point with the page.
+        source.checkEditingSoon()
+    }
+
+    /// Tell a phone that understands it whether a text field on the page has focus,
+    /// so it can show or hide its keyboard. Sent on the first tick of a stream and
+    /// then on each change.
+    private func pushBrowserEditingIfChanged(_ context: StreamContext, streamID: UInt32) {
+        guard let source = context.source as? CompanionBrowserFrameSource,
+              CompanionPushRegistry.peerRevision >= CompanionProtocolVersion.browserInputRevision else {
+            return
+        }
+        let editing = source.isEditingText
+        guard editing != context.lastSentBrowserEditing else {
+            return
+        }
+        context.lastSentBrowserEditing = editing
+        DLog("Companion browser stream \(streamID) editing=\(editing)")
+        send(.browserEditingChanged(streamID: streamID, editing: editing), requestID: nil)
+    }
+
+    /// The browser view controller of a browser stream, for the phone's browser
+    /// controls.
+    private func browserController(streamID: UInt32) -> iTermBrowserViewController? {
+        guard let source = streams[streamID]?.source as? CompanionBrowserFrameSource,
+              let controller = source.browserViewController else {
+            DLog("No browser view controller for stream \(streamID)")
+            return nil
+        }
+        return controller
+    }
+
+    /// Tell a phone that understands it about the page's address, title, history,
+    /// and loading state, for its browser controls. Sent on the first tick of a
+    /// stream and then on each change.
+    private func pushBrowserNavigationIfChanged(_ context: StreamContext, streamID: UInt32) {
+        guard let source = context.source as? CompanionBrowserFrameSource,
+              CompanionPushRegistry.peerRevision >= CompanionProtocolVersion.browserInputRevision,
+              let state = source.navigationState else {
+            return
+        }
+        guard state != context.lastSentBrowserNavigation else {
+            return
+        }
+        context.lastSentBrowserNavigation = state
+        DLog("Companion browser stream \(streamID) navigation=\(state)")
+        send(.browserNavigationChanged(streamID: streamID, state: state), requestID: nil)
     }
 
     // MARK: Live streaming
@@ -1106,9 +1232,15 @@ final class CompanionHostBridge {
         // callbacks fire on a VideoToolbox thread, and yielding to the stream is
         // thread-safe whereas touching the main-actor bridge would not be.
         let outboxRef = outbox
+        // A browser session's terminal view is hidden and empty; stream its web
+        // view instead.
+        let isBrowser = session.isBrowserSession()
+        let source: CompanionLiveFrameSource = isBrowser
+            ? CompanionBrowserFrameSource(session: session)
+            : CompanionTerminalFrameSource(session: session)
         let streamer = CompanionSessionStreamer(
             streamID: streamID,
-            source: CompanionTerminalFrameSource(session: session),
+            source: source,
             maxFrameRate: frameRate,
             bitrateCeiling: bitrateCeiling,
             onConfig: { config in
@@ -1145,17 +1277,20 @@ final class CompanionHostBridge {
         link.streamAcks.register(streamID: streamID) { [weak streamer] ptsMilliseconds, queueDepth in
             streamer?.noteAck(ptsMilliseconds: ptsMilliseconds, queueDepth: queueDepth)
         }
-        streams[streamID] = StreamContext(streamer: streamer, guid: guid, timer: timer,
-                                          lastChange: max(session.screenContentsLastChangedAt,
-                                                          session.view?.lastRedrawRequestedAt ?? 0))
+        streams[streamID] = StreamContext(streamer: streamer,
+                                          source: source,
+                                          isBrowser: isBrowser,
+                                          guid: guid,
+                                          timer: timer,
+                                          lastChange: source.contentLastChangedAt)
         streamIDForGuid[guid] = streamID
-        RLog("stream \(streamID) START guid=\(guid) fps=\(frameRate)")
+        RLog("stream \(streamID) START guid=\(guid) fps=\(frameRate) browser=\(isBrowser)")
         send(.streamStarted(CompanionStreamStarted(streamID: streamID, codec: .hevc)),
              requestID: requestID)
         // Tell the phone about any pre-existing selection on subscribe: the history
         // tiles are rendered with it, so the phone must know which tiles carry the
         // highlight to invalidate them correctly when the selection later changes.
-        if let textview = session.textview {
+        if !isBrowser, let textview = session.textview {
             sendSelectionRange(streamID: streamID, textview: textview)
         }
     }
@@ -1166,11 +1301,11 @@ final class CompanionHostBridge {
             endStream(streamID, reason: .sessionClosed)
             return
         }
-        // Emit on any visual change: grid content (screenContentsLastChangedAt,
-        // bumped under every renderer) OR a redraw request that does not change
-        // content, such as a selection or cursor change (lastRedrawRequestedAt).
-        let changedAt = max(session.screenContentsLastChangedAt,
-                            session.view?.lastRedrawRequestedAt ?? 0)
+        pushBrowserEditingIfChanged(context, streamID: streamID)
+        pushBrowserNavigationIfChanged(context, streamID: streamID)
+        // Emit on any visual change the source reports.
+        context.source.tick()
+        let changedAt = context.source.contentLastChangedAt
         if changedAt > context.lastChange {
             context.lastChange = changedAt
             context.streamer.screenDidChange()
@@ -1184,7 +1319,7 @@ final class CompanionHostBridge {
         // Detect a selection change from any source (mac-side Cmd-A/drag as well as
         // phone gestures) and push it, so the phone reloads the affected history
         // tiles; the live band already reflects it via the rendered video.
-        if let textview = session.textview {
+        if !context.isBrowser, let textview = session.textview {
             let current = currentSelectionRange(textview)
             let decision = Self.selectionPushDecision(current: current,
                                                       lastSent: context.lastSentSelectionRange,
@@ -1231,17 +1366,23 @@ final class CompanionHostBridge {
                  requestID: requestID)
             return
         }
-        let terminalSessionGuid: String?
+        var terminalSessionGuid: String?
+        var browserSessionGuid: String?
         switch mode {
         case .orchestrator:
-            terminalSessionGuid = nil
+            break
         case .session(let guid):
-            terminalSessionGuid = guid
+            // A browser session can only ever be linked as a browser.
+            if ChatListModel.isBrowserSession(reference: guid) == true {
+                browserSessionGuid = guid
+            } else {
+                terminalSessionGuid = guid
+            }
         }
         do {
             let chatID = try client.create(chatWithTitle: title,
                                            terminalSessionGuid: terminalSessionGuid,
-                                           browserSessionGuid: nil,
+                                           browserSessionGuid: browserSessionGuid,
                                            initialMessages: [],
                                            permissions: "")
             if case .orchestrator = mode {
@@ -1748,7 +1889,7 @@ final class CompanionHostBridge {
             RLog("Companion bridge: linked \(terminal ? "terminal" : "browser") session \(guid) to chat \(chatID)")
         } catch {
             RLog("Companion bridge: linkSession failed: \(error)")
-            send(.error(CompanionError(code: .internalError, message: "\(error)")), requestID: nil)
+            send(.error(CompanionError(code: .internalError, message: error.localizedDescription)), requestID: nil)
         }
     }
 
@@ -2172,7 +2313,8 @@ final class CompanionHostBridge {
              .stopSessionStream, .requestKeyframe, .updateStreamParams, .streamAck,
              .reportScrollWheel, .selectionGesture, .clearSelection, .copySelection,
              .selectAllInStream, .pasteText, .sendKey, .resizeSession,
-             .setChatMuted, .unsubscribe, .answerModalAlert:
+             .setChatMuted, .unsubscribe, .answerModalAlert, .browserTap, .browserScroll,
+             .browserGoBack, .browserGoForward, .browserReload, .browserStopLoading, .browserLoad:
             return .open
         // Partly served when AI is off; the handler decides (session list without
         // chats; alerts without chat messages). These also classify the connection

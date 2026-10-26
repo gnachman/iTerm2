@@ -176,6 +176,26 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertFalse(pane(other).isHidden)
     }
 
+    /// QA finding F-129: hidden floats don't draw, so they don't count toward the limit on the
+    /// number of panes in a tab that may use the GPU renderer.
+    func testHiddenFloatsDoNotCountTowardTheMetalPaneLimit() {
+        fixture.addFloat(frame: floatFrame)
+        fixture.addFloat(frame: floatFrame.offsetBy(dx: 20, dy: 20))
+        func count() -> UInt {
+            return tab.numberOfPanesCountingTowardMetalLimit
+        }
+        XCTAssertEqual(count(), 3)
+        tab.floatingPanesHidden = true
+        XCTAssertEqual(count(), 1)
+        tab.floatingPanesHidden = false
+        XCTAssertEqual(count(), 3)
+        // A temporary hide, as during Find Cursor or a drag, doesn't change the count, so it
+        // doesn't switch the renderer on and off.
+        tab.floatingPanesTemporarilyHidden = true
+        XCTAssertEqual(count(), 3)
+        tab.floatingPanesTemporarilyHidden = false
+    }
+
     func testAFloatAddedWhileHiddenStartsHidden() {
         fixture.addFloat(frame: floatFrame)
         tab.floatingPanesHidden = true

@@ -62,9 +62,17 @@ final class CompanionProtocolVersionTests: XCTestCase {
     func testModalAlertRevisionConstants() {
         // Revision 14 is the mac-status revision, and it is additive: the peer
         // floor is unchanged, so no compatible pairing is broken by the bump.
-        XCTAssertEqual(CompanionProtocolVersion.current, 14)
         XCTAssertEqual(CompanionProtocolVersion.modalAlertRevision, 14)
         XCTAssertEqual(CompanionProtocolVersion.minimumPeer, 11)
+    }
+
+    func testBrowserInputRevisionConstants() {
+        // Revision 15 is the browser-input revision, and it is additive: the peer
+        // floor is unchanged, so no compatible pairing is broken by the bump.
+        XCTAssertEqual(CompanionProtocolVersion.current, 15)
+        XCTAssertEqual(CompanionProtocolVersion.browserInputRevision, 15)
+        XCTAssertEqual(CompanionProtocolVersion.minimumPeer, 11)
+        XCTAssertEqual(CompanionProtocolVersion.evaluate(peerRevision: 14, peerMinimumPeer: 11), .compatible)
     }
 
     func testModalAlertRevisionIsBackwardCompatibleWithPriorPeers() {

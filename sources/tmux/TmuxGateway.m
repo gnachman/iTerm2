@@ -668,6 +668,63 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
 }
 
+// tmux's error text for a command it could not even run. For a command sent with
+// kTmuxGatewayCommandReportMalformedCommandErrors, that means iTerm2 sent a bad command. Other
+// errors are refusals that depend on the server's state (such as "pane is modal"). A message that
+// is missed here is only logged more quietly, so a wording is listed only if tmux never uses it for
+// a refusal.
+//
+// tmux has reworded these over the years. Before 2021 every argument error was "usage: ...", which
+// is still listed because tmux only said it while parsing, before looking at any state. Before 3.3,
+// select-layout said "can't set layout: ..." for every failure, including a window that has more
+// panes than the layout, so it is not listed. Since 3.3, "invalid layout" means the string didn't
+// parse and "size mismatch after applying layout" means its sizes don't add up.
++ (BOOL)errorIndicatesMalformedCommand:(NSString *)error {
+    static NSArray<NSString *> *prefixes;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        prefixes = @[ @"parse error",
+                      @"unknown command",
+                      @"ambiguous command",
+                      @"usage:",
+                      @"command ",
+                      @"unknown flag",
+                      @"invalid flag",
+                      @"too many arguments",
+                      @"too few arguments",
+                      @"argument ",
+                      @"invalid layout",
+                      @"size mismatch after applying layout" ];
+    });
+    for (NSString *prefix in prefixes) {
+        if ([error hasPrefix:prefix]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)logToleratedErrorForCurrentCommand {
+    NSString *command = currentCommand_[kCommandString];
+    if ([currentCommand_[kCommandId] isEqual:@"n/a"]) {
+        DLog(@"Skipped “%@” because an earlier command in its list failed", command);
+        return;
+    }
+    NSString *error = [currentCommandResponse_ copy];
+    const BOOL shouldReport = !!([self currentCommandFlags] & kTmuxGatewayCommandReportMalformedCommandErrors);
+    if (!shouldReport || ![TmuxGateway errorIndicatesMalformedCommand:error]) {
+        DLog(@"Tolerating error from “%@”: %@", command, error);
+        return;
+    }
+#if ITERM_DEBUG
+    ITCriticalError(NO, @"tmux could not run “%@”: %@", command, error);
+#else
+    // The command can hold user text, so only its name goes to the always-on log.
+    NSString *name = [command componentsSeparatedByString:@" "].firstObject ?: @"";
+    RLog(@"tmux could not run “%@”: %@", RLogRedact(command, name), error);
+#endif
+}
+
 - (void)currentCommandResponseFinishedWithError:(BOOL)withError {
     while (YES) {
         if (withError) {
@@ -681,6 +738,7 @@ static NSString *kCommandTimestamp = @"timestamp";
                 [self abortWithErrorForCurrentCommand];
                 return;
             }
+            [self logToleratedErrorForCurrentCommand];
         }
         [self invokeCurrentCallbackWithError:withError];
         const BOOL failNext = withError && [self shouldAutofailSubsequentCommands];
@@ -1331,6 +1389,43 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
     TmuxLog(@"Send command: %@", commandWithNewline);
     [self write:commandWithNewline];
     TmuxLog(@"Sent command with dictionary: %@", [dict objectForKey:kCommandString]);
+}
+
+// Enqueued as a two-command list so the existing list handling keeps the queue in step: if the
+// `if` fails, tmux sends no block for the branch, and the error autofails the second entry.
+- (void)sendGuardedCommand:(NSString *)command
+            responseTarget:(id)target
+          responseSelector:(SEL)selector
+            responseObject:(id)obj {
+    NS_VALID_UNTIL_END_OF_SCOPE TmuxGateway *selfRef = self;
+
+    if (detachSent_ || disconnected_) {
+        return;
+    }
+    NSString *commandWithNewline = [command stringByAppendingString:self.newline];
+    NSMutableDictionary *guardDict = [[self dictionaryForCommand:commandWithNewline
+                                                  responseTarget:nil
+                                                responseSelector:nil
+                                                  responseObject:nil
+                                                           flags:kTmuxGatewayCommandShouldTolerateErrors] mutableCopy];
+    guardDict[kCommandIsInList] = @YES;
+    NSMutableDictionary *branchDict = [[self dictionaryForCommand:[@"(branch of) " stringByAppendingString:commandWithNewline]
+                                                   responseTarget:target
+                                                 responseSelector:selector
+                                                   responseObject:obj
+                                                            flags:kTmuxGatewayCommandShouldTolerateErrors] mutableCopy];
+    branchDict[kCommandIsInList] = @YES;
+    branchDict[kCommandIsLastInList] = @YES;
+    [self enqueueCommandDict:guardDict];
+    if (disconnected_) {
+        return;
+    }
+    [self enqueueCommandDict:branchDict];
+    if (disconnected_) {
+        return;
+    }
+    TmuxLog(@"Send guarded command: %@", commandWithNewline);
+    [self write:commandWithNewline];
 }
 
 - (void)sendCommandList:(NSArray *)commandDicts {

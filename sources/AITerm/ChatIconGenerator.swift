@@ -30,7 +30,7 @@ class ChatIconGenerator {
     // title. (Keeping the conversation alive is handled by
     // AIConversation.completeOneShot, not here.)
     private struct Request {
-        var pending: (title: String, modelName: String?, completion: (Data?) -> Void)?
+        var pending: (title: String, modelName: String?, modelVendor: iTermAIVendor?, completion: (Data?) -> Void)?
     }
     // Main-thread only; enforced with dispatchPrecondition rather than
     // @MainActor because the calling stack (ChatListModel and its users)
@@ -49,6 +49,7 @@ class ChatIconGenerator {
     func requestIcon(forChatID chatID: String,
                      title: String,
                      modelName: String?,
+                     modelVendor: iTermAIVendor?,
                      completion: @escaping (Data?) -> Void) {
         dispatchPrecondition(condition: .onQueue(.main))
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -59,7 +60,8 @@ class ChatIconGenerator {
             // title the chat no longer has. When the parked request
             // re-enters below, the guards drop it without starting a
             // generation.
-            requests[chatID]!.pending = (title: trimmed, modelName: modelName, completion: completion)
+            requests[chatID]!.pending = (title: trimmed, modelName: modelName, modelVendor: modelVendor,
+                                          completion: completion)
             return
         }
         guard iTermAITermGatekeeper.allowed else {
@@ -80,15 +82,18 @@ class ChatIconGenerator {
                              prompt: prompt,
                              subject: trimmed,
                              modelName: modelName,
+                             modelVendor: modelVendor,
                              completion: completion)
         }
     }
 
-    static func svgConversation(prompt: String, modelName: String?) -> AIConversation {
+    static func svgConversation(prompt: String, modelName: String?,
+                                modelVendor: iTermAIVendor?) -> AIConversation {
         var conversation = AIConversation(
             registrationProvider: nil,
             messages: [AITermController.Message(role: .user, content: prompt)])
         conversation.model = modelName
+        conversation.modelVendor = modelVendor
         conversation.shouldThink = false
         return conversation
     }
@@ -97,8 +102,10 @@ class ChatIconGenerator {
                             prompt: String,
                             subject: String,
                             modelName: String?,
+                            modelVendor: iTermAIVendor?,
                             completion: @escaping (Data?) -> Void) {
-        let conversation = Self.svgConversation(prompt: prompt, modelName: modelName)
+        let conversation = Self.svgConversation(prompt: prompt, modelName: modelName,
+                                                modelVendor: modelVendor)
         // The callback can run synchronously (e.g., when no registration
         // exists); finish is deferred to the next runloop turn so the
         // bookkeeping in `requests` never mutates re-entrantly.
@@ -145,12 +152,12 @@ class ChatIconGenerator {
         guard let request = requests.removeValue(forKey: chatID) else {
             return
         }
-        if let (title, pendingModelName, pendingCompletion) = request.pending {
+        if let (title, pendingModelName, pendingModelVendor, pendingCompletion) = request.pending {
             // A newer title arrived while this request ran. Drop this
             // result rather than persisting an icon for a superseded
             // title, and generate for the newest title instead.
             requestIcon(forChatID: chatID, title: title, modelName: pendingModelName,
-                        completion: pendingCompletion)
+                        modelVendor: pendingModelVendor, completion: pendingCompletion)
             return
         }
         completion(data)

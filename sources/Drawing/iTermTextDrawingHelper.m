@@ -91,6 +91,17 @@ BOOL iTermScreenCharCanHostSpacingMark(const screen_char_t *base, BOOL useNative
     return ![boxSet longCharacterIsMember:code];
 }
 
+CGFloat iTermLeftmostStringPosition(const CGFloat *positions, NSRange range) {
+    if (range.length == 0) {
+        return positions[range.location];
+    }
+    CGFloat result = positions[range.location];
+    for (NSUInteger i = range.location + 1; i < NSMaxRange(range); i++) {
+        result = MIN(result, positions[i]);
+    }
+    return result;
+}
+
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index) {
     int theIndex = index / 8;
     int mask = 1 << (index & 7);
@@ -1832,40 +1843,65 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     return NSMaxRange(lhs) == rhs.location || NSMaxRange(rhs) == lhs.location;
 }
 
+NSArray<iTermBoxedBackgroundColorRun *> *iTermCombineBackgroundRunsForUnprocessedForeground(NSArray<iTermBoxedBackgroundColorRun *> *runs,
+                                                                                            BOOL bidi) {
+    NSMutableArray<iTermBoxedBackgroundColorRun *> *combinedRuns = [NSMutableArray array];
+    iTermBackgroundColorRun previousRun = { {0} };
+    BOOL havePreviousRun = NO;
+    for (iTermBoxedBackgroundColorRun *run in runs) {
+        if (!havePreviousRun) {
+            havePreviousRun = YES;
+            previousRun = *run.valuePointer;
+        } else if ((bidi || (run.valuePointer->selected == previousRun.selected &&
+                             run.valuePointer->isMatch == previousRun.isMatch)) &&
+                   !run.valuePointer->beneathFaintText &&
+                   !previousRun.beneathFaintText &&
+                   NSRangesAdjacent(previousRun.modelRange, run.valuePointer->modelRange)) {
+            // Combine with preceding run. On a bidi line this may cross a
+            // selection or find-match edge so an Arabic word is shaped as a
+            // whole; the text colors are then chosen per cell.
+            previousRun.visualRange = NSUnionRange(previousRun.visualRange, run.valuePointer->visualRange);
+            previousRun.modelRange = NSUnionRange(previousRun.modelRange, run.valuePointer->modelRange);
+            previousRun.selected = previousRun.selected && run.valuePointer->selected;
+            previousRun.isMatch = previousRun.isMatch && run.valuePointer->isMatch;
+        } else {
+            // Allow this run to remain.
+            [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
+            previousRun = *run.valuePointer;
+        }
+    }
+    if (havePreviousRun) {
+        [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
+    }
+    return combinedRuns;
+}
+
 // Draw assuming no foreground color processing. Keeps glyphs together in a single background color run across different background colors.
 - (void)drawUnprocessedForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                                drawOffscreenCommandLine:(BOOL)drawOffscreenCommandLine
                                                     ctx:(CGContextRef)ctx
                                           virtualOffset:(CGFloat)virtualOffset {
     // Combine runs on each line, except those with different values of
-    // `selected` or `match`, or when faint text is present.
+    // `selected` or `match` (outside bidi lines), or when faint text is present.
     // Those properties affect foreground color and must split ligatures up and process foreground
     // color separately.
     NSArray<iTermBackgroundColorRunsInLine *> *fakeRunArrays = [backgroundRunArrays mapWithBlock:^id(iTermBackgroundColorRunsInLine *runs) {
-        NSMutableArray<iTermBoxedBackgroundColorRun *> *combinedRuns = [NSMutableArray array];
-        iTermBackgroundColorRun previousRun = { {0} };
-        BOOL havePreviousRun = NO;
-        for (iTermBoxedBackgroundColorRun *run in runs.array) {
-            if (!havePreviousRun) {
-                havePreviousRun = YES;
-                previousRun = *run.valuePointer;
-            } else if (run.valuePointer->selected == previousRun.selected &&
-                       run.valuePointer->isMatch == previousRun.isMatch &&
-                       !run.valuePointer->beneathFaintText &&
-                       !previousRun.beneathFaintText &&
-                       NSRangesAdjacent(previousRun.modelRange, run.valuePointer->modelRange)) {
-                // Combine with preceding run.
-                previousRun.visualRange = NSUnionRange(previousRun.visualRange, run.valuePointer->visualRange);
-                previousRun.modelRange = NSUnionRange(previousRun.modelRange, run.valuePointer->modelRange);
-            } else {
-                // Allow this run to remain.
-                [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
-                previousRun = *run.valuePointer;
+        // Only a line with a selection or find-match edge can combine
+        // differently on a bidi line, so skip the metadata lookup otherwise.
+        BOOL hasHighlightEdge = NO;
+        for (NSUInteger i = 1; i < runs.array.count; i++) {
+            const iTermBackgroundColorRun *lhs = runs.array[i - 1].valuePointer;
+            const iTermBackgroundColorRun *rhs = runs.array[i].valuePointer;
+            if (lhs->selected != rhs->selected || lhs->isMatch != rhs->isMatch) {
+                hasHighlightEdge = YES;
+                break;
             }
         }
-        if (havePreviousRun) {
-            [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
-        }
+        const BOOL bidi = (hasHighlightEdge &&
+                           [self canDrawLine:runs.line] &&
+                           [self.delegate drawingHelperMetadataOnLine:runs.sourceLine].rtlFound);
+        NSArray<iTermBoxedBackgroundColorRun *> *combinedRuns =
+            iTermCombineBackgroundRunsForUnprocessedForeground(runs.array, bidi);
 
         iTermBackgroundColorRunsInLine *fakeRuns = [[iTermBackgroundColorRunsInLine alloc] init];
         fakeRuns.line = runs.line;
@@ -1957,8 +1993,18 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
     const BOOL rtlFound = metadata.rtlFound;
     NSData *matches = [_delegate drawingHelperMatchesOnLine:sourceLine];
+    // On a bidi line a run may span a selection or find-match edge (see
+    // iTermCombineBackgroundRunsForUnprocessedForeground), so the attributed
+    // string builder decides those colors per cell from these.
+    NSIndexSet *selectedIndexes = nil;
+    if (rtlFound) {
+        selectedIndexes = [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:sourceLine + _totalScrollbackOverflow] ?: [NSIndexSet indexSet];
+    }
     if (sourceLine != displayLine) {
         matches = nil;
+        if (selectedIndexes) {
+            selectedIndexes = [NSIndexSet indexSet];
+        }
     }
     for (iTermBoxedBackgroundColorRun *box in backgroundRuns) {
         iTermBackgroundColorRun *run = box.valuePointer;
@@ -1972,6 +2018,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                   inRange:run->modelRange
                           startingAtPoint:textOrigin
                                bgselected:run->selected
+                          selectedIndexes:selectedIndexes
                                   bgColor:box.unprocessedBackgroundColor
                  processedBackgroundColor:box.backgroundColor
                                  colorRun:box.valuePointer
@@ -1991,6 +2038,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                             inRange:(NSRange)indexRange
                     startingAtPoint:(NSPoint)initialPoint
                          bgselected:(BOOL)bgselected
+                    selectedIndexes:(NSIndexSet *)selectedIndexes
                             bgColor:(NSColor *)bgColor
            processedBackgroundColor:(NSColor *)processedBackgroundColor
                            colorRun:(iTermBackgroundColorRun *)colorRun
@@ -2021,6 +2069,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                     externalAttributes:eaIndex
                                                  range:indexRange
                                        hasSelectedText:bgselected
+                                       selectedIndexes:selectedIndexes
                                        backgroundColor:bgColor
                                         forceTextColor:forceTextColor
                                               colorRun:colorRun
@@ -2420,7 +2469,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     const NSRange range = NSMakeRange(0, cheapString.length);
     const NSSize size = NSMakeSize([attributes[iTermUnderlineLengthAttribute] intValue] * _cellSize.width,
                                    _cellSize.height * 2);
-    const CGFloat xOrigin = origin.x + stringPositions[range.location];
+    const CGFloat xOrigin = origin.x + iTermLeftmostStringPosition(stringPositions, range);
     const NSRect rect = NSMakeRect(xOrigin,
                                    origin.y,
                                    size.width,
@@ -2450,7 +2499,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
 
         iTermCheapAttributedString *blackCopy = [cheapString copyWithAttributes:attrs];
         [self drawFastPathStringWithoutUnderlineOrStrikethrough:blackCopy
-                                                        atPoint:NSMakePoint(-stringPositions[0], 0)
+                                                        atPoint:NSMakePoint(origin.x - xOrigin, 0)
                                                          origin:VT100GridCoordMake(-1, -1)  // only needed by images
                                                       positions:stringPositions
                                                       inContext:[[NSGraphicsContext currentContext] CGContext]
@@ -2756,7 +2805,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
         }
         NSDictionary *const attributes = [attributedString attributesAtIndex:range.location
                                                               effectiveRange:nil];
-        const CGFloat minX = stringPositions[range.location];
+        const CGFloat minX = iTermLeftmostStringPosition(stringPositions, range);
         // Use iTermUnderlineLengthAttribute (cell count) to compute the right edge.
         // This correctly handles double-width characters which occupy two cells
         // per character in the attributed string.
@@ -2787,7 +2836,7 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                 return;
             }
             [self drawAttributedStringForMask:attributedString
-                                       origin:NSMakePoint(-stringPositions[range.location], 0)
+                                       origin:NSMakePoint(-minX, 0)
                               stringPositions:stringPositions];
         }];
     }];
@@ -3309,28 +3358,60 @@ iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreat
     DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: imageID=%u (0x%x) placementID=%u sourceCoord=(%d,%d) destCoord=(%d,%d) point=%@ placementSize=%dx%d",
          imageID, imageID, placementID, sourceCoord.x, sourceCoord.y, destCoord.x, destCoord.y, NSStringFromPoint(point),
          draw.placementSize.width, draw.placementSize.height);
+    return iTermKittyPlaceholderDrawInstructionsCreateForSourceFrame(draw.sourceFrame,
+                                                                     draw.placementSize,
+                                                                     cellSize,
+                                                                     sourceCoord,
+                                                                     point,
+                                                                     virtualOffset);
+}
+
+iTermKittyPlaceholderDrawInstructions iTermKittyPlaceholderDrawInstructionsCreateForSourceFrame(NSRect sourceFrame,
+                                                                                                VT100GridSize placementSize,
+                                                                                                NSSize cellSize,
+                                                                                                VT100GridCoord sourceCoord,
+                                                                                                NSPoint point,
+                                                                                                CGFloat virtualOffset) {
     iTermKittyPlaceholderDrawInstructions result = { 0 };
     result.valid = NO;
 
-    if (draw.placementSize.width <= 0 || draw.placementSize.height <= 0) {
+    if (placementSize.width <= 0 || placementSize.height <= 0) {
         DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: returning invalid - placementSize is %dx%d",
-             draw.placementSize.width, draw.placementSize.height);
+             placementSize.width, placementSize.height);
         return result;
     }
-    const NSSize sourceCellSize = [iTermTextDrawingHelper sizeForKittyImageCellInPlacementOfSize:draw.placementSize
+    if (sourceFrame.size.width <= 0 || sourceFrame.size.height <= 0) {
+        DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: returning invalid - sourceFrame is %@",
+             NSStringFromRect(sourceFrame));
+        return result;
+    }
+    const NSSize sourceCellSize = [iTermTextDrawingHelper sizeForKittyImageCellInPlacementOfSize:placementSize
                                                                                         cellSize:cellSize
-                                                                                 sourceImageSize:draw.sourceFrame.size];
-    const NSRect destRect = NSMakeRect(0, 0, cellSize.width, cellSize.height);
+                                                                                 sourceImageSize:sourceFrame.size];
     const NSRect sourceRect = [iTermTextDrawingHelper sourceRectangleForKittyPlaceholderAtSourceCoord:sourceCoord
                                                                                        sourceCellSize:sourceCellSize
-                                                                                        placementSize:draw.placementSize
+                                                                                        placementSize:placementSize
                                                                                              cellSize:cellSize
-                                                                                          sourceFrame:draw.sourceFrame];
+                                                                                          sourceFrame:sourceFrame];
+    // A cell in the letterbox padding around the image maps to a source rect that extends past the
+    // source frame. Clip it, or a cropped placement draws the neighboring part of the image there.
+    // The dest rect shrinks in proportion. Both rects have their origin at the bottom.
+    const NSRect clippedSourceRect = NSIntersectionRect(sourceRect, sourceFrame);
+    if (clippedSourceRect.size.width <= 0 || clippedSourceRect.size.height <= 0) {
+        DLog(@"iTermKittyPlaceholderDrawInstructionsCreate: returning invalid - cell is entirely padding");
+        return result;
+    }
+    const CGFloat xScale = cellSize.width / sourceRect.size.width;
+    const CGFloat yScale = cellSize.height / sourceRect.size.height;
+    const NSRect destRect = NSMakeRect((NSMinX(clippedSourceRect) - NSMinX(sourceRect)) * xScale,
+                                       (NSMinY(clippedSourceRect) - NSMinY(sourceRect)) * yScale,
+                                       clippedSourceRect.size.width * xScale,
+                                       clippedSourceRect.size.height * yScale);
 
     result.valid = YES;
     result.translation = NSMakePoint(point.x, point.y + cellSize.height - virtualOffset);
     result.destRect = destRect;
-    result.sourceRect = sourceRect;
+    result.sourceRect = clippedSourceRect;
     return result;
 }
 
@@ -3401,6 +3482,9 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                                     imageID,
                                                     placementID,
                                                     virtualOffset);
+    if (!instructions.valid) {
+        return;
+    }
     DLog(@"drawKittyImageInPlaceholderWithCoord: instructions sourceRect=%@ destRect=%@ translation=%@",
          NSStringFromRect(instructions.sourceRect), NSStringFromRect(instructions.destRect), NSStringFromPoint(instructions.translation));
     [NSGraphicsContext saveGraphicsState];
@@ -3450,8 +3534,10 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     CGFloat adjustedSourceX = sourceCoord.x * sourceCellSize.width - horizontalPadding * (sourceCellSize.width / cellSize.width);
     CGFloat adjustedSourceY = sourceCoord.y * sourceCellSize.height - verticalPadding * (sourceCellSize.height / cellSize.height);
 
+    // sourceFrame has its origin at the bottom of the image, while adjustedSourceY counts down from
+    // the top of the source frame.
     const NSRect sourceRect = NSMakeRect(adjustedSourceX + sourceFrame.origin.x,
-                                         imageSize.height - (adjustedSourceY + sourceFrame.origin.y) - sourceCellSize.height,
+                                         sourceFrame.origin.y + imageSize.height - adjustedSourceY - sourceCellSize.height,
                                          sourceCellSize.width,
                                          sourceCellSize.height);
     return sourceRect;
@@ -3703,6 +3789,7 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
                                       inRange:NSMakeRange(i, charsInLine)
                               startingAtPoint:NSMakePoint(x, y)
                                    bgselected:NO
+                              selectedIndexes:nil
                                       bgColor:nil
                      processedBackgroundColor:[self defaultBackgroundColor]
                                      colorRun:nil
@@ -3890,9 +3977,10 @@ typedef struct {
     iTermCursor *cursor = [iTermCursor itermCopyModeCursorInSelectionState:self.copyModeSelecting];
     cursor.delegate = self;
 
+    const VT100GridCoord visualCoord = [self visualCopyModeCursorCoord];
     [self reallyDrawCursor:cursor
            backgroundColor:cursorBackgroundColor
-                        at:VT100GridCoordMake(_copyModeCursorCoord.x, _copyModeCursorCoord.y - _numberOfScrollbackLines)
+                        at:VT100GridCoordMake(visualCoord.x, visualCoord.y - _numberOfScrollbackLines)
             coordIsLogical:NO
                    outline:NO
              virtualOffset:virtualOffset];
@@ -3997,6 +4085,13 @@ typedef struct {
     } else {
         return self.backgroundColorForCursor;
     }
+}
+
+- (VT100GridCoord)visualCopyModeCursorCoord {
+    const VT100GridCoord screenCoord = VT100GridCoordMake(_copyModeCursorCoord.x,
+                                                          _copyModeCursorCoord.y - _numberOfScrollbackLines);
+    const VT100GridCoord visual = [self coordinateByTransformingScreenCoordinateForRTL:screenCoord];
+    return VT100GridCoordMake(visual.x, visual.y + _numberOfScrollbackLines);
 }
 
 // This is intended to transform the cursor coordinate for bidi lines.
@@ -4619,6 +4714,7 @@ typedef struct {
                               inRange:NSMakeRange(0, _gridSize.width)
                       startingAtPoint:NSMakePoint([iTermPreferences sideMargins], row * _cellSize.height)
                            bgselected:NO
+                      selectedIndexes:nil
                               bgColor:backgroundColor
              processedBackgroundColor:backgroundColor
                              colorRun:nil

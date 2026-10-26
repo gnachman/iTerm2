@@ -73,6 +73,14 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic) BOOL shouldWorkAroundTabBug;
 
 + (TmuxWindowOpener *)windowOpener;
+
+// Whether a tmux window's saved origin should be applied to the terminal window that ends up
+// holding it. `useOriginalWindow` is YES when tmux windows open as tabs in the attaching window
+// and `initialTabs` is how many tabs that window had first.
++ (BOOL)shouldApplySavedOriginUsingOriginalWindow:(BOOL)useOriginalWindow
+                                      initialTabs:(NSInteger)initialTabs
+                                          initial:(BOOL)initial
+                                   isHotKeyWindow:(BOOL)isHotKeyWindow;
 - (BOOL)openWindows:(BOOL)initial;
 
 // Returns YES if the tab's layout was updated.

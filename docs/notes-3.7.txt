@@ -52,10 +52,7 @@ New Features:
   set-var or get-var; a program running there
   cannot otherwise learn which session it is in.
   This works the same on a host reached through
-  SSH Integration. (Claude Code’s own status hook
-  is not yet installed on remote hosts, so its
-  status is only reported automatically for
-  sessions on this Mac.)
+  SSH Integration.
   Claude Code’s status is no longer reported from
   a pane of a plain tmux session (one not using
   tmux Integration), since iTerm2 cannot tell
@@ -63,7 +60,22 @@ New Features:
 - New `it2 session get-status` prints a session’s
   status indicator as JSON. `set-status` no
   longer requires --session and defaults to the
-  active session.
+  active session, and its new --progress option
+  starts or stops the tab’s progress indicator
+  for a program that reports through hooks but
+  does not draw the indicator itself. The
+  set_session_status Python API function takes
+  the same progress argument.
+- The Claude Code hook program is now
+  `it2 handle-agent-hook`, so the hook works
+  wherever it2 does. Existing installs keep
+  working; reinstalling the integration updates
+  the hook entries.
+- `it2 session add-clipping` and
+  `archive-clippings` accept --tmux and
+  --tmux-pane, and every addressing option
+  accepts an empty value as “not given”, so a
+  script can pass all of them and let it2 pick.
 - New Python API functions set_session_status and
   get_session_status read and write a session’s
   status indicator by session ID, and
@@ -73,12 +85,11 @@ New Features:
   update a session’s Session Note.
 - The Session Status tool can now follow Codex
   CLI as well as Claude Code. There is no
-  installer for Codex yet. Write a small shell
-  script that runs the hook program inside
-  iTerm2.app (Contents/Resources/utilities/
-  cc-status) with the argument --agent codex,
-  then in ~/.codex/hooks.json point each event
-  at that script and set timeout to 3 on the
+  installer for Codex yet. In ~/.codex/hooks.json
+  point each event at the command
+  “it2 handle-agent-hook --agent codex” (it2 is
+  in iTerm2.app under Contents/Resources/
+  utilities) and set timeout to 3 on the
   Interrupt and SessionEnd hooks. Codex allows
   those two events one second by default, which
   is not always enough for the hook to finish.
@@ -333,6 +344,20 @@ New Features:
   settings menu, or double-click the file.
   Settings > General > Export All Settings and
   Data can also include them.
+- When a host reached through SSH Integration
+  asks to use it2, you can now choose “Always
+  Allow This Host” so it is not asked again on
+  later connections. Review or remove these hosts
+  in Settings > General > Magic > API access
+  over ssh.
+- The Claude Code integration can now be
+  installed on a host reached through SSH
+  Integration, so Claude Code running there
+  reports its status too. Choose iTerm2 > Install
+  Claude Code Integration from a session on that
+  host, including a tmux Integration pane there.
+  Uninstalling removes it from every host you are
+  connected to.
 
 Improvements:
 - Pausing a spinning progress indicator with
@@ -344,6 +369,11 @@ Improvements:
   an expression is true, such as a user variable
   your script sets. See ContextMenuProviderRPC’s
   submenu and visible_when arguments.
+- If you customized the Code Review system
+  prompt, iTerm2 offers to update it the next
+  time a review starts, so reviews work in tmux
+  and on remote hosts. It shows the changes
+  first, and changes nothing else in your prompt.
 - If a profile archives sessions when they close
   (Settings > Profiles > Session), Undo Close
   keeps working after its time limit runs out.
@@ -564,8 +594,76 @@ Improvements:
   appearing literally. The window title shows the
   text without the tags, including titles set by
   a program or by tmux.
+- In iTerm2 Buddy, you can now tap, scroll, and
+  type into a web browser session from your
+  phone, and use back, forward, reload, and an
+  address field. The phone’s keyboard comes up
+  when a text field on the page has focus.
+  Requires an up-to-date iTerm2 Buddy.
+- On a host reached through SSH Integration, it2
+  is now a real command in ~/.iterm2/bin rather
+  than a shell function, so scripts, sh -c, and
+  tools such as Claude Code’s Bash tool can run
+  it, not just an interactive shell. Commands
+  that read standard input now receive it.
+- On a host reached through SSH Integration, an
+  it2 command that names no session now acts on
+  the session it runs in rather than the focused
+  one.
+- A command run on a host with it2ssh host
+  command, or by an SSH profile, can now use it2,
+  as an interactive shell there can.
+- it2ssh now loads shell integration on the
+  remote host by default, whatever the current
+  profile’s Load Shell Integration Automatically
+  setting. Run it2ssh --no-shell-integration to
+  skip it. SSH profiles still follow their own
+  setting.
+- it2 now works on a host reached through SSH
+  Integration when the shell is tcsh, and when
+  shell integration is not loaded there. Without
+  it iTerm2 copies nothing to the host, so it2
+  has to be installed there.
+- The git status bar component now shows the
+  status of a repository on a host reached
+  through SSH Integration, by running git there.
+  It used to need it2git set up on the host.
+- Shell integration now loads inside tmux,
+  including on a host you ssh to from a tmux
+  pane, so marks, the current directory and
+  host, and the git status work there. It used
+  to need the environment variable
+  ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX. It
+  still skips itself in GNU screen.
+- In a tmux Integration pane on a host reached
+  through SSH Integration, the git status bar
+  component and other features that depend on
+  the session’s host now work without shell
+  integration loaded in the pane.
+- With it2git on a remote host, the git status
+  bar component now counts changes the same way
+  as for a repository on this Mac: every
+  untracked file counts, conflicts are not
+  counted as changes, and a detached HEAD shows
+  its full commit ID.
+- In a tmux Integration session on a host reached
+  through SSH Integration, each pane now knows
+  which program is running in it. The tab shows
+  the job, the Jobs tool lists the pane’s
+  processes, and triggers that watch for a
+  program, such as entering the Claude Code
+  workgroup, work there.
+- SSH Integration now paces output from the
+  remote host, so a program that prints a lot no
+  longer fills the connection’s buffers. Control-C
+  takes effect at once instead of after minutes
+  of buffered output on a slow link, and typing
+  stays responsive while output streams.
 
 Bug Fixes:
+- In an AI chat with an empty message field, the
+  “↩ to submit” hint no longer overlaps a long
+  placeholder.
 - With KeePassXC as the browser password
   manager, “Remember this password” for a
   website’s sign-in dialog now saves the
@@ -579,6 +677,11 @@ Bug Fixes:
   characters, and a URL with disallowed
   characters is rejected with a warning instead
   of opening.
+- Dragging a split divider in a tmux window
+  now leaves the panes the way the drag showed
+  them. Before, a different divider could move,
+  or panes beside the divider could jump to
+  other sizes when the drag ended.
 - On macOS 26, hiding a hotkey window when no
   other iTerm2 windows are open once again
   returns focus to the previous app right away,
@@ -590,6 +693,11 @@ Bug Fixes:
 - Fixed a crash from a Smart Selection rule
   with no regular expression, for example in a
   hand-edited or Dynamic Profile.
+- Fixed a crash from a trigger in a Dynamic
+  Profile whose parameter has an unexpected
+  type, such as a list. A text parameter
+  written as a number, such as text to send, is
+  now used as text instead of being ignored.
 - Fixed memory corruption with the GPU renderer
   that could cause crashes after closing a
   session.
@@ -647,6 +755,22 @@ Bug Fixes:
   with “Failed to copy file” after using SSH
   Integration. Temporary connection files it
   could not copy are now skipped.
+- Shell > SSH > Disconnect now recovers an SSH
+  Integration session whose local it2ssh process
+  was killed. Previously the session stopped
+  showing output and ignored input.
+- An SSH Integration session now recovers on
+  its own when its it2ssh process is killed,
+  even while the remote host is printing
+  output, and ends the ssh process that it2ssh
+  left logged in to the remote host. When iTerm2
+  can’t watch it2ssh, for example because it
+  ran on another host, it offers to disconnect
+  once the prompt reappears. Recovering from a
+  killed it2ssh, on its own or with Disconnect,
+  also undoes the terminal settings ssh changed,
+  so Control-C works and output no longer
+  staircases.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
@@ -676,6 +800,25 @@ Bug Fixes:
   machine, the paste dialog now also offers to
   paste a local path.
   Issue 13117.
+- it2 session list and other it2 commands that
+  print names, paths or profile values no longer
+  show JSON escapes, such as \/dev\/ttys001 for a
+  tty.
+- On a FreeBSD or OpenBSD host reached through
+  SSH Integration, sessions and the Jobs tool
+  showed an environment variable such as
+  VENDOR=unknown instead of the running program.
+- it2ssh now runs a command given after the host
+  exactly as ssh does. Quotes in the command were
+  lost, and newlines, tabs and non-ASCII text
+  were mangled, so a command like
+  it2ssh host "grep 'a b' file" ran the wrong
+  thing.
+- A custom command or SSH profile command that
+  contains a backslash or a double quote now
+  runs as written. Such commands used to reach
+  the shell broken when they ran in a login
+  shell, which SSH profiles always do.
 - Make Text Bigger works again when you type it
   as ⌘⇧= (the way you type ⌘+). Since 3.7.0,
   that keystroke opened the Clippings panel
@@ -725,6 +868,9 @@ Bug Fixes:
   away. Sessions restored from before the restart
   still need to be restarted to regain it.
   Issue 12106.
+- A tmux Integration pane whose server was not
+  yet known to be local when the pane opened
+  never learned which program it was running.
 - The Session Status toolbelt tool now lists
   Claude Code sessions running inside tmux
   Integration panes, on this Mac or on a host
@@ -1485,9 +1631,9 @@ Bug Fixes:
   picker, it stays closed while you keep typing.
 - Sending from the Cockpit after closing the tab
   of one of its chosen sessions now sends to the
-  sessions that remain and names the closed one,
-  instead of sending nothing and showing an
-  internal identifier.
+  sessions that remain, names the closed one,
+  and removes its chip, instead of sending
+  nothing and showing an internal identifier.
 - The Cockpit no longer covers alerts attached
   to a terminal window, such as the Broadcast
   Input confirmation, hiding their buttons.
@@ -1583,3 +1729,534 @@ Bug Fixes:
   profile lose their tab and window names. The
   names could not be recovered by switching the
   setting back.
+- Pressing an arrow key or Tab while composing
+  text with an input method now finishes the
+  character and performs the key in one press, as
+  Return already did.
+- Opening a web browser session in iTerm2 Buddy
+  now shows the web page instead of a black
+  screen.
+- An AI chat started from a web browser session
+  in iTerm2 Buddy is now linked to it as a web
+  browser, not a terminal.
+- When AI chat asks to run a tool that can’t run
+  in the linked session, the chat now reports
+  the error and continues instead of waiting
+  forever.
+- Window > Lock Location and the tab menu’s
+  Rename Tab… item and “Tab Color:” label are
+  now translated instead of always appearing in
+  English.
+- The “AI-generated name” choice in Settings >
+  Profiles > General > Title is now translated.
+- it2 session list no longer shows a session’s
+  tty as \/dev\/ttys000 or its name with
+  backslash escapes. It prints the plain values.
+- it2 session set-var now sets a plain value
+  such as hello. Before, it reported success
+  but set nothing unless the value was quoted
+  JSON.
+- After window restoration, a tab whose session
+  had a status (for example, one set with OSC
+  21337) shows it again in the tab bar, not
+  only in the Session Status tool.
+- A trigger written by hand in a Dynamic Profile
+  no longer forgets its state when the profile
+  reloads, so an Instant trigger no longer fires
+  a second time on the same line.
+- Uninstalling the Claude Code integration no
+  longer says an empty settings.json couldn’t be
+  parsed.
+- Installing the Claude Code integration when
+  ~/.claude/settings.json is a broken symlink no
+  longer leaves the new settings.json marked
+  executable.
+- The Internet-Free shell integration install no
+  longer hangs when the shell you’re using isn’t
+  your login shell (for example, tcsh started
+  from zsh). It installs for the shell you’re
+  using.
+- An AI chat using a local Ollama model no
+  longer sends its messages to your cloud AI
+  provider after that model is removed from
+  Ollama. It now shows an error, and you can
+  pick another local model for the chat.
+- An alert shown again by “Permanently Forget
+  Saved Selection” no longer presses a button
+  when you type a plain letter. Its shortcuts
+  need Cmd, as they did the first time.
+- Cmd-H, Cmd-Q, Cmd-W, and Cmd-M no longer press
+  a button in an alert whose button happens to
+  start with that letter, such as Help.
+- After you change a window’s style in Window >
+  Window Style, for example to No Title Bar, the
+  window keeps keyboard focus, so you can keep
+  typing without clicking it first.
+- After Swap With Session between a tab with
+  one pane and a split tab, each pane now shows
+  or hides its title bar to match its new tab.
+- When tmux windows open as tabs in the
+  attaching window, attaching from a hotkey
+  window no longer moves the hotkey window to
+  where tmux last had a window, often mostly off
+  screen.
+- A profile setting chosen from a pop-up menu,
+  such as the progress bar color scheme, now
+  shows its default instead of a blank menu when
+  the profile holds a value the menu lacks.
+- “Prefer integrated to discrete GPU” in
+  Advanced GPU Settings is now disabled on a Mac
+  with only one GPU, where it has no effect.
+- When pasting text with tabs, the prompt that
+  offers to convert them to spaces now puts the
+  cursor in its number-of-spaces field, so you
+  can type a tab width without clicking first.
+- Shell > Close (⌘W) now closes the Cockpit when
+  it is the key window. Before, the menu item
+  was disabled there.
+- Advanced Paste now counts lines correctly.
+  Before, text whose newlines were converted to
+  carriage returns was reported as one line, and
+  a trailing newline was counted as an extra
+  line.
+- After you back out of the password manager
+  from a website’s sign-in prompt in a browser
+  session, “Remember this password” is no
+  longer ticked unless you ticked it.
+- Session.async_move_to_new_tab() and
+  async_move_to_new_window() in the Python API
+  now return None for a tmux session instead of
+  raising a JSON decoding error.
+- Calling Tab.async_update_layout() from the
+  Python API without changing any sizes no
+  longer shrinks the tab’s panes and window by
+  a cell each time.
+- The banner shown when several nested SSH
+  integration sessions end at once no longer
+  ends with two periods.
+- The warning shown before opening an untrusted
+  arrangement no longer counts a session’s
+  command twice.
+- Typing quickly after a “Press any key to
+  dismiss” message, such as the one shown when
+  a program tries to clear scrollback, no
+  longer loses the keys typed while the message
+  slides away. Only the first key dismisses it.
+- With the Minimal theme, the git branch item in
+  a workgroup’s toolbar draws its ahead and
+  behind arrows in the toolbar’s text color
+  instead of black on a dark terminal
+  background.
+- In Low Power Mode, status bar graphs such as
+  CPU Utilization move once a second instead of
+  animating continuously.
+- After a screen lock ends password manager
+  authentication, the trigger editor’s “Open
+  Password Manager…” action no longer lists
+  saved account names until you authenticate
+  again.
+- Turning on generative AI while Companion
+  Device Settings shows a failed pairing no
+  longer erases the error and the QR code.
+- With Focus Follows Mouse, returning the
+  pointer to a pane whose find field had focus
+  no longer selects the whole query, so the next
+  key you type doesn’t replace it.
+- With Focus Follows Mouse and “…even to views
+  like Search or Composer” on, the status bar’s
+  search field now takes focus when the pointer
+  moves over it, like the find bar does.
+- The donation link in the Settings and Edit
+  Session title bars no longer truncates the
+  window title.
+- In the Add/Edit Manual AI Model sheet, the
+  API key menu is no longer too narrow to show
+  “Automatic (none for a local endpoint)”.
+- In Settings > Keys > Hotkey, the “App
+  Hotkey:” and “Open Quickly Hotkey:” labels no
+  longer run under the controls beside them.
+- The AI chat’s find bar no longer squeezes its
+  search field to nothing in the inline chat or
+  a narrow chat window. When space is short it
+  hides the search mode menu and the match count
+  instead.
+- Closing the AI chat’s find bar with Escape now
+  returns focus to the message field, so what
+  you type next is no longer lost.
+- Test Connection in the AI model editor can now
+  be stopped while it runs. Before, a test of an
+  unreachable server could take many minutes.
+- AI network errors now read “HTTP request
+  failed: …” instead of a broken sentence, and
+  errors from a self-hosted model name its
+  server instead of “Unknown Platform”.
+- Test Connection in the AI model editor now
+  rejects custom headers that are not valid, as
+  Save does, instead of leaving them out and
+  reporting success.
+- The AI Usage toolbar item no longer shows
+  “Unreadable usage data” when Claude Code’s
+  output contains color codes or other control
+  characters.
+- Changing an AI chat permission from the info
+  menu now updates the permission buttons shown
+  in the chat right away.
+- In an orchestration chat, the notice shown
+  when mentioning a session now shows names with
+  underscores correctly.
+- AI command suggestions no longer repeat a
+  directory you already typed in the filename
+  they insert (for example, “rm logs/logs/
+  error.log”).
+- AI models on Azure OpenAI in Azure Government
+  (.azure.us) and Azure China (.azure.cn) now
+  send their API key the way Azure expects.
+- Look Up (Ctrl-Cmd-D) on a right-to-left line
+  now highlights the word where it is drawn and
+  shows its definition next to it, instead of
+  over blank cells at the far side of the line.
+- With the GPU renderer off, underlines and
+  strikethroughs on right-to-left text are now
+  drawn under the text they belong to instead
+  of a few cells to the right.
+- With the GPU renderer off, Devanagari and
+  other scripts with vowel signs written before
+  their consonant draw the sign in the right
+  place again: क्षत्रिय no longer shows ि after त्र.
+- In Copy Mode, the cursor on a right-to-left
+  line is now drawn on the character it is on,
+  instead of in the blank area on the other side
+  of the line.
+- A scroll region set by a program that is
+  still running when iTerm2 quits unexpectedly
+  is kept when the session is restored, so the
+  program’s output no longer scrolls the whole
+  screen.
+- Undo Close of a maximized floating pane now
+  brings it back maximized, and unmaximizing it
+  returns it to where it was before.
+- Docking a floating pane by dragging it onto a
+  pane with Control held now keeps keyboard focus
+  in the docked pane when other floating panes
+  are open.
+- In Swap With Session, pointing at a floating
+  pane no longer also highlights the pane under
+  it as a swap target.
+- In tmux integration, resizing a floating pane
+  with View > Restore Text and Session Size or
+  the Python API now resizes it in tmux too. It
+  used to leave the pane blank or out of sync
+  with tmux.
+- Window > Arrangements > Change Profile in
+  Arrangement now works for a floating pane
+  restored from a saved arrangement.
+- Hidden floating panes no longer count toward
+  the number of panes that turns off the GPU
+  renderer in a tab.
+- In tmux integration, a floating pane over pane
+  %0 is no longer drawn over a different pane
+  while Find > Filter is open.
+- A pane in a Workgroup can no longer be turned
+  into a floating pane by dragging it onto a
+  floating pane in another tab.
+- In tmux integration, the ReportCellSize,
+  ReportWindowFrame, and ReportScreenFrames
+  escape sequences now get a reply.
+- With AI command suggestions on, a filename
+  row in the composer’s suggestion list no
+  longer shows extra backslashes before
+  spaces and other special characters.
+- With Archive On Closure on, closing a pane in
+  a tmux integration window no longer saves an
+  archive of it that could not be restored.
+- Dragging the folder icon in the Current
+  Directory status bar component when its
+  directory can’t be dragged (for example, on a
+  remote host) no longer opens the component’s
+  menu when you release the mouse.
+- When a session is restored with the “Session
+  Contents Restored” banner, the shell’s output
+  now starts right below the banner instead of
+  after a blank row when the cursor had been in
+  the middle of a line.
+- Resizing panes with Tab.async_update_layout()
+  in the Python API now gives each pane the size
+  you asked for. A pane used to come up a column
+  or row short and the window shrank a little
+  each time.
+- With the GPU renderer off, selecting part of
+  an Arabic or Persian word, or a find match
+  inside one, no longer breaks the letters’
+  joining at the edge of the highlight.
+- it2 app get-focus, it2 profile list and it2
+  profile show no longer print names, fonts and
+  badge text with backslash escapes, such as a
+  profile named a/b shown as a\/b.
+- Kitty graphics placeholder cells that show a
+  cropped part of an image now draw that part.
+  Before, a crop could draw nothing, or a strip
+  of the neighboring part of the image could
+  appear at its edge.
+- An SSH Integration session restored after
+  relaunching iTerm2 no longer hangs when its
+  connection drops while the remote command is
+  printing output. It returns to the local
+  shell.
+- In AI Chat, a session mention in the message
+  field now changes size along with the text
+  when you change the font size from the Font
+  menu or Font panel.
+- In the AI Chats window, when sending a message
+  moves a chat to the top of the list, the
+  highlight now moves with it instead of
+  staying on a different chat.
+- An AI chat using a model you added in
+  Settings > General > AI (for example, one on
+  a local server) no longer sends its messages
+  to OpenAI after you remove or rename that
+  model. It now shows an error.
+- VoiceOver now reads the Profiles window’s
+  New Floating Pane button as “New Floating
+  Pane” instead of the name of its icon.
+- The browser’s page-load error page is now
+  fully translated (its “Try Again” button and
+  footer were in English), as is the page shown
+  for an ssh: link with no ssh integration
+  connection.
+- A web address containing a quote or other
+  special characters can no longer inject script
+  or markup into the browser’s page-load error
+  page.
+- When several Dynamic Profiles files have
+  errors, the alert now gives the right number
+  of additional errors in the log. It counted
+  each bad file twice.
+- With Focus Follows Mouse on, if you move the
+  pointer into another split pane while a sheet
+  such as Edit Tab Title is open, that pane now
+  gets focus when the sheet closes. Before, it
+  stayed with the original pane until the
+  pointer left and came back.
+- AI custom headers you remove from a model no
+  longer come back after launching iTerm2 on
+  another Mac that shares your settings.
+- Changing your AI models in Settings when you
+  used a single custom AI model no longer drops
+  the custom headers you set up for it.
+- The AI Usage toolbar item’s problem report no
+  longer fills the screen with the output of a
+  usage command that printed too much, which
+  left its buttons out of reach.
+- Searching in the AI Chats window no longer
+  crashes iTerm2 when the search finds a match.
+- The setting and menu item pickers in the key
+  binding editor now say “Select Setting…” or
+  “Select Menu Item…” until you choose one.
+  Before, they were blank.
+- Advanced Paste’s chunk size and delay
+  values and the sizes in Paste History now use
+  units in your language instead of English.
+- In some languages, the shell integration
+  installer no longer cuts off the option to
+  install the iTerm2 Utilities or its
+  description.
+- The browser’s View Source command now shows
+  the page’s source. Before, it always said
+  “No source available.”
+- When you change the theme, an open browser
+  tab now switches pages that have light and
+  dark versions to the matching one instead of
+  keeping the old look until you open a new tab.
+- In some languages, the shell integration
+  installer no longer cuts off the titles of
+  its install choice buttons or its Skip,
+  Cancel, and Continue buttons.
+- In Russian, the shell integration installer
+  no longer cuts off its Preview Command
+  button.
+- Right-clicking in a browser tab that a page
+  opened from a link now shows the context
+  menu.
+- In a browser tab that a page opened from a
+  link, find, copy on select, hovered links,
+  autofill, the password manager, and named
+  marks now work on that tab instead of the
+  tab that opened it.
+- In AI chat, if you send a new message instead
+  of answering a request to run a command, the
+  AI is no longer told that iTerm2 restarted and
+  invited to run the command again.
+- With the kitty keyboard protocol reporting
+  all keys, a dead key followed by a key it does
+  not combine with now reports the dead key and
+  then the second key, instead of the second key
+  twice.
+- In the Minimal theme, a window opened while
+  iTerm2 is running now shows the profile’s
+  subtitle in its title bar instead of only
+  after the window is resized.
+- When settings load from a custom folder and
+  are saved manually, the red “!” in the
+  Settings title bar now goes away after you
+  click Save Now.
+- Importing a script archive whose signing
+  certificate is damaged now shows an error
+  instead of crashing iTerm2.
+- Undo Close of a floating pane now puts it
+  back at its old place among the other floating
+  panes, so a maximized one no longer comes back
+  in front of and hiding the others.
+- Help > GPU Renderer Availability now explains
+  why GPU rendering is off in a complete
+  sentence.
+- Cmd-hover and Cmd-click now find URLs on
+  right-to-left lines that run up to a pane
+  divider, such as in a tmux split without tmux
+  integration.
+- Cmd-hover now underlines a URL that ends in
+  right-to-left text wherever the pointer is on
+  it, instead of leaving the previous URL
+  underlined.
+- Command Info no longer shows a negative
+  running time such as “0:-1.999” for a command
+  that finishes quickly.
+- The context menu of a tab group’s label now
+  matches the window’s light or dark appearance,
+  like a tab’s context menu, when it differs
+  from the system’s.
+- With HTML tab titles on, “&amp;” and “&lt;”
+  in a title are now shown as “&” and “<” even
+  when the title has no bold, italic, or
+  underline tags.
+- In Settings > Pointer, “…even to views like
+  Search or Composer” is now dimmed when Focus
+  Follows Mouse is off from the moment the pane
+  opens, not only after toggling Focus Follows
+  Mouse.
+- With the Settings window in front of a
+  terminal window, Edit > Find > Find… now
+  focuses the Settings search field instead of
+  opening the find bar in the terminal behind it.
+- Command Info’s Output size no longer counts
+  the next prompt or the command typed at it,
+  and is no longer too large for a command that
+  has scrolled into history.
+- Command Info’s Output size no longer counts
+  the “%” marker and padding zsh adds after
+  output that doesn’t end in a newline.
+- After Session.async_split_pane() in the Python
+  API, calling Tab.async_update_layout() without
+  changing any sizes no longer grows the
+  original pane back to its old width.
+- In AI Chat with streaming responses on, a
+  code block at the end of a reply now shows as
+  code with a copy button instead of as large
+  text or with a stray closing ```.
+- In AI Chat, a mention of a web browser session
+  now shows a globe icon instead of a terminal
+  icon, both in the message field and in sent
+  messages.
+- The Internet-Free shell integration install
+  no longer sometimes hangs while installing
+  the utilities, waiting at a “> ” prompt.
+- The Internet-Free shell integration install
+  for bash could finish without adding the line
+  that loads shell integration to your
+  .profile or .bash_profile.
+- The Internet-Free shell integration install
+  no longer reports that it installed the
+  utilities when they failed to unpack, no
+  longer garbles them on a busy computer, and
+  no longer types them into the shell as
+  commands when the ~/.iterm2 folder is not
+  writable.
+- Canceling the Internet-Free shell integration
+  install while it sends the utilities now
+  stops sending them right away instead of a
+  minute or more later. Canceling a step or
+  clicking Send Again now returns you to your
+  own shell instead of leaving you inside the
+  installer’s helper shells at a “>> ” prompt,
+  even when your shell is slow to start them.
+  If you are still in one when you try again,
+  the installer says so instead of reporting
+  that you use bash.
+- An scp download that asks for a password no
+  longer hangs if you open the Password Manager
+  and close it without choosing a password.
+- An upload over SSH Integration no longer
+  overwrites a remote file of the same name when
+  iTerm2 could not check whether one exists, for
+  example because of a permission error or a
+  connection problem. The upload now fails with
+  an error instead.
+- When an administrator turns off generative AI,
+  iTerm2 no longer uses Apple Intelligence for
+  AI chat, AI tab titles, or the command safety
+  check.
+- The Internet-Free shell integration install
+  no longer unpacks the utilities into the
+  current folder when it can’t open the
+  ~/.iterm2 folder, as when a file has that
+  name. It says they were not installed.
+- Search the Web for Selection now finds text
+  that contains a plus sign. Before, “c++” was
+  searched for as “c” followed by spaces.
+- The “Learn more.” links on the first page of
+  the shell integration installer now use the
+  same font as the text around them.
+- With AI command suggestions off, the gray
+  completion the composer shows for a file name
+  with a space or other special character is
+  now escaped, so accepting it gives a working
+  command.
+- The browser’s View Source now highlights
+  attribute values.
+- With SSH Integration, the Composer now
+  suggests remote file names when the remote
+  host has Python 3.7 or 3.8.
+- With SSH Integration, a remote request that
+  fails unexpectedly, such as a file operation,
+  now reports an error instead of never
+  finishing.
+- With SSH Integration, asking for an immediate
+  update of the remote job list, as the Job
+  status bar component can, no longer ends the
+  integration for that session.
+- With SSH Integration to a Mac, output that a
+  remote command printed just before it exited
+  could be lost.
+- With SSH Integration, ending a connection
+  while a remote file search was running could
+  leave iTerm2’s helper program running on the
+  remote host.
+- With SSH Integration, deleting a remote
+  symbolic link to a folder now deletes the link
+  instead of failing.
+- With SSH Integration, iTerm2 now reads the
+  remote PATH correctly when it contains runs of
+  spaces or wildcard characters, and when the
+  remote login shell is one iTerm2 doesn’t
+  recognize.
+- With SSH Integration, remote files and folders
+  whose names contain non-ASCII characters, such
+  as accented letters, can now be downloaded,
+  deleted, renamed, and otherwise changed.
+  Before, they were reported as missing.
+- With SSH Integration, restoring a session that
+  had used ssh to reach a further host now works
+  when that ssh command has non-ASCII characters.
+- With SSH Integration, non-ASCII text that
+  iTerm2 reads from the remote host, such as a
+  remote PATH containing accented letters, is no
+  longer garbled.
+- With SSH Integration, after iTerm2 restarts
+  or recovers a connection, it no longer waits
+  for the remote host to print something before
+  remote features start working again.
+- Answering Always to “Close tmux windows after
+  detaching?” no longer closes sessions that did
+  not ask, such as the tmux session itself.
+- Announcements in narrow panes are legible: when
+  there is no room beside the buttons, the
+  buttons go on a row below the text.

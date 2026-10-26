@@ -34,7 +34,10 @@ final class OutputCapture {
     func context(channel: FakeChannel,
                  confirm: @escaping (String) -> Bool = { _ in false },
                  isRemote: Bool = false,
-                 originIdentifier: String? = nil) -> IT2Context {
+                 originIdentifier: String? = nil,
+                 originSessionID: String? = nil,
+                 stdin: Data = Data(),
+                 environment: [String: String] = [:]) -> IT2Context {
         return IT2Context(
             out: { [weak self] in self?.out.append($0) },
             err: { [weak self] in self?.err.append($0) },
@@ -42,7 +45,10 @@ final class OutputCapture {
             makeClient: { APIClient(channel: channel) },
             installsSignalHandlers: false,  // embedded-like: no process to own
             isRemote: isRemote,
-            originIdentifier: originIdentifier
+            originIdentifier: originIdentifier,
+            originSessionID: originSessionID,
+            stdin: { stdin },
+            environment: environment
         )
     }
 }

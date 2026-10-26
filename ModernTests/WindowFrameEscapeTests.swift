@@ -206,6 +206,31 @@ final class WindowFrameEscapeTests: XCTestCase {
                        NSRect(x: 5, y: 6, width: 200, height: 100))
     }
 
+    /// F-395: a titled window's minimum must be at least as wide as the user
+    /// can drag it (AppKit's title bar minimum), not just the 2x2 grid minimum.
+    func testMinimumFrameSizeRespectsTitleBarWidth() {
+        let titled: NSWindow.StyleMask = [.titled, .closable, .miniaturizable, .resizable]
+        let gridMinimum = NSSize(width: 24, height: 63)
+        let size = SetWindowFrameRequest.minimumFrameSize(contentMinimum: gridMinimum,
+                                                          windowMinSize: NSSize(width: 0, height: 32),
+                                                          styleMask: titled)
+        let titleBarMinimum = NSWindow.minFrameWidth(withTitle: "", styleMask: titled)
+        XCTAssertGreaterThan(titleBarMinimum, gridMinimum.width)
+        XCTAssertEqual(size, NSSize(width: titleBarMinimum, height: 63))
+
+        // A wider content minimum and the window's own minSize still win.
+        XCTAssertEqual(SetWindowFrameRequest.minimumFrameSize(contentMinimum: NSSize(width: 500, height: 10),
+                                                              windowMinSize: NSSize(width: 0, height: 32),
+                                                              styleMask: titled),
+                       NSSize(width: 500, height: 32))
+
+        // Borderless windows have no title bar minimum.
+        XCTAssertEqual(SetWindowFrameRequest.minimumFrameSize(contentMinimum: gridMinimum,
+                                                              windowMinSize: .zero,
+                                                              styleMask: [.borderless, .resizable]),
+                       gridMinimum)
+    }
+
     // MARK: - Report accessors
 
     /// The report accessors read straight from the (thread-safe) config

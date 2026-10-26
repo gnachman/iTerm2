@@ -53,6 +53,7 @@ static NSString *const iTermUserDefaultsKeyWorkgroupsData = @"Workgroups";
 static NSString *const iTermUserDefaultsKeyWorkgroupShortcutsBackfilled = @"NoSyncWorkgroupShortcutsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled = @"NoSyncClaudeCodeDiffModeBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled = @"NoSyncClaudeCodeReviewSystemPromptCommandBackfilled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSettingsCommandBackfilled = @"NoSyncClaudeCodeReviewSettingsCommandBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled = @"NoSyncClaudeCodeAutoSendClippingsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled = @"NoSyncClaudeCodeAutoRequestReviewBackfilled";
 static NSString *const iTermUserDefaultsKeySuppressPhysicalKeyBindingSuggestion = @"NoSyncSuppressPhysicalKeyBindingSuggestion";
@@ -476,6 +477,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeReviewSystemPromptCommandBackfilled:(BOOL)value {
     [self.userDefaults setBool:value
                         forKey:iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled];
+}
+
++ (BOOL)claudeCodeReviewSettingsCommandBackfilled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeReviewSettingsCommandBackfilled];
+}
+
++ (void)setClaudeCodeReviewSettingsCommandBackfilled:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeyClaudeCodeReviewSettingsCommandBackfilled];
 }
 
 + (BOOL)claudeCodeAutoSendClippingsBackfilled {

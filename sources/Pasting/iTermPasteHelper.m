@@ -7,6 +7,7 @@
 //
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "PasteContext.h"
@@ -15,6 +16,7 @@
 #import "PasteboardHistory.h"
 #import "RegexKitLite.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCharacterSets.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermNumberOfSpacesAccessoryViewController.h"
 #import "iTermPasteHelper.h"
@@ -139,6 +141,67 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 // Zero-width bidi/format characters that line editors render as a visible
 // <200c>-style escape: ZWSP, ZWNJ (Persian half-space), ZWJ, LRM, RLM, plus
 // soft hyphen, word joiner, and ZWNBSP/BOM.
+// Approximates Extended_Pictographic: the characters an emoji ZWJ sequence
+// joins (UAX #29 rule GB11).
+static BOOL iTermPasteHelperIsPictographic(UTF32Char c) {
+    return ((c >= 0x1F000 && c <= 0x1FAFF) ||
+            (c >= 0x2300 && c <= 0x23FF) ||
+            (c >= 0x2600 && c <= 0x27BF) ||
+            (c >= 0x2B00 && c <= 0x2BFF) ||
+            iTermIsEmojiAcceptingVS16(c));
+}
+
+// Characters that may sit between a pictograph and the ZWJ that follows it.
+static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
+    return c == 0xFE0F || c == 0xFE0E || iTermIsEmojiModifier(c);
+}
+
+// Removes characters in zeroWidthFormatCharacterSet, except a ZWJ inside an
+// emoji ZWJ sequence like 👨‍👩‍👧 or 🏳️‍🌈. Removing that ZWJ splits the emoji
+// into separate ones.
++ (NSString *)stringByStrippingZeroWidthFormatCharacters:(NSString *)string {
+    NSCharacterSet *set = [self zeroWidthFormatCharacterSet];
+    if ([string rangeOfCharacterFromSet:set].location == NSNotFound) {
+        return string;
+    }
+    NSMutableArray<NSNumber *> *codePoints = [NSMutableArray array];
+    const NSUInteger length = string.length;
+    for (NSUInteger k = 0; k < length; k++) {
+        const unichar high = [string characterAtIndex:k];
+        if (CFStringIsSurrogateHighCharacter(high) && k + 1 < length) {
+            const unichar low = [string characterAtIndex:k + 1];
+            if (CFStringIsSurrogateLowCharacter(low)) {
+                [codePoints addObject:@(CFStringGetLongCharacterForSurrogatePair(high, low))];
+                k++;
+                continue;
+            }
+        }
+        [codePoints addObject:@(high)];
+    }
+    NSMutableString *result = [NSMutableString stringWithCapacity:string.length];
+    const NSInteger count = codePoints.count;
+    for (NSInteger i = 0; i < count; i++) {
+        const UTF32Char c = codePoints[i].unsignedIntValue;
+        if (![set longCharacterIsMember:c]) {
+            [result appendString:[NSString stringWithLongCharacter:c]];
+            continue;
+        }
+        if (c != 0x200D || i + 1 >= count) {
+            continue;
+        }
+        NSInteger j = i - 1;
+        while (j >= 0 && iTermPasteHelperIsEmojiExtender(codePoints[j].unsignedIntValue)) {
+            j--;
+        }
+        if (j >= 0 &&
+            iTermPasteHelperIsPictographic(codePoints[j].unsignedIntValue) &&
+            iTermPasteHelperIsPictographic(codePoints[i + 1].unsignedIntValue)) {
+            [result appendString:[NSString stringWithLongCharacter:c]];
+        }
+    }
+    return result;
+}
+
 + (NSCharacterSet *)zeroWidthFormatCharacterSet {
     static NSCharacterSet *set;
     static dispatch_once_t onceToken;
@@ -224,6 +287,18 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     }
 }
 
+- (void)abortPasteEventsPassingTest:(BOOL (^NS_NOESCAPE)(PasteEvent *event))test {
+    // Remove the queued ones first, so that stopping the current one doesn't start one of them.
+    [_eventQueue removeObjectsPassingTest:^BOOL(id event) {
+        return [event isKindOfClass:[PasteEvent class]] && test(event);
+    }];
+    PasteEvent *current = _pasteContext.pasteEvent;
+    if (current && test(current)) {
+        RLog(@"Abort the paste in progress");
+        [self abortAndCancelPendingEvents:NO];
+    }
+}
+
 - (BOOL)isPasting {
     return _timer != nil || _pasteContext.isBlocked;
 }
@@ -264,8 +339,10 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
          componentsJoinedByString:@""];
     }
 
+    // A Base64 paste must decode to exactly the copied bytes, so leave it alone.
     if ([iTermPreferences bidiEnabled] &&
-        [iTermAdvancedSettingsModel stripZeroWidthFormatCharactersOnPaste]) {
+        [iTermAdvancedSettingsModel stripZeroWidthFormatCharactersOnPaste] &&
+        !(flags & kPasteFlagsBase64Encode)) {
         // Line editors (zsh/readline, some TUIs) render zero-width bidi/format
         // characters as a visible <200c> because macOS classifies them as
         // control characters, so pasting Persian at a prompt fills up with
@@ -274,9 +351,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         // inert unless bidi is on, and OFF by default even then: these
         // characters are meaningful (the Persian half-space ZWNJ, the LTR/RTL
         // marks), so removing them changes the text; it is the user's explicit choice.
-        theString =
-        [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper zeroWidthFormatCharacterSet]]
-         componentsJoinedByString:@""];
+        theString = [iTermPasteHelper stringByStrippingZeroWidthFormatCharacters:theString];
     }
 
     switch (pasteEvent.tabTransform) {
@@ -913,25 +988,32 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                                                 }];
 }
 
++ (iTermWarning *)pasteWithTabsWarningWithAccessoryController:(iTermNumberOfSpacesAccessoryViewController *)accessoryController {
+    NSString *const advanced = NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog");
+    iTermWarning *warning = [[iTermWarning alloc] init];
+    warning.title = NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteWithTabsTitle", nil, [NSBundle mainBundle], @"You're about to paste a string with tabs.", @"Title of the warning shown before pasting text containing tabs");
+    warning.actionLabels = @[ iTermLocalizedOK(),
+                              iTermLocalizedCancel(),
+                              NSLocalizedStringWithDefaultValue(@"PasteHelper.ConvertTabsToSpaces", nil, [NSBundle mainBundle], @"Convert tabs to spaces", @"Button that converts tabs to spaces when pasting"),
+                              advanced ];
+    // The advanced paste panel opens on this Mac, where the companion app cannot use it.
+    warning.notOfferedRemotelyLabels = @[ advanced ];
+    warning.cancelLabel = iTermLocalizedCancel();
+    warning.accessory = accessoryController.view;
+    warning.remoteInputs = @[ accessoryController.remoteInput ];
+    // Typing a number right away should reach the field without a click.
+    warning.initialFirstResponder = accessoryController.textField;
+    warning.identifier = @"AboutToPasteTabsWithCancel";
+    warning.warningType = kiTermWarningTypePermanentlySilenceable;
+    return warning;
+}
+
 - (int)numberOfSpacesToConvertTabsTo:(NSString *)source {
     if ([source rangeOfString:@"\t"].location != NSNotFound) {
         iTermNumberOfSpacesAccessoryViewController *accessoryController =
             [[iTermNumberOfSpacesAccessoryViewController alloc] init];
 
-        NSString *const advanced = NSLocalizedStringWithDefaultValue(@"PasteHelper.Advanced", nil, [NSBundle mainBundle], @"Advanced…", @"Button that opens the advanced paste dialog");
-        iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = NSLocalizedStringWithDefaultValue(@"PasteHelper.PasteWithTabsTitle", nil, [NSBundle mainBundle], @"You're about to paste a string with tabs.", @"Title of the warning shown before pasting text containing tabs");
-        warning.actionLabels = @[ iTermLocalizedOK(),
-                                  iTermLocalizedCancel(),
-                                  NSLocalizedStringWithDefaultValue(@"PasteHelper.ConvertTabsToSpaces", nil, [NSBundle mainBundle], @"Convert tabs to spaces", @"Button that converts tabs to spaces when pasting"),
-                                  advanced ];
-        // The advanced paste panel opens on this Mac, where the companion app cannot use it.
-        warning.notOfferedRemotelyLabels = @[ advanced ];
-        warning.cancelLabel = iTermLocalizedCancel();
-        warning.accessory = accessoryController.view;
-        warning.remoteInputs = @[ accessoryController.remoteInput ];
-        warning.identifier = @"AboutToPasteTabsWithCancel";
-        warning.warningType = kiTermWarningTypePermanentlySilenceable;
+        iTermWarning *warning = [iTermPasteHelper pasteWithTabsWarningWithAccessoryController:accessoryController];
         warning.window = [self deepestSheetOfWindow:self.delegate.pasteHelperViewForIndicator.window];
         const iTermWarningSelection selection = [warning runModal];
         switch (selection) {

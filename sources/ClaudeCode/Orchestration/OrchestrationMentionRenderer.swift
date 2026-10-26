@@ -39,6 +39,10 @@ enum OrchestrationMentionRenderer {
         // The Mac click handler doesn't need it (it reveals the leader), but
         // the Companion bridge does: the phone opens a member list instead.
         var workgroupID: String? = nil
+        // The SF Symbol drawn before the name. Chosen the same way as the
+        // input field's chip (ChatMentionDisplay) so a mention keeps its icon
+        // once sent: a globe for a browser session, otherwise a terminal.
+        var symbolName: String = SFSymbol.terminal.rawValue
     }
 
     // Maps a parsed mention to a live entity, or nil when it no longer
@@ -149,12 +153,14 @@ enum OrchestrationMentionRenderer {
         }
         attributes[clickableAttribute] = action
 
-        // Prefix a terminal glyph so the user can tell at a glance the
-        // link points at an iTerm2 session rather than the web. The
-        // icon and the thin space between it and the name share the
-        // link's click action, so the whole thing is one target.
+        // Prefix a session glyph (terminal, or globe for a browser session)
+        // so the user can tell at a glance the link points at an iTerm2
+        // session rather than the web. The icon and the thin space between
+        // it and the name share the link's click action, so the whole thing
+        // is one target.
         let result = NSMutableAttributedString()
-        if let icon = iconString(font: baseAttributes[.font] as? NSFont,
+        if let icon = iconString(symbolName: resolved.symbolName,
+                                 font: baseAttributes[.font] as? NSFont,
                                  tint: linkColor,
                                  action: action) {
             result.append(icon)
@@ -186,7 +192,10 @@ enum OrchestrationMentionRenderer {
         attributes[clickableAttribute] = nil
 
         let result = NSMutableAttributedString()
-        if let icon = iconString(font: baseAttributes[.font] as? NSFont,
+        // The session is gone, so its kind is unknown: fall back to the
+        // terminal, as the input field's chip does for an unresolved token.
+        if let icon = iconString(symbolName: SFSymbol.terminal.rawValue,
+                                 font: baseAttributes[.font] as? NSFont,
                                  tint: gray,
                                  action: nil) {
             result.append(icon)
@@ -199,14 +208,16 @@ enum OrchestrationMentionRenderer {
         return result
     }
 
-    // Builds an inline, link-tinted terminal glyph sized to the run's
-    // font. Uses the same DynamicImage / .dynamicAttachment machinery as
-    // the chat's code-copy buttons so ClickableTextView re-tints it when
-    // the appearance flips. Returns nil if the SF Symbol is unavailable.
-    private static func iconString(font: NSFont?,
+    // Builds an inline, link-tinted session glyph (the SF Symbol named
+    // `symbolName`) sized to the run's font. Uses the same DynamicImage /
+    // .dynamicAttachment machinery as the chat's code-copy buttons so
+    // ClickableTextView re-tints it when the appearance flips. Returns nil
+    // if the SF Symbol is unavailable.
+    private static func iconString(symbolName: String,
+                                   font: NSFont?,
                                    tint: NSColor,
                                    action: ((NSPoint) -> ())?) -> NSAttributedString? {
-        guard let symbol = NSImage(systemSymbolName: "terminal",
+        guard let symbol = NSImage(systemSymbolName: symbolName,
                                    accessibilityDescription: String(localized: "OrchestrationMentionRenderer.SessionIconLabel", defaultValue: "iTerm2 session", comment: "Accessibility label for the terminal glyph shown next to a session mention")) else {
             return nil
         }
@@ -278,16 +289,22 @@ enum OrchestrationMentionRenderer {
         }
     }
 
-    private static func resolveSession(reference: String) -> Resolved? {
-        guard let session = iTermController.sharedInstance()?.anySession(forReference: reference) else {
+    // `lookup` finds the session for a reference; injectable for tests.
+    static func resolveSession(
+        reference: String,
+        lookup: (String) -> PTYSession? = { iTermController.sharedInstance()?.anySession(forReference: $0) }) -> Resolved? {
+        guard let session = lookup(reference) else {
             return nil
         }
-        // Use the shared mention naming so message bubbles match the picker and
-        // the inserted token (workgroup role prefix, colon omitted when the
-        // session has no title yet). Reveal by the session's stableID so a click
-        // resolves even after a shell reload rotated its guid.
+        // Use the shared mention naming and icon so message bubbles match the
+        // picker and the inserted token (workgroup role prefix, colon omitted
+        // when the session has no title yet; a globe for a browser session).
+        // Both are resolved each time the bubble renders, so they track the
+        // live session. Reveal by the session's stableID so a click resolves
+        // even after a shell reload rotated its guid.
         return Resolved(displayName: ChatMentionDisplay.displayName(for: session),
-                        revealGuid: session.stableID)
+                        revealGuid: session.stableID,
+                        symbolName: ChatMentionDisplay.symbolName(for: session))
     }
 
     private static func resolveWorkgroup(instanceID: String) -> Resolved? {

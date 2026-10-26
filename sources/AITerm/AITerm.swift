@@ -1447,6 +1447,14 @@ class AITermController {
             handle(event: .error(AIError(String(localized: "AITerm.AppleIntelligenceRequiresOS", defaultValue: "Apple Intelligence requires macOS 26 or later.", comment: "Error shown when Apple Intelligence is used on an older macOS version"))))
             return
         }
+        // The administrator lockout (GenerativeAIAllowed). HTTP providers are
+        // refused in iTermAIClient.request, which this path never reaches. The
+        // runner also refuses, but failing here reports the lockout plainly
+        // instead of as an Apple Intelligence error.
+        guard iTermAdvancedSettingsModel.generativeAIAllowed() else {
+            handle(event: .error(AIError(AppleIntelligenceRunnerError.disallowedByAdministrator.localizedDescription)))
+            return
+        }
         let system = messages
             .filter { $0.role == .system }
             .compactMap { $0.content }

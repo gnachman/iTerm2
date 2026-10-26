@@ -187,6 +187,13 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .fetchAutoProvideConsent(sessionGuid: "g"),
         .grantAutoProvideConsent(chatID: "c"),
         .answerModalAlert(alertID: "a", buttonIndex: 0, suppress: false),
+        .browserTap(streamID: 1, x: 2, y: 3),
+        .browserScroll(streamID: 1, x: 2, y: 3, deltaX: 4, deltaY: 5),
+        .browserGoBack(streamID: 1),
+        .browserGoForward(streamID: 1),
+        .browserReload(streamID: 1),
+        .browserStopLoading(streamID: 1),
+        .browserLoad(streamID: 1, text: "t"),
     ]
 
     /// EXHAUSTIVE: a new case breaks the build here. When it does, add a branch,
@@ -236,6 +243,13 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .fetchAutoProvideConsent: return "fetchAutoProvideConsent"
         case .grantAutoProvideConsent: return "grantAutoProvideConsent"
         case .answerModalAlert: return "answerModalAlert"
+        case .browserTap: return "browserTap"
+        case .browserScroll: return "browserScroll"
+        case .browserGoBack: return "browserGoBack"
+        case .browserGoForward: return "browserGoForward"
+        case .browserReload: return "browserReload"
+        case .browserStopLoading: return "browserStopLoading"
+        case .browserLoad: return "browserLoad"
         }
     }
 
@@ -280,6 +294,10 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .aiAvailabilityChanged(available: false),
         .macStatusChanged(status: CompanionMacStatus(modalAlerts: [], mainBlocked: false)),
         .modalAlertAnswerRejected(alertID: "a"),
+        .browserEditingChanged(streamID: 1, editing: true),
+        .browserNavigationChanged(streamID: 1,
+                                  state: CompanionBrowserNavigationState(url: "u", title: "t", canGoBack: true,
+                                                                         canGoForward: false, isLoading: false)),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -327,6 +345,8 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .aiAvailabilityChanged: return "aiAvailabilityChanged"
         case .macStatusChanged: return "macStatusChanged"
         case .modalAlertAnswerRejected: return "modalAlertAnswerRejected"
+        case .browserEditingChanged: return "browserEditingChanged"
+        case .browserNavigationChanged: return "browserNavigationChanged"
         }
     }
 

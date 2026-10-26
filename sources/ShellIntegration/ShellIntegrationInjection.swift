@@ -176,6 +176,38 @@ import Foundation
              destinationBase.appendingPathComponents(["fish", "vendor_conf.d"]))
         ].filter { $0.0 != nil }
         return Dictionary(uniqueKeysWithValues: tuples as! [(URL, URL)])
+            // destinationBase is <home>/.iterm2/shell-integration, so its parent is the dot dir
+            // the it2 files go in and beside.
+            .merging(it2Files(dotIterm2: destinationBase.deletingLastPathComponent())) { current, _ in current }
+    }
+
+    /// The it2 CLI as a real executable on the remote host, separate from the shell-integration
+    /// scripts because it has to work where those do not.
+    ///
+    /// The scripts define `it2` as a shell FUNCTION, which exists only in an interactive shell.
+    /// A Claude Code hook runs through `sh -c` and an agent's Bash tool does too, so neither can
+    /// see it. A wrapper at ~/.iterm2/bin/it2 (put on PATH by activateIT2Proxy) is visible to
+    /// both.
+    ///
+    /// The interpreter keeps the established ~/.iterm2/it2.<hash>.py name that the scripts
+    /// already materialize their embedded copy to, so the uploaded copy and the materialized one
+    /// are the same file rather than competing. Staged under its hashed name on the way out; see
+    /// iTermRemoteIt2.
+    func it2Files(dotIterm2: URL) -> [URL: URL] {
+        var result = [URL: URL]()
+        if let staged = iTermRemoteIt2.stagedBundledCopy() {
+            result[staged] = dotIterm2
+        }
+        let bundle = Bundle(for: PTYSession.self)
+        if let wrapper = bundle.path(forResource: "it2-remote", ofType: nil) {
+            // TarJob names the remote entry by the LOCAL basename, so the wrapper has to arrive
+            // as "it2", not "it2-remote". Staged under the right name for the same reason the
+            // interpreter is.
+            if let renamed = iTermRemoteIt2.stagedWrapper(source: URL(fileURLWithPath: wrapper)) {
+                result[renamed] = dotIterm2.appendingPathComponent("bin")
+            }
+        }
+        return result
     }
 }
 

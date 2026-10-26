@@ -265,4 +265,48 @@ final class TmuxPaneLocatorDecisionTests: XCTestCase {
     func testUnidentifiedRemoteControllerDoesNotMatch() {
         XCTAssertFalse(canMatch(pid: 0, socketPath: nil, origin: "conductor-A", requestedOrigin: "conductor-A"))
     }
+
+    // MARK: - Serving the requested server, independent of machine
+
+    // The half that says "this controller is attached to that exact server". It must NOT consider
+    // the origin: one tmux server can have several control-mode clients, each driving a different
+    // tmux session over its own ssh connection, and the pane may be held by any of them. Asking
+    // only the caller's own connection is the bug seen 2026-09-28, where creating a second tmux
+    // session broke status for a pane in the first one.
+    private func serves(pid: pid_t = 52533,
+                        socketPath: String? = "/private/tmp/tmux-501/default",
+                        requestedPID: pid_t = 52533,
+                        requestedSocketPath: String? = nil) -> Bool {
+        return TmuxPaneLocator.servesRequestedServer(controllerPID: pid,
+                                                     controllerSocketPath: socketPath,
+                                                     requestedPID: requestedPID,
+                                                     requestedSocketPath: requestedSocketPath ?? socket)
+    }
+
+    func testServesIgnoresOriginEntirely() {
+        // Same server, and that is all this predicate is allowed to care about.
+        XCTAssertTrue(serves())
+    }
+
+    func testServesRejectsAnotherServer() {
+        XCTAssertFalse(serves(pid: 111, requestedPID: 222))
+        XCTAssertFalse(serves(socketPath: "/private/tmp/tmux-501/other"))
+    }
+
+    func testServesRejectsAnUnidentifiedController() {
+        XCTAssertFalse(serves(pid: 0, socketPath: nil))
+    }
+
+    func testServesAcceptsANilSocketPath() {
+        // tmux before 2.2 has no #{socket_path}; a pid alone has to be enough there.
+        XCTAssertTrue(serves(socketPath: nil))
+    }
+
+    // The composition the locator relies on: a controller on ANOTHER connection to the same
+    // server serves it (so pass 2 will search it for the pane) while not by itself proving the
+    // caller's machine (so pass 1 must be satisfied by some other controller).
+    func testOtherConnectionServesButDoesNotProveTheMachine() {
+        XCTAssertTrue(serves())
+        XCTAssertFalse(canMatch(origin: "conductor-B", isLocal: false, requestedOrigin: "conductor-A"))
+    }
 }

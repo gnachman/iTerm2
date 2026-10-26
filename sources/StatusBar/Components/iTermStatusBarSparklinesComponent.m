@@ -162,11 +162,7 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     position.x += dx;
     animation.toValue = (id)[NSValue valueWithPoint:position];
     animation.duration = 1.0;
-    if ([[iTermPowerManager sharedInstance] isLowPowerModeEnabled]) {
-        animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 1, 1);
-    } else {
-        animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 60, 5);
-    }
+    animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 60, 5);
     layer.position = position;
     [layer addAnimation:animation forKey:@"animateLeft"];
     return animation;
@@ -188,7 +184,8 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
 }
 
 - (BOOL)shouldAnimate {
-    return [iTermAdvancedSettingsModel animateGraphStatusBarComponents];
+    return [iTermStatusBarSparklinesComponent shouldAnimateWithSetting:[iTermAdvancedSettingsModel animateGraphStatusBarComponents]
+                                                          lowPowerMode:[[iTermPowerManager sharedInstance] isLowPowerModeEnabled]];
 }
 
 - (CGPathRef)desiredPathDroppingFirst:(NSInteger)count {
@@ -350,6 +347,13 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     NSImageView *_leftImageView;
     NSImageView *_rightImageView;
     NSView *_baseline;
+}
+
+// In Low Power Mode, move the graph in one step per update instead of animating it. A 1 fps
+// preferredFrameRateRange on the animation is only a hint, and in practice the animation kept
+// running smoothly.
++ (BOOL)shouldAnimateWithSetting:(BOOL)animateSetting lowPowerMode:(BOOL)lowPowerMode {
+    return animateSetting && !lowPowerMode;
 }
 
 - (BOOL)shouldHaveTextColorKnob {

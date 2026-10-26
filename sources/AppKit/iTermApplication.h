@@ -40,6 +40,9 @@ extern NSString *const iTermApplicationCharacterPaletteDidClose;
 extern NSString *const iTermApplicationInputMethodEditorDidOpen;
 extern NSString *const iTermApplicationInputMethodEditorDidClose;
 
+// Posted when isUIElement changes, such as when the last ordinary window closes while the app is
+// excluded from the Dock only if all windows are hotkey windows.
+extern NSString *const iTermApplicationIsUIElementDidChange;
 extern NSString *const iTermApplicationWillShowModalWindow;
 extern NSString *const iTermApplicationDidCloseModalWindow;
 extern NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDidChange;

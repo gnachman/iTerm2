@@ -259,13 +259,21 @@ class iTermAIClient {
         PluginError(reason: String(localized: "AIPluginClient.NotAllowed", defaultValue: "Plugin not allowed by administrator.", comment: "Error message when the AI plugin is disallowed by administrator policy"))
     }
 
+    // Test seam: stands in for Plugin.instance() in validate(), so a test can
+    // make the plugin look missing. Nothing in the app sets it.
+    private static let _validationPluginResultForTesting = MutableAtomicObject<Result<Plugin, PluginError>?>(nil)
+    static var validationPluginResultForTesting: Result<Plugin, PluginError>? {
+        get { _validationPluginResultForTesting.value }
+        set { _validationPluginResultForTesting.set(newValue) }
+    }
+
     // Runs on any queue. Throws a PluginError or does nothing.
     func validate() throws {
         DLog("validate")
         if (!iTermAdvancedSettingsModel.generativeAIAllowed()) {
             throw Self.notAllowedError
         }
-        switch Plugin.instance() {
+        switch Self.validationPluginResultForTesting ?? Plugin.instance() {
         case .success(let plugin):
             guard let pluginVersion = try? plugin.version() else {
                 throw PluginError(reason: String(localized: "AIPluginClient.VersionUnknown", defaultValue: "Unable to determine version of AI plugin. Reinstall it and upgrade iTerm2 if possible.", comment: "Error message when iTerm2 cannot determine the AI plugin version"))
@@ -276,7 +284,10 @@ class iTermAIClient {
             }
             return
         case .failure(let error):
-            RLog("\(error)")
+            // Plugin.load() already put the failure in the retrospective log,
+            // once per distinct reason. Settings probes this every few seconds,
+            // so logging it here too would flood the ring.
+            DLog("\(error)")
             throw error
         }
     }

@@ -18,7 +18,7 @@
 #import "iTermUserDefaults.h"
 
 static NSString *const iTermNaggingControllerOrphanIdentifier = @"DidRestoreOrphan";
-static NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier = @"ReopenSessionAfterBrokenPipe";
+NSString *const iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier = @"ReopenSessionAfterBrokenPipe";
 static NSString *const iTermNaggingControllerAbortDownloadIdentifier = @"AbortDownloadOnKeyPressAnnouncement";
 static NSString *const iTermNaggingControllerAbortUploadOnKeyPressAnnouncementIdentifier = @"AbortUploadOnKeyPressAnnouncement";
 static NSString *const iTermNaggingControllerArrangementProfileMissingIdentifier = @"ThisProfileNoLongerExists";
@@ -874,6 +874,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         return *boolPtr;
     }
     NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.CloseTmuxWindowsAfterDetach", nil, [NSBundle mainBundle], @"Close tmux windows after detaching?", @"Prompt asking whether to close tmux windows after detaching");
+    _askedWhetherTmuxWindowsShouldCloseAfterDetach = YES;
     [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:YES

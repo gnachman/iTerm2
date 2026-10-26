@@ -114,6 +114,20 @@ class PTYSessionPeerPort: NSObject {
         }
     }
     
+    /// A peer on a tmux server whose pane was replaced (see TmuxWorkgroupCommands.RelaunchMethod):
+    /// its new session takes its place, under the same identifier.
+    func replacePeer(identifier: String, with session: PTYSession) {
+        guard !invalidated, let old = peers[identifier]?.maybeValue, old !== session else {
+            return
+        }
+        RLog("PTYSessionPeerPort: peer \(identifier) is now \(session.guid), replacing \(old.guid)")
+        if old.peerPort === self {
+            old.peerPort = nil
+        }
+        peers[identifier] = iTermPromise<PTYSession>(value: session)
+        session.set(peerPort: self)
+    }
+
     func contains(session: PTYSession) -> Bool {
         return Array(peers.values).anySatisfies { $0.maybeValue === session }
     }
@@ -172,11 +186,40 @@ class PTYSessionPeerPort: NSObject {
         return peers[identifier]?.maybeValue
     }
 
+    func promise(forIdentifier identifier: String) -> iTermPromise<PTYSession>? {
+        return peers[identifier]
+    }
+
+    // For a peer group in a tmux Integration tab. The tab follows tmux's layout, so activating a
+    // member is a guarded swap-pane that this handles; the port neither swaps views nor needs an
+    // anchor. Set by the workgroup instance.
+    var tmuxActivation: ((String) -> Bool)?
+
+    // In a tmux tab, a member's pane moved into view, by this client's switch or another's: the tab
+    // already shows it, so only record it as active.
+    func tmuxMemberDidBecomeVisible(_ session: PTYSession) {
+        guard let identifier = identifier(for: session) else {
+            return
+        }
+        RLog("PTYSessionPeerPort: \(identifier) is now in view in its tmux tab")
+        activeSessionIdentifier = identifier
+        lastSwappedActiveIdentifier = identifier
+        tmuxActiveMemberDidChange(to: identifier)
+        didSwapInPeer(session)
+    }
+
+    // Hook for subclasses: the active member changed in a tmux tab.
+    func tmuxActiveMemberDidChange(to identifier: String) {
+    }
+
     @objc(activateIdentifier:)
     @discardableResult
     func activate(identifier: String) -> Bool {
         guard let promise = peers[identifier] else {
             return false
+        }
+        if let tmuxActivation {
+            return tmuxActivation(identifier)
         }
         // A spawn that already REJECTED can never be activated, so
         // refuse before committing. Committing would be worse than
@@ -206,6 +249,13 @@ class PTYSessionPeerPort: NSObject {
         // activation attempt would no-op on the already-active check.
         guard hasActivationAnchor() else {
             RLog("PTYSessionPeerPort.activate: no member of \(debugDescription) has a live delegate; refusing to activate \(identifier)")
+            return false
+        }
+        // A tmux Integration pane's tab is laid out by tmux, so the tab refuses to swap a pane in or
+        // out (-[PTYTab swapSession:withBuriedSession:]). Refuse here, before committing: going
+        // ahead moved the toolbar to the hidden peer and left the visible pane with none.
+        guard !realizedPeerSessions.contains(where: { $0.isTmuxClient }) else {
+            RLog("PTYSessionPeerPort.activate: \(debugDescription) includes a tmux pane, which cannot be swapped; refusing to activate \(identifier)")
             return false
         }
         activeSessionIdentifier = identifier
@@ -379,17 +429,42 @@ class PTYSessionPeerPort: NSObject {
         return nil
     }
 
-    // Terminate inactive session and release references.
+    // End the non-leader members and release references.
     func invalidate() {
         RLog("PTYSessionPeerPort.invalidate: port=\(debugDescription) peerIDs=\(peers.keys.sorted())")
         invalidated = true
         for identifier in peers.keys where identifier != leader {
             peers[identifier]?.then {
-                RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\($0.guid) exited=\($0.exited)")
-                $0.terminate()
+                Self.end(peer: $0, identifier: identifier)
             }
         }
         peers = [:]
+    }
+
+    /// A buried peer is terminated. One in a tab is closed through the tab, which closes the
+    /// tab (and its window) if it was the tab's only session. That happens when the teardown
+    /// could not swap the leader back in because the leader itself is what ended, as when
+    /// detaching from tmux while a peer is in view. Terminating it in place would leave its
+    /// tab, and maybe its window, with no session.
+    private static func end(peer session: PTYSession, identifier: String) {
+        guard session.delegate != nil else {
+            RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\(session.guid) exited=\(session.exited)")
+            session.terminate()
+            return
+        }
+        RLog("PTYSessionPeerPort.invalidate: closing peer \(identifier) guid=\(session.guid) in its tab")
+        // On a later pass: the teardown runs while the leader is still terminating.
+        DispatchQueue.main.async { [weak session] in
+            guard let session else {
+                return
+            }
+            if let delegate = session.delegate {
+                // Soft: a tmux pane on the server is left alone.
+                delegate.softClose(session)
+            } else {
+                session.terminate()
+            }
+        }
     }
 }
 

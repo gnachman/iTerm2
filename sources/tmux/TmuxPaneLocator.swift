@@ -65,6 +65,10 @@ class TmuxPaneLocator: NSObject {
         // What each controller reported, captured from the same reads the decision used, so the
         // miss diagnostic below cannot disagree with it (see the comment on the locality reads).
         var candidates: [String] = []
+        // The controllers that are attached to the exact server the address names AND prove the
+        // caller is on the same machine, which means the ones on the caller's own connection
+        // (locally, the local ones).
+        var provenControllers: [TmuxController] = []
 
         for controller in controllers {
             // Read the locality pair once. Neither is a plain getter: both re-ask the kernel when
@@ -78,16 +82,25 @@ class TmuxPaneLocator: NSObject {
             let isLocal = controller.serverIsLocal
             let localityKnown = controller.serverLocalityKnown
             candidates.append("[socketPath=\(controllerSocketPath ?? "(nil)") pid=\(controllerPID) sessionID=\(controller.sessionId) local=\(isLocal) localityKnown=\(localityKnown) origin=\(controllerOrigin ?? "(local)")]")
-            let matchable = canMatch(controllerPID: controllerPID,
-                                     controllerSocketPath: controllerSocketPath,
-                                     controllerOrigin: controllerOrigin,
-                                     isLocal: isLocal,
-                                     requestedPID: serverPID,
-                                     requestedSocketPath: socketPath,
-                                     requestedOrigin: origin)
+            guard servesRequestedServer(controllerPID: controllerPID,
+                                        controllerSocketPath: controllerSocketPath,
+                                        requestedPID: serverPID,
+                                        requestedSocketPath: socketPath) else {
+                continue
+            }
+            let proves = canMatch(controllerPID: controllerPID,
+                                  controllerSocketPath: controllerSocketPath,
+                                  controllerOrigin: controllerOrigin,
+                                  isLocal: isLocal,
+                                  requestedPID: serverPID,
+                                  requestedSocketPath: socketPath,
+                                  requestedOrigin: origin)
+            if proves {
+                provenControllers.append(controller)
+            }
             // Only meaningful for a local request: serverIsLocal is a kernel lookup on this Mac,
             // which says nothing about a server on the far side of an ssh connection.
-            if origin == nil && !matchable && controllerPID == serverPID && !isLocal {
+            if origin == nil && !proves && !isLocal {
                 // Only shout once locality has actually been determined. serverIsLocal is also NO
                 // while the kernel lookup has yet to succeed, which usually resolves within
                 // seconds. Logging that loudly would claim pane addressing is broken for a server
@@ -100,34 +113,79 @@ class TmuxPaneLocator: NSObject {
                     DLog("TmuxPaneLocator: locality for pid \(serverPID) not determined yet; waiting for it to settle")
                 }
             }
-            guard matchable else {
-                continue
-            }
-            // A pane id is unique across the server, so at most one controller opened it and the
-            // first holder is the answer. Which tmux session it belongs to never enters into it.
+        }
+
+        // The address omits the socket path (see below) but carries the requested origin, which
+        // is app-generated and names an ssh connection rather than anything the user typed.
+        let address = "pid=\(serverPID) pane=%\(pane) origin=\(origin ?? "(local)")"
+
+        // Pass 1: is the caller on the same machine as this server? Socket paths are
+        // byte-identical across hosts sharing a uid and pids collide freely, so that has to be
+        // established before any pane is handed back.
+        guard !provenControllers.isEmpty else {
+            RLogOncePerKey("unproven:\(address)",
+                           "TmuxPaneLocator: no controller on the caller's own connection is attached to the tmux server at \(address), so the address cannot be shown to belong to this machine. Dropping the update.")
+            DLog("TmuxPaneLocator: socketPath=\(socketPath); candidates: \(candidates.joined(separator: " "))")
+            return nil
+        }
+
+        // Pass 2: ask only the controllers that proved the machine, which means the ones on the
+        // caller's own connection.
+        //
+        // This deliberately does NOT search every controller attached to the server. A pane id is
+        // unique per server, so that would find the pane wherever it lives, but socket path and
+        // pid are only unique per MACHINE: two hosts sharing a uid have the same default socket
+        // path, and pids collide, so a wide search can return a pane on the wrong host. The
+        // routing is what makes the narrow rule correct: it2 picks the advertised client attached
+        // to the tmux session holding the pane (see TmuxOwnership and it2.py), so the call
+        // arrives on the connection whose controller can actually place it.
+        for controller in provenControllers {
             if let session = controller.session(forWindowPane: pane) {
                 return session
             }
         }
 
-        // No connected server answers to this address. That is all a miss means, and there is
-        // nothing further to try: a pane can only be placed by the controller driving its server.
-        // Partly-connected is not a distinct case -- the controller has simply not finished
-        // identifying itself, and the next hook event a moment later will resolve.
+        // The server is ours and reachable, but no controller has opened this pane: it may be in
+        // a tmux session nothing is attached to, or the window may not have been opened yet.
         //
         // Two log forms. The retrospective ring is always on and ships in user-submitted debug
         // logs, so what goes there omits the socket path: $TMUX reflects whatever `tmux -S` was
         // given, which is often under $HOME and can carry a user or project name. The full form
         // goes to DLog, which only runs when the user turned debug logging on.
-        let address = "pid=\(serverPID) pane=%\(pane)"
         RLogOncePerKey("miss:\(address)",
-                       "TmuxPaneLocator: no connected tmux server matches \(address). Dropping the update.")
+                       "TmuxPaneLocator: the tmux server at \(address) is attached, but no controller is showing that pane. Dropping the update.")
         DLog("TmuxPaneLocator: socketPath=\(socketPath); candidates: \(candidates.joined(separator: " "))")
         return nil
     }
 
-    /// Whether this controller may be asked if it holds the pane. Split out from the loop so the
-    /// rules can be exercised without a live tmux server.
+    /// Whether this controller is attached to the exact server the address names. Deliberately
+    /// says nothing about machines: that is the origin's job, and it is asked separately so a
+    /// controller on another connection to the SAME server can still be searched for the pane.
+    static func servesRequestedServer(controllerPID: pid_t,
+                                      controllerSocketPath: String?,
+                                      requestedPID: pid_t,
+                                      requestedSocketPath: String) -> Bool {
+        // A controller that has not identified itself yet has pid 0 and simply does not match.
+        // Nothing special is owed to that state: the caller drops this event and the next one, a
+        // moment later, finds the controller ready.
+        guard controllerPID != 0, controllerPID == requestedPID else {
+            return false
+        }
+        // Cross-check the socket path when we have it. A pid identifies a running server uniquely,
+        // but a stale $TMUX whose pid has since been recycled by a different tmux server would
+        // match on pid alone. tmux before 2.2 has no #{socket_path}, so accept a nil.
+        if let controllerSocketPath, controllerSocketPath != requestedSocketPath {
+            return false
+        }
+        return true
+    }
+
+    /// Whether this ONE controller settles that the caller is on the same machine as the server
+    /// it names. Split out from the loop so the rules can be exercised without a live tmux server.
+    ///
+    /// This is a proof of provenance, not a claim that this controller holds the pane. A server
+    /// with several attached controllers needs only one of them to satisfy this; the pane is then
+    /// looked for across all of them (see the two-pass rule in `session`).
     static func canMatch(controllerPID: pid_t,
                          controllerSocketPath: String?,
                          controllerOrigin: String?,
@@ -135,10 +193,10 @@ class TmuxPaneLocator: NSObject {
                          requestedPID: pid_t,
                          requestedSocketPath: String,
                          requestedOrigin: String?) -> Bool {
-        // A controller that has not identified itself yet has pid 0 and simply does not match.
-        // Nothing special is owed to that state: the caller drops this event and the next one, a
-        // moment later, finds the controller ready.
-        guard controllerPID != 0, controllerPID == requestedPID else {
+        guard servesRequestedServer(controllerPID: controllerPID,
+                                    controllerSocketPath: controllerSocketPath,
+                                    requestedPID: requestedPID,
+                                    requestedSocketPath: requestedSocketPath) else {
             return false
         }
         // Same machine? The two branches establish that differently, and neither subsumes the
@@ -163,12 +221,6 @@ class TmuxPaneLocator: NSObject {
             guard controllerOrigin == nil, isLocal else {
                 return false
             }
-        }
-        // Cross-check the socket path when we have it. A pid identifies a running server uniquely,
-        // but a stale $TMUX whose pid has since been recycled by a different tmux server would
-        // match on pid alone. tmux before 2.2 has no #{socket_path}, so accept a nil.
-        if let controllerSocketPath, controllerSocketPath != requestedSocketPath {
-            return false
         }
         return true
     }

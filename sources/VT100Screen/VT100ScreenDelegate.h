@@ -418,6 +418,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenSuggestShellIntegrationUpgrade;
 - (void)screenDidDetectShell:(NSString * _Nonnull)shell;
+// Every ShellIntegrationVersion report, including one that names no shell.
+- (void)screenDidReportShellIntegrationVersion:(NSInteger)version shell:(NSString * _Nullable)shell;
 
 - (void)screenSetBackgroundImageFile:(NSString * _Nonnull)filename;
 - (void)screenSetBadgeFormat:(NSString * _Nonnull)theFormat;
@@ -487,6 +489,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                   boolArgs:(NSString * _Nonnull)boolArgs
                                    sshargs:(NSString * _Nonnull)sshargs
                                      dcsID:(NSString * _Nonnull)dcsID
+                               parentDepth:(int)parentDepth
                                 savedState:(NSDictionary * _Nonnull)savedState;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string depth:(int)depth;
 - (void)screenDidUnhookSSHConductor;
@@ -502,16 +505,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                  channel:(uint8_t)channel
                                    depth:(int)depth;
 - (void)screenDidReadRawSSHData:(NSData * _Nonnull)data;
+- (void)screenDidReadSSHPaneOutput:(NSData * _Nonnull)data pid:(int)pid depth:(int)depth;
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth;
 - (void)screenHandleIT2:(NSString * _Nullable)string depth:(int)depth;
+- (void)screenDidReceiveUnframedSSHPromptAtDepth:(int)depth;
 - (void)screenWillBeginSSHIntegration;
+// `injectShellIntegration` is NO when it2ssh was run with --no-shell-integration (si=0).
 - (void)screenBeginSSHIntegrationWithToken:(NSString * _Nonnull)token
                                   uniqueID:(NSString * _Nonnull)uniqueID
                                  encodedBA:(NSString * _Nonnull)encodedBA
-                                   sshArgs:(NSString * _Nonnull)sshArgs;
+                                   sshArgs:(NSString * _Nonnull)sshArgs
+                    injectShellIntegration:(BOOL)injectShellIntegration;
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
 - (NSString * _Nonnull)screenSSHLocation;
-- (void)screenBeginFramerRecovery:(int)parentDepth;
+// Returns NO if the connection's framer output must not start recovery because the
+// connection was abandoned.
+- (BOOL)screenBeginFramerRecovery:(int)parentDepth;
 // Returns true when recovery completes
 - (iTermConductorRecovery * _Nullable)screenHandleFramerRecoveryString:(NSString * _Nonnull)string;
 - (void)screenFramerRecoveryDidFinish;

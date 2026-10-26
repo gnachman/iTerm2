@@ -193,6 +193,23 @@ typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
 }
 
 static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
+
++ (void)initialize {
+    if (self != [iTermPasswordManagerWindowController class] &&
+        self != [iTermBrowserPasswordManagerWindowController class]) {
+        return;
+    }
+    // The cached account names (shown in the trigger editor, for example) must not outlive
+    // authentication, such as after a screen lock revokes it.
+    Class theClass = self;
+    [[NSNotificationCenter defaultCenter] addObserverForName:iTermPasswordManagerDataSourceProvider.didRevokeAuthenticationNotification
+                                                      object:[self dataSourceProvider]
+                                                       queue:nil
+                                                  usingBlock:^(NSNotification * _Nonnull notification) {
+        DLog(@"Authentication revoked; forget cached account names for %@", theClass);
+        [theClass setCachedCombinedAccountNames:nil];
+    }];
+}
 + (NSArray<NSString *> *)cachedCombinedAccountNames {
     return gTerminalCachedCombinedAccountNames;
 }

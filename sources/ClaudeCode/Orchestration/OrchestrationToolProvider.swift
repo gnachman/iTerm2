@@ -379,82 +379,149 @@ final class OrchestrationToolProvider: ToolProvider {
     static func humanDescription(forToolName name: String,
                                   args: AnyCodable) -> String {
         let dict = (args.value as? [String: Any]) ?? [:]
+        // Each bubble is a complete localized sentence. Session and workgroup
+        // targets are @-mentions (or a localized fallback) and quoted
+        // previews carry their own quotation marks, so both are injected as
+        // self-contained values.
         switch name {
         case "list_workgroups":
-            return "Looking up workgroups"
+            return String(localized: "OrchestrationTool.ListWorkgroups",
+                          defaultValue: "Looking up workgroups",
+                          comment: "AI chat bubble shown when the AI lists the workgroups.")
         case "get_state":
-            return "Checking state of " + sessionDescription(args: dict)
+            let session = sessionDescription(args: dict)
+            return String(localized: "OrchestrationTool.GetState",
+                          defaultValue: "Checking state of \(session)",
+                          comment: "AI chat bubble shown when the AI checks a session’s state. The placeholder is a link to the session.")
         case "get_screen_contents":
-            return "Reading screen of " + sessionDescription(args: dict)
+            let session = sessionDescription(args: dict)
+            return String(localized: "OrchestrationTool.GetScreenContents",
+                          defaultValue: "Reading screen of \(session)",
+                          comment: "AI chat bubble shown when the AI reads a session’s screen. The placeholder is a link to the session.")
         case "scroll_wheel":
             // direction defaults to "up" (reveal older content) at the
             // dispatcher; mirror that here so the bubble matches behavior.
             let direction = (dict["direction"] as? String) ?? "up"
-            let what = (direction == "down") ? "newer" : "older"
-            return "Scrolling " + sessionDescription(args: dict)
-                + " to show \(what) content"
+            let session = sessionDescription(args: dict)
+            if direction == "down" {
+                return String(localized: "OrchestrationTool.ScrollDown",
+                              defaultValue: "Scrolling \(session) to show newer content",
+                              comment: "AI chat bubble shown when the AI scrolls a session down. The placeholder is a link to the session.")
+            }
+            return String(localized: "OrchestrationTool.ScrollUp",
+                          defaultValue: "Scrolling \(session) to show older content",
+                          comment: "AI chat bubble shown when the AI scrolls a session up. The placeholder is a link to the session.")
         case "list_workgroup_clippings":
-            return "Listing clippings in " + workgroupDescription(args: dict)
+            let workgroup = workgroupDescription(args: dict)
+            return String(localized: "OrchestrationTool.ListClippings",
+                          defaultValue: "Listing clippings in \(workgroup)",
+                          comment: "AI chat bubble shown when the AI lists a workgroup’s clippings. The placeholder is a link to the workgroup.")
         case "send_text":
             let text = (dict["text"] as? String) ?? ""
-            return "Typing into " + sessionDescription(args: dict)
-                + ": " + previewQuote(text)
+            let session = sessionDescription(args: dict)
+            let quoted = previewQuote(text)
+            return String(localized: "OrchestrationTool.SendText",
+                          defaultValue: "Typing into \(session): \(quoted)",
+                          comment: "AI chat bubble shown when the AI types into a session. The first placeholder is a link to the session; the second is the typed text, already in quotation marks.")
         case "interrupt":
-            return "Interrupting " + sessionDescription(args: dict)
+            let session = sessionDescription(args: dict)
+            return String(localized: "OrchestrationTool.Interrupt",
+                          defaultValue: "Interrupting \(session)",
+                          comment: "AI chat bubble shown when the AI interrupts a session. The placeholder is a link to the session.")
         case "add_workgroup_clipping":
-            let title = (dict["title"] as? String) ?? "(untitled)"
-            return "Posting clipping \u{201C}\(title)\u{201D} to "
-                + workgroupDescription(args: dict)
+            let workgroup = workgroupDescription(args: dict)
+            if let title = dict["title"] as? String {
+                return String(localized: "OrchestrationTool.AddClipping",
+                              defaultValue: "Posting clipping \u{201C}\(title)\u{201D} to \(workgroup)",
+                              comment: "AI chat bubble shown when the AI posts a clipping to a workgroup. The first placeholder is the clipping’s title; the second is a link to the workgroup.")
+            }
+            return String(localized: "OrchestrationTool.AddUntitledClipping",
+                          defaultValue: "Posting an untitled clipping to \(workgroup)",
+                          comment: "AI chat bubble shown when the AI posts a clipping with no title to a workgroup. The placeholder is a link to the workgroup.")
         case "start_session":
             if let cmd = dict["command"] as? String, !cmd.isEmpty {
-                return "Starting new session: `\(cmd)`"
+                return String(localized: "OrchestrationTool.StartSessionWithCommand",
+                              defaultValue: "Starting new session: `\(cmd)`",
+                              comment: "AI chat bubble shown when the AI starts a new session that runs a command. The placeholder is the command, shown as code.")
             }
-            return "Starting new session"
+            return String(localized: "OrchestrationTool.StartSession",
+                          defaultValue: "Starting new session",
+                          comment: "AI chat bubble shown when the AI starts a new session.")
         case "start_code_review":
-            let promptLabel: String
+            let session = sessionDescription(args: dict)
             if let name = dict["prompt_name"] as? String, !name.isEmpty {
-                promptLabel = "with saved prompt \u{201C}\(name)\u{201D}"
+                return String(localized: "OrchestrationTool.CodeReviewSavedPrompt",
+                              defaultValue: "Kicking off Code Review on \(session) with saved prompt \u{201C}\(name)\u{201D}",
+                              comment: "AI chat bubble shown when the AI starts a Code Review. The first placeholder is a link to the session; the second is the name of a saved review prompt.")
             } else if let custom = dict["custom_prompt"] as? String, !custom.isEmpty {
-                promptLabel = "with " + previewQuote(custom)
-            } else {
-                promptLabel = "with the default prompt"
+                let quoted = previewQuote(custom)
+                return String(localized: "OrchestrationTool.CodeReviewCustomPrompt",
+                              defaultValue: "Kicking off Code Review on \(session) with \(quoted)",
+                              comment: "AI chat bubble shown when the AI starts a Code Review with its own prompt. The first placeholder is a link to the session; the second is the start of the prompt, already in quotation marks.")
             }
-            return "Kicking off Code Review on " + sessionDescription(args: dict)
-                + " " + promptLabel
+            return String(localized: "OrchestrationTool.CodeReviewDefaultPrompt",
+                          defaultValue: "Kicking off Code Review on \(session) with the default prompt",
+                          comment: "AI chat bubble shown when the AI starts a Code Review with the default prompt. The placeholder is a link to the session.")
         case "register_watch":
             // Session-bound register_watch carries no session_guid (the target
             // is the chat's linked session); render that as "the linked session"
             // rather than the "(unknown session)" fallback.
             let hasGuid = (dict["session_guid"] as? String).map { !$0.isEmpty } ?? false
-            let target = hasGuid ? sessionDescription(args: dict) : "the linked session"
-            if let condition = dict["condition"] as? String, !condition.isEmpty {
-                return "Will notify when " + target + " satisfies: " + previewQuote(condition)
-            }
+            let condition = (dict["condition"] as? String).flatMap { $0.isEmpty ? nil : previewQuote($0) }
+            // A state name from the tool's schema, such as idle.
+            // Localization unneeded
             let state = (dict["target_state"] as? String) ?? "?"
-            return "Will notify when " + target + " becomes **\(state)**"
-        case "register_timer":
-            let when = Self.timerWhenPhrase(dict: dict)
-            if let note = dict["note"] as? String, !note.isEmpty {
-                return "Setting a timer to fire " + when + ": " + previewQuote(note)
+            guard hasGuid else {
+                if let condition {
+                    return String(localized: "OrchestrationTool.WatchLinkedCondition",
+                                  defaultValue: "Will notify when the linked session satisfies: \(condition)",
+                                  comment: "AI chat bubble shown when the AI sets up a watch on the chat’s linked session. The placeholder is the condition, already in quotation marks.")
+                }
+                return String(localized: "OrchestrationTool.WatchLinkedState",
+                              defaultValue: "Will notify when the linked session becomes **\(state)**",
+                              comment: "AI chat bubble shown when the AI sets up a watch on the chat’s linked session. The placeholder is a session state name such as idle, which stays in English. Keep the ** markers, which make it bold.")
             }
-            return "Setting a timer to fire " + when
+            let session = sessionDescription(args: dict)
+            if let condition {
+                return String(localized: "OrchestrationTool.WatchCondition",
+                              defaultValue: "Will notify when \(session) satisfies: \(condition)",
+                              comment: "AI chat bubble shown when the AI sets up a watch on a session. The first placeholder is a link to the session; the second is the condition, already in quotation marks.")
+            }
+            return String(localized: "OrchestrationTool.WatchState",
+                          defaultValue: "Will notify when \(session) becomes **\(state)**",
+                          comment: "AI chat bubble shown when the AI sets up a watch on a session. The first placeholder is a link to the session; the second is a session state name such as idle, which stays in English. Keep the ** markers, which make it bold.")
+        case "register_timer":
+            let note = (dict["note"] as? String).flatMap { $0.isEmpty ? nil : previewQuote($0) }
+            return Self.timerDescription(when: Self.timerWhen(dict: dict), quotedNote: note)
         case "unregister_watch":
-            return "Cancelling a watch"
+            return String(localized: "OrchestrationTool.UnregisterWatch",
+                          defaultValue: "Cancelling a watch",
+                          comment: "AI chat bubble shown when the AI cancels a watch it set up.")
         case "list_watches":
-            return "Listing active watches"
+            return String(localized: "OrchestrationTool.ListWatches",
+                          defaultValue: "Listing active watches",
+                          comment: "AI chat bubble shown when the AI lists the watches it set up.")
         default:
             if name.hasPrefix("session_") {
                 let raw = String(name.dropFirst("session_".count))
                 if raw == "execute_command",
                    let cmd = dict["command"] as? String,
                    !cmd.isEmpty {
-                    return "Executing `\(cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 80))`"
+                    let code = cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 80)
+                    return String(localized: "OrchestrationTool.ExecuteCommand",
+                                  defaultValue: "Executing `\(code)`",
+                                  comment: "AI chat bubble shown when the AI runs a command in a session. The placeholder is the command, shown as code.")
                 }
                 // Use the @<guid> mention form (not a bare backticked guid) so
                 // OrchestrationMentionRenderer rewrites it to the session's name
                 // (or "[defunct session]" when it no longer resolves).
-                return "\(prettifyToolName(raw)) in " + sessionDescription(args: dict)
+                let tool = prettifyToolName(raw)
+                let session = sessionDescription(args: dict)
+                return String(localized: "OrchestrationTool.SessionTool",
+                              defaultValue: "\(tool) in \(session)",
+                              comment: "AI chat bubble shown when the AI uses a tool on a session. The first placeholder is the tool’s name in English, such as Get selection; the second is a link to the session.")
             }
+            // A tool's internal name, made readable.
             return prettifyToolName(name)
         }
     }
@@ -473,7 +540,9 @@ final class OrchestrationToolProvider: ToolProvider {
     // orchestrator's text bubbles use.
     private static func sessionDescription(args dict: [String: Any]) -> String {
         guard let guid = dict["session_guid"] as? String, !guid.isEmpty else {
-            return "_(unknown session)_"
+            return String(localized: "OrchestrationTool.UnknownSession",
+                          defaultValue: "_(unknown session)_",
+                          comment: "Shown in an AI chat bubble in place of a session the AI did not identify. Keep the _ markers, which make it italic.")
         }
         return "@\(guid)"
     }
@@ -483,7 +552,9 @@ final class OrchestrationToolProvider: ToolProvider {
     // renderer's regex understands.
     private static func workgroupDescription(args dict: [String: Any]) -> String {
         guard let wg = dict["workgroup_id"] as? String, !wg.isEmpty else {
-            return "_unknown workgroup_"
+            return String(localized: "OrchestrationTool.UnknownWorkgroup",
+                          defaultValue: "_unknown workgroup_",
+                          comment: "Shown in an AI chat bubble in place of a workgroup the AI did not identify. Keep the _ markers, which make it italic.")
         }
         return "@\(wg)"
     }
@@ -502,24 +573,63 @@ final class OrchestrationToolProvider: ToolProvider {
         return "\u{201C}\(snippet)\u{201D}"
     }
 
-    // When phrasing for the register_timer bubble, e.g. "in 2 hrs" or, when the
-    // model gave an absolute fire_at that can't be read as a future delta, "at
-    // <fire_at>". The duration uses the shared localized formatter
-    // (DateFormatter.compactDateDifferenceString) rather than a hand-rolled one.
-    private static func timerWhenPhrase(dict: [String: Any]) -> String {
+    // When the register_timer bubble says the timer fires: after a duration
+    // (e.g. "2 hrs"), or, when the model gave an absolute fire_at that can't be
+    // read as a future delta, at <fire_at>. The duration uses the shared
+    // localized formatter (DateFormatter.compactDateDifferenceString) rather
+    // than a hand-rolled one.
+    enum TimerWhen: Equatable {
+        case after(String)
+        case at(String)
+        case later
+    }
+
+    private static func timerWhen(dict: [String: Any]) -> TimerWhen {
         if let delay = (dict["delay_seconds"] as? NSNumber)?.doubleValue, delay > 0 {
-            return "in " + DateFormatter.compactDateDifferenceString(fromTimeDelta: delay)
+            return .after(DateFormatter.compactDateDifferenceString(fromTimeDelta: delay))
         }
         if let fireAt = dict["fire_at"] as? String, !fireAt.isEmpty {
             if let date = parseISO8601(fireAt) {
                 let delta = date.timeIntervalSinceNow
                 if delta > 0 {
-                    return "in " + DateFormatter.compactDateDifferenceString(fromTimeDelta: delta)
+                    return .after(DateFormatter.compactDateDifferenceString(fromTimeDelta: delta))
                 }
             }
-            return "at \(fireAt)"
+            return .at(fireAt)
         }
-        return "later"
+        return .later
+    }
+
+    // The register_timer bubble text. Each case is a complete localized
+    // sentence so translators control word order; quotedNote is the already
+    // quoted note preview, if any.
+    static func timerDescription(when: TimerWhen, quotedNote: String?) -> String {
+        switch (when, quotedNote) {
+        case let (.after(duration), nil):
+            return String(localized: "OrchestrationTool.TimerAfter",
+                          defaultValue: "Setting a timer to fire in \(duration)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The placeholder is a short duration, such as 5min.")
+        case let (.after(duration), note?):
+            return String(localized: "OrchestrationTool.TimerAfterWithNote",
+                          defaultValue: "Setting a timer to fire in \(duration): \(note)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The first placeholder is a short duration, such as 5min; the second is the timer’s note, already in quotation marks.")
+        case let (.at(time), nil):
+            return String(localized: "OrchestrationTool.TimerAt",
+                          defaultValue: "Setting a timer to fire at \(time)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The placeholder is the time the AI asked for, as an ISO 8601 timestamp.")
+        case let (.at(time), note?):
+            return String(localized: "OrchestrationTool.TimerAtWithNote",
+                          defaultValue: "Setting a timer to fire at \(time): \(note)",
+                          comment: "AI chat bubble shown when the AI sets a timer. The first placeholder is the time the AI asked for, as an ISO 8601 timestamp; the second is the timer’s note, already in quotation marks.")
+        case (.later, nil):
+            return String(localized: "OrchestrationTool.TimerLater",
+                          defaultValue: "Setting a timer to fire later",
+                          comment: "AI chat bubble shown when the AI sets a timer without a recognizable time.")
+        case let (.later, note?):
+            return String(localized: "OrchestrationTool.TimerLaterWithNote",
+                          defaultValue: "Setting a timer to fire later: \(note)",
+                          comment: "AI chat bubble shown when the AI sets a timer without a recognizable time. The placeholder is the timer’s note, already in quotation marks.")
+        }
     }
 
     // Parse an ISO-8601 date-time, tolerating both fractional and whole seconds.

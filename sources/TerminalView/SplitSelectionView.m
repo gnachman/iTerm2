@@ -8,6 +8,7 @@
 #import "SplitSelectionView.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSColor+iTerm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSPoint point) {
     switch (half) {
@@ -250,8 +251,33 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
 - (void)mouseMoved:(NSEvent *)theEvent
 {
     NSPoint locationInWindow = [theEvent locationInWindow];
+    if ([self locationIsCoveredByFloatingPane:locationInWindow]) {
+        // Tracking areas are not occlusion-aware: a pane under a floating pane gets entered and
+        // moved events while the pointer is over the float, which is the target there.
+        if (half_ != kNoHalf) {
+            half_ = kNoHalf;
+            [self setNeedsDisplay:YES];
+        }
+        return;
+    }
     NSPoint point = [self convertPoint:locationInWindow fromView:nil];
     [self updateAtPoint:point];
+}
+
+// Whether a click at the window location would go to a floating pane other than the one this
+// picker is in, if any.
+- (BOOL)locationIsCoveredByFloatingPane:(NSPoint)locationInWindow {
+    NSView *contentView = self.window.contentView;
+    if (!contentView) {
+        return NO;
+    }
+    NSView *hit = [contentView hitTest:[contentView.superview convertPoint:locationInWindow fromView:nil]];
+    for (NSView *view = hit; view; view = view.superview) {
+        if ([view isKindOfClass:[iTermFloatingPaneView class]]) {
+            return ![self isDescendantOf:view];
+        }
+    }
+    return NO;
 }
 
 - (void)updateAtPoint:(NSPoint)point

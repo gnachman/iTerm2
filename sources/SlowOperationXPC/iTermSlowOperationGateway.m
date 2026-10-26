@@ -361,8 +361,18 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 - (void)runCommandInUserShell:(NSString *)command
                          mode:(iTermShellRunMode)mode
                    completion:(void (^)(NSString * _Nullable))completion {
+    [self runCommand:command
+             inShell:[iTermOpenDirectory userShell] ?: @"/bin/bash"
+                mode:mode
+          completion:completion];
+}
+
+- (void)runCommand:(NSString *)command
+           inShell:(NSString *)shell
+              mode:(iTermShellRunMode)mode
+        completion:(void (^)(NSString * _Nullable))completion {
     [self runScript:command
-              shell:[iTermOpenDirectory userShell] ?: @"/bin/bash"
+              shell:shell
                mode:mode
          completion:completion];
 }

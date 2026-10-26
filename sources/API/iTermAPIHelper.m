@@ -827,6 +827,22 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     return [iTermPreferences boolForKey:kPreferenceKeyEnableAPIServer];
 }
 
+#if DEBUG
++ (void)debugStartInProcessOnlyServer {
+    iTermAPIHelper *helper = [self sharedInstance];
+    @synchronized (helper) {
+        if (helper->_apiServer) {
+            return;
+        }
+    }
+    iTermAPIServer *server = [[iTermAPIServer alloc] initWithoutListening];
+    server.delegate = helper;
+    @synchronized (helper) {
+        helper->_apiServer = server;
+    }
+}
+#endif
+
 + (void)whenSocketReadyRunBlock:(void (^)(BOOL ready))block {
     iTermAPIHelper *helper = [self sharedInstanceIfEnabled];
     if (!helper || !helper->_apiServer) {
@@ -3706,6 +3722,36 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     return YES;
 }
 
+// Whether two isomorphic split trees give every session the same grid size.
++ (BOOL)splitTree:(ITMSplitTreeNode *)node1 hasSameGridSizesAs:(ITMSplitTreeNode *)node2 {
+    if (node1.linksArray_Count != node2.linksArray_Count) {
+        return NO;
+    }
+    for (NSInteger i = 0; i < node1.linksArray_Count; i++) {
+        ITMSplitTreeNode_SplitTreeLink *link1 = node1.linksArray[i];
+        ITMSplitTreeNode_SplitTreeLink *link2 = node2.linksArray[i];
+        if (link1.childOneOfCase != link2.childOneOfCase) {
+            return NO;
+        }
+        switch (link1.childOneOfCase) {
+            case ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Node:
+                if (![self splitTree:link1.node hasSameGridSizesAs:link2.node]) {
+                    return NO;
+                }
+                break;
+            case ITMSplitTreeNode_SplitTreeLink_Child_OneOfCase_Session:
+                if (link1.session.gridSize.width != link2.session.gridSize.width ||
+                    link1.session.gridSize.height != link2.session.gridSize.height) {
+                    return NO;
+                }
+                break;
+            default:
+                return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)apiServerSetTabLayout:(ITMSetTabLayoutRequest *)request handler:(void (^)(ITMSetTabLayoutResponse *))handler {
     ITMSetTabLayoutResponse *response = [[ITMSetTabLayoutResponse alloc] init];
     PTYTab *tab = [self tabWithID:request.tabId];
@@ -3720,6 +3766,13 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
 
     if (!iTermCheckSplitTreesIsomorphic(before, requested)) {
         response.status = ITMSetTabLayoutResponse_Status_WrongTree;
+        handler(response);
+        return;
+    }
+    if ([iTermAPIHelper splitTree:before hasSameGridSizesAs:requested]) {
+        // Nothing to change, so don't disturb the panes or the window.
+        DLog(@"Requested layout matches the current one; leaving it alone");
+        response.status = ITMSetTabLayoutResponse_Status_Ok;
         handler(response);
         return;
     }
@@ -4522,9 +4575,17 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         return;
     }
 
-    NSString *json = [NSJSONSerialization it_jsonStringForObject:object];
-    response.success.jsonResult = json;
+    response.success.jsonResult = [iTermAPIHelper jsonResultForFunctionValue:object];
     completion(response);
+}
+
++ (NSString *)jsonResultForFunctionValue:(id)object {
+    // it_jsonStringForObject returns nil for a top-level NSNull, which would leave the result
+    // empty and make the Python client's json.loads raise. Functions return NSNull to mean None.
+    if ([object isKindOfClass:[NSNull class]]) {
+        return @"null";
+    }
+    return [NSJSONSerialization it_jsonStringForObject:object];
 }
 
 @end

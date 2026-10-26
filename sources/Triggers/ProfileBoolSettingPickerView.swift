@@ -28,14 +28,22 @@ class ProfileBoolSettingPickerView: NSView, SearchableComboViewDelegate {
     private var selectedKeyStorage: String?
 
     @objc override init(frame frameRect: NSRect) {
-        comboView = SearchableComboView(Self.groups(), defaultTitle: "Select Setting…")
+        comboView = SearchableComboView(Self.groups(),
+                                        defaultTitle: String(localized: "ProfileBoolSettingPicker.SelectSetting",
+                                                             defaultValue: "Select Setting…",
+                                                             comment: "Placeholder of the setting picker in the Set Profile Setting trigger action before a setting is chosen"))
         super.init(frame: frameRect)
 
         comboView.delegate = self
         addSubview(comboView)
 
-        onOffButton.addItem(withTitle: "On")
-        onOffButton.addItem(withTitle: "Off")
+        // Index 0 is On and index 1 is Off; see onOffIndex(forRawValue:).
+        onOffButton.addItem(withTitle: String(localized: "ProfileBoolSettingPicker.On",
+                                              defaultValue: "On",
+                                              comment: "Value popup in the Set Profile Setting trigger action: turn the chosen setting on"))
+        onOffButton.addItem(withTitle: String(localized: "ProfileBoolSettingPicker.Off",
+                                              defaultValue: "Off",
+                                              comment: "Value popup in the Set Profile Setting trigger action: turn the chosen setting off"))
         onOffButton.target = self
         onOffButton.action = #selector(onOffChanged(_:))
         addSubview(onOffButton)
@@ -59,7 +67,11 @@ class ProfileBoolSettingPickerView: NSView, SearchableComboViewDelegate {
     }
 
     private func layoutControls() {
-        let onOffWidth: CGFloat = 70
+        // At least 70pt, and wide enough for the longest item (a popup's cellSize accounts for all
+        // of its items) so translations such as pt-BR “Inativo” are not clipped. Never take more
+        // than half the room from the setting picker.
+        let fittingWidth = ceil(onOffButton.cell?.cellSize.width ?? 0)
+        let onOffWidth = min(max(70, fittingWidth), max(70, bounds.width / 2))
         let gap: CGFloat = 6
         let comboWidth = max(0, bounds.width - onOffWidth - gap)
         comboView.frame = NSRect(x: 0, y: 0, width: comboWidth, height: bounds.height)

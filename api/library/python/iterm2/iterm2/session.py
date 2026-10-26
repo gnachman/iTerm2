@@ -250,6 +250,13 @@ class SessionNote:
         return self.__collapsed
 
 
+def _copy_size(size: Size | api_pb2.Size | None) -> Size | None:
+    """Returns a copy of a size so that changing one doesn't change the other."""
+    if size is None:
+        return None
+    return Size(size.width, size.height)
+
+
 class Session:
     """
     Represents an iTerm2 session.
@@ -345,7 +352,11 @@ class Session:
             self.buried = True
             self.__grid_size = None
             self.frame = None
-        self.__preferred_size = self.grid_size
+        self.__preferred_size = _copy_size(self.grid_size)
+        # True while preferred_size holds a size the script asked for that
+        # Tab.async_update_layout() has not applied yet. Otherwise it follows
+        # the session's actual size as the layout changes.
+        self.__preferred_size_is_pending = False
 
     def __repr__(self):
         return f"<Session name={self.name} id={self.__session_id}>"
@@ -365,8 +376,20 @@ class Session:
         """Replace internal state with that of another session."""
         self.frame = session.frame
         self.__grid_size = session.grid_size
+        if not self.__preferred_size_is_pending:
+            # Otherwise a later Tab.async_update_layout() would restore the
+            # size this session had before the layout changed, for example
+            # before it was split.
+            self.__preferred_size = _copy_size(self.__grid_size)
         self.name = session.name
         self.floating = session.floating
+
+    def _preferred_size_was_applied(self) -> None:
+        """Called after Tab.async_update_layout() succeeds.
+
+        From now on preferred_size follows the session's actual size again.
+        """
+        self.__preferred_size_is_pending = False
 
     def pretty_str(self, indent: str = "") -> str:
         """
@@ -415,6 +438,9 @@ class Session:
         """
         The size in cells to resize to when `Tab.async_update_layout()` is
         called. The size is a :class:`iterm2.util.Size`.
+
+        Unless you have set it and not yet called `Tab.async_update_layout()`,
+        this is the session's current size.
         """
         return self.__preferred_size
 
@@ -425,6 +451,7 @@ class Session:
         called. The size is a :class:`iterm2.util.Size`.
         """
         self.__preferred_size = value
+        self.__preferred_size_is_pending = True
 
     @property
     def session_id(self) -> str:

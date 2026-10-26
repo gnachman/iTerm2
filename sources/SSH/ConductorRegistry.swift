@@ -48,6 +48,13 @@ class ConductorRegistry {
         }
     }
 
+    /// Live conductors whose identity is `identifier` in SSHIdentity.stringIdentifier form, the
+    /// key an always-allow grant is stored under.
+    func conductors(forStringIdentifier identifier: String) -> [Conductor] {
+        return conductors.filter { $0.key.stringIdentifier == identifier }
+            .flatMap { $0.value.compactMap(\.value) }
+    }
+
     func conductors(for url: URL) -> [Conductor] {
         return conductors.flatMap { (entry) -> [Conductor] in
             let key = entry.key

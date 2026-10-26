@@ -157,7 +157,9 @@ final class BrowserBasicAuthCoordinator {
     enum PromptOutcome: Equatable {
         case cancelled
         case submitted(Credential, remember: Bool)
-        case openPasswordManager(typed: Credential?)
+        // `remember` is the Remember checkbox's state when the user left the prompt, so a
+        // re-prompt after backing out of the picker can restore it.
+        case openPasswordManager(typed: Credential?, remember: Bool)
     }
 
     // MARK: - Effects (outputs the manager executes)
@@ -214,6 +216,9 @@ final class BrowserBasicAuthCoordinator {
         let space: SpaceKey
         let isBasic: Bool
         let storeCanRemember: Bool
+        // The Remember checkbox's state when the user opened the password manager from the
+        // prompt, or nil if they haven't.
+        var rememberChecked: Bool? = nil
     }
     private var contexts: [ChallengeID: Context] = [:]
 
@@ -309,7 +314,8 @@ final class BrowserBasicAuthCoordinator {
                 spaces[ctx.space, default: .init()].lastEntered = credential
                 let willRemember = remember && ctx.isBasic && ctx.storeCanRemember
                 return supply(id: id, ctx: ctx, credential: credential, source: .typed, remember: willRemember)
-            case let .openPasswordManager(typed):
+            case let .openPasswordManager(typed, remember):
+                contexts[id]?.rememberChecked = remember
                 return [.showPicker(id: id, space: ctx.space, typed: typed)]
             }
 
@@ -325,11 +331,15 @@ final class BrowserBasicAuthCoordinator {
                                        typed: typedFallback,
                                        last: spaces[ctx.space]?.lastEntered)
             let offer = ctx.isBasic && ctx.storeCanRemember
+            // Restore the checkbox as the user left it. Without that, fall back to the same
+            // rule as the first prompt: on only to correct a rejected saved credential.
+            let rememberByDefault = offer && (ctx.rememberChecked ??
+                                              (spaces[ctx.space]?.savedRejectedThisSession == true))
             return [.prompt(id: id, PromptRequest(space: ctx.space,
                                                   prefill: prefill,
                                                   offerRemember: offer,
                                                   offerPasswordManager: offer,
-                                                  rememberByDefault: offer))]
+                                                  rememberByDefault: rememberByDefault))]
 
         case let .mainFrameResponse(origin, status):
             guard let a = awaiting, a.space.origin == origin else {
@@ -354,7 +364,7 @@ final class BrowserBasicAuthCoordinator {
                 spaces[space, default: .init()].savedRejectedThisSession = false
                 return []
             }
-            return [.toast("Could not save the password for \(host)")]
+            return [.toast(String(localized: "BrowserBasicAuth.SavePasswordFailed", defaultValue: "Could not save the password for \(host)", comment: "Toast shown when a password entered in a browser HTTP authentication prompt could not be saved to the password manager. The placeholder is the host name."))]
         }
     }
 

@@ -88,6 +88,14 @@ class VT100TabStatusUpdate: NSObject {
     @objc var turnOpenPresence: VT100TabStatusUpdateFieldPresence = .notSet
     @objc var turnOpen: Bool = false
 
+    // The tab's progress ring (OSC 9;4), for a program that reports through
+    // hooks but does not emit the progress protocol itself. Applied the way
+    // the terminal applies the protocol, so the tab bar draws it and an
+    // expiring status sees the operation end. Not part of the status: it is
+    // screen state, and it is never written to an arrangement.
+    @objc var progressPresence: VT100TabStatusUpdateFieldPresence = .notSet
+    @objc var progress: VT100ScreenProgress = .stopped
+
     // Preconditions: when set, the whole update is dropped unless the flag
     // and the count already hold these values. cc-status decides to write
     // idle from a status it read a round trip earlier; a prompt submitted in
@@ -159,6 +167,9 @@ class VT100TabStatusUpdate: NSObject {
         case .set:
             parts.append("turn-open=\(turnOpen)")
         @unknown default: break
+        }
+        if progressPresence == .set {
+            parts.append("progress=\(progress.rawValue)")
         }
         if let requiredTurnOpen {
             parts.append("if-turn-open=\(requiredTurnOpen.boolValue)")

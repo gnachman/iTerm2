@@ -24,6 +24,34 @@ enum ConductorUpload {
             offset = end
         }
     }
+
+    // Whether something is at `path` on the remote host, according to `stat`. Only a definite
+    // “not found” means the name is free. Any other failure (a permission error, a dropped
+    // connection) throws, because guessing “free” could overwrite an existing file.
+    static func remotePathExists(_ path: String,
+                                 stat: (String) async throws -> Void) async throws -> Bool {
+        do {
+            try await stat(path)
+            return true
+        } catch SSHEndpointException.fileNotFound {
+            return false
+        } catch {
+            DLog("Could not check whether \(path) exists: \(error)")
+            throw NameCheckFailed(path: path, underlying: error)
+        }
+    }
+
+    struct NameCheckFailed: LocalizedError {
+        var path: String
+        var underlying: Error
+
+        var errorDescription: String? {
+            let filename = (path as NSString).lastPathComponent
+            return String(localized: "ConductorUpload.NameCheckFailed",
+                          defaultValue: "Couldn’t check whether “\(filename)” already exists on the remote host, so it was not uploaded: \(underlying.localizedDescription)",
+                          comment: "Error shown when an upload over SSH integration is stopped because checking for an existing file of the same name failed. The first value is the file name; the second is the reason the check failed.")
+        }
+    }
 }
 
 // Picks the remote name for an upload, never one that exists on the far host or that another

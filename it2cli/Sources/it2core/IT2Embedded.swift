@@ -29,19 +29,38 @@ public enum IT2Embedded {
     /// clientUniqueID). It reaches tmux pane addressing, where it identifies the machine the
     /// caller's $TMUX was collected on. The host supplies it; it is never taken from `arguments`,
     /// which the remote side controls.
+    ///
+    /// `stdin` and `environment` are what the remote it2 sent along: the payload a hook received
+    /// and the allowlisted variables that say which session it belongs to. They reach commands
+    /// through the context, never through the process, which in-process would be iTerm2's own.
     public static func run(arguments: [String],
                            io: IT2IO,
                            channel: APIChannel,
-                           originIdentifier: String?) -> Int32 {
+                           originIdentifier: String?,
+                           originSessionID: String? = nil,
+                           stdin: Data = Data(),
+                           environment: [String: String] = [:]) -> Int32 {
         let context = IT2Context(
             out: io.stdout,
             err: io.stderr,
             confirm: io.confirm,
-            makeClient: { APIClient(channel: channel) },
+            makeClient: {
+                let client = APIClient(channel: channel)
+                // A remote command with no explicit target addresses its own pane when the
+                // environment names one, and otherwise the session it arrived on.
+                client.originSessionID = originSessionID
+                client.callerEnvironment = environment
+                client.originIdentifier = originIdentifier
+                return client
+            },
             installsSignalHandlers: false,
             isRemote: true,
-            originIdentifier: originIdentifier
+            originIdentifier: originIdentifier,
+            originSessionID: originSessionID,
+            stdin: { stdin },
+            environment: environment
         )
+        IT2Context.captureForTesting?(context)
         return runToExitCode(arguments, context)
     }
 }

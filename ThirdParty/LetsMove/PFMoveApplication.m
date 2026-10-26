@@ -688,6 +688,15 @@ static void MarkTranslocationFixAttemptedThisBoot(void) {
 	[[NSUserDefaults standardUserDefaults] synchronize];
 }
 
+NSString *PFMoveRelaunchOpenArgumentsSuffix(NSArray<NSString *> *processArguments) {
+	// iTerm2: keep -suite so the relaunched copy uses the same settings.
+	const NSUInteger index = [processArguments indexOfObject:@"-suite"];
+	if (index == NSNotFound || index == 0 || index + 1 >= processArguments.count) {
+		return @"";
+	}
+	return [NSString stringWithFormat:@" --args -suite %@", ShellQuotedString(processArguments[index + 1])];
+}
+
 static void Relaunch(NSString *destinationPath) {
 	// The shell script waits until the original app process terminates.
 	// This is done so that the relaunched app opens as the front-most app.
@@ -709,7 +718,8 @@ static void Relaunch(NSString *destinationPath) {
 		preOpenCmd = [NSString stringWithFormat:@"/usr/bin/xattr -d com.apple.quarantine %@", quotedDestinationPath];
 	}
 
-	NSString *script = [NSString stringWithFormat:@"(while /bin/kill -0 %d >&/dev/null; do /bin/sleep 0.1; done; %@; /usr/bin/open %@) &", pid, preOpenCmd, quotedDestinationPath];
+	NSString *openArguments = PFMoveRelaunchOpenArgumentsSuffix([[NSProcessInfo processInfo] arguments]);
+	NSString *script = [NSString stringWithFormat:@"(while /bin/kill -0 %d >&/dev/null; do /bin/sleep 0.1; done; %@; /usr/bin/open %@%@) &", pid, preOpenCmd, quotedDestinationPath, openArguments];
 
 	[NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:[NSArray arrayWithObjects:@"-c", script, nil]];
 }

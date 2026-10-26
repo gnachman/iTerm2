@@ -206,8 +206,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableTopRightIndicators;
 + (BOOL)disableTmuxWindowPositionRestoration;
 + (BOOL)disableTmuxWindowResizing;
-+ (BOOL)disableWindowShadowWhenTransparencyOnMojave;
-+ (BOOL)disableWindowShadowWhenTransparencyPreMojave;
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)disclaimChildren;
@@ -614,6 +612,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)userNotificationTriggerRateLimit;
 + (BOOL)openProfilesInNewWindow;
 + (NSString *)validCharactersInSSHUserNames;
++ (BOOL)sshFlowControl;
++ (BOOL)showSSHFlowControlMonitor;
++ (void)setShowSSHFlowControlMonitor:(BOOL)value;
 + (BOOL)vs16Supported;
 + (BOOL)vs16SupportedInPrimaryScreen;
 

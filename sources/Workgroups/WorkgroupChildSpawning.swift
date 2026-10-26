@@ -17,6 +17,10 @@ extension iTermWorkgroupInstance {
     // resulting session in the workgroup tree and recurse.
     func spawnSplit(config: iTermWorkgroupSessionConfig, parent: PTYSession) {
         guard case .split(let settings) = config.kind else { return }
+        if let tmuxBinding {
+            spawnTmuxMember(config: config, parent: parent, binding: tmuxBinding, splitSettings: settings)
+            return
+        }
         // .diff sessions resolve gitBase at fire time, not at spawn
         // time, so a gitBase change while the deferred launch is
         // pending propagates without rebuilding the closure. Pass
@@ -26,15 +30,13 @@ extension iTermWorkgroupInstance {
             : config.substitutingGitBase(currentGitBase)
         guard let newSession = spawner.spawnSplit(parent: parent,
                                                   config: resolved,
-                                                  settings: settings,
-                                                  workgroupInstanceID: instanceUniqueIdentifier) else {
+                                                  settings: settings) else {
             return
         }
         // A tracked member can die synchronously inside the spawner
         // (the willTerminate observer is live), tearing this instance
         // down mid-call. The new session is already installed in the
-        // window with ITERM_WORKGROUP_ID in its environment, but
-        // teardown can't reach it (it was never registered), so close
+        // window, but teardown can't reach it (it was never registered), so close
         // it here and stop. Proceeding would wire live shells —
         // including any nested peer group this config hosts — to a
         // dead workgroup that will never tear them down.
@@ -51,13 +53,16 @@ extension iTermWorkgroupInstance {
 
     // Add a new-tab child from the workgroup config.
     func spawnTab(config: iTermWorkgroupSessionConfig, parent: PTYSession) {
+        if let tmuxBinding {
+            spawnTmuxMember(config: config, parent: parent, binding: tmuxBinding, splitSettings: nil)
+            return
+        }
         // Same .diff rationale as spawnSplit above.
         let resolved = config.mode == .diff
             ? config
             : config.substitutingGitBase(currentGitBase)
         guard let newSession = spawner.spawnTab(parent: parent,
-                                                config: resolved,
-                                                workgroupInstanceID: instanceUniqueIdentifier) else {
+                                                config: resolved) else {
             return
         }
         // Same mid-spawn teardown hazard as spawnSplit above.
@@ -76,16 +81,23 @@ extension iTermWorkgroupInstance {
     // (e.g. a split that hosts its own peer group), build a peer
     // port for it and register the peers. Otherwise treat the
     // session as a leaf non-peer.
-    private func registerNonPeerOrPeerGroupHost(session: PTYSession,
+    func registerNonPeerOrPeerGroupHost(session: PTYSession,
                                                 config: iTermWorkgroupSessionConfig,
                                                 parent: PTYSession) {
-        let peerChildren = workgroup.sessions.filter { s in
-            guard s.parentID == config.uniqueIdentifier else { return false }
-            if case .peer = s.kind { return true }
-            return false
-        }
+        let peerChildren = self.peerChildren(of: config)
         if peerChildren.isEmpty {
             registerNonPeer(session: session, config: config)
+            return
+        }
+        if let tmuxBinding {
+            // The host is a tmux pane, so its peers are tmux panes parked in hidden windows, as the
+            // leader's are.
+            registerTmuxPeerGroup(host: session,
+                                  config: config,
+                                  binding: tmuxBinding,
+                                  adopted: [:],
+                                  activeIdentifier: config.uniqueIdentifier,
+                                  createMissing: true)
             return
         }
         // Nested peer group: this non-peer session hosts peers. Build
@@ -112,8 +124,7 @@ extension iTermWorkgroupInstance {
                 : peer.substitutingGitBase(currentGitBase)
             peers[peer.uniqueIdentifier] =
                 spawner.spawnPeer(parent: peerBasis,
-                                  config: configToSpawn,
-                                  workgroupInstanceID: instanceUniqueIdentifier)
+                                  config: configToSpawn)
         }
         let port = iTermWorkgroupPeerPort(
             peers: peers,
@@ -145,5 +156,14 @@ extension iTermWorkgroupInstance {
         // so workgroupInstance is set by now and toolbarItems(for:)
         // resolves through the nested port.
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
+    }
+
+    /// The peers a config hosts, in definition order.
+    func peerChildren(of config: iTermWorkgroupSessionConfig) -> [iTermWorkgroupSessionConfig] {
+        return workgroup.sessions.filter { s in
+            guard s.parentID == config.uniqueIdentifier else { return false }
+            if case .peer = s.kind { return true }
+            return false
+        }
     }
 }

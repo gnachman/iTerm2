@@ -35,4 +35,10 @@ extension SessionView {
         codeReviewPromptOverlay = promptView
         addSubview(belowFind: promptView)
     }
+
+    /// Without starting the review: someone else started it.
+    func dismissCodeReviewPromptOverlay() {
+        codeReviewPromptOverlay?.removeFromSuperview()
+        codeReviewPromptOverlay = nil
+    }
 }

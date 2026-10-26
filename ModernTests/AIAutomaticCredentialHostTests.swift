@@ -105,6 +105,40 @@ final class AIAutomaticCredentialHostTests: XCTestCase {
                        ["api-key"])
     }
 
+    // Azure Government, Azure China, and serverless model deployments are
+    // Microsoft's own AI service hosts too, and speak Azure's request format.
+    // QA finding F-373.
+    func testSovereignAndServerlessAzureAIEndpointsAreOpenAIsHost() {
+        for url in ["https://x.openai.azure.us/openai/deployments/d/chat/completions?api-version=2024-10-21",
+                    "https://x.cognitiveservices.azure.us/openai/deployments/d/chat/completions",
+                    "https://x.openai.azure.cn/openai/deployments/d/chat/completions",
+                    "https://x.cognitiveservices.azure.cn/openai/deployments/d/chat/completions",
+                    "https://my-endpoint.eastus2.models.ai.azure.com/v1/chat/completions"] {
+            XCTAssertEqual(AITermController.apiKeyPolicy(url: url,
+                                                         api: .chatCompletions,
+                                                         credential: .automatic,
+                                                         keyVendor: .openAI),
+                           .vendorKey, url)
+            XCTAssertEqual(LLMAuthorizationProvider.credentialHeaderNames(url: url, api: .chatCompletions),
+                           ["api-key"], url)
+        }
+    }
+
+    // Look-alikes in the sovereign clouds are not Microsoft's AI hosts.
+    func testSovereignCloudLookAlikesAreNotOpenAIsHost() {
+        for url in ["https://gw.usgovvirginia.cloudapp.usgovcloudapi.net/v1/chat/completions",
+                    "https://evil.azure.us/v1/chat/completions",
+                    "https://x.openai.azure.us.evil.example/v1/chat/completions",
+                    "https://myco-openai.azure.cn/v1/chat/completions",
+                    "https://models.ai.azure.com.evil.example/v1/chat/completions"] {
+            XCTAssertEqual(AITermController.apiKeyPolicy(url: url,
+                                                         api: .chatCompletions,
+                                                         credential: .automatic,
+                                                         keyVendor: .openAI),
+                           .placeholder(.unrecognizedHost), url)
+        }
+    }
+
     func testAzureAIServiceEndpointsAreOpenAIsHost() {
         for url in ["https://myco.openai.azure.com/openai/deployments/x/chat/completions",
                     "https://MyCo.OpenAI.Azure.com./openai/deployments/x/chat/completions",

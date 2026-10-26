@@ -17,6 +17,9 @@
 // Takes its initial value from user defaults.
 @property(nonatomic, readonly) int numberOfSpaces;
 
+// The editable number-of-spaces field. Loads the view.
+@property(nonatomic, readonly) NSTextField *textField;
+
 // Write number of spaces to user defaults.
 - (void)saveToUserDefaults;
 

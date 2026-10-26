@@ -249,6 +249,7 @@ class ChatViewController: NSViewController {
         guard let session = notif.object as? PTYSession else {
             return
         }
+        hostSessionWillTerminate(session)
         // Quitting with window restoration on closes every window, but the
         // session comes back at the next launch with the same stableID, so
         // keep the terminal or browser link (and the watches and timers this
@@ -277,6 +278,7 @@ class ChatViewController: NSViewController {
     // In-conversation find (Cmd-F). The bar is created lazily and hosted
     // as an overlay at the top of the conversation in performLayoutNow().
     private var findBar: ChatFindBarView?
+    static let findBarSideMargin: CGFloat = 16
     private lazy var findController: ChatFindController = {
         let controller = ChatFindController()
         controller.segmentsProvider = { [weak self] message in
@@ -364,7 +366,7 @@ class ChatViewController: NSViewController {
             let barHeight = ChatFindBarView.barHeight
             let gap: CGFloat = 8
             let topReference = (floatingFrame?.minY ?? (bounds.height - toolbarHeight)) - gap
-            let sideMargin: CGFloat = 16
+            let sideMargin = Self.findBarSideMargin
             let maxWidth: CGFloat = 640
             let width = min(maxWidth, max(0, bounds.width - sideMargin * 2))
             let x = floor((bounds.width - width) / 2)
@@ -540,6 +542,9 @@ class ChatViewController: NSViewController {
         self.divider = dividerView
 
         inputView.delegate = self
+        inputView.revealForMentionSelection = { [weak self] in
+            self?.revealForMentionSelection()
+        }
 
         // Disable autoresizing for the children we lay out manually
         // so AppKit doesn't move them on window resize. Empty mask
@@ -600,16 +605,46 @@ extension ChatViewController {
         return LLMMetadata.model(named: name)
     }
 
+    // The vendor the chat's model pin belongs to (Chat.modelVendor), nil when
+    // unknown (a legacy pin whose vendor could not be inferred).
+    private var storedChatVendor: iTermAIVendor? {
+        guard let chatID else {
+            return nil
+        }
+        return listModel.modelVendor(forChatID: chatID)
+    }
+
+    // Resolves `name` for a chat pinned to `vendor` the way request routing does
+    // (LLMMetadata.resolvePinnedModel): a chat on a local (Ollama) model or a
+    // manual model never resolves to a same-named model of another vendor.
+    private func pinnedModel(named name: String?, vendor: iTermAIVendor?) -> AIMetadata.Model? {
+        guard let name else {
+            return nil
+        }
+        if LLMMetadata.pinnedVendorFailsClosed(vendor) {
+            return LLMMetadata.resolvePinnedModel(named: name, vendor: vendor).successValue ?? nil
+        }
+        return model(named: name)
+    }
+
     private var storedChatModel: AIMetadata.Model? {
         guard let chatID else {
             return nil
         }
-        return model(named: listModel.chat(id: chatID)?.modelName)
+        return pinnedModel(named: listModel.chat(id: chatID)?.modelName, vendor: storedChatVendor)
     }
 
     private var latestConfiguredMessageModel: AIMetadata.Model? {
         guard let chatID,
               let messages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return nil
+        }
+        let vendor = storedChatVendor
+        if LLMMetadata.pinnedVendorFailsClosed(vendor), listModel.chat(id: chatID)?.modelName != nil {
+            // The chat's Ollama or manual-model pin didn't resolve (else
+            // storedChatModel would have answered). It fails clearly (see
+            // fallbackModel) rather than quietly moving to a different model an
+            // older message used.
             return nil
         }
         // Walk from the newest message backward, stopping at the first one that
@@ -618,7 +653,7 @@ extension ChatViewController {
         // row-event access, which is a hot path during a streamed response.
         var i = messages.count - 1
         while i >= 0 {
-            if let result = model(named: messages[i].configuration?.model) {
+            if let result = pinnedModel(named: messages[i].configuration?.model, vendor: vendor) {
                 return result
             }
             i -= 1
@@ -652,17 +687,36 @@ extension ChatViewController {
     // provider picker is locked once a chat has messages.
     private var retiredModelFallback: AIMetadata.Model? {
         guard let name = pinnedChatModelName,
-              model(named: name) == nil else {
+              pinnedModel(named: name, vendor: storedChatVendor) == nil else {
             return nil
         }
-        // vendor(forModelName:) returns nil for OpenAI names (gpt-*, o3, o4-mini,
-        // codex, ...) because its nil is meaningful for manual-model
-        // classification. Here nil just means "unrecognized", and OpenAI is the
-        // right default (matching LLMMetadata.manualVendor), so a retired OpenAI
-        // model stays on OpenAI instead of falling through to the global default
-        // vendor - which the locked provider picker won't let the user change.
-        let vendor = LLMMetadata.vendor(forModelName: name) ?? .openAI
-        return recommendedModel(for: vendor)
+        return Self.fallbackModel(forUnresolvedPinNamed: name, vendor: storedChatVendor)
+    }
+
+    // The model a chat whose pin no longer resolves runs on. It always stays on
+    // the pin's vendor: the stored vendor when known, else one inferred from the
+    // name. vendor(forModelName:) returns nil for OpenAI names (gpt-*, o3,
+    // o4-mini, codex, ...) because its nil is meaningful for manual-model
+    // classification. Here nil just means "unrecognized", and OpenAI is the right
+    // default (matching LLMMetadata.manualVendor), so a retired OpenAI model stays
+    // on OpenAI instead of falling through to the global default vendor - which
+    // the locked provider picker won't let the user change.
+    //
+    // A chat pinned to an Ollama model that is gone keeps showing that model on
+    // Ollama, so a turn sent with it fails with an error (see
+    // LLMMetadata.resolvePinnedModel) instead of quietly going to a different
+    // model, local or not. Likewise a chat pinned to a manual model that was
+    // removed or renamed in Settings keeps showing that model.
+    static func fallbackModel(forUnresolvedPinNamed name: String,
+                              vendor storedVendor: iTermAIVendor?) -> AIMetadata.Model? {
+        if storedVendor == .llama {
+            return LLMMetadata.unavailablePinnedOllamaModel(named: name)
+        }
+        if storedVendor == LLMMetadata.manualModelPinVendor {
+            return LLMMetadata.unavailablePinnedManualModel(named: name)
+        }
+        let vendor = storedVendor ?? LLMMetadata.vendor(forModelName: name) ?? .openAI
+        return LLMMetadata.recommendedModel(for: vendor) ?? LLMMetadata.alternateModels(for: vendor).first
     }
 
     private var effectiveChatModel: AIMetadata.Model? {
@@ -678,6 +732,18 @@ extension ChatViewController {
 
     private var manualConfiguredModels: [AIMetadata.Model] {
         return LLMMetadata.manualModels()
+    }
+
+    // The chat's manual model when it is no longer configured (removed or renamed
+    // in Settings), nil otherwise. The chat keeps showing it as its manual model
+    // so a send fails clearly instead of the chat appearing to be on a vendor.
+    private var missingManualPinName: String? {
+        guard let chatID,
+              storedChatVendor == LLMMetadata.manualModelPinVendor,
+              storedChatModel == nil else {
+            return nil
+        }
+        return listModel.chat(id: chatID)?.modelName
     }
 
     private var defaultManualConfiguredModel: AIMetadata.Model? {
@@ -710,7 +776,7 @@ extension ChatViewController {
         // request time), so a name present as a manual config is a manual
         // selection. Only a name that exists solely in the built-in catalog
         // belongs to that catalog model's vendor.
-        if manualConfiguredModels.contains(where: { $0.name == name }) {
+        if manualConfiguredModels.contains(where: { $0.name == name }) || name == missingManualPinName {
             return ChatProviderOption.manualModel(name: name).identifier
         }
         if let builtInVendor = builtInModels.first(where: { $0.name == name })?.vendor {
@@ -1218,6 +1284,33 @@ extension ChatViewController {
         } catch {
             DLog("\(error)")
         }
+        // The permission buttons in the transcript show each category's
+        // state, so refresh them whether the change came from one of them or
+        // from the info menu.
+        reloadPermissionsCells()
+    }
+
+    private func reloadPermissionsCells() {
+        guard let model else {
+            return
+        }
+        let items = model.items
+        let rows = Self.permissionsRowIndexes(in: (0..<items.count).map { items[$0] })
+        guard !rows.isEmpty else {
+            return
+        }
+        tableView.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(integer: 0))
+        tableView.invalidateIntrinsicContentSize()
+    }
+
+    // Rows holding a permissions bubble, whose button titles show the state.
+    static func permissionsRowIndexes(in items: [ChatViewControllerModel.Item]) -> IndexSet {
+        return IndexSet(items.indices.filter { i in
+            if case .message(let message) = items[i] {
+                return message.message.isPermissionsClientLocal
+            }
+            return false
+        })
     }
 
     private func publishUpdatedPermissions() throws {
@@ -1732,11 +1825,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                     guard let category = RemoteCommand.Content.PermissionCategory(rawValue: identifier) else {
                         return
                     }
+                    // Reloads every permissions bubble, this one included.
                     toggle(permissionCategory: category)
-                    // Button titles encode the current permission state
-                    // ("Category: Allow"/"Ask"/"Never"), so reload the
-                    // cell after a toggle to refresh them.
-                    reloadCell(forMessageID: messageID)
                 }
             case .workgroupPermissionRequest:
                 let capturedChatID = self.chatID
@@ -2763,8 +2853,7 @@ extension Message.Content {
                 """, comment: "Body of the prompt asking the user to enable orchestration mode")
                 return AttributedStringForSystemMessageMarkdown(body) {}
             case let .orchestrationPermissionGranted(_, name):
-                let body = String(localized: "ChatViewController.PermissionGrantedBody", defaultValue: "**Granted this chat permission to control \u{201C}\(name)\u{201D}.**\n\nYou @-mentioned it, so the agent can act there without asking. Revoke to require approval again.", comment: "Notice shown when the chat is granted permission to control a mentioned entity")
-                return AttributedStringForSystemMessageMarkdown(body) {}
+                return AttributedStringForSystemMessageMarkdown(Message.orchestrationPermissionGrantedMarkdown(name: name)) {}
             }
 
         case .selectSessionRequest(_, terminal: let terminal):
@@ -2788,6 +2877,13 @@ extension Message {
     }
     var textColor: NSColor {
         return author == .user ? .white : .textColor
+    }
+
+    // The name is escaped so a session name like “my_dev_box” isn't read
+    // as emphasis markup.
+    static func orchestrationPermissionGrantedMarkdown(name: String) -> String {
+        let escapedName = name.escapedForMarkdown
+        return String(localized: "ChatViewController.PermissionGrantedBody", defaultValue: "**Granted this chat permission to control \u{201C}\(escapedName)\u{201D}.**\n\nYou @-mentioned it, so the agent can act there without asking. Revoke to require approval again.", comment: "Notice shown when the chat is granted permission to control a mentioned entity")
     }
 
     // True when this is the permissions toggle bubble. Its buttons are
@@ -3062,11 +3158,17 @@ extension ChatViewController: ChatFindBarViewDelegate {
         guard findBar != nil else {
             return
         }
+        // Removing the bar while its search field is focused would leave the
+        // window with no first responder, so typing afterwards would go nowhere.
+        let barHadFocus = findBar?.containsFirstResponder ?? false
         findController.clear()
         refreshVisibleHighlights()
         findBar?.removeFromSuperview()
         findBar = nil
         setNeedsLayoutNow()
+        if barHadFocus {
+            inputView.makeTextViewFirstResponder()
+        }
     }
 
     private func runFind(query: String, mode: iTermFindMode) {
@@ -3291,14 +3393,19 @@ extension ChatViewController: ChatToolbarDataSource {
             options.append(ChatProviderOption.vendor(vendor))
         }
 
-        // Then a separator followed by each manually-configured model.
-        let manualModels = manualConfiguredModels
-        if !manualModels.isEmpty {
+        // Then a separator followed by each manually-configured model, plus the
+        // chat's own manual model if it is no longer configured, so its selection
+        // can still be shown.
+        var manualNames = manualConfiguredModels.map { $0.name }
+        if let missingManualPinName, !manualNames.contains(missingManualPinName) {
+            manualNames.append(missingManualPinName)
+        }
+        if !manualNames.isEmpty {
             if !options.isEmpty {
                 options.append(ChatProviderOption.separator())
             }
-            for model in manualModels {
-                options.append(ChatProviderOption.manualModel(name: model.name))
+            for name in manualNames {
+                options.append(ChatProviderOption.manualModel(name: name))
             }
         }
         return options
@@ -3333,7 +3440,14 @@ extension ChatViewController: ChatToolbarDataSource {
         guard let vendor = effectiveChatProvider else {
             return [model]
         }
-        return LLMMetadata.alternateModels(for: vendor)
+        let alternates = LLMMetadata.alternateModels(for: vendor)
+        if vendor == .llama, !alternates.contains(where: { $0.name == model.name }) {
+            // The chat's Ollama model is gone (see fallbackModel). List it so the
+            // popup keeps it selected and a send uses it (and fails clearly)
+            // rather than whichever discovered model the popup would select.
+            return alternates + [model]
+        }
+        return alternates
     }
 
     var webSearchEnabled: Bool {
@@ -3683,6 +3797,9 @@ extension ChatViewController: iTermRightGutterPanel {
         if streaming {
             stopStreaming()
         }
+        // A half-typed @-mention would otherwise leave its session buttons up
+        // with no way back to this chat.
+        inputView.endMentionComposition()
         brokerSubscription?.unsubscribe()
         brokerSubscription = nil
         chatID = nil
@@ -3720,6 +3837,31 @@ extension ChatViewController: iTermRightGutterPanel {
             return session
         }
         return panelAttachedSession
+    }
+
+    // Closing the tab that hosts a sidebar chat takes the chat out of the
+    // window the same way switching tabs does, so the input can't tell that
+    // it's gone. End any half-typed mention so its session buttons don't
+    // linger.
+    fileprivate func hostSessionWillTerminate(_ session: PTYSession) {
+        guard isInlinePanel,
+              session === currentInlinePanelSession || session === panelAttachedSession else {
+            return
+        }
+        inputView.endMentionComposition()
+    }
+
+    // The user picked an @-mention by clicking a session, possibly in another
+    // tab or window. Bring this chat back in front of them: a sidebar chat
+    // lives in its session, so reveal that session (switching tabs if
+    // needed); a chat window just comes to the front.
+    fileprivate func revealForMentionSelection() {
+        if isInlinePanel {
+            currentInlinePanelSession?.reveal()
+            return
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        view.window?.makeKeyAndOrderFront(nil)
     }
 }
 
@@ -4103,15 +4245,19 @@ extension ChatViewController {
                 try OrchestratorClient.instance?.disableOrchestration(forChatID: chatID,
                                                                       disabledNotice: notice)
             } else {
-                // Also drop the client-side orchestrator dispatcher (and its
-                // persisted-watcher and broker-subscription state) so it
-                // rebuilds fresh on the next orchestration tool call. Mirrors
-                // dropAgent: order matters, dispatcher tear-down before the
-                // listModel write so a tab-status notification that fires
-                // between the two doesn't get the dispatcher persisting stale
-                // claim / watcher state back to disk after the model clear.
-                OrchestratorClient.instance?.dropDispatcher(forChatID: chatID)
-                try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
+                // Also rebuild the client-side orchestrator dispatcher (and
+                // its persisted-watcher and broker-subscription state).
+                // Mirrors dropAgent: order matters, dispatcher tear-down
+                // before the listModel write so a tab-status notification
+                // that fires between the two doesn't get the dispatcher
+                // persisting stale claim / watcher state back to disk after
+                // the model clear. A fresh dispatcher is built at once if the
+                // chat has pending timers or watches.
+                if let orchestratorClient = OrchestratorClient.instance {
+                    try orchestratorClient.enableOrchestration(forChatID: chatID)
+                } else {
+                    try listModel.setOrchestrationEnabled(enabled, forChatID: chatID)
+                }
                 try? client.publishNotice(chatID: chatID, notice: notice)
             }
         } catch {

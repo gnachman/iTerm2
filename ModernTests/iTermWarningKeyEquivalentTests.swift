@@ -12,6 +12,12 @@
 //    - Two buttons never get the same automatic shortcut, and an automatic
 //      shortcut never repeats one the caller assigned (QA finding F-020).
 //    - A shortcut the caller assigned is kept, even a text editing one.
+//    - Showing the same warning again (as Permanently Forget Saved Selection
+//      does) gives the same shortcuts: automatic ones keep the Command
+//      modifier and Return still presses the default button (QA findings
+//      F-028 and F-366).
+//    - Automatic shortcuts never take Cmd-H, Cmd-Q, Cmd-W, or Cmd-M, which
+//      macOS reserves for Hide, Quit, Close, and Minimize (QA finding F-337).
 //
 //  No alert is shown. The alert is built with makeAlertForRemoteAnswer.
 //
@@ -27,6 +33,13 @@ final class iTermWarningKeyEquivalentTests: XCTestCase {
     private func makeAlert(labels: [String],
                            explicitKeys: [Int: String] = [:],
                            accessory: NSView? = nil) -> NSAlert {
+        return makeWarning(labels: labels, explicitKeys: explicitKeys, accessory: accessory).makeAlertForRemoteAnswer()
+    }
+
+    @MainActor
+    private func makeWarning(labels: [String],
+                             explicitKeys: [Int: String] = [:],
+                             accessory: NSView? = nil) -> iTermWarning {
         let warning = iTermWarning()
         warning.heading = "Heading"
         warning.title = "The main text."
@@ -37,7 +50,7 @@ final class iTermWarningKeyEquivalentTests: XCTestCase {
         }
         warning.warningType = .kiTermWarningTypePersistent
         warning.accessory = accessory
-        return warning.makeAlertForRemoteAnswer()
+        return warning
     }
 
     /// The Command-only shortcut on each button, or nil if it has none (for
@@ -146,5 +159,55 @@ final class iTermWarningKeyEquivalentTests: XCTestCase {
                               explicitKeys: [1: "c"],
                               accessory: textFieldAccessory())
         XCTAssertEqual(alert.buttons[1].keyEquivalent, "c")
+    }
+
+    /// Building the alert a second time for the same warning must not turn
+    /// the first showing's Cmd-letter shortcuts into bare letters.
+    @MainActor
+    func testShowingTheSameWarningAgainKeepsCommandShortcuts() {
+        let warning = makeWarning(labels: ["Paste", "Cancel", "Advanced…"])
+        let first = warning.makeAlertForRemoteAnswer()
+        let second = warning.makeAlertForRemoteAnswer()
+        XCTAssertEqual(commandLetters(second), commandLetters(first))
+        XCTAssertEqual(commandLetters(second)[2], "a")
+        for button in second.buttons {
+            let isLetter = button.keyEquivalent.unicodeScalars.first.map { CharacterSet.letters.contains($0) } ?? false
+            if isLetter {
+                XCTAssertEqual(button.keyEquivalentModifierMask, .command,
+                               "\(button.title) has a bare-letter shortcut")
+            }
+        }
+        XCTAssertEqual(second.buttons[0].keyEquivalent, "\r")
+        XCTAssertEqual(second.buttons.map(\.keyEquivalent), first.buttons.map(\.keyEquivalent))
+    }
+
+    /// The caller's key equivalent is not overwritten by building the alert.
+    @MainActor
+    func testBuildingTheAlertDoesNotChangeTheActionsKeyEquivalents() {
+        let warning = makeWarning(labels: ["OK", "Help", "Hide"], explicitKeys: [2: "h"])
+        _ = warning.makeAlertForRemoteAnswer()
+        XCTAssertEqual((warning.warningActions ?? []).map { $0.keyEquivalent }, [nil, nil, "h"])
+    }
+
+    /// Cmd-H must hide iTerm2, not press Help (QA finding F-337).
+    @MainActor
+    func testAutomaticShortcutsSkipSystemStandardLetters() {
+        let letters = commandLetters(makeAlert(labels: ["Locate", "Help", "Cancel", "Quit", "Window", "Minimize"]))
+        for letter in letters {
+            if let letter {
+                XCTAssertFalse(["h", "q", "w", "m"].contains(letter), "Took Cmd-\(letter)")
+            }
+        }
+        XCTAssertEqual(letters[1], "e")  // Help
+        XCTAssertEqual(letters[3], "u")  // Quit
+        XCTAssertEqual(letters[4], "i")  // Window
+        XCTAssertEqual(letters[5], "n")  // Minimize
+    }
+
+    /// A caller may still choose one of those letters on purpose.
+    @MainActor
+    func testExplicitSystemStandardShortcutIsKept() {
+        let alert = makeAlert(labels: ["OK", "Hide"], explicitKeys: [1: "h"])
+        XCTAssertEqual(alert.buttons[1].keyEquivalent, "h")
     }
 }

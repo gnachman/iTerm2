@@ -364,6 +364,30 @@ final class AIChatToolCallRepairTests: XCTestCase {
                       "orphan result must gain a synthesized tool_use")
     }
 
+    /// The usual way a call loses its result is that the user ignored the
+    /// Allow/Deny prompt and sent a new message. The stand-in result must not
+    /// tell the model iTerm2 was restarted, and must not invite it to run the
+    /// command again on its own. QA finding F-493.
+    func testOrphanCallOutput_describesAbandonedPromptAccurately() {
+        let input = [
+            text("please run sleep", role: .user),
+            toolUse("toolu_ignored", args: "{\"command\":\"sleep 30\"}"),
+            text("never mind, next", role: .user),
+        ]
+        let output = AIChatToolCallRepair.repairingOrphanedToolCalls(input)
+        guard let resultIndex = output.firstIndex(where: { isToolResult($0, id: "toolu_ignored") }),
+              case .functionOutput(_, let filler, _) = output[resultIndex].body else {
+            XCTFail("expected a synthesized tool_result")
+            return
+        }
+        XCTAssertFalse(filler.contains("iTerm2 was restarted before"),
+                       "must not assert a restart that did not happen: \(filler)")
+        XCTAssertFalse(filler.contains("re-issue if needed"),
+                       "must not invite re-running a command the user passed over: \(filler)")
+        XCTAssertTrue(filler.contains("moved on without answering"),
+                      "must say the user may not have answered the permission prompt: \(filler)")
+    }
+
     // MARK: - Anthropic wire format (the decisive id-based test)
 
     /// Build the real Anthropic request body from a repaired orphan and assert

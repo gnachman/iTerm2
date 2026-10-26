@@ -289,6 +289,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
 - (void)resetEchoProbe;
 - (void)threadedReadTask:(char *)buffer length:(int)length;
+// Bytes read from the task so far, for the flow control monitor's receive rate. Safe on any thread.
+- (long long)bytesReceived;
 
 - (void)destructivelySetScreenWidth:(int)width
                              height:(int)height

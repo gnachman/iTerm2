@@ -73,6 +73,7 @@
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100ScreenMutableState+Resizing.h"
+#import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100ScreenMutableState.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
@@ -344,6 +345,7 @@ static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archi
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
 static NSString *const SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE = @"Auto Send Clippings When Idle";  // BOOL. Code-review peer's toolbar toggle state.
 static NSString *const SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE = @"Auto Request Review When Idle";  // BOOL. Main session's toolbar toggle state.
+static NSString *const SESSION_ARRANGEMENT_FRAMER_PANE = @"Framer Pane";  // NSDictionary from -framerPaneArrangement: a workgroup peer running as a pane of its leader's framer, which it reattaches to after a restart.
 static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
 static NSString *const SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT = @"Code Review Last Prompt";  // NSString. The prompt text the user last submitted in a code-review session, so a reload after restore defaults to their edited prompt.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
@@ -450,8 +452,30 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @end
 
 @implementation PTYSession {
+    // See -isTmuxBuried and -hasBeenTmuxBuried.
+    BOOL _tmuxBuried;
+    BOOL _hasBeenTmuxBuried;
+    // Stays set after the session stops being a tmux client, as a second -terminate finds it.
+    BOOL _hasBeenTmuxClient;
+    // A tmux pane on a host reached through SSH Integration: the pane's pid on that host, from
+    // #{pane_pid}. Its jobs are read from the gateway conductor's view of the host's processes
+    // (see remoteTmuxPaneProcessInfoProvider). nil for a pane on this Mac, which uses
+    // _shell.tmuxClientProcessID instead. Also set for a framer pane (a workgroup peer running
+    // as a pane of its leader's framer): the pane's pid on the leader's host.
+    NSNumber *_remoteTmuxPanePID;
+    // Set while restarting a program through the fallback of a framer pane that could not
+    // start, so the next -startProgram:... runs it as a local process.
+    BOOL _startNextProgramLocally;
+
+    // Where the screen records flow-controlled frames from the framer as it parses and
+    // executes them, for the conductor's flow controller. See iTermFramerFlowLedger.
+    iTermFramerFlowLedger *_flowLedger;
 
     NSString *_termVariable;
+
+    // Pastes made by sendTextSlowly: that may not have finished, so stopSendingTextSlowly can
+    // stop them without touching the user's own pastes.
+    NSHashTable<PasteEvent *> *_slowlySentPasteEvents;
 
     // Highest note-model generation this session has ever installed. See -setSessionNoteModel:.
     NSInteger _sessionNoteGenerationFloor;
@@ -749,6 +773,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     TriggerController *_triggerWindowController;
     iTermEventTriggerEvaluator *_eventTriggerEvaluator;
 
+    // Set by -terminate, which clears tmuxMode before -hardStop runs. A tmux client's contents
+    // belong to the tmux server, so it isn't archived on closure.
+    BOOL _terminatedAsTmuxClient;
     // Tracks the scheduled -hardStop that makes a terminated session stop being
     // restorable. Used to pause/resume the countdown (see -pauseTerminationTimer)
     // so a modal alert can be shown without the restorable session expiring.
@@ -805,6 +832,28 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     void (^_pendingConductor)(PTYSession *);
     BOOL _connectingSSH;
     NSMutableData *_queuedConnectingSSH;
+    // it2ssh unique ID of the outermost conductor most recently ended by Disconnect. Its
+    // EndSSH may arrive after the hook was forced off and must still release it2ssh.
+    NSString *_disconnectedSSHClientUniqueID;
+    // Watches local it2ssh processes so the session recovers when one dies (F-482).
+    iTermSSHClientMonitor *_sshClientMonitor;
+    // Abandoned connections whose framer recovery must not begin, as decided on the main
+    // thread. A recovery requested before the terminal learns of the abandonment is
+    // refused here (F-459).
+    iTermFramerRecoveryRefusals *_framerRecoveryRefusals;
+    // The tty's modes from before the outermost connection's ssh made it raw, and that
+    // connection's it2ssh unique ID (F-460).
+    iTermTTYModes *_preSSHTTYModes;
+    NSString *_preSSHTTYModesClientUniqueID;
+    // it2ssh ran on another tty (e.g., inside tmux), so this session's tty isn't ssh's.
+    BOOL _preSSHTTYIsElsewhere;
+    iTermTTYModeRepairer *_ttyModeRepairer;
+    // Recovering an ssh integration connection: how deep it was, when it was nested. The outer
+    // framer's recovery knows nothing of a framer nested in it, so each depth is recovered in
+    // turn. Keys typed meanwhile are held for the innermost.
+    int _framerRecoveryTargetDepth;
+    NSMutableData *_keysHeldForFramerRecovery;
+    NSInteger _framerRecoveryAttempt;
 
     __weak id<VT100ScreenMarkReading> _selectedScreenMark;
     NSMutableArray<PTYSessionHostState *> *_hostStack;
@@ -919,6 +968,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
         _screen = [[VT100Screen alloc] init];
         NSParameterAssert(_shell != nil && _screen != nil);
+        _flowLedger = [[iTermFramerFlowLedger alloc] init];
+        iTermFramerFlowLedger *flowLedger = _flowLedger;
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                 VT100ScreenMutableState *mutableState,
+                                                 id<VT100ScreenDelegate> delegate) {
+            mutableState.flowLedger = flowLedger;
+        }];
 
         _overriddenFields = [[NSMutableSet alloc] init];
 
@@ -979,6 +1035,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
+        _sshClientMonitor = [[iTermSSHClientMonitor alloc] init];
+        _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
+        _ttyModeRepairer = [[iTermTTYModeRepairer alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directoryTracker = [[iTermSessionDirectoryTracker alloc] initWithVariablesScope:self.variablesScope];
         _directoryTracker.delegate = self;
@@ -1039,6 +1098,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(foregroundJobAncestorsDidChange:)
                                                      name:iTermProcessCacheForegroundJobAncestorsDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxServerLocalityDidBecomeKnown:)
+                                                     name:kTmuxControllerServerLocalityDidBecomeKnown
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionContentsChanged:)
@@ -1174,8 +1237,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
+    [_flowLedger release];
     [_restoreSavedForegroundJobAncestors release];
+    [_slowlySentPasteEvents release];
     [_restoredArchivePath release];
+    [_remoteTmuxPanePID release];
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -1368,6 +1434,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [_appSwitchingPreventionDetector release];
     [_stuckKeyReportingDetector release];
     [_queuedConnectingSSH release];
+    [_disconnectedSSHClientUniqueID release];
+    [_sshClientMonitor release];
+    [_framerRecoveryRefusals release];
+    [_preSSHTTYModes release];
+    [_preSSHTTYModesClientUniqueID release];
+    [_ttyModeRepairer release];
+    [_keysHeldForFramerRecovery release];
     [_hostStack release];
     [_defaultPointer release];
     [_originatingArrangement release];
@@ -2365,12 +2438,20 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             if (aSession->_conductor) {
                 [aSession updateVariablesFromConductor];
+                // The outermost conductor's it2ssh runs locally and hooked the top-level parser.
+                // Its unique ID lets the parser recognize that it2ssh's EndSSH even mid-frame.
+                iTermConductor *rootConductor = aSession->_conductor;
+                while (rootConductor.parent) {
+                    rootConductor = rootConductor.parent;
+                }
+                NSString *clientUniqueID = rootConductor.clientUniqueID.length ? rootConductor.clientUniqueID : nil;
                 [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                     NSData *data = [NSData castFrom:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_TREE]];
                     NSDictionary *dict = [NSDictionary it_fromKeyValueCodedData:data];
                     if (dict) {
                         [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]
-                                                                     tree:dict];
+                                                                     tree:dict
+                                                           clientUniqueID:clientUniqueID];
                     }
                 }];
             }
@@ -2407,6 +2488,13 @@ ITERM_WEAKLY_REFERENCEABLE
             if (didAttach) {
                 runCommand = NO;
                 attachedToServer = YES;
+                if (aSession->_conductor) {
+                    // Resynchronizing with the framer should not wait for the host to print
+                    // something.
+                    [aSession.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                        [mutableState flushParserAsynchronously];
+                    }];
+                }
                 shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
@@ -2455,6 +2543,14 @@ ITERM_WEAKLY_REFERENCEABLE
         // paths all require isRestartable, i.e. a non-nil _program). If the
         // arrangement carried no restartable program, fall through to the
         // normal path rather than stranding a dead, unrestartable pane.
+        NSDictionary *framerPane = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_FRAMER_PANE]];
+        if (runCommand && framerPane && [aSession restoreFramerPaneFromArrangement:framerPane launchCommand:aSession.program]) {
+            // A workgroup peer whose pane may still be running on its leader's host: reattach
+            // to it instead of launching anything. A code-review or diff peer too, whose
+            // program would otherwise be left exited.
+            DLog(@"Restored a framer pane; it reattaches instead of relaunching");
+            runCommand = NO;
+        }
         if (runCommand && aSession.isRestartable) {
             if ([options[PTYSessionArrangementOptionsInhibitRelaunch] boolValue] ||
                 (workgroupState &&
@@ -3035,6 +3131,11 @@ ITERM_WEAKLY_REFERENCEABLE
     return _conductor.sshIdentity;
 }
 
+- (void)setPendingJumpsForNextLaunch:(NSArray<iTermSSHReconnectionInfo *> *)jumps {
+    [_pendingJumps release];
+    _pendingJumps = [jumps mutableCopy];
+}
+
 - (NSArray<iTermSSHReconnectionInfo *> *)sshCommandLineSequence {
     assert(_conductor);
     NSMutableArray<iTermSSHReconnectionInfo *> *sequence = [NSMutableArray array];
@@ -3088,6 +3189,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id<ProcessInfoProvider>)processInfoProvider {
+    if (_shell.framerPaneJobManager) {
+        id<ProcessInfoProvider> provider = self.hostConductor.processInfoProvider;
+        if (provider) {
+            return provider;
+        }
+        return [iTermProcessCache sharedInstance];
+    }
     PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
     if (tmuxGatewaySession && self.isTmuxClient && !_conductor) {
         return [tmuxGatewaySession processInfoProvider];
@@ -3099,8 +3207,15 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (id<SessionProcessInfoProvider>)sessionProcessInfoProvider {
+    if (_shell.framerPaneJobManager) {
+        return [self remoteTmuxPaneProcessInfoProvider] ?: _shell;
+    }
     PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
     if (tmuxGatewaySession && self.isTmuxClient && !_conductor && !_tmuxController.serverIsLocal) {
+        id<SessionProcessInfoProvider> pane = [self remoteTmuxPaneProcessInfoProvider];
+        if (pane) {
+            return pane;
+        }
         return [tmuxGatewaySession sessionProcessInfoProvider];
     }
     if (!_conductor.framing) {
@@ -3113,6 +3228,14 @@ ITERM_WEAKLY_REFERENCEABLE
     NSMutableArray<iTermProcessInfo *> *result = [NSMutableArray array];
     if (_conductor) {
         [result addObjectsFromArray:_conductor.transitiveProcesses];
+    }
+    if (_remoteTmuxPanePID) {
+        // A tmux pane on a remote host. _shell.pid means nothing there.
+        iTermProcessInfo *pane = [self.processInfoProvider processInfoForPid:_remoteTmuxPanePID.intValue];
+        if (pane) {
+            [result addObjectsFromArray:[pane descendantsSkippingLevels:0]];
+        }
+        return result;
     }
     pid_t thePid = [_shell pid];
 
@@ -3313,6 +3436,25 @@ ITERM_WEAKLY_REFERENCEABLE
     completion([@[ program ] arrayByAddingObjectsFromArray:arguments ]);
 }
 
++ (void)applyIT2AppPathTo:(NSMutableDictionary *)env
+                suiteName:(nullable NSString *)suiteName
+           settingEnabled:(BOOL)settingEnabled
+               bundlePath:(NSString *)bundlePath {
+    // A suite means more than one instance is running by definition, so the ambiguity this
+    // variable exists to resolve is always present and the user should not have to ask for it.
+    if (settingEnabled || suiteName.length > 0) {
+        env[@"IT2_APP_PATH"] = bundlePath;
+        return;
+    }
+    // Remove rather than leave alone. Whatever is here was inherited from the process that
+    // started this one: a parent tab running another build, or a tmux server started days and
+    // several builds ago, whose environment every pane inherits. A stale value is worse than
+    // none, because it2 then asks THAT iTerm2 for a cookie and this one rejects it, so every
+    // hook fails with "Authentication failed" having set nothing. With no value at all, it2
+    // targets plain "iTerm2", which is correct whenever only one is running.
+    [env removeObjectForKey:@"IT2_APP_PATH"];
+}
+
 - (NSDictionary *)environmentForNewJobFromEnvironment:(NSDictionary *)environment
                                         substitutions:(NSDictionary *)substitutions
                                           arrangement:(NSString *)arrangementName
@@ -3343,9 +3485,10 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"IT2_SUITE"] = suiteName;
     }
 
-    if ([iTermAdvancedSettingsModel setIT2AppPath]) {
-        env[@"IT2_APP_PATH"] = [[NSBundle mainBundle] bundlePath];
-    }
+    [PTYSession applyIT2AppPathTo:env
+                        suiteName:suiteName
+                   settingEnabled:[iTermAdvancedSettingsModel setIT2AppPath]
+                       bundlePath:[[NSBundle mainBundle] bundlePath]];
 
     if ([iTermAdvancedSettingsModel addUtilitiesToPATH]) {
         NSString *sshPath = [iTermPathToSSH() stringByDeletingLastPathComponent];
@@ -3585,6 +3728,36 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
          arrangementName,
          @(fromArrangement),
          self);
+    if (_startNextProgramLocally) {
+        _startNextProgramLocally = NO;
+    } else if (!browser) {
+        // A workgroup peer of a leader on a remote host runs its program as a pane of the
+        // leader's framer when it can. If the pane cannot start, start it as before.
+        __weak __typeof(self) weakSelf = self;
+        void (^fallback)(void) = ^{
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            strongSelf->_startNextProgramLocally = YES;
+            [strongSelf startProgram:command
+                                 ssh:ssh
+                             browser:browser
+                         environment:environment
+                         customShell:customShell
+                              isUTF8:isUTF8
+                       substitutions:substitutions
+                         arrangement:arrangementName
+                     fromArrangement:fromArrangement
+                webViewConfiguration:webViewConfiguration
+                          completion:completion];
+        };
+        if ([self startWorkgroupProgramInFramerPaneIfPossible:command
+                                                   completion:completion
+                                                     fallback:fallback]) {
+            return;
+        }
+    }
     _temporarilySuspendOffscreenMarkAlerts = fromArrangement;
     self.program = command;
     self.customShell = customShell;
@@ -3845,7 +4018,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.workgroupInstance != nil) {
         return;
     }
-    if (_tmuxMode == TMUX_CLIENT && (_tmuxController.detached || _tmuxController.detaching)) {
+    if (_hasBeenTmuxClient || _hasBeenTmuxBuried) {
+        // The pane closed on the server. No profile command ran, and tmux Integration closes
+        // panes it just made (e.g., a workgroup's placeholder windows) as a matter of course. A
+        // buried workgroup member may be ended after its connection is gone, too. A session
+        // terminated again once it is no longer a client (as on detaching) is one too.
         return;
     }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < [iTermAdvancedSettingsModel shortLivedSessionDuration]) {
@@ -3987,10 +4164,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (self.tmuxMode == TMUX_CLIENT) {
-        assert([_delegate tmuxWindow] >= 0);
-        [_tmuxController deregisterWindow:[_delegate tmuxWindow]
-                               windowPane:self.tmuxPane
-                                  session:self];
+        if (_tmuxBuried) {
+            // No tab, so no window registration: see -buryTmuxClientSession.
+            [_tmuxController deregisterBuriedSession:(PTYSession<iTermTmuxControllerSession> *)self
+                                            withPane:self.tmuxPane];
+        } else {
+            assert([_delegate tmuxWindow] >= 0);
+            [_tmuxController deregisterWindow:[_delegate tmuxWindow]
+                                   windowPane:self.tmuxPane
+                                      session:self];
+        }
         // This call to fitLayoutToWindows is necessary to handle the case where
         // a small window closes and leaves behind a larger (e.g., fullscreen)
         // window. We want to set the client size to that of the smallest
@@ -4011,11 +4194,15 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
         [self uninstallTmuxTitleMonitor];
         [self uninstallTmuxForegroundJobMonitor];
+        [self stopTrackingRemoteTmuxPane];
+    } else if (_shell.framerPaneJobManager) {
+        [self stopTrackingRemoteTmuxPane];
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         [_tmuxController detach];
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
+    _terminatedAsTmuxClient = wasTmuxClient;
     BOOL undoable = (![self isTmuxClient] &&
                      !_shouldRestart &&
                      !_synthetic &&
@@ -4169,6 +4356,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         // Its contents are already in that archive.
         archivePath = _restoredArchivePath;
     } else if (!self.isTmuxClient &&
+               !_terminatedAsTmuxClient &&
                !_isArchive &&
                [iTermProfilePreferences boolForKey:KEY_ARCHIVE inProfile:self.profile]) {
         archivePath = [self saveArchive];
@@ -4430,6 +4618,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // is read. Without this the presentation name keeps the undecorated title until
     // something unrelated changes the base name. Issue 13072.
     [_nameController formattingDescriptorDidChange];
+    // Now the pane can reach its gateway, whose connection's host it may take.
+    [self updateInferredTmuxHost];
 }
 
 - (void)handleKeypressInTmuxGateway:(NSEvent *)event {
@@ -4538,11 +4728,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
      canBroadcast:(BOOL)canBroadcast
         reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
-    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
+    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH || _keysHeldForFramerRecovery) {
         if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
+        } else if (_keysHeldForFramerRecovery) {
+            [_keysHeldForFramerRecovery appendData:[string dataUsingEncoding:encoding]];
         } else if (_conductor.handlesKeystrokes) {
             [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         } else if (_connectingSSH) {
@@ -4999,6 +5191,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setExited:NO];
     [_shell autorelease];
     _shell = nil;
+    // Its tty modes are no business of the new shell's.
+    [_ttyModeRepairer disarm];
     [_logging stop];
 
     self.guid = [NSString uuid];
@@ -6721,13 +6915,20 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)setDelegate:(id<PTYSessionDelegate>)delegate {
-    if ([self isTmuxClient]) {
+    // A buried session holds no window registration to release.
+    if ([self isTmuxClient] && !_tmuxBuried) {
         [_tmuxController deregisterWindow:[_delegate tmuxWindow]
                                windowPane:self.tmuxPane
                                   session:self];
     }
     BOOL needsTermID = (_delegate == nil);
     _delegate = delegate;
+    if (_tmuxBuried && delegate) {
+        // Adopted into a tab: see -buryTmuxClientSession.
+        RLog(@"Buried tmux session %@ for pane %d is adopted into a tab", self, self.tmuxPane);
+        _tmuxBuried = NO;
+        [self disinter];
+    }
     if ([self isTmuxClient]) {
         [_tmuxController registerSession:self
                                 withPane:self.tmuxPane
@@ -7611,6 +7812,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_WORKGROUP] = workgroupState;
     }
 
+    // Only with contents, as when restoring windows after a restart: the pane is still running
+    // then. A saved arrangement opened later starts its program anew.
+    NSDictionary *framerPane = includeContents ? self.framerPaneArrangement : nil;
+    if (framerPane) {
+        result[SESSION_ARRANGEMENT_FRAMER_PANE] = framerPane;
+    }
+
     // The prompt the user last submitted in a code-review session. Not
     // derivable from the workgroup config (which only has the raw command
     // template), so persist it here; on restore a reload defaults to the
@@ -7783,7 +7991,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if ([_delegate sessionIsActiveInTab:self]) {
         [self maybeUpdateTitles];
     } else {
-        [self setCurrentForegroundJobProcessInfo:[self.sessionProcessInfoProvider cachedProcessInfoIfAvailable]];
+        [self refreshForegroundJobFromCacheIfAvailable];
         [self.view setTitle:_nameController.presentationSessionTitle];
     }
     // Runs for inactive sessions too: a background tab is exactly the one whose
@@ -7910,6 +8118,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return [self.variablesScope valueForVariableName:iTermVariableKeySessionJob];
 }
 
+// The cheap refresh an inactive session gets on each display update. Nothing in the cache is the
+// normal state for a cold cache, and was the permanent state for a tmux pane until its task
+// looked the pane pid up: it must leave the job alone, not clear it. GlobalJobMonitor cannot tell
+// "cleared" from "exited", and an empty ancestry fires the leader-only Exit Workgroup trigger.
+- (void)refreshForegroundJobFromCacheIfAvailable {
+    iTermProcessInfo *processInfo = [self.sessionProcessInfoProvider cachedProcessInfoIfAvailable];
+    if (!processInfo) {
+        return;
+    }
+    [self setCurrentForegroundJobProcessInfo:processInfo];
+}
+
 - (void)setCurrentForegroundJobProcessInfo:(iTermProcessInfo *)processInfo {
     // processInfo is the deepest foreground job. It may be a helper that runs in
     // the foreground process group but isn't actually attached to the terminal
@@ -7926,7 +8146,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // path and the foreground-job ancestry use. Otherwise the cache lookup misses
     // and the display job silently degrades to the raw deepest job for tmux panes.
     const pid_t effectivePid = _shell.tmuxClientProcessID ? _shell.tmuxClientProcessID.intValue : _shell.pid;
-    iTermProcessInfo *displayInfo = [self.processInfoProvider displayForegroundJobForPid:effectivePid] ?: processInfo;
+    // A remote pane's processes are keyed by its pid on that host, in the gateway's provider.
+    const pid_t displayPid = _remoteTmuxPanePID ? _remoteTmuxPanePID.intValue : effectivePid;
+    iTermProcessInfo *displayInfo = [self.processInfoProvider displayForegroundJobForPid:displayPid] ?: processInfo;
     DLog(@"%p set jobName to %@ (pid %@); raw deepest/deepestJob is %@ (pid %@); root pid %@",
          self, displayInfo.name, @(displayInfo.processID), processInfo.name, @(processInfo.processID), @(effectivePid));
     NSString *name = displayInfo.name;
@@ -7940,6 +8162,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         processTitle = name;
     }
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionJob];
+    if (self.isTmuxGateway) {
+        // Whether tmux runs on the connected host decides its panes' host (TmuxPaneInferredHost).
+        [self updateInferredTmuxHostOfPanes];
+    }
     [self.variablesScope setValue:processTitle forVariableNamed:iTermVariableKeySessionProcessTitle];
     [self.variablesScope setValue:displayInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
     [self.variablesScope setValue:@(displayInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
@@ -7975,6 +8201,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         id oldValue = [self.variablesScope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid];
         if (_conductor.framing) {
             [self.variablesScope setValue:_conductor.framedPID
+                         forVariableNamed:iTermVariableKeySessionEffectiveSessionRootPid];
+        } else if (_remoteTmuxPanePID) {
+            // A tmux pane on a remote host: its root is the pane on that host, which is what the
+            // gateway's process provider (this session's processInfoProvider) knows it by. The
+            // Jobs tool reads this.
+            [self.variablesScope setValue:_remoteTmuxPanePID
                          forVariableNamed:iTermVariableKeySessionEffectiveSessionRootPid];
         } else if (effectiveShellPID.intValue > 0) {
             [self.variablesScope setValue:effectiveShellPID
@@ -10070,6 +10302,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     @synchronized ([TmuxGateway class]) {
         _tmuxMode = tmuxMode;
     }
+    if (tmuxMode == TMUX_CLIENT) {
+        _hasBeenTmuxClient = YES;
+    }
     if (tmuxMode == TMUX_GATEWAY) {
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             mutableState.isTmuxGateway = (tmuxMode == TMUX_GATEWAY);
@@ -10195,7 +10430,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)loadTmuxProcessID {
-    if (!_tmuxController.serverIsLocal) {
+    // A pid is only useful where its processes can be seen: on this Mac, or on a host reached
+    // through SSH Integration, whose framer reports any pid registered with it.
+    if (!_tmuxController.serverIsLocal && !self.hostConductor.framing) {
         return;
     }
     NSString *command = [NSString stringWithFormat:@"display-message -t '%%%@' -p '#{pane_pid}'", @(self.tmuxPane)];
@@ -10207,13 +10444,34 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                    flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
+// The controller settled whether its server is local after this session became a client, so the
+// one pane pid fetch in reallySetTmuxMode: was skipped (see loadTmuxProcessID). Ask again.
+- (void)tmuxServerLocalityDidBecomeKnown:(NSNotification *)notification {
+    if (notification.object != _tmuxController || self.tmuxMode != TMUX_CLIENT) {
+        return;
+    }
+    DLog(@"%@: tmux server locality settled; fetching the pane pid", self);
+    [self loadTmuxProcessID];
+}
+
 - (void)didFetchTmuxPid:(NSString *)pidString {
-    if (pidString && self.tmuxMode == TMUX_CLIENT && _tmuxController.serverIsLocal) {
-        NSNumber *pid = @([pidString integerValue]);
-        if (pid.intValue > 0) {
-            _shell.tmuxClientProcessID = pid;
-            [self updateTitles];
-        }
+    if (!pidString || self.tmuxMode != TMUX_CLIENT) {
+        return;
+    }
+    NSNumber *pid = @([pidString integerValue]);
+    if (pid.intValue <= 0) {
+        return;
+    }
+    if (_tmuxController.serverIsLocal) {
+        _shell.tmuxClientProcessID = pid;
+        [self updateTitles];
+    } else if (self.hostConductor.framing) {
+        // Not _shell.tmuxClientProcessID: that registers with this Mac's process cache, where a
+        // remote pid names some unrelated local process.
+        DLog(@"%@: remote tmux pane pid is %@", self, pid);
+        [self stopTrackingRemoteTmuxPane];
+        _remoteTmuxPanePID = [pid retain];
+        [self updateTitles];
     }
 }
 
@@ -10497,6 +10755,70 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (int)tmuxPane {
     return [[self.variablesScope valueForVariableName:iTermVariableKeySessionTmuxWindowPane] intValue];
+}
+
+// The pane's own jobs on the remote host, once its pid is known and the connection is framing.
+- (void)framerPaneDidStartWithCommand:(NSString *)command remotePID:(pid_t)pid {
+    if (command) {
+        // As -startProgram:... would record it, so a restart relaunches the same thing.
+        self.program = command;
+    }
+    _sshState = iTermSSHStateNone;
+    [self stopTrackingRemoteTmuxPane];
+    _remoteTmuxPanePID = [@(pid) retain];
+    // Registers the pid with the leader's framer so its jobs are tracked. The session's root
+    // pid variable follows on the next foreground job update.
+    [self remoteTmuxPaneProcessInfoProvider];
+}
+
+// The terminal identity a local program would get, for a framer pane's program on the remote
+// host. Nothing else from this Mac's environment applies there.
+- (NSDictionary<NSString *, NSString *> *)framerPaneEnvironment {
+    NSDictionary *env = [self environmentForNewJobFromEnvironment:@{}
+                                                    substitutions:@{}
+                                                      arrangement:nil
+                                                  fromArrangement:NO
+                                                 sshConfiguration:nil];
+    NSArray<NSString *> *keys = @[ @"TERM", @"COLORTERM", @"TERM_PROGRAM", @"TERM_PROGRAM_VERSION",
+                                   @"LC_TERMINAL", @"LC_TERMINAL_VERSION", @"TERM_FEATURES",
+                                   @"TERM_SESSION_ID", @"ITERM_SESSION_ID", @"ITERM_PROFILE" ];
+    NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
+    for (NSString *key in keys) {
+        NSString *value = [NSString castFrom:env[key]];
+        if (value) {
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
+- (id<SessionProcessInfoProvider>)remoteTmuxPaneProcessInfoProvider {
+    if (!_remoteTmuxPanePID) {
+        return nil;
+    }
+    return [self.hostConductor sessionProcessInfoProviderForTmuxPanePID:_remoteTmuxPanePID.intValue];
+}
+
+- (void)stopTrackingRemoteTmuxPane {
+    if (!_remoteTmuxPanePID) {
+        return;
+    }
+    [self.hostConductor stopTrackingTmuxPanePID:_remoteTmuxPanePID.intValue];
+    [_remoteTmuxPanePID release];
+    _remoteTmuxPanePID = nil;
+}
+
+- (iTermConductor *)hostConductor {
+    if (_conductor) {
+        return _conductor;
+    }
+    if (_shell.framerPaneJobManager) {
+        return self.framerPaneHostConductor;
+    }
+    if (self.isTmuxClient) {
+        return self.tmuxGatewaySession.conductor;
+    }
+    return nil;
 }
 
 - (PTYSession *)tmuxGatewaySession {
@@ -10953,8 +11275,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
     // No conductor: a local server, or one reached by plain ssh where no it2 exists to read this.
     // The local it2 finds its socket by suite, so a second instance running under -suite can be
-    // told apart from the main one.
-    return @{ @"suite": [iTermUserDefaults customSuiteName] ?: @"iTerm2" };
+    // told apart from the main one, and it asks THIS bundle for a cookie rather than whatever
+    // IT2_APP_PATH the tmux server froze into every pane when some other build started it.
+    return @{ @"suite": [iTermUserDefaults customSuiteName] ?: @"iTerm2",
+              @"app": [[NSBundle mainBundle] bundlePath] };
 }
 
 - (void)tmuxDidOpenInitialWindows {
@@ -10980,6 +11304,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
          @(windowId), layout, zoomed, @(only));
     PTYTab *tab = [_tmuxController window:windowId];
     if (!tab) {
+        if ([_tmuxController parkedWindow:windowId layoutDidChange:layout]) {
+            DLog(@"* Parked window: resized its buried sessions");
+            return NO;
+        }
         DLog(@"* NO TAB, DO NOTHING");
         [_tmuxController didLearnLayout:layout forWindow:windowId];
         return NO;
@@ -11010,6 +11338,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     PTYTab *tab = [_tmuxController window:windowId];
     if (tab) {
         [[tab realParentWindow] removeTab:tab];
+    } else if ([_tmuxController isParkedWindow:windowId]) {
+        [_tmuxController parkedWindowDidClose:windowId];
     }
     [_tmuxController windowsChanged];
 }
@@ -14777,6 +15107,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _view.appearance = nil;
         self.statusBarViewController.view.appearance = nil;
     }
+    [self updateBrowserWebViewAppearance];
+}
+
+- (void)updateBrowserWebViewAppearance {
+    iTermBrowserViewController *browserViewController = _view.browserViewController;
+    if (!browserViewController) {
+        return;
+    }
+    const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
+    [iTermBrowserWebViewAppearance updateWebView:browserViewController.webView
+                                    minimalTheme:minimal
+                                   appAppearance:[NSApp effectiveAppearance]];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -14785,6 +15127,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                        context:(void *)context {
     if (context == &iTermEffectiveAppearanceKey) {
         DLog(@"System appearance changed to %@", [NSApp effectiveAppearance]);
+        [self updateBrowserWebViewAppearance];
         const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
         if (minimal && _screen.colorMap.useSeparateColorsForLightAndDarkMode) {
             DLog(@"Manually update view appearance");
@@ -15676,6 +16019,34 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (BOOL)isTmuxBuried {
+    return _tmuxBuried;
+}
+
+- (BOOL)hasBeenTmuxBuried {
+    return _hasBeenTmuxBuried;
+}
+
+- (void)markTmuxBuried {
+    _tmuxBuried = YES;
+    _hasBeenTmuxBuried = YES;
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+}
+
+- (void)buryTmuxClientSession {
+    RLog(@"Bury tmux session %@ for pane %d", self, self.tmuxPane);
+    ITAssertWithMessage(self.isTmuxClient, @"Not a tmux client");
+    [_tmuxController deregisterWindow:[_delegate tmuxWindow]
+                           windowPane:self.tmuxPane
+                              session:self];
+    [self markTmuxBuried];
+    // Not through the setter, which would try to register the session with a window.
+    _delegate = nil;
+    [_tmuxController registerBuriedSession:(PTYSession<iTermTmuxControllerSession> *)self
+                                  withPane:self.tmuxPane];
+}
+
 - (void)bury {
     RLog(@"Bury %@", self);
     if (_synthetic) {
@@ -15773,7 +16144,25 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     event.chunkKey = @"";
     event.delayKey = @"";
     event.flags = kPasteFlagsDisableWarnings;
+    if (!_slowlySentPasteEvents) {
+        _slowlySentPasteEvents = [[NSHashTable alloc] initWithOptions:(NSPointerFunctionsWeakMemory |
+                                                                       NSPointerFunctionsObjectPointerPersonality)
+                                                             capacity:0];
+    }
+    [_slowlySentPasteEvents addObject:event];
     [_pasteHelper tryToPasteEvent:event];
+}
+
+- (void)stopSendingTextSlowly {
+    NSHashTable<PasteEvent *> *events = _slowlySentPasteEvents;
+    if (events.count == 0) {
+        return;
+    }
+    DLog(@"Stop sending text slowly");
+    [_pasteHelper abortPasteEventsPassingTest:^BOOL(PasteEvent *event) {
+        return [events containsObject:event];
+    }];
+    [events removeAllObjects];
 }
 
 - (void)launchCoprocessWithCommand:(NSString *)command
@@ -18500,6 +18889,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                        iTermVariableKeySessionUsername: host.username ?: null,
                                        iTermVariableKeySessionIsLocalhost: isLocalhostValue };
     [self.variablesScope setValuesFromDictionary:variablesUpdate];
+    [self updateInferredTmuxHostOfPanes];
 
     [_textview setBadgeLabel:[self badgeLabel]];
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
@@ -19984,6 +20374,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
+- (void)screenDidReportShellIntegrationVersion:(NSInteger)version shell:(NSString *)shell {
+    [self recordReportedShellIntegrationVersion:version shell:shell];
+}
+
 - (void)screenDidDetectShell:(NSString *)shell {
     NSString *name = self.currentHost.usernameAndHostname;
     if (name && shell) {
@@ -20710,10 +21104,50 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                   boolArgs:(NSString *)boolArgs
                                    sshargs:(NSString *)sshargs
                                      dcsID:(NSString * _Nonnull)dcsID
+                               parentDepth:(int)parentDepth
                                 savedState:(NSDictionary *)savedState {
-    BOOL localOrigin = NO;
-    if ([[iTermSecretServer instance] check:token]) {
-        localOrigin = YES;
+    // The terminal executed this hook before it learned the connection carrying it was
+    // abandoned, or it is the abandoned connection's own. Starting a conductor would write
+    // to the shell that owns the tty (F-459).
+    const BOOL wasRefused = _framerRecoveryRefusals.hasRefusal;
+    if (![_framerRecoveryRefusals shouldAcceptHookAsChildOfConductorAtDepth:parentDepth
+                                                            clientUniqueID:uniqueID]) {
+        RLog(@"Ignore a hook from an abandoned connection at parent depth %d", parentDepth);
+        // Undo what accepting the hook did: the token is spent and the shell's terminal
+        // state comes back.
+        const BOOL claimed = [[iTermSecretServer instance] claim:token] != nil;
+        DLog(@"Claimed refused hook token: %@", @(claimed));
+        [_screen restoreSavedState:savedState];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [terminal.parser forceUnhookDCSReturningSuccess:dcsID];
+        }];
+        return;
+    }
+    if (wasRefused) {
+        // The terminal may have executed this hook before it learned of the abandonment
+        // and refused again afterward. This is a new connection, so it may recover.
+        NSString *uniqueIDCopy = [[uniqueID copy] autorelease];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [terminal allowFramerRecoveryForHookAsChildOfConductorAtDepth:parentDepth
+                                                           clientUniqueID:uniqueIDCopy];
+        }];
+    }
+    iTermSecretClaim *claim = [[iTermSecretServer instance] claim:token];
+    const BOOL localOrigin = (claim != nil);
+    if (!_conductor) {
+        // A new outermost connection owns the tty now.
+        [_ttyModeRepairer disarm];
+        [_preSSHTTYModes release];
+        _preSSHTTYModes = nil;
+        [_preSSHTTYModesClientUniqueID release];
+        _preSSHTTYModesClientUniqueID = [uniqueID copy];
+        _preSSHTTYIsElsewhere = NO;
+        if (claim.ttyModes && [claim.ttyModes.path isEqualToString:_shell.tty]) {
+            // it2ssh fetched the token on this session's tty before it started ssh.
+            _preSSHTTYModes = [claim.ttyModes retain];
+        } else if (claim.ttyModes) {
+            _preSSHTTYIsElsewhere = YES;
+        }
     }
 
     NSString *directory = nil;
@@ -20726,8 +21160,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_pendingJumps removeObjectAtIndex:0];
     }
     iTermConductor *previousConductor = [_conductor autorelease];
+    // The shell on the far side reports its own shell-integration version, if it has any.
+    [self forgetReportedShellIntegration];
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
-    const BOOL shouldInjectShellIntegration = [iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY inProfile:self.profile];
+    // What it2ssh asked for, not this session's profile: an it2ssh typed here, or an SSH profile's
+    // (which passes --no-shell-integration when its own setting is off).
+    const BOOL shouldInjectShellIntegration = [self takeSSHIntegrationInjectionForUniqueID:uniqueID];
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
                                      boolArgs:boolArgs
@@ -20747,6 +21185,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     _sshState = iTermSSHStateNone;
     _conductor.delegate = self;
+    if (localOrigin) {
+        [self watchSSHClientAmong:claim.clientAncestors uniqueID:uniqueID];
+    }
     NSArray<iTermSSHReconnectionInfo *> *jumps = _pendingJumps;
     if (!previousConductor && jumps.count) {
         [_conductor startJumpingTo:jumps];
@@ -20757,6 +21198,220 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_conductor start];
     }
     [self updateVariablesFromConductor];
+}
+
+// it2ssh fetched the token on this Mac, so its process can be watched. If it dies the
+// session would otherwise stay hooked forever, so recover then.
+- (void)watchSSHClientAmong:(NSArray<iTermSSHClientProcessIdentity *> *)ancestors
+                   uniqueID:(NSString *)uniqueID {
+    if (!uniqueID.length) {
+        return;
+    }
+    const pid_t pid = [[iTermSSHClientProcessLocator sharedInstance] liveIT2SSHProcessAmong:ancestors];
+    if (pid <= 0) {
+        RLog(@"Could not find a live it2ssh among %@", ancestors);
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    NSString *uniqueIDCopy = [[uniqueID copy] autorelease];
+    [_sshClientMonitor watchProcessID:pid clientUniqueID:uniqueID onExit:^{
+        [weakSelf sshClientDidExitWithUniqueID:uniqueIDCopy];
+    }];
+}
+
+- (iTermConductor *)conductorWithClientUniqueID:(NSString *)uniqueID {
+    for (iTermConductor *conductor = _conductor; conductor; conductor = conductor.parent) {
+        if ([conductor.clientUniqueID isEqualToString:uniqueID]) {
+            return conductor;
+        }
+    }
+    return nil;
+}
+
+- (iTermConductor *)conductorAtDepth:(int)depth {
+    for (iTermConductor *conductor = _conductor; conductor; conductor = conductor.parent) {
+        if (conductor.depth == depth) {
+            return conductor;
+        }
+    }
+    return nil;
+}
+
+// A local it2ssh died without sending EndSSH (F-482).
+- (void)sshClientDidExitWithUniqueID:(NSString *)uniqueID {
+    if (_exited) {
+        DLog(@"it2ssh %@ exited after the session ended", uniqueID);
+        return;
+    }
+    RLog(@"it2ssh %@ exited. Recovering if its conductor is still hooked.", uniqueID);
+    [self abandonSSHThroughClientUniqueID:uniqueID];
+}
+
+// Ends the connection with this it2ssh ID and every connection nested in it without
+// writing anything: its it2ssh is gone (or a shell owns its tty), so anything sent would
+// be typed into a shell. Removes the DCS hook right away.
+- (void)abandonSSHThroughClientUniqueID:(NSString *)uniqueID {
+    iTermConductor *target = [self conductorWithClientUniqueID:uniqueID];
+    if (!target) {
+        DLog(@"Conductor %@ already ended", uniqueID);
+        return;
+    }
+    NSString *identity = target.sshIdentity.description;
+    NSString *dcsID = [[target.dcsID copy] autorelease];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState appendBannerMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.DisconnectedFrom", nil, [NSBundle mainBundle], @"Disconnected from %@", @"Banner shown when an SSH connection ends; placeholder is the host identity"), identity]];
+    }];
+    if (target.parent == nil) {
+        // In case it2ssh is alive after all, its eventual EndSSH must still release it.
+        [_disconnectedSSHClientUniqueID release];
+        _disconnectedSSHClientUniqueID = [target.clientUniqueID copy];
+    }
+    // The abandoned connection's framer output (which carries its children's) arrives at its
+    // parent's depth.
+    const int parentDepth = target.parent ? target.parent.depth : -1;
+    NSMutableArray<NSString *> *abandonedClientUniqueIDs = [NSMutableArray array];
+    for (iTermConductor *conductor = _conductor; conductor; conductor = conductor.parent) {
+        if (conductor.clientUniqueID.length) {
+            [abandonedClientUniqueIDs addObject:conductor.clientUniqueID];
+        }
+        if (conductor == target) {
+            break;
+        }
+    }
+    // Refuse before anything else so a recovery that the terminal already requested can't
+    // begin once this connection is abandoned (F-459).
+    [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:parentDepth
+                                        abandonedClientUniqueIDs:abandonedClientUniqueIDs];
+    while (_conductor) {
+        iTermConductor *conductor = _conductor;
+        const BOOL found = (conductor == target);
+        NSString *clientUniqueID = [[conductor.clientUniqueID copy] autorelease];
+        if (clientUniqueID.length) {
+            // The dead it2ssh's ssh client would otherwise stay logged in (F-351). Kill it
+            // before unhooking so less of its remote conductor's output arrives unhooked.
+            [_sshClientMonitor killOrphanedSSHClientForClientUniqueID:clientUniqueID];
+        }
+        [conductor abandon];
+        [self unhookSSHConductor];
+        if (found) {
+            break;
+        }
+    }
+    [_sshWriteQueue setLength:0];
+    // A connection being set up is gone too, so stop holding back keystrokes for it.
+    _connectingSSH = NO;
+    [_queuedConnectingSSH release];
+    _queuedConnectingSSH = nil;
+    [self forceUnhookAbandonedConductorDCS:dcsID
+             refusingFramerRecoveryAtDepth:parentDepth
+                  abandonedClientUniqueIDs:abandonedClientUniqueIDs];
+    if (parentDepth < 0) {
+        // The outermost connection's ssh ran on this session's tty.
+        [self restoreTTYModesIfIT2SSHExitedForClientUniqueID:uniqueID
+                                   discardingInputForDeadClient:YES];
+    }
+}
+
+// ssh left the tty in raw mode if its it2ssh was killed (F-460). Never touch the modes
+// while it2ssh might be alive: its ssh would still be using them.
+//
+// If discardInput, the connection was abandoned just now, as soon as its it2ssh was found
+// dead, and input written for its ssh client that the client never read is discarded too
+// (F-554).
+- (void)restoreTTYModesIfIT2SSHExitedForClientUniqueID:(NSString *)uniqueID
+                          discardingInputForDeadClient:(BOOL)discardInput {
+    if (!uniqueID.length || ![_sshClientMonitor it2sshHasExitedForClientUniqueID:uniqueID]) {
+        DLog(@"it2ssh %@ is not known to have exited; leaving tty modes alone", uniqueID);
+        return;
+    }
+    if (![iTermTTYModeRepairer mayRepairAfterAbandoningClientUniqueID:uniqueID
+                                                   lastClientUniqueID:_preSSHTTYModesClientUniqueID
+                                                     connectionActive:_conductor != nil
+                                                      ranOnAnotherTTY:_preSSHTTYIsElsewhere
+                                                    shellProcessGroup:[_sshClientMonitor shellProcessGroupForClientUniqueID:uniqueID]]) {
+        RLog(@"Not restoring tty modes after abandoning %@", uniqueID);
+        return;
+    }
+    PTYTask *task = _shell;
+    const int fd = task.fd;
+    NSString *ttyPath = task.tty;
+    if (fd <= 0 || !ttyPath.length || _exited || task.hasBrokenPipe) {
+        // Opening the slave of a pty whose shell is gone could make iTerm2's close the last
+        // one, which discards the shell's final output.
+        return;
+    }
+    const pid_t foregroundProcessGroup = tcgetpgrp(fd);
+    // Something started since then may have set the modes itself. Then only arm the
+    // repairer: it acts when a command starts or the shell that ran it2ssh forks with the
+    // shell's reapplied raw modes, which no program that wants a raw tty has.
+    const BOOL repairNow = [_sshClientMonitor mayRepairTTYWithForegroundProcessGroup:foregroundProcessGroup
+                                                                     clientUniqueID:uniqueID];
+    RLog(@"Repair tty modes now=%@ with process group %d in the foreground", @(repairNow), (int)foregroundProcessGroup);
+    iTermTTYModeRepairer *repairer = _ttyModeRepairer;
+    __weak PTYTask *weakTask = task;
+    [repairer repairAfterAbandonedSSHWithFileDescriptor:^int{
+        // -1 once the task closes its pty, or after it is replaced.
+        PTYTask *strongTask = weakTask;
+        return strongTask ? strongTask.fd : -1;
+    }
+                                                ttyPath:ttyPath
+                                              goodModes:_preSSHTTYModes
+                                              repairNow:repairNow
+                                         shellProcessID:[_sshClientMonitor shellProcessIDForClientUniqueID:uniqueID]];
+    if ([iTermTTYModeRepairer mayDiscardInputForDeadClientAbandonedJustNow:discardInput
+                                                                 repairNow:repairNow
+                                                           foundSSHRawMode:repairer.isArmed]) {
+        // What is waiting to be written to the tty or read from it was written for the dead
+        // ssh client, which didn't read it while it was busy writing output. It includes
+        // conductor commands, such as an autopoll request, that the shell would otherwise read
+        // as a command line (F-554).
+        const NSUInteger dropped = [task discardPendingWrites];
+        const BOOL flushed = [iTermTTYModeRepairer discardPendingInputOfMasterFileDescriptor:fd
+                                                                                      ttyPath:ttyPath];
+        RLog(@"Discarded %@ unwritten bytes and %@ the tty's pending input for abandoned it2ssh %@",
+             @(dropped), flushed ? @"flushed" : @"could not flush", uniqueID);
+    }
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.ttyModeRepairer = repairer;
+    }];
+}
+
+static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID) {
+    return [NSString stringWithFormat:@"SSHMayHaveEnded-%@", clientUniqueID];
+}
+
+- (void)screenDidReceiveUnframedSSHPromptAtDepth:(int)depth {
+    iTermConductor *conductor = [self conductorAtDepth:depth];
+    NSString *uniqueID = conductor.clientUniqueID;
+    if (!uniqueID.length) {
+        DLog(@"No conductor with a client ID at depth %d", depth);
+        return;
+    }
+    if (![_sshClientMonitor shouldAnnounceUnframedPromptForClientUniqueID:uniqueID]) {
+        DLog(@"Not announcing unframed prompt for %@", uniqueID);
+        return;
+    }
+    RLog(@"Unframed prompt for conductor %@ at depth %d", uniqueID, depth);
+    NSString *host = conductor.sshIdentity.compactDescription;
+    NSString *title;
+    if (host.length) {
+        title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.SSHMayHaveEnded", nil, [NSBundle mainBundle], @"It looks like the SSH connection to %@ ended unexpectedly. Disconnect to return to the shell that started it.", @"Announcement shown when a shell prompt appears while iTerm2 still thinks an SSH Integration connection is active, which suggests it2ssh was killed; placeholder is the host"), host];
+    } else {
+        title = NSLocalizedStringWithDefaultValue(@"PTYSession.SSHMayHaveEndedUnknownHost", nil, [NSBundle mainBundle], @"It looks like the SSH connection ended unexpectedly. Disconnect to return to the shell that started it.", @"Announcement shown when a shell prompt appears while iTerm2 still thinks an SSH Integration connection to an unknown host is active, which suggests it2ssh was killed");
+    }
+    NSString *uniqueIDCopy = [[uniqueID copy] autorelease];
+    __weak __typeof(self) weakSelf = self;
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.SSHDisconnect", nil, [NSBundle mainBundle], @"Disconnect", @"Button that ends an SSH Integration connection") ]
+                                                    completion:^(int selection) {
+            if (selection == 0) {
+                [weakSelf abandonSSHThroughClientUniqueID:uniqueIDCopy];
+            }
+        }];
+    [self queueAnnouncement:announcement
+                 identifier:SSHMayHaveEndedAnnouncementIdentifier(uniqueID)];
 }
 
 - (void)screenDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
@@ -20772,6 +21427,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)unhookSSHConductor {
     RLog(@"Unhook %@", _conductor);
+    NSString *clientUniqueID = _conductor.clientUniqueID;
+    if (clientUniqueID.length) {
+        [_sshClientMonitor stopWatchingClientUniqueID:clientUniqueID];
+        [self dismissAnnouncementWithIdentifier:SSHMayHaveEndedAnnouncementIdentifier(clientUniqueID)];
+    }
     [self conductorWillDie];
     NSDictionary *config = _conductor.terminalConfiguration;
     if (config) {
@@ -20790,6 +21450,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _conductor = [_conductor.parent retain];
     _conductor.delegate = self;
     [self updateVariablesFromConductor];
+    [self updateInferredTmuxHostOfPanes];
     _shell.sshIntegrationActive = _conductor != nil;
 }
 
@@ -20829,6 +21490,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
+- (void)screenDidReadSSHPaneOutput:(NSData *)data pid:(int)pid depth:(int)depth {
+    [_conductor handlePaneOutput:data pid:pid depth:depth];
+}
+
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth {
     [_conductor handleTerminatePID:pid withCode:code depth:depth];
 }
@@ -20845,13 +21510,26 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _connectingSSH = NO;
     if (![_conductor ancestryContainsClientUniqueID:uniqueID]) {
         DLog(@"Ancestry does not contain this unique ID");
+        if (uniqueID.length && [uniqueID isEqualToString:_disconnectedSSHClientUniqueID]) {
+            // Disconnect already unhooked this conductor, but it2ssh still waits for a
+            // newline before exiting.
+            [_sshClientMonitor forgetSSHClientForClientUniqueID:uniqueID];
+            [_disconnectedSSHClientUniqueID release];
+            _disconnectedSSHClientUniqueID = nil;
+            [self writeTaskNoBroadcast:@"\x03\n"];
+        }
         return 0;
     }
+    // A connection ended: whatever was being recovered in it is gone.
+    [self cancelNestedFramerRecovery];
     BOOL found = NO;
     NSInteger count = 0;
     while (_conductor != nil && !found) {
         found = [_conductor.clientUniqueID isEqual:uniqueID];
         count += 1;
+        if (_conductor.clientUniqueID.length) {
+            [_sshClientMonitor forgetSSHClientForClientUniqueID:_conductor.clientUniqueID];
+        }
         [self unhookSSHConductor];
     }
     // it2ssh waits for a newline before exiting. This is in case ssh dies while iTerm2 is sending
@@ -20873,7 +21551,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)screenBeginSSHIntegrationWithToken:(NSString *)token
                                   uniqueID:(NSString *)uniqueID
                                  encodedBA:(NSString *)encodedBA
-                                   sshArgs:(NSString *)sshArgs {
+                                   sshArgs:(NSString *)sshArgs
+                    injectShellIntegration:(BOOL)injectShellIntegration {
+    // Used when conductor.sh hooks back with this uniqueID; see screenDidHookSSHConductor.
+    [self rememberSSHIntegrationInjection:injectShellIntegration forUniqueID:uniqueID];
     NSURL *path = [[NSBundle bundleForClass:[PTYSession class]] URLForResource:@"conductor" withExtension:@"sh"];
     NSString *conductorSH = [NSString stringWithContentsOfURL:path encoding:NSUTF8StringEncoding error:nil];
     // Ensure it doesn't contain empty lines.
@@ -20894,7 +21575,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _conductor.sshIdentity.compactDescription;
 }
 
-- (void)screenBeginFramerRecovery:(int)parentDepth {
+- (BOOL)screenBeginFramerRecovery:(int)parentDepth {
+    if ([_framerRecoveryRefusals isRefusedForChildrenOfConductorAtDepth:parentDepth]) {
+        // The terminal executed an abandoned connection's framer output before it learned
+        // of the abandonment. Recovering would type into the shell that owns the tty.
+        RLog(@"Refuse framer recovery for a child of depth %d of an abandoned connection", parentDepth);
+        return NO;
+    }
     // Preserve the it2 proxy state (nonce/socket/authorization) of the conductor being
     // recovered so it carries into the shim below. For a root single-hop recovery the
     // old conductor is unhooked (and released) before the shim exists, so retain it
@@ -20909,8 +21596,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     // carries any decided grant); an undecided prompt re-appears on the next command.
     [recovering resolveIT2AuthorizationFailClosed];
     if (parentDepth < 0) {
+        // How deep the connection was: its innermost framing conductor, or the depth a recovery
+        // already under way is bringing it back to.
+        iTermConductor *framing = _conductor;
+        while (framing && !framing.framing) {
+            framing = framing.parent;
+        }
+        const int depthBeforeRecovery = MAX(framing ? framing.depth : 0, _framerRecoveryTargetDepth);
         while (_conductor) {
             [self unhookSSHConductor];
+        }
+        if (depthBeforeRecovery > 0) {
+            [self beginNestedFramerRecoveryToDepth:depthBeforeRecovery];
         }
     }
     iTermConductor *previousConductor = [_conductor autorelease];
@@ -20924,11 +21621,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                  shouldInjectShellIntegration:NO
                                        parent:previousConductor];
     [_conductor adoptIT2RecoveryStateFrom:recovering];
-    [recovering release];
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
+    // The framer's panes keep running: keep what was kept for those without a session.
+    [_conductor adoptUnclaimedPanesFrom:recovering];
+    [recovering release];
     _shell.sshIntegrationActive = _conductor != nil;
+    return YES;
 }
 
 - (iTermConductorRecovery *)screenHandleFramerRecoveryString:(NSString * _Nonnull)string {
@@ -20953,6 +21653,126 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 // some tokens may have been dropped during recovery.
 - (void)screenDidResynchronizeSSH {
     [_conductor didResynchronize];
+    [self continueNestedFramerRecovery];
+}
+
+#pragma mark - Nested framer recovery
+
+- (BOOL)isRecoveringNestedSSHConnection {
+    return _framerRecoveryTargetDepth > 0;
+}
+
+static const NSTimeInterval iTermNestedFramerRecoveryTimeout = 15;
+// How many times to wait again for a recovery that has answered but not yet resynchronized.
+static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
+
+- (void)beginNestedFramerRecoveryToDepth:(int)depth {
+    RLog(@"Recovering an ssh integration connection nested %d deep", depth);
+    _framerRecoveryTargetDepth = depth;
+    if (!_keysHeldForFramerRecovery) {
+        _keysHeldForFramerRecovery = [[NSMutableData alloc] init];
+    }
+    [self scheduleNestedFramerRecoveryTimeoutForChildOfDepth:-1 extensions:0];
+}
+
+// A depth finished resynchronizing. Recover the one nested in it, if the connection was deeper.
+- (void)continueNestedFramerRecovery {
+    if (_framerRecoveryTargetDepth <= 0) {
+        return;
+    }
+    const int depth = _conductor.depth;
+    if (!_conductor.framing || depth >= _framerRecoveryTargetDepth) {
+        [self finishNestedFramerRecovery];
+        return;
+    }
+    RLog(@"Recover the ssh integration connection nested in depth %d", depth);
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
+        // Output from the nested framer may have started its recovery already.
+        if (terminal.framerRecoveryMode == VT100TerminalFramerRecoveryModeNone) {
+            [mutableState terminalBeginFramerRecoveryForChildOfConductorAtDepth:depth];
+        }
+    }];
+    [self scheduleNestedFramerRecoveryTimeoutForChildOfDepth:depth extensions:0];
+}
+
+// `depth` is the conductor whose child is being recovered, or -1 for the outermost.
+- (void)scheduleNestedFramerRecoveryTimeoutForChildOfDepth:(int)depth extensions:(int)extensions {
+    const NSInteger attempt = ++_framerRecoveryAttempt;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(iTermNestedFramerRecoveryTimeout * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [weakSelf nestedFramerRecoveryAttempt:attempt
+                    didTimeOutForChildOfDepth:depth
+                                   extensions:extensions];
+    });
+}
+
+- (void)nestedFramerRecoveryAttempt:(NSInteger)attempt
+          didTimeOutForChildOfDepth:(int)depth
+                         extensions:(int)extensions {
+    if (attempt != _framerRecoveryAttempt || _framerRecoveryTargetDepth <= 0) {
+        // It finished, or moved on to a deeper connection.
+        return;
+    }
+    // Once the framer has answered, the session's conductor is the one made from its answer,
+    // which frames and waits for the parser to resynchronize. A slow link only delays that.
+    const BOOL answered = (_conductor.depth == depth + 1 &&
+                           _conductor.framing &&
+                           _conductor.awaitingResynchronization);
+    if (answered && extensions < iTermNestedFramerRecoveryMaximumExtensions) {
+        RLog(@"Recovery of the connection nested in depth %d answered; wait to resynchronize", depth);
+        [self scheduleNestedFramerRecoveryTimeoutForChildOfDepth:depth extensions:extensions + 1];
+        return;
+    }
+    if (depth < 0 || answered) {
+        // Don't tear down a recovery that is under way; just stop holding keys.
+        RLog(@"Recovery did not finish in time; stop holding keys");
+        [self cancelNestedFramerRecovery];
+        return;
+    }
+    if (_conductor.depth != depth + 1 || _conductor.framing) {
+        // Something else replaced the conductor being recovered, such as another recovery.
+        [self cancelNestedFramerRecovery];
+        return;
+    }
+    // No answer: the nested connection ended while the outer one was being recovered. Go back
+    // to the conductor it was nested in.
+    RLog(@"The connection nested in depth %d did not answer; give up on it", depth);
+    [self unhookSSHConductor];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
+        terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
+    }];
+    [self cancelNestedFramerRecovery];
+}
+
+// Recovered as deep as the connection was: what was typed meanwhile goes to the innermost.
+- (void)finishNestedFramerRecovery {
+    NSData *held = [[_keysHeldForFramerRecovery retain] autorelease];
+    [self cancelNestedFramerRecovery];
+    if (held.length == 0) {
+        return;
+    }
+    if (_conductor.handlesKeystrokes) {
+        [_conductor sendKeys:held];
+    } else {
+        [self writeData:held];
+    }
+}
+
+// The keys typed meanwhile were for a connection that is gone or not back, so they are dropped
+// rather than sent to another host.
+- (void)cancelNestedFramerRecovery {
+    if (_keysHeldForFramerRecovery.length > 0) {
+        RLog(@"Drop %@ bytes typed during ssh integration recovery", @(_keysHeldForFramerRecovery.length));
+    }
+    _framerRecoveryTargetDepth = 0;
+    _framerRecoveryAttempt += 1;
+    [_keysHeldForFramerRecovery release];
+    _keysHeldForFramerRecovery = nil;
 }
 
 - (void)screenFramerRecoveryDidFinish {
@@ -23711,6 +24531,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return self.processInfoProvider;
 }
 
+- (id<PaneFocusFollowsMousePane>)statusBarFocusFollowsMousePane {
+    return self.view;
+}
+
 - (iTermFindDriver *)statusBarFindDriver {
     // Always use this session's find driver. For synthetic sessions (instant replay or filtering),
     // the synthetic session has taken ownership of the status bar view controller.
@@ -24793,6 +25617,9 @@ static NSError *PTYSessionBrowserEvalJSError(NSInteger code, NSString *message) 
 }
 
 - (void)naggingControllerRestart {
+    if ([self restartEndedTmuxWorkgroupMember]) {
+        return;
+    }
     if (self.workgroupSessionMode == iTermWorkgroupSessionModeCodeReview &&
         self.codeReviewRawCommand) {
         // Code-review sessions re-show the prompt overlay so the user
@@ -26372,9 +27199,32 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     return IT2AuthorizationAnnouncementIdentifier(guid);
 }
 
+#if DEBUG
+- (BOOL)debugAnswerIT2AuthorizationForConductorGUID:(NSString *)guid selection:(int)index {
+    NSString *identifier = IT2AuthorizationAnnouncementIdentifier(guid);
+    PTYSession *host = [self it2AuthorizationPromptSessionForIdentifier:identifier] ?: self;
+    iTermAnnouncementViewController *announcement = host->_announcements[identifier];
+    if (!announcement) {
+        return NO;
+    }
+    [announcement debugSelectActionAtIndex:index];
+    return YES;
+}
+
+- (BOOL)debugSelectAction:(int)index ofAnnouncementWithIdentifier:(NSString *)identifier {
+    iTermAnnouncementViewController *announcement = _announcements[identifier];
+    if (!announcement) {
+        return NO;
+    }
+    [announcement debugSelectActionAtIndex:index];
+    return YES;
+}
+#endif
+
 - (void)conductorRequestIT2AuthorizationWithGUID:(NSString *)guid
                                      displayName:(NSString *)displayName
-                                      completion:(void (^)(BOOL granted, BOOL remember))completion {
+                                  callerTmuxPane:(NSString *)callerTmuxPane
+                                      completion:(void (^)(BOOL granted, BOOL remember, BOOL alwaysForHost))completion {
     NSString *who = displayName.length ? displayName : NSLocalizedStringWithDefaultValue(@"PTYSession.ARemoteSession", nil, [NSBundle mainBundle], @"A remote session", @"Generic name for an unnamed remote session");
     NSString *title =
         [NSString stringWithFormat:
@@ -26382,22 +27232,29 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcementWithTitle:title
                                                          style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Allow", nil, [NSBundle mainBundle], @"Allow", @"Button that allows an action"), NSLocalizedStringWithDefaultValue(@"PTYSession.Deny", nil, [NSBundle mainBundle], @"Deny", @"Button that denies an action") ]
+                                                   withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Allow", nil, [NSBundle mainBundle], @"Allow", @"Button that allows an action"),
+                                                                  NSLocalizedStringWithDefaultValue(@"PTYSession.AlwaysAllowThisHost", nil, [NSBundle mainBundle], @"Always Allow This Host", @"Button that allows a remote host to control iTerm2 on this and every future connection, not just this one"),
+                                                                  NSLocalizedStringWithDefaultValue(@"PTYSession.Deny", nil, [NSBundle mainBundle], @"Deny", @"Button that denies an action") ]
                                                     completion:^(int selection) {
-            // 0 = Allow, 1 = Deny: explicit choices we remember for the connection.
-            // Closing (-1) or dismissing (-2) is not a choice, so deny just this request
-            // without remembering; the next it2 command prompts again. There is no
-            // default action, so a stray Return in the pane cannot grant access.
-            const BOOL granted = (selection == 0);
-            const BOOL remember = (selection == 0 || selection == 1);
-            completion(granted, remember);
+            // The button order above must match iTermIT2AuthorizationOutcome's indices, which
+            // are tested; mapping them here would put the one fragile part where no test sees
+            // it. There is no default action, so a stray Return cannot grant access.
+            iTermIT2AuthorizationOutcome *outcome =
+                [[[iTermIT2AuthorizationOutcome alloc] initWithSelection:selection] autorelease];
+            completion(outcome.granted, outcome.remember, outcome.alwaysForHost);
         }];
-    [self queueAnnouncement:announcement
-                 identifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+    // Not necessarily on this session: a tmux gateway is hidden. See presentIT2Authorization.
+    [self presentIT2AuthorizationAnnouncement:announcement
+                                   identifier:IT2AuthorizationAnnouncementIdentifier(guid)
+                               callerTmuxPane:callerTmuxPane];
 }
 
 - (void)conductorDismissIT2AuthorizationPromptWithGUID:(NSString *)guid {
-    [self dismissAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+    [self dismissIT2AuthorizationAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+}
+
+- (iTermFramerFlowLedger *)conductorFlowLedger {
+    return _flowLedger;
 }
 
 - (void)conductorSendInitialText {
@@ -26436,18 +27293,97 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         NSString *message = [mutableState sshEndBannerTerminatingCount:1 newLocation:location];
         [mutableState appendBannerMessage:message];
     }];
+    if (_conductor.clientUniqueID.length) {
+        [_sshClientMonitor forgetSSHClientForClientUniqueID:_conductor.clientUniqueID];
+    }
     [self unhookSSHConductor];
 }
 
 - (void)conductorQuit {
     RLog(@"conductorQuit");
+    [self cancelNestedFramerRecovery];
     [self conductorWillDie];
     NSString *identity = _conductor.sshIdentity.description;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendBannerMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.DisconnectedFrom", nil, [NSBundle mainBundle], @"Disconnected from %@", @"Banner shown when an SSH connection ends; placeholder is the host identity"), identity]];
     }];
+    // If the it2ssh was killed (F-482) nothing will ever answer the quit request, so the
+    // framer's unhook and it2ssh's EndSSH never arrive and the DCS hook would swallow the
+    // shell's output forever. Give a live remote time to unhook cleanly, then force the
+    // hook off. This is a no-op if the hook is already gone.
+    NSString *dcsID = [[_conductor.dcsID copy] autorelease];
+    NSString *clientUniqueID = [[_conductor.clientUniqueID copy] autorelease];
+    const int parentDepth = _conductor.parent ? _conductor.parent.depth : -1;
+    const BOOL isOutermost = (_conductor.parent == nil);
+    if (_conductor.parent == nil) {
+        [_disconnectedSSHClientUniqueID release];
+        _disconnectedSSHClientUniqueID = [_conductor.clientUniqueID copy];
+    }
+    NSArray<NSString *> *abandonedClientUniqueIDs = clientUniqueID.length ? @[ clientUniqueID ] : @[];
+    // The user ended this connection, so whatever its framer prints from now on must not
+    // start recovery (F-354), even if the terminal already requested it (F-459).
+    [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:parentDepth
+                                        abandonedClientUniqueIDs:abandonedClientUniqueIDs];
     [self unhookSSHConductor];
     [_sshWriteQueue setLength:0];
+    [self refuseFramerRecoveryAtDepth:parentDepth abandonedClientUniqueIDs:abandonedClientUniqueIDs];
+    if (dcsID.length) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            // If it2ssh is dead its ssh client would otherwise stay logged in (F-351).
+            // This does nothing if it2ssh is alive or its ssh client already exited.
+            // Kill it before unhooking so less of its output arrives unhooked.
+            [weakSelf killOrphanedSSHClientForClientUniqueID:clientUniqueID];
+            [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
+            if (isOutermost) {
+                // The shell may have owned the tty for a while by now, so what is waiting
+                // to be read may be the user's.
+                [weakSelf restoreTTYModesIfIT2SSHExitedForClientUniqueID:clientUniqueID
+                                             discardingInputForDeadClient:NO];
+            }
+        });
+    }
+}
+
+- (void)killOrphanedSSHClientForClientUniqueID:(NSString *)clientUniqueID {
+    if (clientUniqueID.length) {
+        [_sshClientMonitor killOrphanedSSHClientForClientUniqueID:clientUniqueID];
+    }
+}
+
+- (void)forceUnhookAbandonedConductorDCS:(NSString *)dcsID {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        if ([terminal.parser forceUnhookDCSReturningSuccess:dcsID]) {
+            RLog(@"Forced unhook of abandoned conductor DCS %@", dcsID);
+        }
+    }];
+}
+
+// The abandoned connection's ssh client may survive (e.g., it could not safely be killed)
+// and keep printing its framer's output. Once unhooked, its framer's OSC 134 output is
+// ignored rather than starting recovery, which would type into the shell that owns the
+// tty. Anything else it prints is drawn.
+- (void)refuseFramerRecoveryAtDepth:(int)parentDepth
+          abandonedClientUniqueIDs:(NSArray<NSString *> *)abandonedClientUniqueIDs {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        RLog(@"Refuse framer recovery for children of depth %d", parentDepth);
+        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth
+                                          abandonedClientUniqueIDs:abandonedClientUniqueIDs];
+    }];
+}
+
+- (void)forceUnhookAbandonedConductorDCS:(NSString *)dcsID
+           refusingFramerRecoveryAtDepth:(int)parentDepth
+                abandonedClientUniqueIDs:(NSArray<NSString *> *)abandonedClientUniqueIDs {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        // Refuse first so no output parsed after the unhook can start recovery.
+        RLog(@"Refuse framer recovery for children of depth %d", parentDepth);
+        [terminal refuseFramerRecoveryForChildrenOfConductorAtDepth:parentDepth
+                                          abandonedClientUniqueIDs:abandonedClientUniqueIDs];
+        if ([terminal.parser forceUnhookDCSReturningSuccess:dcsID]) {
+            RLog(@"Forced unhook of abandoned conductor DCS %@", dcsID);
+        }
+    }];
 }
 
 - (void)conductorStopQueueingInput {
@@ -26458,6 +27394,19 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 - (void)conductorStateDidChange {
     DLog(@"conductorDidExfiltrateState");
     [self updateVariablesFromConductor];
+    [self updateInferredTmuxHostOfPanes];
+}
+
+// A tmux gateway's host or connection changed: its panes' inferred hosts follow (see
+// TmuxPaneInferredHost). A pane reporting its own host updates only itself.
+- (void)updateInferredTmuxHostOfPanes {
+    if (self.isTmuxGateway) {
+        for (PTYSession *session in [self.tmuxController clientSessions]) {
+            [session updateInferredTmuxHost];
+        }
+    } else if (self.isTmuxClient) {
+        [self updateInferredTmuxHost];
+    }
 }
 
 - (void)updateVariablesFromConductor {
@@ -26502,6 +27451,10 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     return self.tabStatusController.status;
 }
 
+- (BOOL)tabStatusIsBeingRestored {
+    return _tabStatusController.isRestoring;
+}
+
 // Created lazily, since PTYSession has several init paths and a session may
 // never have a status at all.
 - (iTermTabStatusController *)tabStatusController {
@@ -26518,7 +27471,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 }
 
 - (void)tabStatusDidChangeFromStatusText:(NSString *)previousStatusText {
-    if (!_tabStatusController.isAcknowledging && !_applyingProgramStatus) {
+    if (!_tabStatusController.isAcknowledging &&
+        !_tabStatusController.isRestoring &&
+        !_applyingProgramStatus) {
         [self maybePostTabStatusNotificationWithPreviousStatusText:previousStatusText];
     }
     // Read from the status rather than from whatever update caused the change:
@@ -26540,6 +27495,18 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         [_programStatusController otherWriterDidSetStatus];
     }
     [self.tabStatusController apply:status];
+    if (status.progressPresence == VT100TabStatusUpdateFieldSet) {
+        // The ring goes through the screen exactly as OSC 9;4 does, so the tab bar draws it and
+        // the delegate hears that the program reported it (the status controller's cue that an
+        // operation ended). The status controller was told first, above, so an update that both
+        // asserts a status and stops the ring arms the expiration before the end that fires it.
+        const VT100ScreenProgress progress = status.progress;
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                        VT100ScreenMutableState *mutableState,
+                                        id<VT100ScreenDelegate> delegate) {
+            [mutableState setProgressFromProtocol:progress];
+        }];
+    }
 }
 
 // Created lazily: most programs never report through OSC 7501.

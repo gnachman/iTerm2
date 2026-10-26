@@ -261,6 +261,8 @@ final class AllSessionsTargetTests: XCTestCase {
             ["session", "set-var", "--", "user.foo", "bar"],
             ["session", "get-var", "--", "user.foo"],
             ["session", "get-background-tasks"],
+            ["session", "add-clipping", "--", "Type", "Title", "Detail"],
+            ["session", "archive-clippings"],
             ["set-status", "--status=idle"],
         ]
         for args in addressable {
@@ -491,5 +493,194 @@ final class TmuxAddressOriginTests: XCTestCase {
 
         XCTAssertEqual(resolved, "GUID-4")
         XCTAssertEqual(channel.sent.count, 1, "the lookup must reach iTerm2, not be refused locally")
+    }
+}
+
+// A caller that always passes every addressing option, with empty strings for the ones it does
+// not have, must be understood as not having passed them. The code-review prompt does exactly
+// that so the agent never has to work out which form applies: locally TERM_SESSION_ID is set, in
+// a pane the tmux pair is, and on a remote host all three may be empty.
+final class EmptyTargetTests: XCTestCase {
+    private func options(_ args: [String]) throws -> TmuxPaneOptions {
+        let command = try IT2.parseAsRoot(["session", "get-status"] + args)
+        return try XCTUnwrap(command as? Session.GetStatus).tmuxOptions
+    }
+
+    func testEmptyTmuxPairIsNotRequested() throws {
+        let opts = try options(["--tmux", "", "--tmux-pane", ""])
+        guard case .notRequested = opts.resolution else {
+            return XCTFail("expected .notRequested, got \(opts.resolution)")
+        }
+        XCTAssertFalse(opts.usesTmuxAddressing)
+    }
+
+    // Half a pair is still a mistake, whether the other half is missing or empty.
+    func testHalfEmptyPairIsRejected() {
+        XCTAssertThrowsError(try options(["--tmux", "", "--tmux-pane", "%0"]))
+        XCTAssertThrowsError(try options(["--tmux", "/tmp/d,99,0", "--tmux-pane", ""]))
+    }
+
+    private func paneReply(guid: String, id: Int64 = 1) -> ITMServerOriginatedMessage {
+        let message = ITMServerOriginatedMessage()
+        message.id_p = id
+        let invoke = ITMInvokeFunctionResponse()
+        let success = ITMInvokeFunctionResponse_Success()
+        success.jsonResult = "\"\(guid)\""
+        invoke.success = success
+        message.invokeFunctionResponse = invoke
+        return message
+    }
+
+    func testEmptySessionYieldsToTheTmuxAddress() throws {
+        let channel = FakeChannel()
+        channel.responses = [paneReply(guid: "GUID-1")]
+        let client = APIClient(channel: channel)
+        let opts = try options(["--tmux", "/private/tmp/tmux-501/default,52533,0", "--tmux-pane", "%3"])
+
+        let resolved = try client.resolveSessionId("", tmuxOptions: opts)
+
+        XCTAssertEqual(resolved, "GUID-1")
+    }
+
+    // With nothing else to go on, an empty --session means the same as no --session: the active
+    // session, which is looked up through the focus state.
+    func testEmptySessionWithNoTmuxUsesTheActiveSessionLookup() throws {
+        let channel = FakeChannel()
+        let client = APIClient(channel: channel)
+        let opts = try options(["--tmux", "", "--tmux-pane", ""])
+
+        XCTAssertThrowsError(try client.resolveSessionId("", tmuxOptions: opts),
+                             "the fake has no focus reply, so the lookup fails; the point is that it was attempted")
+        XCTAssertEqual(channel.sent.count, 1)
+        XCTAssertNotNil(channel.sent.first?.focusRequest, "must ask for the focus state rather than target \"\"")
+    }
+
+    func testEmptySessionWithAllowAllStillMeansUnset() throws {
+        let opts = try options([])
+        XCTAssertThrowsError(try APIClient(channel: FakeChannel()).resolveSessionId("", tmuxOptions: opts, allowAll: true),
+                             "must not return \"\" as a target")
+    }
+}
+
+
+// MARK: - Default target for a remote call (3c)
+
+/// A remote `it2` with no --session and no tmux pane has nothing to address: TERM_SESSION_ID is
+/// never injected on a remote host, so "the current session" cannot be derived there. But the
+/// call arrived over one conductor, and that conductor belongs to exactly one iTerm2 session, so
+/// the app knows the answer even though the caller cannot.
+///
+/// The fallback it replaces is "the key window's focused session", which on a remote call means
+/// whatever the user happens to be looking at. That is the misdelivery this whole feature exists
+/// to prevent.
+final class RemoteDefaultTargetTests: XCTestCase {
+    private func client(originSessionID: String?) -> APIClient {
+        let c = APIClient(channel: FakeChannel())
+        c.originSessionID = originSessionID
+        return c
+    }
+
+    func testNoTargetUsesTheSessionTheCallArrivedOn() throws {
+        let resolved = try client(originSessionID: "ABC-123").resolveSessionId(nil)
+        XCTAssertEqual(resolved, "ABC-123")
+    }
+
+    // An explicit target always wins; the default is only for "I did not say".
+    func testAnExplicitTargetStillWins() throws {
+        let resolved = try client(originSessionID: "ABC-123").resolveSessionId("w0t0p0:DEF-456")
+        XCTAssertEqual(resolved, "DEF-456", "and it is normalized")
+    }
+
+    // The hook runs its work through sub-commands, each given a FRESH client over one shared
+    // channel. Anything not carried across is lost, and losing this one sends a remote hook's
+    // updates to whatever the user is looking at.
+    func testSubCommandClientsInheritTheOriginSession() throws {
+        let base = client(originSessionID: "ABC-123")
+        let factory = SharedAPIClientFactory(base: { base })
+        let child = try factory.make()
+        XCTAssertEqual(child.originSessionID, "ABC-123")
+        XCTAssertEqual(child.callerEnvironment, base.callerEnvironment,
+                       "the environment decides the pane, so it must cross too")
+        XCTAssertEqual(child.originIdentifier, base.originIdentifier)
+        XCTAssertEqual(try child.resolveSessionId(nil), "ABC-123")
+    }
+
+    // A local call has no origin session, so it keeps the focused-session behaviour. Asserted by
+    // the request actually going out rather than by the answer, which needs a live app.
+    func testALocalCallStillAsksTheApp() {
+        let channel = FakeChannel()
+        let c = APIClient(channel: channel)
+        XCTAssertNil(c.originSessionID)
+        _ = try? c.resolveSessionId(nil)
+        XCTAssertFalse(channel.sent.isEmpty, "with no origin session it must still ask iTerm2")
+    }
+}
+
+
+// MARK: - Default target from the caller's own environment
+
+/// With no explicit target, the focused session is nearly always the wrong answer: it is
+/// whatever the user happens to be looking at, which has no relationship to where the command
+/// was typed. The caller's environment usually says exactly where it is, so that comes first and
+/// focus state is demoted to a genuine last resort.
+///
+/// The precedence that matters, and why:
+///   1. TMUX + TMUX_PANE  - inside tmux this is the ONLY trustworthy signal
+///   2. TERM_SESSION_ID   - only outside tmux
+///   3. origin session    - a remote call, where the environment says nothing useful
+///   4. focus state       - the caller is not in an iTerm2 session at all
+///
+/// TERM_SESSION_ID is deliberately ignored inside tmux. A pane inherits whatever the server had
+/// when it started, which can be a session in a DIFFERENT terminal emulator entirely if the tmux
+/// session was created there and later attached from iTerm2.
+final class DefaultTargetPrecedenceTests: XCTestCase {
+    private func sessionId(environment: [String: String]) -> String? {
+        return APIClient.sessionIdFromEnvironment(environment)
+    }
+
+    func testTermSessionIdIsUsedOutsideTmux() {
+        XCTAssertEqual(sessionId(environment: ["TERM_SESSION_ID": "w0t0p0:ABC-123"]), "ABC-123")
+    }
+
+    // The case George raised: the tmux session was created in another terminal emulator and
+    // later attached from iTerm2, so the pane's TERM_SESSION_ID names a session in a different
+    // app. Using it would address something that is not even ours.
+    func testTermSessionIdIsIgnoredInsideTmux() {
+        XCTAssertNil(sessionId(environment: ["TMUX": "/tmp/s,1,0",
+                                             "TMUX_PANE": "%3",
+                                             "TERM_SESSION_ID": "w0t0p0:FROM-ANOTHER-APP"]),
+                     "inside tmux the pane must be resolved, never TERM_SESSION_ID")
+    }
+
+    // Half-set is still inside tmux, so TERM_SESSION_ID stays untrusted. The pane cannot be
+    // resolved either, so this falls through to the later signals rather than guessing.
+    func testHalfSetTmuxStillRejectsTermSessionId() {
+        XCTAssertNil(sessionId(environment: ["TMUX": "/tmp/s,1,0",
+                                             "TERM_SESSION_ID": "w0t0p0:ABC-123"]))
+    }
+
+    func testEmptyTmuxIsNotInsideTmux() {
+        XCTAssertEqual(sessionId(environment: ["TMUX": "", "TERM_SESSION_ID": "w0t0p0:ABC-123"]),
+                       "ABC-123")
+    }
+
+    func testNothingUsableYieldsNil() {
+        XCTAssertNil(sessionId(environment: [:]))
+        XCTAssertNil(sessionId(environment: ["TERM_SESSION_ID": "no-colon-here"]))
+    }
+
+    // The pane address, when it is well formed, is what gets looked up. Parsed here rather than
+    // resolved, since resolving needs a live app.
+    func testPaneAddressIsExtractedWhenWellFormed() throws {
+        let address = try XCTUnwrap(APIClient.paneAddressFromEnvironment(
+            ["TMUX": "/private/tmp/tmux-501/default,52533,0", "TMUX_PANE": "%7"]))
+        XCTAssertEqual(address.socketPath, "/private/tmp/tmux-501/default")
+        XCTAssertEqual(address.serverPID, 52533)
+        XCTAssertEqual(address.pane, 7)
+    }
+
+    func testMalformedPaneAddressIsNotUsed() {
+        XCTAssertNil(APIClient.paneAddressFromEnvironment(["TMUX": "nonsense", "TMUX_PANE": "%0"]))
+        XCTAssertNil(APIClient.paneAddressFromEnvironment(["TMUX": "/tmp/s,1,0", "TMUX_PANE": "7"]))
     }
 }

@@ -13,6 +13,13 @@
 import SwiftUI
 import CompanionProtocol
 
+extension CompanionSessionSummary {
+    /// The SF Symbol for this session's rows.
+    var symbolName: String {
+        isBrowser ? "globe" : "terminal"
+    }
+}
+
 /// The full session browser: the loading / error / empty / populated state
 /// ladder around a `SessionTreeList`, backed by the shared `model.sessionTree`.
 /// The Sessions tab and the mention picker both embed it, supplying their own

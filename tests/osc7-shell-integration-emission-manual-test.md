@@ -12,7 +12,7 @@ The encoders for all six shells (bash, zsh, fish, tcsh, xonsh, nu) are
 covered automatically by `tools/test_shell_integration_encoders.sh`
 (it runs each shell's encoder against a table of inputs and asserts
 the golden output; skips a shell that isn't installed). It also drives
-the real `tcsh` interpreter through the `_iterm2_print_osc7` alias for
+the real `tcsh` interpreter through the `_iterm2_osc7` alias for
 one creatable tricky directory, asserting the whole emitted URL, to
 pin the alias quoting / argument alignment. The full end-to-end
 emission and the fish/machineID checks below are still verified

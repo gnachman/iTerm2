@@ -7,6 +7,7 @@
 //  silently discarding it when the On/Off control is touched.
 //
 
+import AppKit
 import XCTest
 @testable import iTerm2SharedARC
 
@@ -69,5 +70,30 @@ final class ProfileBoolSettingPickerTests: XCTestCase {
         // Non-canonical values execute as Off in the trigger, so the UI must show Off, not On.
         XCTAssertEqual(ProfileBoolSettingPickerView.onOffIndex(forRawValue: "yes"), 1)
         XCTAssertEqual(ProfileBoolSettingPickerView.onOffIndex(forRawValue: ""), 1)
+    }
+    // F-400: the On/Off popup was a fixed 70pt, which clipped pt-BR “Inativo”. It must be wide
+    // enough for its longest item, whichever one is selected.
+    func testOnOffPopupFitsItsLongestItem() throws {
+        for selectedIndex in [0, 1] {
+            let picker = ProfileBoolSettingPickerView(frame: .zero)
+            picker.onOffButton.item(at: 1)?.title = "Inativo Inativo"
+            picker.onOffButton.selectItem(at: selectedIndex)
+            picker.frame = NSRect(x: 0, y: 0, width: 400, height: 22)
+            picker.layoutSubtreeIfNeeded()
+
+            let cell = try XCTUnwrap(picker.onOffButton.cell)
+            XCTAssertGreaterThanOrEqual(picker.onOffButton.frame.width, ceil(cell.cellSize.width),
+                                        "selected index \(selectedIndex)")
+            picker.onOffButton.selectItem(at: 1)
+            XCTAssertGreaterThanOrEqual(picker.onOffButton.frame.width, ceil(cell.cellSize.width),
+                                        "Off selected after layout, from index \(selectedIndex)")
+            XCTAssertLessThanOrEqual(picker.onOffButton.frame.maxX, picker.bounds.width)
+        }
+    }
+
+    func testOnOffPopupKeepsItsWidthForShortTitles() {
+        let picker = ProfileBoolSettingPickerView(frame: NSRect(x: 0, y: 0, width: 400, height: 22))
+        picker.layoutSubtreeIfNeeded()
+        XCTAssertEqual(picker.onOffButton.frame.width, 70)
     }
 }

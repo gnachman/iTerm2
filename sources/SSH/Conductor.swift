@@ -25,14 +25,20 @@ protocol ConductorDelegate: Any {
     // `guid` keys the announcement per conductor so two conductors that share an ssh
     // identity in one session cannot cross-cancel each other's prompt; `displayName` is
     // only the human-readable title.
-    @objc(conductorRequestIT2AuthorizationWithGUID:displayName:completion:)
-    func conductorRequestIT2Authorization(guid: String, displayName: String,
-                                          completion: @escaping (_ granted: Bool, _ remember: Bool) -> Void)
+    // `alwaysForHost` means the user chose to allow this host on every future connection, not
+    // just this one; the conductor then mints a grant (see IT2HostGrants).
+    // `callerTmuxPane` is TMUX_PANE ("%5") of the it2 that asked, if it ran in a tmux pane, so the
+    // prompt can go where the user is looking rather than on a hidden tmux gateway.
+    @objc(conductorRequestIT2AuthorizationWithGUID:displayName:callerTmuxPane:completion:)
+    func conductorRequestIT2Authorization(guid: String, displayName: String, callerTmuxPane: String?,
+                                          completion: @escaping (_ granted: Bool, _ remember: Bool, _ alwaysForHost: Bool) -> Void)
     // Dismiss the it2 authorization announcement for `guid` still on screen (e.g. the
     // connection was resolved/torn down before the user answered). No-op if none.
     @objc(conductorDismissIT2AuthorizationPromptWithGUID:)
     func conductorDismissIT2AuthorizationPrompt(guid: String)
     var guid: String { get }
+    // Where the session records the flow-controlled frames it parses and executes.
+    @objc optional func conductorFlowLedger() -> FramerFlowLedger?
 }
 
 @objc(iTermConductor)
@@ -94,6 +100,10 @@ class Conductor: NSObject, SSHIdentityProvider {
         // authorization grant/denial is persisted so the user is not re-prompted after a
         // relaunch (absent -> undecided -> prompt).
         var it2Proxy = IT2ProxyState()
+        // The framer may have flow control on: `flow on` was sent and not refused. It has no
+        // way to turn it off, so after a restart it needs a controller whatever the setting.
+        var flowMayBeOn = false
+        var framerVersion: Int?
 
         init(sshargs: String,
              varsToSend: [String: String],
@@ -149,7 +159,7 @@ class Conductor: NSObject, SSHIdentityProvider {
                framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
                modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
                homeDirectory, shell, pythonversion, uname, terminalConfiguration,
-               discoveredHostname, it2Proxy,
+               discoveredHostname, it2Proxy, flowMayBeOn, framerVersion,
                // Legacy, decode-only: the committed HEAD schema persisted the it2 proxy as
                // these two separate scalar keys before they were folded into it2Proxy. Kept
                // so init(from:) can migrate an old blob; encode() never writes them.
@@ -182,6 +192,8 @@ class Conductor: NSObject, SSHIdentityProvider {
                 _terminalConfiguration = try? container.decode(CodableNSDictionary?.self,
                                                                forKey: .terminalConfiguration)
                 discoveredHostname = try? container.decode(String?.self, forKey: .discoveredHostname)
+                flowMayBeOn = (try? container.decode(Bool.self, forKey: .flowMayBeOn)) ?? false
+                framerVersion = (try? container.decode(Int?.self, forKey: .framerVersion)) ?? nil
                 if let proxy = try? container.decode(IT2ProxyState.self, forKey: .it2Proxy) {
                     it2Proxy = proxy
                 } else {
@@ -225,6 +237,8 @@ class Conductor: NSObject, SSHIdentityProvider {
             try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
             try container.encode(discoveredHostname, forKey: .discoveredHostname)
             try container.encode(it2Proxy, forKey: .it2Proxy)
+            try container.encode(flowMayBeOn, forKey: .flowMayBeOn)
+            try container.encode(framerVersion, forKey: .framerVersion)
         }
     }
     let guid = UUID().uuidString
@@ -237,7 +251,58 @@ class Conductor: NSObject, SSHIdentityProvider {
         // Keep this in sync with the version reported by the recovery code in framer.py
         case v2 = 2
     }
-    private(set) var framerVersion: FramerVersion?
+    /// Saved with the conductor: after a restart, resynchronizing uses `reset2` only for a
+    /// framer known to understand it.
+    var framerVersion: FramerVersion? {
+        get { restorableState.framerVersion.flatMap { FramerVersion(rawValue: $0) } }
+        set { restorableState.framerVersion = newValue?.rawValue }
+    }
+
+    // Flow control; see Conductor+Flow.swift.
+    static var flowControlAvailable: Bool {
+        flowControlAvailableForTesting ?? iTermAdvancedSettingsModel.sshFlowControl()
+    }
+    static var flowControlAvailableForTesting: Bool?
+    /// Tests compare nested framers controlled with only the outermost one controlled.
+    static var nestedFlowControlAvailableForTesting: Bool?
+    var flowController: FramerFlowController?
+    /// How long a command took to be answered, written to answered, on the flow clock.
+    struct RoundTrip: Equatable {
+        var time: TimeInterval
+        var seconds: TimeInterval
+    }
+    /// Recent round trips of commands with replies, for the flow control monitor, whether or not
+    /// flow control is on. The oldest first.
+    var roundTrips = [RoundTrip]()
+    /// The status a completion gets when its command was aborted or canceled rather than
+    /// answered.
+    static let abortedStatus: Int32 = -2
+    /// The framer's clock (boottime, monotonic or uptime), from its reply to `flow on`.
+    var flowClockName: String?
+    /// The flow control version the framer speaks: 1 has one flow, 2 a flow per source.
+    var flowVersion = 1
+    /// Flow control is being turned back on while the framer may still be spending credit
+    /// granted before: after iTerm2 restarted, or after a relayed grant was lost.
+    var flowRestartingAfterRestore = false
+    /// `flow on` was sent and not yet answered.
+    var flowOnPending = false
+    /// `flow on`s aborted in a row, each sent again.
+    var flowOnRetries = 0
+    var flowMayBeOn: Bool {
+        get { restorableState.flowMayBeOn }
+        set { restorableState.flowMayBeOn = newValue }
+    }
+    /// Quit, failed or unhooked: its framer is gone or going.
+    private(set) var hasEnded = false
+    var flowClock: () -> TimeInterval = Conductor.monotonicNow
+    /// Tests drive ticks themselves.
+    var flowTicksAutomatically = true
+    var flowTimer: Timer?
+    /// The delegate's ledger, once the controller is listening to it.
+    var activeFlowLedger: FramerFlowLedger?
+    /// Nested conductors that will turn flow control on once this one runs version 2.
+    let flowChildrenWaiting = NSHashTable<Conductor>.weakObjects()
+
     @objc var sshargs: String {
         restorableState.sshargs
     }
@@ -248,6 +313,8 @@ class Conductor: NSObject, SSHIdentityProvider {
         }
         set {
             restorableState.discoveredHostname = newValue
+            // tmux panes on this host take it (TmuxPaneInferredHost).
+            delegate?.conductorStateDidChange()
         }
     }
 
@@ -275,7 +342,7 @@ class Conductor: NSObject, SSHIdentityProvider {
     var parsedSSHArguments: ParsedSSHArguments {
         restorableState.parsedSSHArguments
     }
-    var depth: Int32 {
+    @objc var depth: Int32 {
         restorableState.depth
     }
     private var _parent: Conductor?
@@ -380,6 +447,11 @@ class Conductor: NSObject, SSHIdentityProvider {
 
     @objc var autopollEnabled = true
     var _queueWrites = true
+    // Set when the connection is abandoned because its it2ssh died. Nothing may be written
+    // for it after that: there is no ssh to read it, so a command (e.g., an autopoll
+    // request) would be typed into the shell that owns the tty, or into the parent's remote
+    // shell for a nested connection (F-554).
+    @objc private(set) var abandoned = false
 
     // Set while a pipeline transition is running a handler that could call back in.
     // handleCommandEnd captures the pipeline's contents from the pattern match, runs the
@@ -405,7 +477,8 @@ class Conductor: NSObject, SSHIdentityProvider {
     // socket bound but never re-runs it2Listen, so without this the menu would go permanently
     // disabled after any transient drop). Not persisted: it lives OUTSIDE IT2ProxyState.Persisted
     // (the only fields IT2ProxyState's Codable encodes), and the custom init(from:) resets it to
-    // false on decode -- so on state restoration it2Listen re-runs and re-establishes it. Gates
+    // false on decode -- so on state restoration it2Listen is sent again after resynchronizing,
+    // which re-establishes it. Gates
     // it2ProxyActive so the
     // "Remote host can control iTerm2" menu reflects whether the remote can actually connect.
     var it2ListenSucceeded: Bool {
@@ -432,6 +505,12 @@ class Conductor: NSObject, SSHIdentityProvider {
         get { restorableState.it2Proxy.authorized }
         set { restorableState.it2Proxy.authorized = newValue }
     }
+    /// Set at getshell when this connection should get it2; acted on by doFraming.
+    private var pendingIT2Home: String?
+
+    /// Git state for directories on this connection's host. See RemoteGitState.swift.
+    private(set) lazy var remoteGitPollWorker = iTermRemoteGitPollWorker(runner: self)
+
     var it2Nonce: String? {
         get { restorableState.it2Proxy.nonce }
         set { restorableState.it2Proxy.nonce = newValue }
@@ -471,6 +550,24 @@ class Conductor: NSObject, SSHIdentityProvider {
         return provider
     }()
     var backgroundJobs = [Int32: State]()
+    /// Output received from each background job so far, in bytes.
+    private var backgroundJobOutputBytes = [Int32: Int]()
+    /// A command iTerm2 runs on the remote host, such as `man` or one an AI chat asked for, is
+    /// killed past this much output. Its output is held in memory, and flow control shares
+    /// credit with it, so one that never ends must not run forever.
+    var sideCommandOutputCap = 1024 * 1024
+    // Pane processes this conductor's framer runs for workgroup peers. See Conductor+Panes.
+    var panes = [Int32: WeakBox<ConductorPaneClient>]()
+    /// Output and exits of panes whose sessions have not reattached yet, after a restart or a
+    /// recovery. Kept until a session claims them, never dropped. See Conductor+Panes.swift.
+    var unclaimedPanes = [Int32: UnclaimedPane]()
+    /// Pids known to be panes of this framer: from recovery, or the last `panes` answer.
+    var knownPanePIDs = Set<Int32>()
+    /// Unclaimed panes the user chose to stop. What they write until they exit is not kept.
+    var stoppingPanes = Set<Int32>()
+    /// Set for a conductor restored from saved state or recovery until it has resynchronized
+    /// with its framer: commands sent before then can be lost, so panes wait to reattach.
+    @objc private(set) var awaitingResynchronization = false
 
     @objc weak var delegate: ConductorDelegate? {
         didSet {
@@ -593,6 +690,12 @@ class Conductor: NSObject, SSHIdentityProvider {
         _parent = recovery.parent
         framerVersion = .init(rawValue: recovery.version)
         waitingToResynchronize = true
+        awaitingResynchronization = true
+        knownPanePIDs = Set(recovery.panes)
+        unclaimedPanes = recovery.unclaimedPanes
+        if let flow = recovery.flow {
+            resumeFlowControl(afterRecoveryWith: flow)
+        }
     }
 
     deinit {
@@ -719,6 +822,28 @@ extension Conductor {
         }
         return _processInfoProvider
     }
+    /// A tmux pane on this connection's host: tracks its pid with framer, so the host's process
+    /// table includes its subtree, and returns the pane's view of that table. nil when not
+    /// framing. Safe to call on every title update: registration happens once per provider, and
+    /// after an SSH recovery the new provider registers the pane again.
+    @objc(sessionProcessInfoProviderForTmuxPanePID:)
+    func sessionProcessInfoProvider(forTmuxPanePID pid: Int32) -> SessionProcessInfoProvider? {
+        guard framing, !waitingToResynchronize, let provider = sshProcessInfoProvider else {
+            return nil
+        }
+        provider.register(trackedPID: pid)
+        return provider.sessionProcessInfoProvider(forPID: pid)
+    }
+
+    /// The pane closed: stop tracking its pid.
+    @objc(stopTrackingTmuxPanePID:)
+    func stopTrackingTmuxPane(pid: Int32) {
+        guard framing, let provider = sshProcessInfoProvider else {
+            return
+        }
+        provider.unregister(trackedPID: pid)
+    }
+
     @objc var processInfoProvider: (ProcessInfoProvider & SessionProcessInfoProvider)? {
         if waitingToResynchronize {
             return nil
@@ -936,7 +1061,8 @@ extension Conductor {
         case framerLogin(cwd: String, args: [String])
         case framerEval(String)
         case framerSend(Data, pid: Int32)
-        case framerKill(pid: Int)
+        /// `hangUp`: a hangup rather than SIGTERM (see killRemoteJob).
+        case framerKill(pid: Int, hangUp: Bool = false)
         case framerQuit
         case framerRegister(pid: pid_t)
         case framerDeregister(pid: pid_t)
@@ -955,6 +1081,39 @@ extension Conductor {
         case framerIT2Send(connid: String, data: Data)
         case framerIT2Close(connid: String)
 
+        // A workgroup peer's program on its own pty (framer.py handle_pane), and its size.
+        case framerPane(rows: Int, cols: Int, cwd: String, command: String, environment: [String: String])
+        case framerPaneSize(pid: Int32, rows: Int, cols: Int)
+
+        // Flow control (see FramerFlowController). Grants have no reply, so they are written
+        // directly instead of being queued.
+        /// Asks for flow control version 2, with credit per flow.
+        case framerFlowOn
+        /// What a framer that predates version 2 understands.
+        case framerFlowOnVersion1
+        case framerDrain
+        case framerPing
+        /// The pids of the framer's running panes.
+        case framerPanes
+
+        /// The lines sent for this command, each base64-encoded on its own. A command whose
+        /// arguments are free text lists them, so an argument containing a newline (a multi-line
+        /// remote command) stays one argument instead of being split by its newlines.
+        var wireArguments: [String] {
+            switch self {
+            case .framerLogin(cwd: let cwd, args: let args):
+                return ["login", cwd] + args
+            case .framerRun(let command):
+                return ["run", command]
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command,
+                             environment: let environment):
+                return ["pane", String(rows), String(cols), cwd, command] +
+                    environment.keys.sorted().map { "\($0)=\(environment[$0]!)" }
+            default:
+                return stringValue.components(separatedBy: "\n")
+            }
+        }
+
         var isFramer: Bool {
             switch self {
             case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_), .pythonversion,
@@ -964,7 +1123,8 @@ extension Conductor {
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
                     .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements,
-                    .framerIT2Listen, .framerIT2Send, .framerIT2Close:
+                    .framerIT2Listen, .framerIT2Send, .framerIT2Close, .framerPane, .framerPaneSize,
+                    .framerFlowOn, .framerFlowOnVersion1, .framerDrain, .framerPing, .framerPanes:
                 return true
             }
         }
@@ -1002,8 +1162,8 @@ extension Conductor {
                 return ["eval", script.base64Encoded].joined(separator: "\n")
             case .framerSend(let data, pid: let pid):
                 return (["send", String(pid), data.base64EncodedString()]).joined(separator: "\n")
-            case .framerKill(pid: let pid):
-                return ["kill", String(pid)].joined(separator: "\n")
+            case .framerKill(pid: let pid, hangUp: let hangUp):
+                return (["kill", String(pid)] + (hangUp ? ["hup"] : [])).joined(separator: "\n")
             case .framerGetenv(let name):
                 return ["getenv", name].joined(separator: "\n")
             case .framerExecPythonStatements(let statements):
@@ -1013,7 +1173,7 @@ extension Conductor {
             case .framerRegister(pid: let pid):
                 return ["register", String(pid)].joined(separator: "\n")
             case .framerDeregister(pid: let pid):
-                return ["dereigster", String(pid)].joined(separator: "\n")
+                return ["deregister", String(pid)].joined(separator: "\n")
             case .framerPoll:
                 return "poll"
             case .framerReset1:
@@ -1033,6 +1193,22 @@ extension Conductor {
                 return ["it2send", connid, data.base64EncodedString()].joined(separator: "\n")
             case .framerIT2Close(connid: let connid):
                 return ["it2close", connid].joined(separator: "\n")
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command,
+                             environment: let environment):
+                return (["pane", String(rows), String(cols), cwd, command] +
+                    environment.keys.sorted().map { "\($0)=\(environment[$0]!)" }).joined(separator: "\n")
+            case .framerPaneSize(pid: let pid, rows: let rows, cols: let cols):
+                return ["panesize", String(pid), String(rows), String(cols)].joined(separator: "\n")
+            case .framerFlowOn:
+                return ["flow", "on", "2"].joined(separator: "\n")
+            case .framerFlowOnVersion1:
+                return ["flow", "on"].joined(separator: "\n")
+            case .framerDrain:
+                return "drain"
+            case .framerPing:
+                return "ping"
+            case .framerPanes:
+                return "panes"
             }
         }
 
@@ -1070,8 +1246,8 @@ extension Conductor {
                 return "save \(dict.keys.joined(separator: ", "))"
             case .framerSend(let data, pid: let pid):
                 return "send \(data.semiVerboseDescription) to \(pid)"
-            case .framerKill(pid: let pid):
-                return "kill \(pid)"
+            case .framerKill(pid: let pid, hangUp: let hangUp):
+                return "kill \(pid)\(hangUp ? " hup" : "")"
             case .framerGetenv(let name):
                 return "getenv \(name)"
             case .framerExecPythonStatements(let statements):
@@ -1081,7 +1257,7 @@ extension Conductor {
             case .framerRegister(pid: let pid):
                 return ["register", String(pid)].joined(separator: " ")
             case .framerDeregister(pid: let pid):
-                return ["dereigster", String(pid)].joined(separator: " ")
+                return ["deregister", String(pid)].joined(separator: " ")
             case .framerPoll:
                 return "poll"
             case .framerReset1:
@@ -1098,6 +1274,20 @@ extension Conductor {
                 return "it2send \(connid) \(data.semiVerboseDescription)"
             case .framerIT2Close(connid: let connid):
                 return "it2close \(connid)"
+            case .framerPane(rows: let rows, cols: let cols, cwd: let cwd, command: let command, environment: _):
+                return "pane \(rows)x\(cols) cwd=\(cwd) “\(command)”"
+            case .framerPaneSize(pid: let pid, rows: let rows, cols: let cols):
+                return "panesize \(pid) \(rows)x\(cols)"
+            case .framerFlowOn:
+                return "flow on 2"
+            case .framerFlowOnVersion1:
+                return "flow on"
+            case .framerDrain:
+                return "drain"
+            case .framerPing:
+                return "ping"
+            case .framerPanes:
+                return "panes"
             }
         }
     }
@@ -1181,7 +1371,7 @@ extension Conductor {
                     return "handleJump"
                 case .writeOnSuccess(let code):
                     return "writeOnSuccess(\(code.count) chars)"
-                case .handleRunRemoteCommand(let command, _):
+                case .handleRunRemoteCommand(let command, _, _):
                     return "handleRunRemoteCommand(\(command))"
                 case .handleBackgroundJob(let output, _):
                     return"handleBackgroundJob(\(output.strings.count) lines)"
@@ -1197,6 +1387,10 @@ extension Conductor {
                     return "handleGetenv"
                 case .handleReset(let expected, let actual):
                     return "handleReset(\(expected), \(actual.string))"
+                case .handleResetMarker(let marker, _):
+                    return "handleResetMarker(\(marker))"
+                case .handleProbedReset(let code, let actual):
+                    return "handleProbedReset(\(code), \(actual.string))"
                 case .handleGetHostname:
                     return "handleGetHostname"
                 case .handleEphemeralCompletion:
@@ -1211,7 +1405,8 @@ extension Conductor {
             case handleFramerLogin(StringArray)
             case handleJump(StringArray)
             case writeOnSuccess(String)  // see runPython
-            case handleRunRemoteCommand(String, OneTimeClosure2<Data, Int32, Void>)
+            /// The command line, the completion, and what to tell once the job's pid is known.
+            case handleRunRemoteCommand(String, OneTimeClosure2<Data, Int32, Void>, OneTimeClosure1<Int32, Void>?)
             case handleBackgroundJob(StringArray, OneTimeClosure2<Data, Int32, Void>)
             case handlePoll(StringArray, OneTimeClosure1<Data, Void>)
             case handleGetShell(StringArray)
@@ -1219,6 +1414,12 @@ extension Conductor {
             case handleNonFramerLogin
             case handleGetenv(String, StringArray)
             case handleReset(expected: String, lines: StringArray)
+            /// Skips replies until the one that spells `marker`, a `file stat` of "/" whose reply
+            /// echoes the path; everything before it answered earlier commands.
+            case handleResetMarker(marker: String, lines: StringArray)
+            /// The `reset2` sent right after a marker: its reply is the next one, so without the
+            /// code it is a framer that predates `reset2`.
+            case handleProbedReset(code: String, lines: StringArray)
             case handleGetHostname
             case handleEphemeralCompletion(StringArray, OneTimeClosure2<String, Int32, Void>)
 
@@ -1246,6 +1447,8 @@ extension Conductor {
                 case handleReset
                 case handleGetHostname
                 case handleEphemeralCompletion
+                case handleResetMarker
+                case handleProbedReset
             }
 
             private var rawValue: Int {
@@ -1266,7 +1469,7 @@ extension Conductor {
                     return RawValues.handleGetenv.rawValue
                 case .writeOnSuccess(_):
                     return RawValues.writeOnSuccess.rawValue
-                case .handleRunRemoteCommand(_, _):
+                case .handleRunRemoteCommand(_, _, _):
                     return RawValues.handleRunRemoteCommand.rawValue
                 case .handleBackgroundJob(_, _):
                     return RawValues.handleBackgroundJob.rawValue
@@ -1280,6 +1483,10 @@ extension Conductor {
                     return RawValues.handleNonFramerLogin.rawValue
                 case .handleReset:
                     return RawValues.handleReset.rawValue
+                case .handleResetMarker:
+                    return RawValues.handleResetMarker.rawValue
+                case .handleProbedReset:
+                    return RawValues.handleProbedReset.rawValue
                 case .handleGetHostname:
                     return RawValues.handleGetHostname.rawValue
                 case .handleEphemeralCompletion:
@@ -1293,6 +1500,7 @@ extension Conductor {
                 switch self {
                 case .failIfNonzeroStatus, .fireAndForget, .it2Listen, .handleFramerLogin(_), .handlePoll(_, _),
                         .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset,
+                        .handleResetMarker, .handleProbedReset,
                         .handleGetHostname, .handleEphemeralCompletion:
                     break
                 case .handleCheckForPython(let value):
@@ -1301,7 +1509,7 @@ extension Conductor {
                     try container.encode(value, forKey: .stringArray)
                 case .writeOnSuccess(let value):
                     try container.encode(value, forKey: .string)
-                case .handleRunRemoteCommand(let value, _):
+                case .handleRunRemoteCommand(let value, _, _):
                     try container.encode(value, forKey: .string)
                 case .handleBackgroundJob(let value, _):
                     try container.encode(value, forKey: .stringArray)
@@ -1332,7 +1540,7 @@ extension Conductor {
                 case .writeOnSuccess:
                     self = .writeOnSuccess(try container.decode(String.self, forKey: .string))
                 case .handleRunRemoteCommand:
-                    self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), .init({_, _ in}))
+                    self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), .init({_, _ in}), nil)
                 case .handleBackgroundJob:
                     self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), .init({_, _ in}))
                 case .handlePoll:
@@ -1353,11 +1561,19 @@ extension Conductor {
                     self = .handleGetHostname
                 case .handleEphemeralCompletion:
                     self = .handleEphemeralCompletion(StringArray(), .init({ _, _ in }))
+                case .handleResetMarker:
+                    self = .handleResetMarker(marker: "", lines: StringArray())
+                case .handleProbedReset:
+                    self = .handleProbedReset(code: "", lines: StringArray())
                 }
             }
         }
         let handler: Handler
         var canceled = false
+        /// Queued in the priority lane, ahead of ordinary commands.
+        var isHighPriority: Bool?
+        /// When it was written, on Conductor.monotonicNow's clock, to time its round trip.
+        var writtenAt: TimeInterval?
 
         mutating func cancel() {
             if canceled {
@@ -1431,6 +1647,9 @@ extension Conductor {
         var boolArgs: String
         var clientUniqueID: String
         var version: Int
+        /// "1 <clock>" when the framer has flow control on.
+        var flow: String?
+        var panes: [Int32] = []
 
         var tree: NSDictionary {
             return (parentage + [Nesting(pid: login, dcsID: dcsID)]).tree
@@ -1449,6 +1668,8 @@ extension Conductor {
         var boolArgs: String?
         var clientUniqueID: String?
         var version: Int?
+        var flow: String?
+        var panes: [Int32] = []
 
         var finished: FinishedRecoveryInfo? {
             guard let login = login,
@@ -1465,7 +1686,9 @@ extension Conductor {
                 sshargs: sshargs,
                 boolArgs: boolArgs,
                 clientUniqueID: clientUniqueID,
-                version: version ?? 1)
+                version: version ?? 1,
+                flow: flow,
+                panes: panes)
         }
     }
 
@@ -1528,6 +1751,7 @@ extension Conductor {
             return nil
         }
         let leaf = Conductor(restorableState: leafState, restored: true)
+        leaf.awaitingResynchronization = true
         var current: Conductor? = leaf
         while current != nil {
             current?.delegate = delegate
@@ -1766,7 +1990,7 @@ extension Conductor {
         it2ssh_wrapper() {
         \(it2ssh)
         }
-        it2ssh_wrapper \(myJump!.sshargs)
+        it2ssh_wrapper \(shouldInjectShellIntegration ? "" : "--no-shell-integration ")\(myJump!.sshargs)
         """
         return code
     }
@@ -1789,6 +2013,9 @@ extension Conductor {
     }
 
     @objc func startRecovery() {
+        // The conductor made from the recovery takes flow control over.
+        stopFlowControl()
+        abandonPanes()
         write("\n\("recover".base64Encoded)\n\n")
         waitingToResynchronize = true
         state = .recovery(.ground)
@@ -1811,9 +2038,20 @@ extension Conductor {
     func didResynchronize() {
         DLog("didResynchronize")
         waitingToResynchronize = false
+        awaitingResynchronization = false
         forceReturnToGroundState()
         resetTransitively()
+        // A conductor restored after a restart doesn't know whether the framer still listens
+        // for it2 (that isn't saved), so it asks again. A framer that already listens answers
+        // that it does. After the reset, which would abort it.
+        if let path = it2SocketPath, it2Nonce != nil {
+            it2Listen(path: path)
+        }
         exfiltrateUsefulFramerInfo()
+        flowRecoveryDidFinish()
+        restartFlowControlAfterResynchronizing()
+        // Pane sessions reattach now that commands are safe.
+        NotificationCenter.default.post(name: Self.didResynchronizeNotification, object: self)
         // it2 proxy state (nonce/socket/authorization) is carried across recovery in
         // process from the pre-recovery conductor (see init(recovery:)), not re-read
         // from the framer: a fresh $SHELL -c getenv cannot see the one-time-injected
@@ -1822,6 +2060,39 @@ extension Conductor {
     }
 
     @objc func quit() {
+        hasEnded = true
+        flowMayBeOn = false
+        stopFlowControl()
+        abandonPanes()
+        cancelAllRequests()
+        if framing {
+            // The framer reads framer commands; the pre-framer `quit` means nothing to it.
+            framerQuit()
+        } else {
+            send(.quit, .fireAndForget)
+        }
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
+        delegate?.conductorQuit()
+        delegate?.conductorStateDidChange()
+    }
+
+    // The it2ssh process behind this connection died, so nothing can be sent to the
+    // remote. Fail pending requests and forget the connection without writing
+    // anything or notifying the delegate; the caller unhooks.
+    @objc func abandon() {
+        log("abandon")
+        // First, so nothing that canceling requests triggers can write.
+        abandoned = true
+        // So an aborted `flow on` does not start flow control again.
+        hasEnded = true
+        flowMayBeOn = false
+        stopFlowControl()
+        abandonPanes()
+        cancelAllRequests()
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
+    }
+
+    private func cancelAllRequests() {
         cancelEnqueuedRequests(where: { _ in true })
         switch state {
         case .willExecutePipeline(var contexts):
@@ -1838,10 +2109,6 @@ extension Conductor {
         }
         queue = []
         state = .ground
-        send(.quit, .fireAndForget)
-        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
-        delegate?.conductorQuit()
-        delegate?.conductorStateDidChange()
     }
 
     func eval(code: String) {
@@ -1853,13 +2120,34 @@ extension Conductor {
         return self.clientUniqueID == clientUniqueID || (parent?.ancestryContains(clientUniqueID: clientUniqueID) ?? false)
     }
 
+    /// Typed input, which takes the priority lane.
     @objc func sendKeys(_ data: Data) {
+        sendKeys(data, highPriority: true)
+    }
+
+    /// `onAbort` runs if the keys were queued for the framer and the queue was dropped before
+    /// it answered.
+    func sendKeys(_ data: Data, highPriority: Bool, onAbort: (() -> Void)? = nil) {
+        guard !abandoned else {
+            log("Abandoned. Not sending keys.")
+            return
+        }
         guard let pid = framedPID else {
             DLog("[sendKeys] Write: \(data.stringOrHex)")
             delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)
             return
         }
-        framerSend(data: data, pid: pid)
+        guard let onAbort else {
+            framerSend(data: data, pid: pid, highPriority: highPriority)
+            return
+        }
+        send(.framerSend(data, pid: pid),
+             highPriority: highPriority,
+             .handleEphemeralCompletion(StringArray(), .init({ _, status in
+                 if status == Self.abortedStatus {
+                     onAbort()
+                 }
+             })))
     }
 
     @objc
@@ -1901,7 +2189,9 @@ extension Conductor {
     }
 
     private func doFraming() {
+        activatePendingIT2()
         execFramer()
+        startFlowControlIfPossible()
         framerSave(["dcsID": dcsID,
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
@@ -1910,6 +2200,8 @@ extension Conductor {
         // minted and injected into the shell env during the shell-integration setup.
         if let path = it2SocketPath {
             it2Listen(path: path)
+        } else {
+            RLog("Framing without an it2 socket, so it2 on this host cannot reach iTerm2")
         }
         runRemoteCommand(iTermAdvancedSettingsModel.unameCommand()) { [weak self] data, status in
             if status == 0 {
@@ -1921,8 +2213,20 @@ extension Conductor {
         if myJump != nil {
             framerJump()
         } else {
+            // One string: framer joins its arguments with spaces into `-c`, so anything else would
+            // be split and lose its quoting.
+            var command = Self.remoteCommandString(modifiedCommandArgs: modifiedCommandArgs,
+                                                   commandLine: parsedSSHArguments.commandLine)
+            if let unwrapped = command,
+               Self.remoteLaunchKind(commandArgs: parsedSSHArguments.commandArgs) == .command,
+               it2Nonce != nil,
+               let shell {
+                // getshell gave this command it2's environment; it needs it2 on PATH too.
+                command = Self.commandPuttingIT2OnPath(unwrapped, loginShell: shell)
+                DLog("Command with it2 on PATH: \(command ?? "")")
+            }
             framerLogin(cwd: initialDirectory ?? "$HOME",
-                        args: modifiedCommandArgs ?? parsedSSHArguments.commandArgs)
+                        args: command.map { [$0] } ?? [])
         }
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
@@ -1939,6 +2243,9 @@ extension Conductor {
             }
         }
         framerGetenv("PATH")
+        // Who the login is as, which ssh may have taken from ~/.ssh/config rather than the
+        // command line, so the identity doesn't know it.
+        framerGetenv("USER")
     }
 
     private func uploadPayloads() {
@@ -1973,8 +2280,8 @@ extension Conductor {
         send(.framerEval(jumpScript), .handleJump(StringArray()))
     }
 
-    private func framerSend(data: Data, pid: Int32) {
-        send(.framerSend(data, pid: pid), .fireAndForget)
+    private func framerSend(data: Data, pid: Int32, highPriority: Bool) {
+        send(.framerSend(data, pid: pid), highPriority: highPriority, .fireAndForget)
     }
 
     // it2 CLI proxy senders. The demux (see Conductor+IT2) drives these to open a
@@ -2002,7 +2309,7 @@ extension Conductor {
         send(.framerGetenv(name), .handleGetenv(name, StringArray()))
     }
 
-    private func framerExecPythonStatements(statements: String,
+    func framerExecPythonStatements(statements: String,
                                             completion: @escaping (Bool, String) -> ()) {
         send(.framerExecPythonStatements(statements), .handleEphemeralCompletion(StringArray(), .init({ string, code in
             completion(code == 0, string)
@@ -2032,10 +2339,136 @@ extension Conductor {
         if let modifiedCommandArgs = modifiedCommandArgs,
            modifiedCommandArgs.isEmpty {
             send(.execLoginShell(modifiedCommandArgs), .handleNonFramerLogin)
-        } else if parsedSSHArguments.commandArgs.isEmpty {
+        } else if parsedSSHArguments.commandLine.isEmpty {
             send(.execLoginShell([]), .handleNonFramerLogin)
         } else {
-            run((parsedSSHArguments.commandArgs).joined(separator: " "))
+            run(Self.remoteCommandString(modifiedCommandArgs: modifiedCommandArgs,
+                                         commandLine: parsedSSHArguments.commandLine) ?? "")
+        }
+    }
+
+    /// The command the remote login shell runs with `-c`, or nil for an interactive login shell.
+    ///
+    /// Unmodified, it is the command exactly as given, the string ssh would send. When shell
+    /// integration adjusted a shell named as the command (bash gets --posix), the arguments are
+    /// exact words by then and each is quoted, so none can be split or reinterpreted.
+    enum RemoteLaunchKind: Equatable {
+        /// No command: the login shell, interactively.
+        case interactive
+        /// A shell named as the command (`it2ssh host bash`): the session's shell, which shell
+        /// integration may adjust.
+        case customShell(String)
+        /// Anything else: run by the login shell exactly as given.
+        case command
+    }
+
+    /// Shells that can be the session's shell when named as the command.
+    private nonisolated static let shellNames: Set<String> = [
+        "sh", "bash", "zsh", "fish", "xonsh", "tcsh", "csh", "ksh", "mksh", "dash", "ash", "yash"
+    ]
+
+    nonisolated static func remoteLaunchKind(commandArgs: [String]) -> RemoteLaunchKind {
+        guard let first = commandArgs.first else {
+            return .interactive
+        }
+        if shellNames.contains((first as NSString).lastPathComponent) {
+            return .customShell(first)
+        }
+        return .command
+    }
+
+    /// What getshell sets up on the remote.
+    struct RemoteSetup: Equatable {
+        /// Adjust the shell so it loads the shell-integration scripts, and upload them.
+        var injectShellIntegration: Bool
+        /// Upload ~/.iterm2/bin/it2 and the interpreter it runs.
+        var uploadIT2: Bool
+        /// Mint the it2 socket and nonce and put IT2_SOCK, IT2_NONCE and IT2_PY in the shell's
+        /// environment.
+        var activateIT2: Bool
+    }
+
+    /// it2 used to come only with injection, so with "Load shell integration automatically" off,
+    /// or a shell that cannot be injected (tcsh, macOS bash 3.2), there was no socket at all and
+    /// every remote it2 feature failed silently. The socket is not shell integration: it only
+    /// needs the framer, and its variables reach any shell through setenv. So it is always
+    /// minted. The setting decides what is written to the host: off means nothing is uploaded,
+    /// though an it2 already there (installed by hand, or by an earlier session) still works.
+    nonisolated static func remoteSetup(launchKind: RemoteLaunchKind,
+                                        shellSupportsInjection: Bool,
+                                        shouldInjectShellIntegration: Bool,
+                                        haveHome: Bool) -> RemoteSetup {
+        guard haveHome else {
+            return RemoteSetup(injectShellIntegration: false, uploadIT2: false, activateIT2: false)
+        }
+        // A command is run by the login shell exactly as given, never through the scripts.
+        let inject = shouldInjectShellIntegration && launchKind != .command && shellSupportsInjection
+        return RemoteSetup(injectShellIntegration: inject,
+                           uploadIT2: shouldInjectShellIntegration,
+                           activateIT2: true)
+    }
+
+    /// Queues the shell-integration scripts for upload with the other payloads.
+    private func uploadShellIntegrationPayloads() {
+        let base = URL(fileURLWithPath: "/$HOME/.iterm2/shell-integration")
+        let it2 = ShellIntegrationInjector.instance.it2Files(dotIterm2: base.deletingLastPathComponent())
+        for (local, remote) in ShellIntegrationInjector.instance.files(destinationBase: base)
+        where it2[local] == nil {
+            payloads.append(Payload(path: local.path, destination: remote.path))
+        }
+    }
+
+    /// Queues ~/.iterm2/bin/it2 and its interpreter for upload with the other payloads.
+    private func uploadIT2Payloads() {
+        let dotIterm2 = URL(fileURLWithPath: "/$HOME/.iterm2")
+        for (local, remote) in ShellIntegrationInjector.instance.it2Files(dotIterm2: dotIterm2) {
+            payloads.append(Payload(path: local.path, destination: remote.path))
+        }
+    }
+
+    nonisolated static func remoteCommandString(modifiedCommandArgs: [String]?, commandLine: String) -> String? {
+        if let modifiedCommandArgs {
+            if modifiedCommandArgs.isEmpty {
+                return nil
+            }
+            return modifiedCommandArgs.map { "'" + $0.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+                .joined(separator: " ")
+        }
+        return commandLine.isEmpty ? nil : commandLine
+    }
+
+    /// `command` with ~/.iterm2/bin put on PATH first, in the syntax of the login shell that runs
+    /// it with -c. A command gets it2's environment at getshell, but PATH cannot go that way (see
+    /// activateIT2Proxy), and only the interactive shell-integration scripts add the directory.
+    /// It has to happen inside the command because a login shell's profile may reset PATH
+    /// outright (Debian's /etc/profile does). A shell whose syntax is unknown gets the command
+    /// unchanged.
+    nonisolated static func commandPuttingIT2OnPath(_ command: String, loginShell: String) -> String {
+        switch (loginShell as NSString).lastPathComponent {
+        case "sh", "bash", "zsh", "ksh", "mksh", "dash", "ash", "yash":
+            return #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; "# + command
+        case "csh", "tcsh":
+            return #"setenv PATH "${HOME}/.iterm2/bin:${PATH}"; "# + command
+        case "fish":
+            return #"set -gx PATH "$HOME/.iterm2/bin" $PATH; "# + command
+        default:
+            return command
+        }
+    }
+
+    /// Mints the it2 socket and nonce and sends IT2_SOCK, IT2_NONCE and IT2_PY, now that the
+    /// framer that binds the socket is about to start. They go by setenv to conductor.sh, which
+    /// then execs the framer, so the framer and the login shell it starts inherit them. Only here,
+    /// so a host without a usable Python never gets an IT2_SOCK that nothing listens on.
+    private func activatePendingIT2() {
+        guard let home = pendingIT2Home else {
+            return
+        }
+        pendingIT2Home = nil
+        var vars = [String: String]()
+        activateIT2Proxy(home: home, env: &vars)
+        for (key, value) in vars.sorted(by: { $0.key < $1.key }) {
+            send(.setenv(key: key, value: value), .failIfNonzeroStatus)
         }
     }
 
@@ -2105,7 +2538,8 @@ extension Conductor {
 
     struct IgnoreCommandError: Error { }
 
-    private func update(executionContext: ExecutionContext, result: PartialResult) throws {
+    // Internal for tests, which feed it the remote's answers.
+    func update(executionContext: ExecutionContext, result: PartialResult) throws {
         log("update \(executionContext) result=\(result)")
         switch executionContext.handler {
         case .handleNonFramerLogin:
@@ -2183,6 +2617,40 @@ extension Conductor {
                 break
             }
             return
+        case .handleResetMarker(let marker, let lines):
+            switch result {
+            case .line(let message):
+                lines.strings.append(message)
+            case .end:
+                // The reply is a JSON record whose absolutePath is the marker.
+                if lines.strings.contains(where: { $0.contains("\"\(marker)\"") }) {
+                    log("Have received the reset marker")
+                } else {
+                    log("Skip a reply to an earlier command while waiting for the reset marker")
+                    lines.strings.removeAll()
+                    throw IgnoreCommandError()
+                }
+            case .abort, .sideChannelLine, .canceled:
+                break
+            }
+        case .handleProbedReset(let code, let lines):
+            switch result {
+            case .line(let message):
+                lines.strings.append(message)
+            case .end:
+                if lines.strings.contains(code) {
+                    log("The framer speaks reset2")
+                    framerVersion = .v2
+                } else {
+                    log("The framer predates reset2; reset it the old way")
+                    framerVersion = .v1
+                    // Ahead of the autopoll and registrations queued after the reset, which the
+                    // old reset would otherwise clear.
+                    send(.framerReset1, highPriority: true, .fireAndForget)
+                }
+            case .abort, .sideChannelLine, .canceled:
+                break
+            }
         case .handleReset(let code, let lines):
             switch result {
             case .line(let message):
@@ -2244,6 +2712,10 @@ extension Conductor {
             case .end:
                 if let line = lines.strings.first {
                     environmentVariables[name] = line
+                    if name == "USER" {
+                        // tmux panes on this host take it (TmuxPaneInferredHost).
+                        delegate?.conductorStateDidChange()
+                    }
                 }
             }
         case .writeOnSuccess(let code):
@@ -2258,7 +2730,7 @@ extension Conductor {
                 }
                 return
             }
-        case .handleRunRemoteCommand(let commandLine, let completion):
+        case .handleRunRemoteCommand(let commandLine, let completion, let started):
             switch result {
             case .line(let line):
                 guard let pid = Int32(line) else {
@@ -2268,6 +2740,7 @@ extension Conductor {
                                  command: .framerRun(commandLine)) { data, status in
                     completion.call(data, status)
                 }
+                started?.call(pid)
             case .sideChannelLine(_, _, _), .abort, .end(_), .canceled:
                 break
             }
@@ -2316,10 +2789,17 @@ extension Conductor {
                 }
                 // If you ran `it2ssh localhost /usr/local/bin/bash` then the shell is /usr/local/bin/bash.
                 // If you ran `it2ssh localhost` then the shell comes from the response to getshell.
+                // If you ran `it2ssh localhost claude`, the login shell from getshell runs claude.
                 let parts = lines.strings.joined(separator: "").components(separatedBy: "\n").map {
                     $0.trimmingCharacters(in: .whitespaces)
                 }
-                let shell = parsedSSHArguments.commandArgs.first ?? parts.get(0, default: "")
+                let launchKind = Self.remoteLaunchKind(commandArgs: parsedSSHArguments.commandArgs)
+                let shell: String
+                if case .customShell(let customShell) = launchKind {
+                    shell = customShell
+                } else {
+                    shell = parts.get(0, default: "")
+                }
                 let home = parts.get(1, default: "")
                 let version: String
                 if parts.count > 1 {
@@ -2327,9 +2807,13 @@ extension Conductor {
                 } else {
                     version = ""
                 }
-                if !shell.isEmpty &&
-                    !home.isEmpty &&
-                    shouldInjectShellIntegration && shellSupportsInjection(shell.lastPathComponent, version) {
+                let setup = Self.remoteSetup(
+                    launchKind: launchKind,
+                    shellSupportsInjection: !shell.isEmpty && shellSupportsInjection(shell.lastPathComponent, version),
+                    shouldInjectShellIntegration: shouldInjectShellIntegration,
+                    haveHome: !home.isEmpty)
+                DLog("getshell: shell=\(shell) launch=\(launchKind) setup=\(setup)")
+                if setup.injectShellIntegration {
                     (modifiedVars, modifiedCommandArgs) = ShellIntegrationInjector.instance.modifyRemoteShellEnvironment(
                         shellIntegrationDir: "\(home)/.iterm2/shell-integration",
                         env: varsToSend,
@@ -2355,16 +2839,17 @@ extension Conductor {
                     // before the inner interactive shell runs -- zsh's injected .zshenv unsets ZDOTDIR
                     // and skips its interactive-only shell-integration load -- so integration would
                     // never load.
-                    let dict = ShellIntegrationInjector.instance.files(
-                        destinationBase: URL(fileURLWithPath: "/$HOME/.iterm2/shell-integration"))
-                    for (local, remote) in dict {
-                        payloads.append(Payload(path: local.path,
-                                                destination: remote.path))
-                    }
-                    if var vars = modifiedVars {
-                        activateIT2Proxy(home: home, env: &vars)
-                        modifiedVars = vars
-                    }
+                    uploadShellIntegrationPayloads()
+                }
+                if setup.uploadIT2 {
+                    uploadIT2Payloads()
+                }
+                if setup.activateIT2 {
+                    // Not yet: the socket only exists if the framer starts, which needs a usable
+                    // Python, and that is checked next. See doFraming.
+                    pendingIT2Home = home
+                } else {
+                    RLog("No it2 socket for this connection: the remote home directory is unknown")
                 }
                 self.shell = shell
                 delegate?.conductorStateDidChange()
@@ -2388,8 +2873,12 @@ extension Conductor {
             switch result {
             case .line(let line):
                 lines.strings.append(line)
-            case .sideChannelLine(_, _, _), .abort, .canceled:
+            case .sideChannelLine(_, _, _):
                 break
+            case .abort, .canceled:
+                // As other handlers do, so a caller waiting on the reply is not left hanging
+                // when the connection ends or the queue is reset.
+                completion.call("", Self.abortedStatus)
             case .end(let status):
                 completion.call(lines.strings.joined(separator: ""), Int32(status))
             }
@@ -2414,7 +2903,9 @@ extension Conductor {
 
     @objc(handleLine:depth:) func handle(line: String, depth: Int32) {
         log("[\(framedPID.map { String($0) } ?? "unframed")] handle input: \(line) depth=\(depth)")
-        if depth != self.depth && framing {
+        // A shallower depth is an ancestor's even when this one does not frame yet, as while it
+        // is being recovered: the parser only goes deeper below a framing conductor.
+        if (depth != self.depth && framing) || depth < self.depth {
             log("Pass line with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
             parent?.handle(line: line, depth: depth)
             return
@@ -2436,21 +2927,17 @@ extension Conductor {
 
     @objc func handleUnhook() {
         log("unhook")
+        hasEnded = true
+        flowMayBeOn = false
+        stopFlowControl()
+        abandonPanes()
         // Settle the state before notifying anyone, the way forceReturnToGroundState does.
         // These handlers can call back into send() -- handleCheckForPython's abort arm calls
         // execLoginShell() -- and a re-entrant send() that saw the pipeline still in `state`
         // would extend it and write to a conductor being torn down, on a connection whose
         // framer is gone, after which `state = .unhooked` drops the contexts so those
         // handlers never fire.
-        var aborted: [ExecutionContext] = []
-        switch state {
-        case .executingPipeline(let context, _):
-            aborted.append(context)
-        case .willExecutePipeline(let contexts):
-            aborted.append(contexts.first!)
-        case .ground, .recovered, .unhooked, .recovery:
-            break
-        }
+        var aborted = contextsInFlight
         log("Abort pending commands")
         aborted.append(contentsOf: queue)
         queue = []
@@ -2486,7 +2973,7 @@ extension Conductor {
             default:
                 expectFraming = false}
         }
-        if (!expectFraming && type == "f") || (framing && depth != self.depth) {
+        if (!expectFraming && type == "f") || (framing && depth != self.depth) || depth < self.depth {
             // The purpose of the type argument is so that a non-framing conductor with a framing
             // parent can know whether to handle end itself or to pass it on. The depth is not
             // useful for non-framing conductors since the parser is unaware of them.
@@ -2506,6 +2993,10 @@ extension Conductor {
             do {
                 try withPipelineTransition {
                     try update(executionContext: contexts.first!, result: .end(status))
+                    // After the handler accepted the end (reset2 ignores stale ones), and
+                    // inside the transition, so a ping it sends waits until this command has
+                    // left the pipeline.
+                    flowCommandDidEnd(contexts.first!)
                 }
                 if contexts.count == 1 {
                     DLog("Command ended. Return to ground state.")
@@ -2525,6 +3016,7 @@ extension Conductor {
             do {
                 try withPipelineTransition {
                     try update(executionContext: context, result: .end(status))
+                    flowCommandDidEnd(context)
                 }
                 DLog("Command ended. Return to ground state.")
                 if pending.isEmpty {
@@ -2551,8 +3043,12 @@ extension Conductor {
             return
         }
         log("Process \(pid) terminated")
+        if handlePaneTermination(pid, code: code) {
+            return
+        }
         if pid == framedPID {
-            send(.quit, .fireAndForget)
+            // The framer reads framer commands; the pre-framer `quit` means nothing to it.
+            framerQuit()
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
             case .ground, .unhooked, .recovery, .recovered:
@@ -2563,10 +3059,12 @@ extension Conductor {
                 try? update(executionContext: contexts.first!, result: .end(UInt8(code)))
                 log("Remove background job \(pid) after handling termination while in willExecutePipeline job state")
                 backgroundJobs.removeValue(forKey: pid)
+                backgroundJobOutputBytes.removeValue(forKey: pid)
             case let .executingPipeline(context, _):
                 do {
                     try update(executionContext: context, result: .end(UInt8(code)))
                     backgroundJobs.removeValue(forKey: pid)
+                    backgroundJobOutputBytes.removeValue(forKey: pid)
                     log("Remove background job \(pid) after handling termination while in executingPipeline job state")
                 } catch {
                     log("Got \(error) so not updating state")
@@ -2588,6 +3086,14 @@ extension Conductor {
             return
         }
         DLog("handleIT2 \(string.semiVerboseDescription) depth=\(depth)")
+        // Under flow control version 2, data carries the framer's clock and flags, which the
+        // screen recorded on arrival.
+        let parts = string.split(separator: " ", omittingEmptySubsequences: false)
+        if parts.count == 5, parts[1] == "data" {
+            it2DemuxForHandling().handle(parts[0...2].joined(separator: " "))
+            flowIT2DidConsume(bytes: Data(base64Encoded: String(parts[2]))?.count ?? 0)
+            return
+        }
         it2DemuxForHandling().handle(string)
     }
 
@@ -2618,6 +3124,9 @@ extension Conductor {
             log("No background job with pid \(pid)")
             return
         }
+        guard acceptBackgroundJobOutput(string, pid: pid) else {
+            return
+        }
 //        DLog("pid \(pid) channel \(channel) produced: \(string)")
         switch jobState {
         case .ground, .unhooked, .recovery, .recovered:
@@ -2637,6 +3146,22 @@ extension Conductor {
         }
     }
 
+    /// Counts a background job's output against sideCommandOutputCap. Past it, the job is
+    /// killed and the rest of its output dropped; it still ends when the framer reports it.
+    private func acceptBackgroundJobOutput(_ string: String, pid: Int32) -> Bool {
+        let before = backgroundJobOutputBytes[pid, default: 0]
+        let after = before + string.utf8.count
+        backgroundJobOutputBytes[pid] = after
+        guard after > sideCommandOutputCap else {
+            return true
+        }
+        if before <= sideCommandOutputCap {
+            RLog("Background job \(pid) produced more than \(sideCommandOutputCap) bytes. Kill it.")
+            send(.framerKill(pid: Int(pid)), .fireAndForget)
+        }
+        return false
+    }
+
     private func handleNotif(_ message: String) {
         let notifTTY = "%notif tty "
         if message.hasPrefix(notifTTY) {
@@ -2646,6 +3171,10 @@ extension Conductor {
         let notifSearch = "%notif search "
         if message.hasPrefix(notifSearch) {
             handleSearchNotif(String(message.dropFirst(notifSearch.count)))
+        }
+
+        if message.trimmingCharacters(in: .whitespacesAndNewlines) == "%notif valve" {
+            flowValveDidOpen()
         }
     }
 
@@ -2748,15 +3277,19 @@ extension Conductor {
                         state = .ground
 
                         delegate?.conductorStateDidChange()
-                        return ConductorRecovery(pid: finished.login,
+                        let recovery = ConductorRecovery(pid: finished.login,
                                                  dcsID: finished.dcsID,
                                                  tree: finished.tree,
                                                  sshargs: finished.sshargs,
                                                  boolArgs: finished.boolArgs,
                                                  clientUniqueID: finished.clientUniqueID,
                                                  version: finished.version,
+                                                 flow: finished.flow,
+                                                 panes: finished.panes,
                                                  parent: parent,
                                                  it2Proxy: it2Proxy)
+                        recovery.unclaimedPanes = unclaimedPanes
+                        return recovery
                     }
                     return nil
                 }
@@ -2790,6 +3323,13 @@ extension Conductor {
                     temp.boolArgs = String(value)
                 case "clientUniqueID":
                     temp.clientUniqueID = String(value)
+                case "flow":
+                    temp.flow = String(value)
+                case "pane":
+                    guard let pid = Int32(value) else {
+                        return nil
+                    }
+                    temp.panes.append(pid)
                 default:
                     return nil
                 }
@@ -2808,7 +3348,12 @@ extension Conductor {
         let context = ExecutionContext(command: command, handler: handler)
         DLog("Enqueue: \(command)")
         if highPriority {
-            queue.insert(context, at: 0)
+            // First in, first out among high-priority commands, so typed keys stay in order,
+            // and ahead of everything else, such as upload chunks.
+            var context = context
+            context.isHighPriority = true
+            let index = queue.firstIndex { $0.isHighPriority != true } ?? queue.count
+            queue.insert(context, at: index)
         } else {
             // A possible optimization is to merge search acks here. Rather than appending a new
             // ack to the queue, just increment the count.
@@ -2876,24 +3421,28 @@ extension Conductor {
 
     // Produces the bytes written to the remote for `command`. Internal for testing.
     nonisolated static func encodeForWire(_ command: Command, linePrefix: String) -> String {
-        let encodedArgs = command.stringValue.components(separatedBy: "\n").map(\.base64Encoded)
-        if command.isFramer {
-            // framer.py reads one line per argument, joining a line that ends in a backslash
-            // with the next, and an empty line ends the command. Split each argument on its
-            // own so a split never lands next to the newline between two arguments, which
-            // would put an empty line on the wire and cut the command in two.
-            return encodedArgs
-                .flatMap { arg -> [String] in
-                    // chunk() returns nothing for an empty argument; keep its (empty) line.
-                    let lines = arg.chunk(128, continuation: "\\")
-                    return lines.isEmpty ? [""] : lines
-                }
+        return encode(arguments: command.wireArguments,
+                      isFramer: command.isFramer,
+                      linePrefix: linePrefix)
+    }
+
+    /// The text written for a command's arguments, without the blank line that ends it.
+    nonisolated static func encode(arguments: [String], isFramer: Bool, linePrefix: String) -> String {
+        let encoded = arguments.map(\.base64Encoded)
+        guard isFramer else {
+            return encoded
+                .joined(separator: "\n")
+                .chunk(128)
+                .map { linePrefix + $0 }
                 .joined(separator: "\n") + "\n"
         }
-        return encodedArgs
-            .joined(separator: "\n")
-            .chunk(128)
-            .map { linePrefix + $0 }
+        // framer.py reads a line that ends in a backslash as continued on the next, and a blank
+        // line as the end of the command. Each argument is chunked on its own, since cutting
+        // the joined arguments could put a backslash just before a separating newline and
+        // leave a blank line. Base64 has no backslashes or newlines. An empty argument is
+        // sent as "=", which decodes to nothing.
+        return encoded
+            .flatMap { ($0.isEmpty ? "=" : $0).chunk(128, continuation: "\\") }
             .joined(separator: "\n") + "\n"
     }
 
@@ -2952,10 +3501,14 @@ extension Conductor {
                 try? update(executionContext: context, result: result)
             }
         }
-        let contexts = takeNextContextPipeline(existing, dropped: &dropped)
+        var contexts = takeNextContextPipeline(existing, dropped: &dropped)
         guard contexts.count > existing.count else {
             log("Nothing to take")
             return
+        }
+        let now = flowClock()
+        for i in existing.count..<contexts.count {
+            contexts[i].writtenAt = now
         }
         // The writes are a mutation window as well. State is already consistent here, so a
         // re-entrant send() would legitimately extend the pipeline and write immediately,
@@ -2968,7 +3521,7 @@ extension Conductor {
             for pending in contexts[existing.count...] {
                 willSend(pending)
                 let chunked = encode(pending)
-                write(chunked)
+                write(chunked, highPriority: pending.isHighPriority == true)
             }
         }
     }
@@ -3055,14 +3608,21 @@ extension Conductor {
         return pending
     }
 
-    private func write(_ string: String, end: String = "\n") {
+    /// A nested conductor's writes become its parent's keystrokes. `highPriority` carries the
+    /// priority lane through, so a key typed in a nested session is not held behind the
+    /// parent's own queued commands, while relayed bulk such as upload chunks is.
+    func write(_ string: String, end: String = "\n", highPriority: Bool = false) {
         log("write: \(string)")
+        guard !abandoned else {
+            log("Abandoned. Not writing.")
+            return
+        }
         let savedQueueWrites = _queueWrites
         _queueWrites = false
         if let parent = parent {
             if let data = (string + end).data(using: .utf8) {
                 log("ask parent to send: \(string)")
-                parent.sendKeys(data)
+                parent.sendKeys(data, highPriority: highPriority)
             } else {
                 log("can't utf-8 encode string to send: \(string)")
             }
@@ -3101,22 +3661,44 @@ extension Conductor {
         }
     }
 
+    /// Every command written and not yet answered, oldest first.
+    var contextsInFlight: [ExecutionContext] {
+        switch state {
+        case .executingPipeline(let context, let pending):
+            return [context] + pending
+        case .willExecutePipeline(let contexts):
+            return contexts
+        case .ground, .recovered, .unhooked, .recovery:
+            return []
+        }
+    }
+
     func forceReturnToGroundState() {
         log("forceReturnToGroundState")
+        // Commands in flight are abandoned as well as queued ones. Each handler hears of it,
+        // or a caller waiting on its reply (a pane's start, say) would wait forever. State is
+        // settled first, since handlers can send again.
+        let aborted = contextsInFlight + queue
         state = .ground
-        for context in queue {
+        queue = []
+        for context in aborted {
             try? update(executionContext: context, result: .abort)
         }
-        queue = []
         parent?.forceReturnToGroundState()
     }
 
     private func fail(_ reason: String) {
         DLog("FAIL: \(reason)")
+        hasEnded = true
+        flowMayBeOn = false
+        stopFlowControl()
+        abandonPanes()
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
-        delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
+        if !abandoned {
+            delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
+        }
         delegate?.conductorAbort(reason: reason)
     }
 }

@@ -60,6 +60,9 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 // Whether a client advertising `libraryVersion` (the x-iterm2-library-version header) knows about
 // floating panes. Older Python libraries loop forever on a focus change to one.
 + (BOOL)libraryVersionUnderstandsFloatingPanes:(NSString *)libraryVersion;
+
+// The JSON sent back for a function's return value. NSNull (a function returning None) is "null".
++ (NSString *)jsonResultForFunctionValue:(id)object;
 + (instancetype)sharedInstanceFromExplicitUserAction;
 + (instancetype)sharedInstanceIfEnabled;
 
@@ -82,6 +85,13 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 
 + (void)setEnabled:(BOOL)enabled;
 + (BOOL)isEnabled;
+
+#if DEBUG
+// Gives the shared helper an API server that serves in-process connections without listening on
+// the API socket, so in-process it2 commands can run inside the test host, where no server is
+// normally created. Development builds only, for live harnesses.
++ (void)debugStartInProcessOnlyServer;
+#endif
 + (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window;
 
 // Waits for the API server socket to be ready before calling the completion block.
@@ -92,6 +102,9 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 // Refuses new API socket connections from now on, without creating the helper if it does not
 // already exist. Existing connections are unaffected. Called when the app begins to quit.
 + (void)stopAcceptingConnections;
+
+// Whether two isomorphic split trees give every session the same grid size.
++ (BOOL)splitTree:(ITMSplitTreeNode *)node1 hasSameGridSizesAs:(ITMSplitTreeNode *)node2;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 

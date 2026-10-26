@@ -68,6 +68,18 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 @synthesize selector = selector_;
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 
++ (BOOL)shouldApplySavedOriginUsingOriginalWindow:(BOOL)useOriginalWindow
+                                      initialTabs:(NSInteger)initialTabs
+                                          initial:(BOOL)initial
+                                   isHotKeyWindow:(BOOL)isHotKeyWindow {
+    if (isHotKeyWindow) {
+        // A hotkey window's position comes from its profile (for example, top of screen), not
+        // from where tmux last had a window.
+        return NO;
+    }
+    return !useOriginalWindow || initialTabs < 2 || !initial;
+}
+
 + (TmuxWindowOpener *)windowOpener {
     return [[TmuxWindowOpener alloc] init];
 }
@@ -641,7 +653,7 @@ static int OctalValue(const char *bytes) {
             BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowOptionStyleValueFullScreen];
             BOOL isFullScreen = [term anyFullScreen];
             if (wantFullScreen && !isFullScreen) {
-                if (windowPos) {
+                if (windowPos && !term.isHotKeyWindow) {
                     RLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);
                     [[term window] setFrameOrigin:[windowPos pointValue]];
                     windowPos = nil;
@@ -664,7 +676,10 @@ static int OctalValue(const char *bytes) {
     RLog(@"useOriginalWindow=%@ initialTabs=%@ initial=%@ windowPos=%@",
          @(useOriginalWindow), @(initialTabs), @(self.initial), windowPos);
     if (windowPos) {
-        if (!useOriginalWindow || initialTabs < 2 || !self.initial) {
+        if ([TmuxWindowOpener shouldApplySavedOriginUsingOriginalWindow:useOriginalWindow
+                                                            initialTabs:initialTabs
+                                                                initial:self.initial
+                                                         isHotKeyWindow:term.isHotKeyWindow]) {
             // Do this after calling the completion selector because it may affect the window's
             // frame (e.g., when burying a session and that causes the number of tabs to change).
             RLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);

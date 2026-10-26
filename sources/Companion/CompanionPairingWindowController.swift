@@ -83,6 +83,9 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     // True while the biometric/password sheet for a fresh pairing is up, so a
     // poll or re-key does not stack a second prompt.
     private var pairingAuthInFlight = false
+    // True while the top shows a pairing failure. Cleared whenever the top changes
+    // to another state (hideTopContent).
+    private var showingPairingFailure = false
     private var gateObservers: [any NSObjectProtocol] = []
     // The plugin check is a filesystem probe with no change notification, so we
     // poll for it while the window is open (and refresh the settings section).
@@ -166,8 +169,11 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                 // updatePairedConnectionText re-evaluates the AI advisory each poll.
                 updatePairedConnectionText()
                 lastAdvisoryAIAvailable = aiAvailable
-            } else if gate == .allowed, aiAvailable != lastAdvisoryAIAvailable,
-                      !controller.isListening, !pairingAuthInFlight {
+            } else if gate == .allowed,
+                      Self.shouldRebuildReadyToPair(aiAvailabilityChanged: aiAvailable != lastAdvisoryAIAvailable,
+                                                    isListening: controller.isListening,
+                                                    pairingAuthInFlight: pairingAuthInFlight,
+                                                    showingPairingFailure: showingPairingFailure) {
                 // Ready-to-pair (button) state only: the gate doesn't move when AI
                 // toggles, so rebuild here so the baked-in advisory reflects the new
                 // AI state (e.g. the user enables AI in Settings while this window is
@@ -177,7 +183,9 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                 // stopAdvertising()/hideTopContent() and silently abort the pairing the
                 // user is in the middle of. In that case we intentionally leave
                 // lastAdvisoryAIAvailable unchanged so the advisory is rebuilt once the
-                // pairing ends and the button state returns.
+                // pairing ends and the button state returns. Likewise a failed
+                // pairing is no longer listening, but rebuilding would erase the
+                // error the user needs to see.
                 showReadyToPair()
                 lastAdvisoryAIAvailable = aiAvailable
             }
@@ -393,10 +401,20 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
 
     // MARK: Dynamic top
 
+    // Whether refreshGateState should rebuild the ready-to-pair state so its AI
+    // advisory reflects a change in AI availability.
+    static func shouldRebuildReadyToPair(aiAvailabilityChanged: Bool,
+                                         isListening: Bool,
+                                         pairingAuthInFlight: Bool,
+                                         showingPairingFailure: Bool) -> Bool {
+        return aiAvailabilityChanged && !isListening && !pairingAuthInFlight && !showingPairingFailure
+    }
+
     /// Hide every mutually-exclusive top widget so a caller can show just the
     /// one it wants. Leaves the title, instructions, status, and the fixed
     /// bottom settings section alone.
     private func hideTopContent() {
+        showingPairingFailure = false
         gateButton.isHidden = true
         gateButton.keyEquivalent = ""
         qrImageView.isHidden = true
@@ -553,6 +571,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             self?.showPairedState()
         }
         controller.onFailed = { [weak self] message, details in
+            self?.showingPairingFailure = true
             self?.setStatus("Pairing failed: \(message)", color: .systemRed, details: details)
         }
         controller.onDisconnect = { [weak self] in
@@ -672,6 +691,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             qrImageView.image = CompanionPairingController.qrImage(for: code.urlString(), pointSize: 240)
             setStatus("Waiting for your iPhone…", color: .secondaryLabelColor)
         } catch {
+            showingPairingFailure = true
             setStatus("Could not start pairing: \(error.localizedDescription)", color: .systemRed)
         }
     }

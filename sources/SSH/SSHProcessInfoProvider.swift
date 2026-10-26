@@ -120,6 +120,7 @@ class SSHProcessInfoProvider {
     private var rootInfo: iTermProcessInfo?
     private let rootPID: pid_t
     private var haveBumped = false
+    private var paneProviders = [pid_t: SSHPaneProcessInfoProvider]()
     private var lastRows = [pid_t: PSRow]()
     private(set) var cpuUtilization: Double?
     let cpuUtilizationPublisher = iTermPublisher<NSNumber>(capacity: 120)
@@ -397,7 +398,12 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
         return cachedDeepestForegroundJob[pid]
     }
 
+    /// Idempotent: a pid already tracked is not sent to framer again. reregisterTrackedPIDs is for
+    /// after a reset, when framer has forgotten them.
     func register(trackedPID pid: pid_t) {
+        guard !tracked.contains(pid) else {
+            return
+        }
         runner?.registerProcess(pid)
         tracked.insert(pid)
         needsUpdate = true
@@ -406,6 +412,63 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
     func unregister(trackedPID pid: pid_t) {
         runner?.deregisterProcess(pid)
         tracked.remove(pid)
+        paneProviders.removeValue(forKey: pid)
+    }
+
+    /// Registers every tracked pid with framer again. A framer reset forgets its registrations, and
+    /// the tracked set includes tmux panes as well as the login shell.
+    func reregisterTrackedPIDs(including extra: pid_t? = nil) {
+        if let extra {
+            tracked.insert(extra)
+        }
+        for pid in tracked {
+            runner?.registerProcess(pid)
+        }
+        needsUpdate = true
+    }
+
+    /// The jobs in `pid`'s subtree, as a session sees them: for a tmux pane on this host, whose
+    /// pid is registered here. One per pid, so its update state survives between calls.
+    func sessionProcessInfoProvider(forPID pid: pid_t) -> SSHPaneProcessInfoProvider {
+        if let existing = paneProviders[pid] {
+            return existing
+        }
+        let pane = SSHPaneProcessInfoProvider(provider: self, pid: pid)
+        paneProviders[pid] = pane
+        return pane
+    }
+
+    /// The deepest foreground job under `pid`, asking for an update the first time there is none.
+    fileprivate func cachedJob(for pid: pid_t, haveBumped: inout Bool) -> iTermProcessInfo? {
+        if let info = deepestForegroundJob(for: pid) {
+            return info
+        }
+        if !haveBumped {
+            haveBumped = true
+            needsUpdate = true
+        }
+        return nil
+    }
+
+    fileprivate func fetchJob(for pid: pid_t,
+                              haveBumped: inout Bool,
+                              completion: @escaping (iTermProcessInfo?) -> ()) {
+        if let info = deepestForegroundJob(for: pid), info.name != nil {
+            completion(info)
+            return
+        }
+        if pid <= 0 {
+            completion(nil)
+            return
+        }
+        if haveBumped {
+            needsUpdate = true
+            return
+        }
+        haveBumped = true
+        requestImmediateUpdate { [weak self] in
+            completion(self?.deepestForegroundJob(for: pid))
+        }
     }
 
     func processIsDirty(_ pid: pid_t) -> Bool {
@@ -420,33 +483,39 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
 @MainActor
 extension SSHProcessInfoProvider: SessionProcessInfoProvider {
     func cachedProcessInfoIfAvailable() -> iTermProcessInfo? {
-        if let info = deepestForegroundJob(for: rootPID) {
-            return info
-        }
-        if !haveBumped {
-            haveBumped = true
-            needsUpdate = true
-        }
-        return nil
+        return cachedJob(for: rootPID, haveBumped: &haveBumped)
     }
 
     func fetchProcessInfoForCurrentJob(completion: @escaping (iTermProcessInfo?) -> ()) {
-        let pid = rootPID
-        if let info = deepestForegroundJob(for: pid), info.name != nil {
-            completion(info)
-            return
-        }
-        if rootPID <= 0 {
+        fetchJob(for: rootPID, haveBumped: &haveBumped, completion: completion)
+    }
+}
+
+/// A tmux pane's view of the host's processes. The provider answers for the connection's login
+/// shell; this answers for one pane's pid, which must be registered with the provider so framer
+/// reports its subtree.
+@MainActor
+final class SSHPaneProcessInfoProvider: NSObject, SessionProcessInfoProvider {
+    private weak var provider: SSHProcessInfoProvider?
+    let pid: pid_t
+    private var haveBumped = false
+
+    fileprivate init(provider: SSHProcessInfoProvider, pid: pid_t) {
+        self.provider = provider
+        self.pid = pid
+        super.init()
+    }
+
+    func cachedProcessInfoIfAvailable() -> iTermProcessInfo? {
+        return provider?.cachedJob(for: pid, haveBumped: &haveBumped)
+    }
+
+    func fetchProcessInfoForCurrentJob(completion: @escaping (iTermProcessInfo?) -> ()) {
+        guard let provider else {
             completion(nil)
-        }
-        if haveBumped {
-            needsUpdate = true
             return
         }
-        haveBumped = true
-        requestImmediateUpdate { [weak self] in
-            completion(self?.deepestForegroundJob(for: pid))
-        }
+        provider.fetchJob(for: pid, haveBumped: &haveBumped, completion: completion)
     }
 }
 

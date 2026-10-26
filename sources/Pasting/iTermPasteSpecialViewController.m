@@ -72,6 +72,8 @@ static NSString *const kSubstitution = @"Substitution";
     IBOutlet NSSlider *_delayBetweenChunksSlider;
     IBOutlet NSTextField *_chunkSizeLabel;
     IBOutlet NSTextField *_delayBetweenChunksLabel;
+    IBOutlet NSTextField *_chunkSizeTitle;
+    IBOutlet NSTextField *_delayBetweenChunksTitle;
     IBOutlet NSStepper *_stepper;
     IBOutlet NSTextField *_icuRegexHelpLabel;  // Warning: this gets removed from superview in awakeFromNib.
 }
@@ -91,8 +93,17 @@ static NSString *const kSubstitution = @"Substitution";
     self.delayBetweenChunks = kDelayRange.visualCenter;
     self.chunkSize = kChunkSizeRange.visualCenter;
 
+    [self layoutSpeedLabels];
+
     [_icuRegexHelpLabel replaceWithHyperlinkTo:[NSURL URLWithString:@"https://iterm2.com/regex"]];
     _icuRegexHelpLabel = nil;
+}
+
+// Translated titles can be wider than the room the nib leaves before the
+// value next to them.
+- (void)layoutSpeedLabels {
+    [_chunkSizeLabel it_moveToFollowTitle:_chunkSizeTitle gap:4];
+    [_delayBetweenChunksLabel it_moveToFollowTitle:_delayBetweenChunksTitle gap:4];
 }
 
 - (void)setProfileType:(ProfileType)profileType {
@@ -110,49 +121,14 @@ static NSString *const kSubstitution = @"Substitution";
     self.view.frame = frame;
 }
 
-// TODO: When 10.7 support is dropped use NSByteCountFormatter
 - (NSString *)descriptionForByteSize:(double)chunkSize {
-    NSArray *units = @[ @"", @"k", @"M", @"G", @"T" , @"P", @"E", @"Z", @"Y" ];
-    int multiplier = 1024;
-    int exponent = 0;
-
-    while (chunkSize >= multiplier && exponent < units.count) {
-        chunkSize /= multiplier;
-        exponent++;
-    }
-    NSNumberFormatter *formatter = [[[NSNumberFormatter alloc] init] autorelease];
-    [formatter setMaximumFractionDigits:2];
-    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
-    NSString *description = [NSString stringWithFormat:@"%@ %@B",
-                             [formatter stringFromNumber:@(chunkSize)],
-                             units[exponent]];
-    return description;
+    return [iTermLocalizedUnitFormatter chunkSizeDescription:chunkSize
+                                                    language:iTermLocalizedUnitFormatter.nonEnglishUILanguage];
 }
 
 - (NSString *)descriptionForDuration:(NSTimeInterval)duration {
-    NSString *units;
-    double multiplier;
-    if (duration < 0.00001) {
-        units = @"µs";
-        multiplier = 0.00001;
-    } else if (duration < 1) {
-        units = @"ms";
-        multiplier = 0.001;
-    } else if (duration < 60) {
-        units = @"sec";
-        multiplier = 1;
-    } else {
-        units = @"min";
-        multiplier = 60;
-    }
-
-    NSNumberFormatter *formatter = [[[NSNumberFormatter alloc] init] autorelease];
-    [formatter setMaximumFractionDigits:2];
-    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
-    NSString *description = [NSString stringWithFormat:@"%@ %@",
-                             [formatter stringFromNumber:@(duration / multiplier)],
-                             units];
-    return description;
+    return [iTermLocalizedUnitFormatter durationDescription:duration
+                                                   language:iTermLocalizedUnitFormatter.nonEnglishUILanguage];
 }
 
 - (float)floatValueForChunkSize {

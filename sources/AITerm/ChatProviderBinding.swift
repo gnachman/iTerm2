@@ -81,4 +81,19 @@ enum ChatProviderBinding {
         }
         return LLMMetadata.vendor(forModelName: name)
     }
+
+    /// The `vendor` resolver for evaluate(): the chat's stored vendor
+    /// (Chat.modelVendor) answers for its bound model, since the bound name may no
+    /// longer resolve (an Ollama tag that was removed) and must still count as that
+    /// vendor rather than as "unknown", which would let a turn on any other vendor
+    /// through. Other names resolve as vendor(forModelName:).
+    static func vendorResolver(boundModelName: String?,
+                               boundVendor: iTermAIVendor?) -> (String) -> iTermAIVendor? {
+        return { name in
+            if name == boundModelName, let boundVendor {
+                return boundVendor
+            }
+            return vendor(forModelName: name)
+        }
+    }
 }

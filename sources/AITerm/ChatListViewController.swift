@@ -222,7 +222,11 @@ class ChatListViewController: NSViewController {
             }
             ignoreSelectionChange = true
             let activeChatID = self.selectedChatID
-            let selectedChatIDs = self.selectedChatIDs()
+            // The model has already changed (e.g. a chat that got a new
+            // message moved to the top), so the table's selected row
+            // indexes no longer name the selected chats. Use the IDs
+            // recorded when the selection last changed.
+            let selectedChatIDs = self.chatIDsAtLastSelectionChange
             self.tableView.reloadData()
             var selectedRows = IndexSet()
             for chatID in selectedChatIDs {
@@ -237,6 +241,7 @@ class ChatListViewController: NSViewController {
             }
             tableView.selectRowIndexes(selectedRows, byExtendingSelection: false)
             selectionAnchorRow = selectedRows.first
+            chatIDsAtLastSelectionChange = self.selectedChatIDs()
             ignoreSelectionChange = false
         }
     }
@@ -252,6 +257,9 @@ class ChatListViewController: NSViewController {
     }
 
     private var ignoreSelectionChange = false
+    // The selected chats' IDs as of the last selection change, while the
+    // table's rows still matched the model.
+    private var chatIDsAtLastSelectionChange = [String]()
     private var selectionAnchorRow: Int?
     var selectedChatID: String?
 
@@ -490,10 +498,11 @@ extension ChatListViewController: NSTableViewDelegate {
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
+        let selectedIDs = selectedChatIDs()
+        chatIDsAtLastSelectionChange = selectedIDs
         if ignoreSelectionChange {
             return
         }
-        let selectedIDs = selectedChatIDs()
         let chatID: String?
         if let selectedChatID,
            selectedIDs.contains(selectedChatID) {

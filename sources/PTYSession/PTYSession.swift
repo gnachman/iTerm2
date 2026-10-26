@@ -85,6 +85,48 @@ class PTYSessionSwiftState: NSObject {
     // re-launch the same session.
     var pendingDiffLaunch: (() -> Void)?
 
+    // Set on a workgroup peer whose leader is on a host reached through SSH Integration: the
+    // peer's programs run there. See WorkgroupRemoteHost.
+    var workgroupRemoteHost: WorkgroupRemoteHost?
+    // Set during restoration on the session that spawns peers not started at save time: where
+    // they run if the leader's connection has not recovered yet when they are spawned.
+    var restoredRemoteHostForNewPeers: WorkgroupRemoteHost?
+    // The last launch command workgroupPeerLaunchCommand made for a remote peer, and the shell
+    // command it runs. Starting that launch command runs the shell command as a pane of the
+    // leader's framer instead, when it can.
+    var framerPaneLaunch: (launchCommand: String, shellCommand: String)?
+    // Set on a session adopted to show a stranded framer pane: the session whose connection the
+    // pane runs over. Not a workgroup member, so it has no workgroupRemoteHost.
+    var framerPaneOwnerGUID: String?
+    /// A tmux workgroup member whose program exited: its pane stays (remain-on-exit) and its
+    /// session offers to restart it. The run that exited (TmuxWorkgroupCommands.PaneRun).
+    var tmuxMemberEndedRun: String?
+
+    // A remote review peer's input files are being written; a second Start (auto-request calls it
+    // directly) must not launch twice.
+    var codeReviewLaunchPending = false
+    // The host this tmux pane took from its gateway (see TmuxPaneInferredHost), if any.
+    var inferredTmuxHost: TmuxPaneInferredHost.Host?
+    // The offer to update the code review system prompt is on screen; a second start meanwhile
+    // (the overlay stays up under it) is dropped.
+    var codeReviewPromptOfferInProgress = false
+    // A review is being started by the automatic request, which must not raise a modal.
+    var codeReviewAutoRequesting = false
+    // Whether a workgroup member on a tmux server shows that its program has not started (the code
+    // review prompt, or the diff waiting for changes). See syncTmuxWorkgroupWaiting.
+    var tmuxWorkgroupWaiting = TmuxWorkgroupWaitingDisplay.none
+    // The last ShellIntegrationVersion the shell reported, forgotten when a new SSH Integration
+    // connection starts so a remote shell that reports nothing does not inherit the local one's.
+    var reportedShellIntegration: (shell: String?, version: Int)?
+    // Whether each it2ssh in flight asked for shell integration, by its uniqueID, from
+    // SendConductor until conductor.sh hooks back.
+    var sshInjectionByUniqueID = [String: Bool]()
+    // The it2 authorization prompt, keyed by its announcement identifier: the session it was put
+    // on when that is not this one (see presentIT2Authorization), or the announcement itself while
+    // it waits for a hidden tmux window to be shown.
+    let it2PromptSessions = NSMapTable<NSString, PTYSession>(keyOptions: .strongMemory, valueOptions: .weakMemory)
+    var it2PendingPrompts = [String: iTermAnnouncementViewController]()
+
     // For .codeReview sessions, whether the "auto-send clippings when idle"
     // toolbar toggle is on. When on, the workgroup peer port sends this
     // session's clippings to the workgroup's main session each time the
@@ -1622,6 +1664,7 @@ extension PTYSession {
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
                                                            inProfile: justProfile),
             restorableState: restorableState as? [AnyHashable: Any])
+        updateBrowserWebViewAppearance()
         // Seed the session name only when there isn't one already, so it is non-empty
         // before the first page-title callback for a fresh session, WITHOUT clobbering a
         // name restored from a saved arrangement (the last page title). The latter must
@@ -1923,7 +1966,13 @@ extension PTYSession {
     // `workgroupInstance` points at the per-entry state owner.
     @objc var workgroupInstance: iTermWorkgroupInstance? {
         get { swiftState.workgroupInstance }
-        set { swiftState.workgroupInstance = newValue }
+        set {
+            swiftState.workgroupInstance = newValue
+            if newValue != nil {
+                // tmux may have said its program ended before it joined.
+                tmuxController?.workgroupAttacher?.sessionDidJoinWorkgroup(self)
+            }
+        }
     }
 
     // Workgroup-mode tag set by the spawn path. .codeReview triggers the
@@ -1960,6 +2009,203 @@ extension PTYSession {
     // whose spawn was held back because the workgroup’s git poller had
     // not yet reported a pending change. iTermWorkgroupInstance calls
     // firePendingDiffLaunch from gitPollerDidUpdate once changes appear.
+    // MARK: - Where the it2 authorization prompt goes
+
+    enum IT2PromptPlacement: Equatable {
+        /// This session, visible or buried: what happens outside tmux.
+        case ownSession
+        /// Another session of this tmux client, by guid.
+        case session(String)
+        /// The pane that asked is in a hidden tmux window; wait for the user to show it.
+        case whenPaneAppears(Int)
+        /// No pane named and none shown; the first one shown.
+        case whenAnyPaneAppears
+    }
+
+    /// The prompt goes on this session unless it is a tmux gateway, which iTerm2 hides. Then it
+    /// goes on the pane whose it2 asked, or, when that is not known, any shown pane of this client.
+    /// A pane in a hidden window has no session until the window is shown, so the prompt waits for
+    /// it there, as a buried session's prompt waits to be unburied.
+    static func it2PromptPlacement(isTmuxGateway: Bool,
+                                   callerTmuxPane: String?,
+                                   sessionForPane: (Int) -> String?,
+                                   visibleClientSession: String?) -> IT2PromptPlacement {
+        guard isTmuxGateway else {
+            return .ownSession
+        }
+        if let pane = tmuxPaneNumber(callerTmuxPane) {
+            if let guid = sessionForPane(pane) {
+                return .session(guid)
+            }
+            return .whenPaneAppears(pane)
+        }
+        if let visibleClientSession {
+            return .session(visibleClientSession)
+        }
+        return .whenAnyPaneAppears
+    }
+
+    /// 5 for TMUX_PANE "%5".
+    static func tmuxPaneNumber(_ value: String?) -> Int? {
+        guard let value, value.hasPrefix("%"), let number = Int(value.dropFirst()), number >= 0 else {
+            return nil
+        }
+        return number
+    }
+
+    @objc(presentIT2AuthorizationAnnouncement:identifier:callerTmuxPane:)
+    func presentIT2Authorization(_ announcement: iTermAnnouncementViewController,
+                                 identifier: String,
+                                 callerTmuxPane: String?) {
+        let controller = isTmuxGateway ? tmuxController : nil
+        let sessions = controller?.clientSessions() ?? []
+        let current = iTermController.sharedInstance()?.currentTerminal?.currentSession()
+        let visible = sessions.first { $0 === current } ?? sessions.first
+        let placement = Self.it2PromptPlacement(
+            isTmuxGateway: controller != nil,
+            callerTmuxPane: callerTmuxPane,
+            sessionForPane: { controller?.session(forWindowPane: Int32($0))?.guid },
+            visibleClientSession: visible?.guid)
+        RLog("it2 authorization prompt for \(identifier) from pane \(callerTmuxPane ?? "(none)"): \(placement)")
+        switch placement {
+        case .ownSession:
+            queueAnnouncement(announcement, identifier: identifier)
+        case .session(let guid):
+            if let target = sessions.first(where: { $0.guid == guid }) {
+                put(announcement, identifier: identifier, on: target)
+            } else {
+                queueAnnouncement(announcement, identifier: identifier)
+            }
+        case .whenPaneAppears(let pane):
+            swiftState.it2PendingPrompts[identifier] = announcement
+            controller?.whenPaneRegistered(Int32(pane)) { [weak self] session in
+                if let session {
+                    self?.deliverPendingIT2Prompt(identifier: identifier, to: session)
+                }
+            }
+        case .whenAnyPaneAppears:
+            swiftState.it2PendingPrompts[identifier] = announcement
+            controller?.whenAnyPaneRegisteredCall { [weak self] session in
+                if let session {
+                    self?.deliverPendingIT2Prompt(identifier: identifier, to: session)
+                }
+            }
+        }
+    }
+
+    private func put(_ announcement: iTermAnnouncementViewController, identifier: String, on session: PTYSession) {
+        if session === self {
+            queueAnnouncement(announcement, identifier: identifier)
+            return
+        }
+        swiftState.it2PromptSessions.setObject(session, forKey: identifier as NSString)
+        session.queueAnnouncement(announcement, identifier: identifier)
+    }
+
+    private func deliverPendingIT2Prompt(identifier: String, to session: PTYSession) {
+        // Dismissed while waiting (answered elsewhere, or the connection ended): nothing to show.
+        guard let announcement = swiftState.it2PendingPrompts.removeValue(forKey: identifier) else {
+            return
+        }
+        RLog("it2 authorization prompt \(identifier) shown now that its window is")
+        put(announcement, identifier: identifier, on: session)
+    }
+
+    @objc(dismissIT2AuthorizationAnnouncementWithIdentifier:)
+    func dismissIT2Authorization(identifier: String) {
+        swiftState.it2PendingPrompts.removeValue(forKey: identifier)
+        if let other = swiftState.it2PromptSessions.object(forKey: identifier as NSString) {
+            swiftState.it2PromptSessions.removeObject(forKey: identifier as NSString)
+            other.dismissAnnouncement(withIdentifier: identifier)
+        }
+        dismissAnnouncement(withIdentifier: identifier)
+    }
+
+    @objc(it2AuthorizationPromptSessionForIdentifier:)
+    func it2AuthorizationPromptSession(identifier: String) -> PTYSession? {
+        return swiftState.it2PromptSessions.object(forKey: identifier as NSString)
+    }
+
+    @objc(rememberSSHIntegrationInjection:forUniqueID:)
+    func rememberSSHIntegrationInjection(_ inject: Bool, forUniqueID uniqueID: String) {
+        swiftState.sshInjectionByUniqueID[uniqueID] = inject
+    }
+
+    /// Whether the it2ssh that sent `uniqueID` asked for shell integration; yes when it did not
+    /// say (an older it2ssh, or a conductor hooking back without a SendConductor here).
+    @objc(takeSSHIntegrationInjectionForUniqueID:)
+    func takeSSHIntegrationInjection(forUniqueID uniqueID: String) -> Bool {
+        return swiftState.sshInjectionByUniqueID.removeValue(forKey: uniqueID) ?? true
+    }
+
+    @objc(recordReportedShellIntegrationVersion:shell:)
+    func recordReportedShellIntegration(version: Int, shell: String?) {
+        DLog("Session \(guid) reported shell integration \(shell ?? "(no shell)") \(version)")
+        swiftState.reportedShellIntegration = (shell, version)
+    }
+
+    @objc func forgetReportedShellIntegration() {
+        swiftState.reportedShellIntegration = nil
+    }
+
+    var reportedShellIntegration: (shell: String?, version: Int)? {
+        swiftState.reportedShellIntegration
+    }
+
+    var workgroupRemoteHost: WorkgroupRemoteHost? {
+        get { swiftState.workgroupRemoteHost }
+        set {
+            swiftState.workgroupRemoteHost = newValue
+            MainActor.assumeIsolated {
+                framerPaneLeaderDidChange()
+            }
+        }
+    }
+
+    var restoredRemoteHostForNewPeers: WorkgroupRemoteHost? {
+        get { swiftState.restoredRemoteHostForNewPeers }
+        set { swiftState.restoredRemoteHostForNewPeers = newValue }
+    }
+
+    /// Where a peer this session spawns runs: on this session's host if it is on one now, else
+    /// where restoration said the workgroup's peers ran, else on this Mac.
+    @MainActor
+    var remoteHostForNewWorkgroupPeer: WorkgroupRemoteHost? {
+        return WorkgroupRemoteHost.forLeader(self) ?? restoredRemoteHostForNewPeers
+    }
+
+    /// What a workgroup peer runs to execute `shellCommand`: through the user's login shell on
+    /// this Mac, or, for a peer of a leader on a remote host, through SSH Integration on that
+    /// host, in the leader's directory there. Every launch and relaunch of a peer's program goes
+    /// through here, so none can run locally by accident.
+    ///
+    /// nil means "the profile's own command", which only a local peer with no command gets; a
+    /// remote peer with no command gets an interactive login shell on the host instead, never the
+    /// leader's profile command.
+    func workgroupPeerLaunchCommand(_ shellCommand: String) -> String? {
+        guard let remote = workgroupRemoteHost else {
+            return shellCommand.isEmpty ? nil : ITAddressBookMgr.commandByWrapping(inLoginShell: shellCommand)
+        }
+        let directory = MainActor.assumeIsolated { remote.currentDirectory }
+        let plan = remote.launchPlan(remoteCommand: shellCommand, directory: directory)
+        DLog("Workgroup peer \(guid) launches on its leader's host in \(plan.jumps.last?.initialDirectory ?? "(no directory: the host's default)")")
+        setPendingJumpsForNextLaunch(plan.jumps.map { SSHReconnectionInfoObjC($0) })
+        RLog("PTYSession[\(guid)]: workgroup peer runs on its leader's host")
+        let launch = remote.localCommand(for: plan)
+        swiftState.framerPaneLaunch = (launch, shellCommand)
+        return launch
+    }
+
+    /// Replaces what this workgroup member runs with the shell command `command`: in its pane on
+    /// its tmux server, or else here (on the leader's host when the leader is on one).
+    func relaunchWorkgroupMember(command: String) {
+        if let binding = workgroupTmuxBinding {
+            relaunchTmuxWorkgroupMember(binding, command: command)
+            return
+        }
+        restart(withCommand: workgroupPeerLaunchCommand(command) ?? "")
+    }
+
     var pendingDiffLaunch: (() -> Void)? {
         get { swiftState.pendingDiffLaunch }
         set { swiftState.pendingDiffLaunch = newValue }
@@ -2110,7 +2356,7 @@ extension PTYSession {
             }
             return
         }
-        guard isRestartable() else {
+        guard canRelaunchWorkgroupMember else {
             RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded aborted, not restartable and no pending launch (State C)")
             return
         }
@@ -2121,10 +2367,27 @@ extension PTYSession {
         // outer guard is enough, so the closure only needs the weak
         // self check.
         let restartWithCurrentSelection: () -> Void = { [weak self] in
-            if let command = resolveCommand?() {
-                self?.restart(withCommand: command)
+            guard let self else { return }
+            if let binding = self.workgroupTmuxBinding {
+                // A member on a tmux server has no program here to restart; its pane is respawned.
+                guard let command = resolveCommand?() else {
+                    RLog("PTYSession[\(self.guid)]: reloadDiffWithDeferralIfNeeded has no command for the tmux member")
+                    return
+                }
+                self.relaunchTmuxWorkgroupMember(binding, command: command)
+                return
+            }
+            // resolveCommand gives the plain diff command; it runs on the leader's host when the
+            // leader is on one. See workgroupPeerLaunchCommand.
+            if let command = resolveCommand?(),
+               let launch = self.workgroupPeerLaunchCommand(command) {
+                self.restart(withCommand: launch)
+            } else if self.workgroupRemoteHost != nil {
+                // A plain restart would rerun the last program without the hops it was launched
+                // with. Reconnect to the host instead.
+                self.restart(withCommand: self.workgroupPeerLaunchCommand("") ?? "")
             } else {
-                self?.restart()
+                self.restart()
             }
         }
         if ready {
@@ -2183,11 +2446,8 @@ extension PTYSession {
 
     // Build a peer session for a workgroup's configured peer, driven
     // by an iTermWorkgroupSessionConfig config (profile override, command
-    // override, buried until activated). `workgroupInstanceID` is
-    // injected as ITERM_WORKGROUP_ID in the launch request so the
-    // peer's shell sees the per-entry workgroup id.
-    func makeWorkgroupPeer(config: iTermWorkgroupSessionConfig,
-                           workgroupInstanceID: String) -> iTermPromise<PTYSession> {
+    // override, buried until activated).
+    func makeWorkgroupPeer(config: iTermWorkgroupSessionConfig) -> iTermPromise<PTYSession> {
         return iTermPromise<PTYSession> { seal in
             withDelegate { [weak self] delegate in
                 guard let self else {
@@ -2222,6 +2482,14 @@ extension PTYSession {
                     profile[KEY_PROMPT_CLOSE] = PROMPT_ALWAYS
                     profile[KEY_SESSION_END_ACTION] =
                         iTermSessionEndAction.default.rawValue
+                    // A leader on a host reached through SSH Integration: the peer runs there,
+                    // where the files are. Its connection must set up it2 so an agent in it can
+                    // report, whatever the leader's profile says about shell integration.
+                    let remoteHost = self.remoteHostForNewWorkgroupPeer
+                    if let remoteHost {
+                        profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = true
+                        profile[KEY_SSH_CONFIG] = remoteHost.sshConfig ?? [:]
+                    }
                     // Browser profile + configured URL: seed
                     // KEY_INITIAL_URL so the browser session's
                     // deferred-URL load picks it up.
@@ -2239,6 +2507,7 @@ extension PTYSession {
                     // shared profile's Close. This flag can't be reverted,
                     // so the peer never auto-closes on program exit.
                     newSession.forceDefaultEndAction = true
+                    newSession.workgroupRemoteHost = remoteHost
                     newSession.setScreenSize(myView.bounds.size,
                                              parent: delegate.realParentWindow())
                     newSession.setSize(screen.size)
@@ -2295,8 +2564,7 @@ extension PTYSession {
                             objectType: .paneObject,
                             factory: factory,
                             windowController: nil,
-                            oldCWD: oldCWD,
-                            workgroupInstanceID: workgroupInstanceID)
+                            oldCWD: oldCWD)
                         seal.fulfill(newSession)
                         return
                     }
@@ -2342,9 +2610,7 @@ extension PTYSession {
                             let base = newSession.workgroupInstance?.currentGitBase
                                 ?? CCGitBaseSelectorItem.defaultBase
                             let resolved = cfg.resolvedCommand(gitBase: base)
-                            let cmd = resolved.isEmpty
-                                ? nil
-                                : ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+                            let cmd = newSession.workgroupPeerLaunchCommand(resolved)
                             let request = iTermSessionAttachOrLaunchRequest(
                                 session: newSession,
                                 canPrompt: false,
@@ -2353,7 +2619,7 @@ extension PTYSession {
                                 serverConnection: iTermGeneralServerConnection(),
                                 urlString: urlString,
                                 allowURLSubs: false,
-                                environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                                environment: nil,
                                 customShell: nil,
                                 oldCWD: oldCWD,
                                 forceUseOldCWD: true,
@@ -2367,9 +2633,7 @@ extension PTYSession {
                         seal.fulfill(newSession)
                         return
                     }
-                    let command = config.command.isEmpty
-                        ? nil
-                        : ITAddressBookMgr.commandByWrapping(inLoginShell: config.command)
+                    let command = newSession.workgroupPeerLaunchCommand(config.command)
                     let launchRequest = iTermSessionAttachOrLaunchRequest(
                         session: newSession,
                         canPrompt: false,
@@ -2378,7 +2642,7 @@ extension PTYSession {
                         serverConnection: iTermGeneralServerConnection(),
                         urlString: urlString,
                         allowURLSubs: false,
-                        environment: ["ITERM_WORKGROUP_ID": workgroupInstanceID],
+                        environment: nil,
                         customShell: nil,
                         oldCWD: oldCWD,
                         forceUseOldCWD: true,
@@ -2654,8 +2918,13 @@ extension PTYSession {
         // which ends up calling iTermRightGutterController.layoutPanels and
         // creates the panel. Same goes for the 1→0 transition tearing it down
         // when no panel is around to detect its own visibility flip.
-        if view?.actualRightExtra != desiredRightExtra() {
-            delegate?.realParentWindow()?.rightExtraDidChange()
+        //
+        // In a peer group the clippings belong to the group, and the session that changed them
+        // may not be in view: a code review peer's go to the leader, which is hidden while the
+        // review is shown. The window to lay out is the one showing the group.
+        let shown = peerPort?.activeSession ?? self
+        if shown.view?.actualRightExtra != shown.desiredRightExtra() {
+            shown.delegate?.realParentWindow()?.rightExtraDidChange()
         }
     }
 
@@ -2877,8 +3146,8 @@ extension PTYSession {
         // This is called from -updateDisplayBecause: for every session on the
         // display cadence; for the off-by-default common case the disabled path
         // must not pay for a profile lookup and two profile-pref reads per session
-        // per tick.
-        guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+        // per tick. This also covers the administrator's GenerativeAIAllowed lockout.
+        guard AITabTitleGenerator.isEnabled else {
             // The feature is off. If we previously set an AI title it would otherwise
             // stay frozen on the tab for the life of the session: the profile keeps
             // the AI component bit (so it stays reachable to uncheck) and
@@ -3008,7 +3277,7 @@ extension PTYSession {
                 // same stuck state the profile-switch guard below forgets to avoid.
                 // forgetAITitleState clears aiTitle AND resets those fingerprints so a
                 // re-enable re-generates.
-                guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+                guard AITabTitleGenerator.isEnabled else {
                     self.forgetAITitleState()
                     return
                 }
@@ -3303,7 +3572,7 @@ extension PTYSession {
     // synchronously, without the async main-hop in the @objc entry point above.
     @MainActor
     func clearAppliedAITitleIfFeatureDisabled() {
-        guard !iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+        guard !AITabTitleGenerator.isEnabled else {
             return
         }
         if let current = genericScope.value(forVariableName: iTermVariableKeySessionAITitle) as? String,

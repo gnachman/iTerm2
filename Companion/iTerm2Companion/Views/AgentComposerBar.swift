@@ -444,7 +444,7 @@ private struct MentionPickerSheet: View {
             Button {
                 onSelect(session, title)
             } label: {
-                SessionTreeRow(icon: "terminal",
+                SessionTreeRow(icon: session.symbolName,
                                title: title,
                                subtitle: session.subtitle.isEmpty ? nil : session.subtitle,
                                level: level)

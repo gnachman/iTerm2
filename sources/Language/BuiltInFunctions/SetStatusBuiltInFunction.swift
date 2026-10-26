@@ -21,6 +21,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
     private static let turnOpenArg = "turn_open"
     private static let ifTurnOpenArg = "if_turn_open"
     private static let ifBackgroundTasksArg = "if_background_tasks"
+    private static let progressArg = "progress"
     private static let expiresOnArg = "expires_on"
     private static let thenStatusArg = "then_status"
     private static let thenTextColorArg = "then_text_color"
@@ -157,6 +158,20 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
         if let turnOpen = parameters[turnOpenArg] as? NSNumber {
             update.turnOpenPresence = .set
             update.turnOpen = turnOpen.boolValue
+        }
+
+        if let progress = parameters[progressArg] as? String {
+            // The two states a hook can ask for, spelled the way it2's --progress spells them.
+            switch progress {
+            case "running":
+                update.progressPresence = .set
+                update.progress = .indeterminate
+            case "stopped":
+                update.progressPresence = .set
+                update.progress = .stopped
+            default:
+                throw error(message: String(localized: "SetStatus.UnknownProgress", defaultValue: "Unknown progress “\(progress)”. The supported values are running and stopped.", comment: "Error when the progress argument is not one of the two supported states. The placeholder is the value the caller passed."))
+            }
         }
 
         if let requiredTurnOpen = parameters[ifTurnOpenArg] as? NSNumber {
@@ -327,6 +342,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                 turnOpenArg: NSNumber.self,
                 ifTurnOpenArg: NSNumber.self,
                 ifBackgroundTasksArg: NSNumber.self,
+                progressArg: NSString.self,
                 expiresOnArg: NSString.self,
                 thenStatusArg: NSString.self,
                 thenTextColorArg: NSString.self,

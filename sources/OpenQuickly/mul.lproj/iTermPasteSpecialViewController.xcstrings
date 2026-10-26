@@ -284,7 +284,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Учитывает escape-последовательности vim"
+            "value" : "Учитывает escape-коды vim"
           }
         },
         "zh-Hans" : {
@@ -1016,7 +1016,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verzögerung zwischen Blöcken:"
+            "value" : "Blockpause:"
           }
         },
         "en" : {
@@ -1040,7 +1040,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Задержка между фрагментами:"
+            "value" : "Межблочная пауза:"
           }
         },
         "zh-Hans" : {
@@ -1124,7 +1124,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Регулярное выражение"
+            "value" : "Рег. выражение"
           }
         },
         "zh-Hans" : {
@@ -1352,7 +1352,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verwenden Sie $1, $2 usw. für Erfassungsgruppen"
+            "value" : "$1, $2 usw. für Erfassungsgruppen"
           }
         },
         "en" : {
@@ -1376,7 +1376,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Используйте $1, $2 и т. д. для групп захвата"
+            "value" : "$1, $2 и т. д. для групп захвата"
           }
         },
         "zh-Hans" : {

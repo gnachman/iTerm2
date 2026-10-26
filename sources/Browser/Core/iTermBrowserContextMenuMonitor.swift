@@ -25,8 +25,12 @@ class iTermBrowserContextMenuMonitor {
                                                        substitutions: [ "SECRET": secret ])
     }
 
-    func handleMessage(_ message: WKScriptMessage, webView: iTermBrowserWebView) {
-        guard let messageDict = message.body as? [String: Any],
+    // Opens the menu in the web view that sent the message. A web view opened by a target=_blank
+    // link shares its opener's configuration, so its messages arrive at the opener's handler,
+    // whose own web view is the wrong one.
+    func handleMessage(_ message: WKScriptMessage) {
+        guard let webView = message.webView as? iTermBrowserWebView,
+              let messageDict = message.body as? [String: Any],
               let xStr = messageDict["x"] as? NSNumber,
               let yStr = messageDict["y"] as? NSNumber,
               let sessionSecret = messageDict["sessionSecret"] as? String,

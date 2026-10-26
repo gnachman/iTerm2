@@ -107,6 +107,13 @@ extern NSString *const iTermAPIServerConnectionClosed;
 // Whether the server socket is listening and ready to accept connections.
 @property (nonatomic, readonly) BOOL socketReady;
 
+#if DEBUG
+// A server that serves in-process connections only and never binds the API socket. Development
+// builds only, for live harnesses running inside the test host, which must not contend with a
+// real iTerm2 for its socket.
+- (instancetype)initWithoutListening;
+#endif
+
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 - (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey;
 

@@ -83,6 +83,22 @@ final class BrowserSessionTitleTests: XCTestCase {
             selectedComponents: selected))
     }
 
+    // Browser sessions are never AI-titled, so the AI-generated name item is
+    // as meaningless as the job for a browser profile.
+    func testUnselectedAIComponentIsHiddenForBrowser() {
+        XCTAssertTrue(Title.shouldHideTitleComponentMenuItem(
+            tag: Int(iTermTitleComponents.AI.rawValue),
+            isBrowser: true,
+            selectedComponents: iTermTitleComponents.sessionName.rawValue))
+    }
+
+    func testAIComponentIsVisibleForTerminalProfile() {
+        XCTAssertFalse(Title.shouldHideTitleComponentMenuItem(
+            tag: Int(iTermTitleComponents.AI.rawValue),
+            isBrowser: false,
+            selectedComponents: iTermTitleComponents.sessionName.rawValue))
+    }
+
     func testNameComponentIsNeverHidden() {
         XCTAssertFalse(Title.shouldHideTitleComponentMenuItem(
             tag: Int(iTermTitleComponents.sessionName.rawValue),
