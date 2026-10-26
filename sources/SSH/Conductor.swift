@@ -509,6 +509,10 @@ class Conductor: NSObject, SSHIdentityProvider {
     private var pendingIT2Home: String?
     /// Set at getshell with pendingIT2Home; see RemoteSetup.putIT2OnShellPath.
     private var pendingIT2OnShellPath = false
+    /// Set at getshell; see RemoteSetup.putIT2OnCommandPath.
+    private var putIT2OnCommandPath = false
+    /// The login shell getshell reported, which runs the command whatever shell it names.
+    private var loginShell: String?
 
     /// Git state for directories on this connection's host. See RemoteGitState.swift.
     private(set) lazy var remoteGitPollWorker = iTermRemoteGitPollWorker(runner: self)
@@ -2229,11 +2233,12 @@ extension Conductor {
             var command = Self.remoteCommandString(modifiedCommandArgs: modifiedCommandArgs,
                                                    commandLine: parsedSSHArguments.commandLine)
             if let unwrapped = command,
-               Self.remoteLaunchKind(commandArgs: parsedSSHArguments.commandArgs) == .command,
+               putIT2OnCommandPath,
                it2Nonce != nil,
-               let shell {
-                // getshell gave this command it2's environment; it needs it2 on PATH too.
-                command = Self.commandPuttingIT2OnPath(unwrapped, loginShell: shell)
+               let loginShell, !loginShell.isEmpty {
+                // getshell gave this command it2's environment; it needs it2 on PATH too. In the
+                // syntax of the login shell, which runs it, even when it names another shell.
+                command = Self.commandPuttingIT2OnPath(unwrapped, loginShell: loginShell)
                 DLog("Command with it2 on PATH: \(command ?? "")")
             }
             framerLogin(cwd: initialDirectory ?? "$HOME",
@@ -2400,9 +2405,17 @@ extension Conductor {
         /// Have the framer put ~/.iterm2/bin first on the PATH it gives the login shell (whose
         /// own login files may still reorder it: macOS's path_helper does). Only for an
         /// interactive shell that gets the upload without the scripts (tcsh, macOS bash 3.2):
-        /// the injected scripts do it themselves, and a command gets it from
-        /// commandPuttingIT2OnPath.
+        /// the injected scripts do it themselves, and a command, or a shell named as the
+        /// command, gets it from commandPuttingIT2OnPath.
         var putIT2OnShellPath = false
+        /// Run the command through commandPuttingIT2OnPath. A command always is, and so is a
+        /// shell named as the command (`it2ssh host sh -c …`, `it2ssh host bash`) unless the
+        /// scripts are injected into it and it is interactive. One the scripts can't be
+        /// injected into has nothing else to put ~/.iterm2/bin on its PATH, and an injected one
+        /// loads them only when interactive, so `zsh -c …` would miss out too. An interactive
+        /// injected one is left to the scripts: most of them add the directory only when it is
+        /// absent, so a prefix here would let the shell's own startup files push it back.
+        var putIT2OnCommandPath = false
     }
 
     /// it2 used to come only with injection, so with "Load shell integration automatically" off,
@@ -2414,7 +2427,8 @@ extension Conductor {
     nonisolated static func remoteSetup(launchKind: RemoteLaunchKind,
                                         shellSupportsInjection: Bool,
                                         shouldInjectShellIntegration: Bool,
-                                        haveHome: Bool) -> RemoteSetup {
+                                        haveHome: Bool,
+                                        customShellIsInteractive: Bool = true) -> RemoteSetup {
         guard haveHome else {
             return RemoteSetup(injectShellIntegration: false, uploadIT2: false, activateIT2: false)
         }
@@ -2423,7 +2437,43 @@ extension Conductor {
         return RemoteSetup(injectShellIntegration: inject,
                            uploadIT2: shouldInjectShellIntegration,
                            activateIT2: true,
-                           putIT2OnShellPath: shouldInjectShellIntegration && launchKind != .command && !inject)
+                           putIT2OnShellPath: shouldInjectShellIntegration && launchKind != .command && !inject,
+                           putIT2OnCommandPath: launchKind == .command ||
+                            (launchKind != .interactive && !(inject && customShellIsInteractive)))
+    }
+
+    /// Whether a shell named as the command, given these arguments (after its name), will be
+    /// interactive: not when it runs a command string (-c) or a script file, unless -i says so.
+    /// The same reading BashShellIntegrationInjection uses to decide whether to inject. An
+    /// option's value (`-o vi`) reads as a script file, which errs toward the prefix: it2 is
+    /// still on PATH, just possibly not first.
+    nonisolated static func customShellIsInteractive(arguments: [String]) -> Bool {
+        var expectingFile = false
+        for argument in arguments {
+            if expectingFile {
+                return false
+            }
+            if argument == "--" || argument == "-" {
+                expectingFile = true
+                continue
+            }
+            if argument.hasPrefix("--") {
+                continue
+            }
+            if argument.hasPrefix("-") || argument.hasPrefix("+") {
+                let letters = argument.dropFirst()
+                if letters.contains("i") {
+                    return true
+                }
+                if letters.contains("c") {
+                    return false
+                }
+                continue
+            }
+            // A script file.
+            return false
+        }
+        return true
     }
 
     /// Queues the shell-integration scripts for upload with the other payloads.
@@ -2840,7 +2890,9 @@ extension Conductor {
                     launchKind: launchKind,
                     shellSupportsInjection: !shell.isEmpty && shellSupportsInjection(shell.lastPathComponent, version),
                     shouldInjectShellIntegration: shouldInjectShellIntegration,
-                    haveHome: !home.isEmpty)
+                    haveHome: !home.isEmpty,
+                    customShellIsInteractive: Self.customShellIsInteractive(
+                        arguments: Array(parsedSSHArguments.commandArgs.dropFirst())))
                 DLog("getshell: shell=\(shell) launch=\(launchKind) setup=\(setup)")
                 if setup.injectShellIntegration {
                     (modifiedVars, modifiedCommandArgs) = ShellIntegrationInjector.instance.modifyRemoteShellEnvironment(
@@ -2882,6 +2934,8 @@ extension Conductor {
                     RLog("No it2 socket for this connection: the remote home directory is unknown")
                 }
                 self.shell = shell
+                putIT2OnCommandPath = setup.putIT2OnCommandPath
+                loginShell = parts.get(0, default: "")
                 delegate?.conductorStateDidChange()
                 didFinishGetShell()
             }

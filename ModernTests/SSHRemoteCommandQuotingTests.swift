@@ -172,6 +172,14 @@ final class RemoteCommandIT2PathTests: XCTestCase {
         }
     }
 
+    // `it2ssh host sh -c …`: the shell the command names inherits the PATH.
+    func testShellNamedByTheCommandInheritsIt() throws {
+        for shell in ["/bin/zsh", "/bin/tcsh"] where FileManager.default.isExecutableFile(atPath: shell) {
+            XCTAssertEqual(try run(shell, #"sh -c 'printf %s "$PATH"'"#),
+                           "/h/.iterm2/bin:/usr/bin:/bin", shell)
+        }
+    }
+
     func testFishSyntax() {
         XCTAssertEqual(Conductor.commandPuttingIT2OnPath("claude", loginShell: "/usr/bin/fish"),
                        #"set -gx PATH "$HOME/.iterm2/bin" $PATH; claude"#)
@@ -210,15 +218,48 @@ final class RemoteLaunchKindTests: XCTestCase {
 // macOS bash 3.2), there was no socket and no IT2_SOCK at all, so every remote it2 feature
 // failed silently. Now the socket comes whenever there is a connection to frame, and the setting
 // decides only what is uploaded.
+final class CustomShellInteractivityTests: XCTestCase {
+    func testInteractive() {
+        for arguments in [[], ["-l"], ["--login"], ["-i", "-c", "x"], ["--posix"]] {
+            XCTAssertTrue(Conductor.customShellIsInteractive(arguments: arguments), "\(arguments)")
+        }
+    }
+
+    func testNotInteractive() {
+        for arguments in [["-c", "x"], ["-lc", "x"], ["script.sh"], ["--", "script.sh"]] {
+            XCTAssertFalse(Conductor.customShellIsInteractive(arguments: arguments), "\(arguments)")
+        }
+    }
+}
+
 final class RemoteSetupTests: XCTestCase {
     private func setup(_ kind: Conductor.RemoteLaunchKind,
                        injectable: Bool = true,
                        setting: Bool = true,
-                       home: Bool = true) -> Conductor.RemoteSetup {
+                       home: Bool = true,
+                       interactive: Bool = true) -> Conductor.RemoteSetup {
         return Conductor.remoteSetup(launchKind: kind,
                                      shellSupportsInjection: injectable,
                                      shouldInjectShellIntegration: setting,
-                                     haveHome: home)
+                                     haveHome: home,
+                                     customShellIsInteractive: interactive)
+    }
+
+    // A shell named as the command gets ~/.iterm2/bin on PATH the way a command does. One that
+    // can't be injected (`it2ssh host sh -c …`, macOS's bash 3.2) has nothing else to put it
+    // there, and an injected one loads the scripts only when interactive (`zsh -c …`). An
+    // interactive injected one is left to the scripts, which a prefix here would defeat: most
+    // add the directory only when it is absent.
+    func testShellNamedAsTheCommandGetsIt2OnPath() {
+        XCTAssertTrue(setup(.customShell("sh"), injectable: false).putIT2OnCommandPath)
+        XCTAssertTrue(setup(.customShell("bash"), injectable: false).putIT2OnCommandPath)
+        XCTAssertTrue(setup(.customShell("bash"), setting: false).putIT2OnCommandPath)
+        XCTAssertTrue(setup(.customShell("zsh"), interactive: false).putIT2OnCommandPath)
+        XCTAssertFalse(setup(.customShell("zsh")).putIT2OnCommandPath)
+        XCTAssertFalse(setup(.customShell("bash")).putIT2OnCommandPath)
+        XCTAssertFalse(setup(.interactive, injectable: false).putIT2OnCommandPath)
+        XCTAssertTrue(setup(.command).putIT2OnCommandPath)
+        XCTAssertTrue(setup(.command, setting: false).putIT2OnCommandPath)
     }
 
     func testInjectableShellWithTheSettingOnGetsEverything() {
@@ -236,21 +277,25 @@ final class RemoteSetupTests: XCTestCase {
                              putIT2OnShellPath: true))
         XCTAssertEqual(setup(.customShell("/bin/tcsh"), injectable: false),
                        .init(injectShellIntegration: false, uploadIT2: true, activateIT2: true,
-                             putIT2OnShellPath: true))
+                             putIT2OnShellPath: true, putIT2OnCommandPath: true))
     }
 
     // The setting off means nothing is written to the host, but an it2 already there works.
     func testSettingOffUploadsNothingButStillHasASocket() {
-        for kind: Conductor.RemoteLaunchKind in [.interactive, .customShell("bash"), .command] {
+        XCTAssertEqual(setup(.interactive, setting: false),
+                       .init(injectShellIntegration: false, uploadIT2: false, activateIT2: true))
+        for kind: Conductor.RemoteLaunchKind in [.customShell("bash"), .command] {
             XCTAssertEqual(setup(kind, setting: false),
-                           .init(injectShellIntegration: false, uploadIT2: false, activateIT2: true), "\(kind)")
+                           .init(injectShellIntegration: false, uploadIT2: false, activateIT2: true,
+                                 putIT2OnCommandPath: true), "\(kind)")
         }
     }
 
     // A command is run as given, never through the injected scripts.
     func testCommandGetsIt2WithoutInjection() {
         XCTAssertEqual(setup(.command),
-                       .init(injectShellIntegration: false, uploadIT2: true, activateIT2: true))
+                       .init(injectShellIntegration: false, uploadIT2: true, activateIT2: true,
+                             putIT2OnCommandPath: true))
     }
 
     // Without the remote home there is nowhere to put the socket or the files.
