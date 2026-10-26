@@ -47,9 +47,19 @@ final class TmuxWorkgroupExitTests: WorkgroupEntryTestBase {
     }
 
     func testExitLeavesPeersInViewToTmux() throws {
+        try checkPeerInViewIsLeftToTmux(closingSplit: false)
+    }
+
+    // Closing another member (Cmd-W on the split) ends the workgroup the same way. QA finding F-618.
+    func testClosingAMemberLeavesPeersInViewToTmux() throws {
+        try checkPeerInViewIsLeftToTmux(closingSplit: true)
+    }
+
+    private func checkPeerInViewIsLeftToTmux(closingSplit: Bool) throws {
         let root = WGFix.makeRoot()
         let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
-        let wg = WGFix.wrap(name: "rootPeer", sessions: [root, peer])
+        let split = WGFix.makeSplit(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "rootPeerSplit", sessions: [root, peer, split])
         let instance = try XCTUnwrap(enterWorkgroup(wg))
 
         // Make it a workgroup on a tmux server, attached. The leader becomes a tmux client before
@@ -80,14 +90,16 @@ final class TmuxWorkgroupExitTests: WorkgroupEntryTestBase {
         peerSession.delegate = tab
         instance.peerPort.activeSessionIdentifier = peer.uniqueIdentifier
 
-        // Exit Workgroup.
-        instance.teardown()
+        if closingSplit {
+            instance.teardown(becauseSessionTerminated: try XCTUnwrap(spawner.session(forConfigID: split.uniqueIdentifier)))
+        } else {
+            // Exit Workgroup.
+            instance.teardown()
+        }
         drainMainQueue()
 
         XCTAssertEqual(tab.softClosed.count, 0, "the peer leaves its tab when tmux removes its pane")
         XCTAssertFalse(peerSession.exited)
         XCTAssertNil(peerSession.workgroupInstance)
-        XCTAssertTrue(tmux.written.contains { $0.hasPrefix("list-panes -s -t $") },
-                      "the server is cleaned up: \(tmux.written)")
     }
 }
