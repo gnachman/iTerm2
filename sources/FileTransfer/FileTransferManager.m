@@ -219,7 +219,17 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     return NULL;
 }
 
+// Tests turn this off: pressing the menu tracks it modally and stops the test runner.
+static BOOL gFileTransferManagerOpensMenus = YES;
+
++ (void)setOpensMenusForTesting:(BOOL)opensMenus {
+    gFileTransferManagerOpensMenus = opensMenus;
+}
+
 - (void)openDownloadsMenu {
+    if (!gFileTransferManagerOpensMenus) {
+        return;
+    }
     AXUIElementRef menuElement = [self downloadsMenuElement];
     if (menuElement) {
         AXUIElementPerformAction(menuElement, kAXPressAction);
@@ -228,6 +238,9 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)openUploadsMenu {
+    if (!gFileTransferManagerOpensMenus) {
+        return;
+    }
     AXUIElementRef menuElement = [self uploadsMenuElement];
     if (menuElement) {
         AXUIElementPerformAction(menuElement, kAXPressAction);
@@ -267,6 +280,10 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         }
     }
     return nil;
+}
+
+- (BOOL)isListingTransferrableFileForTesting:(TransferrableFile *)transferrableFile {
+    return [self viewControllerForTransferrableFile:transferrableFile] != nil;
 }
 
 - (NSMenuItem *)menuItemForTransferrableFile:(TransferrableFile *)transferrableFile {

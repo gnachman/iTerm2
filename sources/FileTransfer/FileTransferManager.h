@@ -60,4 +60,7 @@
 - (void)setPasswordManagerCompletionForTesting:(void (^)(NSString *password))completion;
 - (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast;
 - (void)iTermPasswordManagerDidClose;
++ (void)setOpensMenusForTesting:(BOOL)opensMenus;
+// Whether the Downloads or Uploads menu lists the transfer.
+- (BOOL)isListingTransferrableFileForTesting:(TransferrableFile *)transferrableFile;
 @end

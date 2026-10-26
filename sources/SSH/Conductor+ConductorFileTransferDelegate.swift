@@ -195,15 +195,29 @@ extension Conductor: ConductorFileTransferDelegate {
                                   progress: progress,
                                   fileTransfer: fileTransfer,
                                   conductor: self)
-        while state.shouldFetchMore {
-            try await state.addTask(conductor: self)
+        do {
+            while state.shouldFetchMore {
+                try await state.addTask(conductor: self)
+            }
+            if let cancellation, cancellation.canceled {
+                RLog("Download of \(remoteFile.absolutePath) throwing")
+                throw SSHEndpointException.transferCanceled
+            }
+            RLog("Download of \(remoteFile.absolutePath) finished normally")
+            try state.content.write(to: destination)
+        } catch {
+            // The Downloads menu lists the transfer until it is told how it ended (F-714). A
+            // canceled one was already told it stopped; one stopped from the menu is told now.
+            if fileTransfer.isStopped {
+                if cancellation?.canceled != true {
+                    fileTransfer.abort()
+                }
+            } else if cancellation?.canceled != true {
+                fileTransfer.fail(reason: error.localizedDescription)
+            }
+            throw error
         }
-        if let cancellation, cancellation.canceled {
-            RLog("Download of \(remoteFile.absolutePath) throwing")
-            throw SSHEndpointException.transferCanceled
-        }
-        RLog("Download of \(remoteFile.absolutePath) finished normally")
-        try state.content.write(to: destination)
+        fileTransfer.didFinishChunkedDownload(to: destination)
         return .file
     }
 

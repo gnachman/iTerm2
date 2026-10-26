@@ -775,6 +775,13 @@ Bug Fixes:
   open, relaunching with window restoration on
   no longer types stray text, such as
   cmVzZXQy, into the restored tabs’ new shells.
+- A file fetched over SSH Integration with
+  Shell > ssh > Download Files… no longer stays
+  listed as downloading in the Downloads menu
+  after it finishes. Clear All in the Downloads
+  menu now removes finished SSH Integration
+  downloads, and their notification no longer
+  says “Upload finished”.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
