@@ -34,7 +34,10 @@ extension PTYSession {
             conductor.startPane(rows: Int(size.height),
                                 cols: Int(size.width),
                                 directory: directory,
-                                command: launch.shellCommand,
+                                // Run as a peer's own connection runs it, with the user's
+                                // interactive PATH. An empty command is a login shell.
+                                command: launch.shellCommand.isEmpty
+                                    ? "" : WorkgroupRemoteHost.peerRemoteCommand(launch.shellCommand),
                                 environment: framerPaneEnvironment(),
                                 client: jobManager) { [weak self] pid in
                 guard let self else {

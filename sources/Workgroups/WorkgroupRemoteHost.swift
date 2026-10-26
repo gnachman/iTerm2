@@ -10,8 +10,15 @@
 //  starts in the leader's directory. Only the connection is reused, never the leader's profile
 //  command, which could run anything.
 //
-//  The command runs as /bin/sh -c '<command>' so it behaves the same whatever the remote login
-//  shell is; the login shell has already read the user's profile, so PATH is the user's.
+//  The command runs under /bin/sh so it behaves the same whatever the remote login shell is. It
+//  reaches the host as a remote command, which the login shell runs with -c, and a shell run that
+//  way does not read everything an interactive one does: zsh skips .zshrc, and macOS's bash reads
+//  no profile at all. Claude Code's installer puts ~/.local/bin on PATH in exactly those files, so
+//  `claude` was not found. So before running the command, /bin/sh asks the user's shell, started
+//  as an interactive login shell, for its PATH, and uses that. Only PATH is taken back: the
+//  startup files still run once more for the probe, with their side effects, but the command
+//  itself does not run in that interactive shell, whose startup files may do anything there
+//  (some exec tmux). See peerShellScript.
 //
 
 import Foundation
@@ -155,7 +162,7 @@ final class WorkgroupRemoteHost: NSObject {
     /// An empty `remoteCommand` means an interactive login shell on the host.
     func launchPlan(remoteCommand: String, directory: String? = nil) -> LaunchPlan {
         let directory = directory ?? self.directory
-        let command: String? = remoteCommand.isEmpty ? nil : "/bin/sh -c " + Self.shellQuote(remoteCommand)
+        let command: String? = remoteCommand.isEmpty ? nil : Self.peerRemoteCommand(remoteCommand)
         var jumps = hops
         let last = jumps.count - 1
         for i in jumps.indices {
@@ -204,6 +211,47 @@ final class WorkgroupRemoteHost: NSObject {
             }
             completion((promptPath, settingsPath))
         }
+    }
+
+    /// What the host runs for a peer's `command`: /bin/sh running peerShellScript. Used both as
+    /// the remote command of a peer's own connection and as the command of a pane of the leader's
+    /// framer, so the two behave the same.
+    ///
+    /// The login shell runs this with -c whatever shell it is, so the script goes base64-encoded:
+    /// then all the login shell sees in quotes is letters, digits and + / =. Quoting the command
+    /// once more instead broke under fish (which reads \' inside single quotes as an escape) and
+    /// under csh and tcsh (a ! or a newline inside single quotes).
+    static func peerRemoteCommand(_ command: String) -> String {
+        let encoded = Data(peerShellScript(command).utf8).base64EncodedString()
+        // macOS before 13 spells decode -D.
+        return #"/bin/sh -c 'eval "$(printf %s "# + encoded + #" | { base64 -d 2>/dev/null || base64 -D; })"'"#
+    }
+
+    /// A POSIX script that runs `command` with the PATH the user's interactive shell would have.
+    ///
+    /// The probe has no input and its errors are discarded, so a startup file that reads input
+    /// or runs a program needing a terminal moves on at once. One that opens /dev/tty itself
+    /// (a passphrase prompt, say) shows its prompt in the peer's session and waits for the user,
+    /// as it would when they log in.
+    ///
+    /// - For zsh, bash and ksh, which read different startup files when not interactive, it starts
+    ///   $SHELL as an interactive login shell with no input and its errors discarded, and takes
+    ///   the PATH it prints, marked so whatever else the startup files print is ignored. If that
+    ///   prints nothing usable, PATH stays as it was. Other shells (fish, tcsh) read their
+    ///   startup files for -c anyway.
+    /// - Then ~/.iterm2/bin goes first, without duplicating it, so iTerm2's it2 wins (the
+    ///   shell-integration scripts make the same promise).
+    /// - Then `command` runs under /bin/sh with that PATH.
+    static func peerShellScript(_ command: String) -> String {
+        let probe = #"it2_p=$("$SHELL" -l -i -c 'printf "\n%s\n" "IT2PATH=$PATH"' </dev/null 2>/dev/null | sed -n 's/^IT2PATH=//p' | tail -n 1)"#
+        let parts = [
+            #"case "${SHELL##*/}" in zsh|bash|ksh|mksh) "# + probe + #"; if [ -n "$it2_p" ]; then PATH=$it2_p; fi;; esac"#,
+            #"it2_bin="$HOME/.iterm2/bin""#,
+            #"if [ -d "$it2_bin" ]; then set -f; it2_r=; it2_ifs=$IFS; IFS=:; for it2_d in $PATH; do if [ "$it2_d" != "$it2_bin" ]; then it2_r="$it2_r:$it2_d"; fi; done; IFS=$it2_ifs; set +f; PATH="$it2_bin$it2_r"; fi"#,
+            "export PATH",
+            "exec /bin/sh -c " + shellQuote(command),
+        ]
+        return parts.joined(separator: "; ")
     }
 
     private static func shellQuote(_ value: String) -> String {
