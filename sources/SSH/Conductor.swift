@@ -389,6 +389,19 @@ class Conductor: NSObject, SSHIdentityProvider {
     // may be sent after that: ssh may exit at any moment, and whatever reaches the pty after
     // it does is typed into the local terminal (F-709).
     private(set) var hasEnded = false
+    // Set once a quit has been sent. See sendQuitOnce().
+    private var sentQuit = false
+
+    /// The remote quits on the first quit. A second one, such as Disconnect after the login
+    /// shell exited, could arrive after ssh exited and be typed into the shell below (F-781).
+    private func sendQuitOnce() {
+        guard !sentQuit else {
+            log("Already sent a quit")
+            return
+        }
+        sentQuit = true
+        send(.quit, isFinal: true, .fireAndForget)
+    }
 
     // Set while a pipeline transition is running a handler that could call back in.
     // handleCommandEnd captures the pipeline's contents from the pattern match, runs the
@@ -1841,14 +1854,14 @@ extension Conductor {
         if !linePrefix.isEmpty {
             write(linePrefix)
         }
-        send(.quit, isFinal: true, .fireAndForget)
+        sendQuitOnce()
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
 
     @objc func quit() {
         hasEnded = true
         cancelAllRequests()
-        send(.quit, isFinal: true, .fireAndForget)
+        sendQuitOnce()
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
         delegate?.conductorQuit()
         delegate?.conductorStateDidChange()
@@ -2599,7 +2612,7 @@ extension Conductor {
             log("The login shell exited")
             hasEnded = true
             cancelEnqueuedRequests(where: { _ in true })
-            send(.quit, isFinal: true, .fireAndForget)
+            sendQuitOnce()
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
             case .ground, .unhooked, .recovery, .recovered:

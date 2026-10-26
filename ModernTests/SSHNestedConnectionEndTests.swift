@@ -320,6 +320,21 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertEqual(delegate.written, "")
     }
 
+    // F-781: Disconnect after the login shell exited must not send a second quit.
+    func testQuitAfterLoginShellExitSendsOneQuit() {
+        let delegate = RecordingConductorDelegate()
+        let conductor = makeFramingConductor(delegate)
+        deliverAutopollEOF(to: conductor)
+        drain(conductor)
+        delegate.written = ""
+        conductor.handleTerminate(loginShellPID, code: 0, depth: conductor.depth)
+        conductor.handleCommandEnd(identifier: "id", type: "f", status: 0, depth: conductor.depth)
+        conductor.quit()
+        drain(conductor)
+        let quit = "quit".data(using: .utf8)!.base64EncodedString()
+        XCTAssertEqual(delegate.written.components(separatedBy: quit).count - 1, 1, delegate.written)
+    }
+
     // The payloads of the framer `send` commands in what was written, decoded the way
     // framer.py does.
     private static func relayedPayloads(_ written: String) -> [String] {
