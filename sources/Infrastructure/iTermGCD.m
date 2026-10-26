@@ -173,18 +173,26 @@ static NSInteger gMainQueueJoinDepth;
     return dispatch_get_specific(&iTermGCDJoinStateKey) != NULL;
 }
 
++ (BOOL)isSafeForMutationQueue:(dispatch_queue_t)queue {
+    void *state = dispatch_queue_get_specific(queue, &iTermGCDJoinStateKey);
+    if (state != NULL && dispatch_get_specific(&iTermGCDJoinStateKey) == state) {
+        return YES;
+    }
+    return [self onMainQueue] &&
+           dispatch_queue_get_specific(queue, &iTermGCDMainQueueSafeKey) == &iTermGCDSpecificMainQueueSafe_Yes;
+}
+
++ (void)assertSafeForMutationQueue:(dispatch_queue_t)queue {
+    ITAssertWithMessage([self isSafeForMutationQueue:queue], @"Not safe for mutation queue %@", queue);
+}
+
++ (BOOL)onMutationQueueWithJoinState:(iTermMutationQueueJoinState *)joinState {
+    return dispatch_get_specific(&iTermGCDJoinStateKey) == (__bridge void *)joinState;
+}
+
 + (BOOL)onMainQueue {
     return dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue());
 }
 
-static _Atomic BOOL gJoined;
-
-+ (BOOL)joined {
-    return gJoined;
-}
-
-+ (void)setJoined:(BOOL)joined {
-    gJoined = joined;
-}
 
 @end

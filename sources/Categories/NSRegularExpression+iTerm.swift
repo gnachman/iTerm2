@@ -7,27 +7,31 @@
 
 import Foundation
 
-struct RegexCache {
-    static var instance = RegexCache()
-    private var cache: [String: Result<NSRegularExpression, Error>] = [:]
+// Any thread.
+final class RegexCache {
+    static let instance = RegexCache()
+    private let cache = MutableAtomicObject([String: Result<NSRegularExpression, Error>]())
 
-    mutating func get(_ pattern: String) throws -> NSRegularExpression? {
-        if let result = cache[pattern] {
-            switch result {
-            case .success(let value):
-                return value
-            case .failure(let error):
-                throw error
-            }
-        }
-        do {
-            let cached = try NSRegularExpression(pattern: pattern)
-            cache[pattern] = .success(cached)
-            return cached
-        } catch {
-            cache[pattern] = .failure(error)
+    func get(_ pattern: String) throws -> NSRegularExpression? {
+        let result = cache.access { $0[pattern] } ?? compile(pattern)
+        switch result {
+        case .success(let value):
+            return value
+        case .failure(let error):
             throw error
         }
+    }
+
+    // Compiled outside the lock. Two threads may both compile a new pattern; either result is fine.
+    private func compile(_ pattern: String) -> Result<NSRegularExpression, Error> {
+        let result: Result<NSRegularExpression, Error>
+        do {
+            result = .success(try NSRegularExpression(pattern: pattern))
+        } catch {
+            result = .failure(error)
+        }
+        cache.mutableAccess { $0[pattern] = result }
+        return result
     }
 }
 

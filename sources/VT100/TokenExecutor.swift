@@ -120,7 +120,7 @@ class TokenExecutor: NSObject {
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
-            iTermGCD.assertMutationQueueSafe()
+            iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
             if isBackgroundSession != oldValue {
                 impl.isBackgroundSession = isBackgroundSession
@@ -130,7 +130,7 @@ class TokenExecutor: NSObject {
 
     @objc var isExecutingToken: Bool {
         #if DEBUG
-        iTermGCD.assertMutationQueueSafe()
+        iTermGCD.assertSafe(forMutationQueue: queue)
         #endif
         return impl.isExecutingToken
     }
@@ -212,7 +212,7 @@ class TokenExecutor: NSObject {
         }
         if highPriority {
 #if DEBUG
-            iTermGCD.assertMutationQueueSafe()
+            iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
             // Re-entrant code path so that the Inject trigger can do its job synchronously
             // (before other triggers run).
@@ -248,7 +248,7 @@ class TokenExecutor: NSObject {
     func rollBackCurrentToken() {
         if gDebugLogging.boolValue { DLog("Roll back current token") }
 #if DEBUG
-        iTermGCD.assertMutationQueueSafe()
+        iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
         impl.rollBackCurrentToken()
     }
@@ -440,7 +440,7 @@ private class TokenExecutorImpl {
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
-            iTermGCD.assertMutationQueueSafe()
+            iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
             if isBackgroundSession != oldValue {
                 sideEffectScheduler.period = isBackgroundSession ? Self.backgroundSideEffectPeriod : Self.foregroundSideEffectPeriod
@@ -582,9 +582,7 @@ private class TokenExecutorImpl {
         let sema2 = DispatchSemaphore(value: 0)
         queue.async {
             sema2.signal()
-            iTermGCD.joined = true
             sema.wait()
-            iTermGCD.joined = false
             DLog("Mutation queue unpaused")
         }
         if unpauser != nil {
@@ -750,7 +748,7 @@ private class TokenExecutorImpl {
 
 #if DEBUG
     private func assertQueue() {
-        iTermGCD.assertMutationQueueSafe()
+        iTermGCD.assertSafe(forMutationQueue: queue)
     }
 #endif
 

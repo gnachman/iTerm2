@@ -4759,25 +4759,34 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
         }
 #if DEBUG
     } else if ([key isEqualToString:@"Debug"]) {
+        // Preferences and the modifier remapper belong to the main thread, so the work happens
+        // there and the reply is sent from this queue.
+        dispatch_queue_t queue = [_delegate terminalQueue];
+        __weak __typeof(self) weakSelf = self;
+        void (^reply)(NSString *) = ^(NSString *report) {
+            dispatch_async(queue, ^{
+                [weakSelf.delegate terminalSendReport:[report dataUsingEncoding:NSUTF8StringEncoding]];
+            });
+        };
         if ([value hasPrefix:@"RemapFn="]) {
             int tag = [[value substringFromIndex:@"RemapFn=".length] intValue];
-            [iTermPreferences setInt:tag forKey:kPreferenceKeyFunctionRemapping];
             dispatch_async(dispatch_get_main_queue(), ^{
+                [iTermPreferences setInt:tag forKey:kPreferenceKeyFunctionRemapping];
                 if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
                     [[iTermModifierRemapper sharedInstance] setRemapModifiers:YES];
                 }
+                reply([NSString stringWithFormat:@"\033]1337;DebugAck=FnRemap=%d\007", tag]);
             });
-            NSString *ack = [NSString stringWithFormat:@"\033]1337;DebugAck=FnRemap=%d\007", tag];
-            [_delegate terminalSendReport:[ack dataUsingEncoding:NSUTF8StringEncoding]];
         } else if ([value isEqualToString:@"QueryFnState"]) {
-            BOOL fnDown = [[iTermModifierRemapper sharedInstance] physicalFnKeyDown];
-            int remap = [iTermPreferences intForKey:kPreferenceKeyFunctionRemapping];
-            BOOL anyRemapped = [[iTermModifierRemapper sharedInstance] isAnyModifierRemapped];
-            BOOL remapping = [[iTermModifierRemapper sharedInstance] isRemappingModifiers];
-            NSString *report = [NSString stringWithFormat:
-                @"\033]1337;DebugAck=FnState=%d;Remap=%d;Any=%d;ET=%d\007",
-                fnDown, remap, anyRemapped, remapping];
-            [_delegate terminalSendReport:[report dataUsingEncoding:NSUTF8StringEncoding]];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                BOOL fnDown = [[iTermModifierRemapper sharedInstance] physicalFnKeyDown];
+                int remap = [iTermPreferences intForKey:kPreferenceKeyFunctionRemapping];
+                BOOL anyRemapped = [[iTermModifierRemapper sharedInstance] isAnyModifierRemapped];
+                BOOL remapping = [[iTermModifierRemapper sharedInstance] isRemappingModifiers];
+                reply([NSString stringWithFormat:
+                    @"\033]1337;DebugAck=FnState=%d;Remap=%d;Any=%d;ET=%d\007",
+                    fnDown, remap, anyRemapped, remapping]);
+            });
         }
 #endif
     } else if ([key isEqualToString:@"ExecFailed"]) {

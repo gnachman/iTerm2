@@ -422,14 +422,16 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     }
 
     const char *thread;
+    // A joined main queue is marked safe for mutable state, and a joined mutation queue is marked
+    // safe for main-queue state.
     if ([iTermGCD onMainQueue]) {
-        if ([iTermGCD joined]) {
+        if ([iTermGCD isMutationQueueSafe]) {
             thread = "joined";
         } else {
             thread = "main";
         }
     } else if ([iTermGCD onMutationQueue]) {
-        if ([iTermGCD joined]) {
+        if ([iTermGCD isMainQueueSafe]) {
             thread = "joined";
         } else {
             thread = "mut";

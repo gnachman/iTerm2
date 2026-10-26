@@ -31,6 +31,39 @@ final class iTermGCDTests: XCTestCase {
         XCTAssertFalse(stateA.performingJoinedBlock)
     }
 
+    func testOnMutationQueueWithJoinStateMatchesOnlyThatQueue() {
+        let a = iTermGCD.newMutationQueue()
+        let b = iTermGCD.newMutationQueue()
+        let stateA = iTermGCD.joinState(for: a)
+        var onA = false
+        var onAFromB = true
+        a.sync { onA = iTermGCD.onMutationQueue(with: stateA) }
+        b.sync { onAFromB = iTermGCD.onMutationQueue(with: stateA) }
+        XCTAssertTrue(onA)
+        XCTAssertFalse(onAFromB)
+        XCTAssertFalse(iTermGCD.onMutationQueue(with: stateA))
+    }
+
+    // A session's mutable state may be used on its own queue, or on main while main has joined that
+    // queue, but not on another session's queue or while main has joined another session.
+    func testSafetyForAParticularMutationQueue() {
+        let a = iTermGCD.newMutationQueue()
+        let b = iTermGCD.newMutationQueue()
+        var aOnA = false
+        var aOnB = true
+        a.sync { aOnA = iTermGCD.isSafe(forMutationQueue: a) }
+        b.sync { aOnB = iTermGCD.isSafe(forMutationQueue: a) }
+        XCTAssertTrue(aOnA)
+        XCTAssertFalse(aOnB)
+
+        XCTAssertFalse(iTermGCD.isSafe(forMutationQueue: a))
+        iTermGCD.setMainQueueSafe(true, on: b)
+        XCTAssertFalse(iTermGCD.isSafe(forMutationQueue: a), "Joined to b, not a")
+        XCTAssertTrue(iTermGCD.isSafe(forMutationQueue: b))
+        iTermGCD.setMainQueueSafe(false, on: b)
+        XCTAssertFalse(iTermGCD.isSafe(forMutationQueue: b))
+    }
+
     func testNewMutationQueuesAreMutationQueues() {
         let queue = iTermGCD.newMutationQueue()
         XCTAssertFalse(iTermGCD.onMutationQueue())

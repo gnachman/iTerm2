@@ -309,7 +309,7 @@ static BOOL sOSC7DisabledWarningShown;
 #pragma mark - Private
 
 - (void)assertOnMutationThread {
-    [iTermGCD assertMutationQueueSafe];
+    [iTermGCD assertSafeForMutationQueue:_queue];
 }
 
 #pragma mark - Internal
@@ -7976,7 +7976,8 @@ lengthExcludingInBandSignaling:data.length
 
 // Main queue or mutation queue.
 - (void)scheduleTriggerCallback:(void (^)(void))block {
-    if ([iTermGCD onMutationQueue] && _triggerEvaluator.evaluating) {
+    // Inline only on this state's own queue, not another session's.
+    if ([iTermGCD onMutationQueueWithJoinState:_joinState] && _triggerEvaluator.evaluating) {
         block();
         return;
     }

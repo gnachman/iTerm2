@@ -20,8 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 // queue: sessions on the shared queue share it.
 //
 // JOIN CONTEXT (main queue only):
-// - `joined`: YES when a mutation queue has paused and is waiting for main to
-//   finish a joined block. Used only for logging.
 // - iTermMutationQueueJoinState.performingJoinedBlock: YES when inside a joined
 //   block for that queue. Used to handle reentrant join requests gracefully
 //   (run them immediately without another semaphore handshake, since that
@@ -54,11 +52,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermGCD : NSObject
 
-#pragma mark - Join Context
-
-// YES when a mutation queue has paused and is waiting. Used only for logging.
-@property (atomic, class) BOOL joined;
-
 #pragma mark - Queues
 
 // The mutation queue that sessions share.
@@ -70,6 +63,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (dispatch_queue_t)deallocQueue;
 // YES on any mutation queue, or a queue that targets one.
 + (BOOL)onMutationQueue;
+// YES on the mutation queue with this join state, or a queue that targets it.
++ (BOOL)onMutationQueueWithJoinState:(iTermMutationQueueJoinState *)joinState;
 + (BOOL)onMainQueue;
 
 #pragma mark - Queue Safety Assertions
@@ -79,6 +74,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)assertMutationQueueSafe;
 + (void)assertMutationQueueSafe:(NSString *)message, ...;
+
+// Whether the current queue may use state belonging to `queue`, a mutation queue: it is `queue` (or
+// targets it), or it is the main queue while main has joined `queue`. Stricter than
+// assertMutationQueueSafe, which accepts main while it has joined any mutation queue.
++ (BOOL)isSafeForMutationQueue:(dispatch_queue_t)queue;
++ (void)assertSafeForMutationQueue:(dispatch_queue_t)queue;
 
 // Whether the current queue is marked safe for main-queue or mutation-queue state.
 + (BOOL)isMainQueueSafe;
