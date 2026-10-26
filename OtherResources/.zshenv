@@ -24,6 +24,31 @@ fi
         # On top of it we add :A:h to get the directory.
         'builtin' 'typeset' _it2_file="${${(%):-%x}:A:h}"/iterm2_shell_integration.zsh
         if [[ -r "$_it2_file" ]]; then
+            # The script below puts ~/.iterm2/bin first on PATH, but this file runs before the
+            # rest of a login shell's startup files: /etc/zprofile's path_helper moves every
+            # entry it doesn't know to the end, ~/.zprofile commonly prepends /opt/homebrew/bin,
+            # and re-sourcing the script skips the prepend because the directory is already on
+            # PATH. Any it2 earlier on PATH would then run instead of iTerm2's. So move it back
+            # to the front once, before the first prompt, after every startup file has run.
+            # PATH stays exported, so `sh -c` children get the same order. Registered before
+            # the script runs so an error in the script can't skip it.
+            _iterm2_put_bin_first() {
+                # Ignore the options the startup files set: under ksh_arrays, for one,
+                # $precmd_functions is only its first element.
+                'builtin' 'emulate' '-L' 'zsh'
+                precmd_functions=(${precmd_functions:#_iterm2_put_bin_first})
+                'builtin' 'unfunction' '_iterm2_put_bin_first'
+                'builtin' 'local' _it2_bin="${HOME}/.iterm2/bin" _it2_dir
+                [[ -d "$_it2_bin" ]] || 'builtin' 'return' 0
+                'builtin' 'local' -a _it2_rest
+                for _it2_dir in "${path[@]}"; do
+                    [[ "$_it2_dir" == "$_it2_bin" ]] || _it2_rest+=("$_it2_dir")
+                done
+                path=("$_it2_bin" "${_it2_rest[@]}")
+                'builtin' 'export' PATH
+            }
+            precmd_functions=(_iterm2_put_bin_first ${precmd_functions[@]-})
+
             'builtin' 'autoload' '-Uz' '--' "$_it2_file"
             "${_it2_file:t}"
             'builtin' 'unfunction' '--' "${_it2_file:t}"
