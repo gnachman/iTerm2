@@ -10,14 +10,18 @@
 extension Conductor: ConductorFileTransferDelegate {
     func beginDownload(fileTransfer: ConductorFileTransfer) {
         guard let path = fileTransfer.localPath() else {
-            fileTransfer.fail(reason: "No local path specified")
+            fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.NoLocalPath",
+                                              defaultValue: "There is no local file to save the download to.",
+                                              comment: "Error shown when an SSH Integration download has no local file to save to"))
             return
         }
         let remotePath = fileTransfer.path.path!
 
         FileManager.default.createFile(atPath: path, contents: nil, attributes: nil)
         guard let fileHandle = FileHandle(forUpdatingAtPath: path) else {
-            fileTransfer.fail(reason: "Could not open \(path)")
+            fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.CouldNotOpen",
+                                              defaultValue: "Could not open “\(path)” for writing.",
+                                              comment: "Error shown when the local file for an SSH Integration download cannot be opened; the argument is its path"))
             return
         }
         Task {
@@ -80,7 +84,9 @@ extension Conductor: ConductorFileTransferDelegate {
             let info = try await stat(remotePath)
             if info.kind == .folder {
                 if !allowDirectories {
-                    fileTransfer.fail(reason: "Transfer of directory at \(remotePath) not allowed")
+                    fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.FolderNotAllowed",
+                                                      defaultValue: "“\(remotePath)” is a folder and can’t be downloaded here.",
+                                                      comment: "Error shown when an SSH Integration download unexpectedly names a folder; the argument is the remote path"))
                 }
                 await reallyDownloadFolder(info: info,
                                            fileTransfer: fileTransfer,
@@ -169,7 +175,10 @@ extension Conductor: ConductorFileTransferDelegate {
         }
 
         guard remoteFile.kind.isRegularFile else {
-            throw ConductorFileTransfer.ConductorFileTransferError("\(remoteFile.absolutePath) on \(sshIdentity.displayName) is not a regular file")
+            throw ConductorFileTransfer.ConductorFileTransferError(
+                String(localized: "ConductorFileTransfer.NotRegularFile",
+                       defaultValue: "“\(remoteFile.absolutePath)” on \(sshIdentity.displayName) is not a regular file.",
+                       comment: "Error shown when an SSH Integration download is not a regular file; the first argument is the remote path and the second is the host"))
         }
 
         let scpPath = SCPPath()
@@ -282,7 +291,7 @@ extension Conductor: ConductorFileTransferDelegate {
                 offset: taskOffset,
                 task: Task { @MainActor in
                     if fileTransfer.isStopped {
-                        throw ConductorFileTransfer.ConductorFileTransferError("Canceled")
+                        throw SSHEndpointException.transferCanceled
                     }
                     let data = try await conductor.downloadOneChunk(
                         remoteFile: remoteFile,
@@ -367,7 +376,9 @@ extension Conductor: ConductorFileTransferDelegate {
             return
         }
         guard let path = fileTransfer.localPath() else {
-            fileTransfer.fail(reason: "No local filename specified")
+            fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.NoLocalFile",
+                                              defaultValue: "No file was chosen to upload.",
+                                              comment: "Error shown when an SSH Integration upload has no local file"))
             return
         }
         Task {
@@ -414,7 +425,10 @@ extension Conductor: ConductorFileTransferDelegate {
                 return exists
             }
             guard let remoteName else {
-                throw ConductorFileTransfer.ConductorFileTransferError("Too many iterations to find a valid file name on remote host for upload")
+                throw ConductorFileTransfer.ConductorFileTransferError(
+                    String(localized: "ConductorFileTransfer.NoFreeRemoteName",
+                           defaultValue: "Could not find an unused file name on the remote host for the upload.",
+                           comment: "Error shown when an SSH Integration upload cannot find a file name that is not already taken on the remote host"))
             }
             defer {
                 uploadNameReservations.release(remoteName)

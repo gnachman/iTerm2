@@ -65283,6 +65283,48 @@
         }
       }
     },
+    "ConductorFileTransfer.CouldNotOpen" : {
+      "comment" : "Error shown when the local file for an SSH Integration download cannot be opened; the argument is its path",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ konnte nicht zum Schreiben geöffnet werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not open “%@” for writing."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」を書き込み用に開けませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível abrir “%@” para gravação."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось открыть «%@» для записи."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法打开“%@”进行写入。"
+          }
+        }
+      }
+    },
     "ConductorFileTransfer.DisplayName" : {
       "comment" : "Multi-line description of an SSH Integration file transfer",
       "extractionState" : "extracted_with_value",
@@ -65367,6 +65409,48 @@
         }
       }
     },
+    "ConductorFileTransfer.FolderNotAllowed" : {
+      "comment" : "Error shown when an SSH Integration download unexpectedly names a folder; the argument is the remote path",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ ist ein Ordner und kann hier nicht heruntergeladen werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%@” is a folder and can’t be downloaded here."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」はフォルダのため、ここではダウンロードできません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” é uma pasta e não pode ser transferida aqui."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» является папкой, и её здесь нельзя скачать."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”是文件夹，无法在此下载。"
+          }
+        }
+      }
+    },
     "ConductorFileTransfer.InMemory" : {
       "comment" : "Placeholder shown for a file transfer whose contents are held in memory rather than on disk",
       "extractionState" : "extracted_with_value",
@@ -65409,6 +65493,132 @@
         }
       }
     },
+    "ConductorFileTransfer.NoFreeRemoteName" : {
+      "comment" : "Error shown when an SSH Integration upload cannot find a file name that is not already taken on the remote host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf dem entfernten Host wurde kein freier Dateiname für den Upload gefunden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not find an unused file name on the remote host for the upload."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロード用に、リモートホスト上で未使用のファイル名が見つかりませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível encontrar um nome de arquivo disponível no host remoto para o envio."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось найти свободное имя файла на удалённом узле для загрузки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法在远程主机上找到可用于上传的未使用文件名。"
+          }
+        }
+      }
+    },
+    "ConductorFileTransfer.NoLocalFile" : {
+      "comment" : "Error shown when an SSH Integration upload has no local file",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wurde keine Datei für den Upload ausgewählt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No file was chosen to upload."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップロードするファイルが選択されていません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum arquivo foi escolhido para envio."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не выбран файл для загрузки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未选择要上传的文件。"
+          }
+        }
+      }
+    },
+    "ConductorFileTransfer.NoLocalPath" : {
+      "comment" : "Error shown when an SSH Integration download has no local file to save to",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es gibt keine lokale Datei, in der der Download gespeichert werden kann."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "There is no local file to save the download to."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロードを保存するローカルファイルがありません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não há um arquivo local para salvar o arquivo transferido."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет локального файла для сохранения скачиваемого файла."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有用于保存下载内容的本地文件。"
+          }
+        }
+      }
+    },
     "ConductorFileTransfer.NoSuchFile" : {
       "comment" : "Error shown when a file to upload does not exist",
       "extractionState" : "extracted_with_value",
@@ -65447,6 +65657,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不存在文件: %@"
+          }
+        }
+      }
+    },
+    "ConductorFileTransfer.NotRegularFile" : {
+      "comment" : "Error shown when an SSH Integration download is not a regular file; the first argument is the remote path and the second is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%1$@“ auf %2$@ ist keine reguläre Datei."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” on %2$@ is not a regular file."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ 上の「%1$@」は通常のファイルではありません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@” em %2$@ não é um arquivo comum."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%1$@» на %2$@ не является обычным файлом."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ 上的“%1$@”不是普通文件。"
           }
         }
       }
