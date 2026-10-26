@@ -2014,3 +2014,8 @@ Bug Fixes:
   their translated title in the menu bar, and
   the size of each file (such as “1.2 MB of
   20 MB”) is now translated.
+- Answering No to “Allow Terminal-Initiated
+  Download?” (for example, for it2dl) no longer
+  fills the terminal with the file’s encoded
+  contents. The same goes for declining to
+  display a file inline.

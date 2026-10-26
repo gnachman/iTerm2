@@ -113,6 +113,97 @@ class VT100ScreenTests: XCTestCase {
         XCTAssertTrue(session.keyReportingFlagsAtChange.isEmpty)
     }
 
+    private func waitUntil(_ screen: VT100Screen,
+                           timeout: TimeInterval = 10,
+                           file: StaticString = #filePath,
+                           line: UInt = #line,
+                           _ condition: () -> Bool) {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            screen.performBlock(joinedThreads: { _, _, _ in })
+            if condition() {
+                return
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+        XCTFail("Timed out waiting for condition", file: file, line: line)
+    }
+
+    private func fileSequence(name: String, payload: Data, inline: Bool) -> String {
+        let encodedName = name.data(using: .utf8)!.base64EncodedString()
+        let body = payload.base64EncodedString(options: [.lineLength76Characters, .endLineWithLineFeed])
+        let inlineArg = inline ? ";inline=1" : ""
+        return "\u{1b}]1337;File=name=\(encodedName);size=\(payload.count)\(inlineArg):\(body)\u{07}"
+    }
+
+    // F-720: declining “Allow Terminal-Initiated Download?” drew the whole base64 payload.
+    func testDeclinedDownloadDiscardsPayload() {
+        declinedFileTest(inline: false)
+    }
+
+    // Same for “Allow Terminal-Initiated Display?”.
+    func testDeclinedInlineFileDiscardsPayload() {
+        declinedFileTest(inline: true)
+    }
+
+    private func declinedFileTest(inline: Bool) {
+        let screen = screen(width: 20, height: 6)
+        session.allowsDownloads = false
+        let payload = Data((0..<300).map { UInt8(truncatingIfNeeded: $0 * 7) })
+        feed(screen, "before\r\n" + fileSequence(name: "f.bin", payload: payload, inline: inline) + "after")
+        waitUntil(screen) {
+            screen.compactLineDump().contains("after")
+        }
+        XCTAssertEqual(session.downloadConfirmationRequests, 1)
+        XCTAssertEqual(screen.compactLineDump(),
+                       "before..............\n" +
+                       "after...............\n" +
+                       "....................\n" +
+                       "....................\n" +
+                       "....................\n" +
+                       "....................")
+
+        // The terminal is back to normal: another file is asked about and text after it shows.
+        feed(screen, "\r\n" + fileSequence(name: "g.bin", payload: payload, inline: inline) + "more")
+        waitUntil(screen) {
+            screen.compactLineDump().contains("more")
+        }
+        XCTAssertEqual(session.downloadConfirmationRequests, 2)
+        XCTAssertEqual(screen.compactLineDump(),
+                       "before..............\n" +
+                       "after...............\n" +
+                       "more................\n" +
+                       "....................\n" +
+                       "....................\n" +
+                       "....................")
+
+        // While a declined payload is still arriving there is no download for ^C to abort.
+        var partial = fileSequence(name: "h.bin", payload: payload, inline: inline)
+        partial.removeLast()
+        feed(screen, partial)
+        waitUntil(screen) {
+            session.downloadConfirmationRequests == 3
+        }
+        // The answer reaches the terminal on the mutation queue after the prompt returns, so
+        // read it there in a later join, once that has run.
+        var receiving = true
+        screen.performBlock(joinedThreads: { terminal, _, _ in
+            receiving = terminal!.receivingFile
+        })
+        XCTAssertFalse(receiving)
+        feed(screen, "\u{07}end")
+        waitUntil(screen) {
+            screen.compactLineDump().contains("end")
+        }
+        XCTAssertEqual(screen.compactLineDump(),
+                       "before..............\n" +
+                       "after...............\n" +
+                       "moreend.............\n" +
+                       "....................\n" +
+                       "....................\n" +
+                       "....................")
+    }
+
     private func screen(width: Int32, height: Int32) -> VT100Screen {
         let screen = VT100Screen()
         session.screen = screen
@@ -2125,6 +2216,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     /// Times screenRemoveProgramStatusRecords fired (a full reset).
     var removeProgramStatusRecordsCount = 0
 
+    /// The answer to “Allow Terminal-Initiated Download?” and how many times it was asked.
+    var allowsDownloads = true
+    var downloadConfirmationRequests = 0
+
     func screenConvertAbsoluteRange(_ range: VT100GridAbsCoordRange, toTextDocumentOfType type: String?, filename: String?, forceWide: Bool) {
 
     }
@@ -2390,7 +2485,8 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
     
     func screenConfirmDownloadAllowed(_ name: String, size: Int, displayInline: Bool, promptIfBig: UnsafeMutablePointer<ObjCBool>) -> Bool {
-        true
+        downloadConfirmationRequests += 1
+        return allowsDownloads
     }
     
     func screenAskAboutClearingScrollback() {
