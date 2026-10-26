@@ -380,9 +380,12 @@ class VT100ScreenEditingTests: XCTestCase {
                        "dd")
     }
 
-    func testAllDirtyIsSetInitiallyAndClearedByMarkingClean() {
+    // Making the screen joins, and the end of a join syncs, which marks the grid clean, so this
+    // marks it dirty first.
+    func testAllDirtyIsClearedByMarkingClean() {
         let screen = makeScreen(width: 2, height: 3)
         mutate(screen) { _, mutableState in
+            mutableState.currentGrid.markAllCharsDirty(true, updateTimestamps: false)
             XCTAssertTrue(mutableState.currentGrid.isAllDirty)
             mutableState.currentGrid.markAllCharsDirty(false, updateTimestamps: false)
             XCTAssertFalse(mutableState.currentGrid.isAllDirty)

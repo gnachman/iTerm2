@@ -1740,6 +1740,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     }
 }
 
+// Once this screen's outermost join ends, the delegate must have switched the main-thread copy back
+// from the shared state. Otherwise main keeps reading mutable state that its queue is changing.
+- (void)assertStateRestoredAfterJoin {
+    if (!_mutableState.performingJoinedBlock) {
+        ITAssertWithMessage(_sharedStateCount == 0, @"Delegate did not restore state after a joined block");
+    }
+}
+
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
@@ -1749,7 +1757,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     // the current one isn't done yet).
     assert(!_mutableState.performingSideEffect ||
            _mutableState.performingPausedSideEffect);
+    // The join can drop the last owner of this screen's session.
+    [[self retain] autorelease];
     [_mutableState performBlockWithJoinedThreads:block];
+    [self assertStateRestoredAfterJoin];
 }
 
 - (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,

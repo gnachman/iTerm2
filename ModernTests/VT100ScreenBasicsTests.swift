@@ -1254,8 +1254,12 @@ class VT100ScreenBasicsTests: XCTestCase {
                        "rstuv\n" +
                        "wxyz.\n" +
                        ".....")
+        var allDirty = false
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             mutableState.clearScrollbackBuffer()
+            // Clearing scrollback marks the whole grid for redraw. The end of the join syncs, which
+            // marks the grid clean again, so check here rather than on the main-thread copy.
+            allDirty = mutableState.currentGrid.isAllDirty
         })
         XCTAssertEqual(screen.compactLineDumpWithHistory(),
                        "mnopq\n" +
@@ -1264,7 +1268,7 @@ class VT100ScreenBasicsTests: XCTestCase {
                        ".....")
         XCTAssertTrue(session.highlightsCleared)
         XCTAssertFalse(session.selection.hasSelection)
-        XCTAssertTrue(screen.isAllDirty())
+        XCTAssertTrue(allDirty)
     }
 
     // MARK: - Appending
