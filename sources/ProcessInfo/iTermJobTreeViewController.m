@@ -382,7 +382,7 @@ static int gSignalsToList[] = {
     if (!_timer) {
         __weak __typeof(self) weakSelf = self;
         _timer = [NSTimer scheduledTimerWithTimeInterval:1 repeats:YES block:^(NSTimer * _Nonnull timer) {
-            [weakSelf update];
+            [weakSelf periodicRefresh];
         }];
     }
     [self update];
@@ -456,7 +456,17 @@ static int gSignalsToList[] = {
 }
 
 - (void)setProcessInfoProvider:(id<ProcessInfoProvider>)processInfoProvider {
+    if (processInfoProvider == _processInfoProvider) {
+        return;
+    }
     _processInfoProvider = processInfoProvider;
+    [self update];
+}
+
+- (void)periodicRefresh {
+    if (self.willRefresh) {
+        self.willRefresh(self);
+    }
     [self update];
 }
 

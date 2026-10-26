@@ -50,6 +50,13 @@ static const CGFloat kMargin = 0;
         _jobTreeViewController.toolbarHeight = 28;
         _jobTreeViewController.controlsBottomMargin = 0;
         _jobTreeViewController.font = [NSFont it_toolbeltFont];
+        // The session's root pid and provider can change without the toolbelt hearing of it, as
+        // a tmux pane on an SSH Integration host's do when its connection starts framing or
+        // recovers. Follow them. QA finding F-612.
+        __weak __typeof(self) weakSelf = self;
+        _jobTreeViewController.willRefresh = ^(iTermJobTreeViewController *controller) {
+            [weakSelf updateJobs];
+        };
         [self addSubview:_jobTreeViewController.view];
         [self relayout];
     }
@@ -99,8 +106,13 @@ static const CGFloat kMargin = 0;
 }
 
 - (void)updateJobs {
-    _jobTreeViewController.pid = [self.toolWrapper.delegate.delegate toolbeltCurrentShellProcessId];
-    _jobTreeViewController.processInfoProvider = [self.toolWrapper.delegate.delegate toolbeltCurrentShellProcessInfoProvider];
+    id<iTermToolbeltViewDelegate> delegate = self.toolWrapper.delegate.delegate;
+    if (!delegate) {
+        return;
+    }
+    // Each setter refreshes the tree only when its value changed.
+    _jobTreeViewController.pid = [delegate toolbeltCurrentShellProcessId];
+    _jobTreeViewController.processInfoProvider = [delegate toolbeltCurrentShellProcessInfoProvider];
 }
 
 @end

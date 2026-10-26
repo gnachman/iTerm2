@@ -18,6 +18,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL useGlassEffectView;
 @property (nonatomic) id<ProcessInfoProvider> processInfoProvider;
 
+// Called before each periodic refresh, so a host whose session's root pid or process info provider
+// can change without telling it (e.g. a tmux pane on an SSH Integration host, whose provider
+// appears once the connection is framing) can set them again. Setting unchanged values does
+// nothing.
+@property (nonatomic, copy, nullable) void (^willRefresh)(iTermJobTreeViewController *controller);
+
 // Height of the bottom strip that holds the signal picker and kill button. The
 // outline scroll view occupies everything above it. Space-constrained hosts
 // (e.g. the toolbelt) may reduce this. Defaults to 38.
