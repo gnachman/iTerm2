@@ -457,7 +457,8 @@ class PTYSessionPeerPort: NSObject {
         guard let tab = delegate as? PTYTab else {
             return true
         }
-        return tab.sessions().contains { $0 === session }
+        // A filter or Instant Replay shows it through a stand-in, which the tab holds instead.
+        return tab.sessions().contains { $0 === session || $0.live === session }
     }
 
     /// A buried peer is terminated. One in a tab is closed through the tab, which closes the

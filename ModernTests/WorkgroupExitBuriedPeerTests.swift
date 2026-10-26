@@ -57,4 +57,34 @@ final class WorkgroupExitBuriedPeerTests: XCTestCase {
         XCTAssertEqual(peer.spy_terminateCount, 1)
         XCTAssertEqual(leader.spy_terminateCount, 0)
     }
+
+    // A peer in view with Find > Filter open is shown through a stand-in, so the tab holds the
+    // stand-in rather than the peer. It is still in the tab. QA finding F-800.
+    func testAFilteredPeerInViewIsInTheTab() {
+        let leader = SpyPTYSession(synthetic: false)!
+        let peer = SpyPTYSession(synthetic: false)!
+        peer.view = SessionView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        let root = PTYSplitView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        root.addSubview(peer.view!)
+        let map = NSMapTable<SessionView, PTYSession>.strongToStrongObjects()
+        map.setObject(peer, forKey: peer.view!)
+        let tab = BuriedPeerSoftCloseSpyTab(root: root, sessions: map)!
+        peer.delegate = tab
+        tab.setActiveSession(peer)
+        let standIn = PTYSession(synthetic: true)!
+        standIn.view = SessionView(frame: peer.view!.frame)
+        standIn.delegate = tab
+        tab.perform(NSSelectorFromString("replaceActiveSessionWithSyntheticSession:"), with: standIn)
+        XCTAssertTrue(standIn.live === peer)
+        XCTAssertFalse(tab.sessions().contains { $0 === peer }, "precondition: the tab holds the stand-in")
+
+        let port = PTYSessionPeerPort(peers: ["ROOT": iTermPromise(value: leader),
+                                              "P1": iTermPromise(value: peer)],
+                                      activeSessionIdentifier: "P1",
+                                      leaderIdentifier: "ROOT")
+        port.invalidate(keepingPeersInTabs: true)
+        drainMainQueue()
+        XCTAssertEqual(peer.spy_terminateCount, 0, "a peer in view is kept in its tab")
+        XCTAssertEqual(tab.softClosed.count, 0)
+    }
 }
