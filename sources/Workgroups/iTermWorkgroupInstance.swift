@@ -729,10 +729,7 @@ final class iTermWorkgroupInstance: NSObject {
         // deallocated synchronously) can't keep pointing at a
         // torn-down instance.
         let peerSessions = allPeerPorts.flatMap { $0.realizedPeerSessions }
-        // Detaching from tmux (or losing the connection) ends the instance here when it terminates
-        // the buried sessions, the leader's among them if a peer is in view. The tmux windows
-        // outlive the connection, so a peer in view stays in its window like any other pane.
-        let keepPeersInTabs = tmuxBinding.map { !$0.isConnected } ?? false
+        let keepPeersInTabs = Self.keepsPeersInTabsOnTeardown(hasTmuxBinding: tmuxBinding != nil)
         peerPort.invalidate(keepingPeersInTabs: keepPeersInTabs)
         for port in nestedPeerPorts {
             port.invalidate(keepingPeersInTabs: keepPeersInTabs)
@@ -786,6 +783,11 @@ final class iTermWorkgroupInstance: NSObject {
             // is later joined to a new port could trip it while a
             // lingering reference keeps the invalidated port alive.
             session.peerPort = nil
+            // A peer kept in its tab (keepsPeersInTabsOnTeardown) is an
+            // ordinary pane now, with no workgroup toolbar.
+            if keepPeersInTabs, let delegate = session.delegate {
+                delegate.sessionDidChangeDesiredToolbarItems(session)
+            }
         }
         // Put the leader's tab title back to its pre-workgroup state. The
         // spawned tabs are closed above, so only the surviving leader needs
@@ -819,6 +821,18 @@ final class iTermWorkgroupInstance: NSObject {
 
         mainSession?.workgroupInstance = nil
         mainSession?.peerPort = nil
+    }
+
+    /// Whether ending the instance leaves its peers that are in tabs where they are, rather than
+    /// closing them. On a tmux server, tmux is the source of truth for members, as for its
+    /// non-peer members (see teardown): ending the instance there swaps the leader back in through
+    /// tmux and kills the members' panes, and tabs follow tmux's layout. Closing the peers in view
+    /// here as well could empty the leader's tab before its pane came back to it, and closing a
+    /// tmux tab's last session hides its window (QA finding F-614). After a detach or a lost
+    /// connection, the tmux windows outlive the connection, so a peer in view stays in its window
+    /// like any other pane (QA finding F-652).
+    static func keepsPeersInTabsOnTeardown(hasTmuxBinding: Bool) -> Bool {
+        return hasTmuxBinding
     }
 
     // The main peer group shares a single tab pane among the leader

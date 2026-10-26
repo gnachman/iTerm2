@@ -430,8 +430,8 @@ class PTYSessionPeerPort: NSObject {
     }
 
     // End the non-leader members and release references. With `keepingPeersInTabs`, a member in a
-    // tab is left there and only the buried ones end: when a tmux connection is gone, its windows
-    // outlive it, and a peer in view stays in its place like any other pane of the window.
+    // tab is left there and only the buried ones end: for a workgroup on a tmux server, whose tabs
+    // follow tmux (see iTermWorkgroupInstance.keepsPeersInTabsOnTeardown).
     func invalidate(keepingPeersInTabs: Bool = false) {
         RLog("PTYSessionPeerPort.invalidate: port=\(debugDescription) peerIDs=\(peers.keys.sorted()) keepingPeersInTabs=\(keepingPeersInTabs)")
         invalidated = true
@@ -449,9 +449,8 @@ class PTYSessionPeerPort: NSObject {
 
     /// A buried peer is terminated. One in a tab is closed through the tab, which closes the
     /// tab (and its window) if it was the tab's only session. That happens when the teardown
-    /// could not swap the leader back in because the leader itself is what ended, as when
-    /// detaching from tmux while a peer is in view. Terminating it in place would leave its
-    /// tab, and maybe its window, with no session.
+    /// could not swap the leader back in because the leader itself is what ended. Terminating it
+    /// in place would leave its tab, and maybe its window, with no session.
     private static func end(peer session: PTYSession, identifier: String) {
         guard session.delegate != nil else {
             RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\(session.guid) exited=\(session.exited)")
