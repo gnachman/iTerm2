@@ -19,6 +19,7 @@ import contextlib
 import errno
 import fcntl
 import io
+import json
 import os
 import pty
 import shutil
@@ -29,6 +30,7 @@ import sys
 import termios
 import threading
 import unittest
+import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import framer_harness as H  # noqa: E402
@@ -1406,6 +1408,98 @@ class FileErrorCodeTests(H.FramerTestCase):
         self.assertEqual(self.file_status("stat"), self.GENERIC)
         self.assertEqual(self.file_status("bogus", "x"), self.GENERIC)
         self.assertEqual(self.file_status("rm", "-r"), self.GENERIC)
+
+
+class ZipSkippedReportTests(H.FramerTestCase):
+    """`file zip` with and without the report-skipped argument, which asks the framer to say
+    which files it could not read and left out of the archive."""
+
+    is_root = os.geteuid() == 0
+
+    def setUp(self):
+        super().setUp()
+        # zip writes its archive into the home folder. Use a scratch one.
+        self.home = os.path.join(self.tmp, "home")
+        os.mkdir(self.home)
+
+    def zip_reply(self, *args):
+        result = []
+
+        async def body():
+            with env(HOME=self.home):
+                result.append(await self.h.call(self.framer.handle_file, "zip", *args))
+        self.run_async(body)
+        reply = result[0]
+        self.assertIsNotNone(reply)
+        return reply
+
+    def make_folder_with_unreadable_files(self):
+        """Makes top with a readable file, two unreadable files, and an unreadable subfolder."""
+        top = os.path.join(self.tmp, "top")
+        os.mkdir(top)
+        with open(os.path.join(top, "ok.txt"), "wb") as f:
+            f.write(b"ok")
+        for name in ("secret1", "secret2"):
+            p = os.path.join(top, name)
+            with open(p, "wb") as f:
+                f.write(b"x")
+            os.chmod(p, 0)
+        locked = os.path.join(top, "locked")
+        os.mkdir(locked)
+        with open(os.path.join(locked, "inner"), "wb") as f:
+            f.write(b"x")
+        os.chmod(locked, 0)
+        return top
+
+    def archive_names(self, path):
+        with zipfile.ZipFile(path) as z:
+            return sorted(z.namelist())
+
+    def test_reply_is_a_bare_path_without_report_flag(self):
+        # An iTerm2 that predates skipped-file reporting reads the whole reply as the path.
+        if self.is_root:
+            self.skipTest("root ignores permissions")
+        top = self.make_folder_with_unreadable_files()
+        reply = self.zip_reply(H.b64(top))
+        self.assertEqual(reply.status, 0)
+        archive = "".join(reply.lines)
+        self.assertTrue(os.path.isfile(archive), archive)
+        self.assertEqual(self.archive_names(archive), ["top/ok.txt"])
+
+    def test_reports_skipped_files_when_asked(self):
+        if self.is_root:
+            self.skipTest("root ignores permissions")
+        top = self.make_folder_with_unreadable_files()
+        reply = self.zip_reply(H.b64(top), "report-skipped")
+        self.assertEqual(reply.status, 0)
+        obj = json.loads("".join(reply.lines))
+        archive = obj.get("path")
+        self.assertTrue(archive and os.path.isfile(archive), archive)
+        self.assertEqual(self.archive_names(archive), ["top/ok.txt"])
+        self.assertEqual(obj.get("skipped"), 3)
+        self.assertEqual(sorted(obj.get("examples", [])), ["locked/", "secret1", "secret2"])
+
+    def test_reports_nothing_skipped(self):
+        top = os.path.join(self.tmp, "top")
+        os.mkdir(top)
+        with open(os.path.join(top, "ok.txt"), "wb") as f:
+            f.write(b"ok")
+        reply = self.zip_reply(H.b64(top), "report-skipped")
+        self.assertEqual(reply.status, 0)
+        obj = json.loads("".join(reply.lines))
+        self.assertEqual(obj.get("skipped"), 0)
+        self.assertEqual(obj.get("examples"), [])
+
+    def test_unreadable_folder_is_permission_denied(self):
+        if self.is_root:
+            self.skipTest("root ignores permissions")
+        top = os.path.join(self.tmp, "top")
+        os.mkdir(top)
+        os.chmod(top, 0)
+        home_before = set(os.listdir(self.home))
+        reply = self.zip_reply(H.b64(top), "report-skipped")
+        self.assertEqual(reply.status, 1)
+        self.assertEqual(set(os.listdir(self.home)) - home_before, set())
 
 
 if __name__ == "__main__":

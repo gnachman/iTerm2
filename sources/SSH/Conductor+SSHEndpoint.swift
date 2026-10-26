@@ -118,13 +118,18 @@ extension Conductor: SSHEndpoint {
     }
 
     @MainActor
-    func zip(_ path: String) async throws -> String {
+    func zip(_ path: String) async throws -> SSHRemoteZipReply {
         return try await logging("zip \(path)") {
             guard let pathData = path.data(using: .utf8) else {
                 throw iTermFileProviderServiceError.notFound(path)
             }
             log("perform file operation to zip \(path)")
-            return try await performFileOperation(subcommand: .zip(path: pathData))
+            let output = try await performFileOperation(subcommand: .zip(path: pathData))
+            let reply = SSHRemoteZipReply(framerOutput: output)
+            if reply.skippedCount > 0 {
+                RLog("Zip of \(path) left out \(reply.skippedCount) unreadable items")
+            }
+            return reply
         }
     }
 

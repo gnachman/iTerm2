@@ -1739,9 +1739,12 @@ async def handle_file(identifier, args):
                                   args[2])
         return
     if sub == "zip":
+        # iTerm2 passes "report-skipped" when it can read a JSON reply that lists the files
+        # left out of the archive. Without it the reply is just the archive's path.
         await handle_file_zip(q,
                               identifier,
-                              make_path(args[1]))
+                              make_path(args[1]),
+                              len(args) > 2 and args[2] == "report-skipped")
         return
     if sub == "search":
         await handle_file_search(q,
@@ -1931,8 +1934,12 @@ async def contents_of_directory(directory, prefix, executable, max_count):
         log(f'exception while getting contents of {directory}: {traceback.format_exc()}')
         return []
 
-async def handle_file_zip(q, identifier, path):
-    log(f'handle_file_zip {identifier} {path}')
+def _displayable_name(name):
+    # os.walk gives undecodable bytes as surrogates, which JSON can't carry.
+    return name.encode('utf-8', 'surrogateescape').decode('utf-8', 'replace')
+
+async def handle_file_zip(q, identifier, path, report_skipped=False):
+    log(f'handle_file_zip {identifier} {path} report_skipped={report_skipped}')
 
     if not os.path.isdir(path):
         log(f'{path} is not a directory')
@@ -1949,28 +1956,73 @@ async def handle_file_zip(q, identifier, path):
         file_error(q, identifier, e, "While creating a temporary file under your home directory")
         return
 
+    # Zip as much as possible. Files and folders that can't be read are left out and, when
+    # iTerm2 asks, reported so the user knows the archive is incomplete.
+    max_examples = 3
+    skipped_count = 0
+    skipped_examples = []
+    root_error = None
+
+    def skip(full_path, is_dir, e):
+        nonlocal skipped_count
+        log(f'Failed to add {full_path}: {e}')
+        skipped_count += 1
+        if full_path is not None and len(skipped_examples) < max_examples:
+            name = _displayable_name(os.path.relpath(full_path, path))
+            skipped_examples.append(name + '/' if is_dir else name)
+
+    def walk_error(e):
+        nonlocal root_error
+        if os.path.normpath(e.filename or '') == os.path.normpath(path):
+            root_error = e
+        else:
+            skip(e.filename, True, e)
+
+    error = None
     try:
-        for root, dirs, files in os.walk(path):
+        for root, dirs, files in os.walk(path, onerror=walk_error):
             for file in files:
+                full_path = os.path.join(root, file)
                 try:
-                    full_path = os.path.join(root, file)
-                    log('add {full_path}')
+                    log(f'add {full_path}')
                     ziph.write(full_path,
-                               os.path.relpath(os.path.join(root, file),
+                               os.path.relpath(full_path,
                                                os.path.join(path, '..')))
                 except Exception as e:
-                    log(f'Failed to add {file}: {e}')
-                    # zip as much as possible. Errors are just ignored, which isn't great.
-                    pass
+                    skip(full_path, False, e)
         log('Done zipping')
     except Exception as e:
-        file_error(q, identifier, e, temp_file)
+        error = e
     finally:
         log('close zip')
-        ziph.close()
-        log('send tempfile name')
+        # Closing writes the archive's directory, which can fail (e.g., a full disk). Report
+        # that instead of letting it escape without ending the command.
+        for closer in (ziph.close, temp_file.close):
+            try:
+                closer()
+            except Exception as e:
+                if error is None:
+                    error = e
+
+    if root_error is not None and error is None:
+        # Nothing in the folder could be listed, so there is nothing to download.
+        error = root_error
+    if error is not None:
+        try:
+            os.unlink(temp_file.name)
+        except OSError:
+            pass
+        file_error(q, identifier, error, path)
+        return
+
+    log('send tempfile name')
+    if report_skipped:
+        send_esc(q, json.dumps({"path": temp_file.name,
+                                "skipped": skipped_count,
+                                "examples": skipped_examples}))
+    else:
         send_esc(q, temp_file.name)
-        end(q, identifier, 0)
+    end(q, identifier, 0)
 
 class Search:
     def __init__(self, query: str, basedir: str):

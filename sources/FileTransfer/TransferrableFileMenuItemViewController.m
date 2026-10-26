@@ -135,7 +135,13 @@ static const CGFloat kCollapsedHeight = 51;
 
         case kTransferrableFileStatusFinishedSuccessfully:
             [self collapse];
-            view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Finished", nil, [NSBundle mainBundle], @"Finished", @"Status text for a transfer that finished successfully");
+            if (_transferrableFile.completionNote.length > 0) {
+                // Such as a folder download that left out files it couldn't read (F-721).
+                // Get Info shows the note itself.
+                view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.FinishedIncomplete", nil, [NSBundle mainBundle], @"Finished, with some items left out", @"Status text for a folder download that finished but left out files or folders it could not read");
+            } else {
+                view.statusMessage = NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Finished", nil, [NSBundle mainBundle], @"Finished", @"Status text for a transfer that finished successfully");
+            }
             break;
 
         case kTransferrableFileStatusFinishedWithError:
@@ -199,6 +205,9 @@ static const CGFloat kCollapsedHeight = 51;
         case kTransferrableFileStatusTransferring:
             return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.StatusTransferring", nil, [NSBundle mainBundle], @"Transferring", @"Status text for a transfer that is in progress");
         case kTransferrableFileStatusFinishedSuccessfully:
+            if (_transferrableFile.completionNote.length > 0) {
+                return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.FinishedWithNote", nil, [NSBundle mainBundle], @"Finished. %@", @"Status text for a transfer that finished but has something to report, such as files left out of a folder download; %@ is a complete sentence describing it"), _transferrableFile.completionNote];
+            }
             return NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.Finished", nil, [NSBundle mainBundle], @"Finished", @"Status text for a transfer that finished successfully");
         case kTransferrableFileStatusFinishedWithError:
             return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenu.FailedWithError", nil, [NSBundle mainBundle], @"Failed with error “%@”", @"Status text for a failed transfer; %@ is the error message"), [_transferrableFile error]];

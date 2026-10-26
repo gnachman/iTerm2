@@ -839,6 +839,10 @@ Bug Fixes:
   longer reports it as failed. An SSH
   Integration transfer that fails because of
   file or folder permissions now says so.
+- Downloading a folder over SSH Integration now
+  tells you when files in it couldn’t be read
+  and were left out, instead of reporting
+  success with no mention of the missing files.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.

@@ -166346,6 +166346,245 @@
         }
       }
     },
+    "SSHRemoteZip.ItemsSkipped" : {
+      "comment" : "Shown when an SSH Integration folder download finished but some files or folders in it could not be read on the remote host and are missing from the download; the argument is how many",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Objekt konnte nicht gelesen werden und wurde ausgelassen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Objekte konnten nicht gelesen werden und wurden ausgelassen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld item couldn’t be read and was left out."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld items couldn’t be read and were left out."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld個の項目を読み取れなかったため、除外しました。"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld item não pôde ser lido e ficou de fora."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld itens não puderam ser lidos e ficaram de fora."
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Пропущено элементов, которые не удалось прочитать: %lld."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Пропущено элементов, которые не удалось прочитать: %lld."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Пропущено элементов, которые не удалось прочитать: %lld."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Пропущено элементов, которые не удалось прочитать: %lld."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "有 %lld 个项目无法读取，已被略过。"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SSHRemoteZip.OneItemSkipped" : {
+      "comment" : "Shown when an SSH Integration folder download finished but one file or folder in it could not be read on the remote host and is missing from the download; the argument is its path relative to the downloaded folder",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ konnte nicht gelesen werden und wurde ausgelassen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%@” couldn’t be read and was left out."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」を読み取れなかったため、除外しました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler “%@”, por isso ficou de fora."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать «%@»; элемент пропущен."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取“%@”，已被略过。"
+          }
+        }
+      }
+    },
+    "SSHRemoteZip.SkippedExample" : {
+      "comment" : "Follows the sentence saying how many files or folders were left out of an SSH Integration folder download because they could not be read; the argument is the path of one of them relative to the downloaded folder",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eines davon ist „%@“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "One of them is “%@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのうちの1つは「%@」です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um deles é “%@”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Среди них: «%@»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其中之一是“%@”。"
+          }
+        }
+      }
+    },
+    "SSHRemoteZip.TwoItemsSkipped" : {
+      "comment" : "Shown when an SSH Integration folder download finished but two files or folders in it could not be read on the remote host and are missing from the download; the arguments are their paths relative to the downloaded folder",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%1$@“ und „%2$@“ konnten nicht gelesen werden und wurden ausgelassen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "“%1$@” and “%2$@” couldn’t be read and were left out."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」と「%2$@」を読み取れなかったため、除外しました。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler “%1$@” e “%2$@”, por isso ficaram de fora."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать «%1$@» и «%2$@»; элементы пропущены."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取“%1$@”和“%2$@”，已被略过。"
+          }
+        }
+      }
+    },
     "SavePanel.Append" : {
       "comment" : "Button that appends to an existing file",
       "extractionState" : "extracted_with_value",
@@ -204820,6 +205059,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已完成"
+          }
+        }
+      }
+    },
+    "TransferrableFileMenu.FinishedIncomplete" : {
+      "comment" : "Status text for a folder download that finished but left out files or folders it could not read",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgeschlossen, einige Objekte ausgelassen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Finished, with some items left out"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完了（一部の項目を除外）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluído, com alguns itens deixados de fora"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завершено, некоторые элементы пропущены"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已完成，部分项目已略过"
+          }
+        }
+      }
+    },
+    "TransferrableFileMenu.FinishedWithNote" : {
+      "comment" : "Status text for a transfer that finished but has something to report, such as files left out of a folder download; %@ is a complete sentence describing it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgeschlossen. %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Finished. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完了。%@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluído. %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завершено. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已完成。%@"
           }
         }
       }
