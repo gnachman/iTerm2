@@ -275,6 +275,19 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         XCTAssertEqual(status, .notInstalled)
     }
 
+    // A connection back to this Mac would otherwise report this Mac's own settings as the remote
+    // install, and the installer would pre-mark the remote step from them (QA finding F-816).
+    func testStatusOfThisMacIsNotInstalledAndOfAnUnknownHostIsUnknown() async throws {
+        let files = try makeFiles()
+        _ = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
+        files.token = try XCTUnwrap(iTermMachineIdentity.localVersion1TokenForTesting())
+        let thisMac = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(thisMac, .notInstalled)
+        files.token = nil
+        let unknown = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(unknown, .unknown)
+    }
+
     // Could not read it, or not JSON: nothing can be said either way.
     func testUnreadableIsUnknown() async throws {
         let files = try makeFiles()

@@ -296,6 +296,17 @@ enum ClaudeCodeRemoteHooks {
                        settingsPath: String,
                        home: String,
                        descriptor: AgentHookDescriptor = .claudeCode) async -> HookStatus {
+        // As in install: this Mac's settings are the local install's, so a connection back to
+        // this Mac has no remote hook of its own, and one that can't be told apart from this Mac
+        // can't be judged.
+        switch await hostIdentity(files: files) {
+        case .thisMac:
+            return .notInstalled
+        case .unknown:
+            return .unknown
+        case .elsewhere:
+            break
+        }
         let settings: [String: Any]
         switch await files.read(settingsPath) {
         case .missing:
