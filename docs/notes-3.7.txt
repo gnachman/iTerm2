@@ -683,7 +683,10 @@ Bug Fixes:
 - An SSH Integration download that can’t be
   saved into your Downloads folder when it
   finishes now reports that it failed, instead
-  of saying the download finished.
+  of saying the download finished. One that
+  can’t be marked as downloaded from the
+  internet is deleted and reported as failed,
+  instead of staying listed as downloading.
 - When an SSH Integration session ends, stray
   text such as YXV0b3BvbGw= no longer appears in
   the terminal.

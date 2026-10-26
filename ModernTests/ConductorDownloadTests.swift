@@ -403,4 +403,39 @@ final class ConductorDownloadTests: XCTestCase {
         XCTAssertEqual(notificationTitles.count, 1)
         XCTAssertEqual(try contentsOfDirectory(), [])
     }
+
+    // T-186: a file that couldn't be quarantined is deleted, as SCP and inline-image downloads
+    // do, and the transfer ends as failed instead of staying in the downloading state with
+    // Stop still available.
+    func testFailedQuarantineFailsAndLeavesNoFile() async throws {
+        let transfer = await download(
+            "/home/user/big.bin",
+            operations: operations(files: ["/home/user/big.bin": bytes(10_000)]),
+            makeTransfer: localFailureTransfer { $0.quarantineHandler = { _ in false } })
+        XCTAssertEqual(transfer.status, .finishedWithError)
+        XCTAssertTrue(transfer.isStopped)
+        XCTAssertFalse(transfer.error()?.isEmpty ?? true)
+        XCTAssertEqual(downloadFinishedNotifications, [])
+        XCTAssertEqual(notificationTitles.count, 1)
+        XCTAssertEqual(try contentsOfDirectory(), [])
+    }
+
+    // T-186: the finished file's attributes can't be read (here, because it vanished).
+    func testFailedAttributesFailsAndLeavesNoFile() async throws {
+        let transfer = await download(
+            "/home/user/big.bin",
+            operations: operations(files: ["/home/user/big.bin": bytes(10_000)]),
+            makeTransfer: localFailureTransfer { transfer in
+                transfer.quarantineHandler = { path in
+                    try? FileManager.default.removeItem(atPath: path!)
+                    return true
+                }
+            })
+        XCTAssertEqual(transfer.status, .finishedWithError)
+        XCTAssertTrue(transfer.isStopped)
+        XCTAssertFalse(transfer.error()?.isEmpty ?? true)
+        XCTAssertEqual(downloadFinishedNotifications, [])
+        XCTAssertEqual(notificationTitles.count, 1)
+        XCTAssertEqual(try contentsOfDirectory(), [])
+    }
 }
