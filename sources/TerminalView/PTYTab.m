@@ -996,7 +996,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (void)makeActive {
     PTYSession *activeSession = [self activeSession];
-    [[self.realParentWindow tabView] selectTabViewItemWithIdentifier:self];
+    NSTabView *tabView = [self.realParentWindow tabView];
+    if (tabView && [tabView indexOfTabViewItemWithIdentifier:self] == NSNotFound) {
+        // E.g., tmux said its window became current just after the tab was closed here.
+        // Selecting it would raise.
+        RLog(@"Not making %@ active: its window's tab view no longer has it", self);
+        return;
+    }
+    [tabView selectTabViewItemWithIdentifier:self];
     if ([self activeSession] != activeSession && [self.sessions containsObject:activeSession]) {
         [self setActiveSession:activeSession];
     }
