@@ -139,6 +139,17 @@ final class SSHMayHaveEndedKeysTests: XCTestCase {
         XCTAssertEqual(Self.sentKeys(session.writes.joined()), [], "\(session.writes)")
     }
 
+    // Abandoned without the button, as when iTerm2 finds the it2ssh dead: the held keys still
+    // go to the shell that took over.
+    func testAbandoningGivesHeldKeysToTheShellThatTookOver() {
+        let (root, _) = makeSuspectNestedConnection()
+        session.writeTask("ls\r")
+        session.abandonSSH(throughClientUniqueID: nestedID)
+        XCTAssertTrue(session.conductor === root)
+        drain(root)
+        XCTAssertEqual(Self.sentKeys(session.writes.joined()), ["ls\r"], "\(session.writes)")
+    }
+
     func testHeldKeysGoToTheShellThatTakesOverWhenTheConnectionEnds() {
         let (root, _) = makeSuspectNestedConnection()
         session.writeTask("ls\r")

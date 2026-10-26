@@ -21027,6 +21027,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         DLog(@"Conductor %@ already ended", uniqueID);
         return;
     }
+    // Keys held while the connection was suspect go to the shell that takes over (F-820).
+    // Taken now, since unhooking dismisses the announcement.
+    NSData *heldKeys = [self takeKeysHeldWhileSSHMayHaveEnded];
+    [self reallyAbandonSSHThrough:target uniqueID:uniqueID];
+    [self sendKeysToShellThatTookOver:heldKeys];
+}
+
+- (void)reallyAbandonSSHThrough:(iTermConductor *)target uniqueID:(NSString *)uniqueID {
     NSString *identity = target.sshIdentity.description;
     NSString *dcsID = [[target.dcsID copy] autorelease];
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -21179,10 +21187,8 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
                                                     completion:^(int selection) {
             // Called with the selection, and again with -2 as it is dismissed.
             if (selection == 0) {
-                // Taken first: abandoning dismisses this announcement.
-                NSData *held = [weakSelf takeKeysHeldWhileSSHMayHaveEnded];
+                // Abandoning gives held keys to the shell that takes over.
                 [weakSelf abandonSSHThroughClientUniqueID:uniqueIDCopy];
-                [weakSelf sendKeysToShellThatTookOver:held];
             } else {
                 [weakSelf releaseKeysHeldWhileSSHMayHaveEndedForClientUniqueID:uniqueIDCopy];
             }
@@ -21208,11 +21214,7 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
         return;
     }
     RLog(@"Send %@ bytes typed while an ssh connection may have ended to the shell that took over", @(keys.length));
-    if (_conductor.handlesKeystrokes) {
-        [_conductor sendKeys:keys];
-    } else {
-        [self writeData:keys];
-    }
+    [self writeKeysForShellThatTookOver:keys];
 }
 
 // The “ended unexpectedly” announcement went away without Disconnect. Keys typed meanwhile
@@ -21227,7 +21229,8 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     RLog(@"Release %@ bytes typed while an ssh connection may have ended. connectionLives=%@",
          @(keys.length), @(conductor != nil));
     if (conductor) {
-        [conductor sendKeys:keys];
+        // As if typed now: to the innermost connection, which may be nested in this one.
+        [self writeKeysForShellThatTookOver:keys];
     } else {
         // It ended normally; its it2ssh's EndSSH releases the shell that takes over.
         if (!_keysTypedAfterSSHEnded) {
