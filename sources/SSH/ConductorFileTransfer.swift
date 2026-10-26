@@ -230,10 +230,15 @@ class ConductorFileTransfer: TransferrableFile {
                                                      to: URL(fileURLWithPath: finalDestination))
                 }
             } catch {
-                _error = error.localizedDescription
+                // Don't say it was saved when it wasn't (T-180). fail(reason:) also removes the
+                // hidden file so it isn't left behind.
+                DLog("Failed to move \(_localPath!) to \(finalDestination): \(error)")
+                fail(reason: String(localized: "ConductorFileTransfer.CouldNotMoveIntoPlace",
+                                    defaultValue: "The download finished but couldn’t be saved as “\(finalDestination)”: \(error.localizedDescription)",
+                                    comment: "Error shown when a finished SSH Integration download cannot be moved to its final location. The first argument is the destination path and the second is the system’s description of the error."))
+                return
             }
-            // If it couldn't be moved into place, don't leave it behind.
-            removeTemporaryDownload()
+            temporaryDownloadPath = nil
             _localPath = finalDestination
             state = .downloadComplete
             FileTransferManager.sharedInstance().transferrableFile(

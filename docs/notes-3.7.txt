@@ -680,6 +680,10 @@ Bug Fixes:
 - An SSH Integration download that fails or is
   stopped no longer leaves an empty or partial
   hidden file in your Downloads folder.
+- An SSH Integration download that can’t be
+  saved into your Downloads folder when it
+  finishes now reports that it failed, instead
+  of saying the download finished.
 - When an SSH Integration session ends, stray
   text such as YXV0b3BvbGw= no longer appears in
   the terminal.
