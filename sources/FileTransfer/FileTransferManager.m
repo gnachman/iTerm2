@@ -366,6 +366,14 @@ static BOOL gFileTransferManagerOpensMenus = YES;
 // |error| is nil on success
 - (void)transferrableFile:(TransferrableFile *)transferrableFile
     didFinishTransmissionWithError:(NSError *)error {
+    if (error && (transferrableFile.status == kTransferrableFileStatusCancelling ||
+                  transferrableFile.status == kTransferrableFileStatusCancelled)) {
+        // It was stopped (usually by the user), so the error is how stopping ended it, not a
+        // failure.
+        RLog(@"Transfer stopped by the user ended with error %@", error);
+        [self transferrableFileDidStopTransfer:transferrableFile];
+        return;
+    }
     if (error) {
         [transferrableFile didFailWithError:error.localizedDescription ?: NSLocalizedStringWithDefaultValue(@"FileTransfer.UnknownError", nil, [NSBundle mainBundle], @"File transfer failed with an unknown error", @"Error shown when a file transfer fails without a specific reason")];
     } else {

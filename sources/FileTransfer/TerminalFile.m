@@ -129,11 +129,11 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 }
 
 - (NSString *)displayName {
-    return self.localPath ? [self.localPath lastPathComponent] : NSLocalizedStringWithDefaultValue(@"TerminalFile.UnnamedFile", nil, [NSBundle mainBundle], @"Unnamed file", @"Placeholder name for a downloaded file that has no local path");
+    return self.localPath ? [self.localPath lastPathComponent] : self.filename ?: NSLocalizedStringWithDefaultValue(@"TerminalFile.UnnamedFile", nil, [NSBundle mainBundle], @"Unnamed file", @"Placeholder name for a downloaded file that has no local path");
 }
 
 - (NSString *)shortName {
-    return self.localPath ? [self.localPath lastPathComponent] : NSLocalizedStringWithDefaultValue(@"TerminalFile.UnnamedFile", nil, [NSBundle mainBundle], @"Unnamed file", @"Placeholder name for a downloaded file that has no local path");
+    return self.localPath ? [self.localPath lastPathComponent] : self.filename ?: NSLocalizedStringWithDefaultValue(@"TerminalFile.UnnamedFile", nil, [NSBundle mainBundle], @"Unnamed file", @"Placeholder name for a downloaded file that has no local path");
 }
 
 - (NSString *)subheading {
@@ -148,11 +148,8 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
         // The user canceled the save panel (or no destination could be chosen). Report the
         // cancellation and leave self.data nil so appendData: no-ops on any further chunks and
         // handleEndOfData treats the transfer as canceled instead of trying to write to nil.
-        NSError *error;
-        error = [self errorWithDescription:NSLocalizedStringWithDefaultValue(@"TerminalFile.Canceled", nil, [NSBundle mainBundle], @"Canceled.", @"Error shown when the user cancels a download")];
-        self.error = [error localizedDescription];
-        [[FileTransferManager sharedInstance] transferrableFile:self
-                                 didFinishTransmissionWithError:error];
+        // A cancellation is not a failure, so it posts no failure notification.
+        [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         return;
     }
     self.data = [NSMutableString string];

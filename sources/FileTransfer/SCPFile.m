@@ -835,9 +835,8 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     if (!self.hasPredecessor) {
         if (![self hostnameIsKnown]) {
             if (![self shouldConnectToNewHostname]) {
-                self.error = NSLocalizedStringWithDefaultValue(@"SCPFile.CanceledByUser", nil, [NSBundle mainBundle], @"Canceled by user", @"Error shown when the user cancels an SCP transfer");
-                [[FileTransferManager sharedInstance] transferrableFile:self
-                                         didFinishTransmissionWithError:SCPFileError(NSLocalizedStringWithDefaultValue(@"SCPFile.CanceledByUser", nil, [NSBundle mainBundle], @"Canceled by user", @"Error shown when the user cancels an SCP transfer"))];
+                // Declining to connect cancels the transfer. It is not a failure.
+                [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
                 return;
             }
             [self addKnownHost];
@@ -905,9 +904,8 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     if (!self.hasPredecessor) {
         if (![self hostnameIsKnown]) {
             if (![self shouldConnectToNewHostname]) {
-                self.error = NSLocalizedStringWithDefaultValue(@"SCPFile.CanceledByUser", nil, [NSBundle mainBundle], @"Canceled by user", @"Error shown when the user cancels an SCP transfer");
-                [[FileTransferManager sharedInstance] transferrableFile:self
-                                         didFinishTransmissionWithError:SCPFileError(NSLocalizedStringWithDefaultValue(@"SCPFile.CanceledByUser", nil, [NSBundle mainBundle], @"Canceled by user", @"Error shown when the user cancels an SCP transfer"))];
+                // Declining to connect cancels the transfer. It is not a failure.
+                [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
                 return;
             }
             [self addKnownHost];

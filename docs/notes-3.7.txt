@@ -665,7 +665,8 @@ Bug Fixes:
 - The notification for a failed download or
   upload now names the file and gives the
   reason, instead of showing only an error such
-  as “File not found”.
+  as “File not found”. Canceling a transfer no
+  longer reports it as failed.
 - When an SSH Integration session ends, stray
   text such as YXV0b3BvbGw= no longer appears in
   the terminal.
