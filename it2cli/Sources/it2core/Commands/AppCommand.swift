@@ -224,49 +224,33 @@ extension App {
             let client = try ctx.makeClient()
             defer { client.disconnect() }
 
-            let focusReq = ITMClientOriginatedMessage()
-            focusReq.id_p = client.nextId()
-            focusReq.focusRequest = ITMFocusRequest()
-
-            let response = try client.send(focusReq)
-            guard response.submessageOneOfCase == .focusResponse,
-                  let focus = response.focusResponse,
-                  let notifications = focus.notificationsArray as? [ITMFocusChangedNotification] else {
-                throw IT2Error.apiError("No focus response")
+            // Report the current window, its selected tab, and that tab's
+            // active session (matching Python output). The focus response lists
+            // every window's selected tab and every tab's active session, so
+            // resolve them against the current window's tabs.
+            let focus = try fetchFocusState(client: client)
+            let windows = try fetchWindows(client: client)
+            let windowId = focus.currentWindowId
+            var tabId: String?
+            var currentSessionId: String?
+            if let windowId,
+               let window = windows.first(where: { $0.windowId == windowId }) {
+                let (tab, sessionId) = focusedTabAndSession(in: window, focus: focus)
+                tabId = tab?.tabId
+                currentSessionId = sessionId
             }
 
-            // Find key window, its selected tab, and active session (matching Python output).
-            var keyWindowId: String?
-            var selectedTabs: [String] = []
-            var sessions: [String] = []
-
-            for notification in notifications {
-                switch notification.eventOneOfCase {
-                case .window:
-                    if let w = notification.window,
-                       w.windowStatus == .terminalWindowBecameKey {
-                        keyWindowId = w.windowId
-                    }
-                case .selectedTab:
-                    selectedTabs.append(notification.selectedTab ?? "")
-                case .session:
-                    sessions.append(notification.session ?? "")
-                default:
-                    break
-                }
-            }
-
-            if let windowId = keyWindowId {
+            if let windowId {
                 ctx.out("Current window: \(windowId)")
             } else {
                 ctx.out("No current window")
             }
-            if let tabId = selectedTabs.last {
+            if let tabId {
                 ctx.out("Current tab: \(tabId)")
             } else {
                 ctx.out("No current tab")
             }
-            if let sessionId = sessions.last {
+            if let sessionId = currentSessionId {
                 ctx.out("Current session: \(sessionId)")
 
                 // Fetch session name.

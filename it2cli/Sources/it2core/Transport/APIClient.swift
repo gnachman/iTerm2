@@ -65,18 +65,13 @@ final class APIClient {
 
         let windows = try fetchWindows(client: self)
 
-        // The last selectedTabId in focus state corresponds to the key window.
-        let selectedTabId = focus.selectedTabIds.last
-
         for win in windows {
             if win.windowId == keyWindowId,
                let tabs = win.tabsArray as? [ITMListSessionsResponse_Tab] {
-                for tab in tabs {
-                    if tab.tabId == selectedTabId {
-                        if let active = tab.activeSessionId, !active.isEmpty { return active }
-                        let ids = collectSessionIds(in: tab)
-                        if let first = ids.first { return first }
-                    }
+                let (selectedTab, activeSessionId) = focusedTabAndSession(in: win, focus: focus)
+                if let activeSessionId { return activeSessionId }
+                if let selectedTab, let first = collectSessionIds(in: selectedTab).first {
+                    return first
                 }
                 if let firstTab = tabs.first {
                     if let active = firstTab.activeSessionId, !active.isEmpty { return active }

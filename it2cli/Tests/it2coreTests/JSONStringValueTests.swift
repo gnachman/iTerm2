@@ -47,23 +47,39 @@ final class JSONStringValueTests: XCTestCase {
     }
 
     func testGetFocusDecodesSessionName() throws {
-        let sessionNote = ITMFocusChangedNotification()
-        sessionNote.session = "sess-1"
+        let windowNote = ITMFocusChangedNotification()
+        let focusWindow = ITMFocusChangedNotification_Window()
+        focusWindow.windowId = "win-1"
+        focusWindow.windowStatus = .terminalWindowBecameKey
+        windowNote.window = focusWindow
         let focusResp = ITMFocusResponse()
-        focusResp.notificationsArray.add(sessionNote)
+        focusResp.notificationsArray.add(windowNote)
         let focusReply = ITMServerOriginatedMessage()
         focusReply.id_p = 1
         focusReply.focusResponse = focusResp
+
+        let tab = ITMListSessionsResponse_Tab()
+        tab.tabId = "tab-1"
+        tab.activeSessionId = "sess-1"
+        let window = ITMListSessionsResponse_Window()
+        window.windowId = "win-1"
+        window.selectedTabId = "tab-1"
+        window.tabsArray.add(tab)
+        let listResp = ITMListSessionsResponse()
+        listResp.windowsArray.add(window)
+        let listReply = ITMServerOriginatedMessage()
+        listReply.id_p = 2
+        listReply.listSessionsResponse = listResp
 
         let vr = ITMVariableResponse()
         vr.status = .ok
         vr.valuesArray.add(#""say \"hi\" \\ x\/y""#)
         let varReply = ITMServerOriginatedMessage()
-        varReply.id_p = 2
+        varReply.id_p = 3
         varReply.variableResponse = vr
 
         let channel = FakeChannel()
-        channel.responses = [focusReply, varReply]
+        channel.responses = [focusReply, listReply, varReply]
         let capture = OutputCapture()
         var command = try App.GetFocus.parse([])
         try command.run(capture.context(channel: channel))

@@ -207,7 +207,11 @@ func decodeJSONString(_ json: String) -> String? {
 
 /// Parsed focus state from a FocusResponse.
 struct FocusState {
+    /// The terminal window that is key, if any.
     var keyWindowId: String?
+    /// The current terminal window: the key one, or the one that would be key
+    /// if a non-terminal window were not.
+    var currentWindowId: String?
     var selectedTabIds: [String] = []
     var sessionIds: [String] = []
 }
@@ -229,9 +233,16 @@ func fetchFocusState(client: APIClient) throws -> FocusState {
     for notification in notifications {
         switch notification.eventOneOfCase {
         case .window:
-            if let w = notification.window,
-               w.windowStatus == .terminalWindowBecameKey {
-                state.keyWindowId = w.windowId
+            if let w = notification.window {
+                switch w.windowStatus {
+                case .terminalWindowBecameKey:
+                    state.keyWindowId = w.windowId
+                    state.currentWindowId = w.windowId
+                case .terminalWindowIsCurrent:
+                    state.currentWindowId = w.windowId
+                default:
+                    break
+                }
             }
         case .selectedTab:
             state.selectedTabIds.append(notification.selectedTab ?? "")
@@ -242,6 +253,33 @@ func fetchFocusState(client: APIClient) throws -> FocusState {
         }
     }
     return state
+}
+
+/// The selected tab of `window` and that tab's active session.
+///
+/// The focus response lists the selected tab of every window and the active
+/// session of every tab, so neither list's order identifies the current one.
+/// Prefer the fields ListSessionsResponse carries (protocol 1.18 and later),
+/// and for older servers pick the focus entries that belong to this window.
+func focusedTabAndSession(in window: ITMListSessionsResponse_Window,
+                          focus: FocusState) -> (tab: ITMListSessionsResponse_Tab?, sessionId: String?) {
+    let tabs = window.tabsArray as? [ITMListSessionsResponse_Tab] ?? []
+    var selected: ITMListSessionsResponse_Tab?
+    if let selectedTabId = window.selectedTabId, !selectedTabId.isEmpty {
+        selected = tabs.first { $0.tabId == selectedTabId }
+    }
+    if selected == nil {
+        let selectedTabIds = Set(focus.selectedTabIds)
+        selected = tabs.first { selectedTabIds.contains($0.tabId ?? "") }
+    }
+    guard let tab = selected else {
+        return (nil, nil)
+    }
+    if let active = tab.activeSessionId, !active.isEmpty {
+        return (tab, active)
+    }
+    let tabSessionIds = Set(collectSessionIds(in: tab))
+    return (tab, focus.sessionIds.first { tabSessionIds.contains($0) })
 }
 
 // MARK: - List Sessions

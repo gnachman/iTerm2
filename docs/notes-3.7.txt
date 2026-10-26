@@ -1978,3 +1978,9 @@ Bug Fixes:
   command.
 - The browser’s View Source now highlights
   attribute values.
+- “it2 app get-focus” now reports the active
+  session of the selected tab. Before, with more
+  than one tab open it reported the last tab’s
+  session. Other it2 commands that act on the
+  current session no longer pick a session in
+  the first tab when several windows are open.
