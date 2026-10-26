@@ -105,6 +105,28 @@ final class ConductorChunkedDownloadTests: XCTestCase {
         XCTAssertEqual(notifications.map(\.title), ["Download finished for “big.bin”."])
     }
 
+    // F-721: a folder download that left out files it couldn't read finishes, but says so.
+    func testFinishedDownloadNotificationIncludesCompletionNote() throws {
+        let transfer = startTransfer()
+        transfer.completionNote = "“secret” couldn’t be read and was left out."
+        let destination = directory.appendingPathComponent("big.bin")
+        try Data("hello".utf8).write(to: destination)
+        transfer.didFinishChunkedDownload(to: destination)
+        XCTAssertEqual(transfer.status, TransferrableFileStatus.finishedSuccessfully)
+        XCTAssertEqual(notifications.count, 1)
+        XCTAssertEqual(notifications.first?.title, "Download finished for “big.bin”.")
+        XCTAssertEqual(notifications.first?.detail, "“secret” couldn’t be read and was left out.")
+    }
+
+    func testFinishedDownloadNotificationHasNoDetailWithoutNote() throws {
+        let transfer = startTransfer()
+        let destination = directory.appendingPathComponent("big.bin")
+        try Data("hello".utf8).write(to: destination)
+        transfer.didFinishChunkedDownload(to: destination)
+        XCTAssertEqual(notifications.count, 1)
+        XCTAssertNil(notifications.first?.detail)
+    }
+
     // Stopping a download is not a failure, so it posts no notification.
     func testStoppedChunkedDownloadPostsNoNotification() {
         let transfer = startTransfer()

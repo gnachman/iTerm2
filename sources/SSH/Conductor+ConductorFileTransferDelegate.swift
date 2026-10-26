@@ -137,6 +137,21 @@ extension Conductor: ConductorFileTransferDelegate {
                          progress: Progress?,
                          cancellation: Cancellation?,
                          destination: URL) async throws -> DownloadType {
+        return try await downloadChunked(remoteFile: remoteFile,
+                                         progress: progress,
+                                         cancellation: cancellation,
+                                         destination: destination,
+                                         completionNote: nil)
+    }
+
+    // `completionNote` is shown with the finished notification, such as what a folder's
+    // archive left out (F-721).
+    @MainActor
+    private func downloadChunked(remoteFile: RemoteFile,
+                                 progress: Progress?,
+                                 cancellation: Cancellation?,
+                                 destination: URL,
+                                 completionNote: String?) async throws -> DownloadType {
         RLog("Download of \(remoteFile.absolutePath) requested")
         await Conductor.downloadSemaphore.wait()
         RLog("Download of \(remoteFile.absolutePath) beginning")
@@ -147,7 +162,8 @@ extension Conductor: ConductorFileTransferDelegate {
             }
         }
         if remoteFile.kind.isFolder {
-            let remoteZipPath = try await zip(remoteFile.absolutePath)
+            let zipReply = try await zip(remoteFile.absolutePath)
+            let remoteZipPath = zipReply.path
             do {
                 let zipRemoteFile = try await stat(remoteZipPath)
                 let localZipPath = destination.appendingPathExtension("zip")
@@ -155,7 +171,8 @@ extension Conductor: ConductorFileTransferDelegate {
                     remoteFile: zipRemoteFile,
                     progress: progress,
                     cancellation: cancellation,
-                    destination: localZipPath)
+                    destination: localZipPath,
+                    completionNote: zipReply.skippedItemsNote)
 
                 // The `destination` argument is the current directory in which unzip is run. I give
                 // -d path in args so it will create destination.path if needed and then
@@ -226,6 +243,7 @@ extension Conductor: ConductorFileTransferDelegate {
             }
             throw error
         }
+        fileTransfer.completionNote = completionNote
         fileTransfer.didFinishChunkedDownload(to: destination)
         return .file
     }
@@ -356,8 +374,11 @@ extension Conductor: ConductorFileTransferDelegate {
                                       remotePath: String,
                                       fileHandle: FileHandle) async {
         do {
-            let remoteZipPath = try await zip(remotePath)
+            let zipReply = try await zip(remotePath)
+            let remoteZipPath = zipReply.path
             fileTransfer.isZipOfFolder = true
+            // Finish, but say what couldn't be read and was left out (F-721).
+            fileTransfer.completionNote = zipReply.skippedItemsNote
             await reallyBeginDownload(fileTransfer: fileTransfer,
                                       remotePath: remoteZipPath,
                                       fileHandle: fileHandle,
@@ -365,7 +386,8 @@ extension Conductor: ConductorFileTransferDelegate {
             try? await rm(remoteZipPath, recursive: false)
         } catch {
             // Only zip() throws here. Its permission errors come from making the archive in the
-            // remote home folder, not from reading the folder, so they get the generic reason.
+            // remote home folder or from listing the folder itself, not from reading a file, so
+            // they get the generic reason.
             fileTransfer.fail(reason: error.localizedDescription)
         }
     }

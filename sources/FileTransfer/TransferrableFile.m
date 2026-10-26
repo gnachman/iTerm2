@@ -56,6 +56,11 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
     return self;
 }
 
+- (void)dealloc {
+    [_completionNote release];
+    [super dealloc];
+}
+
 - (NSString *)protocolName {
     assert(false);
 }
@@ -220,7 +225,7 @@ static void (^gTransferrableFileNotificationHandlerForTesting)(NSString *, NSStr
                         (self.isDownloading
                          ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.DownloadFinishedNotification", nil, [NSBundle mainBundle], @"Download finished for “%@”.", @"Notification shown when a download finishes; %@ is the file name"), [self shortName]]
                          : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.UploadFinishedNotification", nil, [NSBundle mainBundle], @"Upload finished for “%@”.", @"Notification shown when an upload finishes; %@ is the file name"), [self shortName]])
-                                             detail:nil];
+                                             detail:self.completionNote];
                     break;
 
                 case kTransferrableFileStatusFinishedWithError:

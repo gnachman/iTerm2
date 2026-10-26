@@ -669,6 +669,10 @@ Bug Fixes:
   longer reports it as failed. An SSH
   Integration transfer that fails because of
   file or folder permissions now says so.
+- Downloading a folder over SSH Integration now
+  tells you when files in it couldn’t be read
+  and were left out, instead of reporting
+  success with no mention of the missing files.
 - When an SSH Integration session ends, stray
   text such as YXV0b3BvbGw= no longer appears in
   the terminal.

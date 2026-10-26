@@ -793,7 +793,8 @@ extension Conductor {
                 }
 
             case .zip(let path):
-                return "zip\n\(path.nonEmptyBase64EncodedString())"
+                // Ask for the files left out of the archive (F-721). An older framer ignores it.
+                return "zip\n\(path.nonEmptyBase64EncodedString())\n\(SSHRemoteZipReply.reportSkippedArgument)"
 
             case .stat(let path):
                 return "stat\n\(path.nonEmptyBase64EncodedString())"

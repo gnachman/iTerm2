@@ -34,6 +34,9 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 @property(atomic, assign) BOOL hasPredecessor;
 @property(atomic, assign) BOOL isZipOfFolder;
 @property(atomic, copy, nullable) TransferrableFileCompletionBlock completionBlock;
+// A complete sentence shown with the finished notification and in the Downloads menu, such as
+// what a folder's archive left out because it couldn't be read.
+@property(atomic, copy, nullable) NSString *completionNote;
 
 + (void)lockFileName:(NSString *)name;
 + (void)unlockFileName:(NSString *)name;
