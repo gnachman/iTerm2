@@ -76,9 +76,19 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 @synthesize delegate = delegate_;
 
 - (instancetype)init {
+    return [self initWithOptionalMutationQueue:nil];
+}
+
+- (instancetype)initWithMutationQueue:(dispatch_queue_t)queue {
+    return [self initWithOptionalMutationQueue:queue];
+}
+
+// A nil queue means the default.
+- (instancetype)initWithOptionalMutationQueue:(dispatch_queue_t _Nullable)queue {
     self = [super init];
     if (self) {
-        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
+        _mutableState = queue ? [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self queue:queue]
+                              : [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
         _animatedLines = [[NSMutableIndexSet alloc] init];
         _state = [_mutableState copy];
         _mutableState.mainThreadCopy = _state;

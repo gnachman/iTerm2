@@ -103,12 +103,6 @@ iTermTriggerScopeProvider> {
 }
 
 @property (atomic) BOOL hadCommand;
-// The join state of this state's mutation queue. If the queue is shared and gets locked up in a
-// joined block, any VT100ScreenMutableState on it can consider itself joined while on the main
-// thread. This happens when performBlockWithJoinedThreads is reentrant with two different
-// VT100ScreenMutableState objects (for example, when detaching in tmux mode). With a queue of its
-// own, joining another state from inside a join pauses that state's queue too.
-@property (nonatomic, readonly) iTermMutationQueueJoinState *joinState;
 
 // One-shot: set inside a report's joined sync so the rolled-back report token,
 // when it re-executes, is allowed to send (returns YES) instead of rolling back

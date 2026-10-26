@@ -48,6 +48,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCapturedOutputMark.h"
 #import "iTermGCD.h"
+#import "TaskNotifier.h"
 #import "iTermImageMark.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
@@ -143,8 +144,15 @@ static BOOL sOSC7DisabledWarningShown;
 }
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
-    dispatch_queue_t queue = [iTermGCD mutationQueue];
+    // With task I/O monitors, a session's reads don't stall other sessions, so its token
+    // execution shouldn't either: each session gets a queue of its own, and joining one doesn't
+    // stop the others (issue 13141).
+    dispatch_queue_t queue = [TaskNotifier usesTaskIOMonitors] ? [iTermGCD newMutationQueue] : [iTermGCD mutationQueue];
+    return [self initWithSideEffectPerformer:performer queue:queue];
+}
 
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
+                                      queue:(dispatch_queue_t)queue {
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _uniqueIdentifier = [[NSUUID UUID] UUIDString];

@@ -12,6 +12,7 @@
 @protocol VT100ScreenConfiguration;
 @class iTermEchoProbe;
 @class iTermFramerFlowLedger;
+@class iTermMutationQueueJoinState;
 @protocol iTermEchoProbeDelegate;
 @protocol iTermLargeContentProvider;
 @protocol iTermOrderedToken;
@@ -72,7 +73,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) iTermSavedTreeRCDataSource *savedTreeMutationThreadDataSource;
 @property (nullable, nonatomic, strong) iTermSavedTreeRCDataSource *savedTreeMainThreadDataSource;
 
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
+// Runs on a mutation queue of its own when task I/O monitors are on, and on the queue every
+// session shares otherwise.
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer;
+// `queue` must come from +[iTermGCD mutationQueue] or +[iTermGCD newMutationQueue].
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
+                                      queue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
 - (VT100ScreenState *)copy;
 
 - (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
@@ -91,6 +97,12 @@ NS_ASSUME_NONNULL_BEGIN
 // YES while the main queue runs a joined block for this state's mutation queue. Sessions that share
 // a queue share this.
 @property (atomic, readonly) BOOL performingJoinedBlock;
+// The join state of this state's mutation queue. If the queue is shared and gets locked up in a
+// joined block, any VT100ScreenMutableState on it can consider itself joined while on the main
+// thread. This happens when performBlockWithJoinedThreads is reentrant with two different
+// VT100ScreenMutableState objects (for example, when detaching in tmux mode). With a queue of its
+// own, joining another state from inside a join pauses that state's queue too.
+@property (nonatomic, readonly) iTermMutationQueueJoinState *joinState;
 @property (nonatomic) BOOL terminalEnabled;
 @property (nonatomic, readonly) VT100ScreenState *sanitizingAdapter;
 @property (atomic) BOOL performingSideEffect;

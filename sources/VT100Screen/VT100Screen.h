@@ -62,6 +62,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
     iTermTriggerScopeProvider,
     iTermTriggerCallbackScheduler>
 
+// Testing only. The mutable state runs on `queue` instead of the default (see
+// -[VT100ScreenMutableState initWithSideEffectPerformer:]).
+- (instancetype)initWithMutationQueue:(dispatch_queue_t)queue;
+
 @property(nonatomic) BOOL terminalEnabled;
 @property(atomic, weak, nullable) id<VT100ScreenDelegate> delegate;
 @property(nonatomic, readonly) unsigned int maxScrollbackLines;
