@@ -55,6 +55,26 @@ final class TmuxWorkgroupExitTests: WorkgroupEntryTestBase {
         try checkPeerInViewIsLeftToTmux(closingSplit: true)
     }
 
+    // A peer created during this attach, like an adopted one, keeps the default end action, so
+    // detaching (which ends every tmux session here) doesn't close it and leave its slot empty
+    // when its profile says to close sessions that end. QA finding F-652.
+    func testAPeerCreatedHereKeepsTheDefaultEndAction() throws {
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "rootPeer", sessions: [root, peer])
+        let instance = try XCTUnwrap(enterWorkgroup(wg))
+        tmux = TmuxRecordingGateway()
+        let gateway = tmux.gateway
+        let binding = try XCTUnwrap(TmuxWorkgroupBinding(gatewayProvider: { gateway }, sessionID: 4, workgroup: wg,
+                                                         instanceID: instance.instanceUniqueIdentifier,
+                                                         gitBase: "main"))
+        instance.wireTmux(binding)
+        let fresh = PTYSession(synthetic: false)!
+        XCTAssertFalse(fresh.forceDefaultEndAction)
+        binding.configurePeerSession?(fresh, peer)
+        XCTAssertTrue(fresh.forceDefaultEndAction)
+    }
+
     private func checkPeerInViewIsLeftToTmux(closingSplit: Bool) throws {
         let root = WGFix.makeRoot()
         let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)

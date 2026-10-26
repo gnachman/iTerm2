@@ -94,6 +94,10 @@ extension iTermWorkgroupInstance {
         tmuxBinding = binding
         binding.configurePeerSession = { [weak binding] session, config in
             session.workgroupSessionMode = config.mode
+            // As for adopted peers (registerTmuxPeerGroup) and every other member: its profile's
+            // Close end action must not close it, e.g. when detaching ends every tmux session
+            // here, which would leave its slot empty (QA finding F-652).
+            session.forceDefaultEndAction = true
             Self.applyTmuxMemberProfile(config: config, to: session)
             if let binding {
                 session.syncTmuxWorkgroupWaiting(config: config, binding: binding)
