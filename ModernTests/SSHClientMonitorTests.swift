@@ -75,6 +75,28 @@ final class SSHClientProcessLocatorTests: XCTestCase {
         return inspector
     }
 
+    // F-786: a restored session's job still runs ssh only if an ssh client or it2ssh is
+    // among its descendants.
+    func testFindsSSHClientAmongDescendants() {
+        let inspector = FakeProcessInspector()
+        // login (100) -> zsh (110) -> it2ssh (120) -> ssh (130)
+        inspector.processes[110] = .init(parent: 100, startTime: t0, arguments: ["-zsh"])
+        inspector.processes[120] = .init(parent: 110, startTime: t1, arguments: it2sshArgs)
+        inspector.processes[130] = .init(parent: 120, startTime: t2, arguments: ["/usr/bin/ssh", "-t", "example.com"])
+        let locator = SSHClientProcessLocator(inspector: inspector)
+        XCTAssertTrue(locator.hasSSHClient(amongDescendantsOf: 100))
+
+        // ssh died while iTerm2 was down: only the shell is left.
+        inspector.processes[120] = nil
+        inspector.processes[130] = nil
+        XCTAssertFalse(locator.hasSSHClient(amongDescendantsOf: 100))
+
+        // Not fooled by something merely named like ssh.
+        inspector.processes[140] = .init(parent: 110, startTime: t3, arguments: ["/usr/bin/sshd-keygen-wrapper"])
+        XCTAssertFalse(locator.hasSSHClient(amongDescendantsOf: 100))
+        XCTAssertFalse(locator.hasSSHClient(amongDescendantsOf: 0))
+    }
+
     func testAncestorsOfPeerStartAtItsParent() {
         let locator = SSHClientProcessLocator(inspector: makeInspector())
         let ancestors = locator.ancestors(ofPeer: 40)

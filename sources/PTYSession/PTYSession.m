@@ -2494,6 +2494,14 @@ ITERM_WEAKLY_REFERENCEABLE
             if (didAttach) {
                 runCommand = NO;
                 attachedToServer = YES;
+                if (aSession->_conductor &&
+                    ![[iTermSSHClientProcessLocator sharedInstance] hasSSHClientAmongDescendantsOf:aSession->_shell.pid]) {
+                    // The job survived but its ssh didn't (it died while iTerm2 was down), so
+                    // the job is just a shell. Writing the framer's reset would type it there
+                    // (F-786).
+                    RLog(@"Reattached to a job without an ssh client. Forget its SSH Integration state.");
+                    [aSession forgetRestoredConductor];
+                }
                 if (aSession->_conductor) {
                     // Only now is ssh known to survive, so only now may anything be sent to
                     // its framer. Had this session started a new shell instead, it would
@@ -2521,15 +2529,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     }
                 }
                 if (aSession->_conductor) {
-                    [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-                        [terminal.parser cancelConductorRecoveryMode];
-                    }];
-                    [aSession->_conductor resolveIT2AuthorizationFailClosed];
-                    [aSession removeChannelClientsForConductor:aSession->_conductor];
-                    aSession->_conductor.delegate = nil;
-                    [aSession->_conductor release];
-                    aSession->_conductor = nil;
-                    aSession->_shell.sshIntegrationActive = NO;
+                    [aSession forgetRestoredConductor];
                 }
             }
         }
@@ -27367,6 +27367,20 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
             }
         });
     }
+}
+
+// The SSH Integration state saved before iTerm2 restarted doesn't match what runs now: the
+// session didn't reattach, or reattached to a job whose ssh is gone.
+- (void)forgetRestoredConductor {
+    [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [terminal.parser cancelConductorRecoveryMode];
+    }];
+    [_conductor resolveIT2AuthorizationFailClosed];
+    [self removeChannelClientsForConductor:_conductor];
+    _conductor.delegate = nil;
+    [_conductor release];
+    _conductor = nil;
+    _shell.sshIntegrationActive = NO;
 }
 
 - (void)rememberDisconnectedSSHClientUniqueID:(NSString *)clientUniqueID {
