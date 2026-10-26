@@ -493,6 +493,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (IBAction)closeCurrentTab:(id)sender;
 - (BOOL)closeTabIfConfirmed:(PTYTab *)tab;
 - (BOOL)closeSessionWithConfirmation:(PTYSession *)aSession;
+
+// Whether closing these sessions would end a workgroup on a tmux server, and so must be confirmed.
++ (BOOL)closingEndsTmuxWorkgroup:(NSArray<PTYSession *> *)sessions;
 - (void)closeSessionWithoutConfirmation:(PTYSession *)aSession;
 
 // Close the named tab without confirmation. Used by the layout-

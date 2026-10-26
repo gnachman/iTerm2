@@ -2386,6 +2386,9 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
         [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs]) {
         mustAsk = YES;
     }
+    if (numClosing > 0 && [PseudoTerminal closingEndsTmuxWorkgroup:sessions]) {
+        mustAsk = YES;
+    }
 
     if (mustAsk && !suppressConfirmation) {
         const BOOL anyIsLocked = [sessions anyWithBlock:^BOOL(PTYSession *anObject) {
@@ -2441,6 +2444,16 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     return ([aTab isTmuxTab] &&
             [[aTab sessions] count] > 0 &&
             [[aTab tmuxController] isAttached]);
+}
+
+// Closing a member of a workgroup in a tmux Integration tab ends the workgroup and kills its other
+// members' panes on the server. tmux hides panes' jobs from iTerm2, so the usual reasons to ask
+// first may not apply; ask anyway, with the workgroup warning. QA finding F-618.
++ (BOOL)closingEndsTmuxWorkgroup:(NSArray<PTYSession *> *)sessions {
+    const BOOL anyTmuxMember = [sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.isTmuxClient && session.workgroupInstance != nil;
+    }];
+    return anyTmuxMember && [iTermWorkgroupInstance closeCascadeWarningForSessions:sessions] != nil;
 }
 
 - (BOOL)willShowTmuxWarningWhenClosingTab:(PTYTab *)aTab {
@@ -2759,7 +2772,8 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     BOOL okToClose = NO;
     if ([aSession exited]) {
         okToClose = YES;
-    } else if (![aSession promptOnCloseReason].hasReason) {
+    } else if (![aSession promptOnCloseReason].hasReason &&
+               ![PseudoTerminal closingEndsTmuxWorkgroup:@[ aSession ]]) {
         okToClose = YES;
     } else {
       okToClose = [self confirmCloseForSessions:@[aSession]
