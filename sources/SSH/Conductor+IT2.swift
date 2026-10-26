@@ -988,10 +988,13 @@ extension Conductor {
     // passed the gate (e.g. a running `monitor --follow`) are unaffected by a revoke; only
     // subsequent commands see the new decision. Must be called on the main thread.
     @objc func setIT2AuthorizationFromMenu(_ granted: Bool) {
-        if !granted {
+        let host = sshIdentity.stringIdentifier
+        if !granted && Conductor.hostGrantStore.grant(forHost: host) != nil {
             // Otherwise an always-allow grant would re-allow this host on its very next
-            // connection, and switching it off here would seem not to have worked.
-            Conductor.hostGrantStore.remove(host: sshIdentity.stringIdentifier)
+            // connection, and switching it off here would seem not to have worked. Revoke
+            // rather than just forget it, as Settings does, so other live connections to the
+            // host that the grant let in ask again instead of carrying on without it.
+            Conductor.hostGrantStore.revoke(host: host)
         }
         it2Authorized = granted
         // No-op when no prompt is pending; otherwise dismisses the on-screen announcement and

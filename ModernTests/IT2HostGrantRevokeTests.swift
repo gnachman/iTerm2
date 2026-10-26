@@ -116,6 +116,43 @@ final class IT2HostGrantRevokeTests: XCTestCase {
         XCTAssertEqual(conductor.it2Authorized, false)
     }
 
+    // Switching it2 off in one connection takes the grant away from every live connection to
+    // the host, as removing it in Settings does. Otherwise a second connection let in only by
+    // the grant would keep working with no prompt after the grant is gone.
+    func testDenyingFromTheMenuRevokesForOtherLiveConnections() {
+        let store = IT2HostGrantStore(backing: RevokeMemoryBacking())
+        Conductor.hostGrantStoreForTesting = store
+        let host = uniqueHost()
+        let switched = registeredConductor(host: host)
+        let sibling = registeredConductor(host: host)
+        XCTAssertEqual(switched.sshIdentity.stringIdentifier, sibling.sshIdentity.stringIdentifier)
+        store.add(grant(for: switched.sshIdentity.stringIdentifier))
+        switched.it2Authorized = true
+        sibling.it2Authorized = true
+
+        switched.setIT2AuthorizationFromMenu(false)
+
+        XCTAssertEqual(switched.it2Authorized, false)
+        XCTAssertNil(sibling.it2Authorized, "the sibling must ask again on its next command")
+    }
+
+    // With no grant on record there is nothing to take back from other connections: each
+    // connection's own Allow is its own business.
+    func testDenyingFromTheMenuWithoutAGrantLeavesOtherConnectionsAlone() {
+        let store = IT2HostGrantStore(backing: RevokeMemoryBacking())
+        Conductor.hostGrantStoreForTesting = store
+        let host = uniqueHost()
+        let switched = registeredConductor(host: host)
+        let sibling = registeredConductor(host: host)
+        switched.it2Authorized = true
+        sibling.it2Authorized = true
+
+        switched.setIT2AuthorizationFromMenu(false)
+
+        XCTAssertEqual(switched.it2Authorized, false)
+        XCTAssertEqual(sibling.it2Authorized, true)
+    }
+
     func testAllowingFromTheMenuKeepsTheGrant() {
         let store = IT2HostGrantStore(backing: RevokeMemoryBacking())
         Conductor.hostGrantStoreForTesting = store
