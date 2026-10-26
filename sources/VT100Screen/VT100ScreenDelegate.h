@@ -492,7 +492,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                parentDepth:(int)parentDepth
                                 savedState:(NSDictionary * _Nonnull)savedState;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string depth:(int)depth;
-- (void)screenDidUnhookSSHConductor;
+// depth is the nesting depth of the conductor whose hook ended.
+- (void)screenDidUnhookSSHConductorAtDepth:(int)depth;
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString * _Nonnull)identifier
                                                   depth:(int)depth;
 
