@@ -177,6 +177,9 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     NSMutableSet<NSNumber *> *_paneIDs;  // existing pane IDs
     // Remembers control sequences in output for panes about to get a session. See issue 13006.
     iTermTmuxDroppedOutputTracker *_droppedOutputTracker;
+    // pane -> (user variable -> value, or NSNull if unset) for variables a buried session's shell
+    // set while its pane's state was being fetched. See -buriedPanesDidOpen:.
+    NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, id> *> *_userVarsSetInOpeningBuriedPanes;
     NSMutableDictionary<NSNumber *, NSString *> *_tabColors;
 
     // Have we guessed the server version? Don't try to open windows until this is true, because
@@ -324,6 +327,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         gateway_ = gateway;
         _paneIDs = [[NSMutableSet alloc] init];
         _droppedOutputTracker = [[iTermTmuxDroppedOutputTracker alloc] init];
+        _userVarsSetInOpeningBuriedPanes = [[NSMutableDictionary alloc] init];
         windowPanes_ = [[NSMutableDictionary alloc] init];
         _windowStates = [[NSMutableDictionary alloc] init];
         windowPositions_ = [[NSMutableDictionary alloc] init];
@@ -1061,16 +1065,28 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     // The session these are for doesn't have a tmux controller when it executes them, and it
     // copies its user variables from here once it gets one. Apply them now so they win over the
     // @uservars fetched while opening, and so they're saved in tmux.
+    [self applyUserVariablesInDeferredTokens:tokens pane:wp];
+    return tokens;
+}
+
++ (iTermUserVariableAssignment *)userVariableAssignmentInToken:(VT100Token *)token {
+    if (token.type != XTERMCC_SET_KVP || ![token.kvpKey isEqualToString:@"SetUserVar"]) {
+        return nil;
+    }
+    return [[iTermUserVariableAssignment alloc] initWithPayload:token.kvpValue ?: @""];
+}
+
++ (NSString *)userVariableNameSetByToken:(VT100Token *)token {
+    return [self userVariableAssignmentInToken:token].name;
+}
+
+- (void)applyUserVariablesInDeferredTokens:(NSArray<VT100Token *> *)tokens pane:(int)wp {
     for (VT100Token *token in tokens) {
-        if (token.type != XTERMCC_SET_KVP || ![token.kvpKey isEqualToString:@"SetUserVar"]) {
-            continue;
-        }
-        iTermUserVariableAssignment *assignment = [[iTermUserVariableAssignment alloc] initWithPayload:token.kvpValue ?: @""];
+        iTermUserVariableAssignment *assignment = [TmuxController userVariableAssignmentInToken:token];
         if (assignment) {
             [self setUserVariableWithKey:assignment.name value:assignment.value pane:wp];
         }
     }
-    return tokens;
 }
 
 - (void)willOpenPane:(int)wp {
@@ -1215,6 +1231,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (!created.count) {
         return;
     }
+    // Output that arrived before the pane had this session, such as a new peer's first prompt,
+    // was dropped. Keep what was captured from it until the pane's state is fetched (see
+    // -buriedPanesDidOpen:).
+    for (NSNumber *pane in created) {
+        [self willOpenPane:pane.intValue];
+        _userVarsSetInOpeningBuriedPanes[pane] = [NSMutableDictionary dictionary];
+    }
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.unicodeVersion = self.unicodeVersion;
@@ -1223,10 +1246,43 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
-    windowOpener.selector = @selector(panesDidUnpause:);
+    windowOpener.selector = @selector(buriedPanesDidOpen:);
     windowOpener.shouldWorkAroundTabBug = _shouldWorkAroundTabBug;
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     [windowOpener unpauseWindowPanes:created];
+}
+
+// Like -panesDidUnpause:, but the panes' sessions are new, so the control sequences captured from
+// output dropped before they existed are executed too, as for a window being opened (see
+// -[TmuxWindowOpener addDeferredTokensToStates]). Unlike there, the session got the pane's output
+// while the state was fetched, so a user variable its shell set then is newer than what was
+// captured before and than the @uservars the opener fetched. It is kept.
+- (void)buriedPanesDidOpen:(TmuxWindowOpener *)opener {
+    NSArray<NSNumber *> *panes = opener.unpausingWindowPanes;
+    for (NSNumber *wp in panes) {
+        PTYSession<iTermTmuxControllerSession> *session = [self sessionForWindowPane:wp.intValue];
+        NSDictionary *state = [opener stateForWindowPane:wp.intValue];
+        NSDictionary<NSString *, id> *liveUserVars = [_userVarsSetInOpeningBuriedPanes[wp] copy] ?: @{};
+        [_userVarsSetInOpeningBuriedPanes removeObjectForKey:wp];
+        NSArray<VT100Token *> *tokens = [[_droppedOutputTracker takeTokensForPane:wp.intValue] filteredArrayUsingBlock:^BOOL(VT100Token *token) {
+            NSString *name = [TmuxController userVariableNameSetByToken:token];
+            return !name || !liveUserVars[name];
+        }];
+        [self applyUserVariablesInDeferredTokens:tokens pane:wp.intValue];
+        [liveUserVars enumerateKeysAndObjectsUsingBlock:^(NSString *name, id value, BOOL *stop) {
+            [self setUserVariableWithKey:name value:[NSString castFrom:value] pane:wp.intValue];
+        }];
+        if (tokens.count) {
+            DLog(@"Buried pane %@ has %@ deferred tokens", wp, @(tokens.count));
+            NSMutableDictionary *amended = [state mutableCopy] ?: [NSMutableDictionary dictionary];
+            amended[kTmuxWindowOpenerStateDeferredTokens] = tokens;
+            state = amended;
+        }
+        [session setTmuxHistory:[opener historyLinesForWindowPane:wp.intValue alternateScreen:NO]
+                     altHistory:[opener historyLinesForWindowPane:wp.intValue alternateScreen:YES]
+                          state:state];
+    }
+    [self didFinishOpeningPanes:panes];
 }
 
 // A parked window's layout changed, e.g. it was pinned to a new slot size: keep its buried
@@ -1379,6 +1435,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }];
     [_when removeAllObjects];
     [_droppedOutputTracker reset];
+    [_userVarsSetInOpeningBuriedPanes removeAllObjects];
     for (void (^block)(PTYSession<iTermTmuxControllerSession> *) in _whenAny) {
         block(nil);
     }
@@ -4403,6 +4460,11 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         if ([self windowIdFromString:recordWindowId] == [windowId intValue]) {
             if ([self recordParkedWindowFromDoc:doc record:record windowId:[windowId intValue]]) {
                 RLog(@"Not opening window %@: it holds a parked workgroup peer", windowId);
+                // Its buried sessions' panes are still scanned (see
+                // -openBuriedSessionsForParkedWindow:layout:), so the window no longer awaits its
+                // layout.
+                [_droppedOutputTracker windowDidStopAwaitingLayout:windowId.intValue];
+                [self didLearnLayout:[doc valueInRecord:record forField:@"window_layout"] forWindow:windowId.intValue];
                 [_workgroupAttacher parkedWindowAppeared];
                 return;
             }
@@ -4809,6 +4871,8 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
 - (void)setUserVariableWithKey:(NSString *)key
                          value:(NSString *)value
                           pane:(int)paneID {
+    // Kept for -buriedPanesDidOpen:, which runs after the opener's @uservars overwrite these.
+    _userVarsSetInOpeningBuriedPanes[@(paneID)][key] = value ?: [NSNull null];
     if (![self versionAtLeastDecimalNumberWithString:@"3.1"]) {
         return;
     }

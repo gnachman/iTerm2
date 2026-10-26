@@ -45,6 +45,13 @@ class TmuxTestGatewayDelegate: NSObject, TmuxGatewayDelegate {
     func tmuxClientSessionChanged(_ clientName: String!) {}
     func tmuxClientDetached(_ clientName: String!) {}
     func tmuxServerMayOmitEndGuard(beforeExit mayOmit: Bool) {}
+
+    /// The gateway's delegate is its PTYSession in the app, which panes ask for its SSH
+    /// Integration connection, its job (see updateInferredTmuxHost), and its processes. Here there
+    /// are none.
+    @objc var conductor: Conductor? { return nil }
+    @objc let genericScope = iTermVariableScope()
+    @objc var sessionProcessInfoProvider: SessionProcessInfoProvider? { return nil }
 }
 
 /// A real TmuxGateway with no tmux behind it: records each command line it writes, and answers
