@@ -4820,6 +4820,10 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         return;
     }
     DLog(@"Could not select window @%@. It is probably gone.", selection[@"window"]);
+    if (_currentWindowID == [selection[@"window"] intValue]) {
+        // Reordering tabs selects the current window again (-setPartialWindowIdOrder:).
+        _currentWindowID = -1;
+    }
     if ([selection[@"expectsEcho"] boolValue] && _ignoreWindowChangeNotificationCount > 0) {
         _ignoreWindowChangeNotificationCount--;
     }

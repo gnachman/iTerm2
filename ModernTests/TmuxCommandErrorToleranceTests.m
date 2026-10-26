@@ -299,6 +299,8 @@
     XCTAssertNil(_gateway.abortMessage);
     // No %session-window-changed will come for a select-window that failed, so none may be ignored.
     XCTAssertEqualObjects([_controller valueForKey:@"ignoreWindowChangeNotificationCount"], @0);
+    // Nor may it be selected again, as a reorder of tabs would. QA finding F-804.
+    XCTAssertEqualObjects([_controller valueForKey:@"currentWindowID"], @-1);
     [self assertGatewayStillWorks];
 }
 
