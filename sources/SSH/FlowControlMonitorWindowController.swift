@@ -63,6 +63,14 @@ final class FlowControlMonitorWindowController: NSWindowController, NSWindowDele
         monitorView.needsDisplay = true
     }
 
+    /// Shell > Close (Cmd-W) is wired to closeCurrentSession: rather than performClose:. The
+    /// panel never becomes the main window, so without this the action went on to the terminal
+    /// window behind it and closed a session there.
+    @objc(closeCurrentSession:)
+    func closeCurrentSession(_ sender: Any?) {
+        window?.performClose(sender)
+    }
+
     /// Sent only when the person closes the window (its close button or Close), not when it is
     /// closed in code, as it is when iTerm2 quits.
     func windowShouldClose(_ sender: NSWindow) -> Bool {

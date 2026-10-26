@@ -112,4 +112,16 @@ final class FlowControlMonitorViewTests: XCTestCase {
         person.window!.performClose(nil)
         XCTAssertEqual(closedByPerson, 1)
     }
+
+    // Shell > Close (Cmd-W) sends closeCurrentSession:. The panel must take it, closing itself
+    // as its close button would, or it goes on to the terminal window behind and closes a
+    // session there.
+    func testShellCloseIsHandledByThePanel() {
+        let controller = FlowControlMonitorWindowController()
+        var closedByPerson = 0
+        controller.userDidClose = { closedByPerson += 1 }
+        let handled = controller.window!.tryToPerform(NSSelectorFromString("closeCurrentSession:"), with: nil)
+        XCTAssertTrue(handled, "the window or its controller takes closeCurrentSession:")
+        XCTAssertEqual(closedByPerson, 1)
+    }
 }
