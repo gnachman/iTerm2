@@ -717,6 +717,7 @@
 		316BFEDC3EEC8367450DB7E2 /* iTermURLActionFactory+Testing.h in Sources */ = {isa = PBXBuildFile; fileRef = FDF6EB8657CCD10A7A568A61 /* iTermURLActionFactory+Testing.h */; };
 		32729FE01D7AC39C1BC0B1FF /* SafetyTranscriptProjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232A06BD577404F71FFBC0AF /* SafetyTranscriptProjection.swift */; };
 		329255FAF6BE419BCB700B39 /* CodeReviewPromptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F0C4D86ED1181AF4DA5A4F /* CodeReviewPromptStore.swift */; };
+		335117784F92355E402EBE7C /* SSHHookArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5A7493F12FE6D368D9966F /* SSHHookArguments.swift */; };
 		350855B79BCFF20D8A66A936 /* iTermShellArguments.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AE66769B8654316E249B74A /* iTermShellArguments.m */; };
 		355C6FC60EEF61A2C69E8D0E /* ArchiveClippingsBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B084D285B6C1CDDE2932596 /* ArchiveClippingsBuiltInFunction.swift */; };
 		355CFD74AA25EE29E0561F98 /* iTermWorkgroupsEditingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3C8D1807D495D39ED10205 /* iTermWorkgroupsEditingViewController.swift */; };
@@ -8750,6 +8751,7 @@
 		BCB6504EA9415C3BAC796EA5 /* iTermStandardButtons.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermStandardButtons.h; sourceTree = "<group>"; };
 		BCBB83E64BDE6C3824D5CEF6 /* iTermSuppressedAlertsWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSuppressedAlertsWindowController.swift; sourceTree = "<group>"; };
 		BD02F2955BAF479EBAC063FE /* MentionParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionParser.swift; sourceTree = "<group>"; };
+		BE5A7493F12FE6D368D9966F /* SSHHookArguments.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SSHHookArguments.swift; sourceTree = "<group>"; };
 		BFD3901D8207448AB8A8622E /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/DirectoriesPopup.xcstrings; sourceTree = "<group>"; };
 		C0633ABD6E952B2E3BBF254B /* SocketConnection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SocketConnection.swift; path = it2cli/Sources/it2core/Transport/SocketConnection.swift; sourceTree = "<group>"; };
 		C064EB0F853DE6D529AF6FD4 /* AuthCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AuthCommand.swift; path = it2cli/Sources/it2core/Commands/AuthCommand.swift; sourceTree = "<group>"; };
@@ -11680,6 +11682,7 @@
 				6E9FF32118246D33BBE5EF45 /* ConductorUpload.swift */,
 				FB1377960D087186B01E1DC8 /* SSHClientMonitor.swift */,
 				AA38ACCF02277FC72C991593 /* FramerRecoveryRefusals.swift */,
+				BE5A7493F12FE6D368D9966F /* SSHHookArguments.swift */,
 			);
 			path = SSH;
 			sourceTree = "<group>";
@@ -20127,6 +20130,7 @@
 				72C54C1E052706E51D4EB54D /* SSHClientMonitor.swift in Sources */,
 				20A35AB333469449066CC4EF /* FramerRecoveryRefusals.swift in Sources */,
 				232CB1EF1527990E6ADF64B1 /* TTYModeRepairer.swift in Sources */,
+				335117784F92355E402EBE7C /* SSHHookArguments.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

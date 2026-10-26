@@ -489,6 +489,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                      dcsID:(NSString * _Nonnull)dcsID
                                parentDepth:(int)parentDepth
                                 savedState:(NSDictionary * _Nonnull)savedState;
+// The conductor hooked but its parameters could not be decoded. The remote conductor
+// is waiting for commands and must be told to quit.
+- (void)screenDidFailToParseSSHConductorHookWithToken:(NSString * _Nonnull)token
+                                             uniqueID:(NSString * _Nonnull)uniqueID
+                                                dcsID:(NSString * _Nonnull)dcsID
+                                          parentDepth:(int)parentDepth
+                                           savedState:(NSDictionary * _Nonnull)savedState;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string depth:(int)depth;
 - (void)screenDidUnhookSSHConductor;
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString * _Nonnull)identifier

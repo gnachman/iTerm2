@@ -649,6 +649,12 @@ Bug Fixes:
   also undoes the terminal settings ssh changed,
   so Control-C works and output no longer
   staircases.
+- it2ssh no longer hangs when the host or
+  command contains non-ASCII text, such as
+  accented letters or emoji. If iTerm2 can’t
+  read the arguments, it now ends the
+  connection and explains why instead of
+  leaving the tab stuck.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
