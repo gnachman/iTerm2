@@ -11711,6 +11711,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         // In tmux 1.8, this happens before `tmuxInitialCommandDidCompleteSuccessfully`.
         [self kickOffTmuxForRestoration:NO];
     }
+    // Window restoration state is otherwise saved only when the app resigns active or quits. Save
+    // now that this session's arrangement says it is a tmux gateway for this tmux session, so
+    // that if iTerm2 is killed it is restored as one and tmux integration resumes, rather than
+    // the session being adopted as an orphan that shows raw control-mode output.
+    [NSApp invalidateRestorableState];
+    if (![[iTermController sharedInstance] applicationIsQuitting]) {
+        [[iTermApplication.sharedApplication delegate] saveRestorableState];
+    }
 }
 
 - (void)tmuxSessionsChanged {

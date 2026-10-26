@@ -661,6 +661,11 @@ Improvements:
   stays responsive while output streams.
 
 Bug Fixes:
+- If iTerm2 quits unexpectedly while tmux
+  integration is attached, tmux integration
+  resumes when iTerm2 relaunches with window
+  restoration on. Before, the session that ran
+  tmux -CC could show raw tmux output instead.
 - In an AI chat with an empty message field, the
   “↩ to submit” hint no longer overlaps a long
   placeholder.
