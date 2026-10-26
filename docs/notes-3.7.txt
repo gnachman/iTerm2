@@ -1984,3 +1984,6 @@ Bug Fixes:
   session. Other it2 commands that act on the
   current session no longer pick a session in
   the first tab when several windows are open.
+- When a session’s program ends and iTerm2 offers
+  to restart it, short output such as a custom
+  command’s is no longer hidden behind the offer.

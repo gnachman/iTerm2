@@ -5009,6 +5009,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (_shortLivedSingleUse) {
         return;
     }
+    // The announcement covers the top rows of the session. Move short output, such as a custom
+    // command's, down so it isn't hidden behind it.
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [mutableState moveScreenContentToBottom];
+    }];
     [self.naggingController sessionEndedWithExecFailure:_execDidFail];
 }
 

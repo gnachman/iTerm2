@@ -210,6 +210,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)eraseScreenAndRemoveSelection;
 - (void)clearFromAbsoluteLineToEnd:(long long)absLine;
 - (void)clearForComposer;
+// Inserts blank rows at the top of the primary screen so the cursor moves toward the bottom row,
+// taking interval tree objects along with their lines. Only empty rows at the bottom are given
+// up, so no content is lost, and scrollback is untouched. Does nothing in the alternate screen.
+- (void)moveScreenContentToBottom;
 - (void)removeLastLine;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
