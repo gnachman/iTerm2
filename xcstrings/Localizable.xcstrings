@@ -126167,6 +126167,48 @@
         }
       }
     },
+    "PTYSession.SSHArgumentsUnreadable" : {
+      "comment" : "Banner shown when it2ssh's arguments cannot be decoded and the SSH connection is ended",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die SSH-Integration konnte nicht gestartet werden, weil iTerm2 die an it2ssh übergebenen Argumente nicht lesen konnte. Verwenden Sie ssh, um ohne SSH-Integration eine Verbindung herzustellen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "SSH integration couldn’t start because iTerm2 couldn’t read the arguments given to it2ssh. Use ssh to connect without SSH integration."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2がit2sshに渡された引数を読み取れなかったため、SSH統合を開始できませんでした。SSH統合を使わずに接続するにはsshを使用してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível iniciar a integração SSH porque o iTerm2 não conseguiu ler os argumentos passados ao it2ssh. Use o ssh para se conectar sem a integração SSH."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось запустить интеграцию SSH, так как iTerm2 не смог прочитать аргументы, переданные it2ssh. Используйте ssh, чтобы подключиться без интеграции SSH."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法启动 SSH 集成，因为 iTerm2 无法读取传给 it2ssh 的参数。请使用 ssh 在不使用 SSH 集成的情况下连接。"
+          }
+        }
+      }
+    },
     "PTYSession.SSHDisconnect" : {
       "comment" : "Button that ends an SSH Integration connection",
       "extractionState" : "extracted_with_value",
