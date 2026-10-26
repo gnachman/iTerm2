@@ -143,7 +143,7 @@ extension Conductor: ConductorFileTransferDelegate {
             return .file
         }
 
-        let chunkSize = 4096
+        let chunkSize = ConductorDownload.chunkSize
         progress?.fraction = 0
         let state = DownloadState(remoteFile: remoteFile,
                                   chunkSize: chunkSize,
@@ -258,7 +258,7 @@ extension Conductor: ConductorFileTransferDelegate {
                     return data
                 })
             tasks.append(pending)
-            let maxConcurrency = 8
+            let maxConcurrency = ConductorDownload.maxRequestsInFlight
             while tasks.count >= maxConcurrency || (!tasks.isEmpty && !shouldFetchMore) {
                 if fileTransfer.isStopped {
                     cancellation?.cancel()

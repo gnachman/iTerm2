@@ -23,6 +23,68 @@ struct ConductorDownloadOperations {
 /// archive is downloaded.
 @MainActor
 enum ConductorDownload {
+    // Shared with a download through the file panel (Conductor.downloadChunked). Each
+    // request is small so terminal input can be serviced between replies, and several are
+    // in flight so the speed doesn't depend on one round trip per chunk (F-725).
+    static let chunkSize = 4096
+    static let maxRequestsInFlight = 8
+
+    /// Reads a remote file from the start, `chunkSize` bytes per request with up to
+    /// `maxRequestsInFlight` requests outstanding, and passes the data to `consume` in order.
+    /// The file ends at the first reply that is empty or shorter than a chunk.
+    /// `expectedSize` is how big it was when examined, if known; a file that has grown
+    /// since is still read to its end. Returns false if it stopped because `isStopped`
+    /// became true.
+    static func fetch(expectedSize: Int?,
+                      isStopped: () -> Bool,
+                      fetch: @escaping (DownloadChunk) async throws -> Data,
+                      consume: (Data) throws -> Void) async throws -> Bool {
+        var pending = [Task<Data, Error>]()
+        defer {
+            // Replies still on the way after it ends or fails aren't needed. This only marks
+            // the tasks canceled: their requests have already been sent and are answered anyway.
+            for task in pending {
+                task.cancel()
+            }
+        }
+        var nextOffset = 0
+        var received = 0
+        func mayRequestMore() -> Bool {
+            guard let expectedSize else {
+                return true
+            }
+            // Requesting the chunk at the expected end lets a file that grew be noticed.
+            return nextOffset <= max(expectedSize, received)
+        }
+        while true {
+            if isStopped() {
+                return false
+            }
+            while pending.count < maxRequestsInFlight && mayRequestMore() {
+                let chunk = DownloadChunk(offset: nextOffset, size: chunkSize)
+                nextOffset += chunkSize
+                pending.append(Task { @MainActor in
+                    try await fetch(chunk)
+                })
+            }
+            guard !pending.isEmpty else {
+                return true
+            }
+            let data = try await pending.removeFirst().value
+            if isStopped() {
+                return false
+            }
+            if data.isEmpty {
+                return true
+            }
+            try consume(data)
+            received += data.count
+            if data.count < chunkSize {
+                return true
+            }
+        }
+    }
+
     static func run(fileTransfer: ConductorFileTransfer,
                     operations: ConductorDownloadOperations) async {
         guard let path = fileTransfer.localPath() else {
@@ -77,36 +139,30 @@ enum ConductorDownload {
             } else {
                 sizeKnown = false
             }
-            var done = false
-            var offset = 0
-
-            let chunkSize = 1024
-            while !done {
-                if fileTransfer.isStopped {
-                    fileTransfer.abort()
-                    return
+            let finished = try await fetch(expectedSize: info.size,
+                                           isStopped: { fileTransfer.isStopped },
+                                           fetch: { chunk in
+                try await operations.fetch(remotePath, chunk)
+            }, consume: { data in
+                try fileHandle.write(contentsOf: data)
+                if !sizeKnown {
+                    fileTransfer.fileSize = fileTransfer.fileSize + data.count
                 }
-                let chunk = DownloadChunk(offset: offset, size: chunkSize)
-                let data = try await operations.fetch(remotePath, chunk)
-                if data.isEmpty {
-                    done = true
-                } else {
-                    try fileHandle.write(contentsOf: data)
-                    if !sizeKnown {
-                        fileTransfer.fileSize = fileTransfer.fileSize + data.count
-                    }
-                    fileTransfer.didTransferBytes(UInt(data.count))
-                    offset += data.count
-                }
-            }
+                fileTransfer.didTransferBytes(UInt(data.count))
+            })
             // It may have been stopped during the last request.
-            if fileTransfer.isStopped {
+            if !finished || fileTransfer.isStopped {
                 fileTransfer.abort()
                 return
             }
             fileTransfer.didFinishSuccessfully()
         } catch {
-            fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: true))
+            if fileTransfer.isStopped {
+                // Stopped while a request was outstanding. That's not a failure.
+                fileTransfer.abort()
+            } else {
+                fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: true))
+            }
         }
     }
 
@@ -115,6 +171,11 @@ enum ConductorDownload {
                                        fileHandle: FileHandle,
                                        operations: ConductorDownloadOperations) async {
         do {
+            // Zipping a big folder can take a while, so don't start if it was stopped already.
+            if fileTransfer.isStopped {
+                fileTransfer.abort()
+                return
+            }
             let zipReply = try await operations.zip(remotePath)
             let remoteZipPath = zipReply.path
             fileTransfer.isZipOfFolder = true
@@ -127,6 +188,10 @@ enum ConductorDownload {
                            operations: operations)
             try? await operations.rm(remoteZipPath)
         } catch {
+            if fileTransfer.isStopped {
+                fileTransfer.abort()
+                return
+            }
             // Only zip() throws here. Its permission errors come from making the archive in the
             // remote home folder or from listing the folder itself, not from reading a file, so
             // they get the generic reason.

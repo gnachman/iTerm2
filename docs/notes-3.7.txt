@@ -524,6 +524,10 @@ Improvements:
   session’s directory or job in one command.
 - Uploads over SSH Integration are about three
   times faster.
+- Downloading a file or folder with “Download
+  using SSH Integration” is much faster. It
+  used to wait for each kilobyte before asking
+  for the next.
 - “Upload and Paste Path” now works in tmux
   integration windows reached through SSH
   Integration, and before shell integration has
