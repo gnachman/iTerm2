@@ -80,7 +80,17 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
     @objc
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         menuItem.state = isCurrentWorkgroup(item: menuItem) ? .on : .off
+        menuItem.toolTip = disabledExplanation(item: menuItem)
         return shouldEnable(item: menuItem)
+    }
+
+    // Why a per-workgroup entry is disabled, when that is worth explaining (e.g. tmux is too old).
+    private func disabledExplanation(item: NSMenuItem) -> String? {
+        guard let id = item.representedObject as? String, let session = currentSession() else {
+            return nil
+        }
+        return iTermWorkgroupController.instance.enterRefusal(workgroupUniqueIdentifier: id,
+                                                              on: session)?.explanation
     }
 
     private func shouldEnable(item: NSMenuItem) -> Bool {

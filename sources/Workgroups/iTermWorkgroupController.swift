@@ -107,6 +107,12 @@ final class iTermWorkgroupController: NSObject {
                 RLog("iTermWorkgroupController.enter: refusing to switch workgroups on \(session.guid), a non-leader member of \(member.instanceUniqueIdentifier)")
             case .floatingPane:
                 RLog("iTermWorkgroupController.enter: refusing; session \(session.guid) is a floating pane")
+            case .tmuxTooOld:
+                RLog("iTermWorkgroupController.enter: refusing; session \(session.guid) is a pane of a tmux older than 3.2")
+                // Say why when the user asked; a trigger fires on its own, maybe often.
+                if mechanism == .menu || mechanism == .onboarding, let explanation = refusal.explanation {
+                    Self.showRefusal(explanation)
+                }
             }
             return false
         case .proceed(let existing, let workgroup):
@@ -185,12 +191,31 @@ final class iTermWorkgroupController: NSObject {
         // `session` is a floating pane. A workgroup adds peers and split
         // children around its leader, and a float holds one session.
         case floatingPane
+        // `session` is a pane of a tmux server too old to keep a workgroup (before tmux 3.2,
+        // which has format subscriptions; see TmuxWorkgroupBinding). Native splits and tabs
+        // can't stand in: tmux's next layout change would remove them.
+        case tmuxTooOld
+
+        /// Why the user can't enter a workgroup, for refusals worth explaining.
+        var explanation: String? {
+            switch self {
+            case .tmuxTooOld:
+                return String(localized: "Workgroup.TmuxTooOld",
+                              defaultValue: "Workgroups in a tmux Integration session need tmux 3.2 or later. Update tmux, or enter the workgroup in a session that isn’t using tmux Integration.",
+                              comment: "Shown when the user tries to enter a workgroup in a tmux Integration session whose tmux is older than 3.2")
+            case .restoring, .unusableWorkgroup, .nonLeaderMember, .floatingPane:
+                return nil
+            }
+        }
     }
 
     func enterDisposition(workgroupUniqueIdentifier identifier: String,
                           on session: PTYSession) -> EnterDisposition {
         if session.delegate?.sessionIsFloating(session) == true {
             return .refused(.floatingPane)
+        }
+        if session.isTmuxClient, session.tmuxController?.gateway?.supportsSubscriptions() != true {
+            return .refused(.tmuxTooOld)
         }
         let existing = registeredInstance(on: session)
         if let existing {
@@ -216,6 +241,17 @@ final class iTermWorkgroupController: NSObject {
             return .refused(.unusableWorkgroup)
         }
         return .proceed(existing: existing, workgroup: workgroup)
+    }
+
+    private static func showRefusal(_ explanation: String) {
+        let warning = iTermWarning()
+        warning.title = explanation
+        warning.heading = String(localized: "Workgroup.CannotEnterHeading",
+                                 defaultValue: "Can’t Enter Workgroup",
+                                 comment: "Heading of the alert explaining why a workgroup can't be entered")
+        warning.actionLabels = [iTermLocalizedOK()]
+        warning.warningType = .kiTermWarningTypePersistent
+        _ = warning.runModal()
     }
 
     func enterRefusal(workgroupUniqueIdentifier identifier: String,

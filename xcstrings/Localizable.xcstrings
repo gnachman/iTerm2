@@ -213133,6 +213133,48 @@
         }
       }
     },
+    "Workgroup.CannotEnterHeading" : {
+      "comment" : "Heading of the alert explaining why a workgroup can't be entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeitsgruppe kann nicht aufgerufen werden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Can’t Enter Workgroup"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ワークグループに入れません"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não é possível entrar no grupo de trabalho"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удаётся войти в рабочую группу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法进入工作组"
+          }
+        }
+      }
+    },
     "Workgroup.ExitOneWorkgroupCloseSessions" : {
       "comment" : "Confirmation; first placeholder is the workgroup name, second is the number of other sessions that will close",
       "localizations" : {
@@ -213685,6 +213727,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "标签页"
+          }
+        }
+      }
+    },
+    "Workgroup.TmuxTooOld" : {
+      "comment" : "Shown when the user tries to enter a workgroup in a tmux Integration session whose tmux is older than 3.2",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeitsgruppen in einer tmux-Integrationssitzung erfordern tmux 3.2 oder neuer. Aktualisieren Sie tmux oder rufen Sie die Arbeitsgruppe in einer Sitzung auf, die keine tmux-Integration verwendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Workgroups in a tmux Integration session need tmux 3.2 or later. Update tmux, or enter the workgroup in a session that isn’t using tmux Integration."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux統合のセッションでワークグループを使うには、tmux 3.2以降が必要です。tmuxをアップデートするか、tmux統合を使用していないセッションでワークグループに入ってください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupos de trabalho em uma sessão de Integração com tmux exigem o tmux 3.2 ou posterior. Atualize o tmux ou entre no grupo de trabalho em uma sessão que não use a Integração com tmux."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для рабочих групп в сеансе интеграции с tmux нужен tmux 3.2 или новее. Обновите tmux или войдите в рабочую группу в сеансе, который не использует интеграцию с tmux."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 tmux 集成会话中使用工作组需要 tmux 3.2 或更高版本。请更新 tmux，或在未使用 tmux 集成的会话中进入工作组。"
           }
         }
       }
