@@ -36,6 +36,29 @@ private final class TransferBox {
     weak var transfer: ConductorFileTransfer?
 }
 
+// Fails the local steps that follow a finished download: quarantining the file, or moving
+// it into place.
+@MainActor
+private final class LocalFailureTransfer: ConductorFileTransfer {
+    var quarantineHandler: ((String?) -> Bool)?
+    var destinationDirectory: String?
+
+    override func quarantine(_ path: String?, sourceURL: URL?) -> Bool {
+        if let quarantineHandler {
+            return quarantineHandler(path)
+        }
+        return super.quarantine(path, sourceURL: sourceURL)
+    }
+
+    override func finalDestination(forPath baseName: String,
+                                   destinationDirectory: String,
+                                   prompt: Bool) -> String? {
+        return super.finalDestination(forPath: baseName,
+                                      destinationDirectory: self.destinationDirectory ?? destinationDirectory,
+                                      prompt: prompt)
+    }
+}
+
 private struct FakeRemoteError: LocalizedError {
     var errorDescription: String? { "fake failure" }
 }
@@ -46,11 +69,17 @@ final class ConductorDownloadTests: XCTestCase {
     private var transfers = [ConductorFileTransfer]()
     private var delegates = [FakeDownloadDelegate]()
     private var removedRemotePaths = [String]()
+    private var notificationTitles = [String]()
 
     override func setUp() {
         super.setUp()
         FileTransferManager.setOpensMenusForTesting(false)
-        TransferrableFile.setNotificationHandlerForTesting { _, _ in }
+        notificationTitles = []
+        TransferrableFile.setNotificationHandlerForTesting { [weak self] title, _ in
+            MainActor.assumeIsolated {
+                self?.notificationTitles.append(title)
+            }
+        }
         directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         ConductorFileTransfer.temporaryDirectoryForTesting = directory.path
@@ -105,14 +134,16 @@ final class ConductorDownloadTests: XCTestCase {
 
     private func download(_ remotePath: String,
                           operations: ConductorDownloadOperations,
-                          box: TransferBox? = nil) async -> ConductorFileTransfer {
+                          box: TransferBox? = nil,
+                          makeTransfer: ((SCPPath, ConductorFileTransferDelegate) -> ConductorFileTransfer)? = nil) async -> ConductorFileTransfer {
         let delegate = FakeDownloadDelegate(operations: operations)
         delegates.append(delegate)
         let path = SCPPath()
         path.path = remotePath
         path.hostname = "example.com"
         path.username = "user"
-        let transfer = ConductorFileTransfer(path: path, localPath: nil, data: nil, delegate: delegate)
+        let transfer = makeTransfer?(path, delegate)
+            ?? ConductorFileTransfer(path: path, localPath: nil, data: nil, delegate: delegate)
         transfers.append(transfer)
         box?.transfer = transfer
         transfer.download()
@@ -343,5 +374,33 @@ final class ConductorDownloadTests: XCTestCase {
             XCTAssertTrue(finished)
             XCTAssertEqual(received, data, "expectedSize \(String(describing: expectedSize))")
         }
+    }
+
+    private func localFailureTransfer(_ configure: @escaping (LocalFailureTransfer) -> Void) -> (SCPPath, ConductorFileTransferDelegate) -> ConductorFileTransfer {
+        return { path, delegate in
+            let transfer = LocalFailureTransfer(path: path, localPath: nil, data: nil, delegate: delegate)
+            configure(transfer)
+            return transfer
+        }
+    }
+
+    private var downloadFinishedNotifications: [String] {
+        return notificationTitles.filter { $0.hasPrefix("Download finished") }
+    }
+
+    // T-180: when the finished file couldn't be moved into place, the transfer still reported
+    // success, said it was saved, and pointed at a file that didn't exist.
+    func testFailedMoveIntoPlaceFailsAndLeavesNoFile() async throws {
+        let missing = directory.appendingPathComponent("missing").path
+        let transfer = await download(
+            "/home/user/big.bin",
+            operations: operations(files: ["/home/user/big.bin": bytes(10_000)]),
+            makeTransfer: localFailureTransfer { $0.destinationDirectory = missing })
+        XCTAssertEqual(transfer.status, .finishedWithError)
+        XCTAssertTrue(transfer.isStopped)
+        XCTAssertFalse(transfer.error()?.isEmpty ?? true)
+        XCTAssertEqual(downloadFinishedNotifications, [])
+        XCTAssertEqual(notificationTitles.count, 1)
+        XCTAssertEqual(try contentsOfDirectory(), [])
     }
 }

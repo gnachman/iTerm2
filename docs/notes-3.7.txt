@@ -850,6 +850,10 @@ Bug Fixes:
 - An SSH Integration download that fails or is
   stopped no longer leaves an empty or partial
   hidden file in your Downloads folder.
+- An SSH Integration download that can’t be
+  saved into your Downloads folder when it
+  finishes now reports that it failed, instead
+  of saying the download finished.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
