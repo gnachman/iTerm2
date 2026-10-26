@@ -853,7 +853,10 @@ Bug Fixes:
 - An SSH Integration download that can’t be
   saved into your Downloads folder when it
   finishes now reports that it failed, instead
-  of saying the download finished.
+  of saying the download finished. One that
+  can’t be marked as downloaded from the
+  internet is deleted and reported as failed,
+  instead of staying listed as downloading.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.

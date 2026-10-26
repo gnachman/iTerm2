@@ -205,16 +205,23 @@ class ConductorFileTransfer: TransferrableFile {
     @MainActor
     func didFinishSuccessfully() {
         if state == .downloading {
+            // These failures end the transfer as failed so it doesn't stay listed as
+            // downloading with Stop available (T-186). fail(reason:) removes the hidden file.
             if !quarantine(_localPath, sourceURL: url) {
-                _error = String(localized: "ConductorFileTransfer.FailedToQuarantine", defaultValue: "Failed to quarantine", comment: "Error shown when a downloaded file cannot be quarantined")
-                removeTemporaryDownload()
-                FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
+                // Like SCP and inline file downloads, a file that couldn't be quarantined is
+                // deleted rather than kept, and the user is warned if it can't be deleted.
+                let unquarantinedPath = _localPath!
+                fail(reason: String(localized: "ConductorFileTransfer.FailedToQuarantine", defaultValue: "Failed to quarantine", comment: "Error shown when a downloaded file cannot be quarantined"))
+                if FileManager.default.fileExists(atPath: unquarantinedPath) {
+                    // Avoid a modal alert as a side effect of finishing the transfer.
+                    DispatchQueue.main.async {
+                        self.failedToRemoveUnquarantinedFile(at: unquarantinedPath)
+                    }
+                }
                 return
             }
             guard let attributes = try? FileManager.default.attributesOfItem(atPath: _localPath!) else {
-                _error = String(localized: "ConductorFileTransfer.CouldNotGetAttributes", defaultValue: "Could not get attributes of \(_localPath!)", comment: "Error shown when file attributes of a downloaded file cannot be read")
-                removeTemporaryDownload()
-                FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
+                fail(reason: String(localized: "ConductorFileTransfer.CouldNotGetAttributes", defaultValue: "Could not get attributes of \(_localPath!)", comment: "Error shown when file attributes of a downloaded file cannot be read"))
                 return
             }
             let size = attributes[FileAttributeKey.size] as? UInt ?? 0
