@@ -577,6 +577,51 @@ final class ConductorFlowTests: XCTestCase {
         XCTAssertEqual(delegate.commands, [])
     }
 
+    // MARK: - Why the monitor says it is off
+
+    // The monitor says why this connection is unpaced, not what the setting says now: a
+    // connection opened with the setting off stays unpaced after it is turned back on, and its
+    // framer supports flow control all along.
+    func testTheMonitorGivesTheReasonDecidedWhenTheConnectionStarted() throws {
+        Conductor.flowControlAvailableForTesting = false
+        conductor.startFlowControlIfPossible()
+        let whileOff = try XCTUnwrap(FlowControlMonitor.reasonOff(conductor))
+        XCTAssertTrue(whileOff.contains("advanced setting was off"), whileOff)
+        Conductor.flowControlAvailableForTesting = true
+        XCTAssertNil(conductor.flowController)
+        XCTAssertEqual(FlowControlMonitor.reasonOff(conductor), whileOff)
+    }
+
+    func testTheMonitorSaysAFramerThatRefusedFlowControlDoesNotSupportIt() throws {
+        conductor.startFlowControlIfPossible()
+        reply(["unrecognized command"], status: 1)
+        reply(["unrecognized command"], status: 1)
+        let reason = try XCTUnwrap(FlowControlMonitor.reasonOff(conductor))
+        XCTAssertTrue(reason.contains("does not support flow control"), reason)
+        Conductor.flowControlAvailableForTesting = false
+        XCTAssertEqual(FlowControlMonitor.reasonOff(conductor), reason, "the setting changing changes nothing")
+    }
+
+    func testTheMonitorSaysAChildWaitsForItsParent() throws {
+        let child = makeChild()
+        child.startFlowControlIfPossible()
+        let reason = try XCTUnwrap(FlowControlMonitor.reasonOff(child))
+        XCTAssertTrue(reason.contains("runs flow control version 2"), reason)
+    }
+
+    func testTheMonitorSaysAChildWasOffBecauseOfTheSettingNotItsParent() throws {
+        Conductor.flowControlAvailableForTesting = false
+        let child = makeChild()
+        child.startFlowControlIfPossible()
+        let reason = try XCTUnwrap(FlowControlMonitor.reasonOff(child))
+        XCTAssertTrue(reason.contains("advanced setting was off"), reason)
+    }
+
+    func testTheMonitorGivesNoReasonWhileFlowControlRuns() {
+        startFlowControl(version: 2)
+        XCTAssertNil(FlowControlMonitor.reasonOff(conductor))
+    }
+
     // MARK: - Grants, drains and pings
 
     func testGrantsAreWrittenAtOnceEvenWithACommandInFlight() {

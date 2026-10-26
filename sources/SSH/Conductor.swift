@@ -289,6 +289,8 @@ class Conductor: NSObject, SSHIdentityProvider {
     var flowRestartingAfterRestore = false
     /// `flow on` was sent and not yet answered.
     var flowOnPending = false
+    /// Why flow control is off, as decided when it was last tried; see Conductor+Flow.swift.
+    var flowOffReason: FlowOffReason?
     /// `flow on`s aborted in a row, each sent again.
     var flowOnRetries = 0
     var flowMayBeOn: Bool {

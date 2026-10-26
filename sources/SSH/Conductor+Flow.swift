@@ -22,6 +22,24 @@
 import Foundation
 
 extension Conductor {
+    /// Why a conductor's framer is not paced, recorded when that was decided. The setting can
+    /// change afterward without changing what was decided, so the reason is not worked out
+    /// again from the current setting.
+    enum FlowOffReason: Equatable {
+        /// “Pace output from remote hosts” was off.
+        case settingOff
+        /// A test turned off flow control for nested framers.
+        case nestedOffForTesting
+        /// The parent does not frame this conductor's output.
+        case parentDoesNotFrame
+        /// Waiting for the parent to run flow control version 2.
+        case waitingForParent
+        /// The framer refused `flow on`.
+        case unsupported
+        /// `flow on` was aborted and not sent again.
+        case aborted
+    }
+
     /// A clock that never jumps and counts sleep, like the framer's.
     nonisolated static func monotonicNow() -> TimeInterval {
         return Double(clock_gettime_nsec_np(CLOCK_MONOTONIC)) / 1_000_000_000
@@ -31,24 +49,32 @@ extension Conductor {
     /// uncontrolled, as before. A nested conductor waits until its parent's framer runs
     /// version 2; with any older framer in the chain only the outermost one is controlled.
     func startFlowControlIfPossible() {
+        guard !flowOnPending else {
+            return
+        }
         // A framer that may have flow control on needs a controller whatever the setting.
-        guard Self.flowControlAvailable || flowMayBeOn, !flowOnPending else {
+        guard Self.flowControlAvailable || flowMayBeOn else {
+            flowOffReason = .settingOff
             return
         }
         if let parent {
             guard Self.nestedFlowControlAvailableForTesting ?? true else {
+                flowOffReason = .nestedOffForTesting
                 return
             }
             guard parent.framing, parent.depth + 1 == depth else {
                 DLog("The parent does not frame this conductor's output; no flow control")
+                flowOffReason = .parentDoesNotFrame
                 return
             }
             guard parent.flowController != nil, parent.flowVersion >= 2 else {
                 DLog("Wait for the parent to run flow control version 2")
+                flowOffReason = .waitingForParent
                 parent.flowChildrenWaiting.add(self)
                 return
             }
         }
+        flowOffReason = nil
         // Listen before the framer can send a controlled frame: frames that follow the reply
         // in the stream can be parsed, and even executed, before the reply is handled here.
         // Missing them would leave credit counted as outstanding that the framer has spent.
@@ -75,6 +101,7 @@ extension Conductor {
             DLog("flow on was aborted")
             stopFlowControl()
             guard !hasEnded, flowOnRetries < Self.maxFlowOnRetries else {
+                flowOffReason = .aborted
                 return
             }
             flowOnRetries += 1
@@ -102,6 +129,7 @@ extension Conductor {
         guard status == 0, let (version, clock) = Self.flowVersionAndClock(fromReply: reply) else {
             DLog("The framer does not support flow control (status \(status): \(reply))")
             stopFlowControl()
+            flowOffReason = .unsupported
             flowMayBeOn = false
             flowChildrenWaiting.removeAllObjects()
             return

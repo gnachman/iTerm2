@@ -160,7 +160,9 @@ final class FlowControlMonitor: NSObject {
         return result
     }
 
-    private static func reasonOff(_ conductor: Conductor) -> String? {
+    /// Why the conductor is not paced: what was decided when its flow control was last tried,
+    /// not what the settings would decide now.
+    static func reasonOff(_ conductor: Conductor) -> String? {
         // Localization unneeded: technical output in a debugging window.
         if conductor.flowController != nil {
             return nil
@@ -171,12 +173,21 @@ final class FlowControlMonitor: NSObject {
         if conductor.flowOnPending {
             return "Starting: waiting for the framer to answer “flow on”."
         }
-        if let parent = conductor.parent, parent.flowController == nil || parent.flowVersion < 2 {
+        switch conductor.flowOffReason {
+        case .settingOff:
+            return "Off: the “Pace output from remote hosts” advanced setting was off when flow control was decided for this connection."
+        case .nestedOffForTesting:
+            return "Off: flow control for nested connections is turned off for testing."
+        case .parentDoesNotFrame:
+            return "Off: the connection it is nested in does not frame its output."
+        case .waitingForParent:
             return "Off until the connection it is nested in runs flow control version 2."
+        case .unsupported:
+            return "Off: the framer does not support flow control."
+        case .aborted:
+            return "Off: “flow on” was aborted and not sent again."
+        case nil:
+            return "Off: flow control has not been tried on this connection."
         }
-        if !Conductor.flowControlAvailable && !conductor.flowMayBeOn {
-            return "Off: the “Pace output from remote hosts” advanced setting is off."
-        }
-        return "Off: the framer does not support flow control."
     }
 }
