@@ -775,6 +775,7 @@
 		462C0949DF98401D69EC4250 /* RemoteCommand+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = C832F1FDBC038F9C98F04DE7 /* RemoteCommand+Mac.swift */; };
 		46385B41497E6F98C6486BFB /* CompanionWireVectors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F544D6F2B98C16911CCFCC2 /* CompanionWireVectors.swift */; };
 		46FCC43F4245666413E3D138 /* AgentHookEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E331BC658C4F2F1F394CC54 /* AgentHookEvent.swift */; };
+		469B0E35A2DA0F6B7BA403AD /* TransferrableFileStatusRowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1191F8492A220B356000A847 /* TransferrableFileStatusRowLayout.swift */; };
 		4705C05130977E2C81FD75E8 /* iTermUnicodeNormalization.h in Sources */ = {isa = PBXBuildFile; fileRef = 3335AD96138BA74CC79D25A8 /* iTermUnicodeNormalization.h */; };
 		47599A7C4CFF4E096439080E /* KittyDnDChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5818AC79B53F51E350E05682 /* KittyDnDChunker.swift */; };
 		47D71D5838CAD9DBC8E684FF /* KittyDnDController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDA05715892622B011834E98 /* KittyDnDController.swift */; };
@@ -5165,6 +5166,7 @@
 		10C7A9E53E5460D18210F62D /* AILiveAppleIntelligenceClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveAppleIntelligenceClassifier.swift; sourceTree = "<group>"; };
 		112E494BF19647C2BFCAD18B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MinimalPasteView.xib; sourceTree = "<group>"; };
 		1179CD897A4780286BB29AAC /* iTermDockBadgeController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermDockBadgeController.swift; sourceTree = "<group>"; };
+		1191F8492A220B356000A847 /* TransferrableFileStatusRowLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TransferrableFileStatusRowLayout.swift; sourceTree = "<group>"; };
 		11C735CA9A1AF5E864EC718E /* iTermStreamingPNGWriter.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermStreamingPNGWriter.m; sourceTree = "<group>"; };
 		11FDA9247035DE0FCCE7D23D /* iTermCursorBlinkFadeCurveIcon.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermCursorBlinkFadeCurveIcon.h; sourceTree = "<group>"; };
 		12059C10060BB05CF0292FBC /* iTermTabGroupBuiltInFunctions.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermTabGroupBuiltInFunctions.m; sourceTree = "<group>"; };
@@ -11019,6 +11021,7 @@
 				A68A30DA186D1429007F550F /* VT100RemoteHost.m */,
 				A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */,
 				A68A30DB186D1429007F550F /* VT100WorkingDirectory.m */,
+				1191F8492A220B356000A847 /* TransferrableFileStatusRowLayout.swift */,
 			);
 			path = FileTransfer;
 			sourceTree = "<group>";
@@ -20393,6 +20396,7 @@
 				1B2CDD7E697FD1F94FA99789 /* FlowControlMonitorRedrawPolicy.swift in Sources */,
 				335117784F92355E402EBE7C /* SSHHookArguments.swift in Sources */,
 				FAA6FC0D2C098EB7E33BEC16 /* SSHRemoteZipReply.swift in Sources */,
+				469B0E35A2DA0F6B7BA403AD /* TransferrableFileStatusRowLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

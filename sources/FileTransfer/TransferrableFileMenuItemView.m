@@ -8,6 +8,7 @@
 
 #import "TransferrableFileMenuItemView.h"
 #import "NSStringITerm.h"
+#import "iTerm2SharedARC-Swift.h"
 
 const CGFloat progressIndicatorHeight = 6;
 
@@ -149,20 +150,27 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
                                        smallTextHeight);
     [_subheading drawInRect:subheadingRect withAttributes:smallGrayAttributes];
 
+    // The status and the size share the bottom row. Give each its own part of it so a long
+    // status truncates instead of running into the size (F-723).
+    const NSRect bottomRowRect = NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
+                                            bottomY,
+                                            self.bounds.size.width - TransferrableFileMenuItemViewLeftMargin() - TransferrableFileMenuItemViewRightMargin(),
+                                            smallTextHeight);
+    const CGFloat statusWidth = _statusMessage ? [_statusMessage sizeWithAttributes:smallGrayAttributes].width : 0;
+    const CGFloat sizeWidth = [sizeString sizeWithAttributes:sizeAttributes].width;
+    iTermTransferrableFileStatusRowLayout *bottomRowLayout =
+        [[[iTermTransferrableFileStatusRowLayout alloc] initWithRowRect:bottomRowRect
+                                                            statusWidth:statusWidth
+                                                              sizeWidth:sizeWidth] autorelease];
+
     // Draw status label
     if (_statusMessage) {
-        [_statusMessage drawInRect:NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
-                                              bottomY,
-                                              self.bounds.size.width - TransferrableFileMenuItemViewLeftMargin() - TransferrableFileMenuItemViewRightMargin(),
-                                              smallTextHeight)
+        [_statusMessage drawInRect:bottomRowLayout.statusRect
                     withAttributes:smallGrayAttributes];
     }
 
     // Draw size
-    [sizeString drawInRect:NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
-                                      bottomY,
-                                      self.bounds.size.width - TransferrableFileMenuItemViewRightMargin() - TransferrableFileMenuItemViewLeftMargin(),
-                                      smallTextHeight)
+    [sizeString drawInRect:bottomRowLayout.sizeRect
             withAttributes:sizeAttributes];
 }
 
