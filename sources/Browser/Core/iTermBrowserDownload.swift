@@ -182,7 +182,7 @@ extension iTermBrowserDownload: WKDownloadDelegate {
         DispatchQueue.main.async {
             self._error = error.localizedDescription
             self.state = .failed
-            self.status = .finishedWithError
+            // The manager sets the status, and its notification gives the reason (F-717).
             FileTransferManager.sharedInstance().transferrableFile(self, 
                                                                    didFinishTransmissionWithError: error)
         }

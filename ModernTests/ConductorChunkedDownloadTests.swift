@@ -23,10 +23,15 @@ final class ConductorChunkedDownloadTests: XCTestCase {
     private let delegate = NullFileTransferDelegate()
     private var directory: URL!
     private var transfers = [ConductorFileTransfer]()
+    private var notifications = [(title: String, detail: String?)]()
 
     override func setUp() {
         super.setUp()
         FileTransferManager.setOpensMenusForTesting(false)
+        notifications = []
+        TransferrableFile.setNotificationHandlerForTesting { [weak self] title, detail in
+            self?.notifications.append((title: title, detail: detail))
+        }
         directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
@@ -40,6 +45,7 @@ final class ConductorChunkedDownloadTests: XCTestCase {
         transfers = []
         try? FileManager.default.removeItem(at: directory)
         FileTransferManager.setOpensMenusForTesting(true)
+        TransferrableFile.setNotificationHandlerForTesting(nil)
         super.tearDown()
     }
 
@@ -79,5 +85,31 @@ final class ConductorChunkedDownloadTests: XCTestCase {
         let transfer = startTransfer()
         transfer.fail(reason: "connection lost")
         XCTAssertEqual(transfer.status, TransferrableFileStatus.finishedWithError)
+    }
+
+    // F-717: the notification named neither the file nor that the download failed. It was just
+    // the bare reason, such as “File not found”.
+    func testFailedChunkedDownloadNotificationNamesFileAndReason() {
+        let transfer = startTransfer()
+        transfer.fail(reason: "File not found")
+        XCTAssertEqual(notifications.count, 1)
+        XCTAssertEqual(notifications.first?.title, "Download failed for “big.bin”.")
+        XCTAssertEqual(notifications.first?.detail, "File not found")
+    }
+
+    func testFinishedChunkedDownloadNotification() throws {
+        let transfer = startTransfer()
+        let destination = directory.appendingPathComponent("big.bin")
+        try Data("hello".utf8).write(to: destination)
+        transfer.didFinishChunkedDownload(to: destination)
+        XCTAssertEqual(notifications.map(\.title), ["Download finished for “big.bin”."])
+    }
+
+    // Stopping a download is not a failure, so it posts no notification.
+    func testStoppedChunkedDownloadPostsNoNotification() {
+        let transfer = startTransfer()
+        transfer.abort()
+        XCTAssertEqual(transfer.status, TransferrableFileStatus.cancelled)
+        XCTAssertTrue(notifications.isEmpty)
     }
 }

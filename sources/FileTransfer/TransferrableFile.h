@@ -56,6 +56,9 @@ typedef void (^TransferrableFileCompletionBlock)(BOOL success, NSString * _Nulla
 - (BOOL)isDownloading;
 - (void)didFailWithError:(NSString *)error;
 
+// Tests set this to see the notifications transfers post instead of posting them.
++ (void)setNotificationHandlerForTesting:(void (^ _Nullable)(NSString *title, NSString * _Nullable detail))handler;
+
 #pragma mark - Utility
 
 - (nullable NSString *)finalDestinationForPath:(NSString *)baseName

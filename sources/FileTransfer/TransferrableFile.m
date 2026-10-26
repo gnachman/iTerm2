@@ -162,13 +162,41 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
     }
 }
 
+static void (^gTransferrableFileNotificationHandlerForTesting)(NSString *, NSString *);
+
++ (void)setNotificationHandlerForTesting:(void (^)(NSString *, NSString *))handler {
+    // MRC: the static owns a heap copy of the block.
+    [gTransferrableFileNotificationHandlerForTesting release];
+    gTransferrableFileNotificationHandlerForTesting = [handler copy];
+}
+
+- (void)postNotificationWithTitle:(NSString *)title detail:(NSString *)detail {
+    if (gTransferrableFileNotificationHandlerForTesting) {
+        gTransferrableFileNotificationHandlerForTesting(title, detail);
+        return;
+    }
+    [[iTermNotificationController sharedInstance] notify:title withDescription:detail];
+}
+
+- (NSString *)failureNotificationTitle {
+    // A transfer that failed because its path was unusable may have no short name.
+    NSString *name = [self shortName];
+    if (name.length == 0) {
+        name = NSLocalizedStringWithDefaultValue(@"TerminalFile.UnnamedFile", nil, [NSBundle mainBundle], @"Unnamed file", @"Placeholder name for a downloaded file that has no local path");
+    }
+    return (self.isDownloading
+            ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.DownloadFailedNotification", nil, [NSBundle mainBundle], @"Download failed for “%@”.", @"Notification shown when a download fails; %@ is the file name"), name]
+            : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.UploadFailedNotification", nil, [NSBundle mainBundle], @"Upload failed for “%@”.", @"Notification shown when an upload fails; %@ is the file name"), name]);
+}
+
 - (void)didFailWithError:(NSString *)error {
     RLog(@"didFailWithError:%@", error);
     @synchronized(self) {
         if (_status != kTransferrableFileStatusFinishedWithError) {
             _status = kTransferrableFileStatusFinishedWithError;
             _timeOfLastStatusChange = [NSDate timeIntervalSinceReferenceDate];
-            [[iTermNotificationController sharedInstance] notify:error];
+            // Name the file as the success notification does, with the reason below (F-717).
+            [self postNotificationWithTitle:[self failureNotificationTitle] detail:error];
         }
     }
 }
@@ -188,17 +216,15 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
                     break;
 
                 case kTransferrableFileStatusFinishedSuccessfully:
-                    [[iTermNotificationController sharedInstance] notify:
+                    [self postNotificationWithTitle:
                         (self.isDownloading
                          ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.DownloadFinishedNotification", nil, [NSBundle mainBundle], @"Download finished for “%@”.", @"Notification shown when a download finishes; %@ is the file name"), [self shortName]]
-                         : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.UploadFinishedNotification", nil, [NSBundle mainBundle], @"Upload finished for “%@”.", @"Notification shown when an upload finishes; %@ is the file name"), [self shortName]])];
+                         : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.UploadFinishedNotification", nil, [NSBundle mainBundle], @"Upload finished for “%@”.", @"Notification shown when an upload finishes; %@ is the file name"), [self shortName]])
+                                             detail:nil];
                     break;
 
                 case kTransferrableFileStatusFinishedWithError:
-                    [[iTermNotificationController sharedInstance] notify:
-                        (self.isDownloading
-                         ? [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.DownloadFailedNotification", nil, [NSBundle mainBundle], @"Download failed for “%@”.", @"Notification shown when a download fails; %@ is the file name"), [self shortName]]
-                         : [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFile.UploadFailedNotification", nil, [NSBundle mainBundle], @"Upload failed for “%@”.", @"Notification shown when an upload fails; %@ is the file name"), [self shortName]])];
+                    [self postNotificationWithTitle:[self failureNotificationTitle] detail:nil];
             }
         }
     }
