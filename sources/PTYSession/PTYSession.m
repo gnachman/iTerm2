@@ -816,6 +816,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // An it2ssh that is still alive sends EndSSH after its conductor is gone and waits for
     // a line before exiting, so it must still be answered (F-705, F-708).
     NSMutableSet<NSString *> *_disconnectedSSHClientUniqueIDs;
+    // Keys typed after a connection ended, for the shell that takes over (F-783).
+    NSMutableData *_keysTypedAfterSSHEnded;
     // Watches local it2ssh processes so the session recovers when one dies (F-482).
     iTermSSHClientMonitor *_sshClientMonitor;
     // Abandoned connections whose framer recovery must not begin, as decided on the main
@@ -1398,6 +1400,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_stuckKeyReportingDetector release];
     [_queuedConnectingSSH release];
     [_disconnectedSSHClientUniqueIDs release];
+    [_keysTypedAfterSSHEnded release];
     [_sshClientMonitor release];
     [_framerRecoveryRefusals release];
     [_preSSHTTYModes release];
@@ -4440,6 +4443,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                forceEncoding:(BOOL)forceEncoding
                    reporting:(BOOL)reporting {
     if (_conductor.handlesKeystrokes) {
+        if (reporting && _conductor.hasEnded) {
+            // A report for a program on a host whose shell has exited. Whatever asked for it
+            // is gone; the shell that takes over must not read it as typed input (F-783).
+            DLog(@"Drop a report for an ended ssh connection");
+            return;
+        }
         [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         return;
     } else if (self.tmuxMode == TMUX_CLIENT) {
@@ -20887,6 +20896,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     iTermSecretClaim *claim = [[iTermSecretServer instance] claim:token];
     const BOOL localOrigin = (claim != nil);
+    // Keys kept for an earlier connection's EndSSH, which evidently never came, are stale.
+    [_keysTypedAfterSSHEnded release];
+    _keysTypedAfterSSHEnded = nil;
     if (!_conductor) {
         // A new outermost connection owns the tty now.
         [_ttyModeRepairer disarm];
@@ -21035,6 +21047,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         }
     }
     [_sshWriteQueue setLength:0];
+    // No EndSSH will come to deliver keys typed after it ended.
+    [_keysTypedAfterSSHEnded release];
+    _keysTypedAfterSSHEnded = nil;
     // A connection being set up is gone too, so stop holding back keystrokes for it.
     _connectingSSH = NO;
     [_queuedConnectingSSH release];
@@ -21189,6 +21204,13 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
         // and a no-op when no prompt is pending.
         [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
+        NSData *keys = [_conductor takeKeysTypedAfterEnd];
+        if (keys.length) {
+            if (!_keysTypedAfterSSHEnded) {
+                _keysTypedAfterSSHEnded = [[NSMutableData alloc] init];
+            }
+            [_keysTypedAfterSSHEnded appendData:keys];
+        }
         _conductor.delegate = nil;
         [_conductor autorelease];
     }
@@ -21257,6 +21279,7 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
             [_sshClientMonitor forgetSSHClientForClientUniqueID:uniqueID];
             [_disconnectedSSHClientUniqueIDs removeObject:uniqueID];
             [self writeTaskNoBroadcast:@"\x03\n"];
+            [self sendKeysTypedAfterSSHEnded];
         }
         return 0;
     }
@@ -21273,6 +21296,7 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     // it2ssh waits for a newline before exiting. This is in case ssh dies while iTerm2 is sending
     // conductor.sh.
     [self writeTaskNoBroadcast:@"\x03\n"];
+    [self sendKeysTypedAfterSSHEnded];
     if (_queuedConnectingSSH.length) {
         [_queuedConnectingSSH release];
         _queuedConnectingSSH = nil;
@@ -26913,6 +26937,24 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
                                              discardingInputForDeadClient:NO];
             }
         });
+    }
+}
+
+// Keys typed after a connection's login shell exited and before it was unhooked go to the
+// shell that took over: the connection it was nested in, or this session's own shell. Only
+// once it2ssh has its newline, which it would otherwise read them as part of (F-783).
+- (void)sendKeysTypedAfterSSHEnded {
+    NSData *keys = [[_keysTypedAfterSSHEnded retain] autorelease];
+    [_keysTypedAfterSSHEnded release];
+    _keysTypedAfterSSHEnded = nil;
+    if (!keys.length) {
+        return;
+    }
+    RLog(@"Send %@ bytes typed after an ssh connection ended to the shell that took over", @(keys.length));
+    if (_conductor.handlesKeystrokes) {
+        [_conductor sendKeys:keys];
+    } else {
+        [self writeData:keys];
     }
 }
 

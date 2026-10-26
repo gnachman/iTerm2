@@ -388,7 +388,18 @@ class Conductor: NSObject, SSHIdentityProvider {
     // Set once the connection is ending (it quit, or its login shell exited). Only the quit
     // may be sent after that: ssh may exit at any moment, and whatever reaches the pty after
     // it does is typed into the local terminal (F-709).
-    private(set) var hasEnded = false
+    @objc private(set) var hasEnded = false
+    // Keys typed after the connection ended (its login shell exited) and before the session
+    // unhooked it. They belong to the shell that takes over (F-783).
+    private var keysTypedAfterEnd = Data()
+
+    /// Keys typed after the connection ended, which the session gives to the shell that takes
+    /// over. Returns them once.
+    @objc func takeKeysTypedAfterEnd() -> Data {
+        let keys = keysTypedAfterEnd
+        keysTypedAfterEnd = Data()
+        return keys
+    }
     // Set once a quit has been sent. See sendQuitOnce().
     private var sentQuit = false
 
@@ -1906,7 +1917,24 @@ extension Conductor {
         return self.clientUniqueID == clientUniqueID || (parent?.ancestryContains(clientUniqueID: clientUniqueID) ?? false)
     }
 
+    /// Typed input.
     @objc func sendKeys(_ data: Data) {
+        guard !abandoned else {
+            log("Abandoned. Not sending keys.")
+            return
+        }
+        if hasEnded {
+            // Nothing may be sent any more, but the shell that takes over can have them.
+            log("Ended. Keep \(data.count) typed bytes for the shell that takes over")
+            keysTypedAfterEnd.append(data)
+            return
+        }
+        relayKeys(data)
+    }
+
+    /// Keys for this connection's shell that aren't typed input, such as a nested
+    /// conductor's commands.
+    func relayKeys(_ data: Data) {
         guard !abandoned else {
             log("Abandoned. Not sending keys.")
             return
@@ -3133,7 +3161,7 @@ extension Conductor {
         if let parent = parent {
             if let data = (string + end).data(using: .utf8) {
                 log("ask parent to send: \(string)")
-                parent.sendKeys(data)
+                parent.relayKeys(data)
             } else {
                 log("can't utf-8 encode string to send: \(string)")
             }

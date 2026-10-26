@@ -320,6 +320,31 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertEqual(delegate.written, "")
     }
 
+    // F-783: keys typed after the inner login shell exited, before its it2ssh's EndSSH, go to
+    // the outer host's shell once it2ssh has the newline it waits for.
+    func testKeysTypedAfterLoginShellExitGoToTheShellThatTakesOver() {
+        let root = hookFramingRoot()
+        let nested = hookNested(in: root)
+        nested.framedPID = 200
+        nested.forceReturnToGroundState()
+        nested.handleTerminate(200, code: 0, depth: nested.depth)
+        root.forceReturnToGroundState()
+        session.writes.removeAll()
+
+        nested.sendKeys("ls\r".data(using: .utf8)!)
+        XCTAssertTrue(Self.relayedPayloads(session.writes.joined()).filter { $0 == "ls\r" }.isEmpty,
+                      "\(session.writes)")
+
+        send(framed("out2", endSSH(nestedID)))
+        assertRootIsLive(root)
+        // The outer framer answers what it was already doing.
+        drain(root)
+        let newline = session.writes.firstIndex(of: "\u{03}\n")
+        XCTAssertNotNil(newline, "\(session.writes)")
+        let after = session.writes[((newline ?? 0) + 1)...].joined()
+        XCTAssertEqual(Self.relayedPayloads(after), ["ls\r"], "\(session.writes)")
+    }
+
     // F-781: Disconnect after the login shell exited must not send a second quit.
     func testQuitAfterLoginShellExitSendsOneQuit() {
         let delegate = RecordingConductorDelegate()
