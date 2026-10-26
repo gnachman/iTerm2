@@ -1654,6 +1654,32 @@ static BOOL sOSC7DisabledWarningShown;
     }
 }
 
+- (void)moveScreenContentToBottom {
+    if (self.terminalSoftAlternateScreenMode || self.currentGrid != self.primaryGrid) {
+        return;
+    }
+    VT100Grid *grid = self.primaryGrid;
+    // numberOfLinesUsed counts the cursor's line and every line above the last nonempty one, so
+    // moving down by the rest keeps all content on screen.
+    const int delta = self.height - grid.numberOfLinesUsed;
+    DLog(@"delta=%@", @(delta));
+    if (delta <= 0) {
+        return;
+    }
+    [grid scrollRect:VT100GridRectMake(0, 0, self.width, self.height)
+              downBy:delta
+           softBreak:NO];
+    const int firstScreenLine = self.numberOfScrollbackLines;
+    // An object that starts in scrollback and ends on screen keeps its start.
+    [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                  firstScreenLine,
+                                                                  self.width,
+                                                                  firstScreenLine + self.height)
+                            startingAfter:firstScreenLine - 1
+                              downByLines:delta];
+    grid.cursor = VT100GridCoordMake(grid.cursor.x, grid.cursor.y + delta);
+}
+
 - (void)ensureContentEndsAt:(int)line {
     if (line < 0 || line >= self.height || self.terminalSoftAlternateScreenMode) {
         return;

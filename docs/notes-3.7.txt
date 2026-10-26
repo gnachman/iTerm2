@@ -2286,3 +2286,6 @@ Bug Fixes:
 - Installing the iTerm2 utility scripts on Linux
   no longer prints tar warnings or leaves ._
   files in ~/.iterm2.
+- When a session’s program ends and iTerm2 offers
+  to restart it, short output such as a custom
+  command’s is no longer hidden behind the offer.
