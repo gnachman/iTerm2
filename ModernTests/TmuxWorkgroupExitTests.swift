@@ -22,6 +22,15 @@ private final class ExitSoftCloseSpyTab: PTYTab {
     }
 }
 
+/// Records toolbar refreshes.
+private final class ToolbarRefreshSpyTab: PTYTab {
+    var refreshed = [PTYSession]()
+
+    override func sessionDidChangeDesiredToolbarItems(_ session: PTYSession) {
+        refreshed.append(session)
+    }
+}
+
 final class TmuxWorkgroupExitTests: WorkgroupEntryTestBase {
     private var tmux: TmuxRecordingGateway!
     private var controller: TmuxController!
@@ -73,6 +82,33 @@ final class TmuxWorkgroupExitTests: WorkgroupEntryTestBase {
         XCTAssertFalse(fresh.forceDefaultEndAction)
         binding.configurePeerSession?(fresh, peer)
         XCTAssertTrue(fresh.forceDefaultEndAction)
+    }
+
+    // A tab member stays when a tmux workgroup ends here (e.g. at a detach), so its toolbar is
+    // refreshed to drop the workgroup's items. QA finding F-831.
+    func testAKeptTabMemberLosesItsWorkgroupToolbar() throws {
+        let root = WGFix.makeRoot()
+        let tabConfig = WGFix.makeTab(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "rootTab", sessions: [root, tabConfig])
+        let instance = try XCTUnwrap(enterWorkgroup(wg))
+        tmux = TmuxRecordingGateway()
+        let gateway = tmux.gateway
+        instance.tmuxBinding = try XCTUnwrap(TmuxWorkgroupBinding(gatewayProvider: { gateway }, sessionID: 4,
+                                                                  workgroup: wg,
+                                                                  instanceID: instance.instanceUniqueIdentifier,
+                                                                  gitBase: "main"))
+        let member = try XCTUnwrap(spawner.session(forConfigID: tabConfig.uniqueIdentifier))
+        member.view = SessionView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
+        let splitView = PTYSplitView(frame: member.view!.frame)
+        splitView.addSubview(member.view!)
+        let map = NSMapTable<SessionView, PTYSession>.strongToStrongObjects()
+        map.setObject(member, forKey: member.view!)
+        let tab = try XCTUnwrap(ToolbarRefreshSpyTab(root: splitView, sessions: map))
+        member.delegate = tab
+
+        instance.teardown()
+        XCTAssertNil(member.workgroupInstance)
+        XCTAssertTrue(tab.refreshed.contains { $0 === member })
     }
 
     private func checkPeerInViewIsLeftToTmux(closingSplit: Bool) throws {

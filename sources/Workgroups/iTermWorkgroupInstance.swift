@@ -741,6 +741,11 @@ final class iTermWorkgroupInstance: NSObject {
             guard let entry = nonPeerEntriesByConfigID[configID] else { continue }
             entry.session.workgroupInstance = nil
             entry.session.peerPort = nil
+            // A member on a tmux server stays (see below), even one that ended, as at a detach:
+            // it is an ordinary pane now, with no workgroup toolbar (QA finding F-831).
+            if tmuxBinding != nil, let delegate = entry.session.delegate {
+                delegate.sessionDidChangeDesiredToolbarItems(entry.session)
+            }
             // Skip sessions that have already exited.
             // iTermSessionWillTerminate fires before `exited` is set,
             // so this guard does NOT skip the session that triggered
