@@ -21074,7 +21074,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         }
     }
     [_sshWriteQueue setLength:0];
-    // No EndSSH will come to deliver keys typed after it ended.
+    // No EndSSH will come to deliver keys typed after it ended. Its it2ssh is gone, so the
+    // shell that took over gets them below.
+    NSData *keysTypedAfterEnd = [[_keysTypedAfterSSHEnded retain] autorelease];
     [_keysTypedAfterSSHEnded release];
     _keysTypedAfterSSHEnded = nil;
     // A connection being set up is gone too, so stop holding back keystrokes for it.
@@ -21088,6 +21090,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         // The outermost connection's ssh ran on this session's tty.
         [self restoreTTYModesIfIT2SSHExitedForClientUniqueID:uniqueID
                                    discardingInputForDeadClient:YES];
+    }
+    if (keysTypedAfterEnd.length) {
+        RLog(@"Send %@ bytes typed after an abandoned ssh connection ended", @(keysTypedAfterEnd.length));
+        [self writeKeysForShellThatTookOver:keysTypedAfterEnd];
     }
 }
 
