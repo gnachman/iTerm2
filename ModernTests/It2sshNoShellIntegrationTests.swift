@@ -37,7 +37,7 @@ final class It2sshNoShellIntegrationTests: XCTestCase {
         // line and fails, as `ssh` with no host does; it2ssh greps that for boolean options.
         try """
             #!/bin/sh
-            [ "$#" -eq 0 ] && { echo 'usage: ssh [-46] destination' >&2; exit 255; }
+            [ "$#" -eq 0 ] && { echo 'usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-p port] destination' >&2; exit 255; }
             for a in "$@"; do printf '%s\\0' "$a"; done > '\(record.path)'
             """.write(to: fakeSSH, atomically: false, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: fakeSSH.path)
@@ -110,6 +110,20 @@ final class It2sshNoShellIntegrationTests: XCTestCase {
         XCTAssertTrue(try reportedSSHArgs(remote).contains("--no-shell-integration"))
     }
 
+    // Once a word after the host isn't an option, the rest is the remote command, as for ssh. An
+    // option's value is not an option either.
+    func testFlagAfterTheRemoteCommandStartsIsTheRemoteCommands() throws {
+        for arguments in [["host", "-t", "echo", "--no-shell-integration"],
+                          ["host", "-p", "--no-shell-integration"],
+                          ["host", "-2", "echo", "--no-shell-integration"]] {
+            // Removed first, so a refusal (which never runs ssh) can't pass on an earlier record.
+            try? FileManager.default.removeItem(at: record)
+            let args = try sshArguments(arguments)
+            let remote = try XCTUnwrap(args.last, "\(arguments)")
+            XCTAssertTrue(try reportedSSHArgs(remote).contains("--no-shell-integration"), "\(arguments)")
+        }
+    }
+
     // After --, ssh reads no options after the host either, so there it is the remote command.
     func testFlagAfterTheHostFollowingDoubleDashIsTheRemoteCommand() throws {
         let args = try sshArguments(["--", "host", "--no-shell-integration"])
@@ -132,7 +146,13 @@ final class It2sshNoShellIntegrationTests: XCTestCase {
     // rather than quietly load shell integration after all.
     func testMisplacedFlagIsRefused() throws {
         for arguments in [["host", "--no-shell-integration"],
-                          ["-p", "2222", "--no-shell-integration", "host"]] {
+                          ["-p", "2222", "--no-shell-integration", "host"],
+                          // ssh keeps reading options after the host until a word that isn't one.
+                          ["host", "-t", "--no-shell-integration"],
+                          ["-p", "22", "host", "-t", "--no-shell-integration"],
+                          ["host", "-p", "22", "--no-shell-integration"],
+                          ["host", "-tv", "--no-shell-integration"],
+                          ["host", "-2", "--no-shell-integration"]] {
             let result = try runIt2ssh(arguments)
             XCTAssertEqual(result.status, 1, "\(arguments)")
             XCTAssertTrue(result.stderr.contains("--no-shell-integration must be the first argument"),

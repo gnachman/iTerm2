@@ -78,10 +78,10 @@ if [[ "${1:-}" == "--no-shell-integration" ]]; then
     fi
 fi
 
-# Anywhere ssh would read an option (among the options, or right after the host, where ssh
-# reads options too unless they were ended with --) the flag can only be a misplaced it2ssh
-# option. Going ahead would quietly load shell integration after all, so refuse. Elsewhere it is
-# a word of the remote command.
+# Anywhere ssh would read an option (among the options, or after the host, where ssh keeps
+# reading options until the first word that isn't one, unless they were ended with --) the flag
+# can only be a misplaced it2ssh option. Going ahead would quietly load shell integration after
+# all, so refuse. Elsewhere it is a word of the remote command.
 misplaced_flag() {
     echo "it2ssh: --no-shell-integration must be the first argument, before any ssh options and the host." >&2
     exit 1
@@ -100,8 +100,30 @@ COMMAND=()
 ARGS_ALLOWED=1
 EXPECT_VALUE=0
 BOOLEAN_ARGS=$("$SSH" 2>&1 | tr -d '\n' | sed -e 's/^[^[]*\[-*\([a-z0-9A-Z]*\).*/\1/' || true)
+# ssh's getopt also takes -1 and -2, which its usage line leaves out.
+BOOLEAN_ARGS="${BOOLEAN_ARGS}12"
 HAS_T=0
 SAW_DDASH=0
+# Whether ssh would still read the next word after the host as an option, and whether that word
+# is the value of the option before it.
+POST_HOST_OPTIONS=1
+POST_HOST_VALUE=0
+
+# Whether an option word ($1, like -t, -tv or -p) leaves its value to the next word: getopt reads
+# letters until one that takes a value, which takes the rest of the word, or the next word if
+# nothing is left.
+option_wants_next_word() {
+    local word="$1"
+    local i
+    for ((i = 1; i < ${#word}; i++)); do
+        case "$BOOLEAN_ARGS" in
+            *"${word:i:1}"*) ;;
+            *) [[ $((i + 1)) == ${#word} ]] && return 0
+               return 1 ;;
+        esac
+    done
+    return 1
+}
 
 while [[ $# -gt 0 ]]; do
     if [[ $EXPECT_VALUE == 1 ]]; then
@@ -111,8 +133,20 @@ while [[ $# -gt 0 ]]; do
         if [[ $HOSTNAME == "" ]]; then
             HOSTNAME="$1"
         else
-            if [[ $SAW_DDASH == 0 && ${#COMMAND[@]} == 0 && "$1" == "--no-shell-integration" ]]; then
-                misplaced_flag
+            if [[ $SAW_DDASH == 0 && $POST_HOST_OPTIONS == 1 ]]; then
+                if [[ $POST_HOST_VALUE == 1 ]]; then
+                    POST_HOST_VALUE=0
+                elif [[ "$1" == "--" ]]; then
+                    POST_HOST_OPTIONS=0
+                elif [[ "$1" == "--no-shell-integration" ]]; then
+                    misplaced_flag
+                elif [[ "$1" == -?* ]]; then
+                    if option_wants_next_word "$1"; then
+                        POST_HOST_VALUE=1
+                    fi
+                else
+                    POST_HOST_OPTIONS=0
+                fi
             fi
             COMMAND+=("$1")
         fi
