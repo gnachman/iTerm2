@@ -84,4 +84,14 @@ final class ClaudeCodeUninstallTargetsTests: XCTestCase {
         let hosts = ClaudeCodeUninstallTargets.hosts(connections: [("u@b", true), ("u@a", true), ("u@b", true), ("u@c", false)])
         XCTAssertEqual(hosts, ["u@a", "u@b"])
     }
+
+    // A host that is this Mac reached over ssh is not offered: Install refuses it, and its
+    // settings belong to the local uninstall (QA finding F-606).
+    @MainActor
+    func testThisMacIsNotOffered() async {
+        let hosts = await ClaudeCodeUninstallTargets.excludingThisMac(["u@a", "me@localhost", "u@b"]) { host in
+            host == "me@localhost"
+        }
+        XCTAssertEqual(hosts, ["u@a", "u@b"])
+    }
 }

@@ -214,22 +214,16 @@ class ClaudeCodeOnboarding: NSObject {
             RLog("Onboarding: couldn't read settings.json: \(error)")
             return .unreadable
         }
-        // An empty or whitespace-only file has no hooks to remove (and Install
-        // accepts it), but JSONSerialization rejects it.
-        let blank = String(data: data, encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty ?? false
-        if blank {
-            return .success
-        }
-        let parsed: Any
+        // An empty or whitespace-only file is an empty object, with no hooks
+        // to remove (the remote uninstall agrees).
+        let parsed: [String: Any]?
         do {
-            parsed = try JSONSerialization.jsonObject(with: data)
+            parsed = try ClaudeCodeHookSettings.settingsObject(from: data)
         } catch {
             DLog("Onboarding: settings.json isn't valid JSON: \(error)")
             return .malformed
         }
-        guard var settings = parsed as? [String: Any] else {
+        guard var settings = parsed else {
             DLog("Onboarding: settings.json root isn't a JSON object")
             return .malformed
         }
@@ -665,7 +659,7 @@ class ClaudeCodeOnboarding: NSObject {
         guard let data = try? Data(contentsOf: url) else {
             return nil
         }
-        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        return ClaudeCodeHookSettings.settingsObjectIfValid(from: data)
     }
 
     // This instance's hook commands in settings.json (isOurHookCommand), across
@@ -2522,19 +2516,15 @@ class ClaudeCodeOnboarding: NSObject {
                 RLog("Onboarding: couldn't read settings.json, leaving it alone: \(error)")
                 return .unreadable
             }
-            let parsed: Any
+            let parsed: [String: Any]?
             do {
-                // An empty or whitespace-only file holds nothing to lose, but
-                // JSONSerialization rejects it, so treat it as an empty object.
-                let blank = String(data: data, encoding: .utf8)?
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .isEmpty ?? false
-                parsed = blank ? [String: Any]() : try JSONSerialization.jsonObject(with: data)
+                // An empty or whitespace-only file is an empty object.
+                parsed = try ClaudeCodeHookSettings.settingsObject(from: data)
             } catch {
                 RLog("Onboarding: settings.json isn't valid JSON, leaving it alone: \(error)")
                 return .malformed
             }
-            guard let object = parsed as? [String: Any] else {
+            guard let object = parsed else {
                 RLog("Onboarding: settings.json root isn't a JSON object, leaving it alone")
                 return .malformed
             }

@@ -284,6 +284,57 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
         XCTAssertEqual(unreadable, .unreadable)
     }
 
+    // The parse shared with this Mac's install: blank is empty, a non-object root is nil, and
+    // anything else that is not JSON throws.
+    func testSettingsObjectParse() throws {
+        XCTAssertEqual(try ClaudeCodeHookSettings.settingsObject(from: Data())?.count, 0)
+        XCTAssertEqual(try ClaudeCodeHookSettings.settingsObject(from: Data(" \r\n".utf8))?.count, 0)
+        XCTAssertEqual(try ClaudeCodeHookSettings.settingsObject(from: Data("{\"a\": 1}".utf8))?["a"] as? Int, 1)
+        XCTAssertNil(try ClaudeCodeHookSettings.settingsObject(from: Data("[]".utf8)))
+        XCTAssertThrowsError(try ClaudeCodeHookSettings.settingsObject(from: Data("{".utf8)))
+        XCTAssertNil(ClaudeCodeHookSettings.settingsObjectIfValid(from: Data("{".utf8)))
+    }
+
+    // An empty or whitespace-only settings file is an empty object, as on this Mac (F-365): there
+    // is nothing to remove, so uninstall succeeds without writing (QA finding F-606).
+    func testUninstallTreatsABlankFileAsEmpty() async throws {
+        for contents in ["", "  \n\t"] {
+            let files = try makeFiles()
+            files.files[settingsPath] = Data(contents.utf8)
+            let result = await Hooks.uninstall(files: files, settingsPath: settingsPath, home: home)
+            XCTAssertEqual(result, .success, contents.debugDescription)
+            XCTAssertEqual(files.writes, [], contents.debugDescription)
+        }
+    }
+
+    func testStatusOfABlankFileIsNotInstalled() async throws {
+        let files = try makeFiles()
+        files.files[settingsPath] = Data()
+        let status = await Hooks.status(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(status, .notInstalled)
+    }
+
+    func testInstallIntoABlankFile() async throws {
+        let files = try makeFiles()
+        files.files[settingsPath] = Data("\n".utf8)
+        let result = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(result, .installed)
+        XCTAssertEqual(ourCommands(try settings(files), event: "Stop"), [command])
+    }
+
+    // Install refuses this Mac reached over ssh, so uninstall must not edit its settings through
+    // the connection either: the local uninstall owns them (QA finding F-606).
+    func testUninstallOnThisMacLeavesItsSettingsAlone() async throws {
+        let files = try makeFiles()
+        _ = await Hooks.install(files: files, settingsPath: settingsPath, home: home)
+        let before = try XCTUnwrap(files.files[settingsPath])
+        files.token = try XCTUnwrap(iTermMachineIdentity.localVersion1TokenForTesting())
+        let result = await Hooks.uninstall(files: files, settingsPath: settingsPath, home: home)
+        XCTAssertEqual(result, .success)
+        XCTAssertEqual(files.writes, [settingsPath], "only the install wrote")
+        XCTAssertEqual(files.files[settingsPath], before)
+    }
+
     // MARK: - The Python that does it for real
 
     /// Runs `statements` the way framer's runpy does: as the body of a function whose return

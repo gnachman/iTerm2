@@ -51,8 +51,16 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         return ConductorRegistry.instance.conductors(forStringIdentifier: host).first { $0.framing }
     }
 
+    /// True while the hosts are checked before the confirmation, so a second click while that
+    /// runs doesn't queue a second dialog.
+    private var preparingUninstall = false
+
     @MainActor
     private func reallyUninstall() {
+        guard !preparingUninstall else {
+            DLog("Uninstall: already preparing; ignoring")
+            return
+        }
         // The settings.json location was recorded at install time, so this is a
         // synchronous read (no shell spawn) and is the same path uninstallHooks
         // operates on below.
@@ -60,9 +68,26 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         // Nothing about remote hosts is kept on this Mac, and removing the hook means editing a
         // file on the host, so the hosts to look at are the ones connected through SSH
         // Integration now. Each one's own settings say whether the hook is there.
-        let hosts = ClaudeCodeUninstallTargets.hosts(connections: ConductorRegistry.instance.conductors.values
+        let candidates = ClaudeCodeUninstallTargets.hosts(connections: ConductorRegistry.instance.conductors.values
             .flatMap { $0.compactMap(\.value) }
             .map { ($0.sshIdentity.stringIdentifier, $0.framing) })
+        preparingUninstall = true
+        Task { @MainActor [weak self] in
+            // A host that is this Mac is left out of the dialog and the removal, as Install
+            // refuses it.
+            let hosts = await ClaudeCodeUninstallTargets.excludingThisMac(candidates) { [weak self] host in
+                guard let conductor = self?.liveConductor(forHost: host) else {
+                    return false
+                }
+                return await ClaudeCodeRemoteHooks.hostIsThisMac(files: ConductorClaudeCodeRemoteFiles(conductor: conductor))
+            }
+            self?.preparingUninstall = false
+            self?.confirmAndUninstall(settingsPath: settingsPath, hosts: hosts)
+        }
+    }
+
+    @MainActor
+    private func confirmAndUninstall(settingsPath: String, hosts: [String]) {
         let confirm = iTermWarning()
         confirm.heading = String(localized: "ClaudeCode.UninstallTitle", defaultValue: "Uninstall Claude Code Integration?", comment: "Title of the uninstall confirmation dialog")
         var lines = [String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes iTerm2\u{2019}s status hook from \(settingsPath), the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can set up the integration again any time from the iTerm2 menu.", comment: "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json")]
@@ -284,7 +309,7 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
 
     @objc func validateUninstallMenuItem(_ item: NSMenuItem) -> Bool {
         item.isHidden = !integrationKnownToHaveExisted
-        return true
+        return !preparingUninstall
     }
 
     private var integrationKnownToHaveExisted: Bool {
@@ -305,5 +330,25 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
 enum ClaudeCodeUninstallTargets {
     static func hosts(connections: [(host: String, framing: Bool)]) -> [String] {
         return Set(connections.filter(\.framing).map(\.host)).sorted()
+    }
+
+    /// `hosts` without those that are this Mac reached over ssh. Install refuses those, and their
+    /// settings are this Mac's, which the local uninstall handles. Keeps the order. The hosts are
+    /// asked at once, so the wait is the slowest one's rather than the sum.
+    @MainActor
+    static func excludingThisMac(_ hosts: [String],
+                                 isThisMac: @escaping @MainActor (String) async -> Bool) async -> [String] {
+        let checks = hosts.map { host in
+            (host, Task { @MainActor in await isThisMac(host) })
+        }
+        var result = [String]()
+        for (host, check) in checks {
+            if await check.value {
+                DLog("Uninstall: \(host) is this Mac; not offering it")
+                continue
+            }
+            result.append(host)
+        }
+        return result
     }
 }

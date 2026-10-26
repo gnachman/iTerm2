@@ -236,6 +236,25 @@ enum ClaudeCodeHookSettings {
         return result
     }
 
+    /// The settings object a settings file holds, or nil when its root is not a JSON object.
+    /// Throws when it is not JSON at all. An empty or whitespace-only file is an empty object:
+    /// it holds nothing to lose, but JSONSerialization rejects it. Shared by the install on this
+    /// Mac and the remote one so that they agree on which files are malformed.
+    static func settingsObject(from data: Data) throws -> [String: Any]? {
+        let blank = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty ?? false
+        if blank {
+            return [:]
+        }
+        return try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
+
+    /// settingsObject(from:), with both failures as nil.
+    static func settingsObjectIfValid(from data: Data) -> [String: Any]? {
+        return (try? settingsObject(from: data)) ?? nil
+    }
+
     /// The bytes iTerm2 writes a settings file as.
     static func serialized(_ settings: [String: Any]) throws -> Data {
         return try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])

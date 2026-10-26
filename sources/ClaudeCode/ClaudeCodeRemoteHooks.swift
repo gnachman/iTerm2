@@ -212,9 +212,9 @@ enum ClaudeCodeRemoteHooks {
             RLog("Remote hook install: could not read settings (\(reason))")
             return .unreadable
         case .contents(let data):
-            // Unlike the local install, an unparseable file is not treated as empty: it is the
-            // user's, and overwriting it would lose whatever was in it.
-            guard let parsed = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            // An unparseable file is not treated as empty: it is the user's, and overwriting it
+            // would lose whatever was in it. A blank one is empty, as on this Mac.
+            guard let parsed = ClaudeCodeHookSettings.settingsObjectIfValid(from: data) else {
                 RLog("Remote hook install: settings are not a JSON object")
                 return .malformed
             }
@@ -256,7 +256,7 @@ enum ClaudeCodeRemoteHooks {
         case .failed:
             return .unknown
         case .contents(let data):
-            guard let parsed = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            guard let parsed = ClaudeCodeHookSettings.settingsObjectIfValid(from: data) else {
                 return .unknown
             }
             settings = parsed
@@ -279,6 +279,12 @@ enum ClaudeCodeRemoteHooks {
                           settingsPath: String,
                           home: String,
                           descriptor: AgentHookDescriptor = .claudeCode) async -> ClaudeCodeUninstallHooksResult {
+        // As in install: this Mac's settings belong to the local uninstall, which has already
+        // handled them. Nothing to do here.
+        if await hostIsThisMac(files: files) {
+            RLog("Remote hook uninstall skipped: the host is this Mac")
+            return .success
+        }
         let settings: [String: Any]
         switch await files.read(settingsPath) {
         case .missing:
@@ -286,7 +292,7 @@ enum ClaudeCodeRemoteHooks {
         case .failed:
             return .unreadable
         case .contents(let data):
-            guard let parsed = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            guard let parsed = ClaudeCodeHookSettings.settingsObjectIfValid(from: data) else {
                 return .malformed
             }
             settings = parsed
