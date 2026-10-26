@@ -205328,6 +205328,48 @@
         }
       }
     },
+    "TransferrableFileMenuItemView.SizeProgress" : {
+      "comment" : "Size column of a file in the Downloads or Uploads menu; the first argument is how many bytes have been transferred (for example “1.2 MB”) and the second is the size of the file",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ von %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ из %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / %2$@"
+          }
+        }
+      }
+    },
     "Trigger.AfterFractionalSeconds" : {
       "comment" : "Trigger timing description with a fractional number of seconds; %@ is the number, such as 0.5",
       "extractionState" : "extracted_with_value",

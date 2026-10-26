@@ -751,12 +751,13 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 - (NSMenu *)downloadsMenu {
     if (!downloadsMenu_) {
         downloadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
-        downloadsMenu_.title = NSLocalizedStringWithDefaultValue(@"DownloadsMenu.Title", nil, [NSBundle mainBundle], @"Downloads", @"Title of the Downloads menu");
+        NSString *title = NSLocalizedStringWithDefaultValue(@"DownloadsMenu.Title", nil, [NSBundle mainBundle], @"Downloads", @"Title of the Downloads menu");
+        downloadsMenu_.title = title;
         [downloadsMenu_ setAccessibilityIdentifier:iTermDownloadsMenuAXIdentifier];
         NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
         [mainMenu insertItem:downloadsMenu_
                      atIndex:mainMenu.itemArray.count - 1];
-        [downloadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Downloads"] autorelease]];
+        [downloadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:title] autorelease]];
 
         NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"Menu.ClearAll", nil, [NSBundle mainBundle], @"Clear All", @"Menu item to clear all items") action:@selector(clearAllDownloads:) keyEquivalent:@""] autorelease];
         [downloadsMenu_.submenu addItem:clearAll];
@@ -768,12 +769,13 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
 - (NSMenu *)uploadsMenu {
     if (!uploadsMenu_) {
         uploadsMenu_ = [[[NSMenuItem alloc] init] autorelease];
-        uploadsMenu_.title = NSLocalizedStringWithDefaultValue(@"UploadsMenu.Title", nil, [NSBundle mainBundle], @"Uploads", @"Title of the Uploads menu");
+        NSString *title = NSLocalizedStringWithDefaultValue(@"UploadsMenu.Title", nil, [NSBundle mainBundle], @"Uploads", @"Title of the Uploads menu");
+        uploadsMenu_.title = title;
         [uploadsMenu_ setAccessibilityIdentifier:iTermUploadsMenuAXIdentifier];
         NSMenu *mainMenu = [[NSApplication sharedApplication] mainMenu];
         [mainMenu insertItem:uploadsMenu_
                      atIndex:mainMenu.itemArray.count - 1];
-        [uploadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:@"Uploads"] autorelease]];
+        [uploadsMenu_ setSubmenu:[[[NSMenu alloc] initWithTitle:title] autorelease]];
 
         NSMenuItem *clearAll = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"Menu.ClearAll", nil, [NSBundle mainBundle], @"Clear All", @"Menu item to clear all items") action:@selector(clearAllUploads:) keyEquivalent:@""] autorelease];
         [uploadsMenu_.submenu addItem:clearAll];
