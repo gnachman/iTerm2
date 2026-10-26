@@ -655,6 +655,13 @@ Bug Fixes:
   read the arguments, it now ends the
   connection and explains why instead of
   leaving the tab stuck.
+- A file fetched over SSH Integration with
+  Shell > ssh > Download Files… no longer stays
+  listed as downloading in the Downloads menu
+  after it finishes. Clear All in the Downloads
+  menu now removes finished SSH Integration
+  downloads, and their notification no longer
+  says “Upload finished”.
 - When an SSH Integration session ends, stray
   text such as YXV0b3BvbGw= no longer appears in
   the terminal.

@@ -20,6 +20,9 @@ class ConductorFileTransfer: TransferrableFile {
     weak var delegate: ConductorFileTransferDelegate?
     private var _error = ""
     private var _localPath: String?
+    // Whether this is a download, which stays true once it ends. The Downloads menu and Clear
+    // All go by this (F-714).
+    private var isDownload = false
     let data: Data?
 
     private enum State {
@@ -82,6 +85,7 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     override func download() {
+        isDownload = true
         state = .downloading
         status = .starting
         do {
@@ -148,6 +152,26 @@ class ConductorFileTransfer: TransferrableFile {
     @MainActor
     func abort() {
         FileTransferManager.sharedInstance().transferrableFileDidStopTransfer(self)
+    }
+
+    /// A chunked download (see downloadChunked()) whose caller saved the file to `destination`
+    /// itself finished. Without this it would stay listed as downloading (F-714).
+    @MainActor
+    func didFinishChunkedDownload(to destination: URL) {
+        guard state == .downloading else {
+            return
+        }
+        if !quarantine(destination.path, sourceURL: url) {
+            DLog("Failed to quarantine \(destination.path)")
+        }
+        let attributes = try? FileManager.default.attributesOfItem(atPath: destination.path)
+        if let size = attributes?[FileAttributeKey.size] as? UInt {
+            bytesTransferred = size
+            fileSize = Int(size)
+        }
+        _localPath = destination.path
+        state = .downloadComplete
+        FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: nil)
     }
 
     @MainActor
@@ -248,7 +272,7 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     override func isDownloading() -> Bool {
-        return state == .downloading
+        return isDownload
     }
 
     var isStopped: Bool {
