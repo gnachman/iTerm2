@@ -36,8 +36,15 @@ struct AgentHookAddress {
 /// ssh). There `originSessionID`, the session the call arrived on as iTerm2 itself recorded it,
 /// is the address. It never comes from the hook's own input. A pane address still wins over it:
 /// the origin is the session showing the connection, which is not necessarily the pane's tab.
+///
+/// `inProcess` says the call is already running inside iTerm2 (a remote call through the
+/// conductor), so iTerm2 is reachable whatever the environment says. It is separate from the
+/// origin because iTerm2 withholds the origin for a call from a tmux pane whose connection's
+/// session is a tmux gateway.
 func resolveAgentHookAddress(environment: [String: String],
-                             originSessionID: String? = nil) -> AgentHookAddress? {
+                             originSessionID: String? = nil,
+                             inProcess: Bool = false,
+                             localSocketExists: ([String: String]) -> Bool = localIt2SocketExists) -> AgentHookAddress? {
     let termSessionGUID: String? = environment["TERM_SESSION_ID"].flatMap { value in
         // "w0t0p0:D1B2BAE2-3D01-4BB6-9021-27D6CF210957" -- the GUID is everything after the colon.
         value.firstIndex(of: ":").map { String(value[value.index(after: $0)...]) }
@@ -83,10 +90,11 @@ func resolveAgentHookAddress(environment: [String: String],
     // app. Purely a transport question, so nothing about session IDs belongs in it: with the Python
     // API preference off there is no socket but every session still has TERM_SESSION_ID, and the
     // same goes for a stale value left behind after iTerm2 quits.
-    // A call with an origin is already running inside iTerm2: nothing to reach.
-    let it2IsReachable = (originSessionID.map { !$0.isEmpty } ?? false)
+    // A call running inside iTerm2, as one with an origin always is, has nothing to reach.
+    let it2IsReachable = inProcess
+        || (originSessionID.map { !$0.isEmpty } ?? false)
         || (environment["IT2_SOCK"] != nil)
-        || localIt2SocketExists(environment)
+        || localSocketExists(environment)
     if !it2IsReachable {
         return nil
     }

@@ -642,6 +642,22 @@ final class AgentHookScenarioTests: XCTestCase {
                                        + Self.QUIET + Self.WORKING + Self.detail("") + Self.EXPIRES])
     }
 
+    // A remote hook in a tmux pane on a tmux integration connection: iTerm2 withholds the origin
+    // (the gateway is never the pane's session), but the call still runs inside iTerm2, so it must
+    // not depend on a local API socket existing.
+    func testAnInProcessTmuxHookWithoutAnOriginIsStillReachable() {
+        let address = resolveAgentHookAddress(environment: ["TMUX": "/tmp/tmux-1000/default,77,2",
+                                                            "TMUX_PANE": "%4"],
+                                              originSessionID: nil,
+                                              inProcess: true,
+                                              localSocketExists: { _ in false })
+        XCTAssertEqual(address?.args, ["--tmux=/tmp/tmux-1000/default,77,2", "--tmux-pane=%4"])
+        XCTAssertNil(resolveAgentHookAddress(environment: ["TMUX": "/tmp/tmux-1000/default,77,2",
+                                                           "TMUX_PANE": "%4"],
+                                             localSocketExists: { _ in false }),
+                     "out of process with no socket, nothing could answer")
+    }
+
     // A malformed pane address still reports nothing, origin or not: the pane path never falls
     // back to another address.
     func testARemoteMalformedTmuxAddressStillReportsNothing() throws {

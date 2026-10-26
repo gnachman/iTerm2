@@ -55,13 +55,15 @@ enum AgentHookHandler {
                        agent: AgentKind,
                        environment: [String: String],
                        originSessionID: String? = nil,
+                       inProcess: Bool = false,
                        backend: AgentStatusBackend,
                        report: @escaping (String) -> Void) throws {
         guard let event = readAgentHookEvent(payload) else {
             return
         }
         guard let address = resolveAgentHookAddress(environment: environment,
-                                                    originSessionID: originSessionID) else {
+                                                    originSessionID: originSessionID,
+                                                    inProcess: inProcess) else {
             return
         }
         let runner = AgentHookRunner(address: address,

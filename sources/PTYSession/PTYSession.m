@@ -27369,6 +27369,10 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     return _flowLedger;
 }
 
+- (BOOL)conductorIsTmuxGateway {
+    return self.isTmuxGateway;
+}
+
 - (void)conductorSendInitialText {
     [self sendInitialText];
     if (_pendingConductor) {

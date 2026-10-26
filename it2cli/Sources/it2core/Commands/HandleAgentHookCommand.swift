@@ -32,6 +32,7 @@ struct HandleAgentHook: ParsableCommand, IT2Runnable {
                                     agent: agent,
                                     environment: ctx.environment,
                                     originSessionID: ctx.originSessionID,
+                                    inProcess: ctx.isRemote,
                                     backend: backend,
                                     report: ctx.err)
     }

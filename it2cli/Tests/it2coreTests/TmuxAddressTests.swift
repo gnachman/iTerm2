@@ -605,6 +605,32 @@ final class RemoteDefaultTargetTests: XCTestCase {
         XCTAssertEqual(try child.resolveSessionId(nil), "ABC-123")
     }
 
+    // A remote call that the host gave no origin session must not fall back to the focused
+    // session either. The host withholds it when the session the call arrived on is a tmux
+    // gateway and the caller is in a tmux pane: the gateway is never the pane's session, and
+    // reaching it this way means the call came over another connection's socket.
+    func testARemoteCallInAnUnplacedTmuxPaneFailsInsteadOfGuessing() {
+        let channel = FakeChannel()
+        let c = APIClient(channel: channel)
+        c.originIdentifier = "conductor-cid"
+        c.callerEnvironment = ["TMUX": "/tmp/tmux-501/qa34,123,1", "TMUX_PANE": "%7"]
+        XCTAssertThrowsError(try c.resolveSessionId(nil)) { error in
+            guard case IT2Error.targetNotFound(let message) = error else {
+                return XCTFail("\(error)")
+            }
+            XCTAssertTrue(message.contains("tmux pane"), message)
+        }
+        XCTAssertEqual(channel.sent.count, 1, "only the pane lookup, no focus-state request")
+    }
+
+    func testARemoteCallWithNoOriginSessionFailsInsteadOfGuessing() {
+        let channel = FakeChannel()
+        let c = APIClient(channel: channel)
+        c.originIdentifier = "conductor-cid"
+        XCTAssertThrowsError(try c.resolveSessionId(nil))
+        XCTAssertTrue(channel.sent.isEmpty, "no focus-state request")
+    }
+
     // A local call has no origin session, so it keeps the focused-session behaviour. Asserted by
     // the request actually going out rather than by the answer, which needs a live app.
     func testALocalCallStillAsksTheApp() {

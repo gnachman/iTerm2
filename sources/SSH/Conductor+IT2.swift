@@ -667,7 +667,23 @@ extension Conductor {
         // Read through a closure, not captured once: the delegate is replaced across an SSH
         // recovery, and a GUID captured when the demux was built would name a session that no
         // longer exists. Weak, so the demux cannot keep the conductor alive.
-        let originSessionID: () -> String? = { [weak self] in self?.delegate?.guid }
+        //
+        // Not when the caller is in a tmux pane and the session is a tmux integration gateway.
+        // The gateway is never the pane's session: a pane this connection shows resolves by its
+        // address instead, and one it can't place reached iTerm2 over this connection only
+        // because the tmux server handed the pane the IT2_SOCK of whichever connection started
+        // it. Defaulting to the gateway then acted on another connection's gateway and reported
+        // success. Without an origin, it2core says the pane is unplaced rather than guessing.
+        let originSessionID: (IT2ClientContext) -> String? = { [weak self] clientContext in
+            guard let delegate = self?.delegate else {
+                return nil
+            }
+            if delegate.conductorIsTmuxGateway == true,
+               !(clientContext.environment["TMUX"] ?? "").isEmpty {
+                return nil
+            }
+            return delegate.guid
+        }
         let demux = ConductorIT2Demux(
             nonce: { [weak self] in self?.it2Nonce },
             send: { [weak self] connid, data in self?.it2Send(connid: connid, data: data) },
@@ -681,7 +697,7 @@ extension Conductor {
                 // A remote command with no explicit target addresses this session. Logged
                 // because a nil here is the difference between "landed on the right tab" and
                 // "landed on whatever was focused", and nothing else would show which.
-                let resolvedOriginSessionID = originSessionID()
+                let resolvedOriginSessionID = originSessionID(clientContext)
                 self?.DLog("it2 run argv=\(argv) originSession=\(resolvedOriginSessionID ?? "(none)")")
                 // The demux requires stderr/completion on the main thread. The guard/deny
                 // paths below run inline during the (main-thread) run() call, so marshal

@@ -121,6 +121,19 @@ final class APIClient {
         if let originSessionID, !originSessionID.isEmpty {
             return APIClient.normalizeSessionId(originSessionID)
         }
+        // A remote call with no origin session must not fall through to focus state either, for
+        // the same reason. The host withholds the origin when the call came from a tmux pane and
+        // the session it arrived on is a tmux gateway: the gateway is never the pane's session,
+        // and arriving there with an unplaced pane means the call reached iTerm2 through another
+        // connection's socket (a tmux server's inherited IT2_SOCK).
+        if let originIdentifier, !originIdentifier.isEmpty {
+            if APIClient.paneAddressFromEnvironment(callerEnvironment) != nil {
+                throw IT2Error.targetNotFound(
+                    "it2 couldn\u{2019}t find this tmux pane on the connection it reached, so it can\u{2019}t tell which session to act on. Name one with --session.")
+            }
+            throw IT2Error.targetNotFound(
+                "it2 can\u{2019}t tell which session to act on. Name one with --session.")
+        }
 
         // Last resort: the caller is not in an iTerm2 session we can identify at all (cron, the
         // Finder, another terminal app), or its pane did not resolve. Use focus state to find

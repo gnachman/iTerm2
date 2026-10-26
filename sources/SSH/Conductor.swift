@@ -39,6 +39,9 @@ protocol ConductorDelegate: Any {
     var guid: String { get }
     // Where the session records the flow-controlled frames it parses and executes.
     @objc optional func conductorFlowLedger() -> FramerFlowLedger?
+    // Whether the session is a tmux integration gateway, which is never the session a remote
+    // it2 in a tmux pane means. See the run closure in it2DemuxForHandling.
+    @objc optional var conductorIsTmuxGateway: Bool { get }
 }
 
 @objc(iTermConductor)
