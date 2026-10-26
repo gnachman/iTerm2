@@ -3269,7 +3269,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case SSH_UNHOOK:
-            [self.delegate terminalDidUnhookSSHConductor];
+            [self.delegate terminalDidUnhookSSHConductorAtDepth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_BEGIN:

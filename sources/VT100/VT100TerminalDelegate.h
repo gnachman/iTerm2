@@ -609,7 +609,8 @@ NS_ASSUME_NONNULL_BEGIN
 // parentDepth is the depth of the conductor whose framing carried the hook, or -1.
 - (void)terminalDidHookSSHConductorWithParams:(nullable NSString *)token parentDepth:(int)parentDepth;
 - (void)terminalDidReadSSHConductorLine:(nullable NSString *)string depth:(int)depth;
-- (void)terminalDidUnhookSSHConductor;
+// depth is the nesting depth of the conductor whose hook ended.
+- (void)terminalDidUnhookSSHConductorAtDepth:(int)depth;
 - (void)terminalDidBeginSSHConductorCommandWithIdentifier:(nullable NSString *)identifier
                                                     depth:(int)depth;
 - (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier

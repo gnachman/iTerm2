@@ -4031,9 +4031,9 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     } name:@"read ssh"];
 
 }
-- (void)terminalDidUnhookSSHConductor {
+- (void)terminalDidUnhookSSHConductorAtDepth:(int)depth {
     [self addUrgentSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
-        [delegate screenDidUnhookSSHConductor];
+        [delegate screenDidUnhookSSHConductorAtDepth:depth];
     } name:@"unhook ssh"];
 }
 

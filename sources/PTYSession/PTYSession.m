@@ -812,9 +812,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     void (^_pendingConductor)(PTYSession *);
     BOOL _connectingSSH;
     NSMutableData *_queuedConnectingSSH;
-    // it2ssh unique ID of the outermost conductor most recently ended by Disconnect. Its
-    // EndSSH may arrive after the hook was forced off and must still release it2ssh.
-    NSString *_disconnectedSSHClientUniqueID;
+    // it2ssh unique IDs of connections that Disconnect (or abandonment) ended, at any depth.
+    // An it2ssh that is still alive sends EndSSH after its conductor is gone and waits for
+    // a line before exiting, so it must still be answered (F-705, F-708).
+    NSMutableSet<NSString *> *_disconnectedSSHClientUniqueIDs;
     // Watches local it2ssh processes so the session recovers when one dies (F-482).
     iTermSSHClientMonitor *_sshClientMonitor;
     // Abandoned connections whose framer recovery must not begin, as decided on the main
@@ -1004,6 +1005,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _announcements = [[NSMutableDictionary alloc] init];
         _sshClientMonitor = [[iTermSSHClientMonitor alloc] init];
         _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
+        _disconnectedSSHClientUniqueIDs = [[NSMutableSet alloc] init];
         _ttyModeRepairer = [[iTermTTYModeRepairer alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directoryTracker = [[iTermSessionDirectoryTracker alloc] initWithVariablesScope:self.variablesScope];
@@ -1395,7 +1397,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_appSwitchingPreventionDetector release];
     [_stuckKeyReportingDetector release];
     [_queuedConnectingSSH release];
-    [_disconnectedSSHClientUniqueID release];
+    [_disconnectedSSHClientUniqueIDs release];
     [_sshClientMonitor release];
     [_framerRecoveryRefusals release];
     [_preSSHTTYModes release];
@@ -20999,11 +21001,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendBannerMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.DisconnectedFrom", nil, [NSBundle mainBundle], @"Disconnected from %@", @"Banner shown when an SSH connection ends; placeholder is the host identity"), identity]];
     }];
-    if (target.parent == nil) {
-        // In case it2ssh is alive after all, its eventual EndSSH must still release it.
-        [_disconnectedSSHClientUniqueID release];
-        _disconnectedSSHClientUniqueID = [target.clientUniqueID copy];
-    }
+    // In case it2ssh is alive after all, its eventual EndSSH must still release it.
+    [self rememberDisconnectedSSHClientUniqueID:target.clientUniqueID];
     // The abandoned connection's framer output (which carries its children's) arrives at its
     // parent's depth.
     const int parentDepth = target.parent ? target.parent.depth : -1;
@@ -21156,7 +21155,15 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     [_conductor handleLine:string depth:depth];
 }
 
-- (void)screenDidUnhookSSHConductor {
+- (void)screenDidUnhookSSHConductorAtDepth:(int)depth {
+    if (_conductor && depth > _conductor.depth) {
+        // The hook of a nested connection that already ended, as when Disconnect unhooked
+        // it before its framer's unhook arrived, or a hook whose arguments couldn't be read. It
+        // isn't the end of the connection it was nested in, which carries on (F-705, F-708).
+        RLog(@"Ignore the unhook of an ended conductor at depth %d; the innermost is at depth %d",
+             depth, (int)_conductor.depth);
+        return;
+    }
     [_conductor handleUnhook];
     [self writeData:_sshWriteQueue];
     [_sshWriteQueue release];
@@ -21243,12 +21250,12 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     _connectingSSH = NO;
     if (![_conductor ancestryContainsClientUniqueID:uniqueID]) {
         DLog(@"Ancestry does not contain this unique ID");
-        if (uniqueID.length && [uniqueID isEqualToString:_disconnectedSSHClientUniqueID]) {
+        if (uniqueID.length && [_disconnectedSSHClientUniqueIDs containsObject:uniqueID]) {
             // Disconnect already unhooked this conductor, but it2ssh still waits for a
-            // newline before exiting.
+            // newline before exiting. A nested it2ssh runs in the shell of the connection
+            // it was nested in, which is now the innermost one, so the newline goes there.
             [_sshClientMonitor forgetSSHClientForClientUniqueID:uniqueID];
-            [_disconnectedSSHClientUniqueID release];
-            _disconnectedSSHClientUniqueID = nil;
+            [_disconnectedSSHClientUniqueIDs removeObject:uniqueID];
             [self writeTaskNoBroadcast:@"\x03\n"];
         }
         return 0;
@@ -26882,10 +26889,7 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     NSString *clientUniqueID = [[_conductor.clientUniqueID copy] autorelease];
     const int parentDepth = _conductor.parent ? _conductor.parent.depth : -1;
     const BOOL isOutermost = (_conductor.parent == nil);
-    if (_conductor.parent == nil) {
-        [_disconnectedSSHClientUniqueID release];
-        _disconnectedSSHClientUniqueID = [_conductor.clientUniqueID copy];
-    }
+    [self rememberDisconnectedSSHClientUniqueID:_conductor.clientUniqueID];
     NSArray<NSString *> *abandonedClientUniqueIDs = clientUniqueID.length ? @[ clientUniqueID ] : @[];
     // The user ended this connection, so whatever its framer prints from now on must not
     // start recovery (F-354), even if the terminal already requested it (F-459).
@@ -26909,6 +26913,12 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
                                              discardingInputForDeadClient:NO];
             }
         });
+    }
+}
+
+- (void)rememberDisconnectedSSHClientUniqueID:(NSString *)clientUniqueID {
+    if (clientUniqueID.length) {
+        [_disconnectedSSHClientUniqueIDs addObject:clientUniqueID];
     }
 }
 
