@@ -9,6 +9,7 @@
 #import "TmuxDashboardController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermInitialDirectory.h"
 #import "iTermNotificationCenter.h"
@@ -243,15 +244,25 @@
 - (void)setWindows:(TSVDocument *)doc forSession:(NSNumber *)sessionNumber {
     RLog(@"dashboard: setWindows:%@ forSession:%@", doc, sessionNumber);
     if ([sessionNumber isEqual:[sessionsTable_ selectedSessionNumber]]) {
-        NSMutableArray *windows = [NSMutableArray array];
-        for (NSArray *record in doc.records) {
-            [windows addObject:[NSMutableArray arrayWithObjects:
-                                [doc valueInRecord:record forField:@"window_name"],
-                                [[doc valueInRecord:record forField:@"window_id"] substringFromIndex:1],
-                                nil]];
-        }
-        [windowsTable_ setWindows:windows];
+        [windowsTable_ setWindows:[TmuxDashboardController dashboardWindowsFromDocument:doc]];
     }
+}
+
++ (NSArray<NSArray<NSString *> *> *)dashboardWindowsFromDocument:(TSVDocument *)doc {
+    NSMutableArray<NSArray<NSString *> *> *windows = [NSMutableArray array];
+    for (NSArray *record in doc.records) {
+        // A parked workgroup peer's window is part of a workgroup, not a window to open, hide, or
+        // kill: killing it would end the workgroup. The hidden-window menu leaves it out too.
+        if ([iTermTmuxWorkgroupAttacher isParkedWindowTag:[doc valueInRecord:record forField:@"iterm2_wg_parked"]]) {
+            DLog(@"Dashboard: not listing parked window %@", [doc valueInRecord:record forField:@"window_id"]);
+            continue;
+        }
+        [windows addObject:[NSMutableArray arrayWithObjects:
+                            [doc valueInRecord:record forField:@"window_name"],
+                            [[doc valueInRecord:record forField:@"window_id"] substringFromIndex:1],
+                            nil]];
+    }
+    return windows;
 }
 
 - (void)renameWindowWithId:(int)windowId toName:(NSString *)newName {

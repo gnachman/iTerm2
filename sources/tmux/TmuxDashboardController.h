@@ -11,10 +11,15 @@
 #import "TmuxWindowsTable.h"
 
 @class TmuxController;
+@class TSVDocument;
 
 @interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol, TmuxWindowsTableProtocol>
 
 + (instancetype)sharedInstance;
+
+// The windows of a list-windows reply (TmuxController's listWindowsDetailedFormat) to show, each
+// as @[name, number]. Windows holding parked workgroup peers are left out.
++ (NSArray<NSArray<NSString *> *> *)dashboardWindowsFromDocument:(TSVDocument *)doc;
 - (void)didAttachWithHiddenWindows:(BOOL)anyHidden
                     tooManyWindows:(BOOL)tooMany;
 
