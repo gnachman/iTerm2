@@ -32,8 +32,29 @@ private final class WriteCapturingSession: PTYSession {
     }
 }
 
+private final class RecordingConductorDelegate: NSObject, ConductorDelegate {
+    var written = ""
+
+    func conductorWrite(string: String) {
+        written += string
+    }
+    func conductorAbort(reason: String) {}
+    func conductorQuit() {}
+    func conductorStateDidChange() {}
+    func conductorStopQueueingInput() {}
+    func conductorSendInitialText() {}
+    func conductorRequestIT2Authorization(guid: String,
+                                          displayName: String,
+                                          completion: @escaping (Bool, Bool) -> Void) {
+        completion(false, false)
+    }
+    func conductorDismissIT2AuthorizationPrompt(guid: String) {}
+    let guid = "recording-delegate"
+}
+
 @MainActor
 final class SSHNestedConnectionEndTests: XCTestCase {
+    private var extraConductors = [Conductor]()
     private var session: WriteCapturingSession!
     private let rootID = "1234567890"
     private let nestedID = "555"
@@ -59,6 +80,11 @@ final class SSHNestedConnectionEndTests: XCTestCase {
                                               sshIdentity: current.sshIdentity)
             conductor = current.parent
         }
+        for conductor in extraConductors {
+            ConductorRegistry.instance.remove(conductorGUID: conductor.guid,
+                                              sshIdentity: conductor.sshIdentity)
+        }
+        extraConductors = []
         session = nil
         super.tearDown()
     }
@@ -230,6 +256,68 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         root.forceReturnToGroundState()
         root.sendKeys("ls\r".data(using: .utf8)!)
         XCTAssertFalse(session.writes.isEmpty, "keys reach the outer connection")
+    }
+
+    // MARK: - F-709
+
+    private func makeFramingConductor(_ delegate: RecordingConductorDelegate) -> Conductor {
+        let conductor = Conductor("f709.example.com", boolArgs: "", dcsID: "dcs",
+                                  clientUniqueID: "c709",
+                                  varsToSend: [:], clientVars: [:], initialDirectory: nil,
+                                  shouldInjectShellIntegration: false, parent: nil)
+        conductor.delegate = delegate
+        conductor.framedPID = loginShellPID
+        extraConductors.append(conductor)
+        return conductor
+    }
+
+    private func deliverAutopollEOF(to conductor: Conductor) {
+        conductor.handleSideChannelOutput("EOF", pid: SSH_OUTPUT_AUTOPOLL_PID, channel: 1,
+                                          depth: conductor.depth)
+    }
+
+    // The framer answers everything in flight.
+    private func drain(_ conductor: Conductor) {
+        for _ in 0..<20 {
+            switch conductor.state {
+            case .willExecutePipeline, .executingPipeline:
+                conductor.handleCommandEnd(identifier: "id", type: "f", status: 0, depth: conductor.depth)
+            default:
+                return
+            }
+        }
+    }
+
+    // The control: a live connection asks for the next autopoll report.
+    func testLiveConnectionAsksForNextAutopoll() {
+        let delegate = RecordingConductorDelegate()
+        let conductor = makeFramingConductor(delegate)
+        deliverAutopollEOF(to: conductor)
+        drain(conductor)
+        let autopoll = "autopoll".data(using: .utf8)!.base64EncodedString()
+        XCTAssertTrue(delegate.written.contains(autopoll), delegate.written)
+    }
+
+    // The login shell exited, so the framer quits and ssh exits soon after. An autopoll
+    // report that arrives meanwhile must not be answered: the request would be written after
+    // ssh exited and typed into the local terminal (YXV0b3BvbGw=, base64 “autopoll”).
+    func testNothingIsWrittenAfterTheLoginShellExits() {
+        let delegate = RecordingConductorDelegate()
+        let conductor = makeFramingConductor(delegate)
+        // Registers the login shell to poll, the first time.
+        deliverAutopollEOF(to: conductor)
+        drain(conductor)
+        delegate.written = ""
+        conductor.handleTerminate(loginShellPID, code: 0, depth: conductor.depth)
+        XCTAssertFalse(delegate.written.isEmpty, "the framer is told to quit")
+        delegate.written = ""
+
+        // Before and after the framer answers the quit.
+        deliverAutopollEOF(to: conductor)
+        conductor.handleCommandEnd(identifier: "id", type: "f", status: 0, depth: conductor.depth)
+        deliverAutopollEOF(to: conductor)
+        conductor.sendKeys("x".data(using: .utf8)!)
+        XCTAssertEqual(delegate.written, "")
     }
 
     // The payloads of the framer `send` commands in what was written, decoded the way

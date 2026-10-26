@@ -385,6 +385,10 @@ class Conductor: NSObject, SSHIdentityProvider {
     // request) would be typed into the shell that owns the tty, or into the parent's remote
     // shell for a nested connection (F-554).
     @objc private(set) var abandoned = false
+    // Set once the connection is ending (it quit, or its login shell exited). Only the quit
+    // may be sent after that: ssh may exit at any moment, and whatever reaches the pty after
+    // it does is typed into the local terminal (F-709).
+    private(set) var hasEnded = false
 
     // Set while a pipeline transition is running a handler that could call back in.
     // handleCommandEnd captures the pipeline's contents from the pattern match, runs the
@@ -1832,16 +1836,18 @@ extension Conductor {
     // connection. The delegate is responsible for tearing this conductor down.
     @objc func quitWithoutStarting() {
         log("quitWithoutStarting")
+        hasEnded = true
         if !linePrefix.isEmpty {
             write(linePrefix)
         }
-        send(.quit, .fireAndForget)
+        send(.quit, isFinal: true, .fireAndForget)
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
 
     @objc func quit() {
+        hasEnded = true
         cancelAllRequests()
-        send(.quit, .fireAndForget)
+        send(.quit, isFinal: true, .fireAndForget)
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
         delegate?.conductorQuit()
         delegate?.conductorStateDidChange()
@@ -2589,7 +2595,10 @@ extension Conductor {
         }
         log("Process \(pid) terminated")
         if pid == framedPID {
-            send(.quit, .fireAndForget)
+            log("The login shell exited")
+            hasEnded = true
+            cancelEnqueuedRequests(where: { _ in true })
+            send(.quit, isFinal: true, .fireAndForget)
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
             case .ground, .unhooked, .recovery, .recovered:
@@ -2838,11 +2847,18 @@ extension Conductor {
         }
     }
 
+    /// `isFinal` marks the quit, the only command sent after the connection ended.
     func send(_ command: Command,
               highPriority: Bool = false,
+              isFinal: Bool = false,
               _ handler: ExecutionContext.Handler) {
         log("append \(command) to queue in state \(state)")
         let context = ExecutionContext(command: command, handler: handler)
+        guard !hasEnded || isFinal else {
+            log("Ended. Not sending \(command)")
+            try? update(executionContext: context, result: .abort)
+            return
+        }
         DLog("Enqueue: \(command)")
         if highPriority {
             queue.insert(context, at: 0)
