@@ -97,4 +97,19 @@ final class FlowControlMonitorViewTests: XCTestCase {
         XCTAssertEqual(FlowControlChart.Unit.seconds.ceiling(0.037), 0.05, accuracy: 1e-12)
         XCTAssertEqual(FlowControlChart.Unit.seconds.ceiling(0), 1)
     }
+
+    // Closing the window turns the monitor off, but only when the person closes it. Quitting
+    // closes it in code, and must leave the setting on so the monitor is back after a restart.
+    func testClosingTheWindowInCodeIsNotThePersonClosingIt() {
+        let quitting = FlowControlMonitorWindowController()
+        var closedByPerson = 0
+        quitting.userDidClose = { closedByPerson += 1 }
+        quitting.window!.close()
+        XCTAssertEqual(closedByPerson, 0)
+
+        let person = FlowControlMonitorWindowController()
+        person.userDidClose = { closedByPerson += 1 }
+        person.window!.performClose(nil)
+        XCTAssertEqual(closedByPerson, 1)
+    }
 }

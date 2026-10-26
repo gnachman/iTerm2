@@ -80,7 +80,7 @@ final class FlowControlMonitor: NSObject {
         }
         if windowController == nil {
             let windowController = FlowControlMonitorWindowController()
-            windowController.didClose = {
+            windowController.userDidClose = {
                 // Closing the window is how to turn it off. Stop now rather than when the
                 // setting's change is noticed.
                 iTermAdvancedSettingsModel.setShowSSHFlowControlMonitor(false)
@@ -100,7 +100,7 @@ final class FlowControlMonitor: NSObject {
         connections.removeAll()
         let windowController = self.windowController
         self.windowController = nil
-        windowController?.didClose = nil
+        windowController?.userDidClose = nil
         windowController?.close()
     }
 

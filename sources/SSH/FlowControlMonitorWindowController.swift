@@ -11,7 +11,9 @@ import AppKit
 
 @MainActor
 final class FlowControlMonitorWindowController: NSWindowController, NSWindowDelegate {
-    var didClose: (() -> Void)?
+    /// The person closed the window, as opposed to its being closed when iTerm2 quits.
+    var userDidClose: (() -> Void)?
+    private var closingForUser = false
     private let monitorView = FlowControlMonitorView(frame: NSRect(x: 0, y: 0, width: 640, height: 400))
     private let scrollView: NSScrollView
 
@@ -61,8 +63,19 @@ final class FlowControlMonitorWindowController: NSWindowController, NSWindowDele
         monitorView.needsDisplay = true
     }
 
+    /// Sent only when the person closes the window (its close button or Close), not when it is
+    /// closed in code, as it is when iTerm2 quits.
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        closingForUser = true
+        return true
+    }
+
     func windowWillClose(_ notification: Notification) {
-        didClose?()
+        guard closingForUser else {
+            return
+        }
+        closingForUser = false
+        userDidClose?()
     }
 }
 
