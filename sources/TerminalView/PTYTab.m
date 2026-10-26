@@ -6451,6 +6451,25 @@ typedef struct {
     return dict;
 }
 
+// The session to make active when the layout is rebuilt. A peer switch swaps the peer's pane into
+// the place of the member in view. If that member was active, focus stays in its place, on the
+// peer, as it does for a local workgroup. Otherwise the active pane would be gone from the layout
+// and focus would go to its nearest neighbor.
+- (PTYSession *)sessionToActivateAfterAdoptingBuriedSessions:(NSArray<PTYSession *> *)adoptedSessions
+                                                  layoutPanes:(NSArray<NSNumber *> *)layoutPanes {
+    PTYSession *active = activeSession_.liveSession ?: activeSession_;
+    if (!active.isTmuxClient || [layoutPanes containsObject:@(active.tmuxPane)]) {
+        return activeSession_;
+    }
+    for (PTYSession *adopted in adoptedSessions) {
+        if (adopted.peerPort && [active sessionBelongsToPeers:adopted.peerPort]) {
+            RLog(@"Peer %@ takes the place of the active member %@", adopted, active);
+            return adopted;
+        }
+    }
+    return activeSession_;
+}
+
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
                            tmuxController:(TmuxController *)tmuxController {
     // This reads [self sessions] (idMap_-backed while maximized) and rebuilds
@@ -6464,19 +6483,11 @@ typedef struct {
                         @(idMap_.count));
     SessionView *nearestNeighbor = [self nearestNeighborOfSession:self.activeSession];
 
-    NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
     if (tmuxController.variableWindowSize) {
         parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:self.rootViewSize];
         DLog(@"Tweaked parse tree:\n%@", parseTree);
     }
-    [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
-                                                                         bookmark:[self.tmuxController profileForWindow:self.tmuxWindow]
-                                                                           origin:NSZeroPoint
-                                                                 activeWindowPane:[PTYTab tmuxLayoutPaneForSession:activeSession_]
-                                                                   tmuxController:tmuxController
-                                                                           window:self.tmuxWindow]
-                    forKey:TAB_ARRANGEMENT_ROOT];
 
     // Create a map of window pane -> SessionView *. A float that tmux made tiled is reused like any
     // tiled pane; a tiled pane that tmux made floating is left out and adopted as a float below.
@@ -6490,7 +6501,8 @@ typedef struct {
     // this tab (swap-pane), adopt that session, which registers it with this tab's window, rather
     // than making a new one for the pane.
     NSMutableArray<PTYSession *> *adoptedBuriedSessions = [NSMutableArray array];
-    for (NSNumber *pane in [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree]) {
+    NSArray<NSNumber *> *layoutPanes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
+    for (NSNumber *pane in layoutPanes) {
         if (idMap[pane]) {
             continue;
         }
@@ -6516,6 +6528,16 @@ typedef struct {
             [adoptedBuriedSessions addObject:buried];
         }
     }
+    NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
+    [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
+                                                                         bookmark:[self.tmuxController profileForWindow:self.tmuxWindow]
+                                                                           origin:NSZeroPoint
+                                                                 activeWindowPane:[PTYTab tmuxLayoutPaneForSession:[self sessionToActivateAfterAdoptingBuriedSessions:adoptedBuriedSessions
+                                                                                                                                                         layoutPanes:layoutPanes]]
+                                                                   tmuxController:tmuxController
+                                                                           window:self.tmuxWindow]
+                    forKey:TAB_ARRANGEMENT_ROOT];
+
     NSArray *preexistingPanes = [[idMap allKeys] copy];
     NSSplitView *newRoot = (NSSplitView *)[PTYTab _recursiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                                    fromIdMap:idMap
