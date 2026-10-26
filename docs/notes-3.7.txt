@@ -832,6 +832,10 @@ Bug Fixes:
   into a remote bash, the shell is now a login
   shell, so aliases and functions defined in
   ~/.profile or ~/.bash_profile are available.
+- The notification for a failed download or
+  upload now names the file and gives the
+  reason, instead of showing only an error such
+  as “File not found”.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
