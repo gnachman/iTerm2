@@ -179,6 +179,24 @@ final class IT2HostGrantRevokeTests: XCTestCase {
         XCTAssertFalse(sheet.isShowingEmptyState)
     }
 
+    // The date follows the UI language, as iTerm2's other formatted values do, not the region
+    // alone: a German UI showed “Oct 25, 2026”.
+    func testDateFollowsTheUILanguage() {
+        let date = Date(timeIntervalSince1970: 1_793_000_000)
+        let german = IT2HostGrantsWindowController.makeDateFormatter(nonEnglishUILanguage: "de")
+        XCTAssertEqual(german.locale.identifier, "de")
+        XCTAssertEqual(german.dateStyle, .medium)
+        XCTAssertEqual(german.timeStyle, .short)
+        let expected = DateFormatter()
+        expected.locale = Locale(identifier: "de")
+        expected.dateStyle = .medium
+        expected.timeStyle = .short
+        XCTAssertEqual(german.string(from: date), expected.string(from: date))
+
+        let english = IT2HostGrantsWindowController.makeDateFormatter(nonEnglishUILanguage: nil)
+        XCTAssertEqual(english.locale, Locale.current, "an English UI keeps the user’s region")
+    }
+
     func testSheetShowsTheEmptyState() {
         let sheet = IT2HostGrantsWindowController(store: IT2HostGrantStore(backing: RevokeMemoryBacking()))
         XCTAssertEqual(sheet.displayedHosts, [])

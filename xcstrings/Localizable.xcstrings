@@ -89119,10 +89119,40 @@
       "comment" : "Search index name for the button that lists remote hosts always allowed to use the iTerm2 API over SSH integration; matches that button’s title",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API-Zugriff über SSH"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "API access over ssh"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH経由のAPIアクセス"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acesso à API via SSH"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доступ к API через SSH"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 SSH 访问 API"
           }
         }
       }
@@ -90672,10 +90702,40 @@
       "comment" : "Button that closes the list of remote hosts always allowed to use the iTerm2 API",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Done"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完了"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluído"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
           }
         }
       }
@@ -90684,10 +90744,40 @@
       "comment" : "Shown in place of the list when no remote hosts are always allowed to use the iTerm2 API",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es sind keine Remote-Hosts dauerhaft erlaubt. Wählen Sie „Diesen Host immer erlauben“, wenn ein Remote-Host anfragt, iTerm2 zu steuern."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "No remote hosts are always allowed. Choose Always Allow This Host when a remote host asks to control iTerm2."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常に許可されているリモートホストはありません。リモートホストがiTerm2の制御を求めてきたときに「このホストを常に許可」を選択してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum host remoto tem permissão permanente. Escolha “Sempre permitir este host” quando um host remoto pedir para controlar o iTerm2."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет удалённых хостов, которым всегда разрешён доступ. Выберите «Всегда разрешать этому хосту», когда удалённый хост запросит управление iTerm2."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有始终允许的远程主机。当远程主机请求控制 iTerm2 时，请选择“始终允许此主机”。"
           }
         }
       }
@@ -90696,10 +90786,40 @@
       "comment" : "Explanation at the top of the list of remote hosts always allowed to use the iTerm2 API",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Hosts können die iTerm2-API über die SSH-Integration verwenden, ohne vorher zu fragen. Wenn Sie einen Host entfernen, fragt er bei der nächsten Verbindung wieder nach."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "These hosts can use the iTerm2 API over SSH integration without asking first. Removing a host makes it ask again the next time it connects."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これらのホストは、確認なしでSSH統合経由のiTerm2 APIを使用できます。ホストを削除すると、次回接続時に再び確認されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estes hosts podem usar a API do iTerm2 pela integração de SSH sem perguntar antes. Ao remover um host, ele voltará a perguntar na próxima vez que se conectar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эти хосты могут использовать API iTerm2 через интеграцию по SSH без предварительного запроса. Если убрать хост, он снова запросит разрешение при следующем подключении."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些主机无需事先询问即可通过 SSH 集成使用 iTerm2 API。移除某个主机后，它下次连接时会再次询问。"
           }
         }
       }
@@ -90708,10 +90828,40 @@
       "comment" : "Column header for when a remote host was first always allowed to use the iTerm2 API",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaubt seit"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Allowed Since"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可した日時"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido desde"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешено с"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许时间"
           }
         }
       }
@@ -90720,10 +90870,40 @@
       "comment" : "Column header for the remote host in the list of hosts always allowed to use the iTerm2 API",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Host"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ホスト"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хост"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主机"
           }
         }
       }
@@ -90732,10 +90912,40 @@
       "comment" : "Button that stops always allowing the selected remote hosts to use the iTerm2 API",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Remove"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Убрать"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
           }
         }
       }
@@ -90744,10 +90954,40 @@
       "comment" : "Title of the sheet listing remote hosts always allowed to use the iTerm2 API over SSH integration",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remote-Hosts, die iTerm2 steuern dürfen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Remote Hosts Allowed to Control iTerm2"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2の制御を許可されたリモートホスト"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts remotos com permissão para controlar o iTerm2"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалённые хосты, которым разрешено управлять iTerm2"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许控制 iTerm2 的远程主机"
           }
         }
       }
@@ -123070,10 +123310,40 @@
       "comment" : "Button that allows a remote host to control iTerm2 on this and every future connection, not just this one",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diesen Host immer erlauben"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Always Allow This Host"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このホストを常に許可"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sempre permitir este host"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всегда разрешать этому хосту"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始终允许此主机"
           }
         }
       }

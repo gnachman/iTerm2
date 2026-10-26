@@ -34721,10 +34721,40 @@
       "comment" : "Class = \"NSButtonCell\"; title = \"API access over ssh…\"; ObjectID = \"nN8-UW-Jff\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API-Zugriff über SSH…"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "API access over ssh…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH経由のAPIアクセス…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acesso à API via SSH…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доступ к API через SSH…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 SSH 访问 API…"
           }
         }
       }

@@ -26,12 +26,21 @@ final class IT2HostGrantsWindowController: NSWindowController, NSTableViewDataSo
     private let tableView = NSTableView()
     private let removeButton = NSButton()
     private let emptyLabel = NSTextField(wrappingLabelWithString: "")
-    private let dateFormatter: DateFormatter = {
+    private let dateFormatter = makeDateFormatter(
+        nonEnglishUILanguage: LocalizedUnitFormatter.nonEnglishUILanguage)
+
+    /// In the UI language when it isn't English, as iTerm2's other formatted values are (see
+    /// LocalizedUnitFormatter); otherwise in the user's own locale. A German UI on a US region
+    /// otherwise showed an English month in a German sheet.
+    static func makeDateFormatter(nonEnglishUILanguage: String?) -> DateFormatter {
         let formatter = DateFormatter()
+        if let nonEnglishUILanguage {
+            formatter.locale = Locale(identifier: nonEnglishUILanguage)
+        }
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter
-    }()
+    }
 
     @objc(presentSheetFor:)
     static func presentSheet(for parent: NSWindow?) {
