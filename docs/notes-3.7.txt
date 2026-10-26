@@ -673,6 +673,9 @@ Bug Fixes:
   tells you when files in it couldn’t be read
   and were left out, instead of reporting
   success with no mention of the missing files.
+- An SSH Integration download that fails or is
+  stopped no longer leaves an empty or partial
+  hidden file in your Downloads folder.
 - When an SSH Integration session ends, stray
   text such as YXV0b3BvbGw= no longer appears in
   the terminal.

@@ -9,26 +9,13 @@
 @MainActor
 extension Conductor: ConductorFileTransferDelegate {
     func beginDownload(fileTransfer: ConductorFileTransfer) {
-        guard let path = fileTransfer.localPath() else {
-            fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.NoLocalPath",
-                                              defaultValue: "There is no local file to save the download to.",
-                                              comment: "Error shown when an SSH Integration download has no local file to save to"))
-            return
-        }
-        let remotePath = fileTransfer.path.path!
-
-        FileManager.default.createFile(atPath: path, contents: nil, attributes: nil)
-        guard let fileHandle = FileHandle(forUpdatingAtPath: path) else {
-            fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.CouldNotOpen",
-                                              defaultValue: "Could not open “\(path)” for writing.",
-                                              comment: "Error shown when the local file for an SSH Integration download cannot be opened; the argument is its path"))
-            return
-        }
+        let operations = ConductorDownloadOperations(
+            stat: { path in try await self.stat(path) },
+            zip: { path in try await self.zip(path) },
+            fetch: { path, chunk in try await self.download(path, chunk: chunk, uniqueID: nil) },
+            rm: { path in try await self.rm(path, recursive: false) })
         Task {
-            await reallyBeginDownload(fileTransfer: fileTransfer,
-                                      remotePath: remotePath,
-                                      fileHandle: fileHandle,
-                                      allowDirectories: true)
+            await ConductorDownload.run(fileTransfer: fileTransfer, operations: operations)
         }
     }
 
@@ -73,63 +60,6 @@ extension Conductor: ConductorFileTransferDelegate {
             }
         }
         continuation.finish()
-    }
-
-    @MainActor
-    private func reallyBeginDownload(fileTransfer: ConductorFileTransfer,
-                                     remotePath: String,
-                                     fileHandle: FileHandle,
-                                     allowDirectories: Bool) async {
-        do {
-            let info = try await stat(remotePath)
-            if info.kind == .folder {
-                if !allowDirectories {
-                    fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.FolderNotAllowed",
-                                                      defaultValue: "“\(remotePath)” is a folder and can’t be downloaded here.",
-                                                      comment: "Error shown when an SSH Integration download unexpectedly names a folder; the argument is the remote path"))
-                }
-                await reallyDownloadFolder(info: info,
-                                           fileTransfer: fileTransfer,
-                                           remotePath: remotePath,
-                                           fileHandle: fileHandle)
-                return
-            }
-            let sizeKnown: Bool
-            if let size = info.size {
-                sizeKnown = true
-                fileTransfer.fileSize = size
-            } else {
-                sizeKnown = false
-            }
-            var done = false
-            var offset = 0
-
-            let chunkSize = 1024
-            defer {
-                try? fileHandle.close()
-            }
-            while !done {
-                if fileTransfer.isStopped {
-                    fileTransfer.abort()
-                    return
-                }
-                let chunk = DownloadChunk(offset: offset, size: chunkSize)
-                let data = try await download(remotePath, chunk: chunk, uniqueID: nil)
-                if data.isEmpty {
-                    done = true
-                } else {
-                    try fileHandle.write(contentsOf: data)
-                    if !sizeKnown {
-                        fileTransfer.fileSize = fileTransfer.fileSize + data.count
-                    }
-                    fileTransfer.didTransferBytes(UInt(data.count))
-                    offset += data.count
-                }
-            }
-            fileTransfer.didFinishSuccessfully()
-        } catch {
-            fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: true))
-        }
     }
 
     @MainActor
@@ -366,30 +296,6 @@ extension Conductor: ConductorFileTransferDelegate {
 
         // counter.log()
         return data
-    }
-
-    @MainActor
-    private func reallyDownloadFolder(info: RemoteFile,
-                                      fileTransfer: ConductorFileTransfer,
-                                      remotePath: String,
-                                      fileHandle: FileHandle) async {
-        do {
-            let zipReply = try await zip(remotePath)
-            let remoteZipPath = zipReply.path
-            fileTransfer.isZipOfFolder = true
-            // Finish, but say what couldn't be read and was left out (F-721).
-            fileTransfer.completionNote = zipReply.skippedItemsNote
-            await reallyBeginDownload(fileTransfer: fileTransfer,
-                                      remotePath: remoteZipPath,
-                                      fileHandle: fileHandle,
-                                      allowDirectories: false)
-            try? await rm(remoteZipPath, recursive: false)
-        } catch {
-            // Only zip() throws here. Its permission errors come from making the archive in the
-            // remote home folder or from listing the folder itself, not from reading a file, so
-            // they get the generic reason.
-            fileTransfer.fail(reason: error.localizedDescription)
-        }
     }
 
     func beginUpload(fileTransfer: ConductorFileTransfer) {

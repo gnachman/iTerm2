@@ -78,6 +78,13 @@ class ConductorFileTransfer: TransferrableFile {
 
     private var chunked = false
 
+    // The hidden file in the Downloads folder that a download() saves to until it finishes
+    // and is renamed. It is removed if the download fails or is stopped first (F-724).
+    private var temporaryDownloadPath: String?
+
+    // Tests save downloads somewhere other than the Downloads folder.
+    static var temporaryDirectoryForTesting: String?
+
     func downloadChunked() -> Bool {
         chunked = true
         download()
@@ -89,7 +96,12 @@ class ConductorFileTransfer: TransferrableFile {
         state = .downloading
         status = .starting
         do {
-            _localPath = try temporaryFilePath()
+            let temporaryPath = try temporaryFilePath()
+            _localPath = temporaryPath
+            if !chunked {
+                // The delegate creates it. A chunked download's caller saves the file itself.
+                temporaryDownloadPath = temporaryPath
+            }
             FileTransferManager.sharedInstance().files.add(self)
             FileTransferManager.sharedInstance().transferrableFileDidStartTransfer(self)
             status = .transferring
@@ -102,7 +114,7 @@ class ConductorFileTransfer: TransferrableFile {
     }
 
     private func temporaryFilePath() throws -> String {
-        guard let downloads = FileManager.default.downloadsDirectory() else {
+        guard let downloads = Self.temporaryDirectoryForTesting ?? FileManager.default.downloadsDirectory() else {
             throw ConductorFileTransferError("Unable to find Downloads folder")
         }
         let tempFileName = ".iTerm2.\(UUID().uuidString)"
@@ -126,7 +138,16 @@ class ConductorFileTransfer: TransferrableFile {
         }
     }
 
+    private func removeTemporaryDownload() {
+        guard let temporaryDownloadPath else {
+            return
+        }
+        self.temporaryDownloadPath = nil
+        try? FileManager.default.removeItem(atPath: temporaryDownloadPath)
+    }
+
     func fail(reason: String) {
+        removeTemporaryDownload()
         _error = reason
         FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(reason))
         state = .failed
@@ -151,6 +172,7 @@ class ConductorFileTransfer: TransferrableFile {
 
     @MainActor
     func abort() {
+        removeTemporaryDownload()
         FileTransferManager.sharedInstance().transferrableFileDidStopTransfer(self)
     }
 
@@ -179,11 +201,13 @@ class ConductorFileTransfer: TransferrableFile {
         if state == .downloading {
             if !quarantine(_localPath, sourceURL: url) {
                 _error = String(localized: "ConductorFileTransfer.FailedToQuarantine", defaultValue: "Failed to quarantine", comment: "Error shown when a downloaded file cannot be quarantined")
+                removeTemporaryDownload()
                 FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
                 return
             }
             guard let attributes = try? FileManager.default.attributesOfItem(atPath: _localPath!) else {
                 _error = String(localized: "ConductorFileTransfer.CouldNotGetAttributes", defaultValue: "Could not get attributes of \(_localPath!)", comment: "Error shown when file attributes of a downloaded file cannot be read")
+                removeTemporaryDownload()
                 FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
                 return
             }
@@ -208,7 +232,8 @@ class ConductorFileTransfer: TransferrableFile {
             } catch {
                 _error = error.localizedDescription
             }
-            try? FileManager.default.removeItem(at: URL(fileURLWithPath: _localPath!))
+            // If it couldn't be moved into place, don't leave it behind.
+            removeTemporaryDownload()
             _localPath = finalDestination
             state = .downloadComplete
             FileTransferManager.sharedInstance().transferrableFile(
