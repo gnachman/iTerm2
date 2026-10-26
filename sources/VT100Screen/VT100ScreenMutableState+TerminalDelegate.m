@@ -3986,18 +3986,30 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     }
     NSString *token = values[0];
     NSString *uniqueID = values[1];
-    NSString *boolArgs = [values[2] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
-    if (!boolArgs) {
-        RLog(@"Failed to base64 decode %@", values[2]);
-        return;
-    }
-    NSString *sshargs = [values[3] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
-    if (!sshargs) {
-        RLog(@"Failed to base64 decode %@", values[3]);
-        return;
-    }
     NSString *dcsID = values[4];
-    [self appendBannerMessage:[NSString stringWithFormat:@"ssh %@", sshargs]];
+    NSString *boolArgs = [values[2] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    // it2ssh quotes the ssh arguments with bash's printf %q, which can produce bytes that
+    // are not UTF-8 (F-608), so decode the quoting at the byte level.
+    NSData *sshargsData = [NSData dataWithBase64EncodedString:values[3]];
+    NSString *sshargs = sshargsData ? [iTermSSHHookArguments normalizedArgumentsFromData:sshargsData] : nil;
+    if (!boolArgs || !sshargs) {
+        // sshargs may hold private data, so keep it out of the ring.
+        RLog(@"Failed to decode conductor hook parameters (boolArgs ok=%@, sshargs length=%@)",
+             @(boolArgs != nil), @(values[3].length));
+        // The remote conductor waits for an answer with the tty in raw mode. Tell it to
+        // quit so it restores the tty and the connection ends.
+        NSDictionary *savedState = self.savedState;
+        [self addUrgentSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+            [delegate screenDidFailToParseSSHConductorHookWithToken:token
+                                                           uniqueID:uniqueID
+                                                              dcsID:dcsID
+                                                        parentDepth:parentDepth
+                                                         savedState:savedState];
+        } name:@"ssh hook failed"];
+        [self.terminal resetForSSH];
+        return;
+    }
+    [self appendBannerMessage:[NSString stringWithFormat:@"ssh %@", [iTermSSHHookArguments displayStringForNormalizedArguments:sshargs]]];
     NSDictionary *savedState = self.savedState;
     [self addUrgentSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidHookSSHConductorWithToken:token

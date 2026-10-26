@@ -2074,6 +2074,21 @@ extension Conductor {
         DLog(self.debugDescription)
     }
 
+    // Instead of start(), when the hook's parameters could not be understood (F-608). The
+    // remote conductor reads the line prefix and then waits for a command with its tty in
+    // raw mode, so tell it to quit. It restores the tty as it exits, which ends the
+    // connection. The delegate is responsible for tearing this conductor down.
+    @objc func quitWithoutStarting() {
+        log("quitWithoutStarting")
+        hasEnded = true
+        flowMayBeOn = false
+        if !linePrefix.isEmpty {
+            write(linePrefix)
+        }
+        send(.quit, .fireAndForget)
+        ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
+    }
+
     @objc func quit() {
         hasEnded = true
         flowMayBeOn = false

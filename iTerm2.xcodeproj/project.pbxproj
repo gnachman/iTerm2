@@ -735,6 +735,7 @@
 		316BFEDC3EEC8367450DB7E2 /* iTermURLActionFactory+Testing.h in Sources */ = {isa = PBXBuildFile; fileRef = FDF6EB8657CCD10A7A568A61 /* iTermURLActionFactory+Testing.h */; };
 		32729FE01D7AC39C1BC0B1FF /* SafetyTranscriptProjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232A06BD577404F71FFBC0AF /* SafetyTranscriptProjection.swift */; };
 		329255FAF6BE419BCB700B39 /* CodeReviewPromptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F0C4D86ED1181AF4DA5A4F /* CodeReviewPromptStore.swift */; };
+		335117784F92355E402EBE7C /* SSHHookArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5A7493F12FE6D368D9966F /* SSHHookArguments.swift */; };
 		350855B79BCFF20D8A66A936 /* iTermShellArguments.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AE66769B8654316E249B74A /* iTermShellArguments.m */; };
 		352F6F2331E441629B912B47 /* AgentHookDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53EA9AFEC3BECD6B78B76385 /* AgentHookDetail.swift */; };
 		355C6FC60EEF61A2C69E8D0E /* ArchiveClippingsBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B084D285B6C1CDDE2932596 /* ArchiveClippingsBuiltInFunction.swift */; };
@@ -8861,6 +8862,7 @@
 		BCB6504EA9415C3BAC796EA5 /* iTermStandardButtons.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermStandardButtons.h; sourceTree = "<group>"; };
 		BCBB83E64BDE6C3824D5CEF6 /* iTermSuppressedAlertsWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSuppressedAlertsWindowController.swift; sourceTree = "<group>"; };
 		BD02F2955BAF479EBAC063FE /* MentionParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionParser.swift; sourceTree = "<group>"; };
+		BE5A7493F12FE6D368D9966F /* SSHHookArguments.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SSHHookArguments.swift; sourceTree = "<group>"; };
 		BFD3901D8207448AB8A8622E /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/DirectoriesPopup.xcstrings; sourceTree = "<group>"; };
 		C0633ABD6E952B2E3BBF254B /* SocketConnection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SocketConnection.swift; path = it2cli/Sources/it2core/Transport/SocketConnection.swift; sourceTree = "<group>"; };
 		C064EB0F853DE6D529AF6FD4 /* AuthCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AuthCommand.swift; path = it2cli/Sources/it2core/Commands/AuthCommand.swift; sourceTree = "<group>"; };
@@ -11854,6 +11856,7 @@
 				C86B5CE4F7F3519B29EA1C72 /* FrameDelayBaseline.swift */,
 				53E1D3E6F144FCFF66F32D3F /* ProcessInfoProviderKey.swift */,
 				28176490BC2B63BB5164B3CA /* FlowControlMonitorRedrawPolicy.swift */,
+				BE5A7493F12FE6D368D9966F /* SSHHookArguments.swift */,
 			);
 			path = SSH;
 			sourceTree = "<group>";
@@ -20385,6 +20388,7 @@
 				22EC1C1F89212FA7ACF36A0D /* CompanionAppNapBlocker.swift in Sources */,
 				6909AEF4EF285B013BE9E1E6 /* ProcessInfoProviderKey.swift in Sources */,
 				1B2CDD7E697FD1F94FA99789 /* FlowControlMonitorRedrawPolicy.swift in Sources */,
+				335117784F92355E402EBE7C /* SSHHookArguments.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

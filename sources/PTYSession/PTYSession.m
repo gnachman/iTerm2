@@ -21174,6 +21174,63 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                      dcsID:(NSString * _Nonnull)dcsID
                                parentDepth:(int)parentDepth
                                 savedState:(NSDictionary *)savedState {
+    if (![self installSSHConductorWithToken:token
+                                   uniqueID:uniqueID
+                                   boolArgs:boolArgs
+                                    sshargs:sshargs
+                                      dcsID:dcsID
+                                parentDepth:parentDepth
+                                 savedState:savedState]) {
+        return;
+    }
+    iTermConductor *previousConductor = _conductor.parent;
+    NSArray<iTermSSHReconnectionInfo *> *jumps = _pendingJumps;
+    if (!previousConductor && jumps.count) {
+        [_conductor startJumpingTo:jumps];
+    } else if (previousConductor.subsequentJumps.count) {
+        [_conductor startJumpingTo:previousConductor.subsequentJumps];
+        [previousConductor childDidBeginJumping];
+    } else {
+        [_conductor start];
+    }
+    [self updateVariablesFromConductor];
+}
+
+// it2ssh sent arguments that could not be decoded (F-608). The remote conductor is
+// waiting for commands with its tty in raw mode, so make it quit rather than leave the
+// session stuck.
+- (void)screenDidFailToParseSSHConductorHookWithToken:(NSString *)token
+                                             uniqueID:(NSString *)uniqueID
+                                                dcsID:(NSString *)dcsID
+                                          parentDepth:(int)parentDepth
+                                           savedState:(NSDictionary *)savedState {
+    const BOOL outermost = (_conductor == nil);
+    if (![self installSSHConductorWithToken:token
+                                   uniqueID:uniqueID
+                                   boolArgs:@""
+                                    sshargs:@""
+                                      dcsID:dcsID
+                                parentDepth:parentDepth
+                                 savedState:savedState]) {
+        return;
+    }
+    if (outermost) {
+        // A restored chain of jumps can't continue past a connection that failed, and its
+        // remaining jumps must not be taken by the next it2ssh in this session.
+        [_pendingJumps removeAllObjects];
+    }
+    [_conductor quitWithoutStarting];
+    [self endConductorWithBanner:NSLocalizedStringWithDefaultValue(@"PTYSession.SSHArgumentsUnreadable", nil, [NSBundle mainBundle], @"SSH integration couldn’t start because iTerm2 couldn’t read the arguments given to it2ssh. Use ssh to connect without SSH integration.", @"Banner shown when it2ssh's arguments cannot be decoded and the SSH connection is ended")];
+}
+
+// Returns NO if the hook was refused, in which case no conductor was created.
+- (BOOL)installSSHConductorWithToken:(NSString *)token
+                            uniqueID:(NSString *)uniqueID
+                            boolArgs:(NSString *)boolArgs
+                             sshargs:(NSString *)sshargs
+                               dcsID:(NSString *)dcsID
+                         parentDepth:(int)parentDepth
+                          savedState:(NSDictionary *)savedState {
     // The terminal executed this hook before it learned the connection carrying it was
     // abandoned, or it is the abandoned connection's own. Starting a conductor would write
     // to the shell that owns the tty (F-459).
@@ -21189,7 +21246,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             [terminal.parser forceUnhookDCSReturningSuccess:dcsID];
         }];
-        return;
+        return NO;
     }
     if (wasRefused) {
         // The terminal may have executed this hook before it learned of the abandonment
@@ -21237,16 +21294,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     _sshState = iTermSSHStateNone;
     _conductor.delegate = self;
-    NSArray<iTermSSHReconnectionInfo *> *jumps = _pendingJumps;
-    if (!previousConductor && jumps.count) {
-        [_conductor startJumpingTo:jumps];
-    } else if (previousConductor.subsequentJumps.count) {
-        [_conductor startJumpingTo:previousConductor.subsequentJumps];
-        [previousConductor childDidBeginJumping];
-    } else {
-        [_conductor start];
-    }
-    [self updateVariablesFromConductor];
+    return YES;
 }
 
 - (iTermConductor *)conductorWithDCSID:(NSString *)dcsID {
@@ -27174,11 +27222,16 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 
 - (void)conductorQuit {
     RLog(@"conductorQuit");
+    NSString *identity = _conductor.sshIdentity.description;
+    [self endConductorWithBanner:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.DisconnectedFrom", nil, [NSBundle mainBundle], @"Disconnected from %@", @"Banner shown when an SSH connection ends; placeholder is the host identity"), identity]];
+}
+
+// Tears down the innermost conductor after it has asked the remote to quit.
+- (void)endConductorWithBanner:(NSString *)banner {
     [self cancelNestedFramerRecovery];
     [self conductorWillDie];
-    NSString *identity = _conductor.sshIdentity.description;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState appendBannerMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.DisconnectedFrom", nil, [NSBundle mainBundle], @"Disconnected from %@", @"Banner shown when an SSH connection ends; placeholder is the host identity"), identity]];
+        [mutableState appendBannerMessage:banner];
     }];
     // If the it2ssh was killed (F-482) nothing will ever answer the quit request, so the
     // framer's unhook and it2ssh's EndSSH never arrive and the DCS hook would swallow the

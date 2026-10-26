@@ -2136,6 +2136,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenDidHookSSHConductor(withToken token: String, uniqueID: String, boolArgs: String, sshargs: String, dcsID: String, parentDepth: Int32, savedState: [AnyHashable : Any]) {
 
     }
+
+    func screenDidFailToParseSSHConductorHook(withToken token: String, uniqueID: String, dcsID: String, parentDepth: Int32, savedState: [AnyHashable : Any]) {
+
+    }
     
     func screenDidReadSSHConductorLine(_ string: String, depth: Int32) {
 

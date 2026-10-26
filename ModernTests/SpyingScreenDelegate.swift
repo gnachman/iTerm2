@@ -103,6 +103,20 @@ class SpyingScreenDelegate: FakeSession {
         sentReports.append(data)
     }
 
+    /// sshargs passed to screenDidHookSSHConductor, in order.
+    private(set) var hookedSSHArgs: [String] = []
+
+    /// Unique IDs passed to screenDidFailToParseSSHConductorHook, in order.
+    private(set) var failedSSHHookUniqueIDs: [String] = []
+
+    override func screenDidHookSSHConductor(withToken token: String, uniqueID: String, boolArgs: String, sshargs: String, dcsID: String, parentDepth: Int32, savedState: [AnyHashable : Any]) {
+        hookedSSHArgs.append(sshargs)
+    }
+
+    override func screenDidFailToParseSSHConductorHook(withToken token: String, uniqueID: String, dcsID: String, parentDepth: Int32, savedState: [AnyHashable : Any]) {
+        failedSSHHookUniqueIDs.append(uniqueID)
+    }
+
     /// Hosts passed to screenCurrentHostDidChange, in order.
     private(set) var currentHostDidChangeCalls: [any VT100RemoteHostReading] = []
 
