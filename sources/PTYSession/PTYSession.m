@@ -836,6 +836,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // An it2ssh that is still alive sends EndSSH after its conductor is gone and waits for
     // a line before exiting, so it must still be answered (F-705).
     NSMutableSet<NSString *> *_disconnectedSSHClientUniqueIDs;
+    // The DCS hook IDs of conductors the session let go of, whose unhook may arrive later.
+    NSMutableSet<NSString *> *_letGoConductorDCSIDs;
     // Watches local it2ssh processes so the session recovers when one dies (F-482).
     iTermSSHClientMonitor *_sshClientMonitor;
     // Abandoned connections whose framer recovery must not begin, as decided on the main
@@ -1039,6 +1041,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _sshClientMonitor = [[iTermSSHClientMonitor alloc] init];
         _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
         _disconnectedSSHClientUniqueIDs = [[NSMutableSet alloc] init];
+        _letGoConductorDCSIDs = [[NSMutableSet alloc] init];
         _ttyModeRepairer = [[iTermTTYModeRepairer alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directoryTracker = [[iTermSessionDirectoryTracker alloc] initWithVariablesScope:self.variablesScope];
@@ -1437,6 +1440,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_stuckKeyReportingDetector release];
     [_queuedConnectingSSH release];
     [_disconnectedSSHClientUniqueIDs release];
+    [_letGoConductorDCSIDs release];
     [_sshClientMonitor release];
     [_framerRecoveryRefusals release];
     [_preSSHTTYModes release];
@@ -21224,6 +21228,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return nil;
 }
 
+- (iTermConductor *)conductorWithDCSID:(NSString *)dcsID {
+    for (iTermConductor *conductor = _conductor; conductor; conductor = conductor.parent) {
+        if ([conductor.dcsID isEqualToString:dcsID]) {
+            return conductor;
+        }
+    }
+    return nil;
+}
+
 - (iTermConductor *)conductorAtDepth:(int)depth {
     for (iTermConductor *conductor = _conductor; conductor; conductor = conductor.parent) {
         if (conductor.depth == depth) {
@@ -21411,7 +21424,16 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     [_conductor handleLine:string depth:depth];
 }
 
-- (void)screenDidUnhookSSHConductorAtDepth:(int)depth {
+- (void)screenDidUnhookSSHConductorWithDCSID:(NSString *)dcsID depth:(int)depth {
+    if (dcsID.length &&
+        [_letGoConductorDCSIDs containsObject:dcsID] &&
+        ![self conductorWithDCSID:dcsID]) {
+        // The hook of a connection the session already let go of. A connection nested in
+        // one without a framer has the same depth as it, so the depth can't tell (F-787).
+        RLog(@"Ignore the unhook of ended conductor %@", dcsID);
+        [_letGoConductorDCSIDs removeObject:dcsID];
+        return;
+    }
     if (_conductor && depth > _conductor.depth) {
         // The hook of a nested connection that already ended, as when Disconnect unhooked
         // it before its framer's unhook arrived. It isn't the end of the connection it was
@@ -21445,6 +21467,10 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
         // and a no-op when no prompt is pending.
         [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
+        if (_conductor.dcsID.length) {
+            // Its hook may still end later; that is not the end of its parent (F-787).
+            [_letGoConductorDCSIDs addObject:_conductor.dcsID];
+        }
         _conductor.delegate = nil;
         [_conductor autorelease];
     }

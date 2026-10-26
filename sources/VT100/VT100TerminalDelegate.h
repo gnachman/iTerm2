@@ -610,7 +610,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)terminalDidHookSSHConductorWithParams:(nullable NSString *)token parentDepth:(int)parentDepth;
 - (void)terminalDidReadSSHConductorLine:(nullable NSString *)string depth:(int)depth;
 // depth is the nesting depth of the conductor whose hook ended.
-- (void)terminalDidUnhookSSHConductorAtDepth:(int)depth;
+// dcsID names the hook that ended, if known.
+- (void)terminalDidUnhookSSHConductorWithDCSID:(nullable NSString *)dcsID depth:(int)depth;
 - (void)terminalDidBeginSSHConductorCommandWithIdentifier:(nullable NSString *)identifier
                                                     depth:(int)depth;
 - (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier

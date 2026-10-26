@@ -210,6 +210,35 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertTrue(session.screen.compactLineDumpWithHistory().contains("hostA% "))
     }
 
+    // F-787: under an outer connection without a framer, a nested conductor has the outer's
+    // depth. Its late unhook after Disconnect still isn't the outer's end.
+    func testDisconnectedConnectionUnderNonFramingParentLeavesParentLive() {
+        send(hook(uniqueID: rootID))
+        let root = session.conductor!
+        // The outer conductor ran the login shell without a framer and its hook ended.
+        let rootDCSID = root.dcsID
+        session.screen.performBlock(joinedThreads: { terminal, _, _ in
+            XCTAssertTrue(terminal?.parser.forceUnhookDCSReturningSuccess(rootDCSID) ?? false)
+        })
+        root.forceReturnToGroundState()
+        send(hook(uniqueID: nestedID))
+        let nested = session.conductor!
+        XCTAssertTrue(nested.parent === root)
+        XCTAssertEqual(nested.depth, root.depth)
+        nested.framedPID = 200
+        nested.forceReturnToGroundState()
+
+        nested.quit()
+        sync()
+        XCTAssertTrue(session.conductor === root)
+        session.writes.removeAll()
+        // it2ssh's EndSSH ends the nested hook.
+        send(endSSH(nestedID))
+        XCTAssertTrue(session.conductor === root)
+        XCTAssertFalse(Self.isUnhooked(root), "the outer connection was taken for ended")
+        XCTAssertTrue(session.writes.contains("\u{03}\n"), "\(session.writes)")
+    }
+
     // The payloads of the framer `send` commands in what was written, decoded the way
     // framer.py does.
     private static func relayedPayloads(_ written: String) -> [String] {

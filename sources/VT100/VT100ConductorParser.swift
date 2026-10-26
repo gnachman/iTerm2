@@ -308,6 +308,9 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         if string == "unhook" {
             DLog("In ground state: Found valid unhook token")
             token.type = SSH_UNHOOK
+            // Names the hook, so a late unhook of a connection that already ended can be told
+            // from one of the connection it was nested in (F-787).
+            token.string = uniqueID
             return .unhook
         }
         DLog("In ground state: Found unrecognized token")
@@ -516,6 +519,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                                  token: VT100Token) -> VT100DCSParserHookResult {
         iTermParserBacktrack(context, offset: start)
         token.type = SSH_UNHOOK
+        token.string = uniqueID
         return .unhook
     }
 

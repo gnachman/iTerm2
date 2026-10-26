@@ -2141,7 +2141,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenDidUnhookSSHConductor(atDepth depth: Int32) {
+    func screenDidUnhookSSHConductor(withDCSID dcsID: String?, depth: Int32) {
 
     }
     
