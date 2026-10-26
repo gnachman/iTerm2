@@ -7,9 +7,6 @@
 
 
 extension Conductor: SSHEndpoint {
-    // framer.py's file_error maps ENOENT to this exit code.
-    static let framerFileNotFoundCode: Int32 = 2
-
     @MainActor
     func performFileOperation(subcommand: FileSubcommand,
                                       highPriority: Bool = false) async throws -> String {
@@ -19,15 +16,9 @@ extension Conductor: SSHEndpoint {
                 continuation.resume(returning: (content, code))
             }
         }
-        if code < 0 {
-            throw SSHEndpointException.connectionClosed
-        }
         // Codes come from file_error in framer.py. Only ENOENT means the file is not there.
-        if code == Self.framerFileNotFoundCode {
-            throw SSHEndpointException.fileNotFound
-        }
-        if code > 0 {
-            throw SSHEndpointException.fileOperationFailed
+        if let error = SSHEndpointException.forFramerExitCode(code) {
+            throw error
         }
         return output
     }

@@ -162219,6 +162219,48 @@
         }
       }
     },
+    "SSHEndpointException.DownloadPermissionDenied" : {
+      "comment" : "Reason shown when an SSH Integration download fails because the remote file's permissions do not allow reading it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The file couldn’t be read because you don’t have permission to read it on the remote host."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei konnte nicht gelesen werden, da Sie auf dem Remote-Host keine Leseberechtigung für sie haben."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホスト上でこのファイルの読み取り権限がないため、ファイルを読み取れませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler o arquivo porque você não tem permissão para lê-lo no host remoto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать файл: у вас нет прав на его чтение на удалённом хосте."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取该文件，因为你在远程主机上没有读取它的权限。"
+          }
+        }
+      }
+    },
     "SSHEndpointException.FileNotFound" : {
       "comment" : "Error shown when a file cannot be found on an SSH endpoint",
       "extractionState" : "extracted_with_value",
@@ -162345,6 +162387,90 @@
         }
       }
     },
+    "SSHEndpointException.NotADirectory" : {
+      "comment" : "Error shown when a file operation on an SSH endpoint fails because a component of the remote path is a file rather than a folder",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Part of the path on the remote host is not a folder."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Teil des Pfads auf dem Remote-Host ist kein Ordner."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホスト上のパスの一部がフォルダではありません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parte do caminho no host remoto não é uma pasta."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Часть пути на удалённом хосте не является папкой."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "远程主机上的路径中有一部分不是文件夹。"
+          }
+        }
+      }
+    },
+    "SSHEndpointException.PermissionDenied" : {
+      "comment" : "Error shown when a file operation on an SSH endpoint fails because the permissions of the remote file or folder do not allow it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You don’t have permission to access this file on the remote host."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie haben auf dem Remote-Host keine Berechtigung, auf diese Datei zuzugreifen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホスト上でこのファイルにアクセスする権限がありません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você não tem permissão para acessar este arquivo no host remoto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У вас нет прав на доступ к этому файлу на удалённом хосте."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在远程主机上没有访问此文件的权限。"
+          }
+        }
+      }
+    },
     "SSHEndpointException.TransferCanceled" : {
       "comment" : "Error shown when an SSH file transfer is canceled",
       "extractionState" : "extracted_with_value",
@@ -162383,6 +162509,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文件传输已取消。"
+          }
+        }
+      }
+    },
+    "SSHEndpointException.UploadPermissionDenied" : {
+      "comment" : "Reason shown when an SSH Integration upload fails because the remote destination folder's permissions do not allow writing to it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The file couldn’t be saved because you don’t have permission to write to the destination folder on the remote host."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei konnte nicht gespeichert werden, da Sie auf dem Remote-Host keine Schreibberechtigung für den Zielordner haben."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホスト上で保存先フォルダへの書き込み権限がないため、ファイルを保存できませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível salvar o arquivo porque você não tem permissão para gravar na pasta de destino no host remoto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить файл: у вас нет прав на запись в папку назначения на удалённом хосте."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存该文件，因为你在远程主机上没有写入目标文件夹的权限。"
           }
         }
       }

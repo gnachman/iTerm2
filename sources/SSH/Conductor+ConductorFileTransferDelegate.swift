@@ -128,7 +128,7 @@ extension Conductor: ConductorFileTransferDelegate {
             }
             fileTransfer.didFinishSuccessfully()
         } catch {
-            fileTransfer.fail(reason: error.localizedDescription)
+            fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: true))
         }
     }
 
@@ -222,7 +222,7 @@ extension Conductor: ConductorFileTransferDelegate {
                     fileTransfer.abort()
                 }
             } else if cancellation?.canceled != true {
-                fileTransfer.fail(reason: error.localizedDescription)
+                fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: true))
             }
             throw error
         }
@@ -364,7 +364,7 @@ extension Conductor: ConductorFileTransferDelegate {
                                       allowDirectories: false)
             try? await rm(remoteZipPath, recursive: false)
         } catch {
-            fileTransfer.fail(reason: error.localizedDescription)
+            fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: true))
         }
     }
 
@@ -451,7 +451,7 @@ extension Conductor: ConductorFileTransferDelegate {
                 }
                 fileTransfer.abort()
             } else {
-                fileTransfer.fail(reason: error.localizedDescription)
+                fileTransfer.fail(reason: SSHEndpointException.transferFailureReason(for: error, isDownload: false))
             }
         }
     }

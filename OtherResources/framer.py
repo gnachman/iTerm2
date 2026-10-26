@@ -790,7 +790,8 @@ async def handle_file(identifier, args):
     if len(args) < 2:
         log(f'Not enough args {args}')
         q = begin(identifier)
-        end(q, identifier, 1)
+        # Not 1, which iTerm2 reads as permission denied.
+        end(q, identifier, 100)
         return
     q = begin(identifier)
     sub = args[0]
@@ -824,7 +825,7 @@ async def handle_file(identifier, args):
                 recursive = True
             i += 1
         if i == len(args):
-            end(q, identifier, 1)
+            end(q, identifier, 100)
             return
         await handle_file_rm(q, identifier, make_path(args[i]), recursive)
         return
@@ -881,7 +882,7 @@ async def handle_file(identifier, args):
         return
 
     log(f'unrecognized subcommand {sub}')
-    end(q, identifier, 1)
+    end(q, identifier, 100)
 
 def permissions(path):
     return {
@@ -909,19 +910,19 @@ def remotefile(pp, abspath, s):
             "mtime": mtime}
 
 def file_error(q, identifier, e, path):
+    # iTerm2 reads these codes in Conductor+SSHEndpoint.swift: 1 is permission denied
+    # (EPERM or EACCES), 2 is ENOENT, 3 is ENOTDIR, 4 is ELOOP, and anything else is a
+    # generic failure.
     if e is None:
         log(f'file_error {path}')
-        end(q, identifier, 1)
+        end(q, identifier, 100)
         return
     try:
         raise e
     except OSError as e:
         log(f'file_error {path}: {traceback.format_exc()}')
-        errors = {errno.EPERM: 1, errno.ENOENT: 2, errno.ENOTDIR: 3, errno.ELOOP: 4}
+        errors = {errno.EPERM: 1, errno.EACCES: 1, errno.ENOENT: 2, errno.ENOTDIR: 3, errno.ELOOP: 4}
         end(q, identifier, errors.get(e.errno, 100))
-    except PermissionError as e:
-        log(f'file_error {path}: {traceback.format_exc()}')
-        end(q, identifier, 1)
     except Exception as e:
         log(f'file_error {path}: {traceback.format_exc()}')
         end(q, identifier, 255)
@@ -1061,7 +1062,8 @@ async def handle_file_zip(q, identifier, path):
 
     if not os.path.isdir(path):
         log(f'{path} is not a directory')
-        file_error(q, identifier, None, f'{path} is not a directory')
+        code = errno.ENOTDIR if os.path.lexists(path) else errno.ENOENT
+        file_error(q, identifier, OSError(code, os.strerror(code), path), path)
         return
     try:
         # Create a temporary file in the user's home directory
@@ -1270,7 +1272,7 @@ async def handle_file_create(q, identifier, path, content):
         send_remote_file(q, path)
         end(q, identifier, 0)
     except Exception as e:
-        file_error(identifier, e, path)
+        file_error(q, identifier, e, path)
 
 async def handle_file_append(q, identifier, path, content):
     log(f'handle_file_append {identifier} {path} length={len(content)} bytes')
