@@ -2010,3 +2010,7 @@ Bug Fixes:
 - When a session’s program ends and iTerm2 offers
   to restart it, short output such as a custom
   command’s is no longer hidden behind the offer.
+- The Downloads and Uploads menus now show
+  their translated title in the menu bar, and
+  the size of each file (such as “1.2 MB of
+  20 MB”) is now translated.

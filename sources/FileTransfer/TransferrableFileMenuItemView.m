@@ -119,7 +119,7 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
     NSString *sizeString;
     if (_size >= 0) {
         sizeString =
-            [NSString stringWithFormat:@"%@ of %@",
+            [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"TransferrableFileMenuItemView.SizeProgress", nil, [NSBundle mainBundle], @"%1$@ of %2$@", @"Size column of a file in the Downloads or Uploads menu; the first argument is how many bytes have been transferred (for example “1.2 MB”) and the second is the size of the file"),
                 [NSString it_formatBytes:_bytesTransferred],
                 [NSString it_formatBytes:_size]];
     } else {
