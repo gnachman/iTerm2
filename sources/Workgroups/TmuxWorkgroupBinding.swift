@@ -586,20 +586,52 @@ final class TmuxWorkgroupBinding {
             guard let gateway else {
                 return
             }
-            gateway.sendList(TmuxWorkgroupCommands.endInstance(sessionID: sessionID,
-                                                               instanceID: instanceID,
-                                                               leaderPaneID: leaderPaneID)) { _ in }
-            if let leaderPaneID,
-               let bringOut = Self.bringOutParkedLeader(windowsReply: replies.count > 1 ? replies[1] : nil,
-                                                        leaderPaneID: leaderPaneID,
-                                                        sessionID: sessionID) {
-                RLog("TmuxWorkgroupBinding: the leader %\(leaderPaneID) of \(instanceID) is parked; bringing it out")
-                gateway.sendList(bringOut) { _ in }
+            let panesReply = replies.first.flatMap { $0 }
+            if panesReply == nil {
+                RLog("TmuxWorkgroupBinding: tmux did not list the panes of \(instanceID); its members can't be found to remove")
             }
-            for paneID in memberPaneIDs(listPanesReply: replies.first.flatMap { $0 } ?? "", instanceID: instanceID)
-            where paneID != leaderPaneID {
-                gateway.send(TmuxWorkgroupCommands.killPane(paneID)) { _ in }
+            let windowsReply = replies.count > 1 ? replies[1] : nil
+            guard let leaderPaneID, windowsReply == nil else {
+                finishRemoving(gateway: gateway, sessionID: sessionID, instanceID: instanceID,
+                               leaderPaneID: leaderPaneID, panesReply: panesReply, windowsReply: windowsReply)
+                return
             }
+            // Whether the leader is parked must be known before the instance ends: a parked leader
+            // is brought out, or it would stay hidden.
+            RLog("TmuxWorkgroupBinding: tmux did not say where the leader %\(leaderPaneID) of \(instanceID) is; asking again")
+            gateway.send(Self.leaderWindowQuery(sessionID: sessionID)) { [weak gateway] retried in
+                guard let gateway else {
+                    return
+                }
+                if retried == nil {
+                    RLog("TmuxWorkgroupBinding: still can't tell whether the leader %\(leaderPaneID) of \(instanceID) is parked; if it is, the hidden-pane offer can bring it back")
+                }
+                finishRemoving(gateway: gateway, sessionID: sessionID, instanceID: instanceID,
+                               leaderPaneID: leaderPaneID, panesReply: panesReply, windowsReply: retried)
+            }
+        }
+    }
+
+    /// Untags the leader and unsets the record, brings out a parked leader, and kills the members.
+    private static func finishRemoving(gateway: TmuxGateway,
+                                       sessionID: Int,
+                                       instanceID: String,
+                                       leaderPaneID: Int?,
+                                       panesReply: String?,
+                                       windowsReply: String?) {
+        gateway.sendList(TmuxWorkgroupCommands.endInstance(sessionID: sessionID,
+                                                           instanceID: instanceID,
+                                                           leaderPaneID: leaderPaneID)) { _ in }
+        if let leaderPaneID,
+           let bringOut = Self.bringOutParkedLeader(windowsReply: windowsReply,
+                                                    leaderPaneID: leaderPaneID,
+                                                    sessionID: sessionID) {
+            RLog("TmuxWorkgroupBinding: the leader %\(leaderPaneID) of \(instanceID) is parked; bringing it out")
+            gateway.sendList(bringOut) { _ in }
+        }
+        for paneID in memberPaneIDs(listPanesReply: panesReply ?? "", instanceID: instanceID)
+        where paneID != leaderPaneID {
+            gateway.send(TmuxWorkgroupCommands.killPane(paneID)) { _ in }
         }
     }
 

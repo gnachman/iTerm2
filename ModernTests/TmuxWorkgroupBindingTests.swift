@@ -161,6 +161,26 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
         ])
     }
 
+    // If tmux can't say where the leader is, it asks again before ending the instance, rather than
+    // leaving a parked leader hidden. QA finding F-803.
+    func testAFailedLeaderWindowQueryIsAskedAgain() {
+        binding.publish(leaderPaneID: 0)
+        tmux.reply()
+        tmux.reply()
+        let published = tmux.written.count
+        binding.removeFromServer()
+        tmux.reply(["%0 " + tag("INSTANCE", 0), "%5 " + tag("INSTANCE", 2)])
+        tmux.reply(["no server running"], error: true)
+        XCTAssertEqual(tmux.written.dropFirst(published + 1), [TmuxWorkgroupBinding.leaderWindowQuery(sessionID: 4)],
+                       "nothing is ended until it is known whether the leader is parked")
+        tmux.reply(["%0 @3 1 " + TmuxWorkgroupState.ParkedTag(instanceID: "INSTANCE").encoded, "%5 @4 1 "])
+        XCTAssertEqual(tmux.written.dropFirst(published + 2), [
+            C.endInstance(sessionID: 4, instanceID: "INSTANCE", leaderPaneID: 0).joined(separator: "; "),
+            C.bringOutPane(sessionID: 4, paneID: 0, windowID: 3, sharesWindow: false).joined(separator: "; "),
+            "kill-pane -t %5",
+        ])
+    }
+
     // Only this Mac's session went away (a hidden window): the instance stays on the server.
     func testPaneStillThereChangesNothing() {
         binding.removeFromServerIfPaneIsGone(5)
