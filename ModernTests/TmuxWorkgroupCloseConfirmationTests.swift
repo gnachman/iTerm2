@@ -52,6 +52,36 @@ final class TmuxWorkgroupCloseConfirmationTests: WorkgroupEntryTestBase {
         standIn.live = nil
     }
 
+    // Once confirmed, closing the stand-in kills the member's pane, as closing the member itself
+    // does, so the workgroup ends as it would then. Closing only the stand-in left the pane on the
+    // server and the workgroup half alive. QA finding F-830.
+    func testClosingAFilteredTmuxMemberKillsItsPane() throws {
+        let split = try enterRootWithSplit()
+        split.setTmuxPane(1)
+        tmuxSessions.append(split)
+        // A tmux client installs a status bar monitor once it has a controller, which needs a
+        // profile, so it becomes a client first.
+        let drained = expectation(description: "main queue drained")
+        DispatchQueue.main.async { drained.fulfill() }
+        wait(for: [drained], timeout: 10)
+        let tmux = TmuxRecordingGateway()
+        let controller = try XCTUnwrap(TmuxController(gateway: tmux.gateway,
+                                                      clientName: "close-filtered-member-test",
+                                                      profile: [:],
+                                                      profileModel: nil))
+        defer {
+            split.tmuxController = nil
+            TmuxControllerRegistry.sharedInstance().setController(nil, forClient: controller.clientName)
+        }
+        split.tmuxController = controller
+        let standIn = PTYSession(synthetic: true)!
+        standIn.live = split
+        XCTAssertTrue(PseudoTerminal.tmuxPaneSessionClosed(byClosing: standIn) === split)
+        XCTAssertTrue(PseudoTerminal.tmuxPaneSessionClosed(byClosing: split) === split)
+        standIn.live = nil
+        XCTAssertNil(PseudoTerminal.tmuxPaneSessionClosed(byClosing: standIn))
+    }
+
     // Local members ask as they always have, according to their profiles.
     func testClosingALocalMemberIsUnchanged() throws {
         let split = try enterRootWithSplit()

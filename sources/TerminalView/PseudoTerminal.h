@@ -496,6 +496,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Whether closing these sessions would end a workgroup on a tmux server, and so must be confirmed.
 + (BOOL)closingEndsTmuxWorkgroup:(NSArray<PTYSession *> *)sessions;
+
+// The attached tmux pane's session whose pane closing `session` kills, if any.
++ (PTYSession *)tmuxPaneSessionClosedByClosing:(PTYSession *)session;
 - (void)closeSessionWithoutConfirmation:(PTYSession *)aSession;
 
 // Close the named tab without confirmation. Used by the layout-

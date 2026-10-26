@@ -1805,10 +1805,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)closeSession:(PTYSession *)aSession soft:(BOOL)soft {
     RLog(@"closeSession:%@ soft:%@", aSession, @(soft));
-    if (!soft &&
-        [aSession isTmuxClient] &&
-        [[aSession tmuxController] isAttached]) {
-        [[aSession tmuxController] killWindowPane:[aSession tmuxPane]];
+    PTYSession *tmuxPaneSession = [PseudoTerminal tmuxPaneSessionClosedByClosing:aSession];
+    if (!soft && tmuxPaneSession) {
+        [[tmuxPaneSession tmuxController] killWindowPane:[tmuxPaneSession tmuxPane]];
     } else {
         PTYTab *tab = [self tabForSession:aSession];
         if ([[tab sessions] count] == 1) {
@@ -1817,6 +1816,18 @@ ITERM_WEAKLY_REFERENCEABLE
             [aSession terminate];
         }
     }
+}
+
+// The attached tmux pane's session that closing `session` closes, if any: the session itself, or
+// the one a filter or Instant Replay stand-in shows. Closing a stand-in alone would leave its pane
+// on the server, and a tmux workgroup member's pane there keeps its workgroup half alive (QA
+// finding F-830).
++ (PTYSession *)tmuxPaneSessionClosedByClosing:(PTYSession *)session {
+    PTYSession *live = session.liveSession ?: session;
+    if (live.isTmuxClient && [[live tmuxController] isAttached]) {
+        return live;
+    }
+    return nil;
 }
 
 - (PTYTab *)tabForSession:(PTYSession *)session {
