@@ -729,9 +729,13 @@ final class iTermWorkgroupInstance: NSObject {
         // deallocated synchronously) can't keep pointing at a
         // torn-down instance.
         let peerSessions = allPeerPorts.flatMap { $0.realizedPeerSessions }
-        peerPort.invalidate()
+        // Detaching from tmux (or losing the connection) ends the instance here when it terminates
+        // the buried sessions, the leader's among them if a peer is in view. The tmux windows
+        // outlive the connection, so a peer in view stays in its window like any other pane.
+        let keepPeersInTabs = tmuxBinding.map { !$0.isConnected } ?? false
+        peerPort.invalidate(keepingPeersInTabs: keepPeersInTabs)
         for port in nestedPeerPorts {
-            port.invalidate()
+            port.invalidate(keepingPeersInTabs: keepPeersInTabs)
         }
         nestedPeerPorts.removeAll()
         for configID in nonPeerOrderedConfigIDs {

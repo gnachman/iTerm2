@@ -429,13 +429,19 @@ class PTYSessionPeerPort: NSObject {
         return nil
     }
 
-    // End the non-leader members and release references.
-    func invalidate() {
-        RLog("PTYSessionPeerPort.invalidate: port=\(debugDescription) peerIDs=\(peers.keys.sorted())")
+    // End the non-leader members and release references. With `keepingPeersInTabs`, a member in a
+    // tab is left there and only the buried ones end: when a tmux connection is gone, its windows
+    // outlive it, and a peer in view stays in its place like any other pane of the window.
+    func invalidate(keepingPeersInTabs: Bool = false) {
+        RLog("PTYSessionPeerPort.invalidate: port=\(debugDescription) peerIDs=\(peers.keys.sorted()) keepingPeersInTabs=\(keepingPeersInTabs)")
         invalidated = true
         for identifier in peers.keys where identifier != leader {
-            peers[identifier]?.then {
-                Self.end(peer: $0, identifier: identifier)
+            peers[identifier]?.then { session in
+                if keepingPeersInTabs && session.delegate != nil {
+                    RLog("PTYSessionPeerPort.invalidate: keeping peer \(identifier) guid=\(session.guid) in its tab")
+                    return
+                }
+                Self.end(peer: session, identifier: identifier)
             }
         }
         peers = [:]
