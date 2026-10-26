@@ -593,6 +593,13 @@ extension PTYSession {
         return workgroupInstance?.tmuxBinding != nil || hasBeenTmuxBuried
     }
 
+    /// The filter to put back when this buried session's pane returns to a tab. It was showing
+    /// one when a peer switch parked its pane.
+    @objc var tmuxFilterToRestore: String? {
+        get { swiftState.tmuxFilterToRestore }
+        set { swiftState.tmuxFilterToRestore = newValue }
+    }
+
     /// After this session was buried: if tmux no longer has its pane, the member really ended.
     @objc func tmuxSessionWasBuried() {
         guard let gateway = tmuxController?.gateway else {

@@ -6451,6 +6451,53 @@ typedef struct {
     return dict;
 }
 
+// A synthetic stand-in, such as a filter's, shows a tmux pane that left this tab, as a workgroup
+// peer switch parks a member's pane. End the stand-in as leaving the filter does (-setFilter:
+// inSession: with no query, then -showLiveSession:inPlaceOf:), without putting the pane's session
+// back in the tab, and bury that session as for a member in view, so it keeps its state. A filter
+// is put back when the pane returns (see -restoreFiltersOfAdoptedSessions:).
+- (void)buryTmuxSessionShownByStandIn:(PTYSession *)standIn {
+    PTYSession *live = standIn.liveSession;
+    RLog(@"Bury tmux session %@ shown by stand-in %@ (filter %@)", live, standIn, standIn.filter ? @"yes" : @"no");
+    NSString *filter = [standIn.filter copy];
+    [standIn stopFilteringLiveSessionQuietly];
+    [live.view.findDriver setFilterWithoutSideEffects:@""];
+    standIn.active = NO;
+    [live willRetireSyntheticSession:standIn];
+    [hiddenLiveViews_ removeObject:live.view];
+    if (fakeParentWindow_) {
+        [fakeParentWindow_ rejoin:realParentWindow_];
+        fakeParentWindow_ = nil;
+        parentWindow_ = realParentWindow_;
+    }
+    standIn.liveSession = nil;
+    [self.viewToSessionMap removeObjectForKey:standIn.view];
+    [standIn terminate];
+    [self.viewToSessionMap removeObjectForKey:live.view];
+    [live buryTmuxClientSession];
+    [live tmuxSessionWasBuried];
+    live.tmuxFilterToRestore = filter;
+}
+
+// Buried sessions that showed a filter when their panes left get it back, if one is now the
+// active session of the window's current tab: a filter replaces the active session with its
+// stand-in, which the window makes for its current tab and gives focus. Otherwise it is dropped.
+- (void)restoreFiltersOfAdoptedSessions:(NSArray<PTYSession *> *)adoptedSessions {
+    for (PTYSession *session in adoptedSessions) {
+        NSString *filter = session.tmuxFilterToRestore;
+        if (!filter) {
+            continue;
+        }
+        session.tmuxFilterToRestore = nil;
+        if (session != activeSession_ || [realParentWindow_ currentTab] != self) {
+            RLog(@"Not restoring the filter of %@: it is not the active session of the current tab", session);
+            continue;
+        }
+        RLog(@"Restoring the filter of %@", session);
+        [self setFilter:filter inSession:session];
+    }
+}
+
 // The session to make active when the layout is rebuilt. A peer switch swaps the peer's pane into
 // the place of the member in view. If that member was active, focus stays in its place, on the
 // peer, as it does for a local workgroup. Otherwise the active pane would be gone from the layout
@@ -6590,6 +6637,11 @@ typedef struct {
     // keeps arriving and switching back to it is instant. Whether the pane really still exists is
     // then checked with tmux.
     for (PTYSession *aSession in sessionsToTerminate) {
+        PTYSession *live = aSession.liveSession;
+        if (live.isTmuxClient && live.keepsTmuxSessionWhenItLeavesItsTab) {
+            [self buryTmuxSessionShownByStandIn:aSession];
+            continue;
+        }
         if (aSession.isTmuxClient && aSession.keepsTmuxSessionWhenItLeavesItsTab) {
             [self.viewToSessionMap removeObjectForKey:aSession.view];
             [aSession buryTmuxClientSession];
@@ -6654,6 +6706,8 @@ typedef struct {
     }
     --tmuxOriginatedResizeInProgress_;
     [realParentWindow_ setDimmingForSessions];
+    // Last, once the layout is complete: a filter swaps a stand-in in for its session's view.
+    [self restoreFiltersOfAdoptedSessions:adoptedBuriedSessions];
 }
 
 - (void)maximizeAfterApplyingTmuxParseTree:(NSMutableDictionary *)parseTree tmuxController:(TmuxController *)tmuxController {

@@ -24647,6 +24647,17 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     [_textview.window makeFirstResponder:self.mainResponder];
 }
 
+- (void)stopFilteringLiveSessionQuietly {
+    if (!_asyncFilter) {
+        return;
+    }
+    // The filter holds this session as its destination, and the live session holds the filter.
+    [self.liveSession removeContentSubscriber:_asyncFilter];
+    [_asyncFilter cancel];
+    [_asyncFilter release];
+    _asyncFilter = nil;
+}
+
 - (ProfileModel *)profileModel {
     if (self.isDivorced && [_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT]) {
         return [ProfileModel sessionsInstance];

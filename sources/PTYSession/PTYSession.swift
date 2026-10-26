@@ -101,6 +101,9 @@ class PTYSessionSwiftState: NSObject {
     /// A tmux workgroup member whose program exited: its pane stays (remain-on-exit) and its
     /// session offers to restart it. The run that exited (TmuxWorkgroupCommands.PaneRun).
     var tmuxMemberEndedRun: String?
+    /// The filter a tmux pane's session showed when a workgroup peer switch parked its pane. See
+    /// -[PTYTab buryTmuxSessionShownByStandIn:].
+    var tmuxFilterToRestore: String?
 
     // A remote review peer's input files are being written; a second Start (auto-request calls it
     // directly) must not launch twice.

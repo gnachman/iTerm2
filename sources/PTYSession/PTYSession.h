@@ -1244,6 +1244,9 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)showFindPanel;
 - (void)showFilter;
 - (void)stopFiltering;
+// For a filter's stand-in being retired without going back to its live session: stops filtering
+// the live session's content, with none of -stopFiltering's effects on the tab or focus.
+- (void)stopFilteringLiveSessionQuietly;
 
 // Find next/previous occurrence of find string.
 - (void)searchNext;
