@@ -820,6 +820,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     NSMutableData *_keysTypedAfterSSHEnded;
     // The DCS hook IDs of conductors the session let go of, whose unhook may arrive later.
     NSMutableSet<NSString *> *_letGoConductorDCSIDs;
+    // Keys typed while the “ended unexpectedly” announcement is up (F-820).
+    NSMutableData *_keysHeldWhileSSHMayHaveEnded;
     // Watches local it2ssh processes so the session recovers when one dies (F-482).
     iTermSSHClientMonitor *_sshClientMonitor;
     // Abandoned connections whose framer recovery must not begin, as decided on the main
@@ -1405,6 +1407,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_disconnectedSSHClientUniqueIDs release];
     [_keysTypedAfterSSHEnded release];
     [_letGoConductorDCSIDs release];
+    [_keysHeldWhileSSHMayHaveEnded release];
     [_sshClientMonitor release];
     [_framerRecoveryRefusals release];
     [_preSSHTTYModes release];
@@ -4594,11 +4597,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
      canBroadcast:(BOOL)canBroadcast
         reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
-    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
+    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH || _keysHeldWhileSSHMayHaveEnded) {
         if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
+        } else if (_keysHeldWhileSSHMayHaveEnded) {
+            // Until the user says whether the connection ended (F-820).
+            [_keysHeldWhileSSHMayHaveEnded appendData:[string dataUsingEncoding:encoding]];
         } else if (_conductor.handlesKeystrokes) {
             [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         } else if (_connectingSSH) {
@@ -21171,12 +21177,64 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
                                                          style:kiTermAnnouncementViewStyleWarning
                                                    withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.SSHDisconnect", nil, [NSBundle mainBundle], @"Disconnect", @"Button that ends an SSH Integration connection") ]
                                                     completion:^(int selection) {
+            // Called with the selection, and again with -2 as it is dismissed.
             if (selection == 0) {
+                // Taken first: abandoning dismisses this announcement.
+                NSData *held = [weakSelf takeKeysHeldWhileSSHMayHaveEnded];
                 [weakSelf abandonSSHThroughClientUniqueID:uniqueIDCopy];
+                [weakSelf sendKeysToShellThatTookOver:held];
+            } else {
+                [weakSelf releaseKeysHeldWhileSSHMayHaveEndedForClientUniqueID:uniqueIDCopy];
             }
         }];
     [self queueAnnouncement:announcement
                  identifier:SSHMayHaveEndedAnnouncementIdentifier(uniqueID)];
+    // Keys typed while the user decides would go to a connection that may be gone, through
+    // the framers it's nested in. Hold them until then (F-820).
+    if (!_keysHeldWhileSSHMayHaveEnded) {
+        _keysHeldWhileSSHMayHaveEnded = [[NSMutableData alloc] init];
+    }
+}
+
+- (NSData *)takeKeysHeldWhileSSHMayHaveEnded {
+    NSData *keys = [[_keysHeldWhileSSHMayHaveEnded retain] autorelease];
+    [_keysHeldWhileSSHMayHaveEnded release];
+    _keysHeldWhileSSHMayHaveEnded = nil;
+    return keys;
+}
+
+- (void)sendKeysToShellThatTookOver:(NSData *)keys {
+    if (!keys.length) {
+        return;
+    }
+    RLog(@"Send %@ bytes typed while an ssh connection may have ended to the shell that took over", @(keys.length));
+    if (_conductor.handlesKeystrokes) {
+        [_conductor sendKeys:keys];
+    } else {
+        [self writeData:keys];
+    }
+}
+
+// The “ended unexpectedly” announcement went away without Disconnect. Keys typed meanwhile
+// go to the connection, which carries on, or, if it ended normally, to the shell that takes
+// over once its it2ssh exits (F-820).
+- (void)releaseKeysHeldWhileSSHMayHaveEndedForClientUniqueID:(NSString *)clientUniqueID {
+    NSData *keys = [self takeKeysHeldWhileSSHMayHaveEnded];
+    if (!keys.length) {
+        return;
+    }
+    iTermConductor *conductor = [self conductorWithClientUniqueID:clientUniqueID];
+    RLog(@"Release %@ bytes typed while an ssh connection may have ended. connectionLives=%@",
+         @(keys.length), @(conductor != nil));
+    if (conductor) {
+        [conductor sendKeys:keys];
+    } else {
+        // It ended normally; its it2ssh's EndSSH releases the shell that takes over.
+        if (!_keysTypedAfterSSHEnded) {
+            _keysTypedAfterSSHEnded = [[NSMutableData alloc] init];
+        }
+        [_keysTypedAfterSSHEnded appendData:keys];
+    }
 }
 
 - (void)screenDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
@@ -21209,10 +21267,9 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
 
 - (void)unhookSSHConductor {
     RLog(@"Unhook %@", _conductor);
-    NSString *clientUniqueID = _conductor.clientUniqueID;
+    NSString *clientUniqueID = [[_conductor.clientUniqueID copy] autorelease];
     if (clientUniqueID.length) {
         [_sshClientMonitor stopWatchingClientUniqueID:clientUniqueID];
-        [self dismissAnnouncementWithIdentifier:SSHMayHaveEndedAnnouncementIdentifier(clientUniqueID)];
     }
     [self conductorWillDie];
     NSDictionary *config = _conductor.terminalConfiguration;
@@ -21244,6 +21301,11 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     _conductor.delegate = self;
     [self updateVariablesFromConductor];
     _shell.sshIntegrationActive = _conductor != nil;
+    if (clientUniqueID.length) {
+        // After the conductor is gone, so keys held while it was suspect go to the shell
+        // that takes over (F-820).
+        [self dismissAnnouncementWithIdentifier:SSHMayHaveEndedAnnouncementIdentifier(clientUniqueID)];
+    }
 }
 
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
