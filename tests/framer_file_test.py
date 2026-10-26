@@ -10,7 +10,7 @@ Commands go through framer.handle() in-process, with arguments as mainloop passe
 harness's port of iTerm2's parser. Work happens in a fresh temporary directory per test
 (under $FRAMER_TEST_TMPDIR if set).
 
-Error statuses: file_error() maps EPERM to 1, ENOENT to 2, ENOTDIR to 3, ELOOP to 4 and
+Error statuses: file_error() maps EPERM and EACCES to 1, ENOENT to 2, ENOTDIR to 3, ELOOP to 4 and
 any other OSError to 100. iTerm2 treats every nonzero status as failure.
 
 Run: python3 tests/framer_file_test.py
@@ -100,10 +100,10 @@ class FileTestCase(H.FramerTestCase):
 
 class DispatchTests(FileTestCase):
     def test_too_few_arguments_fail(self):
-        self.assertEqual(self.status("ls"), 1)
+        self.assertEqual(self.status("ls"), OTHER)
 
     def test_unknown_subcommand_fails(self):
-        self.assertEqual(self.status("frobnicate", H.b64(self.tmp)), 1)
+        self.assertEqual(self.status("frobnicate", H.b64(self.tmp)), OTHER)
 
     # The handler raises IndexError for the missing sort argument. Whatever it queued is
     # lost, so handle() must send a failure reply or iTerm2 waits forever.
@@ -381,7 +381,7 @@ class RmTests(FileTestCase):
         self.assertFalse(os.path.exists(p))
 
     def test_flags_without_a_path_fail(self):
-        self.assertEqual(self.status("rm", "-r"), 1)
+        self.assertEqual(self.status("rm", "-r"), OTHER)
 
     def test_missing(self):
         self.assertEqual(self.status("rm", H.b64(self.path("nope"))), ENOENT)
@@ -589,10 +589,10 @@ class ZipTests(FileTestCase):
             self.assertEqual(z.namelist(), ["tree/ok"])
 
     def test_not_a_directory(self):
-        self.assertEqual(self.zip(self.write("f")).status, 1)
+        self.assertEqual(self.zip(self.write("f")).status, ENOTDIR)
 
     def test_missing(self):
-        self.assertEqual(self.zip(self.path("nope")).status, 1)
+        self.assertEqual(self.zip(self.path("nope")).status, ENOENT)
 
     @unittest.skipIf(is_root, "root ignores permissions")
     def test_unwritable_home(self):

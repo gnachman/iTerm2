@@ -1320,5 +1320,93 @@ class PythonCompatibilityTests(unittest.TestCase):
         self.assertEqual(found, [])
 
 
+class FileErrorCodeTests(H.FramerTestCase):
+    """The exit codes the `file` command reports on failure. iTerm2 reads them in
+    Conductor+SSHEndpoint.swift: 1 is permission denied (EPERM or EACCES), 2 is ENOENT, 3 is
+    ENOTDIR, 4 is ELOOP, and anything else is a generic failure."""
+
+    PERMISSION_DENIED = 1
+    NOT_FOUND = 2
+    NOT_A_DIRECTORY = 3
+    GENERIC = 100
+
+    # Permission checks do not apply to root.
+    is_root = os.geteuid() == 0
+
+    def file_status(self, *args):
+        result = []
+
+        async def body():
+            reply = await self.h.call(self.framer.handle_file, *args)
+            result.append(None if reply is None else reply.status)
+        self.run_async(body)
+        return result[0]
+
+    def test_file_error_maps_errnos(self):
+        cases = [
+            (PermissionError(errno.EACCES, "Permission denied"), self.PERMISSION_DENIED),
+            (PermissionError(errno.EPERM, "Operation not permitted"), self.PERMISSION_DENIED),
+            (FileNotFoundError(errno.ENOENT, "No such file"), self.NOT_FOUND),
+            (NotADirectoryError(errno.ENOTDIR, "Not a directory"), self.NOT_A_DIRECTORY),
+            (OSError(errno.ELOOP, "Too many levels of symbolic links"), 4),
+            (OSError(errno.EIO, "Input/output error"), self.GENERIC),
+            (None, self.GENERIC),
+            (ValueError("bad"), 255),
+        ]
+        for i, (exc, expected) in enumerate(cases):
+            identifier = "id-map-%d" % i
+
+            async def body():
+                q = self.framer.begin(identifier)
+                self.framer.file_error(q, identifier, exc, "/some/path")
+            self.run_async(body)
+            reply = self.h.reply(identifier)
+            self.assertIsNotNone(reply, repr(exc))
+            self.assertEqual(reply.status, expected, repr(exc))
+
+    def test_fetch_unreadable_file_is_permission_denied(self):
+        if self.is_root:
+            self.skipTest("root ignores permissions")
+        path = os.path.join(self.tmp, "secret")
+        with open(path, "wb") as f:
+            f.write(b"hello")
+        os.chmod(path, 0)
+        try:
+            self.assertEqual(self.file_status("fetch", H.b64(path), "0", "100"),
+                             self.PERMISSION_DENIED)
+        finally:
+            os.chmod(path, 0o600)
+
+    def test_create_in_read_only_folder_is_permission_denied(self):
+        if self.is_root:
+            self.skipTest("root ignores permissions")
+        folder = os.path.join(self.tmp, "readonly")
+        os.mkdir(folder)
+        os.chmod(folder, 0o555)
+        try:
+            target = os.path.join(folder, "upload.uploading")
+            # create used to call file_error with the wrong arguments, so it never ended.
+            self.assertEqual(self.file_status("create", H.b64(target), ""),
+                             self.PERMISSION_DENIED)
+        finally:
+            os.chmod(folder, 0o755)
+
+    def test_missing_and_not_a_directory(self):
+        missing = os.path.join(self.tmp, "missing")
+        self.assertEqual(self.file_status("stat", H.b64(missing)), self.NOT_FOUND)
+
+        regular = os.path.join(self.tmp, "regular")
+        with open(regular, "wb") as f:
+            f.write(b"x")
+        self.assertEqual(self.file_status("ls", H.b64(regular), "n"), self.NOT_A_DIRECTORY)
+        self.assertEqual(self.file_status("zip", H.b64(regular)), self.NOT_A_DIRECTORY)
+        self.assertEqual(self.file_status("zip", H.b64(missing)), self.NOT_FOUND)
+
+    def test_malformed_commands_are_not_permission_denied(self):
+        self.assertEqual(self.file_status("stat"), self.GENERIC)
+        self.assertEqual(self.file_status("bogus", "x"), self.GENERIC)
+        self.assertEqual(self.file_status("rm", "-r"), self.GENERIC)
+
+
 if __name__ == "__main__":
     unittest.main()

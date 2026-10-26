@@ -836,7 +836,9 @@ Bug Fixes:
   upload now names the file and gives the
   reason, instead of showing only an error such
   as “File not found”. Canceling a transfer no
-  longer reports it as failed.
+  longer reports it as failed. An SSH
+  Integration transfer that fails because of
+  file or folder permissions now says so.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
