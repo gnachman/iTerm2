@@ -72,6 +72,15 @@ IT2_SOCKET_PATH = None
 # whole time precisely to hold the lock; IT2_LOCK_PATH is its file, unlinked on teardown.
 IT2_LOCK_FD = None
 IT2_LOCK_PATH = None
+# For a home too long for a socket path, iTerm2 puts the socket in a fresh /tmp/.it2-<hex>
+# directory instead of ~/.iterm2/it2 (Conductor.it2SocketPath). That directory is this
+# connection's alone, so it goes when the socket does; IT2_SOCKET_TMPDIR names it.
+IT2_TMP_SOCKET_ROOT = "/tmp"
+IT2_TMP_SOCKET_PREFIX = ".it2-"
+IT2_SOCKET_TMPDIR = None
+# How old an empty /tmp/.it2-* directory must be before a sweep removes it, so one another
+# framer has just made, and not yet locked, is left alone.
+IT2_TMP_SOCKET_DIR_GRACE = 60
 # Upper bound on a single it2 client's unsent (buffered) bytes. it2send writes without
 # awaiting drain() -- draining on the shared command loop would let a stalled consumer's
 # backpressure freeze send/kill/file/poll for the whole SSH session -- so instead we bound
@@ -2459,10 +2468,10 @@ def on_sigwinch(_sig, _stack):
 # "%it2 <connid> data <base64>", "%it2 <connid> close". Commands down: "it2send
 # <connid> <base64>", "it2close <connid>".
 def _it2_teardown_socket():
-    """Close the it2 server, unlink its socket, and release+remove its liveness lock.
-    Idempotent and safe from atexit; everything lives in a persistent per-user dir so a
-    leak would linger."""
-    global IT2_SERVER, IT2_SOCKET_PATH, IT2_LOCK_FD, IT2_LOCK_PATH
+    """Close the it2 server, unlink its socket, and release+remove its liveness lock, and
+    the /tmp directory it was in if it had one of its own. Idempotent and safe from atexit;
+    everything lives in a persistent per-user dir so a leak would linger."""
+    global IT2_SERVER, IT2_SOCKET_PATH, IT2_LOCK_FD, IT2_LOCK_PATH, IT2_SOCKET_TMPDIR
     if IT2_SERVER is not None:
         with contextlib.suppress(Exception):
             IT2_SERVER.close()
@@ -2479,9 +2488,81 @@ def _it2_teardown_socket():
         with contextlib.suppress(OSError):
             os.close(IT2_LOCK_FD)  # closing the fd drops the advisory lock
         IT2_LOCK_FD = None
+    if IT2_SOCKET_TMPDIR is not None:
+        with contextlib.suppress(OSError):
+            os.rmdir(IT2_SOCKET_TMPDIR)
+        IT2_SOCKET_TMPDIR = None
 
 # Covers exits that skip handle_quit (read error, SIGHUP-then-clean-exit, etc.).
 atexit.register(_it2_teardown_socket)
+
+def _it2_remove_socket_files():
+    """Remove the socket, its lock file and its /tmp directory, for a framer about to die of a
+    signal, which skips atexit. Only unlinks: closing the server from a signal handler could
+    land in the middle of the event loop, and the process is ending anyway."""
+    for path in (IT2_SOCKET_PATH, IT2_LOCK_PATH):
+        if path is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(path)
+    if IT2_SOCKET_TMPDIR is not None:
+        with contextlib.suppress(OSError):
+            os.rmdir(IT2_SOCKET_TMPDIR)
+
+# The framer's own pid, so a signal that lands in a forked child before it execs (run_tty's
+# preexec_fn runs Python there) does not remove the framer's live socket.
+TERMINATING_SIGNAL_PID = None
+
+def _on_terminating_signal(signum, frame):
+    """A hangup (the ssh connection went away) or a termination: clean up, then die of the
+    signal as before."""
+    if os.getpid() == TERMINATING_SIGNAL_PID:
+        _it2_remove_socket_files()
+    signal.signal(signum, signal.SIG_DFL)
+    os.kill(os.getpid(), signum)
+
+def install_terminating_signal_handlers():
+    """Clean up the it2 socket on SIGHUP and SIGTERM. A signal someone chose to ignore (nohup)
+    stays ignored."""
+    global TERMINATING_SIGNAL_PID
+    TERMINATING_SIGNAL_PID = os.getpid()
+    for sig in (signal.SIGHUP, signal.SIGTERM):
+        if signal.getsignal(sig) == signal.SIG_DFL:
+            signal.signal(sig, _on_terminating_signal)
+
+def _it2_is_tmp_socket_dir(socket_dir):
+    return (os.path.dirname(socket_dir) == IT2_TMP_SOCKET_ROOT and
+            os.path.basename(socket_dir).startswith(IT2_TMP_SOCKET_PREFIX))
+
+def _it2_sweep_stale_tmp_socket_dirs(keep_dir):
+    """Remove /tmp/.it2-* directories of this user that no live framer uses, left by framers
+    killed before they could clean up (SIGKILL, a crash). Each is swept like the socket
+    directory itself, so a socket whose lock is held survives and keeps its directory; one
+    then left empty goes, unless it is new enough that another framer may have just made it.
+    Only real directories owned by this user, never through a symlink."""
+    try:
+        names = os.listdir(IT2_TMP_SOCKET_ROOT)
+    except OSError:
+        return
+    uid = os.getuid()
+    now = time.time()
+    for name in names:
+        if not name.startswith(IT2_TMP_SOCKET_PREFIX):
+            continue
+        full = os.path.join(IT2_TMP_SOCKET_ROOT, name)
+        if full == keep_dir:
+            continue
+        try:
+            st = os.lstat(full)
+        except OSError:
+            continue
+        if not stat.S_ISDIR(st.st_mode) or st.st_uid != uid:
+            continue
+        _it2_sweep_stale_sockets(full, keep=None)
+        # The age from before the sweep, which itself touches the directory.
+        if now - st.st_mtime < IT2_TMP_SOCKET_DIR_GRACE:
+            continue
+        with contextlib.suppress(OSError):
+            os.rmdir(full)
 
 def _it2_close_connections():
     """Abort every accepted it2 client connection (but keep the listening socket).
@@ -2547,7 +2628,7 @@ def _it2_sweep_stale_sockets(socket_dir, keep):
                     os.unlink(full)
                 with contextlib.suppress(OSError):
                     os.unlink(_it2_lock_path(full))
-        elif name.endswith(".sock.lock") and full != _it2_lock_path(keep):
+        elif name.endswith(".sock.lock") and (keep is None or full != _it2_lock_path(keep)):
             # An orphan lock whose socket is already gone (owner died between locking and
             # binding, or after its socket was reclaimed above): drop it if unheld.
             sock_path = full[: -len(".lock")]
@@ -2566,7 +2647,7 @@ async def handle_it2listen(identifier, args):
         end(q, identifier, 1)
         return
     path = args[0]
-    global IT2_SOCKET_PATH, IT2_LOCK_FD, IT2_LOCK_PATH
+    global IT2_SOCKET_PATH, IT2_LOCK_FD, IT2_LOCK_PATH, IT2_SOCKET_TMPDIR
     try:
         # Contain the socket in an owner-only (0700) directory. The socket file
         # itself is created 0700 (umask) then chmod 0600, but bind-time socket
@@ -2577,9 +2658,18 @@ async def handle_it2listen(identifier, args):
         socket_dir = os.path.dirname(path)
         if socket_dir:
             os.makedirs(socket_dir, mode=0o700, exist_ok=True)
+            if _it2_is_tmp_socket_dir(socket_dir):
+                # In /tmp anyone can create a name first. Use it only if it is a real
+                # directory of this user's, not a symlink or someone else's.
+                st = os.lstat(socket_dir)
+                if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid():
+                    raise OSError("%s is not a directory of this user's" % socket_dir)
             os.chmod(socket_dir, stat.S_IRWXU)
             # Reclaim sockets leaked by prior sessions killed before they could clean up.
             _it2_sweep_stale_sockets(socket_dir, keep=path)
+            if _it2_is_tmp_socket_dir(socket_dir):
+                IT2_SOCKET_TMPDIR = socket_dir
+                _it2_sweep_stale_tmp_socket_dirs(keep_dir=socket_dir)
         # Take the liveness lock BEFORE binding, so a concurrent sweeper always sees a live
         # owner for this socket and never reclaims it mid-bind. Held for our whole lifetime
         # via IT2_LOCK_FD; released by the kernel if we are killed. LOCK_NB fails only if
@@ -2630,6 +2720,10 @@ async def handle_it2listen(identifier, args):
         with contextlib.suppress(OSError):
             os.unlink(_it2_lock_path(path))
         IT2_LOCK_PATH = None
+        if IT2_SOCKET_TMPDIR is not None:
+            with contextlib.suppress(OSError):
+                os.rmdir(IT2_SOCKET_TMPDIR)
+            IT2_SOCKET_TMPDIR = None
         end(q, identifier, 1)
 
 async def handle_it2_connection(reader, writer):
@@ -2800,6 +2894,7 @@ def _silence_shutdown_unraisable(unraisable):
 
 def main():
     claim_put_bin_flag()
+    install_terminating_signal_handlers()
     if sys.stdin.isatty():
         signal.signal(signal.SIGWINCH, on_sigwinch)
     sys.unraisablehook = _silence_shutdown_unraisable

@@ -19,6 +19,7 @@ import socket
 import stat
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FRAMER_PATH = os.path.join(HERE, "..", "OtherResources", "framer.py")
@@ -78,6 +79,7 @@ def _reset_server():
             os.close(framer.IT2_LOCK_FD)  # release the liveness lock a listen may hold
         framer.IT2_LOCK_FD = None
     framer.IT2_LOCK_PATH = None
+    framer.IT2_SOCKET_TMPDIR = None
     # Abort any accepted connections and clear the shared dict so a leaked writer + its
     # pending reader coroutine from one test cannot append a stray %it2 close frame during
     # the next (which would make frame-count assertions order-dependent / flaky).
@@ -641,6 +643,163 @@ async def test_listen_reclaims_unlocked_sockets():
     return ok
 
 
+async def test_tmp_socket_dir_is_removed_with_the_socket():
+    """For a home too long for a socket path the socket goes in a fresh /tmp/.it2-<hex>
+    directory of its own, which used to be left behind after every connection."""
+    print("test_tmp_socket_dir_is_removed_with_the_socket")
+    ok = True
+
+    def check(cond, msg):
+        nonlocal ok
+        if not cond:
+            ok = False
+            print("  FAIL:", msg)
+
+    _frames.clear()
+    _reset_server()
+    tmp_root = tempfile.mkdtemp()
+    saved_root = framer.IT2_TMP_SOCKET_ROOT
+    framer.IT2_TMP_SOCKET_ROOT = tmp_root
+    try:
+        for ending in ("teardown", "signal"):
+            socket_dir = os.path.join(tmp_root, ".it2-" + ending)
+            path = os.path.join(socket_dir, "s.sock")
+            await framer.handle_it2listen("id-tmp-" + ending, [path])
+            check(os.path.exists(path), ending + ": socket bound")
+            if ending == "teardown":
+                framer._it2_teardown_socket()
+            else:
+                # What the SIGHUP/SIGTERM handler does before the framer dies.
+                framer._it2_remove_socket_files()
+                _reset_server()
+            check(not os.path.exists(socket_dir), ending + ": directory removed")
+        # A /tmp name someone else made first, here a symlink, is refused, not used.
+        target = tempfile.mkdtemp()
+        planted = os.path.join(tmp_root, ".it2-planted")
+        os.symlink(target, planted)
+        await framer.handle_it2listen("id-planted", [os.path.join(planted, "s.sock")])
+        check(end_status("id-planted") == 1, "a symlinked /tmp directory is refused")
+        check(os.listdir(target) == [], "nothing was created through the symlink")
+        check(os.path.islink(planted), "the symlink is left alone")
+        shutil.rmtree(target, ignore_errors=True)
+        # A socket directory that is not a /tmp fallback is never removed.
+        home_dir = os.path.join(tmp_root, "home-it2")
+        path = os.path.join(home_dir, "s.sock")
+        await framer.handle_it2listen("id-home", [path])
+        framer._it2_teardown_socket()
+        check(os.path.isdir(home_dir), "a home socket directory stays")
+    finally:
+        framer.IT2_TMP_SOCKET_ROOT = saved_root
+        _reset_server()
+        shutil.rmtree(tmp_root, ignore_errors=True)
+    print("  PASS" if ok else "  FAILED")
+    return ok
+
+
+async def test_hangup_removes_the_tmp_socket_dir():
+    """A framer that dies of SIGHUP (its ssh connection went away) or SIGTERM skips atexit, so
+    its handler removes the socket files first, then dies of the signal as before."""
+    print("test_hangup_removes_the_tmp_socket_dir")
+    ok = True
+
+    def check(cond, msg):
+        nonlocal ok
+        if not cond:
+            ok = False
+            print("  FAIL:", msg)
+
+    import signal as signal_module
+    import subprocess
+    tmp_root = tempfile.mkdtemp()
+    try:
+        for sig in (signal_module.SIGHUP, signal_module.SIGTERM):
+            socket_dir = os.path.join(tmp_root, ".it2-%d" % sig)
+            script = "\n".join([
+                "import importlib.util, os, signal",
+                "spec = importlib.util.spec_from_file_location('f', %r)" % FRAMER_PATH,
+                "f = importlib.util.module_from_spec(spec)",
+                "spec.loader.exec_module(f)",
+                "os.mkdir(%r, 0o700)" % socket_dir,
+                "f.IT2_SOCKET_PATH = os.path.join(%r, 's.sock')" % socket_dir,
+                "open(f.IT2_SOCKET_PATH, 'w').close()",
+                "f.IT2_LOCK_PATH = f.IT2_SOCKET_PATH + '.lock'",
+                "open(f.IT2_LOCK_PATH, 'w').close()",
+                "f.IT2_SOCKET_TMPDIR = %r" % socket_dir,
+                "f.install_terminating_signal_handlers()",
+                "os.kill(os.getpid(), %d)" % sig,
+                "signal.pause()",
+            ])
+            proc = subprocess.run([sys.executable, "-c", script], timeout=30)
+            check(proc.returncode == -sig, "died of signal %d, got %r" % (sig, proc.returncode))
+            check(not os.path.exists(socket_dir), "signal %d: directory removed" % sig)
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+    print("  PASS" if ok else "  FAILED")
+    return ok
+
+
+async def test_listen_sweeps_stale_tmp_socket_dirs():
+    """A /tmp fallback listen also removes this user's /tmp/.it2-* directories left by
+    framers that were killed: unless a live framer holds a lock there, or the directory is too
+    new to tell (another framer may have just made it)."""
+    print("test_listen_sweeps_stale_tmp_socket_dirs")
+    ok = True
+
+    def check(cond, msg):
+        nonlocal ok
+        if not cond:
+            ok = False
+            print("  FAIL:", msg)
+
+    _frames.clear()
+    _reset_server()
+    tmp_root = tempfile.mkdtemp()
+    saved_root = framer.IT2_TMP_SOCKET_ROOT
+    framer.IT2_TMP_SOCKET_ROOT = tmp_root
+    held_fd = None
+    old = time.time() - 3600
+
+    def make_dir(name):
+        d = os.path.join(tmp_root, name)
+        os.mkdir(d, 0o700)
+        return d
+
+    try:
+        dead = make_dir(".it2-dead")
+        _make_socket_file(os.path.join(dead, "a.sock"))
+        open(os.path.join(dead, "a.sock.lock"), "w").close()
+        empty_old = make_dir(".it2-empty-old")
+        empty_new = make_dir(".it2-empty-new")
+        live = make_dir(".it2-live")
+        _make_socket_file(os.path.join(live, "b.sock"))
+        held_fd = os.open(os.path.join(live, "b.sock.lock"), os.O_CREAT | os.O_RDWR, 0o600)
+        fcntl.flock(held_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        other = make_dir("not-it2")
+        plain_file = os.path.join(tmp_root, ".it2-file")
+        open(plain_file, "w").close()
+        for d in (dead, empty_old, live, other):
+            os.utime(d, (old, old))
+
+        mine = os.path.join(tmp_root, ".it2-mine")
+        await framer.handle_it2listen("id-sweep-tmp", [os.path.join(mine, "c.sock")])
+
+        check(not os.path.exists(dead), "a dead framer's directory is removed")
+        check(not os.path.exists(empty_old), "an old empty directory is removed")
+        check(os.path.isdir(empty_new), "a new empty directory is kept")
+        check(os.path.exists(os.path.join(live, "b.sock")), "a live framer's socket is kept")
+        check(os.path.isdir(other), "other directories are untouched")
+        check(os.path.isfile(plain_file), "a file with the prefix is untouched")
+        check(os.path.isdir(mine), "this framer's own directory is kept")
+    finally:
+        if held_fd is not None:
+            os.close(held_fd)
+        framer.IT2_TMP_SOCKET_ROOT = saved_root
+        _reset_server()
+        shutil.rmtree(tmp_root, ignore_errors=True)
+    print("  PASS" if ok else "  FAILED")
+    return ok
+
+
 async def run():
     results = []
     for test in (
@@ -652,6 +811,9 @@ async def run():
         test_teardown_unlinks_socket,
         test_chmod_failure_tears_down_and_recovers,
         test_listen_reclaims_unlocked_sockets,
+        test_tmp_socket_dir_is_removed_with_the_socket,
+        test_hangup_removes_the_tmp_socket_dir,
+        test_listen_sweeps_stale_tmp_socket_dirs,
         test_send_over_buffer_cap_drops_without_blocking,
         test_single_large_frame_is_not_treated_as_over_cap,
         test_send_over_buffer_cap_aborts_reader_and_emits_close,
