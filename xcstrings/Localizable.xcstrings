@@ -52983,37 +52983,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Einige Hook-Befehle in %1$@ erwähnen cc-status, führen aber auch andere Programme aus, daher hat „Deinstallieren“ sie nicht entfernt. Wenn Sie sie nicht mehr benötigen, bearbeiten Sie die Datei von Hand:\n\n%2$@"
+            "value" : "Einige Hook-Befehle in %1$@ verweisen auf den Status-Hook von iTerm2, führen aber auch andere Programme aus, daher hat „Deinstallieren“ sie nicht entfernt. Wenn Sie sie nicht mehr benötigen, bearbeiten Sie die Datei von Hand:\n\n%2$@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Some hook commands in %1$@ mention cc-status but also run other programs, so Uninstall didn’t remove them. If you don’t want them anymore, edit the file by hand:\n\n%2$@"
+            "value" : "Some hook commands in %1$@ refer to iTerm2’s status hook but also run other programs, so Uninstall didn’t remove them. If you don’t want them anymore, edit the file by hand:\n\n%2$@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ 内の一部のフックコマンドはcc-statusに言及していますが、他のプログラムも実行するため、アンインストールでは削除されませんでした。不要な場合は、ファイルを手動で編集してください:\n\n%2$@"
+            "value" : "%1$@ 内の一部のフックコマンドはiTerm2のステータスフックを参照していますが、他のプログラムも実行するため、アンインストールでは削除されませんでした。不要な場合は、ファイルを手動で編集してください:\n\n%2$@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alguns comandos de hook em %1$@ mencionam cc-status, mas também executam outros programas, por isso a desinstalação não os removeu. Se você não os quiser mais, edite o arquivo manualmente:\n\n%2$@"
+            "value" : "Alguns comandos de hook em %1$@ fazem referência ao hook de status do iTerm2, mas também executam outros programas, por isso a desinstalação não os removeu. Se você não os quiser mais, edite o arquivo manualmente:\n\n%2$@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Некоторые команды хуков в %1$@ упоминают cc-status, но также запускают другие программы, поэтому при удалении они не были удалены. Если они вам больше не нужны, отредактируйте файл вручную:\n\n%2$@"
+            "value" : "Некоторые команды хуков в %1$@ ссылаются на хук статуса iTerm2, но также запускают другие программы, поэтому при удалении они не были удалены. Если они вам больше не нужны, отредактируйте файл вручную:\n\n%2$@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ 中的部分钩子命令提及 cc-status，但也会运行其他程序，因此卸载时未将其移除。如果不再需要，请手动编辑该文件：\n\n%2$@"
+            "value" : "%1$@ 中的部分钩子命令引用了 iTerm2 的状态钩子，但也会运行其他程序，因此卸载时未将其移除。如果不再需要，请手动编辑该文件：\n\n%2$@"
           }
         }
       }
@@ -53109,37 +53109,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Sollen die Arbeitsgruppe und die Trigger trotzdem entfernt werden? cc-status läuft weiter, bis Sie das zugrunde liegende Problem beheben und es erneut versuchen."
+            "value" : "%@ Sollen die Arbeitsgruppe und die Trigger trotzdem entfernt werden? Der Status-Hook von iTerm2 läuft weiter, bis Sie das zugrunde liegende Problem beheben und es erneut versuchen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%@ Continue removing the workgroup and triggers anyway? cc-status will keep running until you fix the underlying issue and try again."
+            "value" : "%@ Continue removing the workgroup and triggers anyway? iTerm2’s status hook will keep running until you fix the underlying issue and try again."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ それでもワークグループとトリガーの削除を続けますか？根本的な問題を修正して再試行するまで、cc-statusは動作し続けます。"
+            "value" : "%@ それでもワークグループとトリガーの削除を続けますか？根本的な問題を修正して再試行するまで、iTerm2のステータスフックは動作し続けます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Continuar removendo o grupo de trabalho e os gatilhos mesmo assim? O cc-status continuará em execução até você corrigir o problema subjacente e tentar novamente."
+            "value" : "%@ Continuar removendo o grupo de trabalho e os gatilhos mesmo assim? O hook de status do iTerm2 continuará em execução até você corrigir o problema subjacente e tentar novamente."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Всё равно продолжить удаление рабочей группы и триггеров? cc-status будет продолжать работать, пока вы не устраните проблему и не повторите попытку."
+            "value" : "%@ Всё равно продолжить удаление рабочей группы и триггеров? Хук статуса iTerm2 будет продолжать работать, пока вы не устраните проблему и не повторите попытку."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 继续移除工作组 和触发器？cc-status 将继续运行，直到你修复根本问题并重试。"
+            "value" : "%@ 仍要继续移除工作组和触发器吗？在你修复根本问题并重试之前，iTerm2 的状态钩子将继续运行。"
           }
         }
       }
@@ -53445,37 +53445,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dies entfernt den cc-status-Hook aus %@, die Claude-Code-Arbeitsgruppe aus Ihren Einstellungen und die Trigger zum Betreten/Verlassen der Arbeitsgruppe aus jedem Profil. Eine erneute Installation ist jederzeit über iTerm2 > Claude-Code-Integration installieren möglich."
+            "value" : "Dies entfernt den Status-Hook von iTerm2 aus %@, die Claude-Code-Arbeitsgruppe aus Ihren Einstellungen und die Trigger zum Betreten/Verlassen der Arbeitsgruppe aus jedem Profil. Sie können die Integration jederzeit über das iTerm2-Menü erneut einrichten."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "This removes the cc-status hook from %@, the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration."
+            "value" : "This removes iTerm2’s status hook from %@, the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can set up the integration again any time from the iTerm2 menu."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "これにより、%@からcc-statusフックが削除され、設定からClaude Codeワークグループが削除され、すべてのプロファイルからワークグループ参加/退出トリガーが削除されます。iTerm2 > Claude Code連携をアンインストールからいつでも再インストールできます。"
+            "value" : "これにより、%@からiTerm2のステータスフックが削除され、設定からClaude Codeワークグループが削除され、すべてのプロファイルからワークグループ参加/退出トリガーが削除されます。iTerm2メニューからいつでも連携を再設定できます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Isso remove o hook cc-status de %@, o workgroup do Claude Code dos seus ajustes e os gatilhos de entrar/sair do workgroup de todos os perfis. Você pode reinstalar a qualquer momento usando iTerm2 > Instalar integração do Claude Code."
+            "value" : "Isso remove o hook de status do iTerm2 de %@, o workgroup do Claude Code dos seus ajustes e os gatilhos de entrar/sair do workgroup de todos os perfis. Você pode configurar a integração novamente a qualquer momento pelo menu iTerm2."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Это удалит хук cc-status из %@, рабочую группу Claude Code из ваших настроек и триггеры Enter/Exit Workgroup из всех профилей. Переустановить интеграцию можно в любой момент через iTerm2 > Install Claude Code Integration."
+            "value" : "Это удалит хук статуса iTerm2 из %@, рабочую группу Claude Code из ваших настроек и триггеры Enter/Exit Workgroup из всех профилей. Снова настроить интеграцию можно в любой момент через меню iTerm2."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这将从 %@ 中移除 cc-status 钩子，从你的设置中移除 Claude Code 工作组，并从每个配置文件中移除“进入/退出工作组”触发器。你可以随时通过“iTerm2 > 安装 Claude Code 集成”重新安装。"
+            "value" : "这将从 %@ 中移除 iTerm2 的状态钩子，从你的设置中移除 Claude Code 工作组，并从每个配置文件中移除“进入/退出工作组”触发器。你可以随时通过 iTerm2 菜单重新设置该集成。"
           }
         }
       }
@@ -55395,37 +55395,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "• Die Python-API von iTerm2 wird aktiviert\n• Ein cc-status-Hook wird zu ~/.claude/settings.json hinzugefügt\n• Der Werkzeugkasten wird angezeigt\n• Eine Claude-Code-Arbeitsgruppe wird zu den iTerm2-Einstellungen hinzugefügt\n• Trigger zum Betreten/Verlassen der Arbeitsgruppe werden zu den von Ihnen ausgewählten Profilen hinzugefügt"
+            "value" : "• Die Python-API von iTerm2 wird aktiviert\n• Ein Status-Hook von iTerm2 wird zu ~/.claude/settings.json hinzugefügt\n• Der Werkzeugkasten wird angezeigt\n• Eine Claude-Code-Arbeitsgruppe wird zu den iTerm2-Einstellungen hinzugefügt\n• Trigger zum Betreten/Verlassen der Arbeitsgruppe werden zu den von Ihnen ausgewählten Profilen hinzugefügt"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "• iTerm2’s Python API is enabled\n• A cc-status hook is added to ~/.claude/settings.json\n• The toolbelt is shown\n• A Claude Code workgroup is added to iTerm2’s settings\n• Enter/Exit Workgroup triggers are added to the profiles you pick"
+            "value" : "• iTerm2’s Python API is enabled\n• An iTerm2 status hook is added to ~/.claude/settings.json\n• The toolbelt is shown\n• A Claude Code workgroup is added to iTerm2’s settings\n• Enter/Exit Workgroup triggers are added to the profiles you pick"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "• iTerm2のPython APIが有効になります\n• ~/.claude/settings.jsonにcc-statusフックが追加されます\n• ツールベルトが表示されます\n• iTerm2の設定にClaude Codeワークグループが追加されます\n• 選択したプロファイルにワークグループ参加/退出トリガーが追加されます"
+            "value" : "• iTerm2のPython APIが有効になります\n• ~/.claude/settings.jsonにiTerm2のステータスフックが追加されます\n• ツールベルトが表示されます\n• iTerm2の設定にClaude Codeワークグループが追加されます\n• 選択したプロファイルにワークグループ参加/退出トリガーが追加されます"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "• A API Python do iTerm2 é ativada\n• Um hook cc-status é adicionado a ~/.claude/settings.json\n• A barra de ferramentas é mostrada\n• Um workgroup do Claude Code é adicionado aos ajustes do iTerm2\n• Gatilhos de entrar/sair do workgroup são adicionados aos perfis que você escolher"
+            "value" : "• A API Python do iTerm2 é ativada\n• Um hook de status do iTerm2 é adicionado a ~/.claude/settings.json\n• A barra de ferramentas é mostrada\n• Um workgroup do Claude Code é adicionado aos ajustes do iTerm2\n• Gatilhos de entrar/sair do workgroup são adicionados aos perfis que você escolher"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "• Включается Python API iTerm2\n• В ~/.claude/settings.json добавляется хук cc-status\n• Показывается набор инструментов\n• В настройки iTerm2 добавляется рабочая группа Claude Code\n• В выбранные вами профили добавляются триггеры Enter/Exit Workgroup"
+            "value" : "• Включается Python API iTerm2\n• В ~/.claude/settings.json добавляется хук статуса iTerm2\n• Показывается набор инструментов\n• В настройки iTerm2 добавляется рабочая группа Claude Code\n• В выбранные вами профили добавляются триггеры Enter/Exit Workgroup"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "• iTerm2 的 Python API 已启用\n• 已向 ~/.claude/settings.json 添加 cc-status 钩子\n• 显示工具箱\n• 已向 iTerm2 的设置添加 Claude Code 工作组\n• 已为你选择的配置文件添加进入/退出工作组触发器"
+            "value" : "• iTerm2 的 Python API 已启用\n• 已向 ~/.claude/settings.json 添加 iTerm2 的状态钩子\n• 显示工具箱\n• 已向 iTerm2 的设置添加 Claude Code 工作组\n• 已为你选择的配置文件添加进入/退出工作组触发器"
           }
         }
       }
@@ -55533,37 +55533,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 konnte in %@ nicht für jedes Claude-Code-Ereignis einen funktionierenden cc-status-Hook finden. Soll der Hook neu installiert werden, damit die Statusanzeigen pro Tab („Arbeitet…“, „Wartet…“) wieder funktionieren?"
+            "value" : "iTerm2 konnte in %@ nicht für jedes Claude-Code-Ereignis einen funktionierenden Status-Hook finden. Soll der Hook neu installiert werden, damit die Statusanzeigen pro Tab („Arbeitet…“, „Wartet…“) wieder funktionieren?"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "iTerm2 couldn’t find a working cc-status hook for every Claude Code event in %@. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
+            "value" : "iTerm2 couldn’t find a working status hook for every Claude Code event in %@. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2は%@で、Claude Codeのすべてのイベントに対して機能するcc-statusフックを見つけられませんでした。タブごとのステータス表示（「作業中…」「待機中…」）が再び機能するように、フックを再インストールしますか？"
+            "value" : "iTerm2は%@で、Claude Codeのすべてのイベントに対して機能するステータスフックを見つけられませんでした。タブごとのステータス表示（「作業中…」「待機中…」）が再び機能するように、フックを再インストールしますか？"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O iTerm2 não encontrou em %@ um hook cc-status funcionando para todos os eventos do Claude Code. Reinstalar o hook para que os indicadores de status por aba (“Trabalhando…”, “Aguardando…”) voltem a funcionar?"
+            "value" : "O iTerm2 não encontrou em %@ um hook de status funcionando para todos os eventos do Claude Code. Reinstalar o hook para que os indicadores de status por aba (“Trabalhando…”, “Aguardando…”) voltem a funcionar?"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 не нашёл в %@ работающего хука cc-status для каждого события Claude Code. Переустановить хук, чтобы индикаторы статуса на вкладках («Работает…», «Ожидание…») снова заработали?"
+            "value" : "iTerm2 не нашёл в %@ работающего хука статуса для каждого события Claude Code. Переустановить хук, чтобы индикаторы статуса на вкладках («Работает…», «Ожидание…») снова заработали?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iTerm2 未能在 %@ 中为每个 Claude Code 事件找到可用的 cc-status 钩子。重新安装钩子，以便每个标签页的状态指示器（“正在处理…”、“正在等待…”）重新工作？"
+            "value" : "iTerm2 未能在 %@ 中为每个 Claude Code 事件找到可用的状态钩子。重新安装钩子，以便每个标签页的状态指示器（“正在处理…”、“正在等待…”）重新工作？"
           }
         }
       }

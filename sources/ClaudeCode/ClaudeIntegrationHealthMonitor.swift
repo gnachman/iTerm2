@@ -399,7 +399,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         let path = ClaudeCodeOnboarding.claudeSettingsURL().path
         let warning = iTermWarning()
         warning.heading = String(localized: "ClaudeHealthMonitor.BrokenHeading", defaultValue: "Claude Code Integration Looks Broken", comment: "Heading of the warning shown when the Claude Code status hook is missing")
-        warning.title = String(localized: "ClaudeHealthMonitor.HookNotWorkingTitle", defaultValue: "iTerm2 couldn\u{2019}t find a working cc-status hook for every Claude Code event in \(path). Reinstall the hook so per-tab status indicators (\u{201C}Working\u{2026},\u{201D} \u{201C}Waiting\u{2026}\u{201D}) work again?", comment: "Body of the warning shown when the Claude Code status hook is missing from settings.json or points at a file that can\u{2019}t run; the interpolated value is the absolute path to settings.json")
+        warning.title = String(localized: "ClaudeHealthMonitor.HookNotWorkingTitle", defaultValue: "iTerm2 couldn\u{2019}t find a working status hook for every Claude Code event in \(path). Reinstall the hook so per-tab status indicators (\u{201C}Working\u{2026},\u{201D} \u{201C}Waiting\u{2026}\u{201D}) work again?", comment: "Body of the warning shown when the Claude Code status hook is missing from settings.json or points at a file that can\u{2019}t run; the interpolated value is the absolute path to settings.json")
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
         warning.identifier = Self.warningIdentifier
         let reinstall = String(localized: "ClaudeHealthMonitor.Reinstall", defaultValue: "Reinstall", comment: "Button to reinstall the Claude Code status hook")

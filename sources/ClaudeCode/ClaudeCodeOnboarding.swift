@@ -1253,7 +1253,7 @@ class ClaudeCodeOnboarding: NSObject {
         introDisclosureLabel = disclosureLabel
 
         let details = NSTextField(wrappingLabelWithString:
-            String(localized: "ClaudeCodeOnboarding.WhatGetsChangedDetails", defaultValue: "\u{2022} iTerm2\u{2019}s Python API is enabled\n\u{2022} A cc-status hook is added to ~/.claude/settings.json\n\u{2022} The toolbelt is shown\n\u{2022} A Claude Code workgroup is added to iTerm2\u{2019}s settings\n\u{2022} Enter/Exit Workgroup triggers are added to the profiles you pick", comment: "Bulleted list detailing what the Claude Code integration changes"))
+            String(localized: "ClaudeCodeOnboarding.WhatGetsChangedDetails", defaultValue: "\u{2022} iTerm2\u{2019}s Python API is enabled\n\u{2022} An iTerm2 status hook is added to ~/.claude/settings.json\n\u{2022} The toolbelt is shown\n\u{2022} A Claude Code workgroup is added to iTerm2\u{2019}s settings\n\u{2022} Enter/Exit Workgroup triggers are added to the profiles you pick", comment: "Bulleted list detailing what the Claude Code integration changes"))
         details.font = NSFont.systemFont(ofSize: 13)
         details.textColor = .secondaryLabelColor
         details.isSelectable = false

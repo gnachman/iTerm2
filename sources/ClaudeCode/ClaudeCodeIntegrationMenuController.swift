@@ -65,7 +65,7 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             .map { ($0.sshIdentity.stringIdentifier, $0.framing) })
         let confirm = iTermWarning()
         confirm.heading = String(localized: "ClaudeCode.UninstallTitle", defaultValue: "Uninstall Claude Code Integration?", comment: "Title of the uninstall confirmation dialog")
-        var lines = [String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes the cc-status hook from \(settingsPath), the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.", comment: "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json")]
+        var lines = [String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes iTerm2\u{2019}s status hook from \(settingsPath), the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can set up the integration again any time from the iTerm2 menu.", comment: "Explanation of what uninstalling the Claude Code integration does; the interpolated value is the absolute path to settings.json")]
         for host in hosts {
             lines.append(String(localized: "ClaudeCode.UninstallConnectedHost", defaultValue: "It also removes the hook from Claude Code\u{2019}s settings on \(host), if it\u{2019}s there.", comment: "Line of the uninstall confirmation for a host connected through SSH Integration, whose settings will be checked and cleaned up; the value is the host"))
         }
@@ -195,7 +195,7 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             let failure = iTermWarning()
             failure.heading = String(localized: "ClaudeCode.HookRemovalFailedTitle", defaultValue: "Couldn\u{2019}t Remove Hooks", comment: "Title shown when Claude Code hook removal failed")
             let joinedDetails = details.joined(separator: "\n")
-            failure.title = String(localized: "ClaudeCode.HookRemovalFailedBody", defaultValue: "\(joinedDetails) Continue removing the workgroup and triggers anyway? cc-status will keep running until you fix the underlying issue and try again.", comment: "Body shown when hook removal failed, asking whether to continue uninstalling")
+            failure.title = String(localized: "ClaudeCode.HookRemovalFailedBody", defaultValue: "\(joinedDetails) Continue removing the workgroup and triggers anyway? iTerm2\u{2019}s status hook will keep running until you fix the underlying issue and try again.", comment: "Body shown when hook removal failed, asking whether to continue uninstalling")
             failure.actionLabels = [String(localized: "General.Continue", defaultValue: "Continue", comment: "Continue button"),
                                     iTermLocalizedCancel()]
             failure.cancelLabel = iTermLocalizedCancel()
@@ -247,7 +247,7 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         let commands = kept.joined(separator: "\n")
         let warning = iTermWarning()
         warning.heading = String(localized: "ClaudeCode.HookCommandsKeptTitle", defaultValue: "Some Hooks Were Left in Place", comment: "Title shown after uninstalling when some Claude Code hook commands were not removed")
-        warning.title = String(localized: "ClaudeCode.HookCommandsKeptBody", defaultValue: "Some hook commands in \(settingsPath) mention cc-status but also run other programs, so Uninstall didn\u{2019}t remove them. If you don\u{2019}t want them anymore, edit the file by hand:\n\n\(commands)", comment: "Body shown after uninstalling when some Claude Code hook commands were not removed. The first interpolated value is the absolute path to settings.json; the second is the list of hook commands, one per line, shown verbatim")
+        warning.title = String(localized: "ClaudeCode.HookCommandsKeptBody", defaultValue: "Some hook commands in \(settingsPath) refer to iTerm2\u{2019}s status hook but also run other programs, so Uninstall didn\u{2019}t remove them. If you don\u{2019}t want them anymore, edit the file by hand:\n\n\(commands)", comment: "Body shown after uninstalling when some Claude Code hook commands were not removed. The first interpolated value is the absolute path to settings.json; the second is the list of hook commands, one per line, shown verbatim")
         warning.actionLabels = [iTermLocalizedOK()]
         warning.warningType = .kiTermWarningTypePersistent
         warning.runModal()
