@@ -2233,17 +2233,13 @@ extension Conductor {
         } else {
             // One string: framer joins its arguments with spaces into `-c`, so anything else would
             // be split and lose its quoting.
-            var command = Self.remoteCommandString(modifiedCommandArgs: modifiedCommandArgs,
-                                                   commandLine: parsedSSHArguments.commandLine)
-            if let unwrapped = command,
-               putIT2OnCommandPath,
-               it2Nonce != nil,
-               let loginShell, !loginShell.isEmpty {
-                // getshell gave this command it2's environment; it needs it2 on PATH too. In the
-                // syntax of the login shell, which runs it, even when it names another shell.
-                command = Self.commandPuttingIT2OnPath(unwrapped, loginShell: loginShell)
-                DLog("Command with it2 on PATH: \(command ?? "")")
-            }
+            let command = Self.framerLoginCommand(
+                Self.remoteCommandString(modifiedCommandArgs: modifiedCommandArgs,
+                                         commandLine: parsedSSHArguments.commandLine),
+                putIT2OnPath: putIT2OnCommandPath && it2Nonce != nil,
+                loginShell: loginShell,
+                launchKind: Self.remoteLaunchKind(commandArgs: parsedSSHArguments.commandArgs))
+            DLog("Command for the login shell: \(command ?? "(none)")")
             framerLogin(cwd: initialDirectory ?? "$HOME",
                         args: command.map { [$0] } ?? [])
         }
@@ -2514,17 +2510,96 @@ extension Conductor {
     /// It has to happen inside the command because a login shell's profile may reset PATH
     /// outright (Debian's /etc/profile does). A shell whose syntax is unknown gets the command
     /// unchanged.
-    nonisolated static func commandPuttingIT2OnPath(_ command: String, loginShell: String) -> String {
+    ///
+    /// With `execFinal`, the command replaces the login shell (`exec`) rather than running as its
+    /// child. A list is not exec'd by every shell (bash 3.2 runs its last command as a child), so
+    /// without it a shell named as the command would sit under an extra non-interactive one.
+    /// Only for a single simple command: `exec` of a list, a builtin or a function would break it.
+    nonisolated static func commandPuttingIT2OnPath(_ command: String,
+                                                    loginShell: String,
+                                                    execFinal: Bool = false) -> String {
+        let final = execFinal ? "exec " + command : command
         switch (loginShell as NSString).lastPathComponent {
         case "sh", "bash", "zsh", "ksh", "mksh", "dash", "ash", "yash":
-            return #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; "# + command
+            return #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; "# + final
         case "csh", "tcsh":
-            return #"setenv PATH "${HOME}/.iterm2/bin:${PATH}"; "# + command
+            return #"setenv PATH "${HOME}/.iterm2/bin:${PATH}"; "# + final
         case "fish":
-            return #"set -gx PATH "$HOME/.iterm2/bin" $PATH; "# + command
+            return #"set -gx PATH "$HOME/.iterm2/bin" $PATH; "# + final
         default:
             return command
         }
+    }
+
+    /// What the framer's login shell runs with -c: `command`, put through commandPuttingIT2OnPath
+    /// when it2 should be on its PATH, in the syntax of the LOGIN shell (which runs it, even when
+    /// it names another shell). A shell named as the command is exec'd when it is one simple
+    /// command, so it replaces the login shell instead of running under it.
+    nonisolated static func framerLoginCommand(_ command: String?,
+                                               putIT2OnPath: Bool,
+                                               loginShell: String?,
+                                               launchKind: RemoteLaunchKind) -> String? {
+        guard let command, putIT2OnPath, let loginShell, !loginShell.isEmpty else {
+            return command
+        }
+        let execFinal: Bool
+        if case .customShell = launchKind {
+            execFinal = isSimpleCommand(command)
+        } else {
+            execFinal = false
+        }
+        return commandPuttingIT2OnPath(command, loginShell: loginShell, execFinal: execFinal)
+    }
+
+    /// Whether `command` has none of a shell's list, pipe, background, subshell or redirection
+    /// operators outside quotes, so prefixing it with `exec` keeps its meaning. Conservative: a
+    /// false negative only costs an extra process.
+    nonisolated static func isSimpleCommand(_ command: String) -> Bool {
+        // A reserved word or an assignment in front is not a program exec could run.
+        let firstWord = command.split(whereSeparator: { $0 == " " || $0 == "\t" }).first.map(String.init) ?? ""
+        let reserved: Set<String> = ["!", "time", "{", "}", "if", "then", "else", "elif", "fi", "while",
+                                     "until", "for", "do", "done", "case", "esac", "function",
+                                     "begin", "end", "not", "and", "or", "switch", "foreach",
+                                     "exec", "builtin", "command", "nohup", "env", "sudo"]
+        if firstWord.isEmpty || reserved.contains(firstWord) || firstWord.contains("=") {
+            return false
+        }
+        var inSingle = false
+        var inDouble = false
+        var escaped = false
+        for c in command {
+            if escaped {
+                escaped = false
+                continue
+            }
+            if inSingle {
+                if c == "'" {
+                    inSingle = false
+                }
+                continue
+            }
+            if c == "\\" {
+                escaped = true
+                continue
+            }
+            if inDouble {
+                if c == "\"" {
+                    inDouble = false
+                }
+                continue
+            }
+            switch c {
+            case "'":
+                inSingle = true
+            case "\"":
+                inDouble = true
+            case ";", "&", "|", "<", ">", "(", ")", "\n", "`":
+                return false
+            default:
+                break
+            }
+        }
+        return !inSingle && !inDouble && !escaped
     }
 
     /// Names the flag the framer reads in handle_login and handle_pane. Must match framer.py.

@@ -180,6 +180,24 @@ final class RemoteCommandIT2PathTests: XCTestCase {
         }
     }
 
+    // A shell named as the command replaces the login shell instead of running under it. bash 3.2
+    // runs the last command of a list as a child, which left an extra shell in between.
+    func testExecReplacesTheLoginShell() throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = ["-c", Conductor.commandPuttingIT2OnPath(#"/bin/sh -c 'echo $$'"#,
+                                                                     loginShell: "/bin/bash",
+                                                                     execFinal: true)]
+        process.environment = ["HOME": "/h", "PATH": "/usr/bin:/bin"]
+        let out = Pipe()
+        process.standardOutput = out
+        try process.run()
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        XCTAssertEqual(String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines),
+                       String(process.processIdentifier))
+    }
+
     func testFishSyntax() {
         XCTAssertEqual(Conductor.commandPuttingIT2OnPath("claude", loginShell: "/usr/bin/fish"),
                        #"set -gx PATH "$HOME/.iterm2/bin" $PATH; claude"#)
@@ -188,6 +206,58 @@ final class RemoteCommandIT2PathTests: XCTestCase {
     // A shell whose syntax we do not know runs the command untouched rather than broken.
     func testUnknownShellIsUnchanged() {
         XCTAssertEqual(Conductor.commandPuttingIT2OnPath("claude", loginShell: "/usr/bin/nu"), "claude")
+    }
+}
+
+// What the framer's login shell is told to run.
+final class FramerLoginCommandTests: XCTestCase {
+    private func command(_ command: String?,
+                         putIT2OnPath: Bool = true,
+                         loginShell: String? = "/bin/zsh",
+                         _ kind: Conductor.RemoteLaunchKind) -> String? {
+        return Conductor.framerLoginCommand(command, putIT2OnPath: putIT2OnPath,
+                                            loginShell: loginShell, launchKind: kind)
+    }
+
+    // In the login shell's syntax, not the syntax of the shell the command names.
+    func testSyntaxIsTheLoginShells() {
+        XCTAssertEqual(command("'bash'", loginShell: "/bin/tcsh", .customShell("bash")),
+                       #"setenv PATH "${HOME}/.iterm2/bin:${PATH}"; exec 'bash'"#)
+        XCTAssertEqual(command("'bash'", loginShell: "/usr/bin/fish", .customShell("bash")),
+                       #"set -gx PATH "$HOME/.iterm2/bin" $PATH; exec 'bash'"#)
+        XCTAssertEqual(command("'bash'", .customShell("bash")),
+                       #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; exec 'bash'"#)
+    }
+
+    func testOnlyASimpleShellCommandIsExeced() {
+        XCTAssertEqual(command(#"sh -c "a; b""#, .customShell("sh")),
+                       #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; exec sh -c "a; b""#)
+        XCTAssertEqual(command("bash && echo done", .customShell("bash")),
+                       #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; bash && echo done"#)
+        XCTAssertEqual(command("claude", .command),
+                       #"PATH="$HOME/.iterm2/bin:$PATH"; export PATH; claude"#)
+    }
+
+    func testUnchangedWithoutIt2() {
+        XCTAssertEqual(command("'bash'", putIT2OnPath: false, .customShell("bash")), "'bash'")
+        XCTAssertEqual(command("'bash'", loginShell: nil, .customShell("bash")), "'bash'")
+        XCTAssertNil(command(nil, .interactive))
+    }
+
+    func testSimpleCommand() {
+        XCTAssertTrue(Conductor.isSimpleCommand(#"'bash' '--posix'"#))
+        XCTAssertTrue(Conductor.isSimpleCommand(#"sh -c 'a; b | c' "$x""#))
+        XCTAssertTrue(Conductor.isSimpleCommand(#"sh -c a\;b"#))
+        XCTAssertFalse(Conductor.isSimpleCommand("bash; echo"))
+        XCTAssertFalse(Conductor.isSimpleCommand("bash | tee x"))
+        XCTAssertFalse(Conductor.isSimpleCommand("bash > x"))
+        XCTAssertFalse(Conductor.isSimpleCommand("bash &"))
+        XCTAssertFalse(Conductor.isSimpleCommand("(bash)"))
+        XCTAssertFalse(Conductor.isSimpleCommand("bash 'unterminated"))
+        XCTAssertFalse(Conductor.isSimpleCommand("! bash"))
+        XCTAssertFalse(Conductor.isSimpleCommand("time bash"))
+        XCTAssertFalse(Conductor.isSimpleCommand("FOO=1 bash"))
+        XCTAssertFalse(Conductor.isSimpleCommand(""))
     }
 }
 
