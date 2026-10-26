@@ -2620,8 +2620,8 @@ extension Conductor {
         activateIT2Proxy(home: home, env: &vars)
         if putIT2OnShellPath {
             // A flag, not a PATH: see activateIT2Proxy for why PATH can't go by setenv. The
-            // framer does the prepend when it starts the login shell, and drops the flag from
-            // that shell's environment.
+            // framer takes the flag out of its own environment when it starts, so nothing it
+            // starts inherits it, and does the prepend for the login shell and its panes.
             vars[Self.it2PutBinOnPathVariable] = "1"
         }
         for (key, value) in vars.sorted(by: { $0.key < $1.key }) {

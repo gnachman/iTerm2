@@ -395,12 +395,27 @@ class LoginTests(CommandTestCase):
 
         async def body():
             with env(HOME=self.tmp, IT2_PUT_BIN_ON_PATH=flag, PATH=path):
+                # As main() does when the framer starts.
+                self.framer.claim_put_bin_flag()
                 pid = await self.h.start("login", self.tmp,
                                          'echo "PATH=[$PATH] FLAG=[${IT2_PUT_BIN_ON_PATH-unset}]"')
             await self.h.wait_terminated(pid)
             out.append(self.output(pid).decode())
-        self.run_async(body)
+        try:
+            self.run_async(body)
+        finally:
+            self.framer.PUT_IT2_BIN_ON_PATH = False
         return bin_dir, out[0]
+
+    # Not only the login shell: nothing the framer starts inherits the flag.
+    def test_flag_is_taken_out_of_the_framers_own_environment(self):
+        try:
+            with env(IT2_PUT_BIN_ON_PATH="1"):
+                self.framer.claim_put_bin_flag()
+                self.assertNotIn("IT2_PUT_BIN_ON_PATH", os.environ)
+            self.assertTrue(self.framer.PUT_IT2_BIN_ON_PATH)
+        finally:
+            self.framer.PUT_IT2_BIN_ON_PATH = False
 
     def test_flag_puts_it2_bin_first_on_the_login_shells_path(self):
         bin_dir, out = self.login_path("1")

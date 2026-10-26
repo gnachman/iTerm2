@@ -901,6 +901,15 @@ def guess_login_shell():
         return path
     return "/bin/sh"
 
+# Set from IT2_PUT_BIN_ON_PATH by claim_put_bin_flag; see login_shell_environment.
+PUT_IT2_BIN_ON_PATH = False
+
+def claim_put_bin_flag():
+    """Take IT2_PUT_BIN_ON_PATH out of the framer's own environment, remembering it. The flag is
+    the framer's: left in os.environ, every process the framer starts would inherit it."""
+    global PUT_IT2_BIN_ON_PATH
+    PUT_IT2_BIN_ON_PATH = os.environ.pop("IT2_PUT_BIN_ON_PATH", None) == "1"
+
 def login_shell_environment():
     """The framer's environment for a login shell it starts.
 
@@ -908,9 +917,10 @@ def login_shell_environment():
     shell-integration script to put that directory on PATH (tcsh, which can't be injected).
     PATH itself can't come from iTerm2: it arrives by setenv in conductor.sh, which needs its
     own PATH, and the value is never re-expanded. So the prepend happens here, where the real
-    PATH is known. The flag is the framer's and is not passed on."""
+    PATH is known, before the shell's own login files run (which may reorder it: macOS's
+    path_helper in /etc/csh.login does)."""
     env = dict(os.environ)
-    if env.pop("IT2_PUT_BIN_ON_PATH", None) != "1":
+    if not PUT_IT2_BIN_ON_PATH:
         return env
     bin_dir = os.path.join(os.path.expanduser("~"), ".iterm2", "bin")
     if not os.path.isdir(bin_dir):
@@ -2789,6 +2799,7 @@ def _silence_shutdown_unraisable(unraisable):
     sys.__unraisablehook__(unraisable)
 
 def main():
+    claim_put_bin_flag()
     if sys.stdin.isatty():
         signal.signal(signal.SIGWINCH, on_sigwinch)
     sys.unraisablehook = _silence_shutdown_unraisable

@@ -273,6 +273,8 @@ class TcshTests(unittest.TestCase):
         try:
             os.environ.clear()
             os.environ.update(fx.env({"IT2_PUT_BIN_ON_PATH": "1"}))
+            # As the framer's main() does when it starts.
+            framer.claim_put_bin_flag()
             return framer.login_shell_environment()
         finally:
             os.environ.clear()
