@@ -2491,6 +2491,10 @@ ITERM_WEAKLY_REFERENCEABLE
                 runCommand = NO;
                 attachedToServer = YES;
                 if (aSession->_conductor) {
+                    // Only now is ssh known to survive, so only now may anything be sent to
+                    // its framer. Had this session started a new shell instead, it would
+                    // have been typed there (F-706).
+                    [aSession->_conductor resetAfterReattaching];
                     // Resynchronizing with the framer should not wait for the host to print
                     // something.
                     [aSession.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

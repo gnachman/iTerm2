@@ -1743,6 +1743,13 @@ extension Conductor {
         return superVerbose || gDebugLogging.boolValue
     }
 
+    /// The session reattached to the process that still runs ssh after iTerm2 restarted, so
+    /// whatever this conductor writes reaches its framer. Each framer in the chain is reset,
+    /// outermost first, to resynchronize.
+    @objc func resetAfterReattaching() {
+        resetTransitively()
+    }
+
     @objc(newConductorWithJSON:delegate:)
     static func create(_ json: String, delegate: ConductorDelegate) -> Conductor? {
         let decoder = JSONDecoder()
@@ -1757,7 +1764,9 @@ extension Conductor {
             current?.delegate = delegate
             current = current?.parent
         }
-        leaf.resetTransitively()
+        // Nothing is written yet: the session may not reattach to the process that runs ssh,
+        // and then whatever is written goes to a new shell (F-706). The session calls
+        // resetAfterReattaching once it has reattached.
         return leaf
     }
 

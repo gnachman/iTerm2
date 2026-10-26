@@ -771,6 +771,10 @@ Bug Fixes:
   also undoes the terminal settings ssh changed,
   so Control-C works and output no longer
   staircases.
+- After quitting with SSH Integration sessions
+  open, relaunching with window restoration on
+  no longer types stray text, such as
+  cmVzZXQy, into the restored tabs’ new shells.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.
