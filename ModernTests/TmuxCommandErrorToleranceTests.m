@@ -288,4 +288,35 @@
     XCTAssertEqual(windowID, -1, @"a caller waiting on a new window must learn that it failed");
 }
 
+#pragma mark - F-653
+
+// When a tmux workgroup ends, its members' panes are killed. A native tab whose window was killed
+// can still become current before tmux's %window-close arrives, and selecting it then fails.
+- (void)testSelectingAWindowTmuxAlreadyClosedDoesNotEndTheConnection {
+    [_controller setCurrentWindow:2];
+    [_gateway feedLines:@[ @"%begin 1791255943 320 1", @"@1", @"%end 1791255943 320 1" ]];
+    [_gateway feedLines:[self errorReply:@"can't find window: @2"]];
+    XCTAssertNil(_gateway.abortMessage);
+    // No %session-window-changed will come for a select-window that failed, so none may be ignored.
+    XCTAssertEqualObjects([_controller valueForKey:@"ignoreWindowChangeNotificationCount"], @0);
+    [self assertGatewayStillWorks];
+}
+
+// Control: a select-window that succeeds still expects its echo.
+- (void)testSelectingAnotherWindowExpectsItsEcho {
+    [_controller setCurrentWindow:2];
+    [_gateway feedLines:@[ @"%begin 1791255943 320 1", @"@1", @"%end 1791255943 320 1" ]];
+    [_gateway feedLines:@[ @"%begin 1791255943 321 1", @"%end 1791255943 321 1" ]];
+    XCTAssertNil(_gateway.abortMessage);
+    XCTAssertEqualObjects([_controller valueForKey:@"ignoreWindowChangeNotificationCount"], @1);
+}
+
+// Focus can land on a pane that a workgroup's teardown just killed.
+- (void)testSelectingAPaneTmuxAlreadyClosedDoesNotEndTheConnection {
+    [_controller selectPane:5];
+    [_gateway feedLines:[self errorReply:@"can't find pane: %5"]];
+    XCTAssertNil(_gateway.abortMessage);
+    [self assertGatewayStillWorks];
+}
+
 @end

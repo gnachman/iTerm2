@@ -4713,31 +4713,54 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
     // in the same command list as the select-window: tmux runs a client's command list without
     // running other clients' commands in between. The echo always arrives after both responses
     // because tmux holds back notifications until the command list's output is written.
+    //
+    // The window may be gone already: a native tab outlives its tmux window until %window-close
+    // arrives and can become current in between, as when a workgroup's teardown kills a member's
+    // window and then closes the tab before it. Errors are tolerated so that doesn't end the
+    // connection. Both replies share `selection` so a failed select-window can take back the echo
+    // it no longer causes.
+    NSMutableDictionary *selection = [@{ @"window": @(windowId) } mutableCopy];
     NSArray *commands = @[
         [gateway_ dictionaryForCommand:@"display -p \"#{window_id}\""
                         responseTarget:self
-                      responseSelector:@selector(didGetCurrentWindow:beforeSelectingWindow:)
-                        responseObject:@(windowId)
-                                 flags:0],
+                      responseSelector:@selector(didGetCurrentWindow:beforeSelecting:)
+                        responseObject:selection
+                                 flags:kTmuxGatewayCommandShouldTolerateErrors],
         [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"select-window -t @%d", windowId]
-                        responseTarget:nil
-                      responseSelector:nil
-                        responseObject:nil
-                                 flags:0]
+                        responseTarget:self
+                      responseSelector:@selector(didSelectWindow:selection:)
+                        responseObject:selection
+                                 flags:kTmuxGatewayCommandShouldTolerateErrors]
     ];
     [gateway_ sendCommandList:commands];
 }
 
-// A failed command aborts the connection, so if this runs then the select-window will run too.
-- (void)didGetCurrentWindow:(NSString *)response beforeSelectingWindow:(NSNumber *)windowId {
+// If this fails, the select-window after it in the list is skipped.
+- (void)didGetCurrentWindow:(NSString *)response beforeSelecting:(NSMutableDictionary *)selection {
+    NSString *target = [NSString stringWithFormat:@"@%d", [selection[@"window"] intValue]];
+    if (!response) {
+        DLog(@"Could not read the current window before selecting %@", target);
+        return;
+    }
     NSString *current = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    NSString *target = [NSString stringWithFormat:@"@%d", windowId.intValue];
     if ([current isEqualToString:target]) {
         DLog(@"%@ is already current. Expect no session-window-changed.", target);
         return;
     }
     DLog(@"Current window is %@. Expect session-window-changed for %@.", current, target);
     _ignoreWindowChangeNotificationCount++;
+    selection[@"expectsEcho"] = @YES;
+}
+
+// tmux sends no %session-window-changed for a select-window that failed.
+- (void)didSelectWindow:(NSString *)response selection:(NSMutableDictionary *)selection {
+    if (response) {
+        return;
+    }
+    DLog(@"Could not select window @%@. It is probably gone.", selection[@"window"]);
+    if ([selection[@"expectsEcho"] boolValue] && _ignoreWindowChangeNotificationCount > 0) {
+        _ignoreWindowChangeNotificationCount--;
+    }
 }
 
 - (NSString *)userVarsString:(int)paneID {
