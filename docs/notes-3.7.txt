@@ -687,6 +687,12 @@ Bug Fixes:
   longer does nothing when the file can’t be
   found on the remote host. It now shows a
   failed download that says why.
+- With the Browser Plugin installed, View in the
+  “Download or View File?” prompt for a file on
+  an SSH Integration host no longer says no
+  connection could be found when the name you
+  connected with differs from the host’s own
+  name, such as an alias in your ssh config.
 - An SSH Integration download that can’t be
   saved into your Downloads folder when it
   finishes now reports that it failed, instead

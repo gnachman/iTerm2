@@ -1674,7 +1674,7 @@ extension Conductor {
         ]
         guard iTermBrowserGateway.browserAllowed(checkIfNo: false),
               let mimeType,
-              let url = path.viewInBrowserURL,
+              let url = sshIdentity.viewInBrowserURL(path: path.path),
               !unsupportedMimeTypes.contains(mimeType) else {
             download(path: path)
             return
@@ -3240,11 +3240,25 @@ extension Array where Element == Conductor.Nesting {
     }
 }
 
-extension SCPPath {
-    var viewInBrowserURL: URL? {
+extension SSHIdentity {
+    // An iterm2-ssh: URL for viewing a remote file in the browser. It names this identity (the
+    // ssh destination, user, and port) rather than the hostname the remote shell reports, so that
+    // ConductorRegistry.conductors(for:) finds this connection even when an ssh alias differs
+    // from the remote host's own name (F-1050).
+    func viewInBrowserURL(path: String) -> URL? {
         var components = URLComponents()
         components.scheme = iTermBrowserSchemes.ssh
-        components.host = hostname
+        components.user = username
+        if host.contains(":") {
+            // An IPv6 address must be bracketed, and a zone ID's % escaped, or there is no URL.
+            // URL.host gives back the bare address, which is what the registry matches.
+            components.percentEncodedHost = "[" + host.replacingOccurrences(of: "%", with: "%25") + "]"
+        } else {
+            components.host = host
+        }
+        if port > 0 {
+            components.port = port
+        }
         components.path = path
         return components.url
     }
