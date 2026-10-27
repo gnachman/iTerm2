@@ -980,6 +980,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 - (void)softTerminate;
 - (void)terminate;
+// Terminate without keeping the session restorable for Undo Close, for a
+// session that has nothing to come back to (e.g. a peer of a workgroup that is
+// exiting).
+- (void)terminateWithoutUndo;
 
 // Tries to revive a terminated session. Returns YES on success. It should be re-added to a tab if
 // after reviving.

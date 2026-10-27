@@ -762,6 +762,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     NSDate *_hardStopDeadline;
     NSTimeInterval _pausedHardStopRemaining;
     BOOL _hardStopPaused;
+    // Set by -terminateWithoutUndo so -terminate stops the session for good
+    // instead of keeping it restorable for Undo Close.
+    BOOL _terminatingWithoutUndo;
 
     // If this session was restored by undo close from an archive, the path of
     // that archive. When it can no longer be revived, undo restores it from
@@ -4069,9 +4072,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     _terminatedAsTmuxClient = wasTmuxClient;
     BOOL undoable = (![self isTmuxClient] &&
+                     !_terminatingWithoutUndo &&
                      !_shouldRestart &&
                      !_synthetic &&
                      ![[iTermController sharedInstance] applicationIsQuitting]);
+    _terminatingWithoutUndo = NO;
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
     _hideAfterTmuxWindowOpens = NO;
@@ -4130,6 +4135,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [[_delegate realParentWindow] sessionDidTerminate:self];
 
     _delegate = nil;
+}
+
+- (void)terminateWithoutUndo {
+    _terminatingWithoutUndo = YES;
+    [self terminate];
 }
 
 - (void)setExited:(BOOL)exited {

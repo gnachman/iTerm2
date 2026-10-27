@@ -386,10 +386,35 @@ class PTYSessionPeerPort: NSObject {
         for identifier in peers.keys where identifier != leader {
             peers[identifier]?.then {
                 RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\($0.guid) exited=\($0.exited)")
-                $0.terminate()
+                Self.terminateForGood($0)
             }
         }
         peers = [:]
+    }
+
+    // A peer that was shown and then swapped out of the shared pane still
+    // has the tab as its delegate (PTYTab's swap does not clear it), unlike
+    // a peer that was born buried. Terminating it with that stale delegate
+    // acts on the tab it no longer lives in: the undo entry records the
+    // whole tab, and a close routed through the delegate sees the tab's
+    // last session (the leader) and closes the tab and window. Detach it
+    // first so it terminates like a born-buried peer. Then stop it for good:
+    // a peer out of the pane can't be brought back into a torn-down
+    // workgroup, so an undo entry would only resurrect it as an orphan.
+    //
+    // A peer still in its tab is terminated as before (undoably): it is the
+    // pane's own member, e.g. the one whose closing drove this teardown, and
+    // closing its tab or window must stay undoable.
+    private static func terminateForGood(_ session: PTYSession) {
+        if let delegate = session.delegate {
+            if delegate.sessions().contains(where: { $0 === session }) {
+                session.terminate()
+                return
+            }
+            RLog("PTYSessionPeerPort: detaching swapped-out peer \(session.guid) from a tab it is not in before terminating it")
+            session.delegate = nil
+        }
+        session.terminateWithoutUndo()
     }
 }
 

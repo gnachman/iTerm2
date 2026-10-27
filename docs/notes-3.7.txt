@@ -2049,3 +2049,9 @@ Bug Fixes:
   choose any file. Before, it only allowed file
   types that the AI provider accepts as
   attachments.
+- Exit Workgroup no longer closes the window
+  when one of the workgroup’s other sessions is
+  showing in place of the main one. The other
+  sessions close and the main session and its
+  window stay. Those sessions also no longer
+  come back after restarting iTerm2.
