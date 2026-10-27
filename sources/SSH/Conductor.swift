@@ -2377,10 +2377,10 @@ extension Conductor {
         /// environment.
         var activateIT2: Bool
         /// Have the framer put ~/.iterm2/bin first on the PATH it gives the login shell (whose
-        /// own login files may still reorder it: macOS's path_helper does). Only for an
-        /// interactive shell that gets the upload without the scripts (tcsh, macOS bash 3.2):
-        /// the injected scripts do it themselves, and a command, or a shell named as the
-        /// command, gets it from commandPuttingIT2OnPath.
+        /// own login files may still reorder it: macOS's path_helper does). Only for the login
+        /// shell itself (no command) when it gets the upload without the scripts (tcsh, macOS
+        /// bash 3.2): the injected scripts do it themselves, and a command, or a shell named as
+        /// the command, gets it from commandPuttingIT2OnPath, which would put it there twice.
         var putIT2OnShellPath = false
         /// Run the command through commandPuttingIT2OnPath. A command always is, and so is a
         /// shell named as the command (`it2ssh host sh -c …`, `it2ssh host bash`) unless the
@@ -2411,7 +2411,7 @@ extension Conductor {
         return RemoteSetup(injectShellIntegration: inject,
                            uploadIT2: shouldInjectShellIntegration,
                            activateIT2: true,
-                           putIT2OnShellPath: shouldInjectShellIntegration && launchKind != .command && !inject,
+                           putIT2OnShellPath: shouldInjectShellIntegration && launchKind == .interactive && !inject,
                            putIT2OnCommandPath: launchKind == .command ||
                             (launchKind != .interactive && !(inject && customShellIsInteractive)))
     }

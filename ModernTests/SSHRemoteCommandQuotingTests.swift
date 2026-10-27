@@ -376,14 +376,15 @@ final class RemoteSetupTests: XCTestCase {
     }
 
     // tcsh: the scripts cannot be injected, but it2 is uploaded and its socket exists. With no
-    // script to put ~/.iterm2/bin on PATH, the framer puts it there for the login shell.
+    // script to put ~/.iterm2/bin on PATH, the framer puts it there for the login shell; a shell
+    // named as the command gets it from its command instead, once.
     func testShellThatCannotBeInjectedStillGetsIt2() {
         XCTAssertEqual(setup(.interactive, injectable: false),
                        .init(injectShellIntegration: false, uploadIT2: true, activateIT2: true,
                              putIT2OnShellPath: true))
         XCTAssertEqual(setup(.customShell("/bin/tcsh"), injectable: false),
                        .init(injectShellIntegration: false, uploadIT2: true, activateIT2: true,
-                             putIT2OnShellPath: true, putIT2OnCommandPath: true))
+                             putIT2OnCommandPath: true))
     }
 
     // The setting off means nothing is written to the host, but an it2 already there works.
