@@ -148,6 +148,12 @@ class ConductorFileTransfer: TransferrableFile {
 
     func fail(reason: String) {
         removeTemporaryDownload()
+        guard !reportedStop else {
+            // It was already reported as stopped. A failure that comes later, such as from a
+            // reply that arrived after Stop, doesn't change that.
+            DLog("Ignoring failure after stop: \(reason)")
+            return
+        }
         _error = reason
         FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(reason))
         state = .failed
@@ -176,9 +182,22 @@ class ConductorFileTransfer: TransferrableFile {
         }
     }
 
+    // Whether the transfer has been reported as stopped. A download() reports it as soon as
+    // Stop is chosen rather than when its task next wakes up, which might be never if the
+    // connection stalled (F-728). The task's own report when it does wake up is ignored.
+    private var reportedStop = false
+
+    // Set by the download task for a download(). Called once when Stop is chosen, to cancel
+    // the requests it has outstanding.
+    var stopHandler: (() -> Void)?
+
     @MainActor
     func abort() {
         removeTemporaryDownload()
+        guard !reportedStop else {
+            return
+        }
+        reportedStop = true
         FileTransferManager.sharedInstance().transferrableFileDidStopTransfer(self)
     }
 
@@ -331,6 +350,15 @@ class ConductorFileTransfer: TransferrableFile {
         guard !isStopped else { return }
         FileTransferManager.sharedInstance().transferrableFileWillStop(self)
         state = .failed
+        if isDownload && !chunked {
+            // Don't wait for the download task to notice: it may be waiting for a reply that
+            // never comes because the connection stalled. Remove the partial file and report
+            // the stop now; anything that arrives later is ignored (F-728).
+            abort()
+            let stopHandler = self.stopHandler
+            self.stopHandler = nil
+            stopHandler?()
+        }
     }
 
     override func error() -> String? {

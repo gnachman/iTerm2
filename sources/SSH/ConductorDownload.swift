@@ -15,6 +15,8 @@ struct ConductorDownloadOperations {
     var zip: (String) async throws -> SSHRemoteZipReply
     var fetch: (String, DownloadChunk) async throws -> Data
     var rm: (String) async throws -> Void
+    // Cancels the fetches that haven't been sent yet. Ones already sent are answered anyway.
+    var cancelFetches: () async -> Void
 }
 
 /// A download started with ConductorFileTransfer.download(), such as from “Download using
@@ -95,6 +97,21 @@ enum ConductorDownload {
         }
         let remotePath = fileTransfer.path.path!
 
+        // Stop removes the file right away, so don't create it after a Stop (F-728).
+        if fileTransfer.isStopped {
+            fileTransfer.abort()
+            return
+        }
+        fileTransfer.stopHandler = {
+            Task { @MainActor in
+                await operations.cancelFetches()
+            }
+        }
+        defer {
+            fileTransfer.stopHandler = nil
+        }
+        // After a Stop the file is removed at once, but this handle stays open until a reply
+        // that was already sent arrives or the connection ends. Nothing is written to it then.
         FileManager.default.createFile(atPath: path, contents: nil, attributes: nil)
         guard let fileHandle = FileHandle(forUpdatingAtPath: path) else {
             fileTransfer.fail(reason: String(localized: "ConductorFileTransfer.CouldNotOpen",
@@ -178,6 +195,12 @@ enum ConductorDownload {
             }
             let zipReply = try await operations.zip(remotePath)
             let remoteZipPath = zipReply.path
+            if fileTransfer.isStopped {
+                // Stopped while zipping. Don't download it, but don't leave it on the host.
+                fileTransfer.abort()
+                try? await operations.rm(remoteZipPath)
+                return
+            }
             fileTransfer.isZipOfFolder = true
             // Finish, but say what couldn't be read and was left out (F-721).
             fileTransfer.completionNote = zipReply.skippedItemsNote

@@ -849,7 +849,9 @@ Bug Fixes:
   success with no mention of the missing files.
 - An SSH Integration download that fails or is
   stopped no longer leaves an empty or partial
-  hidden file in your Downloads folder.
+  hidden file in your Downloads folder. Stop
+  now takes effect right away even when the
+  connection has stalled.
 - An SSH Integration download that can’t be
   saved into your Downloads folder when it
   finishes now reports that it failed, instead
