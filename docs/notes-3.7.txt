@@ -2273,3 +2273,7 @@ Bug Fixes:
 - Announcements in narrow panes are legible: when
   there is no room beside the buttons, the
   buttons go on a row below the text.
+- Shell > ssh > Download Files… now lets you
+  choose any file. Before, it only allowed file
+  types that the AI provider accepts as
+  attachments.
