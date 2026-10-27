@@ -65,6 +65,54 @@ extension Conductor: ConductorFileTransferDelegate {
         continuation.finish()
     }
 
+    // The remote zip command's archive holds the folder itself (`folderName/…`), which is what a
+    // download saved as a .zip file needs. Here the folder's contents go directly in
+    // `destination`, which is the folder, so it isn't nested one level too deep (F-921). Items
+    // already in `destination` with the same name are replaced and others are kept.
+    static func unzipFolderArchive(_ zipURL: URL,
+                                   folderName: String,
+                                   to destination: URL) async throws {
+        let fileManager = FileManager.default
+        let parent = destination.deletingLastPathComponent()
+        let staging = parent.appendingPathComponent(".iTerm2.\(UUID().uuidString)")
+        defer {
+            try? fileManager.removeItem(at: staging)
+        }
+        // unzip creates the -d folder but not its parent. The `destination` argument is just
+        // the directory it runs in.
+        try fileManager.createDirectory(at: parent, withIntermediateDirectories: true)
+        // The framer adds only files, so an empty folder's archive has no entries: just its
+        // 22-byte end of central directory record. unzip fails on that.
+        let emptyArchiveSize = 22
+        let endOfCentralDirectorySignature = Data([0x50, 0x4b, 0x05, 0x06])
+        if let size = (try? fileManager.attributesOfItem(atPath: zipURL.path))?[.size] as? Int,
+           size == emptyArchiveSize,
+           let contents = try? Data(contentsOf: zipURL),
+           contents.starts(with: endOfCentralDirectorySignature) {
+            try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+            return
+        }
+        try await iTermCommandRunner.unzipURL(
+            zipURL,
+            withArguments: ["-q", "-o", "-d", staging.path],
+            destination: "/",
+            callbackQueue: .main)
+        let unzippedFolder = staging.appendingPathComponent(folderName)
+        var isDirectory = ObjCBool(false)
+        let foundFolder = fileManager.fileExists(atPath: unzippedFolder.path,
+                                                 isDirectory: &isDirectory) && isDirectory.boolValue
+        // Only when the archive's folder isn't named `folderName`, which shouldn't happen.
+        let source = foundFolder ? unzippedFolder : staging
+        try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+        for name in try fileManager.contentsOfDirectory(atPath: source.path) {
+            let target = destination.appendingPathComponent(name)
+            if fileManager.fileExists(atPath: target.path) {
+                try fileManager.removeItem(at: target)
+            }
+            try fileManager.moveItem(at: source.appendingPathComponent(name), to: target)
+        }
+    }
+
     @MainActor
     func downloadChunked(remoteFile: RemoteFile,
                          progress: Progress?,
@@ -107,14 +155,9 @@ extension Conductor: ConductorFileTransferDelegate {
                     destination: localZipPath,
                     completionNote: zipReply.skippedItemsNote)
 
-                // The `destination` argument is the current directory in which unzip is run. I give
-                // -d path in args so it will create destination.path if needed and then
-                // unzip therein.
-                try await iTermCommandRunner.unzipURL(
-                    localZipPath,
-                    withArguments: ["-q", "-o", "-d", destination.path],
-                    destination: "/",
-                    callbackQueue: .main)
+                try await Self.unzipFolderArchive(localZipPath,
+                                                  folderName: remoteFile.absolutePath.lastPathComponent,
+                                                  to: destination)
                 try? await rm(remoteZipPath, recursive: false)
                 try? FileManager.default.removeItem(at: localZipPath)
             } catch {
