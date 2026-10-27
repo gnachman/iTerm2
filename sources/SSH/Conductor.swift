@@ -1123,6 +1123,15 @@ extension Conductor {
             }
         }
 
+        var isQuit: Bool {
+            switch self {
+            case .quit, .framerQuit:
+                return true
+            default:
+                return false
+            }
+        }
+
         var isFramer: Bool {
             switch self {
             case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_), .pythonversion,
@@ -3222,6 +3231,14 @@ extension Conductor {
             return
         }
         if pid == framedPID {
+            // The connection ends: the framer quits and then ssh exits. Nothing else may be
+            // sent from now on. Whatever reached the pty after ssh exited would be typed into
+            // the local terminal, such as the request for the next autopoll report (F-709).
+            log("The login shell exited")
+            hasEnded = true
+            flowMayBeOn = false
+            stopFlowControl()
+            cancelEnqueuedRequests(where: { _ in true })
             // The framer reads framer commands; the pre-framer `quit` means nothing to it.
             framerQuit()
         } else if let jobState = backgroundJobs[pid] {
@@ -3521,6 +3538,12 @@ extension Conductor {
               _ handler: ExecutionContext.Handler) {
         log("append \(command) to queue in state \(state)")
         let context = ExecutionContext(command: command, handler: handler)
+        guard !hasEnded || command.isQuit else {
+            // Only the quit goes out after the connection ended (F-709).
+            log("Ended. Not sending \(command)")
+            try? update(executionContext: context, result: .abort)
+            return
+        }
         DLog("Enqueue: \(command)")
         if highPriority {
             // First in, first out among high-priority commands, so typed keys stay in order,

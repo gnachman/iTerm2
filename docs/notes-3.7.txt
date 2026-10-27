@@ -779,6 +779,10 @@ Bug Fixes:
   Integration session, ending ssh no longer
   leaves the session ignoring typed text until
   Return is pressed.
+- Ending an SSH Integration session no longer
+  sometimes types YXV0b3BvbGw= into the local
+  shell, or leaves the tab unable to start
+  another it2ssh connection.
 - A session no longer stops taking input when
   it2ssh is run on a host that was itself
   reached with it2ssh but lacks the Python that

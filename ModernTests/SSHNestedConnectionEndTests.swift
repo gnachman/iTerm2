@@ -316,6 +316,50 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertTrue(session.writes.contains { $0.hasPrefix(send) }, "\(session.writes)")
     }
 
+    // MARK: - F-709 / F-951
+
+    private func deliverAutopollEOF(to conductor: Conductor) {
+        conductor.handleSideChannelOutput("EOF", pid: SSH_OUTPUT_AUTOPOLL_PID, channel: 1,
+                                          depth: conductor.depth)
+    }
+
+    private static let autopoll = "autopoll".data(using: .utf8)!.base64EncodedString()
+
+    // The control: a live connection asks for the next autopoll report.
+    func testLiveConnectionAsksForNextAutopoll() {
+        let root = hookFramingRoot()
+        deliverAutopollEOF(to: root)
+        // The framer answers what comes first, such as registering the login shell to poll.
+        for _ in 0..<3 {
+            root.handleCommandEnd(identifier: "id", type: "f", status: 0, depth: root.depth)
+        }
+        XCTAssertTrue(session.writes.contains { $0.hasPrefix(Self.autopoll) }, "\(session.writes)")
+    }
+
+    // The login shell exited, so the framer quits and ssh exits soon after. An autopoll
+    // report that arrives meanwhile must not be answered: the request would be written after
+    // ssh exited, typed into the local terminal (YXV0b3BvbGw=, base64 “autopoll”), and its
+    // blank line could release it2ssh before the EndSSH that ends the connection is answered.
+    func testNothingButTheQuitIsWrittenAfterTheLoginShellExits() {
+        let root = hookFramingRoot()
+        root.handleTerminate(loginShellPID, code: 0, depth: root.depth)
+        let quit = "quit".data(using: .utf8)!.base64EncodedString()
+        XCTAssertTrue(session.writes.contains { $0.hasPrefix(quit) }, "\(session.writes)")
+        session.writes.removeAll()
+
+        // Before and after the framer answers the quit.
+        deliverAutopollEOF(to: root)
+        root.handleCommandEnd(identifier: "id", type: "f", status: 0, depth: root.depth)
+        deliverAutopollEOF(to: root)
+        XCTAssertEqual(session.writes, [])
+
+        // The connection still ends normally.
+        send("\u{1b}]135;:unhook\u{1b}\\")
+        send(endSSH(rootID))
+        XCTAssertNil(session.conductor)
+        XCTAssertEqual(session.writes, ["\u{03}\n"])
+    }
+
     // The payloads of the framer `send` commands in what was written, decoded the way
     // framer.py does.
     private static func relayedPayloads(_ written: String) -> [String] {
