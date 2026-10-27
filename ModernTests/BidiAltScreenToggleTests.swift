@@ -72,6 +72,7 @@ class BidiAltScreenToggleTests: XCTestCase {
     func testEnablingSettingInAlternateScreenDropsStaleBidiInfo() {
         let screen = makeScreen()
         screen.inject("\u{1b}[?1049h".data(using: .utf8)!)
+        screen.waitForQueuedTokensForTesting()
         screen.performBlock(joinedThreads: { _, m, _ in
             XCTAssertTrue(m.terminal!.softAlternateScreenMode)
             m.appendString(atCursor: "שלום עולם")

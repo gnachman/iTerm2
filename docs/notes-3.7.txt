@@ -668,6 +668,13 @@ Improvements:
   change constantly in a terminal, and indexing
   each one used a lot of CPU in Spotlight’s
   background processes.
+- In beta builds, each session now handles its
+  output independently, so heavy output in some
+  sessions no longer makes typing lag in the
+  others. If you suspect it of causing a problem,
+  search Settings > Advanced for “new
+  implementation of session input”, turn that
+  setting off, and restart iTerm2.
 
 Bug Fixes:
 - Commands saved to Command History no longer
