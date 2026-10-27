@@ -662,10 +662,12 @@ Improvements:
 
 Bug Fixes:
 - If iTerm2 quits unexpectedly while tmux
-  integration is attached, tmux integration
-  resumes when iTerm2 relaunches with window
-  restoration on. Before, the session that ran
-  tmux -CC could show raw tmux output instead.
+  integration is attached, and you switched to
+  another app at some point after attaching,
+  tmux integration resumes when iTerm2
+  relaunches with window restoration on.
+  Before, the session that ran tmux -CC could
+  show raw tmux output instead.
 - If iTerm2 quits unexpectedly after you
   detach from tmux integration, the session
   that ran tmux -CC no longer gets tmux

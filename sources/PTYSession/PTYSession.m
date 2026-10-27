@@ -11522,12 +11522,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // Take the gateway decoration off now rather than a main-queue turn later.
     [_nameController formattingDescriptorDidChange];
     // As when attaching (-tmuxSessionChanged:sessionId:): the saved arrangement must stop saying
-    // this is a tmux gateway, or if iTerm2 is killed it is restored as one and sends tmux
-    // commands to the shell (QA finding F-832).
+    // this is a tmux gateway. Window restoration state is saved at the next resign-active or quit;
+    // a session restored as a gateway before then checks that tmux still runs in it
+    // (-stopRestoredTmuxModeIfNoTmuxIsRunning) before sending tmux anything (QA finding F-832).
     [NSApp invalidateRestorableState];
-    if (![[iTermController sharedInstance] applicationIsQuitting]) {
-        [[iTermApplication.sharedApplication delegate] saveRestorableState];
-    }
 }
 
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {
@@ -11760,14 +11758,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         // In tmux 1.8, this happens before `tmuxInitialCommandDidCompleteSuccessfully`.
         [self kickOffTmuxForRestoration:NO];
     }
-    // Window restoration state is otherwise saved only when the app resigns active or quits. Save
-    // now that this session's arrangement says it is a tmux gateway for this tmux session, so
-    // that if iTerm2 is killed it is restored as one and tmux integration resumes, rather than
-    // the session being adopted as an orphan that shows raw control-mode output.
+    // This session's arrangement now says it is a tmux gateway for this tmux session. Window
+    // restoration state is saved at the next resign-active or quit (saving here would encode it
+    // on the main thread); from then on, if iTerm2 is killed, the session is restored as a gateway
+    // and tmux integration resumes (QA finding F-656).
     [NSApp invalidateRestorableState];
-    if (![[iTermController sharedInstance] applicationIsQuitting]) {
-        [[iTermApplication.sharedApplication delegate] saveRestorableState];
-    }
 }
 
 - (void)tmuxSessionsChanged {
