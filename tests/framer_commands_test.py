@@ -350,6 +350,27 @@ class LoginTests(CommandTestCase):
             self.assertIn(b"one two", self.output(pid))
         self.run_async(body)
 
+    # The injected interactive bash: iTerm2 names the shell and its arguments, and the framer
+    # starts that shell as the login shell itself rather than under the login shell's -c, so its
+    # profile runs in the interactive shell.
+    def test_exec_login_starts_the_named_shell_as_a_login_shell(self):
+        async def body():
+            with env(HOME=self.tmp):
+                pid = await self.h.start(
+                    "login", self.tmp, "--iterm2-exec-login", "/bin/bash", "-c",
+                    'echo "argv0=$0 login=$(shopt -q login_shell && echo on || echo off)"')
+            self.assertEqual(await self.h.wait_terminated(pid), 0)
+            out = self.output(pid)
+            self.assertIn(b"argv0=-bash login=on", out)
+        self.run_async(body)
+
+    def test_exec_login_without_a_shell_fails(self):
+        async def body():
+            reply = await self.h.command("login", self.tmp, "--iterm2-exec-login")
+            self.assertEqual(reply.status, 1)
+            self.assertTrue(reply.lines[0].startswith("Command failed: "), reply)
+        self.run_async(body)
+
     def test_directory_expands_tilde_and_variables(self):
         async def body():
             with env(HOME=self.tmp, FRAMER_DIR="sub"):

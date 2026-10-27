@@ -1410,12 +1410,27 @@ async def save_and_exec(identifier, code):
 
 ## Commands
 
+EXEC_LOGIN_MARKER = "--iterm2-exec-login"
+
 async def handle_login(identifier, args):
     log("begin handle_login")
     cwd = args[0]
     args = args[1:]
     log(f'cwd={cwd} args={args}')
     cwd = os.path.expandvars(os.path.expanduser(cwd))
+    if args and args[0] == EXEC_LOGIN_MARKER:
+        # iTerm2 named the shell and the arguments shell integration gave it (bash's --posix).
+        # Start that shell as the login shell itself, so its profile runs in the interactive
+        # shell. Through the login shell's -c, the outer shell would source it and exec the
+        # interactive one, which would lose what it defines.
+        if len(args) < 2:
+            q = begin(identifier)
+            send_esc(q, f'Command failed: {EXEC_LOGIN_MARKER} without a shell')
+            end(q, identifier, 1)
+            return False
+        shell = args[1]
+        argv = ["-" + os.path.basename(shell)] + args[2:]
+        return await run_login_shell(identifier, shell, argv, cwd, login_shell_environment())
     had_args = len(args) > 0
     if args:
         args = ["-c", " ".join(args)]

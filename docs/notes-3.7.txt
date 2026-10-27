@@ -828,6 +828,10 @@ Bug Fixes:
   read the arguments, it now ends the
   connection and explains why instead of
   leaving the tab stuck.
+- When SSH Integration loads shell integration
+  into a remote bash, the shell is now a login
+  shell, so aliases and functions defined in
+  ~/.profile or ~/.bash_profile are available.
 - Fixed a crash in “Import All Settings and
   Data” when the import changed a setting that
   requires your administrator password.

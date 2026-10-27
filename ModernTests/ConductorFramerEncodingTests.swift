@@ -105,4 +105,34 @@ final class ConductorFramerEncodingTests: XCTestCase {
         }
         assertRoundTrips(.framerSave(dict))
     }
+
+    // An interactive session whose injected shell needed arguments (bash's --posix) asks the
+    // framer to exec that shell as the login shell, so ~/.profile runs in the interactive shell.
+    func testInjectedInteractiveBashExecsTheShellAsLoginShell() {
+        let args = Conductor.framerLoginArgs(modifiedCommandArgs: ["/bin/bash", "--posix"],
+                                             commandArgs: [],
+                                             command: "'/bin/bash' '--posix'")
+        XCTAssertEqual(args, ["--iterm2-exec-login", "/bin/bash", "--posix"])
+        let command = Conductor.Command.framerLogin(cwd: "$HOME", args: args)
+        XCTAssertEqual(command.stringValue, "login\n$HOME\n--iterm2-exec-login\n/bin/bash\n--posix")
+        assertRoundTrips(command)
+    }
+
+    // A command the user gave keeps going through the login shell's -c, as one string.
+    func testCustomCommandKeepsTheOldForm() {
+        XCTAssertEqual(Conductor.framerLoginArgs(modifiedCommandArgs: ["/bin/bash", "--posix", "-l"],
+                                                 commandArgs: ["/bin/bash", "-l"],
+                                                 command: "'/bin/bash' '--posix' '-l'"),
+                       ["'/bin/bash' '--posix' '-l'"])
+        XCTAssertEqual(Conductor.framerLoginArgs(modifiedCommandArgs: nil,
+                                                 commandArgs: ["ls", "-l"],
+                                                 command: "ls -l"),
+                       ["ls -l"])
+    }
+
+    // Env-only injection (zsh, fish, xonsh, nu) and no injection: the login shell, interactively.
+    func testPlainSessionWithoutInjectedArgumentsSendsNoArgs() {
+        XCTAssertEqual(Conductor.framerLoginArgs(modifiedCommandArgs: [], commandArgs: [], command: nil), [])
+        XCTAssertEqual(Conductor.framerLoginArgs(modifiedCommandArgs: nil, commandArgs: [], command: nil), [])
+    }
 }
