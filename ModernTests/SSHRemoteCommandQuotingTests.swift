@@ -302,6 +302,42 @@ final class CustomShellInteractivityTests: XCTestCase {
     }
 }
 
+// getshell reports the LOGIN shell's version, which only says which bash a custom shell is when
+// the login shell is that bash.
+final class ShellInjectabilityTests: XCTestCase {
+    private let macBash = "GNU bash, version 3.2.57(1)-release (arm64-apple-darwin24)"
+    private let macZsh = "zsh 5.9 (arm64-apple-darwin24.0)"
+    private let linuxZsh = "zsh 5.9 (x86_64-debian-linux-gnu)"
+
+    private func injectable(_ shell: String, login: String, version: String) -> Bool {
+        return Conductor.shellSupportsInjection(shell, loginShell: login, loginShellVersion: version)
+    }
+
+    func testMacOSBashUnderAnotherLoginShellIsNotInjectable() {
+        XCTAssertFalse(injectable("bash", login: "/bin/zsh", version: macZsh))
+        XCTAssertFalse(injectable("/bin/bash", login: "/bin/tcsh", version: "tcsh 6.24.10 (unknown-apple-darwin)"))
+    }
+
+    func testAnotherBashOnMacOSIsInjectable() {
+        XCTAssertTrue(injectable("/opt/homebrew/bin/bash", login: "/bin/zsh", version: macZsh))
+    }
+
+    func testBashLoginShellUsesItsVersion() {
+        XCTAssertFalse(injectable("bash", login: "/bin/bash", version: macBash))
+        XCTAssertTrue(injectable("bash", login: "/usr/local/bin/bash",
+                                 version: "GNU bash, version 5.2.37(1)-release (aarch64-apple-darwin24)"))
+    }
+
+    func testBashOffMacOSIsInjectable() {
+        XCTAssertTrue(injectable("bash", login: "/bin/zsh", version: linuxZsh))
+    }
+
+    func testOtherShells() {
+        XCTAssertTrue(injectable("/usr/bin/zsh", login: "/bin/bash", version: macBash))
+        XCTAssertFalse(injectable("tcsh", login: "/bin/zsh", version: macZsh))
+    }
+}
+
 final class RemoteSetupTests: XCTestCase {
     private func setup(_ kind: Conductor.RemoteLaunchKind,
                        injectable: Bool = true,

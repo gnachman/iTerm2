@@ -2643,21 +2643,31 @@ extension Conductor {
 
     private static let minimumPythonMajorVersion = 3
     private static let minimumPythonMinorVersion = 7
-    private func shellSupportsInjection(_ shell: String, _ version: String) -> Bool {
+    /// Whether `shell` (a path or a name) can be injected. `loginShellVersion` is what getshell
+    /// reported, which describes the login shell, so it only says which bash `shell` is when the
+    /// login shell is that bash. A different bash on a macOS host, named `bash` or /bin/bash, is
+    /// taken to be macOS's own 3.2, which ignores the injection.
+    nonisolated static func shellSupportsInjection(_ shell: String,
+                                                   loginShell: String,
+                                                   loginShellVersion: String) -> Bool {
+        let name = shell.lastPathComponent
         let alwaysSupported = ["fish", "nu", "xonsh", "zsh"]
-        if alwaysSupported.contains(shell.lastPathComponent) {
+        if alwaysSupported.contains(name) {
             return true
         }
-        if shell == "bash" {
-            if version.contains("GNU bash, version 3.2.57") && version.contains("apple-darwin") {
-                // macOS's bash doesn't support --posix
-                return false
-            }
-            // Non-macOS bash
-            return true
+        guard name == "bash" else {
+            // Unrecognized shell
+            return false
         }
-        // Unrecognized shell
-        return false
+        let versionIsThisShells = loginShell.lastPathComponent == "bash" &&
+            (shell == loginShell || !shell.contains("/"))
+        if versionIsThisShells {
+            // macOS's bash doesn't support --posix
+            return !(loginShellVersion.contains("GNU bash, version 3.2.57") &&
+                     loginShellVersion.contains("apple-darwin"))
+        }
+        let macOS = loginShellVersion.contains("apple-darwin")
+        return !(macOS && (shell == "bash" || shell == "/bin/bash"))
     }
 
     private func sendInitialText() {
@@ -2937,7 +2947,8 @@ extension Conductor {
                 }
                 let setup = Self.remoteSetup(
                     launchKind: launchKind,
-                    shellSupportsInjection: !shell.isEmpty && shellSupportsInjection(shell.lastPathComponent, version),
+                    shellSupportsInjection: !shell.isEmpty && Self.shellSupportsInjection(
+                        shell, loginShell: parts.get(0, default: ""), loginShellVersion: version),
                     shouldInjectShellIntegration: shouldInjectShellIntegration,
                     haveHome: !home.isEmpty,
                     customShellIsInteractive: Self.customShellIsInteractive(
