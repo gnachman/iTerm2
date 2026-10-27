@@ -1898,7 +1898,7 @@ extension Conductor {
             return
         }
         Task { @MainActor in
-            let choice = await Self.downloadOrViewChoice(path: path.path) { remotePath in
+            let choice = await ConductorDownload.downloadOrViewChoice(path: path.path) { remotePath in
                 try await self.stat(remotePath)
             }
             if choice == .download {
