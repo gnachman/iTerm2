@@ -484,6 +484,8 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
             result.append(answer)
         } else if line.hasPrefix("mkdir "), let range = line.range(of: "; echo ") {
             result.append(line[range.upperBound...].replacingOccurrences(of: "\"", with: ""))
+        } else if line.hasPrefix("echo ") {
+            result.append(line.dropFirst("echo ".count).replacingOccurrences(of: "\"", with: ""))
         } else if line.hasPrefix("sh -c 'ENV=/dev/null") {
             // A nested sh reads the typeahead a byte at a time, so it starts without losing any.
             helperDepth += 1
@@ -505,7 +507,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     static let shellCommand = "sh -c 'echo My shell is $(ps -o ucomm=,comm= -p $PPID 2>/dev/null || ps -o comm= -p $PPID 2>/dev/null) or $SHELL, ${IT2_INSTALLER_HELPER:+in an installer helper shell, }end'\n"
     // The line that starts the outer helper sh, with the variable that marks it and the inner one.
     static let outerHelperLaunch = "env IT2_INSTALLER_HELPER=1 sh"
-    static let launchHelper = outerHelperLaunch + "\nENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) sh\n PS1='>> '; PS2='> '\n"
+    static let launchHelper = outerHelperLaunch + "\nENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) sh\n PS1='>> '; PS2='> '; printf 'it2-''helpers-ready '\n"
     // Asks the shell that printed a helper prompt after Cancel how many helpers deep it is.
     static let helperDepthCommand = "echo \"it2-\"\"helper-depth-${IT2_INSTALLER_HELPER:-0}-\"\n"
     private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"
@@ -1088,8 +1090,19 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     private var delayedOutput = [String]()
     private var flushScheduled = false
     private var prompt = "> "
+    // The row the cursor is on, which a typed line's echo is appended to: the last prompt, plus
+    // whatever was printed before it on the same row.
+    private var promptRow = "> "
     private var heredocLines: [String]?
     private var receivingUtilities = false
+    // sh is reading an if statement up to its fi.
+    private var inIfStatement = false
+    // Set to make the helpers' sh like dash (Debian's and Ubuntu's sh), which has no line
+    // editor: lines typed ahead while the user's shell had the tty in raw mode are never echoed,
+    // so the sh started by the first line prints its prompt (`$ `), the inner sh prints its own,
+    // and the helper prompt follows, all on one row. Once the helpers run, the tty echoes what is
+    // typed as it arrives, and sh's prompts follow the echo (see respondWithoutLineEditor(to:)).
+    var shEchoesTypeahead = true
 
     private(set) var heredocBodies = [[String]]()
     // Set to make tar fail to extract the utilities archive, as for one damaged on the way.
@@ -1135,11 +1148,44 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
         if archiveNeverEnds && receivingUtilities && text.count > "\nEOF\n".count && text.hasSuffix("\nEOF\n") {
             text.removeLast("EOF\n".count)
         }
+        if !shEchoesTypeahead && depth > 0 {
+            return respondWithoutLineEditor(to: text)
+        }
         pendingInput += text
         var rows = [String]()
+        // The lines typed along with the one that starts the outer helper, while the user's
+        // shell had the tty in raw mode, when the helpers' sh is like dash.
+        var unechoedTypeahead = false
         while let newline = pendingInput.firstIndex(of: "\n") {
             let line = String(pendingInput[..<newline])
             pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
+            if unechoedTypeahead {
+                // sh reads the line without echoing it, so what it prints goes on the current row.
+                var row = promptRow
+                var printed = handle(line)
+                if !printed.isEmpty {
+                    printed.removeFirst()
+                }
+                for (i, text) in printed.enumerated() {
+                    if i > 0 {
+                        row = ""
+                    }
+                    row += text
+                    rows.append(row)
+                }
+                promptRow = row
+                continue
+            }
+            if !shEchoesTypeahead && depth == 0 && line == ShellIntegrationOfflineInstallerTests.outerHelperLaunch {
+                // The user's shell echoes the line, and the sh it starts prompts.
+                rows.append(line)
+                depth = 1
+                prompt = "$ "
+                promptRow = prompt
+                rows.append(promptRow)
+                unechoedTypeahead = true
+                continue
+            }
             if delayedOutput.isEmpty {
                 rows.append(line)
             } else {
@@ -1176,9 +1222,55 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
         return rows
     }
 
+    // A helper sh like dash, which has no line editor, leaves the tty in canonical mode with
+    // echo on. The tty echoes all of the text as soon as it arrives, on the row the cursor is
+    // on. sh reads the lines only after that, and prints each one's output and the next prompt
+    // without redrawing the line.
+    private func respondWithoutLineEditor(to text: String) -> [String] {
+        var rows = [String]()
+        var row = promptRow
+        for (i, piece) in text.components(separatedBy: "\n").enumerated() {
+            if i > 0 {
+                rows.append(row)
+                row = ""
+            }
+            row += piece
+        }
+        if !row.isEmpty {
+            rows.append(row)
+        }
+        pendingInput += text
+        while let newline = pendingInput.firstIndex(of: "\n") {
+            let line = String(pendingInput[..<newline])
+            pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
+            let inSh = depth > 0
+            var printed = handle(line)
+            if inSh && !printed.isEmpty {
+                printed.removeFirst()
+            }
+            for (i, text) in printed.enumerated() {
+                if i > 0 {
+                    row = ""
+                }
+                row += text
+                rows.append(row)
+            }
+        }
+        promptRow = row
+        return rows
+    }
+
     // What the shell prints when it gets to a line: in sh, the line editor's redraw of its prompt
     // and the line it read, then the command's output and the next prompt.
     private func handle(_ line: String) -> [String] {
+        let printed = handleLine(line)
+        if let last = printed.last {
+            promptRow = last
+        }
+        return printed
+    }
+
+    private func handleLine(_ line: String) -> [String] {
         if depth == 0 {
             if line == ShellIntegrationOfflineInstallerTests.outerHelperLaunch {
                 depth = 1
@@ -1190,12 +1282,12 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             }
             return super.respond(to: line + "\n") + ["> "]
         }
-        let redraw = prompt + line
+        let redraw = promptRow + line
         if var lines = heredocLines {
             if line == "EOF" {
                 heredocBodies.append(lines)
                 heredocLines = nil
-                prompt = ">> "
+                prompt = inIfStatement ? "> " : ">> "
                 if receivingUtilities {
                     receivingUtilities = false
                     let answer = extractionFails ? "it2-utilities-failed" : "it2-utilities-installed"
@@ -1213,6 +1305,11 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             prompt = "$ "
         } else if line.hasPrefix(" PS1=") {
             prompt = ">> "
+            if let range = line.range(of: "; printf ") {
+                // What printf prints, with no newline, goes before the prompt.
+                let printed = line[range.upperBound...].replacingOccurrences(of: "'", with: "")
+                return result + [printed + prompt]
+            }
         } else if line + "\n" == ShellIntegrationOfflineInstallerTests.shellCommand {
             // macOS's sh is bash, and both helpers have IT2_INSTALLER_HELPER in their
             // environment.
@@ -1227,9 +1324,18 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             heredocLines = []
             receivingUtilities = true
             prompt = ""
-        } else if line.contains("<<'EOF'") {
+        } else if line.contains("<<'EOF'") || line.contains("<<-EOF") {
             heredocLines = []
             prompt = "> "
+        } else if line.hasPrefix("if ") && line.hasSuffix("then") {
+            inIfStatement = true
+            prompt = "> "
+        } else if line == "fi" || line.hasPrefix("fi;") {
+            inIfStatement = false
+            prompt = ">> "
+            if let range = line.range(of: "; echo ") {
+                result.append(line[range.upperBound...].replacingOccurrences(of: "\"", with: ""))
+            }
         } else if line == "exit" {
             depth -= 1
             if depth == 0 {
@@ -1262,6 +1368,8 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
 class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
     // See FakeShellIntegrationTerminal.defersMatchCompletions.
     class var defersMatchCompletions: Bool { false }
+    // See FakeTcshFromZshTerminal.shEchoesTypeahead.
+    class var shEchoesTypeahead: Bool { true }
 
     private var controller: iTermShellIntegrationWindowController!
     private var terminal: FakeTcshFromZshTerminal!
@@ -1270,6 +1378,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         super.setUp()
         terminal = FakeTcshFromZshTerminal(testCase: self)
         terminal.defersMatchCompletions = Self.defersMatchCompletions
+        terminal.shEchoesTypeahead = Self.shEchoesTypeahead
         terminal.responses[ShellIntegrationOfflineInstallerTests.shellCommand] = "My shell is tcsh -csh or /bin/zsh, end"
         controller = iTermShellIntegrationWindowController(windowNibName: "iTermShellIntegrationWindowController")
         controller.delegate = terminal
@@ -1793,6 +1902,28 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertFalse(terminal.helperIsRunning)
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }
+
+    // F-870: every step, the dotfile too, gets through its helpers' launch and returns to the
+    // user's shell.
+    func testWholeInstallWithTheDotfileReturnsToTheUserShell() {
+        for stage in 1...3 {
+            controller.shellIntegrationInstallerSendShellCommands(Int32(stage))
+            terminal.run()
+            XCTAssertFalse(terminal.helperIsRunning, "stage \(stage)")
+            XCTAssertEqual(controller.sendShellCommandsStage, Int32(stage + 1))
+        }
+
+        XCTAssertEqual(terminal.heredocBodies.count, 3)
+        XCTAssertTrue(terminal.heredocBodies.last?.contains { $0.contains("source ~/.iterm2_shell_integration.tcsh") } == true,
+                      "\(terminal.heredocBodies.last ?? [])")
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+    }
+}
+
+// F-870: the same with a helper sh like dash, the sh of Debian and Ubuntu, which doesn't echo the
+// lines typed ahead with the one that starts it, so its helper prompt doesn't start a row.
+final class ShellIntegrationOfflineDashInstallerTests: ShellIntegrationOfflineTcshFromZshInstallerTests {
+    override class var shEchoesTypeahead: Bool { false }
 }
 
 // F-353: the dotfile step for bash. The rows sh prints for the line that starts the
@@ -1807,6 +1938,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
     private static let bashIf = "if ! grep iterm2_shell_integration \"$IT2_INSTALLER_DOTFILE\"  > /dev/null 2>&1; then\n"
     private static let bashCat = "    cat <<-EOF >> \"$IT2_INSTALLER_DOTFILE\"\n\n"
     private static let bashSource = "test -e ~/.iterm2_shell_integration.bash && source ~/.iterm2_shell_integration.bash || true\n"
+    private static let fiLine = "fi; echo it2-\"\"dotfile-done\n"
 
     private var controller: iTermShellIntegrationWindowController!
     private var terminal: FakeShellIntegrationTerminal!
@@ -1851,7 +1983,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
         XCTAssertEqual(controller.shell, .bash)
         XCTAssertEqual(dotfileCommandText(),
                        Self.launchHelper + Self.bashDotfileAssignment + Self.bashIf + Self.bashCat +
-                       Self.bashSource + "EOF\nfi\nexit\nexit\n")
+                       Self.bashSource + "EOF\nfi; echo it2-\"\"dotfile-done\nexit\nexit\n")
     }
 
     func testZshDotfileCommandTypesTheSourceLine() {
@@ -1862,7 +1994,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
                        "if ! grep iterm2_shell_integration /Users/someone/.zshrc  > /dev/null 2>&1; then\n" +
                        "    cat <<-EOF >> /Users/someone/.zshrc\n\n" +
                        "test -e /Users/someone/.iterm2_shell_integration.zsh && source /Users/someone/.iterm2_shell_integration.zsh || true\n" +
-                       "EOF\nfi\nexit\nexit\n")
+                       "EOF\nfi; echo it2-\"\"dotfile-done\nexit\nexit\n")
     }
 
     func testTcshDotfileCommandTypesTheSourceLine() {
@@ -1873,7 +2005,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
                        "if ! grep iterm2_shell_integration ~/.login  > /dev/null 2>&1; then\n" +
                        "    cat <<-EOF >> ~/.login\n\n" +
                        "test -e ~/.iterm2_shell_integration.tcsh && source ~/.iterm2_shell_integration.tcsh || true\n" +
-                       "EOF\nfi\nexit\nexit\n")
+                       "EOF\nfi; echo it2-\"\"dotfile-done\nexit\nexit\n")
     }
 
     func testFishDotfileCommandTypesTheSourceLine() {
@@ -1885,7 +2017,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
                        "if ! grep iterm2_shell_integration ~/.config/fish/config.fish  > /dev/null 2>&1; then\n" +
                        "    cat <<-EOF >> ~/.config/fish/config.fish\n\n" +
                        "test -e $HOME/.iterm2_shell_integration.fish ; and source $HOME/.iterm2_shell_integration.fish ; or true\n" +
-                       "EOF\nfi\nexit\nexit\n")
+                       "EOF\nfi; echo it2-\"\"dotfile-done\nexit\nexit\n")
     }
 
     // xonsh and nushell load the script from where it was written, so there is no dotfile step.
@@ -1909,7 +2041,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
         terminal.responseLines[Self.bashCat] = [">     cat <<-EOF >> \"$IT2_INSTALLER_DOTFILE\"", "> "]
         terminal.responseLines[Self.bashSource] = ["> test -e ~/.iterm2_shell_integration.bash && source ~/.iterm2_shell_integration.bash || true"]
         terminal.responseLines["EOF\n"] = ["> EOF"]
-        terminal.responseLines["fi\n"] = ["> fi", ">> "]
+        terminal.responseLines[Self.fiLine] = ["> fi; echo it2-\"\"dotfile-done", "it2-dotfile-done", ">> "]
         terminal.responseLines["exit\nexit\n"] = [">> exit"]
         let discoveryCount = terminal.sentTexts.count
 
@@ -1927,7 +2059,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
                         Self.bashCat,
                         Self.bashSource,
                         "EOF\n",
-                        "fi\n",
+                        Self.fiLine,
                         "exit\nexit\n"])
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }
@@ -2129,6 +2261,173 @@ final class ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests: 
     override class var defersMatchCompletions: Bool { true }
 }
 
+final class ShellIntegrationOfflineDashDeferredCompletionInstallerTests: ShellIntegrationOfflineTcshFromZshInstallerTests {
+    override class var defersMatchCompletions: Bool { true }
+    override class var shEchoesTypeahead: Bool { false }
+}
+
 final class ShellIntegrationOfflineDotfileDeferredCompletionInstallerTests: ShellIntegrationOfflineDotfileInstallerTests {
     override class var defersMatchCompletions: Bool { true }
+}
+
+// F-870: starts the helper shells in real dash, the sh of Debian and Ubuntu, in a pty, typing the
+// launch ahead the way it reaches a user's shell whose line editor has the tty in raw mode (no
+// echo), and checks that what the installer waits for shows up.
+final class ShellIntegrationHelperLaunchInDashTests: XCTestCase {
+    private static let dash = "/bin/dash"
+    private var binDirectory: URL!
+    private var master: Int32 = -1
+    private var process: Process?
+    private var output = ""
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        guard FileManager.default.isExecutableFile(atPath: Self.dash) else {
+            throw XCTSkip("No \(Self.dash)")
+        }
+        // The launch runs sh from PATH. Make it dash.
+        binDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: binDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(atPath: binDirectory.appendingPathComponent("sh").path,
+                                                   withDestinationPath: Self.dash)
+    }
+
+    override func tearDownWithError() throws {
+        // Closing the master hangs up the tty, which ends shells that are still running.
+        if master >= 0 {
+            close(master)
+            master = -1
+        }
+        if let process, process.isRunning {
+            process.terminate()
+            process.waitUntilExit()
+        }
+        process = nil
+        if let binDirectory {
+            try? FileManager.default.removeItem(at: binDirectory)
+        }
+        try super.tearDownWithError()
+    }
+
+    private func type(_ text: String) {
+        let bytes = Array(text.utf8)
+        XCTAssertEqual(write(master, bytes, bytes.count), bytes.count)
+    }
+
+    private func rows() -> [String] {
+        return output.replacingOccurrences(of: "\r", with: "").components(separatedBy: "\n")
+    }
+
+    // Reads what the shells print until a row, partial ones too, from the firstRow'th on matches
+    // regex. The timeout only bounds how long a failure takes.
+    private func readUntilARowMatches(_ regex: String,
+                                      from firstRow: Int = 0,
+                                      timeout: TimeInterval = 30) throws -> String? {
+        let re = try NSRegularExpression(pattern: regex)
+        let deadline = Date(timeIntervalSinceNow: timeout)
+        while true {
+            if let row = rows().dropFirst(firstRow).first(where: { re.firstMatch(in: $0, range: NSRange($0.startIndex..., in: $0)) != nil }) {
+                return row
+            }
+            let remaining = deadline.timeIntervalSinceNow
+            if remaining <= 0 {
+                return nil
+            }
+            var pfd = pollfd(fd: master, events: Int16(POLLIN), revents: 0)
+            guard poll(&pfd, 1, Int32(min(remaining, 1) * 1000)) > 0 else {
+                continue
+            }
+            var buffer = [UInt8](repeating: 0, count: 4096)
+            let n = read(master, &buffer, buffer.count)
+            if n <= 0 {
+                return nil
+            }
+            output += String(decoding: buffer[0..<n], as: UTF8.self)
+        }
+    }
+
+    // Types the launch ahead with echo off, as while the user's line editor reads its first line,
+    // then turns echo on, as the line editor does before it runs a command, and starts a shell
+    // that reads the first line and runs it.
+    private func launchHelpers(exportedPS1: String?) throws {
+        var slave: Int32 = -1
+        XCTAssertEqual(openpty(&master, &slave, nil, nil, nil), 0)
+        var attributes = termios()
+        XCTAssertEqual(tcgetattr(slave, &attributes), 0)
+        attributes.c_lflag &= ~tcflag_t(ECHO)
+        XCTAssertEqual(tcsetattr(slave, TCSANOW, &attributes), 0)
+        type(ShellIntegrationOfflineInstallerTests.launchHelper)
+        attributes.c_lflag |= tcflag_t(ECHO)
+        XCTAssertEqual(tcsetattr(slave, TCSANOW, &attributes), 0)
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: Self.dash)
+        process.arguments = ["-c", "read -r line; eval \"$line\""]
+        var environment = ["PATH": binDirectory.path + ":/usr/bin:/bin:/usr/sbin:/sbin",
+                           "HOME": NSHomeDirectory(),
+                           "TERM": "xterm"]
+        if let exportedPS1 {
+            environment["PS1"] = exportedPS1
+        }
+        process.environment = environment
+        let handle = FileHandle(fileDescriptor: slave, closeOnDealloc: false)
+        process.standardInput = handle
+        process.standardOutput = handle
+        process.standardError = handle
+        defer {
+            // The shells have their own copies. Without this one, closing the master ends them.
+            close(slave)
+        }
+        try process.run()
+        self.process = process
+    }
+
+    private func checkHelpers(exportedPS1: String?) throws {
+        try launchHelpers(exportedPS1: exportedPS1)
+
+        XCTAssertNotNil(try readUntilARowMatches(iTermShellIntegrationWindowController.helperPromptRegex), output)
+        // Before the fix the installer waited for a row that starts with the prompt, which never
+        // comes.
+        XCTAssertNil(rows().first { $0.hasPrefix(">> ") }, output)
+
+        // What the installer types once the helpers prompted is echoed, and gets its answers.
+        // Only rows after the one the text is typed on count, since that one already has a
+        // prompt.
+        var next = rows().count
+        type(ShellIntegrationOfflineInstallerTests.helperDepthCommand)
+        XCTAssertNotNil(try readUntilARowMatches("it2-helper-depth-2-", from: next), output)
+        next = rows().count
+        type("echo \"it2-\"\"helpers-$PS1-idle\"\n")
+        XCTAssertNotNil(try readUntilARowMatches("it2-helpers->> -idle", from: next), output)
+        next = rows().count
+        type("true\n")
+        XCTAssertNotNil(try readUntilARowMatches("^>> (?![\"'])", from: next), output)
+
+        // A here-document in one piece, as the script step types it. The tty echoes it before
+        // sh prints its prompts, so EOF's echo doesn't follow one, but the answer after it comes.
+        let path = binDirectory.appendingPathComponent("script").path
+        let body = (1...20).map { "line \($0) of the script" }
+        next = rows().count
+        type("cat <<'EOF' > \(path)\n" + body.joined(separator: "\n") + "\nEOF\necho it2-\"\"script-written\n")
+        XCTAssertNotNil(try readUntilARowMatches("it2-script-written", from: next), output)
+        XCTAssertEqual(try String(contentsOfFile: path, encoding: .utf8), body.joined(separator: "\n") + "\n")
+
+        type("exit\nexit\n")
+        let exited = expectation(description: "The shells exited")
+        let process = self.process
+        DispatchQueue.global().async {
+            process?.waitUntilExit()
+            exited.fulfill()
+        }
+        wait(for: [exited], timeout: 30)
+    }
+
+    func testHelpersPromptAfterDashDefaultPrompts() throws {
+        try checkHelpers(exportedPS1: nil)
+    }
+
+    // As with bash's PS1 exported, which dash shows literally.
+    func testHelpersPromptAfterAnExportedPS1() throws {
+        try checkHelpers(exportedPS1: "\\[\\e]0;\\u@\\h: \\w\\a\\]\\u@\\h:\\w\\$ ")
+    }
 }
