@@ -674,9 +674,17 @@ extension iTermMetalView {
 
     private func calculateRefreshesPerSecond() -> Int {
         if let screen = window?.screen ?? NSScreen.main {
-            return screen.maximumFramesPerSecond
+            return Self.refreshesPerSecond(screenMaximum: screen.maximumFramesPerSecond)
         }
         return 60
+    }
+
+    // If a screen reports a maximum of 0 frames per second, dividing by it crashes,
+    // and an infinite interval between frames would stop drawing, so never go below this floor.
+    nonisolated static let minimumRefreshesPerSecond = 15
+
+    nonisolated static func refreshesPerSecond(screenMaximum: Int) -> Int {
+        return max(minimumRefreshesPerSecond, screenMaximum)
     }
 
     private func colorTexturesForceUpdate(_ force: Bool) -> [MTLTexture?]? {

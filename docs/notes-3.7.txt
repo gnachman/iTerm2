@@ -2364,3 +2364,6 @@ Bug Fixes:
   fills the terminal with the file’s encoded
   contents. The same goes for declining to
   display a file inline.
+- iTerm2 no longer crashes or stops drawing
+  terminal contents if a display reports a
+  refresh rate of 0.
