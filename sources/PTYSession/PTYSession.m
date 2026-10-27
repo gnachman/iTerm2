@@ -21337,12 +21337,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     while (_conductor) {
         iTermConductor *conductor = _conductor;
         const BOOL found = (conductor == target);
-        NSString *clientUniqueID = [[conductor.clientUniqueID copy] autorelease];
-        if (clientUniqueID.length) {
-            // The dead it2ssh's ssh client would otherwise stay logged in (F-351). Kill it
-            // before unhooking so less of its remote conductor's output arrives unhooked.
-            [_sshClientMonitor killOrphanedSSHClientForClientUniqueID:clientUniqueID];
-        }
         [conductor abandon];
         [self unhookSSHConductor];
         if (found) {
@@ -21518,7 +21512,6 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
             // Disconnect already unhooked this conductor, but it2ssh still waits for a
             // newline before exiting. A nested it2ssh runs in the shell of the connection
             // it was nested in, which is now the innermost one, so the newline goes there.
-            [_sshClientMonitor forgetSSHClientForClientUniqueID:uniqueID];
             [_disconnectedSSHClientUniqueIDs removeObject:uniqueID];
             [self writeTaskNoBroadcast:@"\x03\n"];
         }
@@ -21531,9 +21524,6 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
     while (_conductor != nil && !found) {
         found = [_conductor.clientUniqueID isEqual:uniqueID];
         count += 1;
-        if (_conductor.clientUniqueID.length) {
-            [_sshClientMonitor forgetSSHClientForClientUniqueID:_conductor.clientUniqueID];
-        }
         [self unhookSSHConductor];
     }
     // it2ssh waits for a newline before exiting. This is in case ssh dies while iTerm2 is sending
@@ -27312,9 +27302,6 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         NSString *message = [mutableState sshEndBannerTerminatingCount:1 newLocation:location];
         [mutableState appendBannerMessage:message];
     }];
-    if (_conductor.clientUniqueID.length) {
-        [_sshClientMonitor forgetSSHClientForClientUniqueID:_conductor.clientUniqueID];
-    }
     [self unhookSSHConductor];
 }
 
@@ -27345,10 +27332,6 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     if (dcsID.length) {
         __weak __typeof(self) weakSelf = self;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            // If it2ssh is dead its ssh client would otherwise stay logged in (F-351).
-            // This does nothing if it2ssh is alive or its ssh client already exited.
-            // Kill it before unhooking so less of its output arrives unhooked.
-            [weakSelf killOrphanedSSHClientForClientUniqueID:clientUniqueID];
             [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
         });
     }
@@ -27371,12 +27354,6 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 - (void)rememberDisconnectedSSHClientUniqueID:(NSString *)clientUniqueID {
     if (clientUniqueID.length) {
         [_disconnectedSSHClientUniqueIDs addObject:clientUniqueID];
-    }
-}
-
-- (void)killOrphanedSSHClientForClientUniqueID:(NSString *)clientUniqueID {
-    if (clientUniqueID.length) {
-        [_sshClientMonitor killOrphanedSSHClientForClientUniqueID:clientUniqueID];
     }
 }
 

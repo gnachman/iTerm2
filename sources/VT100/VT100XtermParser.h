@@ -28,8 +28,4 @@ NS_INLINE BOOL isXTERM(unsigned char *code, int len, BOOL support8BitControlChar
                  encoding:(NSStringEncoding)encoding
                savedState:(NSMutableDictionary *)savedState;
 
-// Whether an OSC 134 payload (what follows "134;") begins with an SSH framer notification
-// header such as ":%output ". Command replies are not headers.
-+ (BOOL)isFramerHeaderPayload:(const unsigned char *)bytes length:(NSUInteger)length;
-
 @end

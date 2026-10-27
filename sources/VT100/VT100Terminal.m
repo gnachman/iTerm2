@@ -3220,9 +3220,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // A new connection's framer output is its own, so it may recover again. A hook
             // from an abandoned connection's stale output (one parsed inside its framing, or
             // carrying its unique ID) must not start a conductor, which would write to the
-            // shell that owns the tty (F-459). An orphaned ssh client that could not be
-            // killed and still prints at this depth could start recovery again after a new
-            // connection hooks, but that requires it to outlive the new connection's setup.
+            // shell that owns the tty (F-459). An orphaned ssh client that still prints at
+            // this depth could start recovery again after a new connection hooks, but that
+            // requires it to outlive the new connection's setup.
             if (_framerRecoveryRefusals &&
                 ![_framerRecoveryRefusals shouldAcceptHookAsChildOfConductorAtDepth:parentDepth
                                                                     clientUniqueID:[iTermFramerRecoveryRefusals clientUniqueIDFromHookParameters:token.string]]) {
