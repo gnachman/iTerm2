@@ -152,7 +152,7 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
 
     // F-864: a connection that aborted is gone, but its it2ssh still prints EndSSH and waits for
     // a newline before giving the terminal back, as after a quit. An EndSSH nobody here started
-    // is not answered: anything printed to the terminal can contain one.
+    // gets only a bare ^C, never a newline: anything printed to the terminal can contain one.
     func testEndSSHAfterAnAbortIsAnswered() {
         let conductor = hookRoot()
         // PTYSession adopts the delegate protocol privately, in its implementation.
@@ -165,7 +165,8 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
         XCTAssertNil(session.conductor)
         session.writes.removeAll()
         send("\u{1b}]1337;EndSSH=777\u{07}")
-        XCTAssertEqual(session.writes, [], "not this session's it2ssh")
+        XCTAssertEqual(session.writes, ["\u{3}"], "not this session's it2ssh")
+        session.writes.removeAll()
         send("\u{1b}]1337;EndSSH=\(rootID)\u{07}")
         XCTAssertEqual(session.writes, ["\u{3}\n"])
     }
