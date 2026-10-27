@@ -80,6 +80,10 @@ class Unpauser: NSObject {
         #if DEBUG
         it_assert(hasBeenUnpaused)
         #endif
+        let stillPaused = mutex.sync { delegate != nil }
+        guard stillPaused else {
+            return
+        }
         DLog("Unpause in deinit! This should never happen.")
         unpause()
 //        if stack != "" {
