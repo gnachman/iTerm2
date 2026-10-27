@@ -15,7 +15,8 @@ Usage: run_experiment.py OUT_ROOT [--app PATH] [--pid PID] [--phases 0,1,3,6] [-
 Needs permission to post events. Don't touch the keyboard or switch windows while it runs. For
 example:
     python3 run_experiment.py OUT_DIR --rate 2000 --phases 0,3,9 --keys 80 --sample 3
-Results: OUT_DIR/run-*/run.log has one line per phase (key latency, DSR round trips, CPU).
+Results: OUT_DIR/run-*/run.log has one line per phase (key latency, DSR round trips, CPU, thread
+count, memory).
 """
 import argparse
 import os
@@ -47,6 +48,18 @@ def cpu_seconds(pid):
     for part in text.split(":"):
         total = total * 60 + float(part)
     return total
+
+
+def thread_count(pid):
+    """Number of threads in a process, from ps -M (one line per thread plus a header)."""
+    text = subprocess.run(["ps", "-M", "-p", str(pid)], capture_output=True, text=True).stdout
+    return max(0, len(text.strip().splitlines()) - 1)
+
+
+def rss_mb(pid):
+    """Resident memory of a process in MB, from ps."""
+    text = subprocess.run(["ps", "-o", "rss=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
+    return int(text or 0) / 1024
 
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -152,6 +165,7 @@ try:
         cpu0 = cpu_seconds(iterm_pid)
         w0 = time.monotonic()
         lat = []
+        threads = []
         timeouts = 0
         skipped_focus = 0
         dsr_from = now()
@@ -178,6 +192,7 @@ try:
                     t_recv = int(lines[n_before])
                     break
                 time.sleep(0.001)
+            threads.append(thread_count(iterm_pid))
             if t_recv is None:
                 timeouts += 1
             else:
@@ -202,13 +217,14 @@ try:
 
         row = dict(floods=k, keys=len(lat), timeouts=timeouts, focus_skips=skipped_focus, cpu=cpu,
                    key_p50=q(lat, 50), key_p95=q(lat, 95), key_max=max(lat) if lat else float("nan"),
-                   dsr_n=len(dsr), dsr_p50=q(dsr, 50), dsr_p95=q(dsr, 95), dsr_max=max(dsr) if dsr else float("nan"))
+                   dsr_n=len(dsr), dsr_p50=q(dsr, 50), dsr_p95=q(dsr, 95), dsr_max=max(dsr) if dsr else float("nan"),
+                   threads_max=max(threads) if threads else 0, rss_mb=rss_mb(iterm_pid))
         results.append(row)
         with open(os.path.join(run, f"keys-phase{k}.txt"), "w") as f:
             f.write("\n".join(f"{x:.3f}" for x in lat) + "\n")
         say("floods={floods} iTermCPU={cpu:.0f}% key ms p50={key_p50:.1f} p95={key_p95:.1f} max={key_max:.1f} "
             "(n={keys}, timeouts={timeouts}, focus_skips={focus_skips}) | DSR ms p50={dsr_p50:.1f} p95={dsr_p95:.1f} "
-            "max={dsr_max:.1f} (n={dsr_n})".format(**row))
+            "max={dsr_max:.1f} (n={dsr_n}) | threads max={threads_max} RSS={rss_mb:.0f}MB".format(**row))
 finally:
     for ctl in ctls:
         write(ctl, "stop")

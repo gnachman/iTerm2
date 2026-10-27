@@ -81,5 +81,6 @@ try:
     print(f"largest growth over the start: {worst:.1f} MB")
 finally:
     subprocess.run(tmux + ["kill-server"], capture_output=True)
-    client.wait(timeout=10)
+    client.kill()
+    client.wait()
     os.close(master)
