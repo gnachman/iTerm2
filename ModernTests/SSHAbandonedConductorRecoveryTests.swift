@@ -4,10 +4,10 @@
 //
 //  F-354: when only the local it2ssh is killed, its ssh client keeps running and its
 //  remote conductor keeps printing framer output (e.g., an autopoll report). Once the
-//  connection is abandoned and its hook removed, that OSC 134 output arrived outside
-//  any hook and started framer recovery, which typed base64 "recover" into the local
-//  shell and left a recovery conductor holding the keyboard. An abandoned connection's
-//  framer output must instead be ignored, and anything else it prints drawn.
+//  user chooses Disconnect and the hook is forced off, that OSC 134 output arrived
+//  outside any hook and started framer recovery, which typed base64 "recover" into the
+//  local shell and left a recovery conductor holding the keyboard. A disconnected
+//  connection's framer output must instead be ignored, and anything else it prints drawn.
 //
 
 import XCTest
@@ -125,6 +125,16 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
         return conductor
     }
 
+    // Disconnect, followed by what its forced unhook does 3 seconds later when nothing
+    // answers the quit.
+    private func disconnect(_ conductor: Conductor?) {
+        let dcsID = conductor?.dcsID ?? ""
+        conductor?.quit()
+        sync()
+        forceUnhook(dcsID)
+        session.writes.removeAll()
+    }
+
     private func assertNothingWritten(file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertEqual(session.writes, [], file: file, line: line)
     }
@@ -149,48 +159,10 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
         XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
     }
 
-    func testAbandonedConnectionsFramerOutputDoesNotStartRecovery() {
-        _ = hookRoot()
-        session.abandonSSH(throughClientUniqueID: rootID)
-        sync()
-        XCTAssertNil(session.conductor)
-
-        send(autopollReport(id: "9001"))
-        assertRecoveryNotStarted()
-        XCTAssertNil(session.conductor, "no recovery conductor may take over the keyboard")
-        XCTAssertTrue(screenText().contains("$begin ps"), screenText())
-
-        // A second report, and then the local shell's prompt, are drawn too: the parser is
-        // not hooked.
-        send(autopollReport(id: "9002"))
-        send("local% ")
-        assertRecoveryNotStarted()
-        XCTAssertTrue(screenText().contains("local% "), screenText())
-        XCTAssertNil(session.conductor)
-    }
-
-    // If the hook was already gone when the connection was abandoned, its framer's output
-    // still must not start recovery.
-    func testAbandonedConnectionWithoutHookDoesNotRecover() {
-        let conductor = hookRoot()
-        forceUnhook(conductor?.dcsID ?? "")
-        session.abandonSSH(throughClientUniqueID: rootID)
-        sync()
-        send(autopollReport(id: "9001"))
-        assertRecoveryNotStarted()
-        XCTAssertNil(session.conductor)
-    }
-
-    // Disconnect, followed by its forced unhook, also abandons the connection.
     func testDisconnectedConnectionsFramerOutputDoesNotStartRecovery() {
         let conductor = hookRoot()
-        let dcsID = conductor?.dcsID ?? ""
-        conductor?.quit()
-        sync()
+        disconnect(conductor)
         XCTAssertNil(session.conductor)
-        // What the forced unhook does 3 seconds later when nothing answers the quit.
-        forceUnhook(dcsID)
-        session.writes.removeAll()
 
         send(autopollReport(id: "9001"))
         send("local% ")
@@ -200,10 +172,8 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
     }
 
     // A new connection's framer output is its own, so it may recover again.
-    func testNewConnectionAfterAbandonmentCanRecover() {
-        _ = hookRoot()
-        session.abandonSSH(throughClientUniqueID: rootID)
-        sync()
+    func testNewConnectionAfterDisconnectCanRecover() {
+        disconnect(hookRoot())
 
         send(hook(uniqueID: "777"))
         let conductor = session.conductor
@@ -229,15 +199,13 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
     }
 
     // A nested connection's orphaned framer prints through its parent's framing. The
-    // parent stays connected and no recovery starts for the abandoned child.
-    func testAbandonedNestedConnectionsFramerOutputDoesNotStartRecovery() {
+    // parent stays connected and no recovery starts for the disconnected child.
+    func testDisconnectedNestedConnectionsFramerOutputDoesNotStartRecovery() {
         let root = hookRoot()
         send(osc134("%output out1 100 -1 0") + hook(uniqueID: nestedID) + osc134("%end out1"))
         XCTAssertEqual(session.conductor?.clientUniqueID, nestedID)
-        session.abandonSSH(throughClientUniqueID: nestedID)
-        sync()
+        disconnect(session.conductor)
         XCTAssertTrue(session.conductor === root)
-        session.writes.removeAll()
 
         send(osc134("%output out2 100 -1 0") + autopollReport(id: "9001") + osc134("%end out2"))
         send(osc134("%output out3 100 -1 0") + "hostA% " + osc134("%end out3"))
@@ -249,13 +217,13 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
 }
 
 
-// MARK: - F-459: abandoning while the remote streams output
+// MARK: - F-459: disconnecting while the remote streams output
 
 // When it2ssh is killed while the remote is streaming output, the session has framed
 // output queued at every stage: bytes not yet parsed, tokens parsed (with the old
 // framing's depths) but not yet executed, and side effects requested but not yet
 // performed. Nothing in any of them may start recovery, start a conductor, or write to
-// the shell once the connection is abandoned.
+// the shell once the user chooses Disconnect.
 @MainActor
 final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
     private var session: WriteCapturingSession!
@@ -373,8 +341,20 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         return conductor
     }
 
-    private func abandonRoot() {
-        session.abandonSSH(throughClientUniqueID: rootID)
+    // Disconnect, followed by what its forced unhook does 3 seconds later when nothing
+    // answers the quit. It may run while the terminal executes tokens, so the forced unhook
+    // is queued as Disconnect's own is.
+    private func disconnect(_ conductor: Conductor?) {
+        let dcsID = conductor?.dcsID ?? ""
+        conductor?.quit()
+        session.screen.mutateAsynchronously { terminal, _, _ in
+            _ = terminal?.parser.forceUnhookDCSReturningSuccess(dcsID)
+        }
+        session.writes.removeAll()
+    }
+
+    private func disconnectRoot() {
+        disconnect(session.conductor)
     }
 
     private func assertRecoveryNotStarted(file: StaticString = #filePath, line: UInt = #line) {
@@ -404,7 +384,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         let queued = parse(framedYes(id: "o1", lines: 500) +
                            framedYes(id: "o2", lines: 500) +
                            osc134("%output o3 100 -1 0") + "y\r\ny\r\ny")
-        abandonRoot()
+        disconnectRoot()
         execute(queued)
         send("\r\ny\r\n" + osc134("%end o3") +
              framedYes(id: "o4", lines: 50) +
@@ -419,7 +399,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
     func testAbandonmentMidOSCDoesNotRecover() {
         _ = hookRoot()
         let queued = parse(framedYes(id: "o1", lines: 20) + "\u{1b}]134;:%outp")
-        abandonRoot()
+        disconnectRoot()
         execute(queued)
         send("ut o2 100 -1 0\u{1b}\\" + "y\r\ny\r\n" + osc134("%end o2") + autopollReport(id: "9001"))
         assertRecoveryNotStarted()
@@ -445,25 +425,8 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         let queued = parse(osc134("%output o1 100 -1 0") +
                            autopollReport(id: "9001") +
                            osc134("%end o1"))
-        abandonRoot()
+        disconnectRoot()
         execute(queued)
-        assertRecoveryNotStarted()
-        assertShellOutputIsDrawn()
-    }
-
-    // The terminal executed framer output that starts recovery (the hook was already
-    // gone) and then the session abandoned the connection before the recovery's side
-    // effect ran.
-    func testRecoveryRequestedBeforeAbandonmentDoesNotBegin() {
-        let conductor = hookRoot()
-        forceUnhook(conductor?.dcsID ?? "")
-        let queued = parse(autopollReport(id: "9001"))
-        execute(queued, then: { [unowned self] in
-            self.abandonRoot()
-        })
-        assertRecoveryNotStarted()
-        // Later framer output is ignored too, and the shell's output is drawn.
-        send(autopollReport(id: "9002"))
         assertRecoveryNotStarted()
         assertShellOutputIsDrawn()
     }
@@ -492,7 +455,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         let queued = parse(osc134("%output o1 100 -1 0") +
                            hook(uniqueID: "888") +
                            osc134("%end o1"))
-        abandonRoot()
+        disconnectRoot()
         execute(queued)
         XCTAssertNil(session.conductor)
         send(autopollReport(id: "9001"))
@@ -509,7 +472,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
                            hook(uniqueID: "888") +
                            osc134("%end o1"))
         execute(queued, then: { [unowned self] in
-            self.abandonRoot()
+            self.disconnectRoot()
         })
         XCTAssertNil(session.conductor)
         session.writes.removeAll()
@@ -521,7 +484,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
     // The abandoned connection's own hook can't start a conductor or lift the refusal.
     func testHookByAbandonedConnectionDoesNotLiftRefusal() {
         _ = hookRoot()
-        abandonRoot()
+        disconnectRoot()
         sync()
         send(hook(uniqueID: rootID))
         XCTAssertNil(session.conductor)
@@ -536,7 +499,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         let root = hookRoot()
         send(osc134("%output out1 100 -1 0") + hook(uniqueID: nestedID) + osc134("%end out1"))
         XCTAssertEqual(session.conductor?.clientUniqueID, nestedID)
-        session.abandonSSH(throughClientUniqueID: nestedID)
+        disconnect(session.conductor)
         sync()
         XCTAssertTrue(session.conductor === root)
         session.writes.removeAll()
@@ -555,7 +518,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         forceUnhook(old?.dcsID ?? "")
         let queued = parse(hook(uniqueID: "777"))
         execute(queued, then: { [unowned self] in
-            self.abandonRoot()
+            self.disconnectRoot()
         })
         let conductor = session.conductor
         XCTAssertEqual(conductor?.clientUniqueID, "777")
@@ -585,7 +548,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
             XCTAssertEqual(terminal?.framerRecoveryMode, VT100TerminalFramerRecoveryMode.syncing)
         })
 
-        session.abandonSSH(throughClientUniqueID: "4242")
+        disconnect(session.conductor)
         sync()
         session.writes.removeAll()
         session.screen.performBlock(joinedThreads: { terminal, _, _ in
@@ -603,7 +566,7 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
     func testNewConnectionAfterStreamingAbandonmentCanRecover() {
         _ = hookRoot()
         let queued = parse(framedYes(id: "o1", lines: 100))
-        abandonRoot()
+        disconnectRoot()
         execute(queued)
         send(hook(uniqueID: "777"))
         let conductor = session.conductor
@@ -612,139 +575,5 @@ final class SSHAbandonedStreamingConductorRecoveryTests: XCTestCase {
         session.writes.removeAll()
         send(autopollReport(id: "9001"))
         XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
-    }
-}
-
-// MARK: - F-554: an abandoned connection writes nothing
-
-// Records what a conductor writes.
-private final class WriteRecordingConductorDelegate: NSObject, ConductorDelegate {
-    var written = ""
-
-    func conductorWrite(string: String) {
-        written += string
-    }
-    func conductorAbort(reason: String) {}
-    func conductorQuit() {}
-    func conductorStateDidChange() {}
-    func conductorStopQueueingInput() {}
-    func conductorSendInitialText() {}
-    func conductorRequestIT2Authorization(guid: String,
-                                          displayName: String,
-                                          callerTmuxPane: String?,
-                                          completion: @escaping (Bool, Bool, Bool) -> Void) {
-        completion(false, false, false)
-    }
-    func conductorDismissIT2AuthorizationPrompt(guid: String) {}
-    let guid = "write-recording-delegate"
-}
-
-// After killing it2ssh while the remote streamed output, iTerm2 typed YXV0b3BvbGw= (base64
-// of “autopoll”) into the local shell. Once a connection is abandoned, nothing that
-// happens to its conductor afterward may write a command for it.
-@MainActor
-final class SSHAbandonedConductorWriteTests: XCTestCase {
-    private let autopoll = "autopoll".data(using: .utf8)!.base64EncodedString()
-    private var conductors = [Conductor]()
-    private var delegates = [WriteRecordingConductorDelegate]()
-
-    override func tearDown() {
-        for conductor in conductors {
-            ConductorRegistry.instance.remove(conductorGUID: conductor.guid,
-                                              sshIdentity: conductor.sshIdentity)
-        }
-        conductors = []
-        delegates = []
-        super.tearDown()
-    }
-
-    private func makeConductor(parent: Conductor?,
-                               delegate: WriteRecordingConductorDelegate) -> Conductor {
-        let conductor = Conductor("f554.example.com", boolArgs: "", dcsID: "dcs",
-                                  clientUniqueID: "cid\(conductors.count)",
-                                  varsToSend: [:], clientVars: [:], initialDirectory: nil,
-                                  shouldInjectShellIntegration: false, parent: parent)
-        // The conductor holds its delegate weakly.
-        delegates.append(delegate)
-        conductor.delegate = delegate
-        // Framing with a login shell running, as after a successful it2ssh handshake.
-        conductor.framedPID = 4242
-        conductors.append(conductor)
-        drain()
-        return conductor
-    }
-
-    private static func inFlight(_ conductor: Conductor) -> Int {
-        switch conductor.state {
-        case .willExecutePipeline(let contexts):
-            return contexts.count
-        case .executingPipeline(_, let pending):
-            return 1 + pending.count
-        case .ground, .unhooked, .recovery, .recovered:
-            return 0
-        }
-    }
-
-    // Delivers the remote's %end for every command in flight (e.g., registering the login
-    // shell), so the next command is written at once.
-    private func drain() {
-        for _ in 0..<100 {
-            guard let busy = conductors.first(where: { Self.inFlight($0) > 0 }) else {
-                return
-            }
-            busy.handleCommandEnd(identifier: "id", type: "f", status: 0, depth: busy.depth)
-        }
-        XCTFail("Commands are still in flight")
-    }
-
-    // What the framer's autopoll report ends with. The conductor answers it by asking for
-    // the next one (after registering the login shell to poll, the first time).
-    private func deliverAutopollEOF(to conductor: Conductor) {
-        conductor.handleSideChannelOutput("EOF",
-                                          pid: SSH_OUTPUT_AUTOPOLL_PID,
-                                          channel: 1,
-                                          depth: conductor.depth)
-        drain()
-    }
-
-    // The control: a live connection asks for the next autopoll report.
-    func testLiveConnectionRequestsAutopoll() {
-        let delegate = WriteRecordingConductorDelegate()
-        let conductor = makeConductor(parent: nil, delegate: delegate)
-        delegate.written = ""
-        deliverAutopollEOF(to: conductor)
-        XCTAssertTrue(delegate.written.contains(autopoll), delegate.written)
-    }
-
-    // An autopoll report parsed before the abandonment and handled after it, while the
-    // session still holds the conductor.
-    func testAbandonedConnectionDoesNotRequestAutopoll() {
-        let delegate = WriteRecordingConductorDelegate()
-        let conductor = makeConductor(parent: nil, delegate: delegate)
-        delegate.written = ""
-        conductor.abandon()
-        deliverAutopollEOF(to: conductor)
-        conductor.sendKeys("ls\r".data(using: .utf8)!)
-        XCTAssertEqual(delegate.written, "")
-    }
-
-    // A nested connection's commands go through its parent, which is still connected, to
-    // the remote shell that ran the nested it2ssh.
-    func testAbandonedNestedConnectionDoesNotWriteThroughParent() {
-        let delegate = WriteRecordingConductorDelegate()
-        let parent = makeConductor(parent: nil, delegate: delegate)
-        let child = makeConductor(parent: parent, delegate: WriteRecordingConductorDelegate())
-        delegate.written = ""
-        deliverAutopollEOF(to: child)
-        XCTAssertFalse(delegate.written.isEmpty, "a live nested connection writes through its parent")
-
-        let otherDelegate = WriteRecordingConductorDelegate()
-        let liveParent = makeConductor(parent: nil, delegate: otherDelegate)
-        let abandonedChild = makeConductor(parent: liveParent,
-                                           delegate: WriteRecordingConductorDelegate())
-        otherDelegate.written = ""
-        abandonedChild.abandon()
-        deliverAutopollEOF(to: abandonedChild)
-        XCTAssertEqual(otherDelegate.written, "")
     }
 }

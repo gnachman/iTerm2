@@ -819,20 +819,6 @@ final class ConductorFlowTests: XCTestCase {
         XCTAssertFalse(conductor.queue.contains { $0.command == .framerFlowOn })
     }
 
-    // A reset aborted `flow on` and scheduled it again, then the it2ssh behind the connection
-    // died. Nothing can reach the framer, so the retry must not start flow control on the dead
-    // connection.
-    func testAnAbortedFlowOnIsNotSentAgainAfterAbandoning() {
-        conductor.startFlowControlIfPossible()
-        conductor.forceReturnToGroundState()
-        conductor.abandon()
-        runMainQueue()
-        XCTAssertEqual(delegate.commands.filter { $0.first == "flow" }.count, 1)
-        XCTAssertFalse(conductor.queue.contains { $0.command == .framerFlowOn })
-        XCTAssertFalse(conductor.flowOnPending)
-        XCTAssertNil(conductor.flowController)
-    }
-
     // Something that keeps dropping the queue must not make this loop.
     func testAbortedFlowOnsAreRetriedOnlyAFewTimes() {
         conductor.startFlowControlIfPossible()

@@ -7,13 +7,13 @@
 
 import Foundation
 
-// Remembers which SSH Integration connections were abandoned so their framer output can't
-// start framer recovery (F-354, F-459). Recovering would type base64 "recover" into the
-// shell that owns the tty and leave a recovery conductor holding the keyboard.
+// Remembers which SSH Integration connections were abandoned, that is, ended with
+// Disconnect, whose remote may never unhook, so their framer output can't start framer
+// recovery (F-354, F-459). Recovering would type base64 "recover" into the shell that owns
+// the tty and leave a recovery conductor holding the keyboard.
 //
-// Abandoning a connection abandons every connection nested in it, so a refusal at a
-// parent depth covers that depth and every deeper one. That keeps output parsed before
-// the abandonment (with the depths of the old, deeper framing) from recovering too.
+// A refusal at a parent depth covers that depth and every deeper one, so output parsed
+// before the abandonment (with the depths of the old, deeper framing) can't recover either.
 //
 // Only a hook by a connection that wasn't abandoned lifts a refusal. Its it2ssh unique
 // ID tells them apart, so a stale hook in the abandoned connection's own buffered output

@@ -4114,13 +4114,6 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     } name:@"handle it2"];
 }
 
-- (void)terminalDidReceiveUnframedSSHPromptAtDepth:(int)depth {
-    DLog(@"terminalDidReceiveUnframedSSHPromptAtDepth:%@", @(depth));
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidReceiveUnframedSSHPromptAtDepth:depth];
-    } name:@"unframed ssh prompt"];
-}
-
 - (void)terminalBeginSSHIntegeration:(NSString *)args {
     RLog(@"begin %@", args);
     if (args) {

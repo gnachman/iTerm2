@@ -287,7 +287,6 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                                     case SSH_END:
                                     case SSH_TERMINATE:
                                     case SSH_IT2:
-                                    case SSH_UNFRAMED_PROMPT:
                                         // Meta-tokens, when emitted as the product of %output, belong
                                         // to the child but will not be properly marked up with ssh info.
                                         token.sshInfo = childInfo;
@@ -349,7 +348,6 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                     case SSH_RECOVERY_BOUNDARY:
                     case SSH_SIDE_CHANNEL:
                     case SSH_IT2:
-                    case SSH_UNFRAMED_PROMPT:
                         isSignaling = YES;
                         break;
 

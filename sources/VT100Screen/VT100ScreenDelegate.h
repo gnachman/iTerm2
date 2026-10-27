@@ -510,7 +510,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenDidReadSSHPaneOutput:(NSData * _Nonnull)data pid:(int)pid depth:(int)depth;
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth;
 - (void)screenHandleIT2:(NSString * _Nullable)string depth:(int)depth;
-- (void)screenDidReceiveUnframedSSHPromptAtDepth:(int)depth;
 - (void)screenWillBeginSSHIntegration;
 // `injectShellIntegration` is NO when it2ssh was run with --no-shell-integration (si=0).
 - (void)screenBeginSSHIntegrationWithToken:(NSString * _Nonnull)token

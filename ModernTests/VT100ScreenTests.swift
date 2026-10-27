@@ -2172,10 +2172,6 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
-    func screenDidReceiveUnframedSSHPrompt(atDepth depth: Int32) {
-
-    }
-
     func screenWillBeginSSHIntegration() {
 
     }

@@ -767,15 +767,9 @@ Bug Fixes:
   could not copy are now skipped.
 - Shell > SSH > Disconnect now recovers an SSH
   Integration session whose local it2ssh process
-  was killed. Previously the session stopped
-  showing output and ignored input.
-- An SSH Integration session now recovers on
-  its own when its it2ssh process is killed,
-  even while the remote host is printing
-  output. When iTerm2 can’t watch it2ssh, for
-  example because it ran on another host, it
-  offers to disconnect once the prompt
-  reappears.
+  was killed, even while the remote host is
+  printing output. Previously the session
+  stopped showing output and ignored input.
 - After quitting with SSH Integration sessions
   open, relaunching with window restoration on
   no longer types stray text, such as

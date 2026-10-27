@@ -291,7 +291,6 @@ typedef enum {
     SSH_RECOVERY_BOUNDARY,
     SSH_SIDE_CHANNEL,  // Synthetic - produced internally in VT100Terminal
     SSH_IT2,  // %it2 - remote it2 CLI RPC frame, delivered whole (no re-parse)
-    SSH_UNFRAMED_PROMPT,  // A shell-integration prompt mark outside the conductor's framing
 
     VT100_LITERAL,
     VT100_GANG
@@ -316,7 +315,6 @@ static inline BOOL VT100TokenTypeIsSSHMeta(VT100TerminalTokenType type) {
         case SSH_RECOVERY_BOUNDARY:
         case SSH_SIDE_CHANNEL:
         case SSH_IT2:
-        case SSH_UNFRAMED_PROMPT:
             return YES;
         default:
             return NO;

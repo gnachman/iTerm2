@@ -19,8 +19,6 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     // OSC 1337;EndSSH=<this ID> after its ssh process exits. In recovery mode it
     // comes from the restored conductor, and is nil when that is unknown.
     private var clientUniqueID: String?
-    // Whether SSH_UNFRAMED_PROMPT was emitted. It is reported at most once per hook.
-    private var reportedUnframedPrompt = false
     private enum State {
         case initial
         case ground
@@ -89,7 +87,6 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             case .osc(let n, let param): "osc(\(n), \(param))"
             case .blocked: "blocked"
             case .endSSH(let id, _): "endSSH(\(id))"
-            case .promptMark: "promptMark"
             }
         }
         case notOSC
@@ -99,23 +96,16 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         // `start` is the offset of the OSC's ESC. The OSC is consumed; to unhook, back
         // up to `start` so the regular parser can execute it.
         case endSSH(String, start: Int)
-        // A shell-integration prompt mark (OSC 133;A). The OSC is consumed.
-        case promptMark
     }
 
     private static let endSSHPrefix = "EndSSH="
     private static let iTermOSC = 1337
-    private static let promptMarkOSC = 133
 
-    // OSCs that the hook recognizes even though the framer didn't send them: it2ssh's
-    // EndSSH and a shell's prompt mark. Shells and it2ssh terminate their OSCs with BEL,
-    // which the framer never does, so these are recognized with either terminator.
-    private func specialOSCResult(code: Int,
-                                  payload: String,
-                                  start: Int) -> OSCParserResult? {
-        if code == Self.promptMarkOSC && (payload == "A" || payload.hasPrefix("A;")) {
-            return .promptMark
-        }
+    // it2ssh terminates its OSCs with BEL, which the framer never does, so this is
+    // recognized with either terminator.
+    private func endSSHResult(code: Int,
+                              payload: String,
+                              start: Int) -> OSCParserResult? {
         guard code == Self.iTermOSC, payload.hasPrefix(Self.endSSHPrefix) else {
             return nil
         }
@@ -206,7 +196,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                     state = .ground
                 }
             case .oscParam(let code, let payload):
-                if c == bel, let result = specialOSCResult(code: code, payload: State.decode(payload), start: checkpoint) {
+                if c == bel, let result = endSSHResult(code: code, payload: State.decode(payload), start: checkpoint) {
                     DLog("Returning \(result.debugDescription)")
                     return result
                 }
@@ -217,7 +207,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 }
             case .oscEsc(let code, let payload):
                 if c == backslash {
-                    if let result = specialOSCResult(code: code, payload: State.decode(payload), start: checkpoint) {
+                    if let result = endSSHResult(code: code, payload: State.decode(payload), start: checkpoint) {
                         DLog("Returning \(result.debugDescription)")
                         return result
                     }
@@ -481,17 +471,6 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 return unhookForEndSSH(context, start: start, token: result)
             case .endSSH(let id, _):
                 DLog("Ignore EndSSH for another connection (\(id))")
-            case .promptMark:
-                // Only framed output should arrive here, so the shell that started
-                // it2ssh (or something else on its tty) is printing a prompt. That
-                // usually means it2ssh died without sending EndSSH.
-                if !reportedUnframedPrompt {
-                    DLog("Unframed prompt mark in ground state")
-                    reportedUnframedPrompt = true
-                    result.type = SSH_UNFRAMED_PROMPT
-                    return .canReadAgain
-                }
-                DLog("Ignore repeated unframed prompt mark")
             case .notOSC:
                 it_fatalError()
             case .osc(let code, let payload):
@@ -551,7 +530,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         case .endSSH(let id, let start) where isEndSSHForThisConnection(id):
             DLog("it2ssh ended (\(id)) while hooked in body state. Unhook.")
             return unhookForEndSSH(context, start: start, token: result)
-        case .osc(_, _), .notOSC, .endSSH(_, _), .promptMark:
+        case .osc(_, _), .notOSC, .endSSH(_, _):
             DLog("non-OSC 134/135 output: \(context.dump)")
             peek.backtrack()
             return .unhook
@@ -589,7 +568,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             // In recovery mode without a known clientUniqueID, this never matches.
             DLog("it2ssh ended (\(id)) while hooked in output state. Unhook.")
             return unhookForEndSSH(context, start: start, token: token)
-        case .notOSC, .osc(_, _), .endSSH(_, _), .promptMark:
+        case .notOSC, .osc(_, _), .endSSH(_, _):
             DLog("backtracking")
             peek.backtrack()
             switch consumeUntilStartOfNextOSCOrEnd(context) {
