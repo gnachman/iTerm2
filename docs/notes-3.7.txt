@@ -2045,3 +2045,7 @@ Bug Fixes:
 - Installing the iTerm2 utility scripts on Linux
   no longer prints tar warnings or leaves ._
   files in ~/.iterm2.
+- Shell > ssh > Download Files… now lets you
+  choose any file. Before, it only allowed file
+  types that the AI provider accepts as
+  attachments.
