@@ -814,6 +814,10 @@ Bug Fixes:
   all of “user@host” as the host name, which
   showed up in the file panel and the Downloads
   menu.
+- Running tmux -CC in a session that is already
+  part of tmux integration, for example over
+  ssh, now explains that tmux integration can’t
+  be nested instead of silently doing nothing.
 - it2ssh no longer hangs when the host or
   command contains non-ASCII text, such as
   accented letters or emoji. If iTerm2 can’t
