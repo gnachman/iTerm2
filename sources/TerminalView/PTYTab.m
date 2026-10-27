@@ -2506,10 +2506,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // difference. Fit the session to newView (session conforms to view) so they agree.
     // This does not resize the window; callers that want the window to conform to the
     // session instead (e.g. instant replay) do that separately. Every synthetic-swap
-    // caller needs this, so it lives here. -fitSessionToCurrentViewSize: no-ops for tmux.
-    if (!self.isTmuxTab) {
-        [self fitSessionToCurrentViewSize:newSession];
-    }
+    // caller needs this, so it lives here. In a tmux tab too: the synthetic session isn't a tmux
+    // client, so tmux doesn't size it (-fitSessionToCurrentViewSize: leaves only tmux clients
+    // alone), and a tmux workgroup member's toolbar otherwise leaves the black strip (QA finding
+    // F-833).
+    [self fitSessionToCurrentViewSize:newSession];
     [newView layoutContentsForNewlyActiveSession];
 
     // The -setNeedsUpdate above makes the synthetic session compute its own name,

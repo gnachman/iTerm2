@@ -220,6 +220,17 @@
     return tree;
 }
 
+// The stand-in isn't a tmux client, so its grid fits its view as in any tab. Left at the live
+// session's size, a view without the live session's chrome (e.g. a workgroup toolbar) is taller
+// than the grid and the uncovered rows draw black. QA finding F-833.
+- (void)testStandInFitsItsViewInATmuxTab {
+    PTYSession *standIn = nil;
+    NSArray<PTYSession *> *panes = nil;
+    PTYTab *tab = [self tabWithFilteredPaneTwo:&standIn panes:&panes];
+    XCTAssertTrue(tab.isTmuxTab);
+    XCTAssertFalse([tab fitSessionToCurrentViewSize:standIn], @"already fitted when it was swapped in");
+}
+
 // tmux rearranges the same three panes (e.g. select-layout even-vertical).
 - (void)testLayoutChangeKeepsFocusOnFilteredPane {
     PTYSession *standIn = nil;
