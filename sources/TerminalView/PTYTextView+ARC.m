@@ -157,7 +157,7 @@ iTermCommandInfoViewControllerDelegate>
         NSString *name = [self.delegate textViewCurrentSSHSessionName];
         if (name) {
             item.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYTextView.DisconnectFrom", nil, [NSBundle mainBundle], @"Disconnect from %@", @"Menu item title; %@ is the SSH session name"), name];
-            return YES;
+            return [self.delegate textViewCanDisconnectSSH];
         } else {
             item.title = NSLocalizedStringWithDefaultValue(@"PTYTextView.Disconnect", nil, [NSBundle mainBundle], @"Disconnect", @"Menu item title to disconnect from an SSH session");
         }

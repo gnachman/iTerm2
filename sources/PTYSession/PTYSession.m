@@ -11024,10 +11024,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _conductor.sshIdentity.description;
 }
 
-// Works before the framer starts too (e.g., it2ssh was killed during setup, or the host
-// lacks the framer's Python): quit sends the pre-framer quit, and the forced unhook and the
-// refusal of framer recovery apply either way.
+// Works before the framer starts too (e.g., it2ssh was killed during setup): quit sends the
+// pre-framer quit, and the forced unhook and the refusal of framer recovery apply either way.
+// Not once a connection without the framer (e.g., the host lacks its Python) has run the
+// login shell, since nothing reads the quit then (F-950).
+- (BOOL)textViewCanDisconnectSSH {
+    return _conductor.canQuit;
+}
+
 - (void)textViewDisconnectSSH {
+    if (!_conductor.canQuit) {
+        DLog(@"Can't disconnect %@", _conductor);
+        return;
+    }
     [_conductor quit];
 }
 

@@ -91,4 +91,27 @@ final class ConductorRestorationTests: XCTestCase {
         restored.resetAfterReattaching()
         XCTAssertTrue(delegate.written.contains(reset2), delegate.written)
     }
+
+    // F-950: a connection without a framer had run the login shell before iTerm2 quit, so
+    // nothing reads conductor commands. Reattaching returns it to its ground state, but
+    // Disconnect still must not type the pre-framer quit into the remote shell.
+    func testRestoredConnectionWithoutFramerCantQuit() throws {
+        let original = Conductor("host.example.com", boolArgs: "", dcsID: "dcs1", clientUniqueID: "c1",
+                                 varsToSend: [:], clientVars: [:], initialDirectory: nil,
+                                 shouldInjectShellIntegration: false, parent: nil)
+        original.delegate = RecordingConductorDelegate()
+        original.handleUnhook()
+        conductors.append(original)
+        let json = try XCTUnwrap(original.jsonValue)
+
+        let delegate = RecordingConductorDelegate()
+        let restored = try XCTUnwrap(Conductor.create(json, delegate: delegate))
+        conductors.append(restored)
+        restored.resetAfterReattaching()
+        XCTAssertFalse(restored.framing)
+        XCTAssertFalse(restored.canQuit)
+        restored.quit()
+        let quit = "quit".data(using: .utf8)!.base64EncodedString()
+        XCTAssertFalse(delegate.written.contains(quit), delegate.written)
+    }
 }

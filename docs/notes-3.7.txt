@@ -773,8 +773,7 @@ Bug Fixes:
   printing output. Previously the session
   stopped showing output and ignored input.
   Disconnect also works before advanced SSH
-  features have started, or on a host without
-  the Python they need, instead of saying it
+  features have started, instead of saying it
   can’t disconnect.
 - After quitting with SSH Integration sessions
   open, relaunching with window restoration on

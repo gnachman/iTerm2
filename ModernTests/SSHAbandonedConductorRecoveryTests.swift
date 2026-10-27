@@ -213,6 +213,33 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
         XCTAssertTrue(screenText().contains("local% "), screenText())
     }
 
+    // F-950: on a host without the framer's Python, conductor.sh unhooks and runs the login
+    // shell, and then nothing reads conductor commands. The pre-framer quit would type a ^C
+    // and a line of base64 into the remote shell and its foreground job. Disconnect is
+    // unavailable then and writes nothing; the connection ends with ssh, through EndSSH.
+    func testDisconnectAfterLoginWithoutFramerWritesNothing() {
+        let conductor = hookRoot()
+        XCTAssertEqual(conductor?.canQuit, true)
+        XCTAssertTrue(session.textViewCanDisconnectSSH())
+        // What conductor.sh prints before it execs the login shell.
+        send("\u{1b}]135;:unhook\u{1b}\\")
+        XCTAssertTrue(session.conductor === conductor)
+        XCTAssertEqual(conductor?.framing, false)
+        XCTAssertFalse(session.textViewCanDisconnectSSH())
+        session.writes.removeAll()
+
+        session.textViewDisconnectSSH()
+        sync()
+        assertNothingWritten()
+        XCTAssertTrue(session.conductor === conductor)
+
+        // Should Disconnect be chosen some other way, quit still writes nothing.
+        conductor?.quit()
+        sync()
+        assertNothingWritten()
+        XCTAssertNil(session.conductor)
+    }
+
     // A new connection's framer output is its own, so it may recover again.
     func testNewConnectionAfterDisconnectCanRecover() {
         disconnect(hookRoot())

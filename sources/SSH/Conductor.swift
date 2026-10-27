@@ -2089,7 +2089,16 @@ extension Conductor {
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
 
+    /// Whether Disconnect can end this connection. Without a framer only conductor.sh reads
+    /// the pre-framer quit, and once it has unhooked to run the login shell or a command,
+    /// nothing does: the quit would be typed into the remote shell (F-950). A connection
+    /// without a framer restored after iTerm2 restarted is taken to be past that point.
+    @objc var canQuit: Bool {
+        return framing || (!hasEnded && !restored)
+    }
+
     @objc func quit() {
+        let canSendQuit = canQuit
         hasEnded = true
         flowMayBeOn = false
         stopFlowControl()
@@ -2098,8 +2107,10 @@ extension Conductor {
         if framing {
             // The framer reads framer commands; the pre-framer `quit` means nothing to it.
             framerQuit()
-        } else {
+        } else if canSendQuit {
             send(.quit, .fireAndForget)
+        } else {
+            log("conductor.sh no longer reads commands. Do not send quit.")
         }
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
         delegate?.conductorQuit()
