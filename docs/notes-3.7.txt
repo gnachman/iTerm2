@@ -696,6 +696,12 @@ Bug Fixes:
 - Get Info on a failed SSH Integration download
   no longer shows the remote file’s path as its
   destination.
+- When you connect with it2ssh user@host or an
+  ssh:// URL, SSH Integration now records the
+  user and host separately. Before, it treated
+  all of “user@host” as the host name, which
+  showed up in the file panel and the Downloads
+  menu.
 - An SSH Integration download that can’t be
   saved into your Downloads folder when it
   finishes now reports that it failed, instead
