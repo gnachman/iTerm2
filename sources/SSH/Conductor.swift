@@ -2354,7 +2354,7 @@ extension Conductor {
 
     /// Shells that can be the session's shell when named as the command.
     private nonisolated static let shellNames: Set<String> = [
-        "sh", "bash", "zsh", "fish", "xonsh", "tcsh", "csh", "ksh", "mksh", "dash", "ash", "yash"
+        "sh", "bash", "zsh", "fish", "xonsh", "nu", "tcsh", "csh", "ksh", "mksh", "dash", "ash", "yash"
     ]
 
     nonisolated static func remoteLaunchKind(commandArgs: [String]) -> RemoteLaunchKind {

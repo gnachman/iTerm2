@@ -272,6 +272,8 @@ final class RemoteLaunchKindTests: XCTestCase {
         XCTAssertEqual(Conductor.remoteLaunchKind(commandArgs: ["/usr/local/bin/bash"]), .customShell("/usr/local/bin/bash"))
         XCTAssertEqual(Conductor.remoteLaunchKind(commandArgs: ["zsh", "-l"]), .customShell("zsh"))
         XCTAssertEqual(Conductor.remoteLaunchKind(commandArgs: ["fish"]), .customShell("fish"))
+        // nu is injectable too, so it must be a shell rather than a command, which is never injected.
+        XCTAssertEqual(Conductor.remoteLaunchKind(commandArgs: ["/opt/homebrew/bin/nu"]), .customShell("/opt/homebrew/bin/nu"))
     }
 
     // Anything else is a command for the login shell to run, exactly as given. It is not "the
