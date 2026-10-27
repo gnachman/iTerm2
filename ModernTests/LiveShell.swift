@@ -36,16 +36,6 @@ final class LiveShell {
     private var _exited = false
     private let answersTerminalQueries: Bool
 
-    /// The pty's master end.
-    var fileDescriptor: Int32 {
-        return masterFD
-    }
-
-    /// The shell's process ID.
-    var processID: pid_t {
-        return childPID
-    }
-
     /// Whether the child process has exited.
     var hasExited: Bool {
         stateLock.lock(); defer { stateLock.unlock() }

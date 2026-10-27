@@ -26,30 +26,9 @@ protocol SSHClientProcessInspecting {
     // Whether the process listens on a unix-domain socket, as an ssh ControlMaster
     // does. Returns nil if unknown.
     func hasListeningUnixSocket(_ pid: pid_t) -> Bool?
-    // Returns 0 if unknown.
-    func processGroup(of pid: pid_t) -> pid_t
-    // Whether any process is in the process group.
-    func processGroupHasMembers(_ group: pid_t) -> Bool
 }
 
 struct SystemSSHClientProcessInspector: SSHClientProcessInspecting {
-    func processGroup(of pid: pid_t) -> pid_t {
-        // getpgid(0) would be iTerm2's own group.
-        guard pid > 0 else {
-            return 0
-        }
-        let group = getpgid(pid)
-        return group > 0 ? group : 0
-    }
-
-    func processGroupHasMembers(_ group: pid_t) -> Bool {
-        guard group > 0 else {
-            return false
-        }
-        // EPERM means a member exists that this process can't signal.
-        return killpg(group, 0) == 0 || errno != ESRCH
-    }
-
     func parentPID(of pid: pid_t) -> pid_t {
         return iTermLSOF.ppid(forPid: pid)
     }
@@ -228,16 +207,6 @@ final class SSHClientMonitor: NSObject {
     private var sources = [String: DispatchSourceProcess]()
     private var announced = Set<String>()
     private var clients = [String: SSHClientRecord]()
-    // Every watched it2ssh, so its death can be confirmed later (F-460).
-    private struct IT2SSHRecord {
-        var identity: SSHClientProcessIdentity
-        // it2ssh's process group, and that of the shell that ran it.
-        var processGroup: pid_t
-        var shellProcessGroup: pid_t
-        // The shell that ran it, if known (F-541).
-        var shell: SSHClientProcessIdentity?
-    }
-    private var it2sshProcesses = [String: IT2SSHRecord]()
     private let inspector: SSHClientProcessInspecting
     private let signaler: (pid_t, Int32) -> Void
 
@@ -270,20 +239,6 @@ final class SSHClientMonitor: NSObject {
             return false
         }
         stopWatching(clientUniqueID: clientUniqueID)
-        if let start = inspector.startTime(of: pid) {
-            let shellPID = inspector.parentPID(of: pid)
-            // A reparented it2ssh's parent is launchd, which is no shell.
-            let shell = shellPID > 1 ? inspector.startTime(of: shellPID).map {
-                SSHClientProcessIdentity(pid: shellPID, startTime: $0)
-            } : nil
-            it2sshProcesses[clientUniqueID] = IT2SSHRecord(
-                identity: SSHClientProcessIdentity(pid: pid, startTime: start),
-                processGroup: inspector.processGroup(of: pid),
-                shellProcessGroup: inspector.processGroup(of: shellPID),
-                shell: shell)
-        } else {
-            it2sshProcesses.removeValue(forKey: clientUniqueID)
-        }
         recordSSHClient(ofIT2SSHProcessID: pid, clientUniqueID: clientUniqueID)
         let source = DispatchSource.makeProcessSource(identifier: pid,
                                                       eventMask: .exit,
@@ -347,7 +302,6 @@ final class SSHClientMonitor: NSObject {
     @objc(forgetSSHClientForClientUniqueID:)
     func forgetSSHClient(clientUniqueID: String) {
         clients.removeValue(forKey: clientUniqueID)
-        it2sshProcesses.removeValue(forKey: clientUniqueID)
     }
 
     // Sends SIGKILL to the ssh client recorded for this connection if its it2ssh has
@@ -388,65 +342,6 @@ final class SSHClientMonitor: NSObject {
         RLog("Killing orphaned ssh client \(ssh) for \(clientUniqueID)")
         signaler(ssh.pid, SIGKILL)
         return true
-    }
-
-    // Whether the it2ssh that was watched for this connection is known to have exited.
-    // False if it was never watched (e.g., it ran on another host) or is still running.
-    @objc(it2sshHasExitedForClientUniqueID:)
-    func it2sshHasExited(clientUniqueID: String) -> Bool {
-        guard let it2ssh = it2sshProcesses[clientUniqueID]?.identity else {
-            return false
-        }
-        return inspector.startTime(of: it2ssh.pid) != it2ssh.startTime
-    }
-
-    // Whether the tty's modes may be repaired after this connection's it2ssh exited, given
-    // the tty's foreground process group. The shell that ran it2ssh may be in the
-    // foreground, and so may it2ssh's own job once it has no members left (an ssh client
-    // that couldn't be killed, such as a ControlMaster, may still be using the modes).
-    // Anything else is a program started since, which may have set the modes itself. If
-    // it2ssh ran without job control (e.g., from a script) it shared the shell's group, so
-    // whatever that script runs next shares it too, and nothing tells them apart.
-    @objc(mayRepairTTYWithForegroundProcessGroup:clientUniqueID:)
-    func mayRepairTTY(foregroundProcessGroup: pid_t, clientUniqueID: String) -> Bool {
-        guard foregroundProcessGroup > 0,
-              let record = it2sshProcesses[clientUniqueID],
-              record.processGroup > 0,
-              record.shellProcessGroup > 0,
-              record.processGroup != record.shellProcessGroup else {
-            return false
-        }
-        if foregroundProcessGroup == record.shellProcessGroup {
-            return true
-        }
-        if foregroundProcessGroup == record.processGroup {
-            return !inspector.processGroupHasMembers(record.processGroup)
-        }
-        return false
-    }
-
-    // The process group of the shell that ran this connection's it2ssh, if it ran with job
-    // control. 0 otherwise.
-    @objc(shellProcessGroupForClientUniqueID:)
-    func shellProcessGroup(clientUniqueID: String) -> pid_t {
-        guard let record = it2sshProcesses[clientUniqueID],
-              record.processGroup > 0,
-              record.processGroup != record.shellProcessGroup else {
-            return 0
-        }
-        return record.shellProcessGroup
-    }
-
-    // The process ID of the shell that ran this connection's it2ssh with job control, if it
-    // is still running. 0 otherwise (F-541).
-    @objc(shellProcessIDForClientUniqueID:)
-    func shellProcessID(clientUniqueID: String) -> pid_t {
-        guard shellProcessGroup(clientUniqueID: clientUniqueID) > 0,
-              let shell = it2sshProcesses[clientUniqueID]?.shell,
-              inspector.startTime(of: shell.pid) == shell.startTime else {
-            return 0
-        }
-        return shell.pid
     }
 
     @objc(isWatchingClientUniqueID:)

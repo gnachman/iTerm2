@@ -844,13 +844,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // thread. A recovery requested before the terminal learns of the abandonment is
     // refused here (F-459).
     iTermFramerRecoveryRefusals *_framerRecoveryRefusals;
-    // The tty's modes from before the outermost connection's ssh made it raw, and that
-    // connection's it2ssh unique ID (F-460).
-    iTermTTYModes *_preSSHTTYModes;
-    NSString *_preSSHTTYModesClientUniqueID;
-    // it2ssh ran on another tty (e.g., inside tmux), so this session's tty isn't ssh's.
-    BOOL _preSSHTTYIsElsewhere;
-    iTermTTYModeRepairer *_ttyModeRepairer;
     // Recovering an ssh integration connection: how deep it was, when it was nested. The outer
     // framer's recovery knows nothing of a framer nested in it, so each depth is recovered in
     // turn. Keys typed meanwhile are held for the innermost.
@@ -1042,7 +1035,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _framerRecoveryRefusals = [[iTermFramerRecoveryRefusals alloc] init];
         _disconnectedSSHClientUniqueIDs = [[NSMutableSet alloc] init];
         _letGoConductorDCSIDs = [[NSMutableSet alloc] init];
-        _ttyModeRepairer = [[iTermTTYModeRepairer alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directoryTracker = [[iTermSessionDirectoryTracker alloc] initWithVariablesScope:self.variablesScope];
         _directoryTracker.delegate = self;
@@ -1443,9 +1435,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_letGoConductorDCSIDs release];
     [_sshClientMonitor release];
     [_framerRecoveryRefusals release];
-    [_preSSHTTYModes release];
-    [_preSSHTTYModesClientUniqueID release];
-    [_ttyModeRepairer release];
     [_keysHeldForFramerRecovery release];
     [_hostStack release];
     [_defaultPointer release];
@@ -5212,8 +5201,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setExited:NO];
     [_shell autorelease];
     _shell = nil;
-    // Its tty modes are no business of the new shell's.
-    [_ttyModeRepairer disarm];
     [_logging stop];
 
     self.guid = [NSString uuid];
@@ -21208,21 +21195,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     iTermSecretClaim *claim = [[iTermSecretServer instance] claim:token];
     const BOOL localOrigin = (claim != nil);
-    if (!_conductor) {
-        // A new outermost connection owns the tty now.
-        [_ttyModeRepairer disarm];
-        [_preSSHTTYModes release];
-        _preSSHTTYModes = nil;
-        [_preSSHTTYModesClientUniqueID release];
-        _preSSHTTYModesClientUniqueID = [uniqueID copy];
-        _preSSHTTYIsElsewhere = NO;
-        if (claim.ttyModes && [claim.ttyModes.path isEqualToString:_shell.tty]) {
-            // it2ssh fetched the token on this session's tty before it started ssh.
-            _preSSHTTYModes = [claim.ttyModes retain];
-        } else if (claim.ttyModes) {
-            _preSSHTTYIsElsewhere = YES;
-        }
-    }
 
     NSString *directory = nil;
     if (_sshState == iTermSSHStateProfile && !_conductor) {
@@ -21385,75 +21357,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self forceUnhookAbandonedConductorDCS:dcsID
              refusingFramerRecoveryAtDepth:parentDepth
                   abandonedClientUniqueIDs:abandonedClientUniqueIDs];
-    if (parentDepth < 0) {
-        // The outermost connection's ssh ran on this session's tty.
-        [self restoreTTYModesIfIT2SSHExitedForClientUniqueID:uniqueID
-                                   discardingInputForDeadClient:YES];
-    }
-}
-
-// ssh left the tty in raw mode if its it2ssh was killed (F-460). Never touch the modes
-// while it2ssh might be alive: its ssh would still be using them.
-//
-// If discardInput, the connection was abandoned just now, as soon as its it2ssh was found
-// dead, and input written for its ssh client that the client never read is discarded too
-// (F-554).
-- (void)restoreTTYModesIfIT2SSHExitedForClientUniqueID:(NSString *)uniqueID
-                          discardingInputForDeadClient:(BOOL)discardInput {
-    if (!uniqueID.length || ![_sshClientMonitor it2sshHasExitedForClientUniqueID:uniqueID]) {
-        DLog(@"it2ssh %@ is not known to have exited; leaving tty modes alone", uniqueID);
-        return;
-    }
-    if (![iTermTTYModeRepairer mayRepairAfterAbandoningClientUniqueID:uniqueID
-                                                   lastClientUniqueID:_preSSHTTYModesClientUniqueID
-                                                     connectionActive:_conductor != nil
-                                                      ranOnAnotherTTY:_preSSHTTYIsElsewhere
-                                                    shellProcessGroup:[_sshClientMonitor shellProcessGroupForClientUniqueID:uniqueID]]) {
-        RLog(@"Not restoring tty modes after abandoning %@", uniqueID);
-        return;
-    }
-    PTYTask *task = _shell;
-    const int fd = task.fd;
-    NSString *ttyPath = task.tty;
-    if (fd <= 0 || !ttyPath.length || _exited || task.hasBrokenPipe) {
-        // Opening the slave of a pty whose shell is gone could make iTerm2's close the last
-        // one, which discards the shell's final output.
-        return;
-    }
-    const pid_t foregroundProcessGroup = tcgetpgrp(fd);
-    // Something started since then may have set the modes itself. Then only arm the
-    // repairer: it acts when a command starts or the shell that ran it2ssh forks with the
-    // shell's reapplied raw modes, which no program that wants a raw tty has.
-    const BOOL repairNow = [_sshClientMonitor mayRepairTTYWithForegroundProcessGroup:foregroundProcessGroup
-                                                                     clientUniqueID:uniqueID];
-    RLog(@"Repair tty modes now=%@ with process group %d in the foreground", @(repairNow), (int)foregroundProcessGroup);
-    iTermTTYModeRepairer *repairer = _ttyModeRepairer;
-    __weak PTYTask *weakTask = task;
-    [repairer repairAfterAbandonedSSHWithFileDescriptor:^int{
-        // -1 once the task closes its pty, or after it is replaced.
-        PTYTask *strongTask = weakTask;
-        return strongTask ? strongTask.fd : -1;
-    }
-                                                ttyPath:ttyPath
-                                              goodModes:_preSSHTTYModes
-                                              repairNow:repairNow
-                                         shellProcessID:[_sshClientMonitor shellProcessIDForClientUniqueID:uniqueID]];
-    if ([iTermTTYModeRepairer mayDiscardInputForDeadClientAbandonedJustNow:discardInput
-                                                                 repairNow:repairNow
-                                                           foundSSHRawMode:repairer.isArmed]) {
-        // What is waiting to be written to the tty or read from it was written for the dead
-        // ssh client, which didn't read it while it was busy writing output. It includes
-        // conductor commands, such as an autopoll request, that the shell would otherwise read
-        // as a command line (F-554).
-        const NSUInteger dropped = [task discardPendingWrites];
-        const BOOL flushed = [iTermTTYModeRepairer discardPendingInputOfMasterFileDescriptor:fd
-                                                                                      ttyPath:ttyPath];
-        RLog(@"Discarded %@ unwritten bytes and %@ the tty's pending input for abandoned it2ssh %@",
-             @(dropped), flushed ? @"flushed" : @"could not flush", uniqueID);
-    }
-    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        mutableState.ttyModeRepairer = repairer;
-    }];
 }
 
 static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID) {
@@ -27430,7 +27333,6 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     NSString *dcsID = [[_conductor.dcsID copy] autorelease];
     NSString *clientUniqueID = [[_conductor.clientUniqueID copy] autorelease];
     const int parentDepth = _conductor.parent ? _conductor.parent.depth : -1;
-    const BOOL isOutermost = (_conductor.parent == nil);
     [self rememberDisconnectedSSHClientUniqueID:_conductor.clientUniqueID];
     NSArray<NSString *> *abandonedClientUniqueIDs = clientUniqueID.length ? @[ clientUniqueID ] : @[];
     // The user ended this connection, so whatever its framer prints from now on must not
@@ -27448,12 +27350,6 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
             // Kill it before unhooking so less of its output arrives unhooked.
             [weakSelf killOrphanedSSHClientForClientUniqueID:clientUniqueID];
             [weakSelf forceUnhookAbandonedConductorDCS:dcsID];
-            if (isOutermost) {
-                // The shell may have owned the tty for a while by now, so what is waiting
-                // to be read may be the user's.
-                [weakSelf restoreTTYModesIfIT2SSHExitedForClientUniqueID:clientUniqueID
-                                             discardingInputForDeadClient:NO];
-            }
         });
     }
 }

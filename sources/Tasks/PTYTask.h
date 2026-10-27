@@ -216,10 +216,6 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 
 - (void)writeTask:(NSData*)data;
 
-// Drops whatever was passed to -writeTask: but not yet written to the pty. Returns the
-// number of bytes dropped.
-- (NSUInteger)discardPendingWrites;
-
 - (void)stop;
 
 // Called on any thread

@@ -705,7 +705,6 @@
 		224C2FB202294C3B6C2E1030 /* iTermWorkgroupInstance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC9620CA37B0A32A763C48A /* iTermWorkgroupInstance.swift */; };
 		229997A22B1C8033B1EDEC2E /* iTermTmuxControlModeKeyName.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E02D44A9E1C1B28D6C40090 /* iTermTmuxControlModeKeyName.m */; };
 		22EC1C1F89212FA7ACF36A0D /* CompanionAppNapBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02709B4528F17F4F1F61E95C /* CompanionAppNapBlocker.swift */; };
-		232CB1EF1527990E6ADF64B1 /* TTYModeRepairer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C167125EBF331BCD7AB4F131 /* TTYModeRepairer.swift */; };
 		23F147E06A07F14899B113FD /* iTermRightGutterController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1889B7BCB3C9FBBE656FC590 /* iTermRightGutterController.swift */; };
 		24AA7B99D58357DFF0FC3126 /* iTermWorkgroupRestoration.swift in Sources */ = {isa = PBXBuildFile; fileRef = E75A577B8D27C3128D180B27 /* iTermWorkgroupRestoration.swift */; };
 		24C720C5B54B4B0D1859206E /* WorkgroupUsageToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3C1692FB633AACA44AD2625 /* WorkgroupUsageToolbarItem.swift */; };
@@ -8864,7 +8863,6 @@
 		C08AA4008946722C3F4C67C1 /* WordSelectionAtom.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WordSelectionAtom.swift; sourceTree = "<group>"; };
 		C0A28E717306FFCBB02A7DB2 /* CompanionFrameChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionFrameChannel.swift; sourceTree = "<group>"; };
 		C10C843E3FEB7FC74ADE7DC0 /* AddClippingBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AddClippingBuiltInFunction.swift; sourceTree = "<group>"; };
-		C167125EBF331BCD7AB4F131 /* TTYModeRepairer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TTYModeRepairer.swift; sourceTree = "<group>"; };
 		C253AF0160FA01071B7DD22F /* CompanionPushSender.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPushSender.swift; sourceTree = "<group>"; };
 		C25F46F9F3BA829BDB185B38 /* iTermHDREngager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermHDREngager.swift; sourceTree = "<group>"; };
 		C2B75EA7ECA05D0BBE98C9EF /* CompanionPixelBufferHash.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPixelBufferHash.swift; sourceTree = "<group>"; };
@@ -13740,7 +13738,6 @@
 				A616CF102841AA1600EF82D0 /* WinSizeController.swift */,
 				ED4D6F76FD82DD8AA45E812B /* iTermMultiServerSocketNumbers.swift */,
 				3DADE73F74E739BD29D488FB /* iTermForkedServerRegistry.swift */,
-				C167125EBF331BCD7AB4F131 /* TTYModeRepairer.swift */,
 			);
 			path = Tasks;
 			sourceTree = "<group>";
@@ -20361,7 +20358,6 @@
 				45C0A2DAC1EEB302DA9FF56B /* LocalizedUnitFormatter.swift in Sources */,
 				72C54C1E052706E51D4EB54D /* SSHClientMonitor.swift in Sources */,
 				20A35AB333469449066CC4EF /* FramerRecoveryRefusals.swift in Sources */,
-				232CB1EF1527990E6ADF64B1 /* TTYModeRepairer.swift in Sources */,
 				67C35F5A63227428A1D3D6F0 /* TmuxWorkgroupRepair.swift in Sources */,
 				F97014D02D2DF9126FFEEDE5 /* Conductor+Panes.swift in Sources */,
 				8C43D36D53CEF93694BFCF08 /* FramerFlowController.swift in Sources */,

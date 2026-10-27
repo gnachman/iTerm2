@@ -13,14 +13,9 @@ class SecretClaim: NSObject {
     // The nearest ancestors of the process that fetched the secret, nearest first.
     // When it2ssh fetched it locally, it2ssh is among them.
     @objc let clientAncestors: [SSHClientProcessIdentity]
-    // The modes of the fetching process's controlling tty when it fetched the secret.
-    // it2ssh fetches it before it starts ssh, so these are the modes ssh will change
-    // (F-460).
-    @objc let ttyModes: TTYModes?
 
-    init(clientAncestors: [SSHClientProcessIdentity], ttyModes: TTYModes?) {
+    init(clientAncestors: [SSHClientProcessIdentity]) {
         self.clientAncestors = clientAncestors
-        self.ttyModes = ttyModes
     }
 }
 
@@ -94,12 +89,10 @@ class SecretServer: NSObject {
             guard let secret = makeSecret() else {
                 return
             }
-            // Record the peer's ancestry and tty modes now, while it is still connected.
-            let pid = peerPID(fd)
-            let ancestors = SSHClientProcessLocator.shared.ancestors(ofPeer: pid)
-            let ttyModes = TTYModes.ofControllingTTY(ofProcessID: pid)
-            DLog("Secret requested by a process with ancestors \(ancestors) on \(ttyModes?.path ?? "no tty")")
-            let claim = SecretClaim(clientAncestors: ancestors, ttyModes: ttyModes)
+            // Record the peer's ancestry now, while it is still connected.
+            let ancestors = SSHClientProcessLocator.shared.ancestors(ofPeer: peerPID(fd))
+            DLog("Secret requested by a process with ancestors \(ancestors)")
+            let claim = SecretClaim(clientAncestors: ancestors)
             mutex.sync {
                 secrets[secret] = claim
             }
