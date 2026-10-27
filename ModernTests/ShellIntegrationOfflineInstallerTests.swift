@@ -17,6 +17,35 @@ import XCTest
 // prints whether the archive extracted.
 private let receiveUtilitiesCommandMarker = "echo it2-\"\"receiving-utilities"
 
+// Part of the command with which the helper sh receives the shell integration script. The fakes'
+// sh answers it with it2-receiving-script (or it2-cannot-receive-script when the file's folder
+// doesn't exist), reads lines until one that is just EOF, and writes the decoded script only if
+// its checksum is the one in the command, as the real command does.
+private let receiveScriptCommandMarker = "echo it2-\"\"receiving-script"
+
+// The path, as typed, that the installer's command to receive the script writes to.
+private func fakeReceiveScriptPath(_ command: String) -> String? {
+    guard let regex = try? NSRegularExpression(pattern: "^IT2_F=(.+?); "),
+          let match = regex.firstMatch(in: command, range: NSRange(command.startIndex..., in: command)),
+          let range = Range(match.range(at: 1), in: command) else {
+        return nil
+    }
+    return String(command[range])
+}
+
+// What the command to receive the script writes, given the lines it read, or nil if what it read
+// isn't the script the command expects, so it writes nothing.
+private func fakeReceivedScript(_ command: String, lines: [String]) -> String? {
+    guard let regex = try? NSRegularExpression(pattern: "\\$1 \\$2\" = '([0-9]+ [0-9]+)'"),
+          let match = regex.firstMatch(in: command, range: NSRange(command.startIndex..., in: command)),
+          let range = Range(match.range(at: 1), in: command),
+          let data = Data(base64Encoded: lines.joined(), options: []),
+          iTermShellIntegrationWindowController.posixChecksum(of: data) == command[range] else {
+        return nil
+    }
+    return String(decoding: data, as: UTF8.self)
+}
+
 // What sh prints for the installer's `cd folder && echo done || echo failed` line, or nil if the
 // line isn't one.
 private func fakeConditionalEchoAnswer(_ line: String, fails: Bool) -> String? {
@@ -26,6 +55,11 @@ private func fakeConditionalEchoAnswer(_ line: String, fails: Bool) -> String? {
     }
     let answer = fails ? line[or.upperBound...] : line[and.upperBound..<or.lowerBound]
     return answer.replacingOccurrences(of: "\"", with: "")
+}
+
+// The length in bytes of the longest line in texts.
+private func longestTypedLine(_ texts: [String]) -> Int {
+    return texts.joined().components(separatedBy: "\n").map { $0.utf8.count }.max() ?? 0
 }
 
 private class FakeShellIntegrationTerminal: NSObject, iTermShellIntegrationWindowControllerDelegate {
@@ -181,6 +215,8 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
     private var heredoc: (path: String?, lines: [String])?
     private var lastStatus: Int32 = 0
     private var autoloadDirVariable = ""
+    // The command receiving the script, while sh reads it.
+    private var receiveScriptCommand: String?
 
     // The value of $SHELL in the session, which need not be nu.
     var shellVariable = FakeNushellTerminal.nuPath
@@ -277,6 +313,15 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
             }
             self.heredoc = nil
             guard let path = heredoc.path else {
+                if let command = receiveScriptCommand {
+                    receiveScriptCommand = nil
+                    guard let path = fakeReceiveScriptPath(command).map(expand),
+                          let contents = fakeReceivedScript(command, lines: heredoc.lines) else {
+                        return [line, "it2-script-failed", ">> "]
+                    }
+                    files[path] = contents
+                    return [line, "it2-script-written", ">> "]
+                }
                 // The utilities archive was received.
                 lastStatus = 0
                 return [line, "it2-utilities-installed", ">> "]
@@ -317,10 +362,18 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
             result.append("it2-receiving-utilities")
             heredoc = (path: nil, lines: [])
             prompt = ""
-        } else if line.hasPrefix("if test $? -eq 0 && test -s ") {
-            let written = lastStatus == 0 && !(files[Self.scriptPath] ?? "").isEmpty
-            result.append(written ? "iTerm2-nu-script-written" : "iTerm2-nu-script-missing")
-            prompt = ">> "
+        } else if line.contains(receiveScriptCommandMarker) {
+            let path = fakeReceiveScriptPath(line).map(expand) ?? ""
+            if createdDirectories.contains((path as NSString).deletingLastPathComponent) {
+                result.append("it2-receiving-script")
+                heredoc = (path: nil, lines: [])
+                receiveScriptCommand = line
+                prompt = ""
+            } else {
+                result.append("sh: \(path).it2-b64: No such file or directory")
+                result.append("it2-cannot-receive-script")
+                prompt = ">> "
+            }
         } else if line.hasPrefix("chmod +x ") {
             let path = expand(String(line.dropFirst("chmod +x ".count)))
             if files[path] == nil {
@@ -374,6 +427,8 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
     private var helperDepth = 0
     private var pendingInput = ""
     private var heredoc: (path: String?, lines: [String])?
+    // The command receiving the script, while sh reads it.
+    private var receiveScriptCommand: String?
 
     private(set) var createdDirectories = Set<String>()
     private(set) var files = [String: String]()
@@ -452,6 +507,15 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
             }
             self.heredoc = nil
             guard let path = heredoc.path else {
+                if let command = receiveScriptCommand {
+                    receiveScriptCommand = nil
+                    guard let path = fakeReceiveScriptPath(command),
+                          let contents = fakeReceivedScript(command, lines: heredoc.lines) else {
+                        return [line, "it2-script-failed", ">> "]
+                    }
+                    files[path] = contents
+                    return [line, "it2-script-written", ">> "]
+                }
                 // The utilities archive was received.
                 return [line, "it2-utilities-installed", ">> "]
             }
@@ -475,6 +539,17 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
             result.append("it2-receiving-utilities")
             heredoc = (path: nil, lines: [])
             prompt = ""
+        } else if line.contains(receiveScriptCommandMarker) {
+            let path = fakeReceiveScriptPath(line) ?? ""
+            if createdDirectories.contains((path as NSString).deletingLastPathComponent) {
+                result.append("it2-receiving-script")
+                heredoc = (path: nil, lines: [])
+                receiveScriptCommand = line
+                prompt = ""
+            } else {
+                result.append("sh: \(path).it2-b64: No such file or directory")
+                result.append("it2-cannot-receive-script")
+            }
         } else if line.hasPrefix("chmod +x ") {
             let path = String(line.dropFirst("chmod +x ".count))
             if files[path] == nil {
@@ -856,8 +931,9 @@ class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
             XCTAssertTrue(texts[0].hasPrefix("sh -c 'ENV=/dev/null"), texts[0])
             XCTAssertTrue(texts[1].hasPrefix("IT2_NU_AUTOLOAD_DIR="), texts[1])
             XCTAssertTrue(texts[1].contains("mkdir -p \"$IT2_NU_AUTOLOAD_DIR\""), texts[1])
-            XCTAssertEqual(texts[2], "cat <<'EOF' > \"$IT2_NU_AUTOLOAD_DIR/iterm2_shell_integration.nu\"\n")
-            XCTAssertTrue(texts[3].contains("\nEOF\nif test $? -eq 0 && test -s "), texts[3])
+            XCTAssertTrue(texts[2].contains(receiveScriptCommandMarker), texts[2])
+            XCTAssertTrue(texts[2].hasPrefix("IT2_F=\"$IT2_NU_AUTOLOAD_DIR/iterm2_shell_integration.nu\"; "), texts[2])
+            XCTAssertTrue(texts[3].hasSuffix("\nEOF\n"), texts[3])
             XCTAssertEqual(texts[4], "exit\n")
         }
         let script = terminal.files[FakeNushellTerminal.scriptPath] ?? ""
@@ -868,6 +944,7 @@ class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
         XCTAssertFalse(terminal.helperIsRunning)
         XCTAssertEqual(controller.sendShellCommandsStage, 2)
         XCTAssertFalse(controller.sendShellCommandsWriteFailed)
+        XCTAssertLessThan(longestTypedLine(textsAfterDiscovery()), 1024)
     }
 
     func testWriteScriptReportsFailureWhenTheFileIsNotWritten() {
@@ -1073,6 +1150,7 @@ final class ShellIntegrationOfflineXonshInstallerTests: XCTestCase {
         controller.shellIntegrationInstallerSendShellCommands(2)
         terminal.run()
 
+        XCTAssertLessThan(longestTypedLine(terminal.sentTexts), 1024)
         XCTAssertEqual(terminal.textLostToXonsh, [])
         XCTAssertNotNil(terminal.files[FakeXonshTerminal.scriptPath])
         XCTAssertFalse(terminal.helperIsRunning)
@@ -1095,6 +1173,8 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     private var promptRow = "> "
     private var heredocLines: [String]?
     private var receivingUtilities = false
+    // The command receiving the script, while sh reads it.
+    private var receiveScriptCommand: String?
     // sh is reading an if statement up to its fi.
     private var inIfStatement = false
     // Set to make the helpers' sh like dash (Debian's and Ubuntu's sh), which has no line
@@ -1105,6 +1185,10 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     var shEchoesTypeahead = true
 
     private(set) var heredocBodies = [[String]]()
+    // The files sh wrote, by the path as typed.
+    private(set) var files = [String: String]()
+    // Where the here-document being read goes, if it goes to a file.
+    private var heredocPath: String?
     // Set to make tar fail to extract the utilities archive, as for one damaged on the way.
     var extractionFails = false
     // Set to make sh unable to create the file the archive goes into, as in a folder that is
@@ -1241,7 +1325,9 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
         }
         pendingInput += text
         while let newline = pendingInput.firstIndex(of: "\n") {
-            let line = String(pendingInput[..<newline])
+            // In canonical mode Linux's tty keeps at most 4095 bytes of a line, plus its newline,
+            // and drops the rest.
+            let line = String(decoding: pendingInput[..<newline].utf8.prefix(4095), as: UTF8.self)
             pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
             let inSh = depth > 0
             var printed = handle(line)
@@ -1287,11 +1373,24 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             if line == "EOF" {
                 heredocBodies.append(lines)
                 heredocLines = nil
+                if let heredocPath {
+                    files[heredocPath] = lines.joined(separator: "\n") + "\n"
+                    self.heredocPath = nil
+                }
                 prompt = inIfStatement ? "> " : ">> "
                 if receivingUtilities {
                     receivingUtilities = false
                     let answer = extractionFails ? "it2-utilities-failed" : "it2-utilities-installed"
                     return [redraw, answer, prompt]
+                }
+                if let command = receiveScriptCommand {
+                    receiveScriptCommand = nil
+                    guard let path = fakeReceiveScriptPath(command),
+                          let contents = fakeReceivedScript(command, lines: lines) else {
+                        return [redraw, "it2-script-failed", prompt]
+                    }
+                    files[path] = contents
+                    return [redraw, "it2-script-written", prompt]
                 }
             } else {
                 lines.append(line)
@@ -1314,6 +1413,15 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             // macOS's sh is bash, and both helpers have IT2_INSTALLER_HELPER in their
             // environment.
             result.append("My shell is bash sh or /bin/zsh, in an installer helper shell, end")
+        } else if line.contains(receiveScriptCommandMarker) && receiveFails {
+            result.append("sh: \(fakeReceiveScriptPath(line) ?? "").it2-b64: Permission denied")
+            result.append("it2-cannot-receive-script")
+        } else if line.contains(receiveScriptCommandMarker) {
+            // sh reads the script from the tty with its line editor off, so there is no prompt.
+            result.append("it2-receiving-script")
+            heredocLines = []
+            receiveScriptCommand = line
+            prompt = ""
         } else if line.contains(receiveUtilitiesCommandMarker) && receiveFails {
             // The redirection failed, so the read loop never runs and sh reads commands again.
             result.append("sh: .it2-utilities.b64: Permission denied")
@@ -1326,6 +1434,9 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             prompt = ""
         } else if line.contains("<<'EOF'") || line.contains("<<-EOF") {
             heredocLines = []
+            if line.hasPrefix("cat <<'EOF' > ") {
+                heredocPath = String(line.dropFirst("cat <<'EOF' > ".count))
+            }
             prompt = "> "
         } else if line.hasPrefix("if ") && line.hasSuffix("then") {
             inIfStatement = true
@@ -1538,10 +1649,11 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
     }
 
-    // F-544: Cancel while the script's here-document is typed lets it finish, then leaves the
-    // helpers. The helpers are started once, not again from within themselves.
+    // F-544: Cancel while sh receives the script ends its read loop, then leaves the helpers.
+    // The helpers are started once, not again from within themselves. F-880: what sh got is not
+    // the whole script, so it writes nothing.
     func testCancelWhileWritingTheScriptReturnsToTheUserShell() {
-        terminal.holdInputContaining = "<<'EOF'"
+        terminal.holdInputContaining = receiveScriptCommandMarker
         controller.shellIntegrationInstallerSendShellCommands(1)
         terminal.run()
         XCTAssertEqual(terminal.heredocBodies.count, 0)
@@ -1553,6 +1665,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
 
         XCTAssertEqual(launchesTyped, 1)
         XCTAssertEqual(terminal.heredocBodies.count, 1)
+        XCTAssertEqual(terminal.files, [:])
         XCTAssertEqual(terminal.helperDepth, 0)
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
     }
@@ -1746,10 +1859,44 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }
 
-    // F-543: Send Again while the script's here-document is typed waits for it to finish and
-    // writes the script again from the same helpers.
+    // F-880: Cancel while the command that receives the script may still be typing doesn't stop
+    // typing, which could cut the command and leave sh waiting for the rest of it. The lines that
+    // end its read loop follow it.
+    func testCancelBeforeTheScriptIsTypedDoesNotStopTyping() {
+        terminal.holdInputContaining = receiveScriptCommandMarker
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+        let sentBefore = terminal.sentTexts.count
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertEqual(terminal.stopSendingTextCount, 0)
+        XCTAssertTrue(terminal.sentTexts.dropFirst(sentBefore).first?.hasPrefix("\nEOF\n") == true)
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+    }
+
+    // F-880: once the script is being typed, Cancel stops typing it.
+    func testCancelWhileTypingTheScriptStopsTypingIt() {
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.holdInputContaining = "\nEOF\n"
+        terminal.run()
+        XCTAssertNotNil(terminal.sentTexts.firstIndex { $0.contains(receiveScriptCommandMarker) })
+        XCTAssertTrue(terminal.sentTexts.last?.hasSuffix("\nEOF\n") == true)
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+
+        XCTAssertEqual(terminal.stopSendingTextCount, 1)
+    }
+
+    // F-543: Send Again while sh receives the script ends its read loop and writes the script
+    // again from the same helpers.
     func testSendAgainWhileWritingTheScriptReturnsToTheUserShell() {
-        terminal.holdInputContaining = "<<'EOF'"
+        terminal.holdInputContaining = receiveScriptCommandMarker
         controller.shellIntegrationInstallerSendShellCommands(1)
         terminal.run()
 
@@ -1761,6 +1908,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
 
         XCTAssertEqual(launchesTyped, 1)
         XCTAssertEqual(terminal.heredocBodies.count, 2)
+        XCTAssertEqual(terminal.files["~/.iterm2_shell_integration.tcsh"]?.hasPrefix(bundledScript("tcsh")), true)
         XCTAssertEqual(terminal.helperDepth, 0)
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
         XCTAssertEqual(controller.sendShellCommandsStage, 2)
@@ -1874,9 +2022,9 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertFalse(controller.sendShellCommandsWriteFailed)
     }
 
-    // F-463: a shell integration script cut short would be written partially if the here-document
-    // were then ended, so Cancel lets it finish. Once the archive is in, there is nothing to stop.
-    func testCancelStopsTypingOnlyTheArchive() {
+    // F-463: Cancel stops typing only while sh reads a file: before anything was typed, or once
+    // the archive is in, there is nothing to stop.
+    func testCancelStopsTypingOnlyWhileShReadsAFile() {
         controller.shellIntegrationInstallerSendShellCommands(1)
         controller.shellIntegrationInstallerCancelExpectations()
         XCTAssertEqual(terminal.stopSendingTextCount, 0)
@@ -1887,6 +2035,61 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
         controller.shellIntegrationInstallerCancelExpectations()
         XCTAssertEqual(terminal.stopSendingTextCount, 0)
+    }
+
+    private func bundledScript(_ shell: String) -> String {
+        let bundle = Bundle(for: iTermShellIntegrationWindowController.self)
+        guard let url = bundle.url(forResource: "iterm2_shell_integration", withExtension: shell),
+              let script = try? String(contentsOf: url, encoding: .utf8) else {
+            XCTFail("Missing bundled \(shell) script")
+            return ""
+        }
+        return script
+    }
+
+    // F-880: the script has lines longer than a tty in canonical mode, as dash reads it, keeps.
+    // It must be written whole, and no typed line may be longer than macOS's limit of 1024 bytes,
+    // the smaller one.
+    func testWriteScriptWritesTheWholeScript() {
+        let bundled = bundledScript("tcsh")
+        XCTAssertGreaterThan(bundled.components(separatedBy: "\n").map { $0.utf8.count }.max() ?? 0, 4096)
+
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        let script = terminal.files["~/.iterm2_shell_integration.tcsh"] ?? ""
+        XCTAssertTrue(script.hasPrefix(bundled), "\(script.utf8.count) bytes written, \(bundled.utf8.count) expected")
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(controller.sendShellCommandsStage, 2)
+        XCTAssertFalse(controller.sendShellCommandsWriteFailed)
+        XCTAssertLessThan(longestTypedLine(terminal.sentTexts), 1024)
+    }
+
+    // F-880: when sh can't create the file the script goes into, the script is not typed (it
+    // would run as commands), the helpers exit, and the step says the script was not written.
+    func testWriteScriptDoesNotTypeTheScriptWhenShCannotReceiveIt() {
+        terminal.receiveFails = true
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        XCTAssertNotNil(terminal.sentTexts.firstIndex { $0.contains(receiveScriptCommandMarker) })
+        XCTAssertFalse(terminal.sentTexts.contains { $0.contains("\nEOF\n") })
+        XCTAssertEqual(terminal.files, [:])
+        XCTAssertFalse(terminal.helperIsRunning)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
+        XCTAssertEqual(controller.sendShellCommandsStage, 1)
+        XCTAssertTrue(controller.sendShellCommandsWriteFailed)
+    }
+
+    // F-880: every line of the whole install, the dotfile step too, is far shorter than a tty in
+    // canonical mode keeps.
+    func testWholeInstallTypesOnlyShortLines() {
+        for stage in 1...3 {
+            controller.shellIntegrationInstallerSendShellCommands(Int32(stage))
+            terminal.run()
+            XCTAssertEqual(controller.sendShellCommandsStage, Int32(stage + 1))
+        }
+        XCTAssertLessThan(longestTypedLine(terminal.sentTexts), 1024)
     }
 
     func testWholeInstallSendsBothHereDocumentsAndExitsTheHelper() {
@@ -2255,6 +2458,153 @@ final class ShellIntegrationReceiveUtilitiesCommandTests: XCTestCase {
     }
 }
 
+// F-880: runs the command with which the helper sh receives and writes the shell integration
+// script in real POSIX shells, as the installer types it.
+final class ShellIntegrationReceiveScriptCommandTests: XCTestCase {
+    private static let shells = ["/bin/sh", "/bin/dash"].filter { FileManager.default.isExecutableFile(atPath: $0) }
+    private var folder: URL!
+    private var path: String { folder.appendingPathComponent(".iterm2_shell_integration.bash").path }
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: folder)
+        try super.tearDownWithError()
+    }
+
+    // The bundled bash script, whose longest line is longer than any tty keeps in canonical mode.
+    private func script() throws -> Data {
+        let bundle = Bundle(for: iTermShellIntegrationWindowController.self)
+        let url = try XCTUnwrap(bundle.url(forResource: "iterm2_shell_integration", withExtension: "bash"))
+        return try Data(contentsOf: url)
+    }
+
+    // Runs the command in an interactive sh, like the helper, with `input` as what is typed after
+    // it, and returns what sh printed.
+    private func run(_ shell: String, command: String, input: String) throws -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: shell)
+        process.arguments = ["-i", "-c", command]
+        process.currentDirectoryURL = folder
+        process.environment = ["ENV": "/dev/null", "HOME": folder.path, "PATH": "/usr/bin:/bin:/usr/sbin:/sbin"]
+        let stdin = Pipe()
+        let output = Pipe()
+        process.standardInput = stdin
+        process.standardOutput = output
+        process.standardError = output
+        try process.run()
+        stdin.fileHandleForWriting.write(Data(input.utf8))
+        try stdin.fileHandleForWriting.close()
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private func leftoverTemporaryFiles() -> [String] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+        return names.filter { $0.contains(".it2-") }
+    }
+
+    func testChecksumIsTheOneCksumPrints() throws {
+        for data in [Data(), Data("a".utf8), try script()] {
+            let file = folder.appendingPathComponent("data")
+            try data.write(to: file)
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/cksum")
+            process.arguments = [file.path]
+            let output = Pipe()
+            process.standardOutput = output
+            try process.run()
+            let printed = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            process.waitUntilExit()
+            let words = printed.split(whereSeparator: { $0 == " " || $0 == "\t" || $0 == "\n" })
+            XCTAssertEqual(iTermShellIntegrationWindowController.posixChecksum(of: data),
+                           words.prefix(2).joined(separator: " "))
+        }
+    }
+
+    func testWritesTheWholeScript() throws {
+        let script = try script()
+        let command = iTermShellIntegrationWindowController.commandToReceiveScript(script, at: path)
+        for shell in Self.shells {
+            try? FileManager.default.removeItem(atPath: path)
+            let output = try run(shell, command: command, input: iTermShellIntegrationWindowController.textToSend(script))
+
+            XCTAssertTrue(output.contains("it2-receiving-script"), "\(shell): \(output)")
+            XCTAssertTrue(output.contains("it2-script-written"), "\(shell): \(output)")
+            XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: path)), script, shell)
+            XCTAssertTrue(FileManager.default.isExecutableFile(atPath: path), shell)
+            XCTAssertEqual(leftoverTemporaryFiles(), [], shell)
+        }
+    }
+
+    // The path is typed as the installer has it, which for most shells starts with ~.
+    func testWritesToAPathUnderTheHomeDirectory() throws {
+        let script = try script()
+        let command = iTermShellIntegrationWindowController.commandToReceiveScript(script, at: "~/.iterm2_shell_integration.bash")
+        for shell in Self.shells {
+            try? FileManager.default.removeItem(atPath: path)
+            let output = try run(shell, command: command, input: iTermShellIntegrationWindowController.textToSend(script))
+
+            XCTAssertTrue(output.contains("it2-script-written"), "\(shell): \(output)")
+            XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: path)), script, shell)
+            XCTAssertEqual(leftoverTemporaryFiles(), [], shell)
+        }
+    }
+
+    // A script cut short, as when a tty drops the end of a long line or Cancel stops typing it,
+    // must not replace the one there.
+    func testPartialScriptIsNotWritten() throws {
+        let script = try script()
+        let command = iTermShellIntegrationWindowController.commandToReceiveScript(script, at: path)
+        var lines = iTermShellIntegrationWindowController.textToSend(script).components(separatedBy: "\n")
+        lines.remove(at: lines.count / 2)
+        for shell in Self.shells {
+            try Data("old".utf8).write(to: URL(fileURLWithPath: path))
+            for input in ["EOF\n", lines.joined(separator: "\n")] {
+                let output = try run(shell, command: command, input: input)
+
+                XCTAssertTrue(output.contains("it2-script-failed"), "\(shell): \(output)")
+                XCTAssertFalse(output.contains("it2-script-written"), "\(shell): \(output)")
+                XCTAssertEqual(try String(contentsOfFile: path, encoding: .utf8), "old", shell)
+                XCTAssertEqual(leftoverTemporaryFiles(), [], shell)
+            }
+        }
+    }
+
+    // The file to read the script into can't be created, so sh must not say it is receiving:
+    // iTerm2 would then type the script into its prompt.
+    func testDoesNotReceiveWhenTheFolderIsMissing() throws {
+        let script = try script()
+        let missing = folder.appendingPathComponent("missing/script").path
+        let command = iTermShellIntegrationWindowController.commandToReceiveScript(script, at: missing)
+        for shell in Self.shells {
+            let output = try run(shell, command: command, input: "EOF\n")
+
+            XCTAssertTrue(output.contains("it2-cannot-receive-script"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-receiving-script"), "\(shell): \(output)")
+            XCTAssertFalse(output.contains("it2-script-written"), "\(shell): \(output)")
+        }
+    }
+
+    // sh echoes the typed command, and the echo must not look like any of its answers. It must
+    // also be short enough for a tty in canonical mode to keep, even with a long path.
+    func testCommandIsShortAndDoesNotContainItsAnswers() throws {
+        let longPath = "/home/" + String(repeating: "x", count: 64) + "/.iterm2_shell_integration.bash"
+        let command = iTermShellIntegrationWindowController.commandToReceiveScript(try script(), at: longPath)
+        for answer in ["it2-receiving-script", "it2-cannot-receive-script",
+                       "it2-script-written", "it2-script-failed"] {
+            XCTAssertFalse(command.contains(answer), answer)
+        }
+        XCTAssertLessThan(command.utf8.count, 1024)
+        XCTAssertLessThan(longestTypedLine([iTermShellIntegrationWindowController.textToSend(try script())]), 80)
+    }
+}
+
 // The same tests with expectations completed in the order the app can complete them: the next
 // command is typed before the completion of the expectation that matched runs.
 final class ShellIntegrationOfflineTcshFromZshDeferredCompletionInstallerTests: ShellIntegrationOfflineTcshFromZshInstallerTests {
@@ -2403,14 +2753,37 @@ final class ShellIntegrationHelperLaunchInDashTests: XCTestCase {
         type("true\n")
         XCTAssertNotNil(try readUntilARowMatches("^>> (?![\"'])", from: next), output)
 
-        // A here-document in one piece, as the script step types it. The tty echoes it before
-        // sh prints its prompts, so EOF's echo doesn't follow one, but the answer after it comes.
+        // The script, as the script step sends it. F-880: one of its lines is longer than the
+        // tty keeps in canonical mode, which is how dash reads it.
         let path = binDirectory.appendingPathComponent("script").path
-        let body = (1...20).map { "line \($0) of the script" }
+        let script = Data(((1...20).map { "line \($0) of the script" } +
+                           [String(repeating: "long line ", count: 1000)]).joined(separator: "\n").utf8 + [0x0a])
         next = rows().count
-        type("cat <<'EOF' > \(path)\n" + body.joined(separator: "\n") + "\nEOF\necho it2-\"\"script-written\n")
-        XCTAssertNotNil(try readUntilARowMatches("it2-script-written", from: next), output)
-        XCTAssertEqual(try String(contentsOfFile: path, encoding: .utf8), body.joined(separator: "\n") + "\n")
+        type(iTermShellIntegrationWindowController.commandToReceiveScript(script, at: path))
+        XCTAssertNotNil(try readUntilARowMatches("it2-receiving-script", from: next), output)
+        next = rows().count
+        // Typed from another thread while this one reads what the tty echoes, since the tty's
+        // buffers are smaller than the text.
+        let bytes = Array(iTermShellIntegrationWindowController.textToSend(script).utf8)
+        let master = self.master
+        // It asserts nothing itself, since the test can be over (and the master closed) if it
+        // failed: the expectation is fulfilled only once all of the text was written.
+        let typed = expectation(description: "The script was typed")
+        DispatchQueue.global().async {
+            var offset = 0
+            while offset < bytes.count {
+                let n = bytes[offset...].withUnsafeBufferPointer { write(master, $0.baseAddress, $0.count) }
+                if n <= 0 {
+                    return
+                }
+                offset += n
+            }
+            typed.fulfill()
+        }
+        XCTAssertNotNil(try readUntilARowMatches("it2-script-(written|failed)", from: next), output)
+        wait(for: [typed], timeout: 30)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: path)), script)
+        XCTAssertNotNil(rows().first { $0.contains("it2-script-written") }, output)
 
         type("exit\nexit\n")
         let exited = expectation(description: "The shells exited")

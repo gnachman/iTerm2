@@ -48,6 +48,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (class, nonatomic, readonly) NSString *helperPromptRegex;
 // The command that makes the helper sh enter the utilities folder and says whether it did.
 + (NSString *)commandToEnterUtilitiesFolder:(NSString *)folder NS_SWIFT_NAME(commandToEnterUtilitiesFolder(_:));
+// The checksum and length POSIX cksum prints for data, separated by a space.
++ (NSString *)posixChecksumOfData:(NSData *)data NS_SWIFT_NAME(posixChecksum(of:));
+// data as typed to the helper sh's read loop: base64 lines, then a line that is just EOF.
++ (NSString *)textToSendData:(NSData *)data NS_SWIFT_NAME(textToSend(_:));
+// The command that makes the helper sh receive data, typed after it with textToSendData:, and
+// write it to path, saying whether it did.
++ (NSString *)commandToReceiveScriptData:(NSData *)data atPath:(NSString *)path NS_SWIFT_NAME(commandToReceiveScript(_:at:));
 @end
 
 NS_ASSUME_NONNULL_END

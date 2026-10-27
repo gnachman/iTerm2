@@ -62,11 +62,15 @@ static NSString *const iTermShellIntegrationNuAutoloadDirCommand =
     @"IT2_NU_AUTOLOAD_DIR=$(case \"${SHELL##*/}\" in (nu) IT2_NU=\"$SHELL\";; (*) IT2_NU=$(command -v nu);; esac; \"$IT2_NU\" --no-config-file -c 'print ($nu.user-autoload-dirs? | default [($nu.data-dir | path join vendor autoload)] | first)'); mkdir -p \"$IT2_NU_AUTOLOAD_DIR\"; echo iTerm2-nu-autoload-dir-\"\"ready\n";
 static NSString *const iTermShellIntegrationNuAutoloadDirReadyRegex = @"^iTerm2-nu-autoload-dir-ready$";
 
-// Sent right after the heredoc that writes the script, so $? is cat's exit status. Prints
-// iTerm2-nu-script-written only if cat succeeded and the file is not empty.
-static NSString *const iTermShellIntegrationNuVerifyScriptCommandFormat =
-    @"if test $? -eq 0 && test -s %1$@; then chmod +x %1$@; echo iTerm2-nu-script-\"\"written; else echo iTerm2-nu-script-\"\"missing; fi\n";
-static NSString *const iTermShellIntegrationNuVerifyScriptRegex = @"^iTerm2-nu-script-(written|missing)$";
+// Files go to the helper sh base64-encoded, in short lines, which a read loop in sh takes from the
+// tty into a file (see receiveText:withCommand:name:resultRegex:success:expectation:completion:).
+// These are the pieces of the commands that do that. OpenBSD has no base64 command, but it has
+// b64decode. The loop stops at a line that is just EOF, which base64 never produces (its lines are
+// multiples of four characters).
+#define iTermShellIntegrationChooseBase64Decoder \
+    @"if command -v base64 >/dev/null 2>&1; then IT2_B64D='base64 -d'; else IT2_B64D='b64decode -r'; fi; "
+#define iTermShellIntegrationReadLinesUntilEOF \
+    @"while IFS= read -r IT2_LINE && test \"$IT2_LINE\" != EOF; do printf '%s\\n' \"$IT2_LINE\"; done; "
 
 // Typed into the helper sh in the utilities folder. Reads the base64 archive from the tty up to
 // a line that is just EOF into a file (with read, so not through a line editor), decodes it
@@ -94,15 +98,35 @@ static NSString *const iTermShellIntegrationNuVerifyScriptRegex = @"^iTerm2-nu-s
 //
 // The empty quotes keep the echo of the command from matching any of these.
 static NSString *const iTermShellIntegrationReceiveUtilitiesCommand =
-    @"if command -v base64 >/dev/null 2>&1; then IT2_B64D='base64 -d'; else IT2_B64D='b64decode -r'; fi; "
+    iTermShellIntegrationChooseBase64Decoder
     @"if { echo it2-\"\"receiving-utilities >&3; "
-    @"while IFS= read -r IT2_LINE && test \"$IT2_LINE\" != EOF; do printf '%s\\n' \"$IT2_LINE\"; done; } 3>&1 > .it2-utilities.b64; then "
+    iTermShellIntegrationReadLinesUntilEOF @"} 3>&1 > .it2-utilities.b64; then "
     @"if $IT2_B64D < .it2-utilities.b64 > .it2-utilities.tgz && tar tfz .it2-utilities.tgz > /dev/null && "
     @"tar xfz .it2-utilities.tgz && test -s it2check && "
     @"mkdir -p ~/.iterm2/bin && cp -p it2-files/bin/it2 ~/.iterm2/bin/it2 && cp -p it2-files/it2.*.py ~/.iterm2/; "
     @"then echo it2-\"\"utilities-installed; else echo it2-\"\"utilities-failed; fi; "
     @"else echo it2-\"\"cannot-receive-utilities; fi; "
     @"rm -f .it2-utilities.b64 .it2-utilities.tgz; rm -rf it2-files\n";
+
+// Typed into the helper sh to write the shell integration script to the path {path} (IT2_F, so
+// the command stays short with a long path), the way the utilities archive is received: the
+// script is typed base64-encoded after sh says it is reading it into $IT2_F.it2-b64, with the
+// same answers but for “script” in place of “utilities”. sh then decodes it into $IT2_F.it2-new,
+// and only if that is the whole script, as POSIX cksum (whose first two words, without the blanks
+// and file name some versions print, must be {cksum}) says, copies it over $IT2_F (through a symlink, keeping
+// its owner) and makes that executable. It prints it2-script-written if all of that succeeded and
+// it2-script-failed otherwise, so a script cut short, as by Cancel, never replaces the one there.
+// Both temporary files are removed.
+static NSString *const iTermShellIntegrationReceiveScriptCommandTemplate =
+    @"IT2_F={path}; "
+    iTermShellIntegrationChooseBase64Decoder
+    @"if { echo it2-\"\"receiving-script >&3; "
+    iTermShellIntegrationReadLinesUntilEOF @"} 3>&1 > \"$IT2_F.it2-b64\"; then "
+    @"if $IT2_B64D < \"$IT2_F.it2-b64\" > \"$IT2_F.it2-new\" && set -- $(cksum < \"$IT2_F.it2-new\") && test \"$1 $2\" = '{cksum}' && "
+    @"cat \"$IT2_F.it2-new\" > \"$IT2_F\" && chmod +x \"$IT2_F\"; "
+    @"then echo it2-\"\"script-written; else echo it2-\"\"script-failed; fi; "
+    @"else echo it2-\"\"cannot-receive-script; fi; "
+    @"rm -f \"$IT2_F.it2-b64\" \"$IT2_F.it2-new\"\n";
 
 // The prompt of the innermost helper sh (PS1 in launchHelperShellString), at the start of a row
 // or right after iTermShellIntegrationHelpersReadyMarker. A line editor that breaks the echo of a
@@ -149,10 +173,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationHelperState) {
     iTermShellIntegrationHelperStateLaunching,
     // _helperShellDepth helpers are running and the innermost reads the next line as a command.
     iTermShellIntegrationHelperStateIdle,
-    // The innermost helper is in its loop that reads the utilities archive.
-    iTermShellIntegrationHelperStateReadingUtilities,
-    // The innermost helper is reading a here-document whose end has been typed.
-    iTermShellIntegrationHelperStateInHereDocument,
+    // The innermost helper is in its loop that reads the utilities archive or the shell
+    // integration script.
+    iTermShellIntegrationHelperStateReceivingFile,
     // Something was typed whose end won't be, such as part of an if statement whose remaining
     // lines were canceled, or nothing is known.
     iTermShellIntegrationHelperStateUnknown,
@@ -213,6 +236,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSUInteger _canceledHelperLaunchWaitID;
     // See cancelHelpersIdleExpectation.
     NSUInteger _helpersIdleExpectationGeneration;
+    // While the helper receives a file, whether typing the file itself (rather than the command
+    // that receives it) has begun. See helpersIdleExpectation.
+    BOOL _receivedTextTyped;
 }
 
 - (instancetype)initWithWindow:(NSWindow *)window {
@@ -517,8 +543,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [_pendingExpectations removeAllObjects];
     _afterHelpersExit = nil;
     _lastTextIsIdleOnMatch = NO;
-    if (_helperState == iTermShellIntegrationHelperStateReadingUtilities) {
-        // Stops typing the archive and ends sh's read loop. See helpersIdleExpectation.
+    if (_helperState == iTermShellIntegrationHelperStateReceivingFile) {
+        // Stops typing the file and ends sh's read loop. See helpersIdleExpectation.
         [self helpersIdleExpectation];
     }
     [self.currentViewController setBusy:NO];
@@ -536,6 +562,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 // The innermost helper was seen reading commands.
 - (void)helperShellsBecameIdle {
+    _receivedTextTyped = NO;
     _helperState = iTermShellIntegrationHelperStateIdle;
     _helperShellDepth = [self helperShellLevels];
     DLog(@"Helper shells are idle at depth %@", @(_helperShellDepth));
@@ -563,15 +590,14 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 // An expectation that completes once the helpers, which are running but busy, read commands
 // again, or nil when that can't be awaited. It types what it takes to get there:
 // - While they launch, an empty line, so a prompt follows even if their first one went by.
-// - While sh reads the utilities archive, which takes a minute or more to type, typing the
-//   archive stops and the line that ends sh's read loop is typed, as the archive would have
-//   ended. Otherwise sh would keep taking whatever is typed next into its file. The newline
-//   first ends a line the stop may have cut. sh then fails to unpack what it got, removes its
-//   files, and prompts. This is safe because sh checks the whole archive before unpacking any of
-//   it, so a partial one installs nothing. If sh has not read the receive command yet, its loop
-//   reads just these lines and ends the same way.
-// - A here-document of a shell integration script, in contrast, is left to finish: cut short,
-//   ending it would write a partial script that a dotfile may already source.
+// - While sh reads the utilities archive (which takes a minute or more to type) or the shell
+//   integration script, typing it stops and the line that ends sh's read loop is typed, as the
+//   file would have ended. Otherwise sh would keep taking whatever is typed next into its file.
+//   The newline first ends a line the stop may have cut. sh then finds that what it got is not
+//   the whole file, removes its temporary files, and prompts. This is safe because sh checks the
+//   whole archive before unpacking any of it, and the script's checksum before writing it, so a
+//   partial one installs nothing. If sh has not read the receive command yet, its loop reads
+//   just these lines and ends the same way.
 // Then a command whose answer shows the helper reads commands, typed only once this expectation
 // is in place so the answer can't go by unseen.
 - (iTermExpectation *)helpersIdleExpectation {
@@ -589,12 +615,15 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             text = @"\n";
             regex = iTermShellIntegrationHelperPromptRegex;
             break;
-        case iTermShellIntegrationHelperStateReadingUtilities:
-            [self.delegate shellIntegrationWindowControllerStopSendingText];
+        case iTermShellIntegrationHelperStateReceivingFile:
+            // Typing is stopped only once the file is being typed. Before that, what is still
+            // being typed is the receive command, and stopping it partway could leave sh waiting
+            // for the rest of an if statement or a quoted string. Typed whole, it is followed by
+            // the lines below, which end its loop.
+            if (_receivedTextTyped) {
+                [self.delegate shellIntegrationWindowControllerStopSendingText];
+            }
             text = [@"\nEOF\n" stringByAppendingString:iTermShellIntegrationHelpersIdleCommand];
-            break;
-        case iTermShellIntegrationHelperStateInHereDocument:
-            text = iTermShellIntegrationHelpersIdleCommand;
             break;
     }
     DLog(@"Wait for helper shells to become idle in state %@", @(_helperState));
@@ -912,9 +941,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             return;
         }
         strongSelf->_helperState = state;
+        strongSelf->_receivedTextTyped = NO;
         if (state != iTermShellIntegrationHelperStateIdle &&
-            state != iTermShellIntegrationHelperStateReadingUtilities &&
-            state != iTermShellIntegrationHelperStateInHereDocument) {
+            state != iTermShellIntegrationHelperStateReceivingFile) {
             strongSelf->_helperShellDepth = 0;
         }
     };
@@ -1298,26 +1327,74 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     return exits;
 }
 
-// Writes string to path from the helper sh. The here-document goes in one piece, so a cancel
-// can't leave sh reading one whose end won't be typed.
+// The checksum POSIX cksum prints for data, followed by its length, as in “4294967295 0”.
++ (NSString *)posixChecksumOfData:(NSData *)data {
+    __block uint32_t crc = 0;
+    void (^add)(uint8_t) = ^(uint8_t byte) {
+        crc ^= (uint32_t)byte << 24;
+        for (int i = 0; i < 8; i++) {
+            crc = (crc & 0x80000000) ? (crc << 1) ^ 0x04C11DB7 : (crc << 1);
+        }
+    };
+    const uint8_t *bytes = data.bytes;
+    for (NSUInteger i = 0; i < data.length; i++) {
+        add(bytes[i]);
+    }
+    // Then the length, least significant byte first, in as few bytes as it takes.
+    for (unsigned long long length = data.length; length > 0; length >>= 8) {
+        add(length & 0xff);
+    }
+    return [NSString stringWithFormat:@"%u %@", (unsigned int)~crc, @(data.length)];
+}
+
+// data as the installer types it to a read loop in the helper sh: base64 in lines of 76
+// characters, far shorter than any tty keeps in canonical mode (1024 bytes on macOS and BSD,
+// 4096 on Linux), followed by the line that ends the loop.
++ (NSString *)textToSendData:(NSData *)data {
+    NSString *encoded = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed)];
+    return [encoded stringByAppendingString:@"\nEOF\n"];
+}
+
++ (NSData *)scriptDataForString:(NSString *)string {
+    // The script ends with a newline after string, as when it was written with a here-document.
+    return [[string stringByAppendingString:@"\n"] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSString *)commandToReceiveScriptData:(NSData *)data atPath:(NSString *)path {
+    // Not a format string, since the command has a printf format of its own. The checksum goes
+    // in first, so a path can't add to what is replaced.
+    NSString *command = [iTermShellIntegrationReceiveScriptCommandTemplate stringByReplacingOccurrencesOfString:@"{cksum}"
+                                                                                                    withString:[self posixChecksumOfData:data]];
+    return [command stringByReplacingOccurrencesOfString:@"{path}" withString:path];
+}
+
+// Writes string to path from the helper sh and then exits the helpers, as the utilities archive
+// is received (see receiveText:withCommand:name:resultRegex:success:expectation:completion:),
+// rather than in a here-document: some lines of the scripts are longer than a tty in canonical
+// mode keeps, which is how sh reads a here-document when it has no line editor (as dash, the sh
+// of Debian and Ubuntu), so their ends would be lost. completion says whether the whole script
+// was written.
 // expectation is inout, not out: ARC passes an out parameter a nil temporary, so the commands
 // here would start a chain of their own and be typed alongside the caller's instead of after them.
 - (NSString *)catString:(NSString *)string
                      to:(NSString *)path
              reallySend:(BOOL)reallySend
-            expectation:(inout iTermExpectation **)expectation {
-    // Once sh prints the answer after the end of the here-document, it reads commands. The
-    // answer is waited for rather than the echo of EOF: an sh without a line editor, such as
-    // dash, leaves echoing to the tty, which echoes each piece of the text as it arrives, before
-    // sh prints the prompts for its lines, so EOF's echo doesn't follow a prompt.
-    NSString *text = [NSString stringWithFormat:@"cat <<'EOF' > %@\n%@\nEOF\necho it2-\"\"script-written\n", path, string];
-    return [self sendText:text
-               reallySend:reallySend
-               afterRegex:@"it2-script-written"
-              expectation:expectation
-                  didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateInHereDocument]
-              idleOnMatch:YES
-               completion:nil];
+            expectation:(inout iTermExpectation **)expectation
+             completion:(void (^)(BOOL written))completion {
+    NSData *data = [iTermShellIntegrationWindowController scriptDataForString:string];
+    NSString *command = [iTermShellIntegrationWindowController commandToReceiveScriptData:data atPath:path];
+    NSString *text = [iTermShellIntegrationWindowController textToSendData:data];
+    if (!reallySend) {
+        return [[command stringByAppendingString:text] stringByAppendingString:self.exitHelperShellString];
+    }
+    [self receiveText:text
+          withCommand:command
+                 name:@"script"
+          resultRegex:@"it2-script-(written|failed)"
+              success:@"written"
+          expectation:expectation
+           completion:completion];
+    return command;
 }
 
 // nushell sources every .nu file in its autoload directories at startup, after config.nu, so the
@@ -1326,13 +1403,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 // nushell version.
 //
 // Each command is sent only once output shows the previous one ran in the helper sh. nushell
-// reads typeahead in bulk, so text typed before sh is reading would go to nushell. The script is
-// written from this helper sh without catString:to:, and completion
+// reads typeahead in bulk, so text typed before sh is reading would go to nushell. completion
 // reports whether the file was written.
 - (NSString *)catToNuScript:(NSString *)script
                  reallySend:(BOOL)reallySend
                  completion:(void (^)(BOOL written))completion {
-    NSString *path = [self shellIntegrationPath];
     NSMutableString *result = [NSMutableString string];
     iTermExpectation *expectation = nil;
     // Each text below is typed when the regex of the one before it matches.
@@ -1343,34 +1418,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                              reallySend:reallySend
                              afterRegex:iTermShellIntegrationNuAutoloadDirReadyRegex
                             expectation:&expectation]];
-    // sh is prompting for the heredoc. The script, its terminator, and the check then go in one
-    // piece so nothing else can be typed into the heredoc. Until they are typed, sh reads a
-    // heredoc that won't end if they are canceled.
-    [result appendString:[self sendText:[NSString stringWithFormat:@"cat <<'EOF' > %@\n", path]
-                             reallySend:reallySend
-                             afterRegex:@"^> "
-                            expectation:&expectation
-                                didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateUnknown]
-                             completion:nil]];
-    NSString *verify = [NSString stringWithFormat:iTermShellIntegrationNuVerifyScriptCommandFormat, path];
-    NSString *body = [NSString stringWithFormat:@"%@\nEOF\n%@", script, verify];
-    __weak __typeof(self) weakSelf = self;
-    [result appendString:[self sendText:body
-                             reallySend:reallySend
-                             afterRegex:iTermShellIntegrationNuVerifyScriptRegex
-                            expectation:&expectation
-                                didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateInHereDocument]
-                             completion:^(NSArray<NSString *> *captures) {
-        // The helper sh printed the result, so it is the one that reads exit, not nushell.
-        [weakSelf helperShellsBecameIdle];
-        [weakSelf exitIdleHelperShells];
-        if (completion) {
-            completion([captures[1] isEqualToString:@"written"]);
-        }
-    }]];
-    if (!reallySend) {
-        [result appendString:self.exitHelperShellString];
-    }
+    [result appendString:[self catString:script
+                                      to:[self shellIntegrationPath]
+                              reallySend:reallySend
+                             expectation:&expectation
+                              completion:completion]];
     return result;
 }
 
@@ -1396,19 +1448,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [result appendString:[self catString:scriptForShell
                                       to:[self shellIntegrationPath]
                               reallySend:reallySend
-                             expectation:&expectation]];
-    [result appendString:[self sendText:[NSString stringWithFormat:@"chmod +x %@\n", [self shellIntegrationPath]]
-                             reallySend:reallySend
-                             afterRegex:@"^>> "
-                            expectation:&expectation]];
-    [result appendString:[self exitHelperShells:reallySend
-                                     afterRegex:@"^>> "
-                                    expectation:&expectation
-                                     completion:^(NSArray<NSString *> *captures) {
-        if (completion) {
-            completion(YES);
-        }
-    }]];
+                             expectation:&expectation
+                              completion:completion]];
     return result;
 }
 
@@ -1484,59 +1525,89 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 }
 
 - (NSString *)encodedUtilitiesArchiveFromURL:(NSURL *)url {
-    NSData *data = [NSData dataWithContentsOfURL:url];
-    NSString *encoded = [data base64EncodedStringWithOptions:(NSDataBase64Encoding76CharacterLineLength | NSDataBase64EncodingEndLineWithLineFeed)];
-    return [encoded stringByAppendingString:@"\nEOF\n"];
+    return [iTermShellIntegrationWindowController textToSendData:[NSData dataWithContentsOfURL:url]];
 }
 
 // Typed into the helper sh once it is in the utilities folder.
 - (void)receiveUtilitiesArchiveFromURL:(NSURL *)url
                             completion:(void (^)(BOOL installed))completion {
-    // The archive is hundreds of lines. Typed into a here-document, each line goes through sh's
-    // line editor, which switches the tty between raw and canonical mode for every line, and on
-    // a busy system lines got lost or spliced, most likely where input queued across a switch
-    // overflowed the tty's input buffer. So a read loop in sh takes the lines instead: no line
-    // editor, and the tty stays in canonical mode, where a full input buffer makes the writer
-    // wait instead of dropping input. The loop stops at a line that is just EOF, which base64
-    // never produces (its lines are multiples of four characters). The archive is typed only
-    // once sh says the loop is reading into a file it created, so none of it can reach sh's
-    // prompt and run as a command. tar's exit status then says whether it arrived intact, since
-    // gzip checks a CRC. OpenBSD has no base64 command, but it has b64decode.
-    NSString *archive = [self encodedUtilitiesArchiveFromURL:url];
-    // Whether to type the archive depends on sh's answer, so it is not chained after the
-    // command like the other texts: the answer's completion types it, or gives up.
+    // tar's exit status says whether the archive arrived intact, since gzip checks a CRC.
+    iTermExpectation *expectation = nil;
+    [self receiveText:[self encodedUtilitiesArchiveFromURL:url]
+          withCommand:iTermShellIntegrationReceiveUtilitiesCommand
+                 name:@"utilities"
+          resultRegex:@"it2-utilities-(installed|failed)"
+              success:@"installed"
+          expectation:&expectation
+           completion:completion];
+}
+
+// Types command, which makes the helper sh read lines from the tty up to one that is just EOF
+// into a file and then use it, and then text, the lines it reads, followed by that EOF line.
+// command prints it2-receiving-<name> once the file is open, or it2-cannot-receive-<name> if it
+// can't be created, and then an answer that resultRegex matches, whose first capture is success
+// if the file was used. Then the helpers exit, and completion says whether it was.
+//
+// Text typed into a here-document goes through sh's line editor, which switches the tty between
+// raw and canonical mode for every line, and on a busy system lines got lost or spliced, most
+// likely where input queued across a switch overflowed the tty's input buffer. An sh without a
+// line editor, such as dash, reads it in canonical mode, where the tty drops what goes past its
+// limit on a line. So a read loop in sh takes short lines instead: no line editor, and the tty
+// stays in canonical mode, where a full input buffer makes the writer wait instead of dropping
+// input. text is typed only once sh says the loop is reading into a file it created, so none of
+// it can reach sh's prompt and run as a command.
+- (void)receiveText:(NSString *)text
+        withCommand:(NSString *)command
+               name:(NSString *)name
+        resultRegex:(NSString *)resultRegex
+            success:(NSString *)success
+        expectation:(inout iTermExpectation **)expectation
+         completion:(void (^)(BOOL succeeded))completion {
+    // Whether to type text depends on sh's answer, so it is not chained after the command like
+    // the other texts: the answer's completion types it, or gives up.
     __weak __typeof(self) weakSelf = self;
     const NSUInteger generation = _cancellationGeneration;
-    iTermExpectation *receiveExpectation = nil;
-    [self sendText:iTermShellIntegrationReceiveUtilitiesCommand
+    [self sendText:command
         reallySend:YES
-        afterRegex:@"it2-(receiving|cannot-receive)-utilities"
-       expectation:&receiveExpectation
-           didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateReadingUtilities]
+        afterRegex:[NSString stringWithFormat:@"it2-(receiving|cannot-receive)-%@", name]
+       expectation:expectation
+           didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateReceivingFile]
         completion:^(NSArray<NSString *> *captures) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf || strongSelf->_cancellationGeneration != generation) {
-            DLog(@"Not answering the utilities receive command after a cancel");
+            DLog(@"Not answering the %@ receive command after a cancel", name);
             return;
         }
         if (![captures[1] isEqualToString:@"receiving"]) {
-            // sh could not create the file to receive the archive into. It is reading commands.
+            DLog(@"sh could not create the file to receive the %@ into", name);
+            // It is reading commands.
             [strongSelf helperShellsBecameIdle];
             [strongSelf exitIdleHelperShells];
-            completion(NO);
+            if (completion) {
+                completion(NO);
+            }
             return;
         }
-        iTermExpectation *archiveExpectation = nil;
-        [strongSelf sendText:archive
+        iTermExpectation *textExpectation = nil;
+        [strongSelf sendText:text
                   reallySend:YES
-                  afterRegex:@"it2-utilities-(installed|failed)"
-                 expectation:&archiveExpectation
+                  afterRegex:resultRegex
+                 expectation:&textExpectation
+                     didSend:^{
+            __strong __typeof(self) innerSelf = weakSelf;
+            if (innerSelf) {
+                innerSelf->_receivedTextTyped = YES;
+            }
+        }
                   completion:^(NSArray<NSString *> *captures) {
             __strong __typeof(self) innerSelf = weakSelf;
             // sh printed the result, so it is reading commands again.
             [innerSelf helperShellsBecameIdle];
             [innerSelf exitIdleHelperShells];
-            completion([captures[1] isEqualToString:@"installed"]);
+            DLog(@"Receiving the %@ ended with %@", name, captures[1]);
+            if (completion) {
+                completion([captures[1] isEqualToString:success]);
+            }
         }];
     }];
 }
