@@ -766,6 +766,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if ([self updatePaneTitles] && [self isTmuxTab]) {
         DLog(@"PTYTab %@ triggering windowDidResize", reason);
         [tmuxController_ windowDidResize:realParentWindow_];
+        // Title bars and toolbars change views' content areas; tmux refits only its clients.
+        [self fitStandInsToTheirViews];
     }
 }
 
@@ -6296,6 +6298,7 @@ typedef struct {
     [realParentWindow_ tmuxTabLayoutDidChange:NO tab:nil variableWindowSize:tmuxController_.variableWindowSize];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
+    [self fitStandInsToTheirViews];
     [root_ setNeedsDisplay:YES];
     [_containerView setNeedsDisplay:YES];
 }
@@ -6714,8 +6717,20 @@ typedef struct {
     }
     --tmuxOriginatedResizeInProgress_;
     [realParentWindow_ setDimmingForSessions];
+    [self fitStandInsToTheirViews];
     // Last, once the layout is complete: a filter swaps a stand-in in for its session's view.
     [self restoreFiltersOfAdoptedSessions:adoptedBuriedSessions];
+}
+
+// tmux sizes its clients' grids, but not a filter's or Instant Replay's stand-in, which is not a
+// tmux client. Fit stand-ins after a layout from tmux changes their views, or the rows a grid no
+// longer covers draw as a black band (QA finding F-833).
+- (void)fitStandInsToTheirViews {
+    for (PTYSession *session in [self sessions]) {
+        if (session.liveSession && !session.isTmuxClient) {
+            [self fitSessionToCurrentViewSize:session];
+        }
+    }
 }
 
 - (void)maximizeAfterApplyingTmuxParseTree:(NSMutableDictionary *)parseTree tmuxController:(TmuxController *)tmuxController {

@@ -231,6 +231,18 @@
     XCTAssertFalse([tab fitSessionToCurrentViewSize:standIn], @"already fitted when it was swapped in");
 }
 
+// A layout from tmux resizes the stand-in's view, as when a filter is put back while the tab is
+// still settling after a peer switch from another Mac; its grid must follow, or the rows it no
+// longer covers draw as a black band. QA finding F-833.
+- (void)testStandInFitsItsViewAfterATmuxLayout {
+    PTYSession *standIn = nil;
+    NSArray<PTYSession *> *panes = nil;
+    PTYTab *tab = [self tabWithFilteredPaneTwo:&standIn panes:&panes];
+    [tab replaceViewHierarchyWithParseTree:[self parseTreeForLayout:@"abcd,80x24,0,0[80x8,0,0,0,80x7,0,9,1,80x7,0,17,2]"]
+                            tmuxController:_controller];
+    XCTAssertFalse([tab fitSessionToCurrentViewSize:standIn], @"fitted after the layout");
+}
+
 // tmux rearranges the same three panes (e.g. select-layout even-vertical).
 - (void)testLayoutChangeKeepsFocusOnFilteredPane {
     PTYSession *standIn = nil;
