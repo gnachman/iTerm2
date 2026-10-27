@@ -176,7 +176,7 @@ final class TmuxWorkgroupAttacher: NSObject {
             return
         }
         let reported = Set(value.split(separator: " ").compactMap { TmuxWorkgroupCommands.paneID(fromReply: String($0)) })
-        let shown = Set(tab.sessions().map { Int($0.tmuxPane) })
+        let shown = Set(tab.sessions().map { Int(PTYTab.tmuxLayoutPane(for: $0)) })
         if reported != shown {
             RLog("TmuxWorkgroupAttacher: window @\(windowID) holds panes \(reported.sorted()) but its tab shows \(shown.sorted()); re-reading its layout")
             controller.refreshLayout(ofWindow: windowID)

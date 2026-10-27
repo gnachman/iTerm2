@@ -6069,7 +6069,9 @@ typedef struct {
     if (typeOfView == kLeafLayoutNode) {
         SessionView *sessionView = (SessionView *)view;
         PTYSession *session = [self sessionForSessionView:sessionView];
-        return session.tmuxPane == [parseTree[kLayoutDictWindowPaneKey] intValue];
+        // A filter's stand-in is not a tmux client and its tmuxPane reads 0. Compare the pane it
+        // shows, or a layout that brings %0 into its place would look unchanged (QA finding F-910).
+        return [PTYTab tmuxLayoutPaneForSession:session] == [parseTree[kLayoutDictWindowPaneKey] intValue];
     }
 
     NSArray *treeChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
