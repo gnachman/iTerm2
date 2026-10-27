@@ -818,6 +818,10 @@ Bug Fixes:
   part of tmux integration, for example over
   ssh, now explains that tmux integration can’t
   be nested instead of silently doing nothing.
+- it2ssh no longer leaves the terminal waiting
+  for Return when ssh fails before connecting,
+  such as for a host name that doesn’t resolve.
+  it2ssh now exits with ssh’s exit status.
 - it2ssh no longer hangs when the host or
   command contains non-ASCII text, such as
   accented letters or emoji. If iTerm2 can’t

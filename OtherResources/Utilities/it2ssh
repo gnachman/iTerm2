@@ -237,6 +237,7 @@ sh \
 -c \
 "$eval_cmd" \
 \'"$sanitized"\'
+ssh_status=$?
 
 
 stty_settings=$(command stty -g)
@@ -244,17 +245,42 @@ cleanup() {
   command stty "$stty_settings"
 }
 trap "cleanup" EXIT
-command stty -isig -echo
+# Read bytes rather than lines: iTerm2 answers an EndSSH it doesn't recognize
+# (e.g., ssh never connected) with a bare ^C, which ends no line.
+command stty -isig -echo -icanon min 1 time 0
 
 print_osc
 printf "1337;EndSSH=%s" "${UNIQUEID}"
 print_st
 
+# Uses dd because bash's read -n turns isig back on, so a ^C would kill us.
+read_byte() {
+    c=$(command dd bs=1 count=1 2>/dev/null; printf x)
+    c=${c%x}
+    [ -n "$c" ]
+}
+
 # If ssh dies after send_conductor is sent, we don't want conductor.sh to go to
-# the command line. Read until EndSSH causes a blank line to be sent.
-while read l; do
-    [ -z "$l" ] && break
-    [ "$l" = "$(command printf '\003')" ] && break
+# the command line. Read until iTerm2 answers EndSSH with a ^C or a blank line.
+line=""
+while read_byte; do
+    case "$c" in
+        $'\003')
+            # A connection iTerm2 knows gets ^C and a newline. Consume the newline
+            # so it doesn't reach the shell; a bare ^C is followed by nothing.
+            command stty min 0 time 1
+            read_byte || true
+            break
+            ;;
+        $'\n')
+            [ -z "$line" ] && break
+            line=""
+            ;;
+        *)
+            line="$line$c"
+            ;;
+    esac
 done
 
 cleanup
+exit "$ssh_status"
