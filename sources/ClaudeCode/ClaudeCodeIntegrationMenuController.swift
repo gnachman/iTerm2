@@ -141,7 +141,11 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             remoteHostsWithHook(rest, found: found, completion: completion)
             return
         }
-        ClaudeCodeOnboarding.remoteHookStatus(conductor: conductor) { [weak self] status in
+        // A short identity deadline, as in the removal, so an unresponsive host doesn't stall it.
+        let files = ConductorClaudeCodeRemoteFiles(
+            conductor: conductor,
+            tokenDeadline: ConductorClaudeCodeRemoteFiles.confirmationCheckDeadline)
+        ClaudeCodeOnboarding.remoteHookStatus(conductor: conductor, files: files) { [weak self] status in
             let keep = status != .notInstalled
             DLog("Uninstall: \(host) hook status \(status)")
             self?.remoteHostsWithHook(rest, found: keep ? found + [host] : found, completion: completion)
@@ -193,6 +197,8 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             return String(localized: "ClaudeCode.RemoteHookWriteFailed", defaultValue: "Couldn\u{2019}t write Claude Code\u{2019}s settings on \(host).", comment: "Detail shown when the Claude Code settings on a remote host could not be written during uninstall; the value is the host")
         case .hostIdentityUnknown:
             return String(localized: "ClaudeCode.RemoteHookIdentityUnknown", defaultValue: "iTerm2 couldn\u{2019}t tell whether \(host) is this Mac, so it left Claude Code\u{2019}s settings there unchanged.", comment: "Detail shown during uninstall when iTerm2 could not determine whether a remote host is this Mac, so it made no changes there; the value is the host")
+        case .hostNotResponding:
+            return String(localized: "ClaudeCode.RemoteHookNotResponding", defaultValue: "\(host) didn\u{2019}t respond, so iTerm2 left Claude Code\u{2019}s settings there unchanged.", comment: "Detail shown during uninstall when a remote host reached through SSH Integration did not answer in time, so no changes were made there; the value is the host")
         case .unreadable, .success:
             return String(localized: "ClaudeCode.RemoteHookUnreadable", defaultValue: "Couldn\u{2019}t read Claude Code\u{2019}s settings on \(host).", comment: "Detail shown when the Claude Code settings on a remote host could not be read, or the host disconnected, during uninstall; the value is the host")
         @unknown default:
@@ -218,8 +224,8 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
                 detail = String(localized: "ClaudeCode.HookMalformed", defaultValue: "\(settingsPath) couldn\u{2019}t be parsed as JSON. Open it in a text editor and check it for syntax errors.", comment: "Detail shown when the Claude Code settings file is not valid JSON; the interpolated value is the absolute path to settings.json")
             case .writeFailed:
                 detail = String(localized: "ClaudeCode.HookWriteFailed", defaultValue: "Could not write to \(settingsPath) — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be written; the interpolated value is the absolute path to settings.json")
-            case .success, .hostIdentityUnknown:
-                // The local uninstall never reports hostIdentityUnknown.
+            case .success, .hostIdentityUnknown, .hostNotResponding:
+                // The local uninstall never reports the remote-only results.
                 detail = ""
             @unknown default:
                 detail = ""

@@ -20,6 +20,8 @@ enum ClaudeCodeUninstallHooksResult: Int {
     /// A remote host's machine identity couldn't be read, so it might be this Mac and its
     /// settings were left alone.
     case hostIdentityUnknown
+    /// A remote host didn't answer, so its settings were left alone.
+    case hostNotResponding
 }
 
 // Outcome of merging our hooks into settings.json during Install. An existing

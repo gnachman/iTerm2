@@ -182,10 +182,14 @@ final class ClaudeCodeRemoteHooksTests: XCTestCase {
             files.files[settingsPath] = try ClaudeCodeHookSettings.serialized(
                 ["hooks": ["Stop": [["hooks": [["type": "command", "command": command]]]]]])
             let uninstalled = await Hooks.uninstall(files: files, settingsPath: settingsPath, home: home)
-            XCTAssertEqual(uninstalled, .hostIdentityUnknown, String(describing: token))
+            // No token at all means the host didn't answer, which uninstall reports as such
+            // rather than as an identity it couldn't judge (QA finding F-868).
+            XCTAssertEqual(uninstalled, token == nil ? .hostNotResponding : .hostIdentityUnknown,
+                           String(describing: token))
             XCTAssertEqual(files.writes, [], String(describing: token))
         }
     }
+
 
     // A Linux host says so ("1:" with no value), which is a positive "not this Mac".
     func testANonMacHostIsEdited() async throws {

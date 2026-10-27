@@ -114,10 +114,16 @@ final class ConductorClaudeCodeRemoteFiles: ClaudeCodeRemoteFiles {
 
     private weak var conductor: Conductor?
     private let deadline: TimeInterval
+    private let tokenDeadline: TimeInterval?
 
-    init(conductor: Conductor, deadline: TimeInterval = ConductorClaudeCodeRemoteFiles.deadline) {
+    /// `tokenDeadline`, when given, applies to machineToken alone. Uninstall uses a short one so a
+    /// host that doesn't answer is reported as not responding without a long wait.
+    init(conductor: Conductor,
+         deadline: TimeInterval = ConductorClaudeCodeRemoteFiles.deadline,
+         tokenDeadline: TimeInterval? = nil) {
         self.conductor = conductor
         self.deadline = deadline
+        self.tokenDeadline = tokenDeadline
     }
 
     func read(_ path: String) async -> ClaudeCodeRemoteRead {
@@ -136,16 +142,16 @@ final class ConductorClaudeCodeRemoteFiles: ClaudeCodeRemoteFiles {
     }
 
     func machineToken() async -> String? {
-        return await run(iTermMachineIdentity.pythonStatementsReturningToken())
+        return await run(iTermMachineIdentity.pythonStatementsReturningToken(), deadline: tokenDeadline)
     }
 
     /// The function's return value, or nil when it raised, the connection is gone, or the deadline
     /// passed.
-    private func run(_ statements: String) async -> String? {
+    private func run(_ statements: String, deadline: TimeInterval? = nil) async -> String? {
         guard let conductor, conductor.framing else {
             return nil
         }
-        return await Self.awaitAnswer(deadline: deadline) { finish in
+        return await Self.awaitAnswer(deadline: deadline ?? self.deadline) { finish in
             conductor.framerExecPythonStatements(statements: statements) { ok, output in
                 DispatchQueue.main.async {
                     if !ok {
@@ -206,13 +212,18 @@ enum ClaudeCodeRemoteHooks {
         case thisMac
         /// Positively another machine.
         case elsewhere
-        /// The machine token couldn't be read (no answer, a Mac that couldn't compute it, or a
-        /// version this Mac doesn't implement). It might be this Mac.
+        /// The machine token couldn't be judged (a Mac that couldn't compute it, or a version
+        /// this Mac doesn't implement). It might be this Mac.
         case unknown
+        /// The host didn't answer. It might be this Mac.
+        case noAnswer
     }
 
     static func hostIdentity(files: ClaudeCodeRemoteFiles) async -> HostIdentity {
-        switch iTermMachineIdentity.locality(forToken: await files.machineToken()) {
+        guard let token = await files.machineToken() else {
+            return .noAnswer
+        }
+        switch iTermMachineIdentity.locality(forToken: token) {
         case .localhost:
             return .thisMac
         case .remote:
@@ -240,7 +251,7 @@ enum ClaudeCodeRemoteHooks {
         case .thisMac:
             RLog("Remote hook install refused: the host is this Mac")
             return .thisMac
-        case .unknown:
+        case .unknown, .noAnswer:
             // It might be this Mac, whose settings the remote install must not touch.
             RLog("Remote hook install refused: could not tell whether the host is this Mac")
             return .identityUnknown
@@ -302,7 +313,7 @@ enum ClaudeCodeRemoteHooks {
         switch await hostIdentity(files: files) {
         case .thisMac:
             return .notInstalled
-        case .unknown:
+        case .unknown, .noAnswer:
             return .unknown
         case .elsewhere:
             break
@@ -346,6 +357,9 @@ enum ClaudeCodeRemoteHooks {
         case .unknown:
             RLog("Remote hook uninstall refused: could not tell whether the host is this Mac")
             return .hostIdentityUnknown
+        case .noAnswer:
+            RLog("Remote hook uninstall refused: the host did not answer")
+            return .hostNotResponding
         case .elsewhere:
             break
         }
@@ -530,7 +544,9 @@ extension ClaudeCodeOnboarding {
                 finish(.unreadable)
                 return
             }
-            let access = files ?? ConductorClaudeCodeRemoteFiles(conductor: conductor)
+            let access = files ?? ConductorClaudeCodeRemoteFiles(
+                conductor: conductor,
+                tokenDeadline: ConductorClaudeCodeRemoteFiles.confirmationCheckDeadline)
             Task { @MainActor in
                 let result = await ClaudeCodeRemoteHooks.uninstall(files: access, settingsPath: settingsPath, home: home)
                 if result == .success {

@@ -53348,6 +53348,48 @@
         }
       }
     },
+    "ClaudeCode.RemoteHookNotResponding" : {
+      "comment" : "Detail shown during uninstall when a remote host reached through SSH Integration did not answer in time, so no changes were made there; the value is the host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat nicht geantwortet, daher hat iTerm2 die Einstellungen von Claude Code dort nicht verändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ didn’t respond, so iTerm2 left Claude Code’s settings there unchanged."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が応答しなかったため、iTerm2はそこにあるClaude Codeの設定を変更しませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não respondeu, por isso o iTerm2 não alterou os ajustes do Claude Code lá."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не ответил, поэтому iTerm2 не стал изменять настройки Claude Code на нём."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 没有响应，因此 iTerm2 未更改该处的 Claude Code 设置。"
+          }
+        }
+      }
+    },
     "ClaudeCode.RemoteHookUnreadable" : {
       "comment" : "Detail shown when the Claude Code settings on a remote host could not be read, or the host disconnected, during uninstall; the value is the host",
       "extractionState" : "extracted_with_value",
