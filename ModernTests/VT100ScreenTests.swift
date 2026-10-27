@@ -36,6 +36,33 @@ class VT100ScreenTests: XCTestCase {
         XCTAssertTrue(joined)
     }
 
+    // A tmux line counts against the gateway's budget from when it is handed to the main queue
+    // until main has handled it. Otherwise the gateway keeps reading while main is behind and
+    // overshoots the budget, then stops reading for seconds while the panes catch up.
+    func testTmuxLineCountsAgainstBudgetUntilMainHandlesIt() {
+        let screen = fiveByFourScreenWithThreeLinesOneWrapped()
+        let budget = ByteBudget(capacity: 1000)
+        screen.setTmuxInputBudget(budget)
+        let line = "%output %1 hello"
+        var inUseWhileHandling: Int?
+        session.tmuxInputHandler = { _ in
+            inUseWhileHandling = budget.inUse
+        }
+        let token = VT100Token()
+        token.type = TMUX_LINE
+        token.string = line
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.terminalHandleTmuxInput(token)
+        })
+        XCTAssertEqual(budget.inUse, line.utf16.count)
+
+        let handled = expectation(description: "Main handled the line")
+        DispatchQueue.main.async { handled.fulfill() }
+        wait(for: [handled], timeout: 10)
+        XCTAssertEqual(inUseWhileHandling, line.utf16.count)
+        XCTAssertEqual(budget.inUse, 0)
+    }
+
     private func fiveByNineScreenWithEmptyLineAtTop() -> VT100Screen {
         let screen = VT100Screen()
         session.screen = screen
@@ -2198,6 +2225,7 @@ struct SeededGenerator: RandomNumberGenerator {
 
 class FakeSession: NSObject, VT100ScreenDelegate {
     var keyReportingFlagsAtChange = [VT100TerminalKeyReportingFlags]()
+    var tmuxInputHandler: ((VT100Token) -> Void)?
     var screen: VT100Screen?
     var configuration = VT100MutableScreenConfiguration()
     var selection = iTermSelection()
@@ -2841,7 +2869,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
     
     func screenHandleTmuxInput(_ token: VT100Token) {
-
+        tmuxInputHandler?(token)
     }
     
     func screenShouldTreatAmbiguousCharsAsDoubleWidth() -> Bool {

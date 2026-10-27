@@ -4,8 +4,10 @@
 //
 //  Counts bytes that have been produced but not yet consumed, so a producer that can't be blocked
 //  can still be slowed down at its source. A tmux gateway's pane sessions take bytes as they queue
-//  %output for their tasks and give them back as the tasks read it. While the count is at capacity,
-//  the gateway stops reading from tmux, which is the backpressure a pipe per pane used to provide.
+//  %output for their tasks and give them back as the tasks read it. The gateway also takes each
+//  tmux line from when it hands the line to the main queue until main has handled it. While the
+//  count is at capacity, the gateway stops reading from tmux, which is the backpressure a pipe per
+//  pane used to provide.
 //
 
 import Foundation
@@ -22,9 +24,15 @@ final class ByteBudget: NSObject {
     private let lowWatermark: Int
 
     @objc
-    init(capacity: Int) {
+    convenience init(capacity: Int) {
+        self.init(capacity: capacity, lowWatermark: capacity / 2)
+    }
+
+    // `lowWatermark` is clamped to [0, capacity - 1].
+    @objc
+    init(capacity: Int, lowWatermark: Int) {
         self.capacity = max(1, capacity)
-        lowWatermark = self.capacity / 2
+        self.lowWatermark = min(max(0, lowWatermark), self.capacity - 1)
     }
 
     override var description: String {
@@ -43,12 +51,14 @@ final class ByteBudget: NSObject {
     }
 
     // Any thread. Never blocks, and may take usage past capacity.
+    @objc(take:)
     func take(_ count: Int) {
         it_assert(count >= 0, "Negative count \(count)")
         state.mutableAccess { $0.inUse += count }
     }
 
     // Any thread. Returns bytes taken by take(_:).
+    @objc(give:)
     func give(_ count: Int) {
         it_assert(count >= 0, "Negative count \(count)")
         state.mutableAccess { state in

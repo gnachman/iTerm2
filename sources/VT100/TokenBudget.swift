@@ -16,13 +16,10 @@ final class TokenBudget {
     }
     private let state = ConditionVariable(State())
     private let capacity: Int
-    // The capacity-available handler fires once usage is at or below this.
-    private let lowWatermark: Int
 
     init(capacity: Int) {
         // A capacity of zero would block forever.
         self.capacity = max(1, capacity)
-        lowWatermark = self.capacity / 2
     }
 
     // Any thread. Whether a slot is free right now.
@@ -58,13 +55,16 @@ final class TokenBudget {
         state.mutate { state in
             it_assert(state.inUse > 0, "Released more slots than were acquired")
             state.inUse -= 1
-            dispatchHandlerIfBelowWatermark(&state)
+            dispatchHandlerIfHasCapacity(&state)
         }
     }
 
-    // Any thread. Runs `block` asynchronously on `queue` once usage drops to the low watermark, or
-    // right away if it is already there. Releases happen while the executor holds locks and in the
-    // middle of executing tokens, so the block is never called inline.
+    // Any thread. Runs `block` asynchronously on `queue` once a slot is free, or right away if one
+    // already is. Like a reader blocked in acquire(), it doesn't wait for more room than that: a
+    // reader that stops for long stretches makes its producer bursty, and a tmux gateway that
+    // stops reading for long lets tmux queue a large backlog ahead of anything typed. Releases
+    // happen while the executor holds locks and in the middle of executing tokens, so the block is
+    // never called inline.
     //
     // Only one block is kept. Registering another runs the pending one right away, so a block may
     // run while there is still no capacity and must check again. A reader that stopped (such as a
@@ -76,13 +76,13 @@ final class TokenBudget {
                 previous.queue.async(execute: previous.block)
             }
             state.capacityAvailableHandler = (queue, block)
-            dispatchHandlerIfBelowWatermark(&state)
+            dispatchHandlerIfHasCapacity(&state)
         }
     }
 
     // Call with the state locked.
-    private func dispatchHandlerIfBelowWatermark(_ state: inout State) {
-        guard state.inUse <= lowWatermark, let handler = state.capacityAvailableHandler else {
+    private func dispatchHandlerIfHasCapacity(_ state: inout State) {
+        guard state.inUse < capacity, let handler = state.capacityAvailableHandler else {
             return
         }
         state.capacityAvailableHandler = nil

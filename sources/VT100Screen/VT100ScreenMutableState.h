@@ -10,6 +10,7 @@
 #import "VT100ScreenDelegate.h"
 
 @protocol VT100ScreenConfiguration;
+@class iTermByteBudget;
 @class iTermEchoProbe;
 @class iTermFramerFlowLedger;
 @class iTermMutationQueueJoinState;
@@ -59,6 +60,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak, nullable) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
+// Any thread. Set once this session becomes a tmux gateway with task I/O monitors, and kept after
+// that (a reattach reuses it). Tmux lines count against it, by their approximate length, from when
+// they are handed to the main queue until main has handled them.
+@property (atomic, strong, nullable) iTermByteBudget *tmuxInputBudget;
 @property (nonatomic) BOOL exited;
 @property (nonatomic, strong, readonly, nullable) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;

@@ -4810,9 +4810,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_screen threadedReadTask:buffer length:length];
 }
 
-// A gateway also stops reading while its panes have too much output waiting. That holds back
-// everything tmux sends, including command replies, so it relies on every pane that is still open
-// draining its queue.
+// A gateway also stops reading while its panes have too much output waiting, counting lines the
+// main queue hasn't handled yet. That holds back everything tmux sends, including command replies,
+// so it relies on main and every pane that is still open draining their queues.
 - (BOOL)taskHasReadCapacity {
     if (![_screen threadedHasTokenCapacity]) {
         return NO;
@@ -10881,9 +10881,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             // Enough for the panes to keep busy, small enough that memory stays bounded and
             // tmux's pause-after still sees a client that has fallen behind.
             const NSInteger capacity = 1024 * 1024;
-            self.tmuxOutputBudget = [[[iTermByteBudget alloc] initWithCapacity:capacity] autorelease];
+            // Resume reading the gateway as soon as a little room frees up, as a pipe would. While
+            // iTerm2 isn't reading, tmux can keep reading a flooding pane into a backlog for us
+            // (it stops only when its write buffer to us holds 512 bytes or more), so long pauses
+            // let it queue up minutes of output ahead of anything typed afterwards.
+            const NSInteger lowWatermark = capacity - 16 * 1024;
+            self.tmuxOutputBudget = [[[iTermByteBudget alloc] initWithCapacity:capacity
+                                                                  lowWatermark:lowWatermark] autorelease];
         }
         _tmuxController.outputBudget = self.tmuxOutputBudget;
+        [_screen setTmuxInputBudget:self.tmuxOutputBudget];
     }
 
     // We intentionally don't send anything to tmux yet. We wait to get a

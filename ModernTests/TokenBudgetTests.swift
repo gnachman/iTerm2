@@ -38,9 +38,10 @@ final class TokenBudgetTests: XCTestCase {
         XCTAssertFalse(budget.tryAcquire())
     }
 
-    // The handler fires once usage drops to half of capacity, not as soon as one slot frees up.
-    // That keeps a reader from waking for every token array the executor finishes.
-    func testHandlerFiresAtLowWatermark() {
+    // The handler fires as soon as a slot frees up, as a reader blocked in acquire() would wake.
+    // Waiting for more room would make the reader stop for long stretches; a tmux gateway that
+    // stops reading that long lets tmux queue a large backlog ahead of anything typed.
+    func testHandlerFiresAsSoonAsASlotFrees() {
         let budget = TokenBudget(capacity: 4)
         for _ in 0..<4 {
             XCTAssertTrue(budget.tryAcquire())
@@ -51,9 +52,6 @@ final class TokenBudgetTests: XCTestCase {
         XCTAssertEqual(calls.value, 0)
 
         budget.release()  // 3 in use
-        drainHandlers()
-        XCTAssertEqual(calls.value, 0)
-        budget.release()  // 2 in use
         drainHandlers()
         XCTAssertEqual(calls.value, 1)
     }

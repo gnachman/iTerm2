@@ -1870,10 +1870,17 @@ typedef struct {
         return;
     }
 
+    // A gateway's budget counts the line (approximately: UTF-16 units, but tmux lines are ASCII)
+    // from now until main has handled it, so the gateway stops reading while main is behind and
+    // doesn't overshoot by what main hasn't handled yet.
+    iTermByteBudget *budget = self.tmuxInputBudget;
+    const NSInteger charge = budget ? (NSInteger)token.string.length : 0;
+    [budget take:charge];
     dispatch_async(dispatch_get_main_queue(), ^{
         DLog(@"on main queue for %@", token);
         id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
         [delegate screenHandleTmuxInput:token];
+        [budget give:charge];
         DLog(@"leave group");
         dispatch_group_leave(self->_tmuxGroup);
     });

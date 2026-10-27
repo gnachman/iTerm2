@@ -1973,6 +1973,11 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     }
 }
 
+- (void)setTmuxInputBudget:(iTermByteBudget *)budget {
+    // Atomic, and only read by the mutation queue when it hands tmux lines to main.
+    _mutableState.tmuxInputBudget = budget;
+}
+
 - (void)injectData:(NSData *)data {
     [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState injectData:data];

@@ -161,8 +161,8 @@ class TokenExecutor: NSObject {
         return budget.hasCapacity
     }
 
-    // Any queue. Runs `block` asynchronously on `queue` once the executor has drained enough
-    // buffered tokens to be worth reading again, or right away if it already has. Registering
+    // Any queue. Runs `block` asynchronously on `queue` once a slot is free (as soon as a token
+    // array finishes executing), or right away if one already is. Registering
     // another block runs the pending one right away, so a block must check for capacity again.
     @objc(notifyWhenTokenCapacityAvailableOnQueue:block:)
     func notifyWhenTokenCapacityAvailable(on queue: DispatchQueue, _ block: @escaping () -> Void) {

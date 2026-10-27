@@ -59,6 +59,24 @@ final class ByteBudgetTests: XCTestCase {
         XCTAssertEqual(counter.value, 1)
     }
 
+    // A low watermark just under capacity resumes the producer as soon as a little room frees up,
+    // so it pauses briefly instead of until half the capacity drains.
+    func testHandlerRunsAtCustomLowWatermark() {
+        let budget = ByteBudget(capacity: 10, lowWatermark: 8)
+        budget.take(10)
+        let counter = Counter()
+        budget.notifyWhenCapacityAvailable(on: handlerQueue) {
+            counter.value += 1
+        }
+        budget.give(1)
+        drainHandlers()
+        XCTAssertEqual(counter.value, 0)
+
+        budget.give(1)
+        drainHandlers()
+        XCTAssertEqual(counter.value, 1)
+    }
+
     func testHandlerRunsRightAwayWhenThereIsRoom() {
         let budget = ByteBudget(capacity: 10)
         let counter = Counter()

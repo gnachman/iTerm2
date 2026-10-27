@@ -18,6 +18,7 @@
 #import "iTermRowContentIdentity.h"
 
 @class DVR;
+@class iTermByteBudget;
 @class iTermNotificationController;
 @class iTermMark;
 @class iTermStringLine;
@@ -254,6 +255,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (VT100GridCoordRange)commandRange;
 - (VT100GridCoordRange)extendedCommandRange;
 - (void)injectData:(NSData *)data;
+// Main queue. See -[VT100ScreenMutableState tmuxInputBudget].
+- (void)setTmuxInputBudget:(iTermByteBudget * _Nullable)budget;
 
 typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
     VT100ScreenTriggerCheckTypeNone,
