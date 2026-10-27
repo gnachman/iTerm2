@@ -65,13 +65,13 @@ final class PromptMarkRangeFoldTests: XCTestCase {
                       screen: VT100Screen) -> NSRange {
         let range = NSRange(location: startLine, length: endLine - startLine)
         screen.foldAbsLineRange(range)
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
         return range
     }
 
     private func unfold(range: NSRange, screen: VT100Screen) {
         screen.removeFolds(in: range, completion: nil)
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     // MARK: - 1. Sentinel preservation (default values)

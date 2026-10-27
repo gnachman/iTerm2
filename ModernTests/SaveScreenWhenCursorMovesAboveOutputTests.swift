@@ -16,7 +16,7 @@ class SaveScreenWhenCursorMovesAboveOutputTests: XCTestCase {
     /// terminal handlers), then flush the token executor so the effects are visible synchronously.
     private func feed(_ screen: VT100Screen, _ string: String) {
         screen.inject(string.data(using: .utf8)!)
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     /// Builds a screen, appends `priorLines` (the content already on screen), then simulates shell
@@ -185,7 +185,7 @@ class SaveScreenWhenCursorMovesAboveOutputTests: XCTestCase {
         // Fold BBBB and CCCC (abs lines 1...2) into one placeholder. No FTCS was sent, so there is
         // no shell integration: the command-output path cannot fire and the fold is the only anchor.
         screen.foldAbsLineRange(NSRange(location: 1, length: 1))
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
         return screen
     }
 
@@ -240,7 +240,7 @@ class SaveScreenWhenCursorMovesAboveOutputTests: XCTestCase {
         })
         // Fold the top prior content (TOP0, TOP1) into one placeholder at the top of the grid.
         screen.foldAbsLineRange(NSRange(location: 0, length: 1))
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
 
         // Shell integration: establish a running command (FTCS C), which sets the output start and
         // resets appendedTextSinceCommandExecuted, mirroring a real shell launching `claude`.

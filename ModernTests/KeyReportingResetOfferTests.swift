@@ -108,7 +108,7 @@ final class KeyReportingResetOfferTests: XCTestCase {
             CVectorDestroy(&vector)
         })
         // Drain any queued side effects.
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     private static let ESC = "\u{1b}"
@@ -386,6 +386,6 @@ final class KeyReportingResetOfferTests: XCTestCase {
             RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01))
         }
         XCTAssertTrue(sentinelRan, "main queue never drained", file: file, line: line)
-        session.screen.performBlock(joinedThreads: { _, _, _ in })
+        session.screen.waitForQueuedTokensForTesting()
     }
 }

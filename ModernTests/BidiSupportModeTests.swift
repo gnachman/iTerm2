@@ -108,7 +108,7 @@ final class BidiSupportModeTests: XCTestCase {
         harness.screen.performBlock(joinedThreads: { _, mutableState, _ in
             mutableState.inject(data)
         })
-        harness.screen.performBlock(joinedThreads: { _, _, _ in })
+        harness.screen.waitForQueuedTokensForTesting()
     }
 
     // A reset pauses token execution until a side effect on the main queue
@@ -123,7 +123,7 @@ final class BidiSupportModeTests: XCTestCase {
             RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01))
         }
         XCTAssertTrue(sentinelRan, "main queue never drained", file: file, line: line)
-        harness.screen.performBlock(joinedThreads: { _, _, _ in })
+        harness.screen.waitForQueuedTokensForTesting()
     }
 
     // Populates RTL state the way the per-frame sync does before every draw.

@@ -125,7 +125,7 @@ class VT100ScreenBasicsTests: XCTestCase {
             return
         }
         screen.inject(data)
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     // abcde+

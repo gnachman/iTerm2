@@ -250,7 +250,7 @@ class VT100ScreenTests: XCTestCase {
 
     private func feed(_ screen: VT100Screen, _ string: String) {
         screen.inject(string.data(using: .utf8)!)
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     // The per-row cache's combined screenCharArrayForLine:contentIdentity: must

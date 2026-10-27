@@ -35,7 +35,7 @@ final class PTYTextViewTextReplacementCountTests: XCTestCase {
 
     private func feed(_ string: String) {
         screen.inject(string.data(using: .utf8)!)
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     // The NSTextInputClient location just after the cursor's cell.

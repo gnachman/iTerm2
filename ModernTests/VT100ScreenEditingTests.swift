@@ -150,7 +150,7 @@ class VT100ScreenEditingTests: XCTestCase {
     }
 
     private func sync(_ screen: VT100Screen) {
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     private func mutate(_ screen: VT100Screen,

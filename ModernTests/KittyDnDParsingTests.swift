@@ -15,7 +15,7 @@ import XCTest
 final class KittyDnDParsingTests: XCTestCase {
     private func feed(_ harness: TerminalTestHarness, _ string: String) {
         harness.screen.inject(string.data(using: .utf8)!)
-        harness.screen.performBlock(joinedThreads: { _, _, _ in })
+        harness.screen.waitForQueuedTokensForTesting()
     }
 
     private func osc72(_ content: String) -> String {
@@ -49,7 +49,7 @@ final class KittyDnDParsingTests: XCTestCase {
     func testBELTerminatorDeliversSameContent() {
         let harness = TerminalTestHarness()
         harness.screen.inject("\u{1b}]72;t=r:x=1;YWJj\u{07}".data(using: .utf8)!)
-        harness.screen.performBlock(joinedThreads: { _, _, _ in })
+        harness.screen.waitForQueuedTokensForTesting()
         XCTAssertEqual(harness.delegate.kittyDragAndDropContents, ["t=r:x=1;YWJj"])
     }
 

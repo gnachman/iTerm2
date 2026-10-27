@@ -54,7 +54,7 @@ class TerminalRenderer {
 
         if !data.isEmpty {
             session.inject(data)
-            session.screen.performBlock(joinedThreads: { _, _, _ in })
+            session.screen.waitForQueuedTokensForTesting()
             RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
         }
 

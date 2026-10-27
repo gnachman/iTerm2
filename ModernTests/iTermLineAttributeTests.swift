@@ -2013,6 +2013,7 @@ final class iTermLineAttributeTests: XCTestCase {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             mutableState.inject(string.data(using: .utf8)!)
         })
+        screen.waitForQueuedTokensForTesting()
     }
 
     /// CUF (cursor forward) on a DWL line should advance by 2 physical cells
@@ -2567,6 +2568,7 @@ final class iTermLineAttributeTests: XCTestCase {
         screen.performBlock(joinedThreads: { _, mutableState, _ in
             mutableState.inject(crlf.data(using: .utf8)!)
         })
+        screen.waitForQueuedTokensForTesting()
         let actual = trimTrailingResetLines(copyWithControlSequences(from: screen))
 
         let expectedLines = trimmedExpected.components(separatedBy: "\n")

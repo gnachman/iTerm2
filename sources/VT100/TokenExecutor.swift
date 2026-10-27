@@ -396,6 +396,25 @@ class TokenExecutor: NSObject {
     var joinWaitsForIdleQueue: Bool {
         return impl.joinWaitsForIdleQueue
     }
+
+    // Mutation queue, or the main queue in a joined block. Whether tokens or high-priority tasks
+    // are waiting to execute.
+    var hasPendingWork: Bool {
+#if DEBUG
+        iTermGCD.assertSafe(forMutationQueue: queue)
+#endif
+        return impl.hasPendingWork
+    }
+
+    // Main queue, outside a joined block. For tests: executes pending work on this executor's
+    // queue now, unless execution is paused. Doesn't depend on how many hops an unpause takes to
+    // schedule execution.
+    func executeForTesting() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        queue.sync {
+            impl.executeForTesting()
+        }
+    }
 }
 
 private class TokenExecutorImpl {
@@ -511,6 +530,16 @@ private class TokenExecutorImpl {
             DLog("Pause")
         }
         return Unpauser(self)
+    }
+
+    // Mutation queue, or the main queue in a joined block.
+    var hasPendingWork: Bool {
+        return !tokenQueue.isEmpty || taskQueue.count > 0
+    }
+
+    // Mutation queue
+    func executeForTesting() {
+        execute()
     }
 
     private var isPaused: Bool {

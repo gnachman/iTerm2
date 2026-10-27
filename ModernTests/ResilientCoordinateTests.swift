@@ -132,14 +132,14 @@ class ResilientCoordinateTests: XCTestCase {
         let sc = sc ?? screen!
         let range = NSRange(location: startLine, length: endLine - startLine)
         sc.foldAbsLineRange(range)
-        sc.performBlock(joinedThreads: { _, _, _ in })
+        sc.waitForQueuedTokensForTesting()
         return range
     }
 
     private func unfold(range: NSRange, screen sc: VT100Screen? = nil) {
         let sc = sc ?? screen!
         sc.removeFolds(in: range, completion: nil)
-        sc.performBlock(joinedThreads: { _, _, _ in })
+        sc.waitForQueuedTokensForTesting()
     }
 
     /// Add a porthole via the real screen API, replacing lines [startLine, endLine]
@@ -163,7 +163,7 @@ class ResilientCoordinateTests: XCTestCase {
         let range = VT100GridAbsCoordRangeMake(0, Int64(startLine),
                                                sc.width(), Int64(endLine))
         sc.replace(range, with: porthole, ofHeight: Int32(height))
-        sc.performBlock(joinedThreads: { _, _, _ in })
+        sc.waitForQueuedTokensForTesting()
         return porthole
     }
 
@@ -172,7 +172,7 @@ class ResilientCoordinateTests: XCTestCase {
         let sc = sc ?? screen!
         if let mark = PortholeRegistry.instance.mark(for: porthole.uniqueIdentifier) {
             sc.replace(mark, withLines: porthole.savedLines, savedITOs: porthole.savedITOs)
-            sc.performBlock(joinedThreads: { _, _, _ in })
+            sc.waitForQueuedTokensForTesting()
         }
     }
 
@@ -185,7 +185,7 @@ class ResilientCoordinateTests: XCTestCase {
             return
         }
         sc.changeHeight(of: mark, to: Int32(newHeight))
-        sc.performBlock(joinedThreads: { _, _, _ in })
+        sc.waitForQueuedTokensForTesting()
     }
 
     // MARK: - Basic Status
@@ -265,7 +265,7 @@ class ResilientCoordinateTests: XCTestCase {
         // the query.  Before the fix this crashes in
         // SavedIntervalTreeObject.from with an array-index-out-of-bounds.
         screen.foldAbsLineRange(NSRange(location: 20, length: 4))
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
 
         // If we get here without crashing, the bug is fixed.
     }
@@ -486,7 +486,7 @@ class ResilientCoordinateTests: XCTestCase {
         let range = VT100GridAbsCoordRangeMake(0, Int64(startLine),
                                                sc.width(), Int64(endLine))
         sc.replace(range, withLines: lines, promptLength: -1, blockMarks: [:])
-        sc.performBlock(joinedThreads: { _, _, _ in })
+        sc.waitForQueuedTokensForTesting()
     }
 
     /// Replacing 5 lines with 8 makes the buffer GROW (delta +3). The
@@ -1106,7 +1106,7 @@ class ResilientCoordinateTests: XCTestCase {
 
         // 1. Fold lines 0-2.
         localScreen.foldAbsLineRange(NSRange(location: 0, length: 2))
-        localScreen.performBlock(joinedThreads: { _, _, _ in })
+        localScreen.waitForQueuedTokensForTesting()
         XCTAssertEqual(rc.status, .inFold)
         XCTAssertEqual(rc.coordWithinFold, VT100GridCoordMake(4, 2))
 
@@ -1116,7 +1116,7 @@ class ResilientCoordinateTests: XCTestCase {
 
         // 3. Unfold. At width 12, 'y' reflows to (0, 2).
         localScreen.removeFolds(in: NSRange(location: 0, length: 1), completion: nil)
-        localScreen.performBlock(joinedThreads: { _, _, _ in })
+        localScreen.waitForQueuedTokensForTesting()
 
         assertChar(at: rc, equals: "y", screen: localScreen)
     }

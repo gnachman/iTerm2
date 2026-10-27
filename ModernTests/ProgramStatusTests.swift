@@ -638,7 +638,7 @@ final class ProgramStatusControllerTests: XCTestCase {
 final class ProgramStatusTerminalTests: XCTestCase {
     private func feed(_ harness: TerminalTestHarness, _ string: String) {
         harness.screen.inject(string.data(using: .utf8)!)
-        harness.screen.performBlock(joinedThreads: { _, _, _ in })
+        harness.screen.waitForQueuedTokensForTesting()
     }
 
     func testReportReachesDelegate() {

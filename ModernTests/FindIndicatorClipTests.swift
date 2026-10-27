@@ -136,7 +136,7 @@ final class FindIndicatorClipTests: XCTestCase {
 
     private func resize(_ session: PTYSession, width: Int32) {
         session.setSize(VT100GridSizeMake(width, 25))
-        session.screen.performBlock(joinedThreads: { _, _, _ in })
+        session.screen.waitForQueuedTokensForTesting()
         XCTAssertEqual(session.screen.width(), width, "Precondition")
     }
 

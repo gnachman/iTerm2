@@ -102,12 +102,12 @@ final class RemoteHostCacheTests: XCTestCase {
         // 1, 2, 3. Either way this covers the host mark's line (abs line 2).
         let foldRange = NSRange(location: 1, length: 2)
         h.screen.foldAbsLineRange(foldRange)
-        h.screen.performBlock(joinedThreads: { _, _, _ in })
+        h.screen.waitForQueuedTokensForTesting()
         XCTAssertNil(mutableHost(h),
                      "sanity: folding the host mark's line should remove it from the tree")
 
         h.screen.removeFolds(in: foldRange, completion: nil)
-        h.screen.performBlock(joinedThreads: { _, _, _ in })
+        h.screen.waitForQueuedTokensForTesting()
         XCTAssertEqual(mutableHost(h), "hostB",
                        "host must be observed again after unfold re-adds its mark")
     }

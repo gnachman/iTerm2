@@ -40,16 +40,16 @@ final class VT100ScreenOSC7ReceiverTests: XCTestCase {
             mutableState.setWorkingDirectoryFromURLString(url)
             host = mutableState.lastRemoteHost
         })
-        // currentDirectoryReallyDidChangeTo: runs the path/prompt completion via an
-        // async hop on the mutation queue when the directory actually changes, so a
-        // second joined block (FIFO on the serial queue) drains it and its side
-        // effects before assertions.
+        // currentDirectoryReallyDidChangeTo: finishes asynchronously, through a side
+        // effect on the main queue and a hop back to the mutation queue, when the
+        // directory actually changes. Wait for that and its side effects before
+        // assertions.
         drain(screen)
         return host
     }
 
     private func drain(_ screen: VT100Screen) {
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     override func setUp() {

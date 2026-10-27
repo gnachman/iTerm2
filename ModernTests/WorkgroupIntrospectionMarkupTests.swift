@@ -47,7 +47,7 @@ final class WorkgroupIntrospectionMarkupTests: XCTestCase {
     // reading the screen without this flush is racy.
     private func inject(_ screen: VT100Screen, _ string: String) {
         screen.inject(string.data(using: .utf8)!)
-        screen.performBlock(joinedThreads: { _, _, _ in })
+        screen.waitForQueuedTokensForTesting()
     }
 
     private func extracted(_ screen: VT100Screen) -> String {

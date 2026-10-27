@@ -193,9 +193,9 @@ class TerminalTestHarness {
         }
     }
 
-    /// Synchronize threads and execute pending side effects
-    func sync() {
-        screen.performBlock(joinedThreads: { _, _, _ in })
+    /// Wait for queued tokens to execute, then run pending side effects.
+    func sync(file: StaticString = #filePath, line: UInt = #line) {
+        screen.waitForQueuedTokensForTesting(file: file, line: line)
     }
 
     /// Reset the delegate's call records
@@ -212,5 +212,31 @@ class TerminalTestHarness {
     /// Check if shouldExpectWorkingDirectoryUpdates is set
     var expectsWorkingDirectoryUpdates: Bool {
         return screen.shouldExpectWorkingDirectoryUpdates()
+    }
+}
+
+extension VT100Screen {
+    /// Main queue. Returns once the tokens and tasks waiting in this screen's executor (such as
+    /// injected or read bytes) have executed and the side effects they queued have run. A single
+    /// join isn't enough: it pauses token execution, so tokens scheduled before it can run after
+    /// it instead.
+    func waitForQueuedTokensForTesting(file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<10_000 {
+            var executor: TokenExecutor?
+            // Runs pending side effects, which may unpause execution, then checks for work.
+            performBlock(joinedThreads: { _, mutableState, _ in
+                if mutableState.tokenExecutor.hasPendingWork {
+                    executor = mutableState.tokenExecutor
+                }
+            })
+            guard let executor else {
+                return
+            }
+            // Some side effects pause execution and run from the main queue rather than in a
+            // join (for example after a reset, a resize, or a directory change). Let them run.
+            RunLoop.current.run(mode: .default, before: Date())
+            executor.executeForTesting()
+        }
+        XCTFail("Queued tokens never finished executing", file: file, line: line)
     }
 }

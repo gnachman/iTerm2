@@ -82,7 +82,7 @@ final class SessionArchivePropertyListTests: XCTestCase {
             }
             CVectorDestroy(&vector)
         })
-        session.screen.performBlock(joinedThreads: { _, _, _ in })
+        session.screen.waitForQueuedTokensForTesting()
     }
 
     // Counts the external attributes anywhere in a property list whose URL is
