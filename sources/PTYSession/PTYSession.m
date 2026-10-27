@@ -3208,7 +3208,18 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
     if (tmuxGatewaySession && self.isTmuxClient && !_conductor) {
-        return [tmuxGatewaySession processInfoProvider];
+        if (_tmuxController.serverIsLocal) {
+            // The pane's processes are on this Mac, whatever the gateway session runs in, e.g. an
+            // SSH Integration connection back to this Mac, whose framer doesn't track this pane.
+            // -sessionProcessInfoProvider makes the same choice for the pane's job. QA finding
+            // F-612.
+            DLog(@"%@: tmux server is local; pane processes come from this Mac", self);
+            return [iTermProcessCache sharedInstance];
+        }
+        id<ProcessInfoProvider> provider = [tmuxGatewaySession processInfoProvider];
+        DLog(@"%@: remote tmux pane; using the gateway's provider %@ (remote pane pid %@)",
+             self, provider, _remoteTmuxPanePID);
+        return provider;
     }
     if (!_conductor.framing) {
         return [iTermProcessCache sharedInstance];
@@ -10443,6 +10454,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // A pid is only useful where its processes can be seen: on this Mac, or on a host reached
     // through SSH Integration, whose framer reports any pid registered with it.
     if (!_tmuxController.serverIsLocal && !self.hostConductor.framing) {
+        DLog(@"%@: not fetching the pane pid: tmux server is not local and the host isn't framing", self);
         return;
     }
     NSString *command = [NSString stringWithFormat:@"display-message -t '%%%@' -p '#{pane_pid}'", @(self.tmuxPane)];
@@ -10473,9 +10485,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     if (_tmuxController.serverIsLocal) {
+        DLog(@"%@: local tmux pane pid is %@", self, pid);
         _shell.tmuxClientProcessID = pid;
         [self updateTitles];
-    } else if (self.hostConductor.framing) {
+    } else if (!self.hostConductor.framing) {
+        DLog(@"%@: dropping remote tmux pane pid %@: the host isn't framing", self, pid);
+    } else {
         // Not _shell.tmuxClientProcessID: that registers with this Mac's process cache, where a
         // remote pid names some unrelated local process.
         DLog(@"%@: remote tmux pane pid is %@", self, pid);

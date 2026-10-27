@@ -111,8 +111,14 @@ static const CGFloat kMargin = 0;
         return;
     }
     // Each setter refreshes the tree only when its value changed.
-    _jobTreeViewController.pid = [delegate toolbeltCurrentShellProcessId];
-    _jobTreeViewController.processInfoProvider = [delegate toolbeltCurrentShellProcessInfoProvider];
+    const pid_t pid = [delegate toolbeltCurrentShellProcessId];
+    id<ProcessInfoProvider> provider = [delegate toolbeltCurrentShellProcessInfoProvider];
+    if (pid != _jobTreeViewController.pid || provider != _jobTreeViewController.processInfoProvider) {
+        DLog(@"Jobs tool: pid %@ from provider %@ (has it: %@)",
+             @(pid), provider, @([provider processInfoForPid:pid] != nil));
+    }
+    _jobTreeViewController.pid = pid;
+    _jobTreeViewController.processInfoProvider = provider;
 }
 
 @end
