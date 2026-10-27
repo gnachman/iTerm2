@@ -765,7 +765,10 @@ extension Conductor {
     }
 
     @objc var queueWrites: Bool {
-        if let parent = parent {
+        // A parent without a framer passes writes through as they are, even once it has
+        // unhooked to run the login shell, so it has no say. Otherwise a framer nested in it
+        // never got typed keys framed and took them for malformed commands (F-971).
+        if let parent = parent, parent.framing {
             return nontransitiveQueueWrites && parent.queueWrites
         }
         return nontransitiveQueueWrites

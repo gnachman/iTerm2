@@ -285,6 +285,37 @@ final class SSHNestedConnectionEndTests: XCTestCase {
                       "\(session.writes)")
     }
 
+    // MARK: - F-971
+
+    // An outer connection without a framer runs the login shell straight on the tty, so it
+    // has unhooked and passes writes through. A framer started by a connection nested in it
+    // must still get the keys typed in its session framed, or it reads them as malformed
+    // commands and the session takes no input.
+    func testNestedFramerUnderNonFramingParentHandlesKeystrokes() {
+        send(hook(uniqueID: rootID))
+        let root = session.conductor!
+        // What conductor.sh prints before it execs the login shell.
+        send("\u{1b}]135;:unhook\u{1b}\\")
+        XCTAssertTrue(Self.isUnhooked(root))
+        send(hook(uniqueID: nestedID))
+        let nested = session.conductor!
+        XCTAssertTrue(nested.parent === root)
+        nested.framedPID = 200
+        nested.forceReturnToGroundState()
+        // That returned the outer one to its ground state too; it is unhooked, as it was.
+        root.handleUnhook()
+        XCTAssertTrue(Self.isUnhooked(root))
+        session.writes.removeAll()
+
+        XCTAssertTrue(nested.handlesKeystrokes)
+        XCTAssertTrue(nested.queueWrites)
+        XCTAssertFalse(root.queueWrites)
+        nested.sendKeys("x".data(using: .utf8)!)
+        // A framer `send` command, written to the tty as is by the outer connection.
+        let send = "send".data(using: .utf8)!.base64EncodedString()
+        XCTAssertTrue(session.writes.contains { $0.hasPrefix(send) }, "\(session.writes)")
+    }
+
     // The payloads of the framer `send` commands in what was written, decoded the way
     // framer.py does.
     private static func relayedPayloads(_ written: String) -> [String] {
