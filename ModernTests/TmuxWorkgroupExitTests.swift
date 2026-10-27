@@ -84,6 +84,22 @@ final class TmuxWorkgroupExitTests: WorkgroupEntryTestBase {
         XCTAssertTrue(fresh.forceDefaultEndAction)
     }
 
+    // Detaching with the leader in view keeps it in its slot, as its members are kept, even when
+    // its profile closes sessions that end. QA finding F-845.
+    func testDetachKeepsTheLeaderOfAWorkgroup() throws {
+        let root = WGFix.makeRoot()
+        XCTAssertNotNil(enterWorkgroup(WGFix.wrap(name: "rootOnly", sessions: [root])))
+        leader.endAction = .close
+        XCTAssertEqual(leader.endActionWhenTmuxDetaches, .default)
+    }
+
+    // Control: outside a workgroup, the profile's end action applies.
+    func testDetachFollowsAPlainSessionsEndAction() {
+        let session = PTYSession(synthetic: false)!
+        session.endAction = .close
+        XCTAssertEqual(session.endActionWhenTmuxDetaches, .close)
+    }
+
     // A tab member stays when a tmux workgroup ends here (e.g. at a detach), so its toolbar is
     // refreshed to drop the workgroup's items. QA finding F-831.
     func testAKeptTabMemberLosesItsWorkgroupToolbar() throws {

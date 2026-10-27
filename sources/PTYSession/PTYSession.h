@@ -1353,6 +1353,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)toggleTmuxZoom;
 - (void)forceTmuxDetach;
 - (void)tmuxDidDisconnect;
+// The end action -tmuxDidDisconnect follows.
+@property(nonatomic, readonly) iTermSessionEndAction endActionWhenTmuxDetaches;
 - (void)tmuxWindowTitleDidChange;
 
 - (void)restoreStateForZoom:(nullable PTYSessionZoomState *)state;

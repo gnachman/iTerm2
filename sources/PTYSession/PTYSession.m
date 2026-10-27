@@ -5016,6 +5016,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self updateTitles];
 }
 
+// A workgroup's members are pinned to the default end action (forceDefaultEndAction) so they stay
+// in place when tmux detaches, like a plain tmux window's panes. Its leader is treated the same
+// here, or closing it alone would leave its slot empty beside the members that stay (QA finding
+// F-845). Only here: outside a detach, the leader keeps its own end action.
+- (iTermSessionEndAction)endActionWhenTmuxDetaches {
+    return self.workgroupInstance ? iTermSessionEndActionDefault : self.endAction;
+}
+
 - (void)tmuxDidDisconnect {
     RLog(@"tmuxDidDisconnect");
     if (_exited) {
@@ -5024,7 +5032,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setExited:YES];
     [self cleanUpAfterBrokenPipe];
     [self appendBrokenPipeMessage:NSLocalizedStringWithDefaultValue(@"PTYSession.TmuxDetached", nil, [NSBundle mainBundle], @"tmux detached", @"Message appended when tmux detaches")];
-    switch (self.endAction) {
+    switch (self.endActionWhenTmuxDetaches) {
         case iTermSessionEndActionClose:
             if ([_delegate sessionShouldAutoClose:self]) {
                 [_delegate softCloseSession:self];
