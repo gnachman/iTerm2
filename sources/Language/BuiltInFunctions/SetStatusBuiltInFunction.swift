@@ -475,10 +475,12 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
     //
     // `origin` is empty for this Mac, or the clientUniqueID of the SSH-integration conductor a
     // remote caller arrived over. It exists because the rest of the address is only meaningful
-    // within one machine (see TmuxPaneLocator). The it2 command tree fills it in from its own
-    // execution context, never from its arguments, so a remote caller cannot name a connection
-    // other than its own. A local API client can pass anything, which grants nothing: a client
-    // that can call this can already drive every session directly.
+    // within one machine (see TmuxPaneLocator). The it2 commands that take a pane address fill it
+    // in from their own execution context, never from their arguments, so they can't be misled
+    // into another connection's servers. It is not access control: any client that can evaluate
+    // an expression can pass any origin, including a remote it2 through interpolation
+    // (`it2 session list --format`). That grants little, since such a client can already list
+    // and drive every session, this Mac's included.
     //
     // Returns the empty string when no connected tmux server answers to that address, rather than
     // guessing at a session.
