@@ -18,10 +18,12 @@ final class IT2PromptPlacementTests: XCTestCase {
     private func place(gateway: Bool = true,
                        callerPane: String? = nil,
                        sessions: [Int: String] = [:],
+                       clientsPanes: Set<Int>? = nil,
                        visible: String? = nil) -> P {
         return PTYSession.it2PromptPlacement(isTmuxGateway: gateway,
                                              callerTmuxPane: callerPane,
                                              sessionForPane: { sessions[$0] },
+                                             paneIsThisClients: { clientsPanes?.contains($0) ?? true },
                                              visibleClientSession: visible)
     }
 
@@ -37,6 +39,12 @@ final class IT2PromptPlacementTests: XCTestCase {
     // Its window is hidden: wait for the user to show it, rather than put it somewhere else.
     func testPaneInAHiddenWindowWaitsForIt() {
         XCTAssertEqual(place(callerPane: "%5", visible: "other"), .whenPaneAppears(5))
+    }
+
+    // A pane of another tmux session on the same server never appears here: refuse at once rather
+    // than wait for it, which hung this request and every later one on the connection.
+    func testPaneOfAnotherTmuxSessionIsRefused() {
+        XCTAssertEqual(place(callerPane: "%1", clientsPanes: [5, 6], visible: "other"), .notThisClientsPane)
     }
 
     // A caller outside tmux, or one that did not say: any visible pane of this tmux client.

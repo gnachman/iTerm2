@@ -11520,6 +11520,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 
     [_tmuxController detach];
+    [self dismissPendingIT2Prompts];
     // Autorelease the gateway because it called this function so we can't free
     // it immediately.
     [_tmuxGateway autorelease];

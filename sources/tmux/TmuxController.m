@@ -234,6 +234,8 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     // Panes with pane-border-lines none, kept current by a subscription once the server shows it
     // has floating panes.
     NSMutableSet<NSNumber *> *_borderlessPanes;
+    // Every pane in a window layout learned so far. See -paneIsInKnownLayout:.
+    NSMutableSet<NSNumber *> *_panesInLayouts;
     iTermTmuxSubscriptionHandle *_paneBorderLinesSubscription;
     BOOL _versionDetected;
     // terminal guid -> [(tmux window id, tab index), ...]
@@ -367,6 +369,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _windowSizes = [[NSMutableDictionary alloc] init];
         _paneBorderStatusByWindow = [[NSMutableDictionary alloc] init];
         _borderlessPanes = [[NSMutableSet alloc] init];
+        _panesInLayouts = [[NSMutableSet alloc] init];
         RLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
@@ -1108,8 +1111,13 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (!parseTree) {
         return;
     }
-    [_droppedOutputTracker didLearnPanes:[[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree]
-                                  window:windowId];
+    NSArray<NSNumber *> *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
+    [_panesInLayouts addObjectsFromArray:panes];
+    [_droppedOutputTracker didLearnPanes:panes window:windowId];
+}
+
+- (BOOL)paneIsInKnownLayout:(int)wp {
+    return [_panesInLayouts containsObject:@(wp)];
 }
 
 - (BOOL)paneIsBorderless:(int)wp {

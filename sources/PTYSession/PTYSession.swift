@@ -2021,6 +2021,11 @@ extension PTYSession {
         case session(String)
         /// The pane that asked is in a hidden tmux window; wait for the user to show it.
         case whenPaneAppears(Int)
+        /// The pane that asked is not in this client's tmux session at all (another connection's
+        /// session on the same server, reached through a socket its pane inherited). It never
+        /// appears here, so waiting for it would hang this request and every later one on the
+        /// connection. Refuse at once, without remembering a decision.
+        case notThisClientsPane
         /// No pane named and none shown; the first one shown.
         case whenAnyPaneAppears
     }
@@ -2032,6 +2037,7 @@ extension PTYSession {
     static func it2PromptPlacement(isTmuxGateway: Bool,
                                    callerTmuxPane: String?,
                                    sessionForPane: (Int) -> String?,
+                                   paneIsThisClients: (Int) -> Bool,
                                    visibleClientSession: String?) -> IT2PromptPlacement {
         guard isTmuxGateway else {
             return .ownSession
@@ -2039,6 +2045,9 @@ extension PTYSession {
         if let pane = tmuxPaneNumber(callerTmuxPane) {
             if let guid = sessionForPane(pane) {
                 return .session(guid)
+            }
+            if !paneIsThisClients(pane) {
+                return .notThisClientsPane
             }
             return .whenPaneAppears(pane)
         }
@@ -2068,6 +2077,7 @@ extension PTYSession {
             isTmuxGateway: controller != nil,
             callerTmuxPane: callerTmuxPane,
             sessionForPane: { controller?.session(forWindowPane: Int32($0))?.guid },
+            paneIsThisClients: { controller?.paneIs(inKnownLayout: Int32($0)) ?? false },
             visibleClientSession: visible?.guid)
         RLog("it2 authorization prompt for \(identifier) from pane \(callerTmuxPane ?? "(none)"): \(placement)")
         switch placement {
@@ -2085,6 +2095,11 @@ extension PTYSession {
                 if let session {
                     self?.deliverPendingIT2Prompt(identifier: identifier, to: session)
                 }
+            }
+        case .notThisClientsPane:
+            // Not synchronously: the caller takes back its seal only after presenting.
+            DispatchQueue.main.async {
+                announcement.dismiss()
             }
         case .whenAnyPaneAppears:
             swiftState.it2PendingPrompts[identifier] = announcement
@@ -2112,6 +2127,17 @@ extension PTYSession {
         }
         RLog("it2 authorization prompt \(identifier) shown now that its window is")
         put(announcement, identifier: identifier, on: session)
+    }
+
+    /// The tmux client went away, so a prompt waiting for one of its panes to appear never will.
+    /// Dismissing it refuses that request without remembering, so later requests on the
+    /// connection are not stuck behind it.
+    @objc func dismissPendingIT2Prompts() {
+        let pending = swiftState.it2PendingPrompts
+        swiftState.it2PendingPrompts.removeAll()
+        for announcement in pending.values {
+            announcement.dismiss()
+        }
     }
 
     @objc(dismissIT2AuthorizationAnnouncementWithIdentifier:)

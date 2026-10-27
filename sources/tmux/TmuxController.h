@@ -381,6 +381,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
 // Call with every window layout received from tmux, including those of hidden windows.
 - (void)didLearnLayout:(NSString *)layout forWindow:(int)windowId;
+// Whether some window layout learned so far, hidden windows' included, has this pane: whether it
+// is in the attached tmux session. A pane of another session of the same server is not.
+- (BOOL)paneIsInKnownLayout:(int)wp;
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)activeWindowDidChangeTo:(int)windowID;
 // Whether tmux last reported this window as the attached session's current window.
