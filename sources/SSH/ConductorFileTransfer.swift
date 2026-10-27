@@ -293,7 +293,9 @@ class ConductorFileTransfer: TransferrableFile {
         case .uploading, .uploadComplete:
             return remoteName ?? path.path
         case .failed, .idle:
-            return path.path
+            // A download that didn't finish saved nothing, and path is its remote source, so
+            // don't report it as a destination (F-1051). An upload's path is its destination.
+            return isDownload ? nil : path.path
         }
     }
 
@@ -368,6 +370,10 @@ class ConductorFileTransfer: TransferrableFile {
     override func localPath() -> String? {
         if data != nil {
             return String(localized: "ConductorFileTransfer.InMemory", defaultValue: "(In memory)", comment: "Placeholder shown for a file transfer whose contents are held in memory rather than on disk")
+        }
+        if isDownload && state == .failed {
+            // Its hidden temporary file was removed, so there is no local file (F-1051).
+            return nil
         }
         return _localPath
     }

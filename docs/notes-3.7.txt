@@ -693,6 +693,9 @@ Bug Fixes:
   connection could be found when the name you
   connected with differs from the host’s own
   name, such as an alias in your ssh config.
+- Get Info on a failed SSH Integration download
+  no longer shows the remote file’s path as its
+  destination.
 - An SSH Integration download that can’t be
   saved into your Downloads folder when it
   finishes now reports that it failed, instead

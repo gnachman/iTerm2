@@ -81,6 +81,23 @@ final class ConductorChunkedDownloadTests: XCTestCase {
         XCTAssertFalse(manager.isListingTransferrableFile(forTesting: transfer))
     }
 
+    // F-1051: Get Info on a failed download said “Destination: /home/user/big.bin”, the remote
+    // source path, as if that were where the file was saved.
+    func testFailedDownloadHasNoDestination() {
+        let transfer = startTransfer()
+        transfer.fail(reason: "File not found")
+        XCTAssertNil(transfer.destination())
+        // Nor its deleted hidden temporary file as its local path.
+        XCTAssertNil(transfer.localPath())
+    }
+
+    func testStoppedDownloadHasNoDestination() {
+        let transfer = startTransfer()
+        transfer.stop()
+        XCTAssertNil(transfer.destination())
+        XCTAssertNil(transfer.localPath())
+    }
+
     func testFailedChunkedDownloadIsListedAsFailed() {
         let transfer = startTransfer()
         transfer.fail(reason: "connection lost")
