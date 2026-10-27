@@ -82,6 +82,17 @@ final class TmuxWorkgroupCloseConfirmationTests: WorkgroupEntryTestBase {
         XCTAssertNil(PseudoTerminal.tmuxPaneSessionClosed(byClosing: standIn))
     }
 
+    // The confirmation names the session the stand-in shows, which is what closes, not the
+    // stand-in. QA finding F-846.
+    func testTheConfirmationNamesTheSessionAStandInShows() throws {
+        let split = try enterRootWithSplit()
+        let standIn = PTYSession(synthetic: true)!
+        standIn.live = split
+        XCTAssertEqual(PseudoTerminal.name(forClosing: standIn),
+                       PseudoTerminal.name(forClosing: split))
+        standIn.live = nil
+    }
+
     // Local members ask as they always have, according to their profiles.
     func testClosingALocalMemberIsUnchanged() throws {
         let split = try enterRootWithSplit()

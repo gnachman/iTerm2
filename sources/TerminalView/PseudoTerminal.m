@@ -1818,6 +1818,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// The name a close confirmation gives `session`: for a filter's or Instant Replay's stand-in, the
+// session it shows, which is what closes (QA finding F-846).
++ (NSString *)nameForClosingSession:(PTYSession *)session {
+    PTYSession *live = session.liveSession ?: session;
+    return [[live name] removingHTMLFromTabTitleIfNeeded];
+}
+
 // The attached tmux pane's session that closing `session` closes, if any: the session itself, or
 // the one a filter or Instant Replay stand-in shows. Closing a stand-in alone would leave its pane
 // on the server, and a tmux workgroup member's pane there keeps its workgroup half alive (QA
@@ -2791,7 +2798,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     } else {
       okToClose = [self confirmCloseForSessions:@[aSession]
                                         subject:aSession.locked ? iTermCloseSubjectLockedSession : iTermCloseSubjectSession
-                                     closeTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseSessionTitle", nil, [NSBundle mainBundle], @"Close session “%@”?", @"Close-confirmation title for a session; %@ is the session name"), [[aSession name] removingHTMLFromTabTitleIfNeeded]]
+                                     closeTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseSessionTitle", nil, [NSBundle mainBundle], @"Close session “%@”?", @"Close-confirmation title for a session; %@ is the session name"), [PseudoTerminal nameForClosingSession:aSession]]
                               additionalMessage:[iTermWorkgroupInstance closeCascadeWarningForSessions:@[aSession]]];
     }
     if (okToClose) {
