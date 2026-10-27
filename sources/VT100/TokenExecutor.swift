@@ -391,6 +391,11 @@ class TokenExecutor: NSObject {
     func whilePaused(_ block: () -> ()) {
         self.impl.whilePaused(block, onExecutorQueue: onExecutorQueue)
     }
+
+    // Any queue
+    var joinWaitsForIdleQueue: Bool {
+        return impl.joinWaitsForIdleQueue
+    }
 }
 
 private class TokenExecutorImpl {
@@ -575,8 +580,9 @@ private class TokenExecutorImpl {
     // Runs block synchronously while token executor is stopped.
     func whilePaused(_ block: () -> (), onExecutorQueue: Bool) {
         dispatchPrecondition(condition: .onQueue(.main))
-        if gDebugLogging.boolValue { DLog("Incr pending pauses if \(iTermPreferences.maximizeThroughput())") }
-        var unpauser = iTermPreferences.maximizeThroughput() ? nil : pauseForJoin()
+        let waitForIdle = joinWaitsForIdleQueue
+        if gDebugLogging.boolValue { DLog("Join: waitForIdle=\(waitForIdle)") }
+        var unpauser = waitForIdle ? nil : pauseForJoin()
 
         let sema = DispatchSemaphore(value: 0)
         let sema2 = DispatchSemaphore(value: 0)
@@ -588,9 +594,10 @@ private class TokenExecutorImpl {
         if unpauser != nil {
             sema2.wait()
         } else {
-            // When maximize throughput is on, we want to avoid pausing token execution but we can't
-            // let it go on indefinitely. After a timeout, pause it and block for what should be a short
-            // amount of time (until the current batch of tokens is done being executed).
+            // On the shared queue with maximize throughput on, pausing stops every session, so first
+            // give the queue a chance to reach the join by itself. After a timeout, pause it and block
+            // for what should be a short amount of time (until the current batch of tokens is done
+            // being executed).
             let timeout = 0.03
             if sema2.wait(timeout: .now() + timeout) == .timedOut {
                 unpauser = pauseForJoin()
@@ -604,6 +611,15 @@ private class TokenExecutorImpl {
         }
         unpauser?.unpause()
         sema.signal()
+    }
+
+    // Any queue. With Maximize Throughput on, a join on the shared queue first gives the queue a short
+    // time to go idle by itself, because pausing it stops every session. A session with a queue of its
+    // own pauses right away and waits only for its current batch: pausing costs only that session,
+    // and a busy queue never goes idle, so waiting would block the main thread for the whole grace
+    // period on every join (issue 13141).
+    var joinWaitsForIdleQueue: Bool {
+        return !hasOwnQueue && iTermPreferences.maximizeThroughput()
     }
 
     // Main queue. Stops token execution so the queue gets to the join soon. A session with a queue

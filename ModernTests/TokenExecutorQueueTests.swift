@@ -73,4 +73,25 @@ final class TokenExecutorQueueTests: XCTestCase {
         }
         XCTAssertEqual(globalPauses, 0)
     }
+
+    // With Maximize Throughput on, a join on the shared queue waits briefly for the queue to go idle
+    // before pausing, because pausing stops every session. A session with a queue of its own pauses
+    // right away: pausing costs only that session, and waiting for a busy queue to go idle blocked
+    // the main thread for the whole grace period on every join of a busy session (issue 13141).
+    func testOnlyTheSharedQueueWaitsForIdleBeforePausingWithMaximizeThroughput() {
+        let saved = iTermPreferences.bool(forKey: kPreferenceKeyMaximizeThroughput)
+        defer {
+            iTermPreferences.setBool(saved, forKey: kPreferenceKeyMaximizeThroughput)
+        }
+        let own = makeExecutor(on: iTermGCD.newMutationQueue())
+        let shared = makeExecutor(on: iTermGCD.mutationQueue())
+
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyMaximizeThroughput)
+        XCTAssertFalse(own.joinWaitsForIdleQueue)
+        XCTAssertTrue(shared.joinWaitsForIdleQueue)
+
+        iTermPreferences.setBool(false, forKey: kPreferenceKeyMaximizeThroughput)
+        XCTAssertFalse(own.joinWaitsForIdleQueue)
+        XCTAssertFalse(shared.joinWaitsForIdleQueue)
+    }
 }
