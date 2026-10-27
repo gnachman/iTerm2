@@ -505,18 +505,29 @@ extension ClaudeCodeOnboarding {
     }
 
     /// Removes the hook from `conductor`'s host. `revokeAlwaysAllow` also revokes the host's
-    /// always-allow grant. Required, because the user must be asked: the grant may predate the
-    /// install, and other uses of it2 on that host may depend on it.
+    /// always-allow grant, whether or not the hook could be removed. Required, because the user
+    /// must be asked: the grant may predate the install, and other uses of it2 on that host may
+    /// depend on it.
     @MainActor
     static func uninstallHooksRemotely(conductor: Conductor,
                                        revokeAlwaysAllow: Bool,
                                        files: ClaudeCodeRemoteFiles? = nil,
                                        facts: ClaudeCodeRemoteConnectionFacts = .shared,
                                        completion: @escaping (ClaudeCodeUninstallHooksResult) -> Void) {
+        // The user answered the grant question on its own terms, so honor it whether or not the
+        // hook can be removed: a refused or failed removal must not silently keep the grant. Done
+        // once the removal is over, so a hook firing meanwhile isn't met by an authorization
+        // prompt.
         let host = conductor.sshIdentity.stringIdentifier
+        let finish = { (result: ClaudeCodeUninstallHooksResult) in
+            if revokeAlwaysAllow {
+                Conductor.hostGrantStore.revoke(host: host)
+            }
+            completion(result)
+        }
         remoteSettingsPath(conductor: conductor, facts: facts) { [weak conductor] settingsPath in
             guard let conductor, let settingsPath, let home = conductor.homeDirectory else {
-                completion(.unreadable)
+                finish(.unreadable)
                 return
             }
             let access = files ?? ConductorClaudeCodeRemoteFiles(conductor: conductor)
@@ -524,11 +535,8 @@ extension ClaudeCodeOnboarding {
                 let result = await ClaudeCodeRemoteHooks.uninstall(files: access, settingsPath: settingsPath, home: home)
                 if result == .success {
                     facts.setHookPresent(false, for: conductor)
-                    if revokeAlwaysAllow {
-                        Conductor.hostGrantStore.revoke(host: host)
-                    }
                 }
-                completion(result)
+                finish(result)
             }
         }
     }

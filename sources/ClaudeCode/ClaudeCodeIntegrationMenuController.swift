@@ -171,7 +171,10 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         }
         let rest = Array(hosts.dropFirst())
         guard let conductor = liveConductor(forHost: host) else {
-            // Disconnected since the confirmation.
+            // Disconnected since the confirmation. The grant answer still stands.
+            if revoke[host] == true {
+                Conductor.hostGrantStore.revoke(host: host)
+            }
             uninstallRemoteHooks(rest, revoke: revoke, failures: failures + [(host, .unreadable)], completion: completion)
             return
         }
