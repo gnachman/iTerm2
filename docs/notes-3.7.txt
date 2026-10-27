@@ -1730,6 +1730,9 @@ Bug Fixes:
 - Opening a web browser session in iTerm2 Buddy
   now shows the web page instead of a black
   screen.
+- iTerm2 Buddy no longer connects slowly or
+  keeps saying your Mac is busy while the Mac’s
+  displays are asleep.
 - An AI chat started from a web browser session
   in iTerm2 Buddy is now linked to it as a web
   browser, not a terminal.

@@ -704,6 +704,7 @@
 		221A8E8F0F0FF0C72C23DB93 /* CompanionToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25EC5E50C69463E890DD26BE /* CompanionToast.swift */; };
 		224C2FB202294C3B6C2E1030 /* iTermWorkgroupInstance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC9620CA37B0A32A763C48A /* iTermWorkgroupInstance.swift */; };
 		229997A22B1C8033B1EDEC2E /* iTermTmuxControlModeKeyName.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E02D44A9E1C1B28D6C40090 /* iTermTmuxControlModeKeyName.m */; };
+		22EC1C1F89212FA7ACF36A0D /* CompanionAppNapBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02709B4528F17F4F1F61E95C /* CompanionAppNapBlocker.swift */; };
 		232CB1EF1527990E6ADF64B1 /* TTYModeRepairer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C167125EBF331BCD7AB4F131 /* TTYModeRepairer.swift */; };
 		23F147E06A07F14899B113FD /* iTermRightGutterController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1889B7BCB3C9FBBE656FC590 /* iTermRightGutterController.swift */; };
 		24AA7B99D58357DFF0FC3126 /* iTermWorkgroupRestoration.swift in Sources */ = {isa = PBXBuildFile; fileRef = E75A577B8D27C3128D180B27 /* iTermWorkgroupRestoration.swift */; };
@@ -5124,6 +5125,7 @@
 		011BA2A554383D657736352C /* ClaudeCodeConfigDirResolver.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeConfigDirResolver.swift; sourceTree = "<group>"; };
 		01B39A6571770B2627411423 /* iTermTabGroupBuiltInFunctions.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermTabGroupBuiltInFunctions.h; sourceTree = "<group>"; };
 		0211A7DD1809A7F1194B6870 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/SSHConfigurationWindow.xcstrings; sourceTree = "<group>"; };
+		02709B4528F17F4F1F61E95C /* CompanionAppNapBlocker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionAppNapBlocker.swift; sourceTree = "<group>"; };
 		02C8736B56EFFCC6B075273B /* TmuxPaneInferredHost.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxPaneInferredHost.swift; sourceTree = "<group>"; };
 		02CF16386D8605E6BC44ED81 /* CharacterAtomIterator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CharacterAtomIterator.swift; sourceTree = "<group>"; };
 		02E18F7ADCCB078E0E6143DE /* ScreenWatchPoller.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScreenWatchPoller.swift; sourceTree = "<group>"; };
@@ -10081,6 +10083,7 @@
 				07A8A9A5AE787B6797A610B2 /* CompanionBrowserFrameSource.swift */,
 				C7533ED506C01C692384CE02 /* CompanionBrowserInput.swift */,
 				FECE5E04FE9D0FCDF073F6F5 /* companion-browser-editing.js */,
+				02709B4528F17F4F1F61E95C /* CompanionAppNapBlocker.swift */,
 			);
 			path = Companion;
 			sourceTree = "<group>";
@@ -20377,6 +20380,7 @@
 				2FB1E18F926E8FA48AFB2D9A /* FlowControlChart.swift in Sources */,
 				65226AC1E9F2BCABC102670E /* FlowControlMonitorWindowController.swift in Sources */,
 				3A63636B32EF1E6514A92C89 /* FrameDelayBaseline.swift in Sources */,
+				22EC1C1F89212FA7ACF36A0D /* CompanionAppNapBlocker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

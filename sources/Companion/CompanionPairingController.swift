@@ -275,6 +275,7 @@ final class CompanionPairingController: NSObject {
     private var pairedPID: String? {
         get { iTermUserDefaults.userDefaults().string(forKey: Self.pairedPIDKey) }
         set {
+            appNapBlocker.setPaired(newValue != nil)
             if let newValue {
                 iTermUserDefaults.userDefaults().set(newValue, forKey: Self.pairedPIDKey)
                 // The first successful pairing makes the user "experienced": the
@@ -441,8 +442,12 @@ final class CompanionPairingController: NSObject {
 
     private var gateObservers: [any NSObjectProtocol] = []
 
+    /// Holds App Nap off for as long as a phone is paired.
+    private let appNapBlocker = CompanionAppNapBlocker()
+
     private override init() {
         super.init()
+        appNapBlocker.setPaired(hasPairedDevice)
         // Lets a warning shown over a terminal window say which sessions it is
         // about, so the phone can show it to someone looking at one of them.
         iTermWarning.setSessionGuidResolver { window in
