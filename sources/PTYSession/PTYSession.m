@@ -10689,7 +10689,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // Write a ^C to make it hard to use tmux mode for RCE because we'll soon write a newline.
     // The next thing we send will be a phony command so that if we're actually talking to tmux it
     // will ignore the ^C.
-    [self writeTaskImpl:[NSString stringWithLongCharacter:3] encoding:NSUTF8StringEncoding forceEncoding:NO canBroadcast:NO reporting:NO];
+    // It goes where tmux commands go: through the framer when tmux runs over SSH Integration.
+    // Written straight to the pty, it was held for the framer's unhook and then reached the
+    // local it2ssh just before the newline that lets it exit, which it then didn't see (F-864).
+    [self tmuxWriteString:[NSString stringWithLongCharacter:3]];
 
     NSString *preferredTmuxClientName = [self preferredTmuxClientName];
     self.tmuxMode = TMUX_GATEWAY;

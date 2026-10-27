@@ -264,6 +264,27 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertTrue(session.writes.contains("\u{03}\n"), "\(session.writes)")
     }
 
+    // MARK: - F-864
+
+    // Starting tmux integration writes a ^C first. Over SSH Integration it must go through
+    // the framer to the shell running tmux -CC. Written straight to the pty, it was held
+    // until the framer's unhook and then flushed to the local it2ssh just before the "\u{03}\n"
+    // answering its EndSSH, so it2ssh read the line ^C^C and kept waiting with echo off.
+    func testTmuxStartControlCGoesThroughFramer() {
+        _ = hookFramingRoot()
+        send(framed("out1", "\u{1b}P1000p"))
+        // tmux tokens are handled on the main queue.
+        for _ in 0..<5 {
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.02))
+            sync()
+        }
+        XCTAssertEqual(session.tmuxMode, TMUX_GATEWAY)
+        let held = session.value(forKey: "sshWriteQueue") as? Data
+        XCTAssertEqual(held ?? Data(), Data(), "held for the local tty")
+        XCTAssertTrue(Self.relayedPayloads(session.writes.joined()).contains("\u{03}"),
+                      "\(session.writes)")
+    }
+
     // The payloads of the framer `send` commands in what was written, decoded the way
     // framer.py does.
     private static func relayedPayloads(_ written: String) -> [String] {

@@ -775,6 +775,10 @@ Bug Fixes:
   Disconnect also works before advanced SSH
   features have started, instead of saying it
   can’t disconnect.
+- After using tmux integration in an SSH
+  Integration session, ending ssh no longer
+  leaves the session ignoring typed text until
+  Return is pressed.
 - After quitting with SSH Integration sessions
   open, relaunching with window restoration on
   no longer types stray text, such as
