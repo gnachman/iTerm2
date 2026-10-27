@@ -275,7 +275,7 @@ it with "No session is showing that tmux pane."
 
 What makes it work is the routing, not a wider search. `it2` asks the server which tmux session
 holds `$TMUX_PANE` and which session each attached client is on, then prefers the client attached
-to the pane's session (`#{client_session}` and `#{session_id}`; see TmuxOwnership and it2.py). So
+to the pane's session (`#{session_id}` on both sides; see TmuxOwnership and it2.py). So
 the call arrives on the one connection whose controller can place the pane, and the lookup still
 only considers controllers on the caller's own connection.
 

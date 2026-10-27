@@ -124,7 +124,7 @@ enum TmuxOwnership {
             }
             if line.hasPrefix(clientLinePrefix + "\t") {
                 let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
-                // Absent on tmux too old for #{client_session}; then nothing is preferred and
+                // Empty or absent (no session, or a very old tmux); then nothing is preferred and
                 // the newest-attacher order stands on its own.
                 if fields.count >= 5, !fields[4].isEmpty {
                     clientSession[String(fields[1])] = String(fields[4])
@@ -217,11 +217,14 @@ enum TmuxOwnership {
     /// `;`-separated command sequence in a single client. The format uses real tab characters,
     /// since tmux does not interpret backslash escapes in a format string.
     static func queryArguments(socketPath: String, pane: String?) -> [String] {
-        // client_session is what lets the caller reach the connection that can actually place
-        // its pane: one server can have several attached control-mode clients, each driving a
-        // DIFFERENT tmux session, and only the one attached to the pane's session can show it.
+        // The client's session is what lets the caller reach the connection that can actually
+        // place its pane: one server can have several attached control-mode clients, each
+        // driving a DIFFERENT tmux session, and only the one attached to the pane's session can
+        // show it. Both sides use #{session_id} (in list-clients it is the client's session), so
+        // they compare: #{client_session} is a session NAME, which never equals an id like $0,
+        // and a name can also be renamed.
         let format = [clientLinePrefix, "#{client_name}", "#{client_control_mode}",
-                      "#{client_created}", "#{client_session}"]
+                      "#{client_created}", "#{session_id}"]
             .joined(separator: "\t")
         var arguments = ["tmux", "-S", socketPath, "list-clients", "-F", format, ";",
                          "show-options", "-g"]

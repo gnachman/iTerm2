@@ -222,13 +222,15 @@ def tmux_query_arguments(socket_path, pane, tmux="tmux"):
     formats carry real tab characters: tmux does not interpret backslash escapes in a
     format string.
 
-    client_session is what lets the caller reach the connection that can actually place its
-    pane. A tmux server can have several attached control-mode clients, each driving a
-    DIFFERENT tmux session over its own ssh connection, and only the one attached to the
-    pane's session can show it.
+    The client's session is what lets the caller reach the connection that can actually
+    place its pane. A tmux server can have several attached control-mode clients, each
+    driving a DIFFERENT tmux session over its own ssh connection, and only the one attached
+    to the pane's session can show it. Both sides use #{session_id} (in list-clients it is
+    the client's session), so they compare: #{client_session} is a session NAME, which
+    never equals an id like $0, and a name can also be renamed.
     """
     fmt = "\t".join([TMUX_CLIENT_LINE_PREFIX, "#{client_name}", "#{client_control_mode}",
-                     "#{client_created}", "#{client_session}"])
+                     "#{client_created}", "#{session_id}"])
     args = [tmux, "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
     if pane:
         args += [";", "display-message", "-p", "-t", pane,
@@ -258,7 +260,7 @@ def parse_tmux_client_records(output):
             if len(fields) < 4:
                 continue
             name, control_mode, created = fields[1], fields[2], fields[3]
-            # Absent on tmux too old for #{client_session}; then nothing is preferred and
+            # Empty or absent (no session, or a very old tmux); then nothing is preferred and
             # the newest-attacher order below stands on its own.
             if len(fields) >= 5 and fields[4]:
                 client_session[name] = fields[4]

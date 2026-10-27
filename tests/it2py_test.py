@@ -322,7 +322,7 @@ def test_tmux_query_uses_one_invocation_with_real_tabs():
     check(args[:3] == ["tmux", "-S", "/tmp/od,d,socket"], "socket passed through verbatim")
     check(";" in args, "both commands run in one tmux client")
     fmt = args[args.index("-F") + 1]
-    check(fmt == "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}\t#{client_session}",
+    check(fmt == "IT2CLIENT\t#{client_name}\t#{client_control_mode}\t#{client_created}\t#{session_id}",
           "format: %r" % fmt)
     check("\\t" not in fmt, "tmux does not interpret backslash escapes in formats")
     check("display-message" not in args, "no pane, nothing to ask about it")
@@ -334,6 +334,17 @@ def test_tmux_query_asks_which_session_holds_the_pane():
     i = args.index("display-message")
     check(args[i:i + 4] == ["display-message", "-p", "-t", "%7"], "targets the pane: %r" % args[i:i + 4])
     check(args[i + 4] == "IT2PANESESSION\t#{session_id}", "format: %r" % args[i + 4])
+
+
+def test_client_and_pane_sessions_use_the_same_format():
+    # F-911: #{client_session} is a session NAME ("A") and never equals the pane's
+    # #{session_id} ("$0"), so the preference for the pane's own client silently did nothing.
+    args = it2mod.tmux_query_arguments("/tmp/s", "%7")
+    client_fields = args[args.index("-F") + 1].split("\t")
+    pane_fields = args[args.index("display-message") + 4].split("\t")
+    check(client_fields[4] == pane_fields[1],
+          "client and pane session fields differ: %r vs %r" % (client_fields[4], pane_fields[1]))
+    check(pane_fields[1] == "#{session_id}", "ids survive a rename; names do not")
 
 
 def test_client_showing_the_pane_is_preferred_over_the_newest():

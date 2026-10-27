@@ -40,4 +40,4 @@ if [ -z "${IT2_SOCK:-}" ]; then
   IFS=$saved_ifs
   set +f
 fi
-exec python3 "${IT2_PY:-$HOME/.iterm2/it2.f1f13ef87d320f31.py}" "$@"
+exec python3 "${IT2_PY:-$HOME/.iterm2/it2.aba20b206c1e89e3.py}" "$@"

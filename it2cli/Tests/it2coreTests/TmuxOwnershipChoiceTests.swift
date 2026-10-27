@@ -143,7 +143,7 @@ final class TmuxOwnershipChoiceTests: XCTestCase {
                        ["newer", "older"])
     }
 
-    // tmux too old for #{client_session}: no session field at all, so nothing is preferred.
+    // A tmux that prints no client session field at all: nothing is preferred.
     func testOldTmuxWithoutClientSessionStillOrdersByAttachTime() {
         let output = [clientLine("/dev/pts/3", created: 100, session: nil),
                       clientLine("/dev/pts/4", created: 200, session: nil),
@@ -160,7 +160,18 @@ final class TmuxOwnershipChoiceTests: XCTestCase {
         XCTAssertNotNil(i)
         XCTAssertEqual(Array(args[i!..<(i! + 4)]), ["display-message", "-p", "-t", "%7"])
         XCTAssertEqual(args[i! + 4], "IT2PANESESSION\t#{session_id}")
-        XCTAssertTrue(args.contains { $0.contains("#{client_session}") })
+    }
+
+    // F-911: the client's session and the pane's session must be the same kind of value, or
+    // they never match and the preference silently does nothing. #{client_session} is a NAME
+    // (“A”) while the pane's #{session_id} is an id (“$0”).
+    func testClientAndPaneSessionsUseTheSameFormat() {
+        let args = TmuxOwnership.queryArguments(socketPath: "/tmp/s", pane: "%7")
+        let clientFields = args[args.firstIndex(of: "-F")! + 1].components(separatedBy: "\t")
+        let paneFields = args[args.firstIndex(of: "display-message")! + 4]
+            .components(separatedBy: "\t")
+        XCTAssertEqual(clientFields[4], paneFields[1])
+        XCTAssertEqual(paneFields[1], "#{session_id}", "ids survive a rename; names do not")
     }
 
     func testQuerySkipsThePaneCommandWhenThereIsNoPane() {
