@@ -21,8 +21,10 @@ import fcntl
 import io
 import os
 import pty
+import shutil
 import signal
 import struct
+import subprocess
 import sys
 import termios
 import threading
@@ -634,6 +636,114 @@ class PollTests(CommandTestCase):
             b"  103   101 S    Mon Oct 12 09:00:04 2026     python3 helper.py --flag\n", b"")
         self.assertEqual(sorted(framer.procmon_parse(changed)), [
             "-103", "~101 100 T+ Mon Oct 12 09:00:02 2026 vim notes.txt"])
+
+    # A foreground process whose stdio is not a terminal (claude's caffeinate, with its stdio on
+    # /dev/null) is marked, so iTerm2 names the job after the one on the terminal, as it does
+    # locally. One that can't be checked stays unmarked, and each is looked up only once.
+    def test_foreground_jobs_off_the_terminal_are_marked(self):
+        rows = {
+            "300": ("300", "1", "Ss", "Mon Oct 12 09:00:01 2026", "-zsh"),
+            "301": ("301", "300", "S+", "Mon Oct 12 09:00:02 2026", "claude"),
+            "302": ("302", "301", "S+", "Mon Oct 12 09:00:03 2026", "caffeinate -i -t 300"),
+            "303": ("303", "301", "S+", "Mon Oct 12 09:00:04 2026", "mystery"),
+            "304": ("304", "300", "S", "Mon Oct 12 09:00:05 2026", "background"),
+        }
+        states = {"301": True, "302": False, "303": None, "304": False}
+        asked = []
+
+        def fake_proc(pid):
+            asked.append(pid)
+            return states[pid]
+
+        async def fake_lsof(pids):
+            asked.extend(pids)
+            return {pid: states[pid] for pid in pids if states[pid] is not None}
+
+        async def body(with_proc):
+            self.framer.STDIO_ON_TERMINAL = {}
+            del asked[:]
+            with patched(self.framer, "proc_stdio_on_terminal", fake_proc), \
+                    patched(self.framer, "lsof_stdio_on_terminal", fake_lsof), \
+                    patched(self.framer, "has_proc_fds", lambda: with_proc):
+                first = dict(rows)
+                await self.framer.mark_foreground_jobs_off_the_terminal(first)
+                self.assertEqual(first["301"][2], "S+")
+                self.assertEqual(first["302"][2], "S+!")
+                self.assertEqual(first["303"][2], "S+")
+                self.assertEqual(first["304"][2], "S", "only foreground processes are checked")
+                self.assertEqual(sorted(asked), ["301", "302", "303"])
+                del asked[:]
+                second = dict(rows)
+                await self.framer.mark_foreground_jobs_off_the_terminal(second)
+                self.assertEqual(second["302"][2], "S+!")
+                self.assertEqual(asked, [], "each process is looked up once")
+                # One that execs something else is looked up again.
+                third = dict(rows)
+                third["301"] = ("301", "300", "S+", "Mon Oct 12 09:00:02 2026", "caffeinate")
+                states["301"] = False
+                await self.framer.mark_foreground_jobs_off_the_terminal(third)
+                states["301"] = True
+                self.assertEqual(third["301"][2], "S+!")
+                self.assertEqual(asked, ["301"])
+        # Linux, from /proc; and macOS or BSD, from lsof.
+        for with_proc in (True, False):
+            self.run_async(lambda: body(with_proc))
+
+    def test_parse_lsof_stdio(self):
+        output = "p301\nf0\nn/dev/ttys003\nf1\nn/dev/ttys003\np302\nf0\nn/dev/null\nf1\nn/dev/null\n" \
+                 "p303\nf0\nnpipe\nf1\nn/dev/pts/4\n"
+        self.assertEqual(self.framer.parse_lsof_stdio(output),
+                         {"301": True, "302": False, "303": True})
+
+    # A lsof that does not finish in time is killed, not left running.
+    def test_hung_lsof_is_killed(self):
+        fake_lsof = os.path.join(self.tmp, "lsof")
+        marker = os.path.join(self.tmp, "lsof-pid")
+        with open(fake_lsof, "w") as f:
+            f.write("#!/bin/sh\necho $$ > '%s'\nexec sleep 30\n" % marker)
+        os.chmod(fake_lsof, 0o755)
+        real_wait_for = asyncio.wait_for
+
+        async def quick_wait_for(awaitable, timeout):
+            return await real_wait_for(awaitable, timeout=0.5)
+
+        result = {}
+
+        async def body():
+            with env(PATH=self.tmp + ":/usr/bin:/bin"), \
+                    patched(self.framer.asyncio, "wait_for", quick_wait_for):
+                result.update(await self.framer.lsof_stdio_on_terminal(["1"]))
+        self.run_async(body)
+        self.assertEqual(result, {})
+        with open(marker) as f:
+            pid = int(f.read().strip())
+        with self.assertRaises(ProcessLookupError):
+            os.kill(pid, 0)
+
+    # The real lookup, on this host: a child on /dev/null is off the terminal, one on a pty is on.
+    def test_stdio_lookup_on_this_host(self):
+        master, slave = pty.openpty()
+        off = subprocess.Popen(["sleep", "30"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        on = subprocess.Popen(["sleep", "30"], stdin=slave, stdout=slave)
+        try:
+            pids = [str(off.pid), str(on.pid)]
+            if os.path.isdir("/proc/self/fd"):
+                found = {pid: self.framer.proc_stdio_on_terminal(pid) for pid in pids}
+            else:
+                if shutil.which("lsof") is None:
+                    self.skipTest("no lsof")
+                found = {}
+
+                async def body():
+                    found.update(await self.framer.lsof_stdio_on_terminal(pids))
+                self.run_async(body)
+            self.assertEqual(found, {str(off.pid): False, str(on.pid): True})
+        finally:
+            for p in (off, on):
+                p.kill()
+                p.wait()
+            os.close(master)
+            os.close(slave)
 
     def test_procmon_ignores_unregistered_and_missing_pids(self):
         self.framer.REGISTERED = [999]

@@ -86,6 +86,7 @@ def reset_framer(framer):
     framer.REPLIED = set()
     framer.REGISTERED = []
     framer.LASTPS = {}
+    framer.STDIO_ON_TERMINAL = {}
     framer.AUTOPOLL = 0
     framer.AUTOPOLL_TASK = None
     framer.TTY_TASK = None

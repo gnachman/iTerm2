@@ -3212,6 +3212,19 @@ ITERM_WEAKLY_REFERENCEABLE
     return _conductor.processInfoProvider;
 }
 
+// The pid processInfoProvider knows this session's processes by. Chosen with the same branches as
+// processInfoProvider, so the two cannot drift apart.
+- (pid_t)processInfoProviderKeyForEffectivePid:(pid_t)effectivePid {
+    PTYSession *tmuxGatewaySession = self.tmuxGatewaySession;
+    return [iTermProcessInfoProviderKey pidForFramerPane:_shell.framerPaneJobManager != nil
+                                       tmuxPaneOfGateway:tmuxGatewaySession != nil && self.isTmuxClient
+                                            hasConductor:_conductor != nil
+                                                 framing:_conductor.framing
+                                               framedPID:_conductor.framedPID.intValue
+                                           remotePanePID:_remoteTmuxPanePID.intValue
+                                            effectivePID:effectivePid];
+}
+
 - (id<SessionProcessInfoProvider>)sessionProcessInfoProvider {
     if (_shell.framerPaneJobManager) {
         return [self remoteTmuxPaneProcessInfoProvider] ?: _shell;
@@ -8158,11 +8171,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // path and the foreground-job ancestry use. Otherwise the cache lookup misses
     // and the display job silently degrades to the raw deepest job for tmux panes.
     const pid_t effectivePid = _shell.tmuxClientProcessID ? _shell.tmuxClientProcessID.intValue : _shell.pid;
-    // A remote pane's processes are keyed by its pid on that host, in the gateway's provider.
-    const pid_t displayPid = _remoteTmuxPanePID ? _remoteTmuxPanePID.intValue : effectivePid;
+    // The pid processInfoProvider knows this session by: for a remote provider, a pid on that host
+    // (a remote pane's, or the login shell's on a host reached through SSH Integration), not the
+    // local ssh's.
+    const pid_t displayPid = [self processInfoProviderKeyForEffectivePid:effectivePid];
     iTermProcessInfo *displayInfo = [self.processInfoProvider displayForegroundJobForPid:displayPid] ?: processInfo;
-    DLog(@"%p set jobName to %@ (pid %@); raw deepest/deepestJob is %@ (pid %@); root pid %@",
-         self, displayInfo.name, @(displayInfo.processID), processInfo.name, @(processInfo.processID), @(effectivePid));
+    DLog(@"%p set jobName to %@ (pid %@); raw deepest/deepestJob is %@ (pid %@); root pid %@, looked up as %@",
+         self, displayInfo.name, @(displayInfo.processID), processInfo.name, @(processInfo.processID), @(effectivePid), @(displayPid));
     NSString *name = displayInfo.name;
     NSString *processTitle = displayInfo.argv0 ?: name;
 

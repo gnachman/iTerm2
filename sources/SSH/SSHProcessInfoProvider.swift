@@ -41,6 +41,10 @@ fileprivate struct PSRow {
     let ppid: pid_t
     let command: String
     let fg: Bool
+    /// False when framer marked the process as in the foreground process group with neither its
+    /// stdin nor its stdout on a terminal (OFF_TERMINAL_MARKER in framer.py), like the caffeinate
+    /// claude starts. True otherwise, including from a framer too old to check.
+    let stdioOnTerminal: Bool
     let startTime: Date?
 
     init?(_ line: String) {
@@ -91,7 +95,9 @@ fileprivate struct PSRow {
         }
         self.pid = pid
         self.ppid = ppid
-        self.fg = nsstring.substring(with: ranges[3]).contains("+")
+        let stat = nsstring.substring(with: ranges[3])
+        self.fg = stat.contains("+")
+        self.stdioOnTerminal = !stat.contains("!")
 
         let ltime = nsstring.substring(with: ranges[4])
         let formatter = DateFormatter()
@@ -116,6 +122,7 @@ class SSHProcessInfoProvider {
         minimumInterval: 1)
     private var dirtyPIDs = Set<pid_t>()
     private var cachedDeepestForegroundJob = [pid_t: iTermProcessInfo]()
+    private var cachedDisplayForegroundJob = [pid_t: iTermProcessInfo]()
     private var tracked = Set<pid_t>()
     private var rootInfo: iTermProcessInfo?
     private let rootPID: pid_t
@@ -256,6 +263,7 @@ class SSHProcessInfoProvider {
 
         self.collection = collection
         cachedDeepestForegroundJob = newDeepestForegroundJobCache()
+        cachedDisplayForegroundJob = newDisplayForegroundJobCache()
         _needsUpdate = false
         rootInfo = collection.info(forProcessID: rootPID)
     }
@@ -293,6 +301,23 @@ class SSHProcessInfoProvider {
         return result
     }
 
+    /// As for a local session: the deepest foreground job on the terminal, else the deepest
+    /// foreground job. framer says which processes are on a terminal; SSHProcessDataSource gives
+    /// them all one synthetic tty.
+    private func newDisplayForegroundJobCache() -> [pid_t: iTermProcessInfo] {
+        var cache = [pid_t: iTermProcessInfo]()
+        guard let collection = collection else {
+            return cache
+        }
+        for pid in tracked {
+            if let info = collection.info(forProcessID: pid)?.deepestForegroundJob(
+                attachedToTTYRdev: SSHProcessDataSource.terminalRdev) {
+                cache[pid] = info
+            }
+        }
+        return cache
+    }
+
     private func newDeepestForegroundJobCache() -> [pid_t: iTermProcessInfo] {
         var cache = [pid_t: iTermProcessInfo]()
         guard let collection = collection else {
@@ -308,6 +333,10 @@ class SSHProcessInfoProvider {
 }
 
 fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
+    /// A stand-in for "a terminal": remote device numbers mean nothing here, and all that
+    /// matters is whether a process's stdio is on one.
+    static let terminalRdev: dev_t = 1
+
     private let rows: [PSRow]
     private let index: [pid_t: Int]
 
@@ -359,8 +388,12 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
     }
 
     func ttyRdev(forFileDescriptor fd: Int32, ofProcess pid: pid_t) -> dev_t {
-        // We can't introspect file descriptors of remote processes.
-        return 0
+        // framer reports only whether a process's stdio is on a terminal, not which fd or which
+        // terminal.
+        guard let row = row(pid: pid), row.stdioOnTerminal else {
+            return 0
+        }
+        return Self.terminalRdev
     }
 }
 
@@ -393,9 +426,7 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
     }
 
     func displayForegroundJob(for pid: pid_t) -> iTermProcessInfo? {
-        // We can't introspect remote file descriptors, so tty attachment is
-        // unknowable. Fall back to the raw deepest foreground job.
-        return cachedDeepestForegroundJob[pid]
+        return cachedDisplayForegroundJob[pid] ?? cachedDeepestForegroundJob[pid]
     }
 
     /// Idempotent: a pid already tracked is not sent to framer again. reregisterTrackedPIDs is for

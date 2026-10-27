@@ -57,6 +57,54 @@ final class SSHPaneProcessInfoTests: XCTestCase {
                        "the chain stops at the pane's login shell, so claude is seen")
     }
 
+    // claude starts caffeinate, in the foreground process group with its stdio on /dev/null,
+    // which framer marks with "!". The job is named after claude, as it is locally; the raw
+    // deepest foreground job is still caffeinate.
+    func testJobNameSkipsAForegroundHelperOffTheTerminal() throws {
+        let runner = FakeRunner()
+        let provider = makeProvider(runner)
+        provider.register(trackedPID: panePID)
+        provider.handle("""
+        $begin ps
+        +100 1 Ss Sun Oct  4 20:00:00 2026 -zsh
+        +101 100 S+ Sun Oct  4 20:00:01 2026 claude
+        +102 101 S+! Sun Oct  4 20:00:02 2026 caffeinate -i -t 300
+        +300 1 Ss Sun Oct  4 20:00:02 2026 -zsh
+        +301 300 S+ Sun Oct  4 20:00:03 2026 claude
+        +302 301 S+! Sun Oct  4 20:00:04 2026 caffeinate -i -t 300
+        """)
+        XCTAssertEqual(provider.displayForegroundJob(for: loginShell)?.processID, 101)
+        XCTAssertEqual(provider.deepestForegroundJob(for: loginShell)?.processID, 102)
+        XCTAssertEqual(provider.displayForegroundJob(for: panePID)?.processID, 301, "a remote tmux pane too")
+    }
+
+    // A framer too old to mark anything: every foreground process counts, as before.
+    func testUnmarkedListingKeepsTheDeepestForegroundJob() {
+        let provider = makeProvider(FakeRunner())
+        provider.handle(listing)
+        XCTAssertEqual(provider.displayForegroundJob(for: loginShell)?.processID, 101)
+    }
+
+    // The pid a session's job is looked up by must be the one its provider knows it by.
+    func testProviderKeyFollowsTheProvider() {
+        func key(framerPane: Bool = false, tmuxPane: Bool = false, conductor: Bool = false,
+                 framing: Bool = false, remotePane: pid_t = 0) -> pid_t {
+            return ProcessInfoProviderKey.pid(framerPane: framerPane, tmuxPaneOfGateway: tmuxPane,
+                                              hasConductor: conductor, framing: framing,
+                                              framedPID: 500, remotePanePID: remotePane,
+                                              effectivePID: 42)
+        }
+        XCTAssertEqual(key(), 42, "a local session")
+        XCTAssertEqual(key(conductor: true, framing: true), 500, "a session on a host reached through SSH Integration")
+        XCTAssertEqual(key(conductor: true, framing: false), 42, "a connection not framing yet")
+        XCTAssertEqual(key(tmuxPane: true, remotePane: 301), 301, "a remote tmux pane")
+        XCTAssertEqual(key(tmuxPane: true), 42, "a local tmux pane")
+        XCTAssertEqual(key(tmuxPane: true, conductor: true, framing: true, remotePane: 301), 500,
+                       "a remote tmux pane running it2ssh has a connection of its own")
+        XCTAssertEqual(key(framerPane: true, conductor: true, framing: true, remotePane: 301), 301,
+                       "a framer pane uses its host's provider")
+    }
+
     // The gateway session keeps answering for the connection's login shell.
     func testRootStillReportsTheLoginShellsJob() throws {
         let runner = FakeRunner()

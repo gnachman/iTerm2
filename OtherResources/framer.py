@@ -1091,11 +1091,117 @@ async def poll_ps():
     output, erroutput = await proc.communicate()
     if proc.returncode == 0:
         log(f'poll_ps: successful return')
-        final = procmon_parse(output)
+        rows = procmon_rows(output)
+        await mark_foreground_jobs_off_the_terminal(rows)
+        final = procmon_diff(rows)
         log(f'poll_ps: return parsed output')
         return final
     log(f'poll_ps: ps failed with {proc.returncode}')
     return None
+
+# Appended to a process's stat when it is in the terminal's foreground process group but neither
+# its stdin nor its stdout is a terminal, like the caffeinate claude starts with its stdio sent to
+# /dev/null, or an MCP server piped to its parent. iTerm2 names a session's job after the deepest
+# foreground job that IS on the terminal, as it does for local sessions by looking at the fds.
+# Not a character ps uses in stat.
+OFF_TERMINAL_MARKER = "!"
+
+# (pid, start time, command) -> whether its stdin or stdout is a terminal, or None when unknown.
+# A process keeps its stdio, so each is looked up once; the command is in the key so one that
+# execs something else (a child that moved its stdio to /dev/null and became caffeinate) is
+# looked up again.
+STDIO_ON_TERMINAL = {}
+
+def has_proc_fds():
+    """Whether this host has /proc/<pid>/fd (Linux). Otherwise lsof is asked."""
+    return os.path.isdir("/proc/self/fd")
+
+def stdio_is_terminal(path):
+    return path.startswith("/dev/pts/") or path.startswith("/dev/tty")
+
+def proc_stdio_on_terminal(pid):
+    """From /proc (Linux): True or False, or None when /proc can't say."""
+    paths = []
+    for fd in (0, 1):
+        try:
+            paths.append(os.readlink("/proc/%s/fd/%d" % (pid, fd)))
+        except OSError:
+            pass
+    if not paths:
+        return None
+    return any(stdio_is_terminal(p) for p in paths)
+
+def parse_lsof_stdio(output):
+    """pid -> whether fd 0 or 1 is a terminal, from `lsof -F fn` output for fds 0 and 1."""
+    result = {}
+    pid = None
+    for line in output.splitlines():
+        if line.startswith("p"):
+            pid = line[1:]
+            result.setdefault(pid, False)
+        elif line.startswith("n") and pid is not None:
+            if stdio_is_terminal(line[1:]):
+                result[pid] = True
+    return result
+
+async def lsof_stdio_on_terminal(pids):
+    """For hosts without /proc (macOS, BSD): pid -> True or False, for the pids lsof could see."""
+    proc = None
+
+    async def stop():
+        # A lsof that hangs (a stale network mount, say) must not outlive the question.
+        if proc is not None and proc.returncode is None:
+            with contextlib.suppress(Exception):
+                proc.kill()
+            # Bounded: SIGKILL waits for a process stuck in the kernel to come back out.
+            with contextlib.suppress(Exception):
+                await asyncio.wait_for(proc.wait(), 1)
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "lsof", "-w", "-b", "-n", "-P", "-a", "-d", "0,1", "-p", ",".join(pids), "-F", "fn",
+            stdin=asyncio.subprocess.DEVNULL,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL)
+        output, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
+    except asyncio.CancelledError:
+        # Before Python 3.8 this is an Exception, and swallowing it below would keep autopoll
+        # running after quit cancelled it.
+        await stop()
+        raise
+    except Exception as e:
+        log(f'lsof_stdio_on_terminal: {e}')
+        await stop()
+        return {}
+    return parse_lsof_stdio(output.decode("utf-8", "replace"))
+
+async def mark_foreground_jobs_off_the_terminal(rows):
+    """Append OFF_TERMINAL_MARKER to the stat of each foreground process (+ in stat) whose stdio
+    is not a terminal. One that can't be checked is left unmarked, which is how it was before."""
+    global STDIO_ON_TERMINAL
+    live = {}
+    unknown = []
+    for pid, row in rows.items():
+        if "+" not in row[2]:
+            continue
+        key = (pid, row[3], row[4])
+        if key in STDIO_ON_TERMINAL:
+            live[key] = STDIO_ON_TERMINAL[key]
+            continue
+        if has_proc_fds():
+            live[key] = proc_stdio_on_terminal(pid)
+        else:
+            unknown.append(pid)
+            live[key] = None
+    if unknown:
+        found = await lsof_stdio_on_terminal(unknown)
+        for pid in unknown:
+            live[(pid, rows[pid][3], rows[pid][4])] = found.get(pid)
+    STDIO_ON_TERMINAL = live
+    for (pid, _, _), on_terminal in live.items():
+        if on_terminal is False:
+            row = rows[pid]
+            rows[pid] = (row[0], row[1], row[2] + OFF_TERMINAL_MARKER, row[3], row[4])
 
 async def register(pid):
     global REGISTERED
@@ -1110,6 +1216,10 @@ async def deregister(pid):
         REGISTERED.remove(pid)
 
 def procmon_parse(output):
+    return procmon_diff(procmon_rows(output))
+
+def procmon_rows(output):
+    """pid -> (pid, ppid, stat, start time, command) for the registered pids' subtrees."""
     output = output.decode("utf-8")
     lines = output.split("\n")
     whitespace = r'\s+'
@@ -1184,7 +1294,11 @@ def procmon_parse(output):
         if str(pid) in index:
             add(str(pid))
     log(f'procmon_parse: {len(results)} processes in output')
+    return results
 
+def procmon_diff(results):
+    """The edits since the last poll: +row for a new process, -pid for a gone one, ~row for a
+    changed one."""
     global LASTPS
     last = dict(LASTPS)
     LASTPS = dict(results)

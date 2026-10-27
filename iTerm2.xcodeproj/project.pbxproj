@@ -1054,6 +1054,7 @@
 		67C35F5A63227428A1D3D6F0 /* TmuxWorkgroupRepair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8630327624AB2186EAAFB662 /* TmuxWorkgroupRepair.swift */; };
 		67C47D5F2F8DF88F92E26984 /* LLM+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF2267B1164F44724EB0853 /* LLM+Mac.swift */; };
 		681A08D192AC9A47766AFAFC /* PTYSession+CodeReviewPromptMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A910F0C87249E36FDB26F5A4 /* PTYSession+CodeReviewPromptMigration.swift */; };
+		6909AEF4EF285B013BE9E1E6 /* ProcessInfoProviderKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E1D3E6F144FCFF66F32D3F /* ProcessInfoProviderKey.swift */; };
 		6A01F4220CBCC9D9258D0138 /* iTermAttributedStringBuilderBenchmark.h in Sources */ = {isa = PBXBuildFile; fileRef = B017AB697F0D773A08D2C2E5 /* iTermAttributedStringBuilderBenchmark.h */; };
 		6A4CCE7B1B251A970DD324D6 /* TmuxWorkgroupHiddenPaneOffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83BACEE4D273E0A3FD916D1D /* TmuxWorkgroupHiddenPaneOffer.swift */; };
 		6A8ED0F641A9897F39D60FBE /* VT100ScreenState+RCDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = DB46A60B018E4C5F6859B164 /* VT100ScreenState+RCDataSource.m */; };
@@ -5906,6 +5907,7 @@
 		53D0FD50237DCB5A00DAFA8A /* NSTableView+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSTableView+iTerm.m"; sourceTree = "<group>"; };
 		53D68F7E2283EE7C0018710D /* iTermTmuxLayoutBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxLayoutBuilder.h; sourceTree = "<group>"; };
 		53D68F7F2283EE7C0018710D /* iTermTmuxLayoutBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxLayoutBuilder.m; sourceTree = "<group>"; };
+		53E1D3E6F144FCFF66F32D3F /* ProcessInfoProviderKey.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProcessInfoProviderKey.swift; sourceTree = "<group>"; };
 		53E282CC22EA9D98007CBA30 /* iTermClientServerProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermClientServerProtocol.h; sourceTree = "<group>"; };
 		53E282CD22EA9D98007CBA30 /* iTermClientServerProtocol.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = iTermClientServerProtocol.c; sourceTree = "<group>"; };
 		53E282D022EAA02F007CBA30 /* iTermMultiServerProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMultiServerProtocol.h; sourceTree = "<group>"; };
@@ -11848,6 +11850,7 @@
 				16E7789ECB52C72E2DF4D36F /* FlowControlChart.swift */,
 				E300468361106B82C9C9DF62 /* FlowControlMonitorWindowController.swift */,
 				C86B5CE4F7F3519B29EA1C72 /* FrameDelayBaseline.swift */,
+				53E1D3E6F144FCFF66F32D3F /* ProcessInfoProviderKey.swift */,
 			);
 			path = SSH;
 			sourceTree = "<group>";
@@ -20377,6 +20380,7 @@
 				65226AC1E9F2BCABC102670E /* FlowControlMonitorWindowController.swift in Sources */,
 				3A63636B32EF1E6514A92C89 /* FrameDelayBaseline.swift in Sources */,
 				22EC1C1F89212FA7ACF36A0D /* CompanionAppNapBlocker.swift in Sources */,
+				6909AEF4EF285B013BE9E1E6 /* ProcessInfoProviderKey.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
