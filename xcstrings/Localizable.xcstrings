@@ -128267,6 +128267,48 @@
         }
       }
     },
+    "PTYSession.TmuxIntegrationCannotNest" : {
+      "comment" : "Warning shown when tmux -CC is run inside a session that is itself a tmux integration pane",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die tmux-Integration kann nicht in einer Sitzung starten, die bereits Teil einer tmux-Integration ist. Der neue tmux-Client wartet im Steuerungsmodus; drücke in dieser Sitzung die Eingabetaste, um ihn zu beenden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "tmux integration can’t start in a session that is already part of tmux integration. The new tmux client is waiting in control mode; press Return in this session to end it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すでに tmux 統合の一部になっているセッションでは tmux 統合を開始できません。新しい tmux クライアントはコントロールモードで待機しています。このセッションで Return キーを押すと終了します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A integração com o tmux não pode iniciar em uma sessão que já faz parte de uma integração com o tmux. O novo cliente tmux está aguardando no modo de controle; pressione Return nesta sessão para encerrá-lo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интеграция с tmux не может запуститься в сеансе, который уже входит в интеграцию с tmux. Новый клиент tmux ожидает в режиме управления; нажмите Return в этом сеансе, чтобы завершить его."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法在已属于 tmux 集成的会话中启动 tmux 集成。新的 tmux 客户端正在控制模式下等待；在此会话中按 Return 键即可结束它。"
+          }
+        }
+      }
+    },
     "PTYSession.TmuxLoggingOff" : {
       "comment" : "Message reporting that tmux logging was turned off",
       "extractionState" : "extracted_with_value",

@@ -10480,8 +10480,24 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (void)warnThatTmuxIntegrationCannotNest {
+    [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.TmuxIntegrationCannotNest", nil, [NSBundle mainBundle], @"tmux integration can’t start in a session that is already part of tmux integration. The new tmux client is waiting in control mode; press Return in this session to end it.", @"Warning shown when tmux -CC is run inside a session that is itself a tmux integration pane")
+                               actions:@[ iTermLocalizedOK() ]
+                            identifier:@"NoSyncTmuxIntegrationCannotNest"
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                                window:self.view.window];
+}
+
 - (void)startTmuxMode:(NSString *)dcsID {
     if (self.tmuxMode != TMUX_NONE) {
+        DLog(@"Not starting tmux mode in %@ because tmuxMode is %@", self, @(self.tmuxMode));
+        if (self.tmuxMode == TMUX_CLIENT) {
+            // This is called from a paused side effect, so don't run a modal alert here.
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf warnThatTmuxIntegrationCannotNest];
+            });
+        }
         return;
     }
     // Write a ^C to make it hard to use tmux mode for RCE because we'll soon write a newline.
