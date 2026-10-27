@@ -264,6 +264,34 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
         XCTAssertEqual(session.conductor?.clientUniqueID, "4321")
     }
 
+    // F-970: iTerm2 was killed before it saved any state, so on relaunch the job is adopted
+    // as an orphan with no restored conductor. Its ssh died while iTerm2 was down, so its
+    // unread framer output arrives outside any hook while no ssh client runs in the job
+    // (this test session has no job at all). It must not start recovery, which typed base64
+    // “recover” into the local shell and left a recovery conductor holding the keyboard.
+    func testUnreadFramerOutputInAdoptedJobWithoutSSHDoesNotRecover() {
+        session.showOrphanAnnouncement()
+        XCTAssertNil(session.conductor)
+        send(autopollReport(id: "9001"))
+        send(autopollReport(id: "9002"))
+        send("local% ")
+        assertRecoveryNotStarted()
+        XCTAssertNil(session.conductor)
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+
+        // A new connection may recover again.
+        send(hook(uniqueID: "4321"))
+        XCTAssertEqual(session.conductor?.clientUniqueID, "4321")
+    }
+
+    // The control: a session that wasn't adopted as an orphan, such as a tmux pane, has no
+    // local job to look for ssh in, so framer output with no conductor still recovers.
+    func testUnhookedFramerOutputWithoutConductorStillRecoversOutsideAdoptedJob() {
+        XCTAssertNil(session.conductor)
+        send(autopollReport(id: "9001"))
+        XCTAssertTrue(session.writes.contains { $0.contains(recover) }, "\(session.writes)")
+    }
+
     // A new connection's framer output is its own, so it may recover again.
     func testNewConnectionAfterDisconnectCanRecover() {
         disconnect(hookRoot())

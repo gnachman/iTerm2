@@ -808,6 +808,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // (unique ID, hostname)
     NSMutableData *_sshWriteQueue;
     BOOL _jiggleUponAttach;
+    // Adopted as an orphan job, whose SSH Integration state was never saved, and no framer
+    // output has asked to recover a connection since (F-970).
+    BOOL _adoptedAsOrphanWithoutFramerRecoveryCheck;
 
     // Are we currently enqueuing the bytes to write a focus report?
     BOOL _reportingFocus;
@@ -2864,6 +2867,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // jiggleUponAttach to force it to happen eventually.
     [self jiggle];
     _jiggleUponAttach = YES;
+    _adoptedAsOrphanWithoutFramerRecoveryCheck = YES;
     [self.naggingController didRestoreOrphan];
 }
 
@@ -21527,6 +21531,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         RLog(@"Refuse framer recovery for a child of depth %d of an abandoned connection", parentDepth);
         return NO;
     }
+    const BOOL adoptedAsOrphan = _adoptedAsOrphanWithoutFramerRecoveryCheck;
+    _adoptedAsOrphanWithoutFramerRecoveryCheck = NO;
+    if (adoptedAsOrphan &&
+        !_conductor &&
+        ![[iTermSSHClientProcessLocator sharedInstance] hasSSHClientAmongDescendantsOf:_shell.pid]) {
+        // iTerm2 was killed before it saved any state, so it adopted this job as an orphan
+        // and knows of no connection, and nothing in the job runs ssh. This is unread output
+        // from a connection whose ssh died while iTerm2 was down. Recovering would type
+        // base64 “recover” into the shell that owns the tty (F-970).
+        RLog(@"Framer output arrived in an adopted orphan job without an ssh client. Refuse framer recovery.");
+        [self refuseFramerRecoveryForConnectionWhoseSSHEnded:@[]];
+        return NO;
+    }
     // Preserve the it2 proxy state (nonce/socket/authorization) of the conductor being
     // recovered so it carries into the shim below. For a root single-hop recovery the
     // old conductor is unhooked (and released) before the shim exists, so retain it
@@ -27329,6 +27346,11 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
         }
     }
     [self forgetRestoredConductor];
+    [self refuseFramerRecoveryForConnectionWhoseSSHEnded:clientUniqueIDs];
+}
+
+// Refuses framer recovery at every depth until a new connection hooks.
+- (void)refuseFramerRecoveryForConnectionWhoseSSHEnded:(NSArray<NSString *> *)clientUniqueIDs {
     [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:-1
                                         abandonedClientUniqueIDs:clientUniqueIDs];
     [self refuseFramerRecoveryAtDepth:-1 abandonedClientUniqueIDs:clientUniqueIDs];
