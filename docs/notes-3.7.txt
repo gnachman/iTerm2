@@ -770,6 +770,10 @@ Bug Fixes:
   was killed, even while the remote host is
   printing output. Previously the session
   stopped showing output and ignored input.
+  Disconnect also works before advanced SSH
+  features have started, or on a host without
+  the Python they need, instead of saying it
+  can’t disconnect.
 - After quitting with SSH Integration sessions
   open, relaunching with window restoration on
   no longer types stray text, such as

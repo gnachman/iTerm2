@@ -10994,18 +10994,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _conductor.sshIdentity.description;
 }
 
+// Works before the framer starts too (e.g., it2ssh was killed during setup, or the host
+// lacks the framer's Python): quit sends the pre-framer quit, and the forced unhook and the
+// refusal of framer recovery apply either way.
 - (void)textViewDisconnectSSH {
-    if (!_conductor.framing) {
-        NSString *title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.AdvancedSSHUnavailable", nil, [NSBundle mainBundle], @"Advanced SSH features are unavailable because Python %1$@ or later was not found on %2$@", @"Warning that advanced SSH features require a newer Python; first placeholder is the version, second is the host"), [iTermConductor minimumPythonVersionForFramer], _conductor.sshIdentity.hostname ?: NSLocalizedStringWithDefaultValue(@"PTYSession.RemoteHost", nil, [NSBundle mainBundle], @"remote host", @"Fallback name for a remote host when the hostname is unknown")];
-        [iTermWarning showWarningWithTitle:title
-                                   actions:@[ iTermLocalizedOK() ]
-                                 accessory:nil
-                                identifier:nil
-                               silenceable:kiTermWarningTypePersistent
-                                   heading:NSLocalizedStringWithDefaultValue(@"PTYSession.CantDisconnect", nil, [NSBundle mainBundle], @"Can’t Disconnect", @"Heading for a warning that iTerm2 cannot disconnect from SSH")
-                                    window:self.view.window];
-        return;
-    }
     [_conductor quit];
 }
 

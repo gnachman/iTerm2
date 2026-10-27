@@ -2643,10 +2643,6 @@ extension Conductor {
 
     private static let minimumPythonMajorVersion = 3
     private static let minimumPythonMinorVersion = 7
-    @objc static var minimumPythonVersionForFramer: String {
-        "\(minimumPythonMajorVersion).\(minimumPythonMinorVersion)"
-    }
-
     private func shellSupportsInjection(_ shell: String, _ version: String) -> Bool {
         let alwaysSupported = ["fish", "nu", "xonsh", "zsh"]
         if alwaysSupported.contains(shell.lastPathComponent) {

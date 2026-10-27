@@ -171,6 +171,28 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
         XCTAssertTrue(screenText().contains("local% "), screenText())
     }
 
+    // Disconnect works before the framer starts, as when it2ssh is killed during setup: it
+    // sends the pre-framer quit instead of refusing, the session lets go of the conductor,
+    // and once the hook is forced off the local shell's output is drawn.
+    func testDisconnectBeforeFramerStartsEndsConnection() {
+        let conductor = hookRoot()
+        XCTAssertEqual(conductor?.framing, false)
+        let dcsID = conductor?.dcsID ?? ""
+        session.textViewDisconnectSSH()
+        sync()
+        XCTAssertNil(session.conductor)
+        let quit = "quit".data(using: .utf8)!.base64EncodedString()
+        XCTAssertTrue(session.writes.contains { $0.contains(quit) }, "\(session.writes)")
+        forceUnhook(dcsID)
+        session.writes.removeAll()
+
+        send(autopollReport(id: "9001"))
+        send("local% ")
+        assertRecoveryNotStarted()
+        XCTAssertNil(session.conductor)
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+    }
+
     // A new connection's framer output is its own, so it may recover again.
     func testNewConnectionAfterDisconnectCanRecover() {
         disconnect(hookRoot())

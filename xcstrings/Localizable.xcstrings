@@ -122910,48 +122910,6 @@
         }
       }
     },
-    "PTYSession.AdvancedSSHUnavailable" : {
-      "comment" : "Warning that advanced SSH features require a newer Python; first placeholder is the version, second is the host",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erweiterte SSH-Funktionen sind nicht verfügbar, da Python %1$@ oder neuer auf %2$@ nicht gefunden wurde."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Advanced SSH features are unavailable because Python %1$@ or later was not found on %2$@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%2$@でPython %1$@以降が見つからなかったため、高度なSSH機能は使用できません"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Os recursos avançados de SSH estão indisponíveis porque o Python %1$@ ou posterior não foi encontrado em %2$@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Расширенные функции SSH недоступны, так как на %2$@ не найден Python версии %1$@ или новее"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "由于未找到 Python %1$@ 或更高版本，高级 SSH 功能不可用 %2$@"
-          }
-        }
-      }
-    },
     "PTYSession.Alert" : {
       "comment" : "Notification title for a session alert",
       "extractionState" : "extracted_with_value",
@@ -123746,48 +123704,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法开始对“%1$@”配置文件进行的会话日志记录：%2$@"
-          }
-        }
-      }
-    },
-    "PTYSession.CantDisconnect" : {
-      "comment" : "Heading for a warning that iTerm2 cannot disconnect from SSH",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trennen nicht möglich"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Can’t Disconnect"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "切断できません"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não é possível desconectar"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не удалось отключиться"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法断开连接"
           }
         }
       }
@@ -126744,48 +126660,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "配置文件已更新"
-          }
-        }
-      }
-    },
-    "PTYSession.RemoteHost" : {
-      "comment" : "Fallback name for a remote host when the hostname is unknown",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remote-Host"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "remote host"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リモートホスト"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "host remoto"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "удалённый хост"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "远程主机"
           }
         }
       }
