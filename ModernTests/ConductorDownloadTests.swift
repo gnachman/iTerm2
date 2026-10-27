@@ -129,13 +129,27 @@ final class ConductorDownloadTests: XCTestCase {
             },
             rm: { [weak self] path in
                 self?.removedRemotePaths.append(path)
-            })
+            },
+            cancelFetches: {})
     }
 
     private func download(_ remotePath: String,
                           operations: ConductorDownloadOperations,
                           box: TransferBox? = nil,
                           makeTransfer: ((SCPPath, ConductorFileTransferDelegate) -> ConductorFileTransfer)? = nil) async -> ConductorFileTransfer {
+        let (transfer, delegate) = startDownload(remotePath,
+                                                 operations: operations,
+                                                 box: box,
+                                                 makeTransfer: makeTransfer)
+        await delegate.task?.value
+        return transfer
+    }
+
+    // Starts a download without waiting for it to end.
+    private func startDownload(_ remotePath: String,
+                               operations: ConductorDownloadOperations,
+                               box: TransferBox? = nil,
+                               makeTransfer: ((SCPPath, ConductorFileTransferDelegate) -> ConductorFileTransfer)? = nil) -> (ConductorFileTransfer, FakeDownloadDelegate) {
         let delegate = FakeDownloadDelegate(operations: operations)
         delegates.append(delegate)
         let path = SCPPath()
@@ -147,8 +161,7 @@ final class ConductorDownloadTests: XCTestCase {
         transfers.append(transfer)
         box?.transfer = transfer
         transfer.download()
-        await delegate.task?.value
-        return transfer
+        return (transfer, delegate)
     }
 
     private func bytes(_ count: Int) -> Data {
@@ -437,5 +450,101 @@ final class ConductorDownloadTests: XCTestCase {
         XCTAssertEqual(downloadFinishedNotifications, [])
         XCTAssertEqual(notificationTitles.count, 1)
         XCTAssertEqual(try contentsOfDirectory(), [])
+    }
+
+    // F-728: Stop on a download whose connection stalled left the partial hidden file behind,
+    // because cleanup waited for a reply that never came. Stop now cleans up right away, and
+    // replies that arrive afterward are ignored.
+    func testStopWhileStalledCleansUpRightAway() async throws {
+        let data = bytes(ConductorDownload.chunkSize * 10)
+        let stall = Stall()
+        let stalled = expectation(description: "a request stalls")
+        stalled.assertForOverFulfill = false
+        let canceled = expectation(description: "unsent requests are canceled")
+        var ops = operations(files: ["/home/user/big.bin": data])
+        ops.cancelFetches = { canceled.fulfill() }
+        let realFetch = ops.fetch
+        ops.fetch = { path, chunk in
+            // The first two chunks arrive; the rest wait until released.
+            if chunk.offset >= ConductorDownload.chunkSize * 2 && !stall.released {
+                await withCheckedContinuation { continuation in
+                    stall.continuations.append(continuation)
+                    stalled.fulfill()
+                }
+            }
+            return try await realFetch(path, chunk)
+        }
+        let (transfer, delegate) = startDownload("/home/user/big.bin", operations: ops)
+        await fulfillment(of: [stalled], timeout: 60)
+        XCTAssertEqual(try contentsOfDirectory().count, 1)
+
+        transfer.stop()
+        XCTAssertEqual(transfer.status, .cancelled)
+        XCTAssertEqual(try contentsOfDirectory(), [])
+        await fulfillment(of: [canceled], timeout: 60)
+
+        // The stalled replies arrive late.
+        let bytesAtStop = transfer.bytesTransferred
+        stall.release()
+        await delegate.task?.value
+        XCTAssertEqual(transfer.status, .cancelled)
+        XCTAssertEqual(transfer.bytesTransferred, bytesAtStop)
+        XCTAssertEqual(try contentsOfDirectory(), [])
+        XCTAssertEqual(notificationTitles, [])
+    }
+
+    // Stopped while the folder is zipped: the archive isn't downloaded and is removed.
+    func testStoppedDuringZipDoesNotDownloadArchive() async throws {
+        let box = TransferBox()
+        var fetches = 0
+        let transfer = await download(
+            "/home/user/dir",
+            operations: operations(files: ["/home/user/.iterm2-dir.zip": bytes(100)],
+                                   folders: ["/home/user/dir"],
+                                   zip: { _ in
+                                       box.transfer?.stop()
+                                       return SSHRemoteZipReply(path: "/home/user/.iterm2-dir.zip")
+                                   },
+                                   beforeFetch: { _ in fetches += 1 }),
+            box: box)
+        XCTAssertEqual(transfer.status, .cancelled)
+        XCTAssertEqual(fetches, 0)
+        XCTAssertEqual(removedRemotePaths, ["/home/user/.iterm2-dir.zip"])
+        XCTAssertEqual(try contentsOfDirectory(), [])
+    }
+
+    // Stopped before the download task starts: it doesn't create the file afterward.
+    func testStopBeforeDownloadStartsCreatesNoFile() async throws {
+        var stats = 0
+        var ops = operations(files: ["/home/user/big.bin": bytes(100)])
+        let realStat = ops.stat
+        ops.stat = { path in
+            stats += 1
+            return try await realStat(path)
+        }
+        let (transfer, delegate) = startDownload("/home/user/big.bin", operations: ops)
+        transfer.stop()
+        XCTAssertEqual(transfer.status, .cancelled)
+        await delegate.task?.value
+        XCTAssertEqual(transfer.status, .cancelled)
+        XCTAssertEqual(stats, 0)
+        XCTAssertEqual(try contentsOfDirectory(), [])
+        XCTAssertEqual(notificationTitles, [])
+    }
+}
+
+// Holds fetches that haven't been answered, as on a stalled connection.
+@MainActor
+private final class Stall {
+    var continuations = [CheckedContinuation<Void, Never>]()
+    private(set) var released = false
+
+    func release() {
+        released = true
+        let continuations = self.continuations
+        self.continuations = []
+        for continuation in continuations {
+            continuation.resume()
+        }
     }
 }

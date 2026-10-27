@@ -9,11 +9,14 @@
 @MainActor
 extension Conductor: ConductorFileTransferDelegate {
     func beginDownload(fileTransfer: ConductorFileTransfer) {
+        // Every fetch for this download shares an ID so Stop can cancel the unsent ones.
+        let uniqueID = UUID().uuidString
         let operations = ConductorDownloadOperations(
             stat: { path in try await self.stat(path) },
             zip: { path in try await self.zip(path) },
-            fetch: { path, chunk in try await self.download(path, chunk: chunk, uniqueID: nil) },
-            rm: { path in try await self.rm(path, recursive: false) })
+            fetch: { path, chunk in try await self.download(path, chunk: chunk, uniqueID: uniqueID) },
+            rm: { path in try await self.rm(path, recursive: false) },
+            cancelFetches: { try? await self.cancelDownload(uniqueID: uniqueID) })
         Task {
             await ConductorDownload.run(fileTransfer: fileTransfer, operations: operations)
         }
