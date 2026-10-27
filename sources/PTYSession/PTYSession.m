@@ -27154,6 +27154,11 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
 - (void)conductorAbortWithReason:(NSString *)reason {
     XLog(@"conductor aborted: %@", reason);
     [self conductorWillDie];
+    if (_conductor.parent == nil && _conductor.clientUniqueID.length) {
+        // As for a quit: its it2ssh will still print EndSSH and wait for a newline, which
+        // screenEndSSH: sends only for a connection it knows.
+        [self rememberDisconnectedSSHClientUniqueID:_conductor.clientUniqueID];
+    }
 
     NSString *location = _conductor.parent.sshIdentity.compactDescription;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

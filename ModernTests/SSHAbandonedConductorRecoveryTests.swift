@@ -150,6 +150,26 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
 
     // MARK: - Tests
 
+    // F-864: a connection that aborted is gone, but its it2ssh still prints EndSSH and waits for
+    // a newline before giving the terminal back, as after a quit. An EndSSH nobody here started
+    // is not answered: anything printed to the terminal can contain one.
+    func testEndSSHAfterAnAbortIsAnswered() {
+        let conductor = hookRoot()
+        // PTYSession adopts the delegate protocol privately, in its implementation.
+        _ = session.perform(NSSelectorFromString("conductorAbortWithReason:"), with: "test")
+        if let dcsID = conductor?.dcsID {
+            session.screen.performBlock(joinedThreads: { terminal, _, _ in
+                _ = terminal?.parser.forceUnhookDCSReturningSuccess(dcsID)
+            })
+        }
+        XCTAssertNil(session.conductor)
+        session.writes.removeAll()
+        send("\u{1b}]1337;EndSSH=777\u{07}")
+        XCTAssertEqual(session.writes, [], "not this session's it2ssh")
+        send("\u{1b}]1337;EndSSH=\(rootID)\u{07}")
+        XCTAssertEqual(session.writes, ["\u{3}\n"])
+    }
+
     // The control: framer output outside any hook for a connection that wasn't abandoned
     // (e.g., the parser lost sync) still starts recovery.
     func testUnhookedFramerOutputStillRecoversLiveConnection() {
