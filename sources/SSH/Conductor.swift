@@ -1885,10 +1885,10 @@ extension Conductor {
             return
         }
         Task { @MainActor in
-            guard let sb = try? await stat(path.path) else {
-                return
+            let choice = await Self.downloadOrViewChoice(path: path.path) { remotePath in
+                try await self.stat(remotePath)
             }
-            if sb.kind.isFolder {
+            if choice == .download {
                 download(path: path)
                 return
             }

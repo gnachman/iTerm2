@@ -787,6 +787,11 @@ Bug Fixes:
   menu now removes finished SSH Integration
   downloads, and their notification no longer
   says “Upload finished”.
+- With the Browser Plugin installed, “Download
+  using SSH Integration” in the context menu no
+  longer does nothing when the file can’t be
+  found on the remote host. It now shows a
+  failed download that says why.
 - it2ssh no longer hangs when the host or
   command contains non-ASCII text, such as
   accented letters or emoji. If iTerm2 can’t

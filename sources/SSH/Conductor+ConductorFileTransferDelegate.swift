@@ -71,6 +71,26 @@ extension Conductor: ConductorFileTransferDelegate {
         continuation.finish()
     }
 
+    enum DownloadOrViewChoice {
+        case download
+        case ask
+    }
+
+    /// Whether to ask the user to download or view a file that could be shown in the
+    /// browser. A folder is downloaded. So is a file that can't be examined: the download
+    /// fails and reports why (such as a name in older output whose path was built from a
+    /// different working directory), rather than nothing happening (F-960).
+    static func downloadOrViewChoice(path: String,
+                                     stat: (String) async throws -> RemoteFile) async -> DownloadOrViewChoice {
+        do {
+            let info = try await stat(path)
+            return info.kind.isFolder ? .download : .ask
+        } catch {
+            iTerm2SharedARC.DLog("stat \(path) failed with \(error); download it so the failure is reported")
+            return .download
+        }
+    }
+
     // The remote zip command's archive holds the folder itself (`folderName/…`), which is what a
     // download saved as a .zip file needs. Here the folder's contents go directly in
     // `destination`, which is the folder, so it isn't nested one level too deep (F-921). Items
