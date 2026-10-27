@@ -189,6 +189,25 @@ final class SSHNestedConnectionEndTests: XCTestCase {
         XCTAssertTrue(session.writes.contains("\u{03}\n"), "\(session.writes)")
     }
 
+    // MARK: - Unrecognized EndSSH
+
+    // ssh failed before connecting (e.g., the host didn't resolve), so no connection
+    // started, but it2ssh still waits. It gets a bare ^C, never a newline, because
+    // anything can print EndSSH.
+    func testUnrecognizedEndSSHIsAnsweredWithControlCOnly() {
+        send(endSSH("999"))
+        XCTAssertNil(session.conductor)
+        XCTAssertEqual(session.writes, ["\u{03}"])
+    }
+
+    // A nested it2ssh whose ssh never connected waits in the outer host's login shell.
+    func testUnrecognizedNestedEndSSHIsAnsweredWithControlCOnly() {
+        let root = hookFramingRoot()
+        send(framed("out2", endSSH("999")))
+        assertRootIsLive(root)
+        XCTAssertEqual(session.writes, ["\u{03}"])
+    }
+
     func testDisconnectingNestedConnectionLeavesParentLive() {
         let root = hookFramingRoot()
         let nested = hookNested(in: root)

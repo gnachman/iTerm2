@@ -21403,6 +21403,12 @@ static NSString *SSHMayHaveEndedAnnouncementIdentifier(NSString *clientUniqueID)
             [_disconnectedSSHClientUniqueIDs removeObject:uniqueID];
             [self writeTaskNoBroadcast:@"\x03\n"];
             [self sendKeysTypedAfterSSHEnded];
+        } else {
+            // No connection of ours started this it2ssh (e.g., ssh never connected), but it
+            // still waits for an answer. Anything can print EndSSH, so don't send a newline,
+            // which could run a command. A bare ^C ends the wait in a current it2ssh.
+            DLog(@"Answer unrecognized EndSSH with ^C");
+            [self writeTaskNoBroadcast:@"\x03"];
         }
         return 0;
     }
