@@ -127,6 +127,58 @@ final class SSHHookArgumentsTests: XCTestCase {
             XCTAssertEqual((normalized! as NSString).componentsInShellCommand(), words, "locale \(locale)")
         }
     }
+
+    // F-920: `it2ssh user@host` left the user in the host name, so the identity's host name was
+    // “qa@127.0.0.1” and a download's source URL couldn't be made.
+    func testUserAtHostIsSplit() {
+        let args = parsed("qa@127.0.0.1")
+        XCTAssertEqual(args.host, "127.0.0.1")
+        XCTAssertEqual(args.hostname, "127.0.0.1")
+        XCTAssertEqual(args.username, "qa")
+        XCTAssertEqual(args.identity.hostname, "127.0.0.1")
+        XCTAssertEqual(args.identity.username, "qa")
+    }
+
+    // Like ssh, the last @ separates the user from the host.
+    func testUserAtHostUsesLastAt() {
+        let args = parsed("me@example.org@example.com -p 2222 ls")
+        XCTAssertEqual(args.host, "example.com")
+        XCTAssertEqual(args.username, "me@example.org")
+        XCTAssertEqual(args.port, 2222)
+        XCTAssertEqual(args.commandArgs, ["ls"])
+    }
+
+    func testLoginNameOption() {
+        let args = parsed("-l qa example.com")
+        XCTAssertEqual(args.host, "example.com")
+        XCTAssertEqual(args.username, "qa")
+    }
+
+    // Like ssh, whichever user comes first wins.
+    func testLoginNameBeforeUserAtHostWins() {
+        let args = parsed("-l bob alice@example.com")
+        XCTAssertEqual(args.host, "example.com")
+        XCTAssertEqual(args.username, "bob")
+    }
+
+    func testUserAtHostBeforeLoginNameWins() {
+        let args = parsed("alice@example.com -l bob")
+        XCTAssertEqual(args.host, "example.com")
+        XCTAssertEqual(args.username, "alice")
+    }
+
+    func testLoginNameBeforeSSHURLWins() {
+        let args = parsed("-l bob ssh://alice@example.com")
+        XCTAssertEqual(args.host, "example.com")
+        XCTAssertEqual(args.username, "bob")
+    }
+
+    func testSSHURLDestination() {
+        let args = parsed("ssh://qa@example.com:2222")
+        XCTAssertEqual(args.host, "example.com")
+        XCTAssertEqual(args.username, "qa")
+        XCTAssertEqual(args.port, 2222)
+    }
 }
 
 private final class WriteRecordingConductorDelegate: NSObject, ConductorDelegate {

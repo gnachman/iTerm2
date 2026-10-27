@@ -49,10 +49,10 @@ final class ConductorChunkedDownloadTests: XCTestCase {
         super.tearDown()
     }
 
-    private func startTransfer() -> ConductorFileTransfer {
+    private func startTransfer(hostname: String = "example.com") -> ConductorFileTransfer {
         let path = SCPPath()
         path.path = "/home/user/big.bin"
-        path.hostname = "example.com"
+        path.hostname = hostname
         path.username = "user"
         let transfer = ConductorFileTransfer(path: path, localPath: nil, data: nil, delegate: delegate)
         transfer.fileSize = 5
@@ -133,5 +133,17 @@ final class ConductorChunkedDownloadTests: XCTestCase {
         transfer.abort()
         XCTAssertEqual(transfer.status, TransferrableFileStatus.cancelled)
         XCTAssertTrue(notifications.isEmpty)
+    }
+
+    // F-920: a host that can't go in a URL, such as “qa@127.0.0.1” from `it2ssh qa@127.0.0.1`,
+    // crashed when the download finished because the quarantine source URL was force-unwrapped.
+    func testFinishedChunkedDownloadWithHostThatIsNotAValidURLHost() throws {
+        for hostname in ["qa@127.0.0.1", "bad host/with:stuff"] {
+            let transfer = startTransfer(hostname: hostname)
+            let destination = directory.appendingPathComponent(UUID().uuidString)
+            try Data("hello".utf8).write(to: destination)
+            transfer.didFinishChunkedDownload(to: destination)
+            XCTAssertEqual(transfer.status, TransferrableFileStatus.finishedSuccessfully, hostname)
+        }
     }
 }

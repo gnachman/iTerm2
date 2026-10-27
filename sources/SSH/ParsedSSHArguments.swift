@@ -163,18 +163,26 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
                 continue
             }
             if destination == nil {
-                if let url = URL(string: arg), url.scheme == "ssh" {
-                    if let user = url.user, let host = url.host {
-                        preferredUser = user
-                        destination = host
-                    } else if let host = url.host {
-                        destination = host
+                // Like ssh, a -l before the destination takes precedence over its user.
+                let loginNameGiven = paramArgs.hasOption(.loginName)
+                if let url = URL(string: arg), url.scheme == "ssh", let host = url.host {
+                    if !loginNameGiven {
+                        preferredUser = url.user
                     }
+                    destination = host
                     if !paramArgs.hasOption(.port), let urlPort = url.port {
                         preferredPort = urlPort
                     }
+                } else if let at = arg.range(of: "@", options: .backwards),
+                          at.lowerBound != arg.startIndex {
+                    // user@host. Like ssh, split at the last @ (F-920).
+                    if !loginNameGiven {
+                        preferredUser = String(arg[..<at.lowerBound])
+                    }
+                    destination = String(arg[at.upperBound...])
+                } else {
+                    destination = arg
                 }
-                destination = arg
                 continue
             }
             commandArgs.append(arg)
