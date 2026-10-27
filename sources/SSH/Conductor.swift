@@ -2013,7 +2013,8 @@ extension Conductor {
             framerJump()
         } else {
             framerLogin(cwd: initialDirectory ?? "$HOME",
-                        args: modifiedCommandArgs ?? parsedSSHArguments.commandArgs)
+                        args: Self.framerLoginArgs(modifiedCommandArgs: modifiedCommandArgs,
+                                                   commandArgs: parsedSSHArguments.commandArgs))
         }
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
@@ -2054,6 +2055,23 @@ extension Conductor {
 
     private func framerSave(_ dict: [String: String]) {
         send(.framerSave(dict), .fireAndForget)
+    }
+
+    /// Tells the framer's login command to exec the shell that follows as the login shell, with
+    /// the arguments after it, rather than running everything with the login shell's -c.
+    nonisolated static let framerExecLoginMarker = "--iterm2-exec-login"
+
+    /// The arguments for the framer's login command. With no command the session is the login
+    /// shell, interactively. When shell integration had to give it arguments (bash's --posix),
+    /// modifiedCommandArgs is the shell followed by them, and the framer must start that shell as
+    /// the login shell itself. Running it with `login_shell -c` would source the profile in the
+    /// outer, non-interactive shell, and the interactive one would lose what it defines.
+    nonisolated static func framerLoginArgs(modifiedCommandArgs: [String]?,
+                                            commandArgs: [String]) -> [String] {
+        if commandArgs.isEmpty, let modifiedCommandArgs, !modifiedCommandArgs.isEmpty {
+            return [framerExecLoginMarker] + modifiedCommandArgs
+        }
+        return modifiedCommandArgs ?? commandArgs
     }
 
     private func framerLogin(cwd: String, args: [String]) {
@@ -2432,9 +2450,9 @@ extension Conductor {
                         modifiedCommandArgs?.insert(firstArg, at: 0)
                     } else if modifiedCommandArgs?.isEmpty == false {
                         // Plain interactive session whose injection modified argv (bash's --posix).
-                        // The shell must be named explicitly so those args take effect, which routes
-                        // through the framer's `-c` path (there the interactive child still honors
-                        // env-based injection like bash's $ENV loader).
+                        // The shell must be named explicitly so those args take effect. framerLoginArgs
+                        // has the framer exec it as the login shell itself, so ~/.profile runs in the
+                        // interactive shell and what it defines (aliases, functions) survives.
                         modifiedCommandArgs?.insert(shell, at: 0)
                     }
                     // Otherwise: a plain interactive session with purely env-based injection

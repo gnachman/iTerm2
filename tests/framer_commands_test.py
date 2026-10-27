@@ -338,6 +338,57 @@ async def test_zip_of_unreadable_folder_is_permission_denied():
     return c.ok
 
 
+async def _login_call(args):
+    """Run handle_login with run_login_shell stubbed out; return what it would have started."""
+    calls = []
+
+    async def fake_run_login_shell(identifier, login_shell, argv, directory, environment):
+        calls.append((login_shell, argv, directory))
+        return False
+
+    saved = (framer.run_login_shell, framer.guess_login_shell)
+    framer.run_login_shell = fake_run_login_shell
+    framer.guess_login_shell = lambda: "/bin/zsh"
+    try:
+        await framer.handle_login("id-login", args)
+    finally:
+        framer.run_login_shell, framer.guess_login_shell = saved
+    return calls
+
+
+async def test_login_exec_login_starts_the_named_shell_as_login_shell():
+    # The injected interactive bash: run it as the login shell, not under the login shell's -c,
+    # so its profile runs in the interactive shell.
+    print("test_login_exec_login_starts_the_named_shell_as_login_shell")
+    c = Checker()
+    calls = await _login_call(["/tmp", "--iterm2-exec-login", "/bin/bash", "--posix"])
+    c.check(calls == [("/bin/bash", ["-bash", "--posix"], "/tmp")], f"started {calls}")
+    print("  PASS" if c.ok else "  FAILED")
+    return c.ok
+
+
+async def test_login_plain_args_still_use_dash_c():
+    print("test_login_plain_args_still_use_dash_c")
+    c = Checker()
+    calls = await _login_call(["/tmp", "/bin/bash", "--posix"])
+    c.check(calls == [("/bin/zsh", ["-zsh", "-c", "/bin/bash --posix"], "/tmp")], f"started {calls}")
+    calls = await _login_call(["/tmp"])
+    c.check(calls == [("/bin/zsh", ["-zsh"], "/tmp")], f"started {calls}")
+    print("  PASS" if c.ok else "  FAILED")
+    return c.ok
+
+
+async def test_login_exec_login_without_a_shell_fails():
+    print("test_login_exec_login_without_a_shell_fails")
+    c = Checker()
+    _frames.clear()
+    calls = await _login_call(["/tmp", "--iterm2-exec-login"])
+    c.check(calls == [], f"started {calls}")
+    c.check(end_status("id-login") == 1, f"status {end_status('id-login')}")
+    print("  PASS" if c.ok else "  FAILED")
+    return c.ok
+
+
 async def run():
     results = []
     for test in (
@@ -350,6 +401,9 @@ async def run():
         test_zip_reports_skipped_files_when_asked,
         test_zip_reports_nothing_skipped,
         test_zip_of_unreadable_folder_is_permission_denied,
+        test_login_exec_login_starts_the_named_shell_as_login_shell,
+        test_login_plain_args_still_use_dash_c,
+        test_login_exec_login_without_a_shell_fails,
     ):
         results.append(await test())
     ok = all(results)
