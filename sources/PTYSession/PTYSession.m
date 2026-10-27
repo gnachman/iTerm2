@@ -2485,7 +2485,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     // the job is just a shell. Writing the framer's reset would type it there
                     // (F-786).
                     RLog(@"Reattached to a job without an ssh client. Forget its SSH Integration state.");
-                    [aSession forgetRestoredConductor];
+                    [aSession forgetRestoredConductorWhoseSSHEnded];
                 }
                 if (aSession->_conductor) {
                     // Only now is ssh known to survive, so only now may anything be sent to
@@ -27293,6 +27293,23 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     [_conductor release];
     _conductor = nil;
     _shell.sshIntegrationActive = NO;
+}
+
+// The restored job's ssh died while iTerm2 was down. Its framer output that was still
+// unread, such as an autopoll report, arrives outside any hook once reading resumes. It
+// must not start framer recovery, which would type base64 “recover” into the shell and
+// leave a recovery conductor holding the keyboard (F-970).
+- (void)forgetRestoredConductorWhoseSSHEnded {
+    NSMutableArray<NSString *> *clientUniqueIDs = [NSMutableArray array];
+    for (iTermConductor *conductor = _conductor; conductor; conductor = conductor.parent) {
+        if (conductor.clientUniqueID.length) {
+            [clientUniqueIDs addObject:conductor.clientUniqueID];
+        }
+    }
+    [self forgetRestoredConductor];
+    [_framerRecoveryRefusals refuseForChildrenOfConductorAtDepth:-1
+                                        abandonedClientUniqueIDs:clientUniqueIDs];
+    [self refuseFramerRecoveryAtDepth:-1 abandonedClientUniqueIDs:clientUniqueIDs];
 }
 
 - (void)rememberDisconnectedSSHClientUniqueID:(NSString *)clientUniqueID {

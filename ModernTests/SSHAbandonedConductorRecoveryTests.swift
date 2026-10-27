@@ -240,6 +240,29 @@ final class SSHAbandonedConductorRecoveryTests: XCTestCase {
         XCTAssertNil(session.conductor)
     }
 
+    // F-970: iTerm2 restarted and reattached to a job whose ssh died while it was down, so
+    // the restored SSH Integration state is forgotten. The dead connection's unread framer
+    // output then arrives outside any hook. It must not start recovery, which typed base64
+    // “recover” into the local shell and left a recovery conductor holding the keyboard.
+    func testUnreadFramerOutputAfterRestoreWithoutSSHDoesNotRecover() {
+        _ = hookRoot()
+        // PTYSession declares it in its implementation.
+        _ = session.perform(NSSelectorFromString("forgetRestoredConductorWhoseSSHEnded"))
+        sync()
+        XCTAssertNil(session.conductor)
+        session.writes.removeAll()
+
+        send(autopollReport(id: "9001"))
+        send("local% ")
+        assertRecoveryNotStarted()
+        XCTAssertNil(session.conductor)
+        XCTAssertTrue(screenText().contains("local% "), screenText())
+
+        // A new connection may recover again.
+        send(hook(uniqueID: "4321"))
+        XCTAssertEqual(session.conductor?.clientUniqueID, "4321")
+    }
+
     // A new connection's framer output is its own, so it may recover again.
     func testNewConnectionAfterDisconnectCanRecover() {
         disconnect(hookRoot())

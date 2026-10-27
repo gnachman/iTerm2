@@ -783,6 +783,11 @@ Bug Fixes:
   open, relaunching with window restoration on
   no longer types stray text, such as
   cmVzZXQy, into the restored tabs’ new shells.
+  Likewise, when iTerm2 restarts after a crash
+  and an SSH Integration session’s ssh has
+  ended in the meantime, the restored session
+  no longer types cmVjb3Zlcg== into its shell
+  and then ignores input.
 - A file fetched over SSH Integration with
   Shell > ssh > Download Files… no longer stays
   listed as downloading in the Downloads menu
