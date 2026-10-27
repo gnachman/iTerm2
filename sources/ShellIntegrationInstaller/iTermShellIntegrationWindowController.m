@@ -120,20 +120,15 @@ static NSString *const iTermShellIntegrationReceiveScriptCommandTemplate =
     @"else echo it2-\"\"cannot-receive-script; fi; "
     @"rm -f \"$IT2_F.it2-b64\" \"$IT2_F.it2-new\"\n";
 
-// The prompt of the innermost helper sh (PS1 in launchHelperShellString), at the start of a row
-// or right after iTermShellIntegrationHelpersReadyMarker. A line editor that breaks the echo of a
-// long command line can start a row with the >> in PS1=">> " or PS1='>> ', which must not count.
-//
-// The marker is there because an sh without a line editor, such as dash (the sh of Debian and
-// Ubuntu), doesn't echo the lines of the launch that were typed ahead while the user's shell
-// read the first one. So the helper prompt goes on the row where the helpers' own default
-// prompts (or an exported PS1) are, after them, and that row doesn't start with it. The line that
-// sets PS1 prints the marker with no newline, so the helper prompt follows it on the same row.
-// The marker is written with empty quotes in that line, so the line's echo doesn't contain it.
+// The prompt of the helper sh (PS1 in launchHelperShellString), at the start of a row or right
+// after iTermShellIntegrationHelpersReadyMarker, which the launch prints with no newline right
+// before the helper's first prompt. That one is what shows the helper started, and it follows
+// the marker even where a row doesn't start with it. A line editor that breaks the echo of a long
+// command line can start a row with the >> in PS1=">> ", which must not count.
 #define iTermShellIntegrationHelpersReadyMarker @"it2-helpers-ready "
 static NSString *const iTermShellIntegrationHelperPromptRegex = @"(?:^|" iTermShellIntegrationHelpersReadyMarker @")>> (?![\"'])";
 
-// Typed into the innermost helper sh to learn when it reads commands again. The answer includes
+// Typed into the helper sh to learn when it reads commands again. The answer includes
 // the helper's PS1, so if the helpers were somehow gone the user's shell would not give it. The
 // empty quotes keep the echo of the command from matching iTermShellIntegrationHelpersIdleRegex.
 static NSString *const iTermShellIntegrationHelpersIdleCommand = @"echo \"it2-\"\"helpers-$PS1-idle\"\n";
@@ -163,9 +158,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationHelperState) {
     iTermShellIntegrationHelperStateNone,
     // The helpers were launched and have not prompted yet.
     iTermShellIntegrationHelperStateLaunching,
-    // _helperShellDepth helpers are running and the innermost reads the next line as a command.
+    // The helper is running and reads the next line as a command.
     iTermShellIntegrationHelperStateIdle,
-    // The innermost helper is in its loop that reads the utilities archive or the shell
+    // The helper is in its loop that reads the utilities archive or the shell
     // integration script.
     iTermShellIntegrationHelperStateReceivingFile,
     // Something was typed whose end won't be, such as part of an if statement whose remaining
@@ -204,10 +199,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // its expectation was canceled is not typed.
     NSUInteger _cancellationGeneration;
     iTermShellIntegrationHelperState _helperState;
-    // How many helper sh are running when _helperState says they are known to run: 0, or
-    // helperShellLevels once their prompt or their answer to a command has been seen.
-    NSInteger _helperShellDepth;
-    // Completes once the innermost helper reads commands again, when that is awaited after a
+    // Completes once the helper reads commands again, when that is awaited after a
     // cancel. Steps sent in the meantime are chained after it. It is not canceled with the
     // installer's other expectations, since what it types is what makes the helpers usable.
     iTermExpectation *_helpersIdleExpectation;
@@ -544,39 +536,23 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 #pragma mark - Helper Shells
 
-// How many helper sh launchHelperShellString starts.
-- (NSInteger)helperShellLevels {
-    if (self.shell == iTermShellIntegrationShellXonsh || self.shell == iTermShellIntegrationShellNu) {
-        return 1;
-    }
-    return 2;
-}
-
-// The innermost helper was seen reading commands.
+// The helper was seen reading commands.
 - (void)helperShellsBecameIdle {
     _receivedTextTyped = NO;
     _helperState = iTermShellIntegrationHelperStateIdle;
-    _helperShellDepth = [self helperShellLevels];
-    DLog(@"Helper shells are idle at depth %@", @(_helperShellDepth));
+    DLog(@"Helper shell is idle");
 }
 
-// Types one exit for each helper known to be running, ending at the user's shell. Only valid
-// while the helpers are idle.
+// Types the exit that ends the helper, back at the user's shell. Only valid while the helper is
+// known to be idle.
 - (void)exitIdleHelperShells {
     if (_helperState != iTermShellIntegrationHelperStateIdle) {
         DLog(@"Not exiting helper shells in state %@", @(_helperState));
         return;
     }
-    NSMutableString *exits = [NSMutableString string];
-    for (NSInteger i = 0; i < _helperShellDepth; i++) {
-        [exits appendString:@"exit\n"];
-    }
-    DLog(@"Exit %@ helper shells", @(_helperShellDepth));
+    DLog(@"Exit the helper shell");
     _helperState = iTermShellIntegrationHelperStateNone;
-    _helperShellDepth = 0;
-    if (exits.length > 0) {
-        [self typeText:exits];
-    }
+    [self typeText:self.exitHelperShellString];
 }
 
 // An expectation that completes once the helpers, which are running but busy, read commands
@@ -695,11 +671,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 // Waits for helpers whose launch was typed but whose prompt has not been seen, as when Cancel is
 // clicked while the user's shell is slow to start them, so they can be exited. A “>> ” prompt
-// alone doesn't show how many helpers run: it could be the user's own prompt, or one helper
-// could have started without the other (say, after Control-C). So once a prompt shows up, the
-// shell that printed it is asked how many helpers it is nested in (IT2_INSTALLER_HELPER, see
-// launchHelperShellString), and the exits are typed only if that is how many were launched.
-// Asking is safe: in the user's shell the command prints something else, or an error.
+// alone doesn't show that the helper runs: it could be the user's own prompt. So once a prompt
+// shows up, the shell that printed it is asked how many helpers it is nested in
+// (IT2_INSTALLER_HELPER, see launchHelperShellString), and the exit is typed only if it is the
+// one helper that was launched. Asking is safe: in the user's shell the command prints
+// something else, or an error.
 // After canceledHelperLaunchTimeout the wait ends without typing anything more. The timeout only
 // limits how long a prompt is trusted, so a slow machine can at worst leave the helpers running,
 // as if they had not been awaited.
@@ -780,9 +756,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             return;
         }
         const NSInteger depth = captureGroups.count > 1 ? [captureGroups[1] integerValue] : 0;
-        if (strongSelf->_typedTextCount != typedCount || depth != [strongSelf helperShellLevels]) {
-            DLog(@"Not exiting canceled helper shells: depth %@ expected %@, typed since: %@",
-                 @(depth), @([strongSelf helperShellLevels]), @(strongSelf->_typedTextCount != typedCount));
+        if (strongSelf->_typedTextCount != typedCount || depth != 1) {
+            DLog(@"Not exiting canceled helper shells: depth %@, typed since: %@",
+                 @(depth), @(strongSelf->_typedTextCount != typedCount));
             [strongSelf endCanceledHelperLaunchWait];
             return;
         }
@@ -799,7 +775,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     [self cancelHelpersIdleExpectation];
     _waitingForCanceledHelperLaunch = NO;
     _helperState = iTermShellIntegrationHelperStateUnknown;
-    _helperShellDepth = 0;
     _exitHelpersWhenIdle = NO;
     [self runAfterHelpersExit];
 }
@@ -843,7 +818,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     _exitHelpersWhenIdle = NO;
     _afterHelpersExit = nil;
     _helperState = iTermShellIntegrationHelperStateUnknown;
-    _helperShellDepth = 0;
     [_previousInstaller abandonHelperShells];
     _previousInstaller = nil;
 }
@@ -865,8 +839,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     _afterHelpersExit = [block copy];
 }
 
-// Starts the helper sh for a step, or reuses the ones already running. Text sent after this goes
-// to the innermost helper.
+// Starts the helper sh for a step, or reuses the one already running. Text sent after this goes
+// to the helper.
 - (NSString *)enterHelperShell:(BOOL)reallySend
                    expectation:(inout iTermExpectation **)expectation {
     if (!reallySend) {
@@ -888,9 +862,8 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         *expectation = idle;
         return @"";
     }
-    // nushell and xonsh read typeahead in bulk, so a command sent before the helper sh prompts
-    // would be read by them instead of sh, and xonsh runs it once sh exits. Other shells leave
-    // typeahead in the tty for sh to read. Either way the prompt is what shows the helpers run.
+    // Nothing more is typed until the helper prompts, since typeahead can be read by the user's
+    // shell instead (see launchHelperShellString).
     return [self sendText:self.launchHelperShellString
                reallySend:YES
                afterRegex:iTermShellIntegrationHelperPromptRegex
@@ -934,10 +907,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
         }
         strongSelf->_helperState = state;
         strongSelf->_receivedTextTyped = NO;
-        if (state != iTermShellIntegrationHelperStateIdle &&
-            state != iTermShellIntegrationHelperStateReceivingFile) {
-            strongSelf->_helperShellDepth = 0;
-        }
     };
 }
 
@@ -1291,32 +1260,25 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 // shell. Use sh, not bash, because bash is not installed by default on BSDs. If the helper
 // shell fails to launch, the heredocs run in the user's shell, and tcsh never terminates
 // <<'EOF' on a plain EOF line.
+//
+// It is one line, which every supported shell parses the same way, so nothing is typed ahead of
+// the helper. Typeahead is not safe: nushell reads it in bulk, and Linux hands everything queued
+// while the user's line editor had the tty in raw mode to the first read() after it, so a shell
+// the launch starts could read lines meant for one it starts after that (F-882). The sh -c
+// sets ENV, which an interactive sh would source, and the prompts, then becomes the helper. It
+// prints iTermShellIntegrationHelpersReadyMarker (with empty quotes, so the echo of this line
+// doesn't contain it) right before the helper's first prompt. It is printed just before the
+// exec, so if that failed (it practically can't) the next prompt would be the user's. See
+// iTermShellIntegrationHelperPromptRegex. IT2_INSTALLER_HELPER says how many helpers deep a
+// shell is. It lets discovery tell that it runs in one (see discoverShell:completion:) and
+// awaitCanceledHelperLaunchTypingNewline: whether the shell that prompted is the helper.
 - (NSString *)launchHelperShellString {
-    if (self.shell == iTermShellIntegrationShellXonsh || self.shell == iTermShellIntegrationShellNu) {
-        // For xonsh, use sh -c to set PS1/PS2 properly (env would include literal quotes).
-        // The -c command sets prompts then runs an interactive sh.
-        // nushell needs the single line for another reason: reedline reads typeahead in bulk,
-        // so of the three lines below only `sh` would reach sh and the other two would run in
-        // nushell once sh exits. bash and zsh read a byte at a time and don't have this problem.
-        return @"sh -c 'ENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) PS1=\">> \" PS2=\"> \" sh'\n";
-    }
-    // The first sh gives a known syntax for setting ENV, which an interactive sh would source.
-    // IT2_INSTALLER_HELPER says how many helpers deep a shell is. It lets discovery tell that it
-    // runs in one (see discoverShell:completion:) and awaitCanceledHelperLaunchTypingNewline: how many to exit.
-    // env sets it in any shell. The inner sh adds one to what the line is read by, which is the
-    // outer sh, or (if that one was killed) a shell where it is unset, or one that rejects it.
-    // The last line prints iTermShellIntegrationHelpersReadyMarker before the first helper
-    // prompt, which may not start a row (see iTermShellIntegrationHelperPromptRegex).
-    return @"env IT2_INSTALLER_HELPER=1 sh\nENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) sh\n PS1='>> '; PS2='> '; printf 'it2-''helpers-ready '\n";
+    return @"sh -c 'printf \"it2-\"\"helpers-ready \"; exec env ENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) PS1=\">> \" PS2=\"> \" sh'\n";
 }
 
-// The exits that end the helpers launchHelperShellString starts.
+// The exit that ends the helper launchHelperShellString starts.
 - (NSString *)exitHelperShellString {
-    NSMutableString *exits = [NSMutableString string];
-    for (NSInteger i = 0; i < [self helperShellLevels]; i++) {
-        [exits appendString:@"exit\n"];
-    }
-    return exits;
+    return @"exit\n";
 }
 
 // The checksum POSIX cksum prints for data, followed by its length, as in “4294967295 0”.
