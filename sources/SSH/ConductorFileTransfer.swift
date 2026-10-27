@@ -132,13 +132,19 @@ class ConductorFileTransfer: TransferrableFile {
         state = .failed
     }
 
-    private var url: URL {
+    // The source URL recorded when the file is quarantined. Nil if the host or path can't be
+    // put in a URL, in which case the file is quarantined without one (F-920).
+    private var url: URL? {
         let components = NSURLComponents()
         components.host = path.hostname
         components.user = path.username
         components.path = path.path
         components.scheme = "ssh"
-        return components.url!
+        let result = components.url
+        if result == nil {
+            DLog("Can't make a URL for host=\(path.hostname.d) user=\(path.username.d) path=\(path.path.d)")
+        }
+        return result
     }
 
     @MainActor
