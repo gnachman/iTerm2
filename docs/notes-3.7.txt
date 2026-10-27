@@ -666,6 +666,11 @@ Bug Fixes:
   resumes when iTerm2 relaunches with window
   restoration on. Before, the session that ran
   tmux -CC could show raw tmux output instead.
+- If iTerm2 quits unexpectedly after you
+  detach from tmux integration, the session
+  that ran tmux -CC no longer gets tmux
+  commands typed into its shell when window
+  restoration brings it back.
 - In an AI chat with an empty message field, the
   “↩ to submit” hint no longer overlaps a long
   placeholder.

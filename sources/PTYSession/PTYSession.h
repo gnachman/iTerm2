@@ -1247,6 +1247,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // For a filter's stand-in being retired without going back to its live session: stops filtering
 // the live session's content, with none of -stopFiltering's effects on the tab or focus.
 - (void)stopFilteringLiveSessionQuietly;
+// Whether a process name (as the process cache reports it, maybe "-zsh") is an interactive shell.
++ (BOOL)processNameIsAShell:(nullable NSString *)name;
 
 // Find next/previous occurrence of find string.
 - (void)searchNext;

@@ -11363,6 +11363,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)kickOffTmuxForRestoration:(BOOL)restoration {
     if (restoration) {
         [_tmuxGateway enableWritesAfterDelay];
+        [self stopRestoredTmuxModeIfNoTmuxIsRunning];
     }
     _haveKickedOffTmux = YES;
     // This must be first. See the note in -startTmuxMode:.
@@ -11374,6 +11375,49 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_tmuxController loadKeyBindings];
     [_tmuxController exitCopyMode];
     [_tmuxController guessVersion];  // NOTE: This kicks off more stuff that depends on knowing the version number.
+}
+
+// A restored session whose saved state says it was a tmux gateway may no longer be one, e.g. tmux
+// was detached before iTerm2 was killed and the state wasn't saved since. Writes to tmux wait a
+// second (-enableWritesAfterDelay) in case of that. When the session's foreground job is a shell,
+// nothing is running tmux in it, so leave tmux mode before anything is typed into the shell (QA
+// finding F-832). Another job, like ssh, can't be told apart from tmux, so it is trusted.
++ (BOOL)processNameIsAShell:(NSString *)name {
+    static NSSet<NSString *> *shells;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        shells = [[NSSet alloc] initWithArray:@[ @"zsh", @"bash", @"sh", @"fish", @"tcsh", @"csh",
+                                                 @"ksh", @"dash", @"nu", @"xonsh", @"elvish" ]];
+    });
+    NSString *base = name.lastPathComponent;
+    if ([base hasPrefix:@"-"]) {
+        base = [base substringFromIndex:1];
+    }
+    return base.length > 0 && [shells containsObject:base];
+}
+
+- (void)stopRestoredTmuxModeIfNoTmuxIsRunning {
+    const pid_t shellPid = _shell.pid;
+    id<ProcessInfoProvider> provider = self.processInfoProvider;
+    if (shellPid <= 0 || _conductor || _shell.framerPaneJobManager || !provider) {
+        return;
+    }
+    TmuxGateway *gateway = _tmuxGateway;
+    __weak __typeof(self) weakSelf = self;
+    [provider requestImmediateUpdateWithCompletionBlock:^{
+        PTYSession *strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_tmuxGateway != gateway || strongSelf.tmuxMode != TMUX_GATEWAY) {
+            return;
+        }
+        iTermProcessInfo *job = [provider deepestForegroundJobForPid:shellPid];
+        if (![PTYSession processNameIsAShell:job.name]) {
+            DLog(@"Restored tmux gateway's foreground job is %@; keeping tmux mode", job);
+            return;
+        }
+        RLog(@"Restored tmux gateway %@ is at a shell (%@), not in tmux; leaving tmux mode", strongSelf, job.name);
+        [gateway cancelDelayedWritesAndDiscardQueue];
+        [strongSelf tmuxHostDisconnected:[[gateway.dcsID copy] autorelease]];
+    }];
 }
 
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error {
@@ -11479,6 +11523,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
     // Take the gateway decoration off now rather than a main-queue turn later.
     [_nameController formattingDescriptorDidChange];
+    // As when attaching (-tmuxSessionChanged:sessionId:): the saved arrangement must stop saying
+    // this is a tmux gateway, or if iTerm2 is killed it is restored as one and sends tmux
+    // commands to the shell (QA finding F-832).
+    [NSApp invalidateRestorableState];
+    if (![[iTermController sharedInstance] applicationIsQuitting]) {
+        [[iTermApplication.sharedApplication delegate] saveRestorableState];
+    }
 }
 
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {

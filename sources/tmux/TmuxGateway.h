@@ -209,5 +209,8 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 // for. Each change reaches the delegate as a layout change.
 - (void)subscribeToWindowLayouts;
 - (void)enableWritesAfterDelay;
+// Cancels a pending -enableWritesAfterDelay and drops what was waiting to be written, e.g. when a
+// restored gateway turns out not to be talking to tmux.
+- (void)cancelDelayedWritesAndDiscardQueue;
 
 @end

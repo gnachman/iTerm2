@@ -1472,6 +1472,12 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
     [self performSelector:@selector(enableWrites) withObject:nil afterDelay:1.0];
 }
 
+- (void)cancelDelayedWritesAndDiscardQueue {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(enableWrites) object:nil];
+    RLog(@"Discarding unwritten commands: %@", _writeQueue);
+    [_writeQueue setString:@""];
+}
+
 - (void)enableWrites {
     _canWrite = YES;
     [self flushWriteQueue];
