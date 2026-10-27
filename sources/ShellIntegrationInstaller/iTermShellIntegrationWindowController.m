@@ -96,10 +96,18 @@ static NSString *const iTermShellIntegrationReceiveUtilitiesCommand =
     @"else echo it2-\"\"cannot-receive-utilities; fi; "
     @"rm -f .it2-utilities.b64 .it2-utilities.tgz\n";
 
-// The prompt of the innermost helper sh (PS1 in launchHelperShellString). A line editor that
-// breaks the echo of a long command line can start a row with the >> in PS1=">> " or PS1='>> ',
-// which must not count.
-static NSString *const iTermShellIntegrationHelperPromptRegex = @"^>> (?![\"'])";
+// The prompt of the innermost helper sh (PS1 in launchHelperShellString), at the start of a row
+// or right after iTermShellIntegrationHelpersReadyMarker. A line editor that breaks the echo of a
+// long command line can start a row with the >> in PS1=">> " or PS1='>> ', which must not count.
+//
+// The marker is there because an sh without a line editor, such as dash (the sh of Debian and
+// Ubuntu), doesn't echo the lines of the launch that were typed ahead while the user's shell
+// read the first one. So the helper prompt goes on the row where the helpers' own default
+// prompts (or an exported PS1) are, after them, and that row doesn't start with it. The line that
+// sets PS1 prints the marker with no newline, so the helper prompt follows it on the same row.
+// The marker is written with empty quotes in that line, so the line's echo doesn't contain it.
+#define iTermShellIntegrationHelpersReadyMarker @"it2-helpers-ready "
+static NSString *const iTermShellIntegrationHelperPromptRegex = @"(?:^|" iTermShellIntegrationHelpersReadyMarker @")>> (?![\"'])";
 
 // Typed into the innermost helper sh to learn when it reads commands again. The answer includes
 // the helper's PS1, so if the helpers were somehow gone the user's shell would not give it. The
@@ -321,6 +329,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 + (NSString *)receiveUtilitiesCommand {
     return iTermShellIntegrationReceiveUtilitiesCommand;
+}
+
++ (NSString *)helperPromptRegex {
+    return iTermShellIntegrationHelperPromptRegex;
 }
 
 // The archive is unpacked in the current directory, so the answer says whether cd worked (it
@@ -1203,9 +1215,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     NSString *prefix = [strings componentsJoinedByString:@""];
     [strings removeAllObjects];
     NSString *ifLine = [NSString stringWithFormat:@"if ! grep iterm2_shell_integration %@  > /dev/null 2>&1; then\n", script];
+    // Without a prefix, what matches is the if line's echo after the helper prompt, which follows
+    // the ready marker on its row when the helpers were just launched.
     [self sendText:[prefix stringByAppendingString:ifLine]
         reallySend:reallySend
-        afterRegex:@"^>> "
+        afterRegex:iTermShellIntegrationHelperPromptRegex
        expectation:expectation
            didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateUnknown]
         completion:nil];
@@ -1223,9 +1237,11 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                            reallySend:reallySend
                            afterRegex:@"^> "
                           expectation:expectation]];
-    [strings addObject:[self sendText:@"fi\n"
+    // The answer shows sh read fi. Its prompt after fi may not start a row in dash, after
+    // prompts for the lines before it that it prints only once the tty echoed this line.
+    [strings addObject:[self sendText:@"fi; echo it2-\"\"dotfile-done\n"
                            reallySend:reallySend
-                           afterRegex:@"^>> "
+                           afterRegex:@"it2-dotfile-done"
                           expectation:expectation
                               didSend:nil
                           idleOnMatch:YES
@@ -1260,7 +1276,9 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     // runs in one (see discoverShell:completion:) and awaitCanceledHelperLaunchTypingNewline: how many to exit.
     // env sets it in any shell. The inner sh adds one to what the line is read by, which is the
     // outer sh, or (if that one was killed) a shell where it is unset, or one that rejects it.
-    return @"env IT2_INSTALLER_HELPER=1 sh\nENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) sh\n PS1='>> '; PS2='> '\n";
+    // The last line prints iTermShellIntegrationHelpersReadyMarker before the first helper
+    // prompt, which may not start a row (see iTermShellIntegrationHelperPromptRegex).
+    return @"env IT2_INSTALLER_HELPER=1 sh\nENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) sh\n PS1='>> '; PS2='> '; printf 'it2-''helpers-ready '\n";
 }
 
 // The exits that end the helpers launchHelperShellString starts.
@@ -1280,11 +1298,14 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                      to:(NSString *)path
              reallySend:(BOOL)reallySend
             expectation:(inout iTermExpectation **)expectation {
-    NSString *text = [NSString stringWithFormat:@"cat <<'EOF' > %@\n%@\nEOF\n", path, string];
-    // Once sh reads the end of the here-document, it reads commands.
+    // Once sh prints the answer after the end of the here-document, it reads commands. The
+    // answer is waited for rather than the echo of EOF: an sh without a line editor, such as
+    // dash, leaves echoing to the tty, which echoes each piece of the text as it arrives, before
+    // sh prints the prompts for its lines, so EOF's echo doesn't follow a prompt.
+    NSString *text = [NSString stringWithFormat:@"cat <<'EOF' > %@\n%@\nEOF\necho it2-\"\"script-written\n", path, string];
     return [self sendText:text
                reallySend:reallySend
-               afterRegex:@"> EOF"
+               afterRegex:@"it2-script-written"
               expectation:expectation
                   didSend:[self setHelperStateWhenSent:iTermShellIntegrationHelperStateInHereDocument]
               idleOnMatch:YES
