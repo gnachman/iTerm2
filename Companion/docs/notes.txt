@@ -47,6 +47,10 @@ New Features:
   field sit above the page. Requires an
   up-to-date Mac.
 
+Improvements:
+- The session view no longer covers the top-left
+  corner of the terminal with a “LIVE” badge.
+
 Bug Fixes:
 - The QR scanner used to show a black preview the
   first time you granted camera access (notably on

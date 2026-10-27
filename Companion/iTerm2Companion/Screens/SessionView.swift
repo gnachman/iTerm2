@@ -829,14 +829,7 @@ private struct LiveSessionView: View {
                             browserControlsHeight = height
                         }
                 }
-                VStack {
-                    HStack {
-                        liveBadge
-                        Spacer()
-                    }
-                    Spacer()
-                }
-                .padding()
+                Spacer(minLength: 0)
             }
             if let endedReason {
                 ContentUnavailableView {
@@ -965,20 +958,6 @@ private struct LiveSessionView: View {
                 model.pauseLiveStream()
             default: break
             }
-        }
-    }
-
-    @ViewBuilder private var liveBadge: some View {
-        if endedReason == nil {
-            HStack(spacing: 6) {
-                Circle().fill(.red).frame(width: 8, height: 8)
-                Text("LIVE")
-                    .font(.caption2.monospaced())
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(.ultraThinMaterial, in: Capsule())
-            .foregroundStyle(.white)
         }
     }
 
