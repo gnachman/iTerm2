@@ -2277,3 +2277,6 @@ Bug Fixes:
   choose any file. Before, it only allowed file
   types that the AI provider accepts as
   attachments.
+- Installing the iTerm2 utility scripts on Linux
+  no longer prints tar warnings or leaves ._
+  files in ~/.iterm2.

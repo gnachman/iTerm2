@@ -72,7 +72,9 @@ cp -p $SUBMODULE/utilities/* $STAGE/
 mkdir -p $STAGE/it2-files/bin
 cp -p Resources/it2-remote $STAGE/it2-files/bin/it2
 cp -p $SUBMODULE/shell_integration/it2.py $STAGE/it2-files/it2.$IT2_PY_HASH.py
-(cd $STAGE && tar cvfz $DEST/utilities.tgz *)
+# Keep macOS metadata out of the archive: AppleDouble ._ files and xattr headers make
+# GNU tar on Linux print warnings and leave ._ files in ~/.iterm2.
+(cd $STAGE && COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs -cvzf $DEST/utilities.tgz *)
 rm -rf $STAGE
 
 pushd $SUBMODULE/utilities
