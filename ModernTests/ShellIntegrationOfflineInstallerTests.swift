@@ -23,6 +23,15 @@ private let receiveUtilitiesCommandMarker = "echo it2-\"\"receiving-utilities"
 // its checksum is the one in the command, as the real command does.
 private let receiveScriptCommandMarker = "echo it2-\"\"receiving-script"
 
+// A typed line as the shell reads it: Control-U (the tty's kill character, and the line editors'
+// default binding for it) erases what was typed on the line before it.
+private func erasingKilledText(_ line: String) -> String {
+    guard let kill = line.lastIndex(of: "\u{15}") else {
+        return line
+    }
+    return String(line[line.index(after: kill)...])
+}
+
 // What the helper launch prints, with no newline, right before the helper's first prompt.
 private let helpersReadyMarker = "it2-helpers-ready "
 
@@ -241,7 +250,7 @@ private final class FakeNushellTerminal: FakeShellIntegrationTerminal {
         pendingInput += text
         var result = [String]()
         while let newline = pendingInput.firstIndex(of: "\n") {
-            let line = String(pendingInput[..<newline])
+            let line = erasingKilledText(String(pendingInput[..<newline]))
             pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
             result.append(contentsOf: handle(line))
             if state == .helperStarting {
@@ -449,7 +458,7 @@ private final class FakeXonshTerminal: FakeShellIntegrationTerminal {
         pendingInput += text
         var result = [String]()
         while let newline = pendingInput.firstIndex(of: "\n") {
-            let line = String(pendingInput[..<newline])
+            let line = erasingKilledText(String(pendingInput[..<newline]))
             pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
             result.append(contentsOf: handle(line))
             if state == .helperStarting {
@@ -587,6 +596,9 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
     // before the helper's first prompt.
     static let helperLaunchLine = "sh -c 'printf \"it2-\"\"helpers-ready \"; exec env ENV=/dev/null INPUTRC=/dev/null IT2_INSTALLER_HELPER=$((${IT2_INSTALLER_HELPER:-0}+1)) PS1=\">> \" PS2=\"> \" sh'"
     static let launchHelper = helperLaunchLine + "\n"
+    // The exit typed to end the helper, after Control-U erases what the user may have typed on
+    // its line (F-883). What the installer shows for pasting by hand has no Control-U.
+    static let typedExit = "\u{15}exit\n"
     // Asks the shell that printed a helper prompt after Cancel how many helpers deep it is.
     static let helperDepthCommand = "echo \"it2-\"\"helper-depth-${IT2_INSTALLER_HELPER:-0}-\"\n"
     private static let zshDotdirCommand = "echo My dotfiles go in ${ZDOTDIR:-$HOME}, end\n"
@@ -864,7 +876,7 @@ final class ShellIntegrationOfflineInstallerTests: XCTestCase {
         terminal.output(">> ")
         terminal.run()
 
-        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), [Self.helperDepthCommand, "exit\n"])
+        XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)), [Self.helperDepthCommand, Self.typedExit])
     }
 
     func testSkipAfterDiscoveryUsesDiscoveredDotdir() {
@@ -938,7 +950,7 @@ class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
             XCTAssertTrue(texts[2].contains(receiveScriptCommandMarker), texts[2])
             XCTAssertTrue(texts[2].hasPrefix("IT2_F=\"$IT2_NU_AUTOLOAD_DIR/iterm2_shell_integration.nu\"; "), texts[2])
             XCTAssertTrue(texts[3].hasSuffix("\nEOF\n"), texts[3])
-            XCTAssertEqual(texts[4], "exit\n")
+            XCTAssertEqual(texts[4], ShellIntegrationOfflineInstallerTests.typedExit)
         }
         let script = terminal.files[FakeNushellTerminal.scriptPath] ?? ""
         let bundled = bundledScript()
@@ -962,7 +974,7 @@ class ShellIntegrationOfflineNushellInstallerTests: XCTestCase {
         XCTAssertTrue(controller.sendShellCommandsWriteFailed)
         // The helper sh still exits, leaving the session in nushell.
         XCTAssertFalse(terminal.helperIsRunning)
-        XCTAssertEqual(terminal.sentTexts.last, "exit\n")
+        XCTAssertEqual(terminal.sentTexts.last, ShellIntegrationOfflineInstallerTests.typedExit)
     }
 
     // QA finding F-381: the write-failed message wraps, and the step list had a fixed height, so
@@ -1207,6 +1219,9 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
     private var heldInput = ""
     // The helper launch was read and its first prompt has not been printed yet.
     private var awaitingHelperPrompt = false
+    // The user types text (with no newline) right after the installer types a text containing
+    // trigger, before the shell has answered it.
+    var userTypesAfter: (trigger: String, text: String)?
     // How many times exit reached the user's shell, which would end it.
     private(set) var exitsTypedIntoUserShell = 0
 
@@ -1235,6 +1250,17 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
             heldInput += text
             return []
         }
+        var userText: String?
+        if let typing = userTypesAfter, text.contains(typing.trigger) {
+            userText = typing.text
+            userTypesAfter = nil
+        }
+        defer {
+            // Typed before anything else arrives, so sh reads it before the next text.
+            if let userText {
+                pendingInput += userText
+            }
+        }
         var text = text
         if archiveNeverEnds && receivingUtilities && text.count > "\nEOF\n".count && text.hasSuffix("\nEOF\n") {
             text.removeLast("EOF\n".count)
@@ -1245,7 +1271,7 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
         pendingInput += text
         var rows = [String]()
         while let newline = pendingInput.firstIndex(of: "\n") {
-            let line = String(pendingInput[..<newline])
+            let line = erasingKilledText(String(pendingInput[..<newline]))
             pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
             if depth == 0 && line == ShellIntegrationOfflineInstallerTests.helperLaunchLine {
                 // F-882: what is typed before the helper prompts can be read by the wrong shell
@@ -1312,7 +1338,7 @@ private final class FakeTcshFromZshTerminal: FakeShellIntegrationTerminal {
         while let newline = pendingInput.firstIndex(of: "\n") {
             // In canonical mode Linux's tty keeps at most 4095 bytes of a line, plus its newline,
             // and drops the rest.
-            let line = String(decoding: pendingInput[..<newline].utf8.prefix(4095), as: UTF8.self)
+            let line = erasingKilledText(String(decoding: pendingInput[..<newline].utf8.prefix(4095), as: UTF8.self))
             pendingInput = String(pendingInput[pendingInput.index(after: newline)...])
             let inSh = depth > 0
             var printed = handle(line)
@@ -1669,7 +1695,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         terminal.run()
 
         XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
-                       [ShellIntegrationOfflineInstallerTests.helperDepthCommand, "exit\n"])
+                       [ShellIntegrationOfflineInstallerTests.helperDepthCommand, ShellIntegrationOfflineInstallerTests.typedExit])
         XCTAssertEqual(terminal.helperDepth, 0)
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
         XCTAssertFalse(controller.waitingForCanceledHelperLaunch)
@@ -1730,7 +1756,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
 
         XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
                        [ShellIntegrationOfflineInstallerTests.helperDepthCommand,
-                        "exit\n",
+                        ShellIntegrationOfflineInstallerTests.typedExit,
                         ShellIntegrationOfflineInstallerTests.shellCommand])
         XCTAssertEqual(terminal.helperDepth, 0)
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
@@ -1813,7 +1839,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
 
         XCTAssertEqual(Array(terminal.sentTexts.dropFirst(sentBefore)),
                        [ShellIntegrationOfflineInstallerTests.helperDepthCommand,
-                        "exit\n",
+                        ShellIntegrationOfflineInstallerTests.typedExit,
                         ShellIntegrationOfflineInstallerTests.shellCommand])
         XCTAssertEqual(terminal.helperDepth, 0)
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
@@ -1873,6 +1899,24 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
         terminal.run()
 
         XCTAssertEqual(terminal.stopSendingTextCount, 1)
+    }
+
+    // F-883: text the user types into the terminal after Cancel, before the helper answers the
+    // command that shows it reads commands again, doesn't keep the exit from running.
+    func testCancelWhileWritingTheScriptReturnsToTheUserShellWhenTheUserTypes() {
+        terminal.holdInputContaining = receiveScriptCommandMarker
+        terminal.userTypesAfter = (trigger: "helpers-$PS1-idle", text: "echo")
+        controller.shellIntegrationInstallerSendShellCommands(1)
+        terminal.run()
+
+        _ = controller.perform(Selector(("cancel:")), with: nil)
+        terminal.run()
+        terminal.releaseHeldInput()
+        terminal.run()
+
+        XCTAssertNil(terminal.userTypesAfter)
+        XCTAssertEqual(terminal.helperDepth, 0)
+        XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
     }
 
     // F-543: Send Again while sh receives the script ends its read loop and writes the script
@@ -1957,7 +2001,7 @@ class ShellIntegrationOfflineTcshFromZshInstallerTests: XCTestCase {
 
         let typed = Array(terminal.sentTexts.dropFirst(sentBefore))
         XCTAssertEqual(typed.count, 3, "\(typed)")
-        XCTAssertEqual(typed.dropFirst().first, "exit\n")
+        XCTAssertEqual(typed.dropFirst().first, ShellIntegrationOfflineInstallerTests.typedExit)
         XCTAssertEqual(typed.last, ShellIntegrationOfflineInstallerTests.shellCommand)
         XCTAssertEqual(terminal.helperDepth, 0)
         XCTAssertEqual(terminal.exitsTypedIntoUserShell, 0)
@@ -2227,7 +2271,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
         terminal.responseLines[Self.bashSource] = ["> test -e ~/.iterm2_shell_integration.bash && source ~/.iterm2_shell_integration.bash || true"]
         terminal.responseLines["EOF\n"] = ["> EOF"]
         terminal.responseLines[Self.fiLine] = ["> fi; echo it2-\"\"dotfile-done", "it2-dotfile-done", ">> "]
-        terminal.responseLines["exit\n"] = [">> exit"]
+        terminal.responseLines[ShellIntegrationOfflineInstallerTests.typedExit] = [">> exit"]
         let discoveryCount = terminal.sentTexts.count
 
         // In the app the button click's autorelease pool drains before any output arrives, so
@@ -2245,7 +2289,7 @@ class ShellIntegrationOfflineDotfileInstallerTests: XCTestCase {
                         Self.bashSource,
                         "EOF\n",
                         Self.fiLine,
-                        "exit\n"])
+                        ShellIntegrationOfflineInstallerTests.typedExit])
         XCTAssertEqual(controller.sendShellCommandsStage, 3)
     }
 }

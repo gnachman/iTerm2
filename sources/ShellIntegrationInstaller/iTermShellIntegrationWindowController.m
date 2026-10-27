@@ -560,7 +560,10 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
     }
     DLog(@"Exit the helper shell");
     _helperState = iTermShellIntegrationHelperStateNone;
-    [self typeText:self.exitHelperShellString];
+    // Control-U first erases whatever the user typed on the helper's line since it last read
+    // one, as after Cancel, which would otherwise run together with exit (F-883). The tty does
+    // this for an sh without a line editor, and it is the line editors' default binding, too.
+    [self typeText:[@"\025" stringByAppendingString:self.exitHelperShellString]];
 }
 
 // An expectation that completes once the helpers, which are running but busy, read commands
@@ -595,11 +598,12 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             // Typing is stopped only once the file is being typed. Before that, what is still
             // being typed is the receive command, and stopping it partway could leave sh waiting
             // for the rest of an if statement or a quoted string. Typed whole, it is followed by
-            // the lines below, which end its loop.
+            // the lines below, which end its loop. Control-U then erases anything the user typed
+            // after Cancel, so it can't run together with the command that follows (F-883).
             if (_receivedTextTyped) {
                 [self.delegate shellIntegrationWindowControllerStopSendingText];
             }
-            text = [@"\nEOF\n" stringByAppendingString:iTermShellIntegrationHelpersIdleCommand];
+            text = [@"\nEOF\n\025" stringByAppendingString:iTermShellIntegrationHelpersIdleCommand];
             break;
     }
     DLog(@"Wait for helper shells to become idle in state %@", @(_helperState));
