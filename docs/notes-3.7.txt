@@ -792,6 +792,12 @@ Bug Fixes:
   longer does nothing when the file can’t be
   found on the remote host. It now shows a
   failed download that says why.
+- When you connect with it2ssh user@host or an
+  ssh:// URL, SSH Integration now records the
+  user and host separately. Before, it treated
+  all of “user@host” as the host name, which
+  showed up in the file panel and the Downloads
+  menu.
 - it2ssh no longer hangs when the host or
   command contains non-ASCII text, such as
   accented letters or emoji. If iTerm2 can’t
