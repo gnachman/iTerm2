@@ -682,6 +682,11 @@ Bug Fixes:
   hidden file in your Downloads folder. Stop
   now takes effect right away even when the
   connection has stalled.
+- With the Browser Plugin installed, “Download
+  using SSH Integration” in the context menu no
+  longer does nothing when the file can’t be
+  found on the remote host. It now shows a
+  failed download that says why.
 - An SSH Integration download that can’t be
   saved into your Downloads folder when it
   finishes now reports that it failed, instead
