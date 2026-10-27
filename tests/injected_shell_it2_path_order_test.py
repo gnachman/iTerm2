@@ -301,6 +301,101 @@ class TcshTests(unittest.TestCase):
         self.assertIn("RESULT_SH=%s ITERM2" % it2, out)
 
 
+# Each script, sourced into a shell whose PATH already has ~/.iterm2/bin in the middle and at the
+# end (as after a login profile's path_helper or a `brew shellenv` that ran later), moves it to the
+# front and leaves one copy. They used to skip the prepend when it was there at all.
+class SourcedScriptMovesBinToFrontTests(unittest.TestCase):
+    def path_after_sourcing(self, shell_name, argv_for, path_for=None, expected_for=None):
+        shell = shutil.which(shell_name, path="/bin:/usr/bin:/opt/homebrew/bin:/usr/local/bin")
+        if shell is None:
+            self.skipTest(shell_name + " is not installed")
+        fx = Fixture(self)
+        if path_for:
+            path = path_for(fx)
+        else:
+            path = "/opt/qa:%s:/usr/bin:/bin:%s" % (fx.it2_bin, fx.it2_bin)
+        env = {"HOME": fx.home, "PATH": path, "TERM": "xterm-256color", "LANG": "en_US.UTF-8"}
+        proc = subprocess.run(argv_for(shell, fx), env=env, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, timeout=60,
+                              cwd=fx.home)
+        out = proc.stdout.decode("utf-8", "replace")
+        lines = [l for l in out.splitlines() if "RESULT_PATH=" in l]
+        self.assertTrue(lines, out)
+        entries = lines[-1].split("RESULT_PATH=", 1)[1].strip().split(":")
+        expected = expected_for(fx) if expected_for else [fx.it2_bin, "/opt/qa", "/usr/bin", "/bin"]
+        self.assertEqual(entries, expected, out)
+
+    def test_bash(self):
+        self.path_after_sourcing("bash", lambda shell, fx: [
+            shell, "--norc", "--noprofile", "-i", "-c",
+            'source "%s"; echo "RESULT_PATH=$PATH"' % os.path.join(SCRIPTS, "iterm2_shell_integration.bash")])
+
+    def test_zsh(self):
+        self.path_after_sourcing("zsh", lambda shell, fx: [
+            shell, "-f", "-i", "-c",
+            'source "%s"; echo "RESULT_PATH=$PATH"' % os.path.join(SCRIPTS, "iterm2_shell_integration.zsh")])
+
+    # The user's options must not truncate PATH (KSH_ARRAYS), split an entry with a space
+    # (SH_WORD_SPLIT), or treat $HOME as a pattern (GLOB_SUBST).
+    def test_zsh_options(self):
+        script = os.path.join(SCRIPTS, "iterm2_shell_integration.zsh")
+        for option in ("ksh_arrays", "sh_word_split", "glob_subst"):
+            self.path_after_sourcing(
+                "zsh",
+                lambda shell, fx: [shell, "-f", "-i", "-c",
+                                   'setopt %s; source "%s"; echo "RESULT_PATH=$PATH"' % (option, script)],
+                path_for=lambda fx: "/opt/a b:%s:/usr/bin:/bin" % fx.it2_bin,
+                expected_for=lambda fx: [fx.it2_bin, "/opt/a b", "/usr/bin", "/bin"])
+
+    # Under GLOB_SUBST a $HOME with a ? in it must not match, and remove, another user's bin.
+    def test_zsh_glob_subst_home(self):
+        script = os.path.join(SCRIPTS, "iterm2_shell_integration.zsh")
+        shell = shutil.which("zsh", path="/bin:/usr/bin:/opt/homebrew/bin")
+        if shell is None:
+            self.skipTest("zsh is not installed")
+        fx = Fixture(self)
+        home = os.path.join(fx.tmp, "h?me")
+        os.makedirs(os.path.join(home, ".iterm2", "bin"))
+        lookalike = os.path.join(fx.tmp, "hXme", ".iterm2", "bin")
+        bin_dir = os.path.join(home, ".iterm2", "bin")
+        env = {"HOME": home, "PATH": "%s:/usr/bin:/bin" % lookalike, "TERM": "xterm-256color"}
+        proc = subprocess.run([shell, "-f", "-i", "-c",
+                               'setopt glob_subst; source "%s"; echo "RESULT_PATH=$PATH"' % script],
+                              env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                              stdin=subprocess.DEVNULL, timeout=60)
+        out = proc.stdout.decode("utf-8", "replace")
+        lines = [l for l in out.splitlines() if "RESULT_PATH=" in l]
+        self.assertTrue(lines, out)
+        self.assertEqual(lines[-1].split("RESULT_PATH=", 1)[1].strip().split(":"),
+                         [bin_dir, lookalike, "/usr/bin", "/bin"], out)
+
+    def test_fish(self):
+        self.path_after_sourcing("fish", lambda shell, fx: [
+            shell, "--no-config", "-i", "-c",
+            'source "%s"; echo "RESULT_PATH="(string join : $PATH)' % os.path.join(SCRIPTS, "iterm2_shell_integration.fish")])
+
+    def test_tcsh(self):
+        self.path_after_sourcing("tcsh", lambda shell, fx: [
+            shell, "-f", "-c",
+            'set prompt="x> "; source "%s"; echo "RESULT_PATH=$PATH"' % os.path.join(SCRIPTS, "iterm2_shell_integration.tcsh")])
+
+    def test_xonsh(self):
+        def argv(shell, fx):
+            # xonsh sources only files with a xonsh extension.
+            copy = os.path.join(fx.home, "integration.xsh")
+            shutil.copyfile(os.path.join(SCRIPTS, "iterm2_shell_integration.xonsh"), copy)
+            return [shell, "--no-rc", "-i", "-c", 'source %s; print("RESULT_PATH=" + ":".join($PATH))' % copy]
+        self.path_after_sourcing("xonsh", argv)
+        # A stored ~/.iterm2/bin, which xonsh expands when compared but not when removed.
+        self.path_after_sourcing("xonsh", argv,
+                                 path_for=lambda fx: "~/.iterm2/bin:/opt/qa:/usr/bin:/bin")
+
+    def test_nushell(self):
+        self.path_after_sourcing("nu", lambda shell, fx: [
+            shell, "-n", "-c",
+            'source %s; print $"RESULT_PATH=($env.PATH | str join \':\')"' % os.path.join(SCRIPTS, "iterm2_shell_integration.nu")])
+
+
 @unittest.skipIf(BASH is None, "no injectable bash is installed")
 class BashTests(unittest.TestCase, PathOrderAssertions):
     def test_bash_profile_prepend_after_path_helper(self):

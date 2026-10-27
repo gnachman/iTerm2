@@ -28,8 +28,8 @@ final class It2sshNoShellIntegrationTests: XCTestCase {
         return root.appendingPathComponent("args")
     }
 
-    /// Runs the real it2ssh (the copy the app bundles) with a fake ssh, returning its exit status
-    /// and standard error.
+    /// Runs the real it2ssh (the shell-integration repo's, which the app bundles a copy of) with a
+    /// fake ssh, returning its exit status and standard error.
     @discardableResult
     private func runIt2ssh(_ arguments: [String]) throws -> (status: Int32, stderr: String) {
         let fakeSSH = root.appendingPathComponent("ssh")
@@ -47,7 +47,7 @@ final class It2sshNoShellIntegrationTests: XCTestCase {
         try? FileManager.default.createSymbolicLink(at: bin.appendingPathComponent("ssh"),
                                                     withDestinationURL: fakeSSH)
         let it2ssh = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("OtherResources/Utilities/it2ssh")
+            .appendingPathComponent("submodules/iTerm2-shell-integration/utilities/it2ssh")
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [it2ssh.path] + arguments

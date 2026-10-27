@@ -437,6 +437,65 @@ def test_env_allowlist_omits_absent_variables():
     check(sent == {"TMUX": "/tmp/s,1,0"}, "absent names must not appear as empty: %r" % sent)
 
 
+def test_tmux_is_found_through_its_server():
+    # tmux started by its full path leaves none on PATH; the server's own executable is used.
+    check(it2mod.tmux_executable(str(os.getpid()), which=lambda name: "/opt/tmux") == "/opt/tmux",
+          "tmux on PATH wins")
+    # A stand-in server started by its full path, as the tmux in question is.
+    server = subprocess.Popen([os.path.realpath(sys.executable), "-c", "import time; time.sleep(30)"])
+    try:
+        found = it2mod.tmux_executable(str(server.pid), which=lambda name: None)
+        check(found is not None and os.path.isabs(found) and os.access(found, os.X_OK),
+              "the server's own executable: %r" % found)
+    finally:
+        server.kill()
+        server.wait()
+    check(it2mod.tmux_executable("not-a-pid", which=lambda name: None) is None, "bad pid")
+    check(it2mod.tmux_executable("999999999", which=lambda name: None) is None, "no such process")
+
+
+def test_tmux_query_runs_the_tmux_it_found():
+    args = it2mod.tmux_query_arguments("/tmp/s", "", "/opt/homebrew/bin/tmux")
+    check(args[0] == "/opt/homebrew/bin/tmux", "argv0: %r" % args[0])
+
+
+def test_unreadable_tmux_server_fails_instead_of_using_the_inherited_socket():
+    # Inside tmux with no tmux to ask, the inherited IT2_SOCK belongs to whichever connection
+    # started the server, and a command sent there would act on that connection's session.
+    d = tempfile.mkdtemp()
+    try:
+        env = dict(os.environ, IT2_SOCK=os.path.join(d, "never-used.sock"), IT2_NONCE="x",
+                   TMUX="/tmp/no-such-tmux-socket,999999999,0", TMUX_PANE="%1",
+                   PATH=d)
+        result = subprocess.run([sys.executable, IT2, "app", "version"], env=env,
+                                capture_output=True, text=True, timeout=10)
+        check(result.returncode == 2, "exit status: %r" % result.returncode)
+        check("tmux" in result.stderr and "cannot reach" not in result.stderr,
+              "says why: %r" % result.stderr)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_tmux_that_reaches_no_server_fails_too():
+    # A tmux that runs but reaches no server (another protocol version, a socket this user can't
+    # open) exits nonzero with no output. That is not "no iTerm2 attached".
+    d = tempfile.mkdtemp()
+    try:
+        fake = os.path.join(d, "tmux")
+        with open(fake, "w") as f:
+            f.write("#!/bin/sh\nexit 1\n")
+        os.chmod(fake, 0o755)
+        env = dict(os.environ, IT2_SOCK=os.path.join(d, "never-used.sock"), IT2_NONCE="x",
+                   TMUX="/tmp/no-such-tmux-socket,999999999,0", TMUX_PANE="%1",
+                   PATH=d + ":/usr/bin:/bin")
+        result = subprocess.run([sys.executable, IT2, "app", "version"], env=env,
+                                capture_output=True, text=True, timeout=10)
+        check(result.returncode == 2, "exit status: %r" % result.returncode)
+        check("did not say" in result.stderr, "says why: %r" % result.stderr)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_records_survive_a_partial_query():
     # A stale $TMUX_PANE makes display-message fail, so tmux exits nonzero after the earlier
     # commands have already printed. The records must survive that: the pane going away does

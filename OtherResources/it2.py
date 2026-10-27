@@ -28,6 +28,7 @@ the framer this talks to already runs under it).
 import base64
 import json
 import os
+import shutil
 import signal
 import socket
 import struct
@@ -213,7 +214,7 @@ TMUX_CLIENT_LINE_PREFIX = "IT2CLIENT"
 TMUX_PANE_SESSION_LINE_PREFIX = "IT2PANESESSION"
 
 
-def tmux_query_arguments(socket_path, pane):
+def tmux_query_arguments(socket_path, pane, tmux="tmux"):
     """argv for one tmux invocation: the attached clients, the global options, and which
     tmux session holds `pane` (skipped when there is no pane).
 
@@ -228,7 +229,7 @@ def tmux_query_arguments(socket_path, pane):
     """
     fmt = "\t".join([TMUX_CLIENT_LINE_PREFIX, "#{client_name}", "#{client_control_mode}",
                      "#{client_created}", "#{client_session}"])
-    args = ["tmux", "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
+    args = [tmux, "-S", socket_path, "list-clients", "-F", fmt, ";", "show-options", "-g"]
     if pane:
         args += [";", "display-message", "-p", "-t", pane,
                  TMUX_PANE_SESSION_LINE_PREFIX + "\t#{session_id}"]
@@ -303,6 +304,37 @@ def parse_tmux_client_records(output):
     return [records[n] for n in ordered if n in records]
 
 
+def tmux_executable(server_pid, which=shutil.which):
+    """The tmux to ask. On Linux, the tmux server's own executable through /proc, which is the
+    same tmux even after an upgrade replaced the file, so client and server speak the same
+    protocol. Else the one on PATH. Else, as for a tmux started by its full path (Homebrew's,
+    with /opt/homebrew/bin not on PATH), the server's executable as ps names it, trusted only
+    when that is an absolute path. None when no tmux can be found."""
+    if server_pid.isdigit():
+        exe = "/proc/%s/exe" % server_pid
+        if os.access(exe, os.X_OK):
+            return exe
+    found = which("tmux")
+    if found:
+        return found
+    if not server_pid.isdigit():
+        return None
+    try:
+        result = subprocess.run(["ps", "-o", "comm=", "-p", server_pid],
+                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                stdin=subprocess.DEVNULL, timeout=2)
+        comm = result.stdout.decode("utf-8", "replace").strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if os.path.isabs(comm) and os.access(comm, os.X_OK):
+        return comm
+    return None
+
+
+# Why tmux_advertised_client_records last returned None, for the message main() prints.
+TMUX_LOOKUP_FAILURE = None
+
+
 def tmux_advertised_client_records():
     """The records of the iTerm2 clients attached to this pane's tmux server, newest first.
 
@@ -315,8 +347,11 @@ def tmux_advertised_client_records():
     attacher first, which matches the app's rule that the last attacher owns the pane;
     the caller tries each in turn and falls back to the pane's own environment last.
 
-    Returns [] when not inside tmux or the server cannot be asked; a wedged server must
-    not hang every it2 call, hence the timeout.
+    Returns [] when not inside tmux or when no attached client has advertised, and None
+    when inside tmux but the server could not be asked (no tmux found, or it did not answer;
+    a wedged server must not hang every it2 call, hence the timeout). The caller must not then
+    treat the inherited socket as this pane's: it belongs to whichever connection started the
+    server, and a command sent there acts on that connection's session instead.
     """
     tmux = os.environ.get("TMUX")
     if not tmux:
@@ -329,13 +364,25 @@ def tmux_advertised_client_records():
     socket_path = ",".join(fields[:-2])
     if not socket_path:
         return []
+    global TMUX_LOOKUP_FAILURE
+    executable = tmux_executable(fields[-2])
+    if executable is None:
+        TMUX_LOOKUP_FAILURE = "not found"
+        return None
     try:
         result = subprocess.run(
-            tmux_query_arguments(socket_path, os.environ.get("TMUX_PANE", "")),
+            tmux_query_arguments(socket_path, os.environ.get("TMUX_PANE", ""), executable),
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
             timeout=2)
     except (OSError, subprocess.SubprocessError):
-        return []
+        TMUX_LOOKUP_FAILURE = "no answer"
+        return None
+    # A server that answers always prints its global options, so nothing at all with a failure
+    # means it was never reached (no server there, a tmux that speaks another protocol version,
+    # a socket this user can't open).
+    if result.returncode != 0 and not result.stdout.strip():
+        TMUX_LOOKUP_FAILURE = "no answer"
+        return None
     # Parse whatever came back, even on a nonzero exit. The pane query is part of the same
     # invocation, so a stale or closed $TMUX_PANE makes tmux exit nonzero, and bailing here
     # would throw away the client records the earlier commands already printed -- turning a
@@ -488,6 +535,18 @@ def read_stdin_payload(stream):
 
 def main():
     candidates = tmux_advertised_client_records()
+    if candidates is None:
+        if TMUX_LOOKUP_FAILURE == "not found":
+            eprint("it2: can\u2019t find tmux to ask this tmux server which iTerm2 is showing "
+                   "this pane, so it can\u2019t tell which connection to use. Put tmux on PATH "
+                   "and try again.\n")
+        else:
+            eprint("it2: this tmux server did not say which iTerm2 is showing this pane, so "
+                   "it2 can\u2019t tell which connection to use.\n")
+        return 2
+    # The pane's own environment comes last: it is right for a tmux server no iTerm2 has
+    # attached to with tmux -CC (plain tmux in an SSH Integration session), and a fallback
+    # when every advertised socket is gone.
     own_sock_path = os.environ.get("IT2_SOCK")
     if own_sock_path:
         candidates.append({"sock": own_sock_path, "nonce": os.environ.get("IT2_NONCE", "")})
