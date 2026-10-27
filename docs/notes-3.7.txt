@@ -2042,3 +2042,6 @@ Bug Fixes:
 - iTerm2 no longer crashes or stops drawing
   terminal contents if a display reports a
   refresh rate of 0.
+- Installing the iTerm2 utility scripts on Linux
+  no longer prints tar warnings or leaves ._
+  files in ~/.iterm2.

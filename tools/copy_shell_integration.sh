@@ -49,7 +49,9 @@ ALLDEST=$PWD/OtherResources/utilities
 
 pushd $SUBMODULE/utilities
 files=$(find . -type f)
-tar cvfz $DEST/utilities.tgz *
+# Keep macOS metadata out of the archive: AppleDouble ._ files and xattr headers make
+# GNU tar on Linux print warnings and leave ._ files in ~/.iterm2.
+COPYFILE_DISABLE=1 tar --no-mac-metadata --no-xattrs -cvzf $DEST/utilities.tgz *
 echo * > $DEST/utilities-manifest.txt
 cp * $ALLDEST
 popd
