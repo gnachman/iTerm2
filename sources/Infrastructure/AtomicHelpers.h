@@ -30,6 +30,9 @@ long long iTermAtomicInt64Get(iTermAtomicInt64 *i);
 // Assigns value.
 void iTermAtomicInt64Set(iTermAtomicInt64 *i, long long value);
 
+// If the value is expected, assigns desired and returns YES. Otherwise returns NO.
+BOOL iTermAtomicInt64CompareAndSwap(iTermAtomicInt64 *i, long long expected, long long desired);
+
 typedef struct iTermAtomicUInt64 iTermAtomicUInt64;
 
 iTermAtomicUInt64 *iTermAtomicUInt64Create(void);

@@ -48,6 +48,10 @@ void iTermAtomicInt64Set(iTermAtomicInt64 *i, long long value) {
     atomic_store(&i->value, value);
 }
 
+BOOL iTermAtomicInt64CompareAndSwap(iTermAtomicInt64 *i, long long expected, long long desired) {
+    return atomic_compare_exchange_strong(&i->value, &expected, desired);
+}
+
 typedef struct iTermAtomicUInt64 {
     atomic_ullong value;
 } iTermAtomicUInt64;

@@ -145,7 +145,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         release.signal()
         waitUntil("b ran") { b.delegate.tokensSeen == 10 }
         XCTAssertEqual(a.delegate.tokensSeen, 10)
-        waitUntil("permit freed") { permits.inUseForTesting == 0 }
+        waitUntil("nobody runs") { permits.runningCountForTesting == 0 }
     }
 
     // Joining a session that is waiting for a permit doesn't wait for one: its queue is idle.
@@ -263,7 +263,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         release.signal()
         waitUntil("c ran") { c.delegate.tokensSeen == 10 }
         XCTAssertEqual(b.delegate.tokensSeen, 0)
-        waitUntil("no permit is stranded") { permits.inUseForTesting == 0 && permits.waitingCountForTesting == 0 }
+        waitUntil("no permit is stranded") { permits.runningCountForTesting == 0 && permits.waitingCountForTesting == 0 }
 
         // Leaving copy mode reschedules execution, which takes a permit again.
         b.delegate.queueTokens = false
@@ -280,7 +280,7 @@ final class TokenExecutorPermitTests: XCTestCase {
             b.executor.discardTokensFromPTY()
         }
         release.signal()
-        waitUntil("no permit is stranded") { permits.inUseForTesting == 0 && permits.waitingCountForTesting == 0 }
+        waitUntil("no permit is stranded") { permits.runningCountForTesting == 0 && permits.waitingCountForTesting == 0 }
         XCTAssertEqual(b.delegate.tokensSeen, 0)
     }
 
@@ -290,7 +290,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         let (_, b, release) = makeHolderAndWaiter(permits: permits)
         b.executor.delegate = nil
         release.signal()
-        waitUntil("no permit is stranded") { permits.inUseForTesting == 0 && permits.waitingCountForTesting == 0 }
+        waitUntil("no permit is stranded") { permits.runningCountForTesting == 0 && permits.waitingCountForTesting == 0 }
     }
 
     // A pause other than a join (a paused side effect, say) can last a long time, so the session
@@ -360,7 +360,8 @@ final class TokenExecutorPermitTests: XCTestCase {
                 // Stay in the first token until the join has paused a, so the join lands mid-run.
                 while !executor.isPausedForTesting {}
             case 2:
-                // After the join, run past the time slice.
+                // b got in line during the join. Run past the time slice.
+                self.spin { permits.waitingCountForTesting == 1 }
                 self.spin(for: 2 * iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
             default:
                 break
@@ -374,10 +375,10 @@ final class TokenExecutorPermitTests: XCTestCase {
         }
         addTokens(100, to: a)
         started.wait()
-        addTokens(10, to: b)
-        waitUntil("b waits") { permits.waitingCountForTesting == 1 }
-
-        a.executor.whilePaused {}
+        // Nobody is owed the permit until the join, so a doesn't yield at its first token.
+        a.executor.whilePaused {
+            self.addTokens(10, to: b)
+        }
 
         waitUntil("both ran") { a.delegate.tokensSeen == 100 && b.delegate.tokensSeen == 10 }
         XCTAssertEqual(aTokensWhenBStarted, 2)
@@ -449,9 +450,9 @@ final class TokenExecutorPermitTests: XCTestCase {
         waitUntil("b ran") { b.delegate.tokensSeen == 10 }
     }
 
-    // A session with nothing left to do gives up its permit even if a join pauses it as it
-    // finishes, so the permit isn't idle for the join.
-    func testSessionWithNoWorkGivesUpItsPermitDuringAJoin() {
+    // A session with nothing left to do leaves its permit idle, where anyone can take it, even if
+    // a join pauses it as it finishes.
+    func testSessionWithNoWorkLeavesItsPermitIdleDuringAJoin() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
         let a = makeSession(permits: permits)
         let started = DispatchSemaphore(value: 0)
@@ -464,11 +465,11 @@ final class TokenExecutorPermitTests: XCTestCase {
         addTokens(1, to: a)
         started.wait()
 
-        var inUseDuringJoin = -1
+        var runningDuringJoin = -1
         a.executor.whilePaused {
-            inUseDuringJoin = permits.inUseForTesting
+            runningDuringJoin = permits.runningCountForTesting
         }
-        XCTAssertEqual(inUseDuringJoin, 0)
+        XCTAssertEqual(runningDuringJoin, 0)
     }
 
     // Tokens that arrive while execute() is deciding what to do with an empty queue wait for a
@@ -493,5 +494,68 @@ final class TokenExecutorPermitTests: XCTestCase {
 
         release.signal()
         waitUntil("everyone ran") { a.delegate.tokensSeen == 10 && b.delegate.tokensSeen == 10 }
+    }
+
+    // A session that runs out of tokens keeps its permit, idle, and runs its next tokens with it.
+    func testSessionThatRunsOutOfTokensKeepsItsPermitIdle() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = makeSession(permits: permits)
+        addTokens(10, to: a)
+        waitUntil("a ran") { a.delegate.tokensSeen == 10 }
+        waitUntil("a's permit is idle") { permits.idleHolderCountForTesting == 1 }
+        XCTAssertEqual(permits.inUseForTesting, 1)
+
+        addTokens(10, to: a)
+        waitUntil("a ran again") { a.delegate.tokensSeen == 20 }
+        XCTAssertEqual(permits.waitingCountForTesting, 0)
+        waitUntil("a's permit is idle again") { permits.idleHolderCountForTesting == 1 }
+    }
+
+    // An idle session's permit goes to a session that needs it, and comes back when the idle
+    // session has work again.
+    func testIdlePermitGoesWhereItIsNeeded() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = makeSession(permits: permits)
+        let b = makeSession(permits: permits)
+        addTokens(10, to: a)
+        waitUntil("a's permit is idle") { a.delegate.tokensSeen == 10 && permits.idleHolderCountForTesting == 1 }
+
+        addTokens(10, to: b)
+        waitUntil("b ran") { b.delegate.tokensSeen == 10 }
+        addTokens(10, to: a)
+        waitUntil("a ran again") { a.delegate.tokensSeen == 20 }
+        waitUntil("nobody runs or waits") { permits.runningCountForTesting == 0 && permits.waitingCountForTesting == 0 }
+    }
+
+    // A session whose slice ends with a waiter owed the permit gives it up even if a join pauses it
+    // just then, rather than keeping it through the join and running another slice.
+    func testSessionYieldsAtTheEndOfItsSliceEvenIfAJoinPausesIt() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = makeSession(permits: permits)
+        let b = makeSession(permits: permits)
+        let joinNow = DispatchSemaphore(value: 0)
+        a.delegate.onToken = { [executor = a.executor] count in
+            if count == 1 {
+                self.spin { permits.waitingCountForTesting == 1 }
+                // Pause for a join as the slice ends, before execute() settles.
+                joinNow.signal()
+                self.spin { executor.isPausedForTesting }
+                self.spin(for: 2 * iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
+            }
+        }
+        var aTokensWhenBStarted = -1
+        b.delegate.onToken = { count in
+            if count == 1 {
+                aTokensWhenBStarted = a.delegate.tokensSeen
+            }
+        }
+        addTokens(100, to: a)
+        waitUntil("a holds the permit") { permits.inUseForTesting == 1 }
+        addTokens(10, to: b)
+        joinNow.wait()
+        a.executor.whilePaused {}
+
+        waitUntil("both ran") { a.delegate.tokensSeen == 100 && b.delegate.tokensSeen == 10 }
+        XCTAssertEqual(aTokensWhenBStarted, 1)
     }
 }

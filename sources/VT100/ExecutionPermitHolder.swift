@@ -3,9 +3,9 @@
 //  iTerm2
 //
 //  One token executor's side of ExecutionPermits: whether it holds a permit or is waiting in line
-//  for one, how long it has run in its current time slice, and giving the permit up whenever the
-//  executor won't execute tokens. The executor asks it before executing tokens, between tokens,
-//  and when execute() ends.
+//  for one, how long it has run in its current time slice, parking the permit when the executor
+//  runs out of tokens, and giving it up when the executor is paused for long. The executor asks
+//  it before executing tokens, between tokens, and when execute() ends.
 //
 //  Everything here runs in the executor's queue's context (possibly on the main thread, in a
 //  queue.sync). Joins never call into it: a join only pauses the executor, and must never take the
@@ -35,14 +35,22 @@ final class ExecutionPermitHolder {
 
     private let permits: ExecutionPermits
     private let client: ExecutionPermits.Client
+    private let queue: DispatchQueue
+    private let execute: () -> Void
     // Any queue. When a permit was last handed over, for TokenExecutionStats.
     private let wokenAt = iTermAtomicInt64Create()
     // Executor's queue. Whether this executor holds a permit, and whether it is in line for one
     // (or was handed one it hasn't taken up yet). With neither, there is nothing to give up.
     private var holding = false
     private var inLine = false
-    // Executor's queue. When the current run began (nil while paused for a join), and how long it
-    // had run in this slice before the join.
+    // Executor's queue. Whether the permit held is parked (idle), where another session may take
+    // it. It must be resumed before running.
+    private var parked = false
+    // Executor's queue. Set when the slice ended with a waiter owed the permit, so settle() gives
+    // it up.
+    private var yieldRequested = false
+    // Executor's queue. When the current run began (nil while stopped, as for a join or while
+    // parked), and how long it had run in this slice before that.
     private var runStart: UInt64?
     private var ranBeforeJoin: TimeInterval = 0
     private static let timeSlice = max(0.0005, iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
@@ -50,9 +58,9 @@ final class ExecutionPermitHolder {
     // Executor's queue. Set by the executor to collect stats for an execute() call; nil otherwise.
     var stats: Stats?
 
-    // Executor's queue. Whether the executor holds a permit.
+    // Executor's queue. Whether the executor holds a permit it may run with.
     var isHolding: Bool {
-        return holding
+        return holding && !parked
     }
 
     // `isPaused` may be called on any thread; see ExecutionPermits.Client. `execute` runs on `queue`
@@ -62,12 +70,12 @@ final class ExecutionPermitHolder {
          isPaused: @escaping () -> Bool,
          execute: @escaping () -> Void) {
         self.permits = permits
+        self.queue = queue
+        self.execute = execute
         let wokenAt = self.wokenAt
         client = permits.makeClient(isPaused: isPaused, wake: {
-            // This runs with the permits' lock held, so it must not reference the holder or the
-            // executor: if it made the last strong reference to either, its deinit would run here
-            // and take the lock again. deinit gives up the permit, so a wake that reaches a dead
-            // executor isn't lost.
+            // This must not strongly reference the holder or the executor, which own the client.
+            // deinit gives up the permit, so a wake that reaches a dead executor isn't lost.
             if TokenExecutionStats.enabled {
                 iTermAtomicInt64Set(wokenAt, Int64(monotonicNanoseconds()))
             }
@@ -87,8 +95,8 @@ final class ExecutionPermitHolder {
     }
 
     // Executor's queue. Decides whether tokens may be executed now. Without a permit, the executor
-    // waits in line. If it won't execute tokens, it gives up its permit or its place in line,
-    // including a permit handed to it while it was waiting.
+    // waits in line. If it won't execute tokens for now, it parks its permit, or gives up its place
+    // in line (including a permit handed to it while it was waiting).
     func decide(hasTokens: Bool,
                 willQueueTokens: Bool,
                 isPaused: Bool,
@@ -109,11 +117,16 @@ final class ExecutionPermitHolder {
             return .dontExecute
         }
         if willQueueTokens || !hasTokens {
-            relinquish()
+            if holding {
+                park()
+            } else {
+                relinquish()
+            }
             return .dontExecute
         }
+        resumeParkedPermit()
         if holding {
-            // Kept through a join, which stopped the clock. Restart it, or the slice would never
+            // The clock stops for a join and while parked. Restart it, or the slice would never
             // end and the time run would never be charged.
             if runStart == nil {
                 runStart = monotonicNanoseconds()
@@ -144,7 +157,7 @@ final class ExecutionPermitHolder {
     // Executor's queue, between tokens. Whether the executor has used up its time slice and
     // should give its permit to a waiting session.
     func sliceIsOverAndShouldYield() -> Bool {
-        guard holding, let runStart else {
+        guard holding, !parked, let runStart else {
             return false
         }
         let ran = ranBeforeJoin + secondsSince(runStart)
@@ -157,37 +170,96 @@ final class ExecutionPermitHolder {
         let shouldYield = timing { permits.checkpoint(client, ran: ran) }
         if shouldYield {
             stats?.yielded = true
+            yieldRequested = true
         }
         return shouldYield
     }
 
     // Executor's queue, at the end of execute(). `hasTokensToExecute` says whether tokens remain
-    // that could execute once any pause ends. With some, paused only for joins, the executor keeps
-    // its permit and stops its clock. Otherwise it gives up the permit, and waits in line again if
-    // it isn't paused and has more to do. `hasTokensToExecute` is called only while holding.
+    // that could execute once any pause ends. `hasTokensToExecute` is called only while holding a
+    // running permit.
+    //   - After yielding at the end of a slice, it gives up the permit (even when paused for a join),
+    //     and waits in line again if it has more to do (unless it is first in line, when it keeps
+    //     the permit and carries on).
+    //   - Paused for anything but joins, which can last a long time, it gives up the permit.
+    //   - With tokens left, paused only for joins, it keeps the permit and stops its clock.
+    //   - With tokens left otherwise (they arrived while it ran), it keeps the permit and carries on.
+    //   - With nothing to do, it parks the permit.
     func settle(isPaused: Bool, isPausedOnlyForJoins: Bool, hasTokensToExecute: () -> Bool) {
-        guard holding else {
+        let yielded = yieldRequested
+        yieldRequested = false
+        guard holding, !parked else {
+            return
+        }
+        let hasTokens = hasTokensToExecute()
+        if isPaused && !isPausedOnlyForJoins {
+            relinquish()
+            return
+        }
+        if yielded {
+            // Owed to a waiter. Give it up even when paused for a join, or the waiter would wait
+            // for this session's next slice.
+            let ran = ranBeforeJoin + secondsSince(runStart)
+            ranBeforeJoin = 0
+            runStart = nil
+            let keeps = timing {
+                permits.release(client, ran: ran, hasMoreWork: hasTokens)
+            }
+            holding = keeps
+            inLine = hasTokens && !keeps
+            if keeps {
+                // First in line after all, so it kept the permit, charged for the time run.
+                queue.async(execute: execute)
+            }
+            return
+        }
+        guard hasTokens else {
+            park()
+            return
+        }
+        // Keep the permit, stopping the clock until execution resumes.
+        ranBeforeJoin += secondsSince(runStart)
+        runStart = nil
+        if !isPaused {
+            queue.async(execute: execute)
+        }
+    }
+
+    // Executor's queue. Resumes a parked permit, if there is one. If another session took it while
+    // it was idle (charging the time run), the executor no longer holds a permit.
+    private func resumeParkedPermit() {
+        guard holding && parked else {
+            return
+        }
+        parked = false
+        if !timing({ permits.resume(client) }) {
+            holding = false
+            ranBeforeJoin = 0
+            runStart = nil
+        }
+    }
+
+    // Executor's queue, holding a running permit. Parks it, or gives it up if someone who can run
+    // is in line.
+    private func park() {
+        guard !parked else {
             return
         }
         let ran = ranBeforeJoin + secondsSince(runStart)
-        let hasTokens = hasTokensToExecute()
-        if hasTokens && isPaused && isPausedOnlyForJoins {
-            ranBeforeJoin = ran
-            runStart = nil
-            return
-        }
-        let more = hasTokens && !isPaused
-        holding = false
-        inLine = more
-        ranBeforeJoin = 0
         runStart = nil
-        timing {
-            permits.release(client, ran: ran, hasMoreWork: more)
+        if timing({ permits.park(client, uncharged: ran) }) {
+            parked = true
+            ranBeforeJoin = ran
+        } else {
+            // Given up, and charged.
+            holding = false
+            ranBeforeJoin = 0
         }
     }
 
     // Executor's queue. Gives up the permit, or the place in line, if it has either.
     func relinquish() {
+        resumeParkedPermit()
         guard holding || inLine else {
             return
         }

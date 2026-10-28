@@ -13,6 +13,8 @@ final class ExecutionPermitsTests: XCTestCase {
         var paused = false
         var alive = true
         var wakes = 0
+        // Runs when the session is woken.
+        var onWake: (() -> Void)?
         var client: ExecutionPermits.Client!
 
         init(_ name: String, permits: ExecutionPermits, visible: Bool = false) {
@@ -20,6 +22,7 @@ final class ExecutionPermitsTests: XCTestCase {
             client = permits.makeClient(isPaused: { [unowned self] in self.paused },
                                         wake: { [unowned self] in
                 self.wakes += 1
+                self.onWake?()
                 return self.alive
             })
             permits.setVisible(client, visible)
@@ -85,16 +88,54 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertEqual(a.wakes, 0)
     }
 
-    // A session that gives up its permit with work left waits again, and gets the permit back
-    // (woken) if nobody else is owed it.
-    func testReleaseWithMoreWorkAndNoRivalsWakesTheSameSession() {
+    // A session that gives up its permit with work left keeps it if nobody else is owed it. It
+    // isn't woken: it carries on by itself.
+    func testReleaseWithMoreWorkAndNoRivalsKeepsThePermit() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
         let a = FakeSession("a", permits: permits)
         XCTAssertTrue(permits.acquire(a.client))
-        permits.release(a.client, ran: 0.005, hasMoreWork: true)
-        XCTAssertEqual(a.wakes, 1)
-        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.release(a.client, ran: 0.005, hasMoreWork: true))
+        XCTAssertEqual(a.wakes, 0)
         XCTAssertEqual(permits.inUseForTesting, 1)
+        XCTAssertEqual(permits.waitingCountForTesting, 0)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertEqual(permits.virtualTimeForTesting(a.client), 0.005, accuracy: 1e-9)
+    }
+
+    // A session owed the permit gets it when the holder releases with work left, and the holder
+    // waits.
+    func testReleaseWithMoreWorkHandsThePermitToAWaiterAhead() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        XCTAssertFalse(permits.release(a.client, ran: 0.005, hasMoreWork: true))
+        XCTAssertEqual(b.wakes, 1)
+        XCTAssertEqual(permits.waitingCountForTesting, 1)
+    }
+
+    // Waking a session schedules its execution, which can take a moment, so it happens after the
+    // lock is released rather than holding up every other session.
+    func testWakeIsCalledWithoutTheLockHeld() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        var lockWasFree = false
+        b.onWake = {
+            // Another thread takes the lock. It can only finish if the lock isn't held.
+            let done = DispatchSemaphore(value: 0)
+            DispatchQueue.global().async {
+                _ = permits.inUseForTesting
+                done.signal()
+            }
+            lockWasFree = done.wait(timeout: .now() + 10) == .success
+        }
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        permits.release(a.client, ran: 0.005, hasMoreWork: false)
+        XCTAssertEqual(b.wakes, 1)
+        XCTAssertTrue(lockWasFree)
     }
 
     func testHandoffGoesToTheWaiterWithTheLowestVirtualTime() {
@@ -402,6 +443,178 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertEqual(c.wakes, 0)
     }
 
+    // MARK: - Idle holders
+
+    // A holder with nothing to do keeps its permit, idle, so its next tokens don't need the lock.
+    func testParkingWithNobodyWaitingKeepsThePermit() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.park(a.client, uncharged: 0.001))
+        XCTAssertEqual(permits.inUseForTesting, 1)
+        XCTAssertEqual(permits.idleHolderCountForTesting, 1)
+        XCTAssertTrue(permits.resume(a.client))
+        XCTAssertEqual(permits.idleHolderCountForTesting, 0)
+    }
+
+    // A holder that parks while someone waits gives the permit to the waiter instead.
+    func testParkingWithAWaiterHandsThePermitOn() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        XCTAssertFalse(permits.park(a.client, uncharged: 0.002))
+        XCTAssertEqual(b.wakes, 1)
+        XCTAssertEqual(permits.virtualTimeForTesting(a.client), 0.002, accuracy: 1e-9)
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertFalse(permits.acquire(a.client))
+    }
+
+    // A session that needs a permit when none is free takes one from an idle holder, which is
+    // charged for the time it ran and has to ask again.
+    func testIdlePermitIsTakenBySomeoneWhoNeedsIt() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.park(a.client, uncharged: 0.003))
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertEqual(permits.inUseForTesting, 1)
+        XCTAssertEqual(permits.idleHolderCountForTesting, 0)
+        XCTAssertEqual(permits.virtualTimeForTesting(a.client), 0.003, accuracy: 1e-9)
+
+        XCTAssertFalse(permits.resume(a.client))
+        XCTAssertFalse(permits.acquire(a.client))
+        XCTAssertEqual(permits.waitingCountForTesting, 1)
+    }
+
+    // A waiter that is paused can't use a permit, so a holder that runs out of tokens keeps its
+    // permit idle. The waiter takes it once it can run.
+    func testParkingWithOnlyAPausedWaiterKeepsThePermitIdle() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        b.paused = true
+        XCTAssertTrue(permits.park(a.client, uncharged: 0))
+        XCTAssertEqual(permits.idleHolderCountForTesting, 1)
+        b.paused = false
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertFalse(permits.resume(a.client))
+    }
+
+    // A holder that runs out of tokens while a waiter that can run is in line gives the permit up,
+    // even if a paused waiter is ahead of it.
+    func testParkingWithARunnableWaiterBehindAPausedOneHandsThePermitOn() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        let c = FakeSession("c", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        XCTAssertFalse(permits.acquire(c.client))
+        b.paused = true
+        XCTAssertFalse(permits.park(a.client, uncharged: 0))
+        XCTAssertEqual(c.wakes, 1)
+        XCTAssertEqual(b.wakes, 0)
+    }
+
+    // Idle holders don't hold the floor down: they aren't running.
+    func testIdleHolderDoesNotHoldTheFloorDown() {
+        let permits = ExecutionPermits(capacity: 2, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertTrue(permits.park(a.client, uncharged: 0))
+        XCTAssertFalse(permits.checkpoint(b.client, ran: 3))
+        let c = FakeSession("c", permits: permits)
+        XCTAssertEqual(permits.virtualTimeForTesting(c.client), 3, accuracy: 1e-9)
+    }
+
+    // A holder that resumes after being idle can't use the time it sat idle as credit: it is
+    // raised to the floor when next charged.
+    func testResumedHolderDoesNotBankCredit() {
+        let permits = ExecutionPermits(capacity: 2, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertTrue(permits.park(a.client, uncharged: 0))
+        XCTAssertFalse(permits.checkpoint(b.client, ran: 3))
+        XCTAssertTrue(permits.resume(a.client))
+        XCTAssertFalse(permits.checkpoint(a.client, ran: 0.001))
+        XCTAssertEqual(permits.virtualTimeForTesting(a.client), 3.001, accuracy: 1e-9)
+    }
+
+    // Lowering the cap takes permits back from idle holders right away.
+    func testLoweringTheCapTakesBackIdlePermits() {
+        let permits = ExecutionPermits(capacity: 2, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertTrue(permits.park(a.client, uncharged: 0))
+        permits.capacity = 1
+        XCTAssertEqual(permits.inUseForTesting, 1)
+        XCTAssertFalse(permits.resume(a.client))
+    }
+
+    // After the cap is lowered below the permits in use, a session that needs a permit takes idle
+    // ones until fewer than the cap are in use, and waits if that isn't enough.
+    func testNeedingAPermitAfterTheCapIsLoweredTakesIdlePermitsUntilUnderTheCap() {
+        let permits = ExecutionPermits(capacity: 3, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        let c = FakeSession("c", permits: permits)
+        let d = FakeSession("d", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertTrue(permits.acquire(c.client))
+        permits.capacity = 2
+        XCTAssertTrue(permits.park(a.client, uncharged: 0))
+        XCTAssertFalse(permits.acquire(d.client))
+        XCTAssertEqual(permits.inUseForTesting, 2)
+        XCTAssertFalse(permits.resume(a.client))
+
+        // b runs out of tokens with d in line, so it gives its permit up, leaving fewer in use
+        // than the cap. d gets it.
+        XCTAssertFalse(permits.park(b.client, uncharged: 0))
+        XCTAssertEqual(d.wakes, 1)
+        XCTAssertTrue(permits.acquire(d.client))
+        XCTAssertEqual(permits.inUseForTesting, 2)
+    }
+
+    // After the cap is lowered, a checkpoint takes idle permits back before deciding whether the
+    // running holder is over the cap, so it doesn't stop for nothing.
+    func testCheckpointTakesIdlePermitsBeforeYieldingForTheCap() {
+        let permits = ExecutionPermits(capacity: 3, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        let c = FakeSession("c", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertTrue(permits.acquire(c.client))
+        permits.capacity = 2
+        XCTAssertTrue(permits.park(c.client, uncharged: 0))
+        XCTAssertFalse(permits.checkpoint(a.client, ran: 0.005))
+        XCTAssertEqual(permits.inUseForTesting, 2)
+        XCTAssertFalse(permits.resume(c.client))
+    }
+
+    // Removing an idle holder frees its permit.
+    func testRemovingAnIdleHolderFreesItsPermit() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.park(a.client, uncharged: 0))
+        permits.remove(a.client)
+        XCTAssertEqual(permits.inUseForTesting, 0)
+        XCTAssertEqual(permits.idleHolderCountForTesting, 0)
+    }
+
     // MARK: - Closing
 
     func testRemovingAHolderHandsItsPermitOn() {
@@ -625,14 +838,73 @@ final class ExecutionPermitsTests: XCTestCase {
                 let now = iTermAtomicInt64Add(active, 1)
                 highWater.mutableAccess { $0 = max($0, now) }
                 iTermAtomicInt64Add(active, -1)
-                permits.release(session.client, ran: 0.001, hasMoreWork: round + 1 < rounds)
-                if round + 1 < rounds {
-                    // Released with more work: it is either woken right away or later.
+                let keeps = permits.release(session.client, ran: 0.001, hasMoreWork: round + 1 < rounds)
+                if round + 1 < rounds && !keeps {
+                    // Released with more work and someone else was owed the permit, so it is
+                    // woken when its turn comes.
                     if session.woken.wait(timeout: .now() + 30) == .timedOut {
                         timedOut.set(true)
                         return
                     }
                 }
+            }
+        }
+        XCTAssertFalse(timedOut.value)
+        XCTAssertLessThanOrEqual(highWater.value, Int64(capacity))
+        XCTAssertEqual(permits.inUseForTesting, 0)
+        XCTAssertEqual(permits.waitingCountForTesting, 0)
+    }
+
+    // Sessions on many threads run, go idle holding their permits, and resume, while others take
+    // idle permits away. No more than the cap ever run at once, and nobody is left waiting.
+    func testParkingNeverStrandsAWaiterOrExceedsTheCap() {
+        let capacity = 3
+        let permits = ExecutionPermits(capacity: capacity, visibleWeight: 4)
+        let count = 24
+        let rounds = 300
+        let active = iTermAtomicInt64Create()
+        let highWater = MutableAtomicObject<Int64>(0)
+        defer { iTermAtomicInt64Free(active) }
+
+        final class Session {
+            let woken = DispatchSemaphore(value: 0)
+            var client: ExecutionPermits.Client!
+        }
+        let sessions = (0..<count).map { _ in Session() }
+        for session in sessions {
+            session.client = permits.makeClient(isPaused: { false }, wake: { [session] in
+                session.woken.signal()
+                return true
+            })
+        }
+        let timedOut = MutableAtomicObject(false)
+        DispatchQueue.concurrentPerform(iterations: count) { i in
+            let session = sessions[i]
+            var holding = false
+            for _ in 0..<rounds {
+                if !(holding && permits.resume(session.client)) {
+                    if !permits.acquire(session.client) {
+                        if session.woken.wait(timeout: .now() + 30) == .timedOut {
+                            timedOut.set(true)
+                            return
+                        }
+                        if !permits.acquire(session.client) {
+                            timedOut.set(true)
+                            return
+                        }
+                    }
+                }
+                let now = iTermAtomicInt64Add(active, 1)
+                highWater.mutableAccess { $0 = max($0, now) }
+                // Stay running for a little while, so sessions running at once overlap here.
+                for _ in 0..<1000 {
+                    highWater.mutableAccess { $0 = max($0, iTermAtomicInt64Get(active)) }
+                }
+                iTermAtomicInt64Add(active, -1)
+                holding = permits.park(session.client, uncharged: 0.001)
+            }
+            if holding && permits.resume(session.client) {
+                permits.relinquish(session.client, ran: 0)
             }
         }
         XCTAssertFalse(timedOut.value)
