@@ -785,7 +785,7 @@ function iterm2_prompt_suffix() {
 
 function iterm2_print_version_number() {
   iterm2_begin_osc
-  printf "1337;ShellIntegrationVersion=23;shell=bash"
+  printf "1337;ShellIntegrationVersion=24;shell=bash"
   iterm2_end_osc
 }
 

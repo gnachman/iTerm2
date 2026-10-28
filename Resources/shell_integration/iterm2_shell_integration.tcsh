@@ -136,7 +136,7 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       endif
 
       # Define aliases for printing the shell integration version this script is written against
-      alias _iterm2_shell_integration_version 'printf "\033]1337;ShellIntegrationVersion=10;shell=tcsh\007"'
+      alias _iterm2_shell_integration_version 'printf "\033]1337;ShellIntegrationVersion=11;shell=tcsh\007"'
 
       # Define aliases for defining the boundary between a command prompt and the
       # output of a command started from that prompt. $_iterm2_current_aid is

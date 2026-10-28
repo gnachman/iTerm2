@@ -293,7 +293,7 @@ if $iterm2_active {
         )
     )
     iterm2 report-state $iterm2_machine_id
-    iterm2 osc "1337;ShellIntegrationVersion=1;shell=nu"
+    iterm2 osc "1337;ShellIntegrationVersion=2;shell=nu"
 }
 
 # Put iTerm2's uploaded it2 first on PATH, as the other shells' integration
