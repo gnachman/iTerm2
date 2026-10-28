@@ -12,8 +12,13 @@ import XCTest
 final class TokenExecutorQueueTests: XCTestCase {
     private let queueKey = DispatchSpecificKey<String>()
 
-    private func makeExecutor(on queue: DispatchQueue) -> TokenExecutor {
-        return TokenExecutor(VT100Terminal(), slownessDetector: SlownessDetector(), queue: queue)
+    // No execution permits, so these tests don't depend on the app-wide ones.
+    private func makeExecutor(on queue: DispatchQueue, ownsQueue: Bool = true) -> TokenExecutor {
+        return TokenExecutor(VT100Terminal(),
+                             slownessDetector: SlownessDetector(),
+                             queue: queue,
+                             ownsQueue: ownsQueue,
+                             permits: nil)
     }
 
     // A high-priority task scheduled from another executor's queue must run on its own executor's
@@ -43,8 +48,8 @@ final class TokenExecutorQueueTests: XCTestCase {
     func testTaskScheduledOnASharedQueueRunsOnIt() {
         let queue = iTermGCD.newMutationQueue()
         queue.setSpecific(key: queueKey, value: "shared")
-        let first = makeExecutor(on: queue)
-        let second = makeExecutor(on: queue)
+        let first = makeExecutor(on: queue, ownsQueue: false)
+        let second = makeExecutor(on: queue, ownsQueue: false)
 
         var ranSynchronously = false
         queue.sync {
@@ -84,7 +89,7 @@ final class TokenExecutorQueueTests: XCTestCase {
             iTermPreferences.setBool(saved, forKey: kPreferenceKeyMaximizeThroughput)
         }
         let own = makeExecutor(on: iTermGCD.newMutationQueue())
-        let shared = makeExecutor(on: iTermGCD.mutationQueue())
+        let shared = makeExecutor(on: iTermGCD.mutationQueue(), ownsQueue: false)
 
         iTermPreferences.setBool(true, forKey: kPreferenceKeyMaximizeThroughput)
         XCTAssertFalse(own.joinWaitsForIdleQueue)

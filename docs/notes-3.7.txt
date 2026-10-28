@@ -674,7 +674,10 @@ Improvements:
   others. If you suspect it of causing a problem,
   search Settings > Advanced for “new
   implementation of session input”, turn that
-  setting off, and restart iTerm2.
+  setting off, and restart iTerm2. To limit how
+  much CPU heavy output can use, set “Sessions
+  processing output at once” in Settings >
+  General > Magic.
 
 Bug Fixes:
 - Commands saved to Command History no longer

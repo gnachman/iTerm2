@@ -81,9 +81,11 @@ NS_ASSUME_NONNULL_BEGIN
 // Runs on a mutation queue of its own when task I/O monitors are on, and on the queue every
 // session shares otherwise.
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer;
-// `queue` must come from +[iTermGCD mutationQueue] or +[iTermGCD newMutationQueue].
+// `queue` must come from +[iTermGCD mutationQueue] or +[iTermGCD newMutationQueue]. `ownsQueue`
+// says which: whether `queue` belongs to this session alone rather than being shared by all.
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
-                                      queue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
+                                      queue:(dispatch_queue_t)queue
+                                  ownsQueue:(BOOL)ownsQueue NS_DESIGNATED_INITIALIZER;
 - (VT100ScreenState *)copy;
 
 - (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;

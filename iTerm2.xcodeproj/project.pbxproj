@@ -1110,6 +1110,8 @@
 		7822303C5D0B67588F07F281 /* CompanionStreamPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B577B7726D9E6991593F0069 /* CompanionStreamPacer.swift */; };
 		7889196D8646277EB77FCAE7 /* iTermSessionPreviewPanel.h in Sources */ = {isa = PBXBuildFile; fileRef = 330E8619FD42B5DC2EDA60D0 /* iTermSessionPreviewPanel.h */; };
 		78F6E883D21EEDFFC89F6DB0 /* TokenBudget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63D08A31D7E87531E3C80B6 /* TokenBudget.swift */; };
+		3420F3CA39850429B09A88C5 /* ExecutionPermits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512B9306271E83ED0C78C736 /* ExecutionPermits.swift */; };
+		5D2EC5E704A9EB75CA396653 /* ExecutionPermitHolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB84FFB8ED3B5EE7647347F /* ExecutionPermitHolder.swift */; };
 		796E31ABF13A4A84DA64E407 /* iTermTabGroupBuiltInFunctions.h in Sources */ = {isa = PBXBuildFile; fileRef = 01B39A6571770B2627411423 /* iTermTabGroupBuiltInFunctions.h */; };
 		79F784C0D62EE69089FB4CD2 /* WorkgroupToolbarShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2C2044C323A7D2F314F6C1 /* WorkgroupToolbarShortcut.swift */; };
 		7A0FE23B33980379355635C8 /* iTermTmuxControlModeKeyName.h in Sources */ = {isa = PBXBuildFile; fileRef = 4F11062666A3520744C1AC2B /* iTermTmuxControlModeKeyName.h */; };
@@ -9079,6 +9081,8 @@
 		F62D15F00AA64B2F0075A287 /* PSMTabDragWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabDragWindow.h; sourceTree = "<group>"; };
 		F62D15F10AA64B2F0075A287 /* PSMTabDragWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabDragWindow.m; sourceTree = "<group>"; };
 		F63D08A31D7E87531E3C80B6 /* TokenBudget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TokenBudget.swift; sourceTree = "<group>"; };
+		512B9306271E83ED0C78C736 /* ExecutionPermits.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExecutionPermits.swift; sourceTree = "<group>"; };
+		FDB84FFB8ED3B5EE7647347F /* ExecutionPermitHolder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExecutionPermitHolder.swift; sourceTree = "<group>"; };
 		F641AA5722DFF319F445E6CA /* AIModelCatalog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIModelCatalog.swift; sourceTree = "<group>"; };
 		F6441F620E748404000EC682 /* CarbonHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CarbonHelpers.h; sourceTree = "<group>"; };
 		F6441F630E748404000EC682 /* CGSAccessibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSAccessibility.h; sourceTree = "<group>"; };
@@ -13681,6 +13685,8 @@
 				75E5DD79B80BDFFB71AA74E7 /* iTermTitleBatch.swift */,
 				9B68ED5BF1F8A73D4F784F7C /* SetWindowFrameRequest.swift */,
 				F63D08A31D7E87531E3C80B6 /* TokenBudget.swift */,
+				512B9306271E83ED0C78C736 /* ExecutionPermits.swift */,
+				FDB84FFB8ED3B5EE7647347F /* ExecutionPermitHolder.swift */,
 			);
 			path = VT100;
 			sourceTree = "<group>";
@@ -20440,6 +20446,8 @@
 				3B70D1EB941BFD9362AFDEC8 /* PTYSession+ClaudeInteractivity.swift in Sources */,
 				D3C3D7DE7E900CCF5BA700F0 /* ChildReaper.swift in Sources */,
 				78F6E883D21EEDFFC89F6DB0 /* TokenBudget.swift in Sources */,
+				3420F3CA39850429B09A88C5 /* ExecutionPermits.swift in Sources */,
+				5D2EC5E704A9EB75CA396653 /* ExecutionPermitHolder.swift in Sources */,
 				B2B910741C395DF2BB52D26D /* TaskIOMonitor.swift in Sources */,
 				E150F42CDFEA057CC83BD2B6 /* OwnedFileDescriptor.swift in Sources */,
 				3B283BF5C33CA79E276B29E2 /* SIGCHLDObserver.swift in Sources */,

@@ -14,7 +14,7 @@ final class PerSessionMutationQueueTests: XCTestCase {
     private var delegates = [FakeSession]()
 
     private func makeScreen(queue: DispatchQueue?) -> VT100Screen {
-        let screen = queue.map { VT100Screen(mutationQueue: $0) } ?? VT100Screen()
+        let screen = queue.map { VT100Screen(mutationQueue: $0, ownsQueue: $0 !== iTermGCD.mutationQueue()) } ?? VT100Screen()
         let delegate = FakeSession()
         delegates.append(delegate)
         delegate.screen = screen

@@ -17,9 +17,14 @@ example:
     python3 run_experiment.py OUT_DIR --rate 2000 --phases 0,3,9 --keys 80 --sample 3
 Results: OUT_DIR/run-*/run.log has one line per phase (key latency, DSR round trips, CPU, thread
 count, memory).
+--exec-stats FILE adds iTerm2's token execution stats for each phase (how long joins waited for a
+session, and what fraction of execution time was overhead). iTerm2 must be writing them to FILE,
+set in the defaults domain the build uses (com.googlecode.iterm2 for a normal install):
+    defaults write com.googlecode.iterm2 NoSyncTokenExecutionStatsFile /tmp/exec-stats.txt
 """
 import argparse
 import os
+import re
 import statistics
 import subprocess
 import time
@@ -62,6 +67,69 @@ def rss_mb(pid):
     return int(text or 0) / 1024
 
 
+def complete_blocks(path):
+    """The blocks of token execution stats iTerm2 has finished writing to path."""
+    try:
+        blocks = open(path).read().split("start=")[1:]
+    except OSError:
+        return []
+    return [block for block in blocks if block.endswith("\n")]  # the last may still be being written
+
+
+def block_end(block):
+    m = re.match(r"[0-9.]+ end=([0-9.]+)", block)
+    return float(m.group(1)) if m else 0.0
+
+
+def wait_for_exec_stats(path, end, timeout=10):
+    """Waits until iTerm2 has written the block covering time end. It writes one a second."""
+    deadline = time.time() + timeout
+    while not any(block_end(block) >= end for block in complete_blocks(path)):
+        if time.time() > deadline:
+            say(f"warning: no token execution stats cover the end of the phase in {path}")
+            return
+        time.sleep(0.1)
+
+
+def exec_stats(path, start, end):
+    """Summarizes the token execution stats iTerm2 wrote once a second during a phase.
+
+    Each block starts with "start=S end=E", the interval it covers. A block counts toward the phase
+    if it began during the phase, so the one covering the time before the phase is left out and the
+    one written just after the phase ends is kept."""
+    kept = []
+    for block in complete_blocks(path):
+        try:
+            block_start = float(block.split(" ", 1)[0])
+        except ValueError:
+            continue
+        if start <= block_start < end:
+            kept.append(block)
+    text = "\n".join(kept)
+    overhead = busy = 0.0
+    waits = yields = 0
+    join_p50 = []
+    join_p95 = []
+    join_max = 0.0
+    number = r"([0-9.]+)"
+    for m in re.finditer(r"permits " + number + r"ms, other " + number + r"ms, tokens " + number + r"ms, high-pri " + number + "ms", text):
+        permits, other, tokens, high = (float(x) for x in m.groups())
+        overhead += permits + other
+        busy += permits + other + tokens + high
+    for m in re.finditer(r"Waits for a permit: (\d+), slice yields: (\d+)", text):
+        waits += int(m.group(1))
+        yields += int(m.group(2))
+    for m in re.finditer(r"Join wait: p50=" + number + r"ms p95=" + number + r"ms max=" + number + "ms", text):
+        join_p50.append(float(m.group(1)))
+        join_p95.append(float(m.group(2)))
+        join_max = max(join_max, float(m.group(3)))
+    return dict(overhead_frac=overhead / busy if busy else float("nan"),
+                waits=waits, yields=yields,
+                join_p50=statistics.median(join_p50) if join_p50 else float("nan"),
+                join_p95=max(join_p95) if join_p95 else float("nan"),
+                join_max=join_max if join_p50 else float("nan"))
+
+
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 SPACE_KEYCODE = 49
 
@@ -78,6 +146,7 @@ ap.add_argument("--ignore-focus", action="store_true",
                 help="post keys even without a focus report from the probe (keys that land elsewhere time out)")
 ap.add_argument("--gap", type=float, default=0.15)
 ap.add_argument("--sample", type=float, default=3, help="seconds of /usr/bin/sample per phase, 0 = off")
+ap.add_argument("--exec-stats", default="", help="file iTerm2 writes token execution stats to; reported per phase")
 args = ap.parse_args()
 
 phases = [int(x) for x in args.phases.split(",")]
@@ -164,6 +233,7 @@ try:
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         cpu0 = cpu_seconds(iterm_pid)
         w0 = time.monotonic()
+        phase_start = time.time()
         lat = []
         threads = []
         timeouts = 0
@@ -200,6 +270,7 @@ try:
             time.sleep(args.gap)
         cpu1 = cpu_seconds(iterm_pid)
         wall = time.monotonic() - w0
+        phase_end = time.time()
         cpu = (cpu1 - cpu0) / wall * 100
         dsr = []
         try:
@@ -219,12 +290,18 @@ try:
                    key_p50=q(lat, 50), key_p95=q(lat, 95), key_max=max(lat) if lat else float("nan"),
                    dsr_n=len(dsr), dsr_p50=q(dsr, 50), dsr_p95=q(dsr, 95), dsr_max=max(dsr) if dsr else float("nan"),
                    threads_max=max(threads) if threads else 0, rss_mb=rss_mb(iterm_pid))
+        if args.exec_stats:
+            wait_for_exec_stats(args.exec_stats, phase_end)
+            row.update(exec_stats(args.exec_stats, phase_start, phase_end))
         results.append(row)
         with open(os.path.join(run, f"keys-phase{k}.txt"), "w") as f:
             f.write("\n".join(f"{x:.3f}" for x in lat) + "\n")
         say("floods={floods} iTermCPU={cpu:.0f}% key ms p50={key_p50:.1f} p95={key_p95:.1f} max={key_max:.1f} "
             "(n={keys}, timeouts={timeouts}, focus_skips={focus_skips}) | DSR ms p50={dsr_p50:.1f} p95={dsr_p95:.1f} "
             "max={dsr_max:.1f} (n={dsr_n}) | threads max={threads_max} RSS={rss_mb:.0f}MB".format(**row))
+        if args.exec_stats:
+            say("  join wait ms p50={join_p50:.2f} p95={join_p95:.2f} max={join_max:.2f} | overhead={overhead_frac:.4f} "
+                "permit waits={waits} slice yields={yields}".format(**row))
 finally:
     for ctl in ctls:
         write(ctl, "stop")

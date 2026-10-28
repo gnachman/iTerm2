@@ -147,12 +147,14 @@ static BOOL sOSC7DisabledWarningShown;
     // With task I/O monitors, a session's reads don't stall other sessions, so its token
     // execution shouldn't either: each session gets a queue of its own, and joining one doesn't
     // stop the others (issue 13141).
-    dispatch_queue_t queue = [TaskNotifier usesTaskIOMonitors] ? [iTermGCD newMutationQueue] : [iTermGCD mutationQueue];
-    return [self initWithSideEffectPerformer:performer queue:queue];
+    const BOOL ownsQueue = [TaskNotifier usesTaskIOMonitors];
+    dispatch_queue_t queue = ownsQueue ? [iTermGCD newMutationQueue] : [iTermGCD mutationQueue];
+    return [self initWithSideEffectPerformer:performer queue:queue ownsQueue:ownsQueue];
 }
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
-                                      queue:(dispatch_queue_t)queue {
+                                      queue:(dispatch_queue_t)queue
+                                  ownsQueue:(BOOL)ownsQueue {
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _uniqueIdentifier = [[NSUUID UUID] UUIDString];
@@ -202,7 +204,8 @@ static BOOL sOSC7DisabledWarningShown;
         [self setInitialTabStops];
         _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:_terminal
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
-                                                                queue:_queue];
+                                                                queue:_queue
+                                                            ownsQueue:ownsQueue];
         _tokenExecutor.delegate = self;
         _echoProbe = [[iTermEchoProbe alloc] initWithQueue:_queue];
         _echoProbe.delegate = self;

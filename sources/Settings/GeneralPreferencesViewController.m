@@ -18,6 +18,9 @@
 #import "RegexKitLite.h"
 #import "WindowArrangements.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "TaskNotifier.h"
+#import "iTermSlider.h"
+#import "NSObject+iTerm.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
@@ -2103,6 +2106,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     iTermAdvancedGPUSettingsWindowController *_advancedGPUWindowController;
 
     IBOutlet NSButton *_maximizeThroughput;
+    IBOutlet NSSlider *_maximumConcurrentTokenExecutions;
+    IBOutlet NSButton *_maximumConcurrentTokenExecutionsAutomatic;
     IBOutlet NSButton *_enableAPI;
     IBOutlet NSPopUpButton *_apiPermission;
     IBOutlet NSButton *_browserScriptingPermissions;
@@ -2544,6 +2549,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     info.observer = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
     };
+
+    [self defineMaximumConcurrentTokenExecutionsControls];
 
     [self defineControl:_enableBonjour
                     key:kPreferenceKeyAddBonjourHostsToProfiles
@@ -4001,6 +4008,64 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return NO;
     }
     return YES;
+}
+
+// The slider shows how many sessions may process output at once. The preference stores 0 for
+// automatic, which the checkbox controls; the slider then shows the automatic number, disabled.
+- (void)defineMaximumConcurrentTokenExecutionsControls {
+    const NSInteger minimum = iTermExecutionPermits.minimumCapacity;
+    const NSInteger maximum = iTermExecutionPermits.maximumCapacity;
+    _maximumConcurrentTokenExecutions.minValue = minimum;
+    _maximumConcurrentTokenExecutions.maxValue = maximum;
+    _maximumConcurrentTokenExecutions.numberOfTickMarks = maximum - minimum + 1;
+    _maximumConcurrentTokenExecutions.allowsTickMarkValuesOnly = YES;
+    [[iTermSlider castFrom:_maximumConcurrentTokenExecutions.superview] sliderRangeDidChange];
+
+    BOOL (^taskIOMonitorsInUse)(void) = ^BOOL{
+        // With the old implementation every session shares one thread, so the limit does nothing.
+        return [TaskNotifier usesTaskIOMonitors];
+    };
+
+    PreferenceInfo *sliderInfo = [self defineControl:_maximumConcurrentTokenExecutions
+                                                 key:kPreferenceKeyMaximumConcurrentTokenExecutions
+                                         displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.MaximumConcurrentTokenExecutions", nil, [NSBundle mainBundle], @"Sessions processing output at once", @"Search index name for the setting that limits how many sessions process terminal output at the same time")
+                                                type:kPreferenceInfoTypeSlider];
+    sliderInfo.syntheticGetter = ^id{
+        const NSInteger configured = [iTermPreferences integerForKey:kPreferenceKeyMaximumConcurrentTokenExecutions];
+        // A value saved on a computer with more cores shows as the most this one allows.
+        return @(configured == 0 ? iTermExecutionPermits.automaticCapacity : [iTermExecutionPermits clampedCapacity:configured]);
+    };
+    sliderInfo.syntheticSetter = ^(NSNumber *newValue) {
+        [iTermPreferences setInteger:[iTermExecutionPermits clampedCapacity:lround(newValue.doubleValue)]
+                              forKey:kPreferenceKeyMaximumConcurrentTokenExecutions];
+    };
+    sliderInfo.shouldBeEnabled = ^BOOL{
+        return taskIOMonitorsInUse() &&
+            [iTermPreferences integerForKey:kPreferenceKeyMaximumConcurrentTokenExecutions] != 0;
+    };
+    sliderInfo.observer = ^{
+        [iTermExecutionPermits capacityPreferenceDidChange];
+    };
+
+    __weak __typeof(self) weakSelf = self;
+    PreferenceInfo *automaticInfo = [self defineControl:_maximumConcurrentTokenExecutionsAutomatic
+                                                    key:kPreferenceKeyMaximumConcurrentTokenExecutionsAutomatic
+                                            relatedView:nil
+                                                   type:kPreferenceInfoTypeCheckbox];
+    automaticInfo.syntheticGetter = ^id{
+        return @([iTermPreferences integerForKey:kPreferenceKeyMaximumConcurrentTokenExecutions] == 0);
+    };
+    automaticInfo.syntheticSetter = ^(NSNumber *newValue) {
+        // Turning automatic off starts from the number it was using.
+        [iTermPreferences setInteger:newValue.boolValue ? 0 : iTermExecutionPermits.automaticCapacity
+                              forKey:kPreferenceKeyMaximumConcurrentTokenExecutions];
+    };
+    automaticInfo.shouldBeEnabled = taskIOMonitorsInUse;
+    automaticInfo.observer = ^{
+        [iTermExecutionPermits capacityPreferenceDidChange];
+        [weakSelf updateValueForInfo:sliderInfo];
+        [weakSelf updateEnabledStateForInfo:sliderInfo];
+    };
 }
 
 #pragma mark - Actions

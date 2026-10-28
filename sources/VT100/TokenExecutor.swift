@@ -135,10 +135,27 @@ class TokenExecutor: NSObject {
         return impl.isExecutingToken
     }
 
-    @objc(initWithTerminal:slownessDetector:queue:)
+    // `ownsQueue` says whether `queue` belongs to this session alone, as opposed to the mutation
+    // queue every session shares. An executor with a queue of its own pauses only itself for a
+    // join, and takes an execution permit to execute tokens, which limits how many sessions do so at
+    // once. On the shared queue only one can run anyway.
+    @objc(initWithTerminal:slownessDetector:queue:ownsQueue:)
+    convenience init(_ terminal: VT100Terminal,
+                     slownessDetector: SlownessDetector,
+                     queue: DispatchQueue,
+                     ownsQueue: Bool) {
+        self.init(terminal,
+                  slownessDetector: slownessDetector,
+                  queue: queue,
+                  ownsQueue: ownsQueue,
+                  permits: ownsQueue ? ExecutionPermits.shared : nil)
+    }
+
     init(_ terminal: VT100Terminal,
          slownessDetector: SlownessDetector,
-         queue: DispatchQueue) {
+         queue: DispatchQueue,
+         ownsQueue: Bool,
+         permits: ExecutionPermits?) {
         self.queue = queue
         // Main queue only, so two executors made for one queue can't both set its token.
         it_assert(Thread.isMainThread, "TokenExecutor must be created on the main queue")
@@ -150,7 +167,9 @@ class TokenExecutor: NSObject {
         }
         impl = TokenExecutorImpl(terminal,
                                  slownessDetector: slownessDetector,
-                                 queue: queue)
+                                 queue: queue,
+                                 ownsQueue: ownsQueue,
+                                 permits: permits)
     }
 
     // Any queue. Whether addTokens(_:lengthTotal:lengthExcludingInBandSignaling:) would return
@@ -406,6 +425,11 @@ class TokenExecutor: NSObject {
         return impl.hasPendingWork
     }
 
+    // Any queue
+    var isPausedForTesting: Bool {
+        return impl.isPausedForTesting
+    }
+
     // Main queue, outside a joined block. For tests: executes pending work on this executor's
     // queue now, unless execution is paused. Doesn't depend on how many hops an unpause takes to
     // schedule execution.
@@ -431,7 +455,18 @@ private class TokenExecutorImpl {
     private let sideEffectSerialCounter = iTermAtomicInt64Create()
     private let sideEffectAppendMutex = Mutex()
     private let tokenQueue = TwoTierTokenQueue()
-    private var pauseCount = iTermAtomicInt64Create()
+    private let pauseCount = PauseCount()
+    // Limits how many sessions execute tokens at once. Nil on the shared queue.
+    private var permitHolder: ExecutionPermitHolder?
+    // Executor's queue. True while executeForTesting() runs execute(), which then executes tokens
+    // without a permit. Tests call it synchronously and expect tokens to execute.
+    private var bypassingPermits = false
+    // Executor's queue. The permit holder that token execution goes through.
+    private var executionPermitHolder: ExecutionPermitHolder? {
+        return bypassingPermits ? nil : permitHolder
+    }
+    // Mutation queue. The current execute() call's stats, if TokenExecutionStats is enabled.
+    private var statsSample: TokenExecutionStats.Sample?
     // Nonzero means a report may be sent without first pausing+syncing, because a
     // sync has happened and no state side effect has been scheduled since. It is
     // armed by armReportsMaySkipSync() (from the report gate's joined sync) and
@@ -467,6 +502,7 @@ private class TokenExecutorImpl {
             iTermGCD.assertSafe(forMutationQueue: queue)
 #endif
             if isBackgroundSession != oldValue {
+                permitHolder?.setVisible(!isBackgroundSession)
                 sideEffectScheduler.period = isBackgroundSession ? Self.backgroundSideEffectPeriod : Self.foregroundSideEffectPeriod
                 if isBackgroundSession {
                     Self.activeSessionsWithTokens.mutableAccess { set in
@@ -485,10 +521,12 @@ private class TokenExecutorImpl {
 
     init(_ terminal: VT100Terminal,
          slownessDetector: SlownessDetector,
-         queue: DispatchQueue) {
+         queue: DispatchQueue,
+         ownsQueue: Bool,
+         permits: ExecutionPermits?) {
         self.terminal = terminal
         self.queue = queue
-        hasOwnQueue = queue !== iTermGCD.mutationQueue()
+        hasOwnQueue = ownsQueue
         self.slownessDetector = slownessDetector
         sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: Self.foregroundSideEffectPeriod, action: { [weak self] in
             guard let self = self else {
@@ -500,6 +538,16 @@ private class TokenExecutorImpl {
                 DLog("[side effects] End executing scheduled side effects")
             }
         })
+        if let permits {
+            permitHolder = ExecutionPermitHolder(permits: permits,
+                                                 queue: queue,
+                                                 isPaused: { [pauseCount] in
+                pauseCount.isPaused
+            }, execute: { [weak self] in
+                self?.execute()
+            })
+            permitHolder?.setVisible(!isBackgroundSession)
+        }
         NotificationCenter.default.addObserver(forName: Self.didUnpauseGloballyNotification,
                                                observer: self,
                                                object: nil) { [weak self] _ in
@@ -525,8 +573,7 @@ private class TokenExecutorImpl {
 #if DEBUG
         assertQueue()
 #endif
-        let newValue = iTermAtomicInt64Add(pauseCount, 1)
-        if newValue == 1 && gDebugLogging.boolValue {
+        if pauseCount.addOther() && gDebugLogging.boolValue {
             DLog("Pause")
         }
         return Unpauser(self)
@@ -539,6 +586,10 @@ private class TokenExecutorImpl {
 
     // Mutation queue
     func executeForTesting() {
+        bypassingPermits = true
+        defer {
+            bypassingPermits = false
+        }
         execute()
     }
 
@@ -546,7 +597,7 @@ private class TokenExecutorImpl {
 #if DEBUG
         assertQueue()
 #endif
-        return iTermAtomicInt64Get(pauseCount) > 0 || iTermAtomicInt64Get(TokenExecutor.globalPauseCount) > 0
+        return pauseCount.isPaused || iTermAtomicInt64Get(TokenExecutor.globalPauseCount) > 0
     }
 
     func invalidate() {
@@ -611,7 +662,7 @@ private class TokenExecutorImpl {
         dispatchPrecondition(condition: .onQueue(.main))
         let waitForIdle = joinWaitsForIdleQueue
         if gDebugLogging.boolValue { DLog("Join: waitForIdle=\(waitForIdle)") }
-        var unpauser = waitForIdle ? nil : pauseForJoin()
+        var endPause = waitForIdle ? nil : pauseForJoin()
 
         let sema = DispatchSemaphore(value: 0)
         let sema2 = DispatchSemaphore(value: 0)
@@ -620,7 +671,8 @@ private class TokenExecutorImpl {
             sema.wait()
             DLog("Mutation queue unpaused")
         }
-        if unpauser != nil {
+        let joinStart = TokenExecutionStats.enabled ? monotonicNanoseconds() : nil
+        if endPause != nil {
             sema2.wait()
         } else {
             // On the shared queue with maximize throughput on, pausing stops every session, so first
@@ -629,16 +681,19 @@ private class TokenExecutorImpl {
             // being executed).
             let timeout = 0.03
             if sema2.wait(timeout: .now() + timeout) == .timedOut {
-                unpauser = pauseForJoin()
+                endPause = pauseForJoin()
                 sema2.wait()
             }
         }
+        if let joinStart {
+            TokenExecutionStats.recordJoinWait(secondsSince(joinStart))
+        }
         DLog("Mutation queue paused")
         block()
-        if unpauser != nil {
+        if endPause != nil {
             if gDebugLogging.boolValue { DLog("Decr pending pauses") }
         }
-        unpauser?.unpause()
+        endPause?()
         sema.signal()
     }
 
@@ -651,17 +706,48 @@ private class TokenExecutorImpl {
         return !hasOwnQueue && iTermPreferences.maximizeThroughput()
     }
 
-    // Main queue. Stops token execution so the queue gets to the join soon. A session with a queue
-    // of its own pauses only itself; on the shared queue, every session must stop.
-    private func pauseForJoin() -> Unpauser {
+    // Main queue. Stops token execution so the queue gets to the join soon, and returns a closure
+    // that ends the pause. A session with a queue of its own pauses only itself; on the shared
+    // queue, every session must stop.
+    private func pauseForJoin() -> () -> Void {
         guard hasOwnQueue else {
-            return TokenExecutor.globalPause()
+            let unpauser = TokenExecutor.globalPause()
+            return {
+                unpauser.unpause()
+            }
         }
-        let newValue = iTermAtomicInt64Add(pauseCount, 1)
-        if newValue == 1 && gDebugLogging.boolValue {
+        if pauseCount.addJoin() && gDebugLogging.boolValue {
             DLog("Pause for join")
         }
-        return Unpauser(self)
+        return { [self] in
+            unpauseJoin()
+        }
+    }
+
+    // Any queue. Ends a pause begun by pauseForJoin(). Once no joins remain, schedules execution,
+    // unless another kind of pause remains. Then the session can't make progress, so it only gives
+    // up any permit it kept for the join; its unpause schedules execution later.
+    private func unpauseJoin() {
+        guard pauseCount.removeJoin() else {
+            return
+        }
+        if pauseCount.isPaused {
+            guard permitHolder != nil else {
+                return
+            }
+            queue.async { [weak self] in
+                guard let self, pauseCount.isPaused, !pauseCount.isPausedOnlyForJoins else {
+                    // The other pause ended meanwhile, and that scheduled execution.
+                    return
+                }
+                permitHolder?.relinquish()
+            }
+            return
+        }
+        if iTermAtomicInt64Get(TokenExecutor.globalPauseCount) == 0 {
+            if gDebugLogging.boolValue { DLog("Unpause join") }
+            schedule()
+        }
     }
 
     // Any queue
@@ -811,11 +897,34 @@ private class TokenExecutorImpl {
             Self.mutationTimingStats.recordStart()
         }
         executingCount += 1
+        // execute() can be reentered (a high-priority task may run it synchronously), so only the
+        // call that starts a sample records it.
+        let ownsStatsSample = statsSample == nil && TokenExecutionStats.enabled && executionPermitHolder != nil
+        if ownsStatsSample {
+            statsSample = TokenExecutionStats.Sample(start: monotonicNanoseconds())
+            executionPermitHolder?.stats = ExecutionPermitHolder.Stats()
+        }
         defer {
             executingCount -= 1
+            executionPermitHolder?.settle(isPaused: isPaused,
+                                          isPausedOnlyForJoins: isPausedOnlyForJoins,
+                                          hasTokensToExecute: {
+                !tokenQueue.isEmpty && !(delegate?.tokenExecutorShouldQueueTokens() ?? true)
+            })
             executeHighPriorityTasks()
             if TokenExecutor.enableTimingStats {
                 Self.mutationTimingStats.recordEnd()
+            }
+            if ownsStatsSample, var sample = statsSample {
+                statsSample = nil
+                if let permitStats = executionPermitHolder?.stats {
+                    executionPermitHolder?.stats = nil
+                    sample.permits = permitStats.permits
+                    sample.waited = permitStats.waited
+                    sample.yielded = permitStats.yielded
+                    sample.handoffGap = permitStats.handoffGap
+                }
+                TokenExecutionStats.record(sample)
             }
         }
         executeHighPriorityTasks()
@@ -826,11 +935,26 @@ private class TokenExecutorImpl {
                 DLog("empty queue")
             }
             tokenQueue.removeAll()
+            executionPermitHolder?.relinquish()
             return
         }
         let hadTokens = !tokenQueue.isEmpty
         var accumulatedLength = ByteExecutionStats()
-        if !delegate.tokenExecutorShouldQueueTokens() {
+        let willQueueTokens = delegate.tokenExecutorShouldQueueTokens()
+        let permitDecision = executionPermitHolder?.decide(hasTokens: hadTokens,
+                                                  willQueueTokens: willQueueTokens,
+                                                  isPaused: isPaused,
+                                                  isPausedOnlyForJoins: isPausedOnlyForJoins) ?? (willQueueTokens ? .dontExecute : .execute)
+        if permitDecision == .execute {
+            it_assert(executionPermitHolder?.isHolding ?? true, "Executing tokens without a permit")
+            let tokensStart = statsSample == nil ? 0 : monotonicNanoseconds()
+            let excludedBefore = (statsSample?.highPriorityTasks ?? 0) + (executionPermitHolder?.stats?.permits ?? 0)
+            defer {
+                if statsSample != nil {
+                    let excluded = (statsSample?.highPriorityTasks ?? 0) + (executionPermitHolder?.stats?.permits ?? 0) - excludedBefore
+                    statsSample?.tokens += max(0, secondsSince(tokensStart) - excluded)
+                }
+            }
             slownessDetector.measure(event: PTYSessionSlownessEventExecute) {
                 var first = true
                 if gDebugLogging.boolValue {
@@ -863,7 +987,8 @@ private class TokenExecutorImpl {
                 if gDebugLogging.boolValue { DLog("Finished enumerating token arrays. \(tokenQueue.isEmpty ? "There are no more tokens in the queue" : "The queue is not empty")") }
             }
         }
-        if accumulatedLength.total > 0 || hadTokens {
+        // A session waiting for a permit executed nothing, and will be scheduled again when it gets one.
+        if accumulatedLength.total > 0 || (hadTokens && permitDecision != .waitForPermit) {
             delegate.tokenExecutorDidExecute(lengthTotal: accumulatedLength.total,
                                              lengthExcludingInBandSignaling: accumulatedLength.excludingInBandSignaling,
                                              throughput: throughputEstimator.estimatedThroughput)
@@ -921,6 +1046,15 @@ private class TokenExecutorImpl {
                     }
                 }
             }
+            // High-priority tokens (as from an Inject trigger) run before giving up the permit.
+            // A token that leaves some sets quitVectorEarly to switch to them. Not after the
+            // group's last token either, for the same reason as below.
+            if vectorHasNext && !tokenQueue.hasHighPriorityToken && (executionPermitHolder?.sliceIsOverAndShouldYield() ?? false) {
+                // Give the permit to a waiting session. Settling puts this one back in line
+                // with its remaining tokens.
+                DLog("Yield permit")
+                return false
+            }
             if vectorHasNext && !hasOwnQueue && isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
                 // Avoid blocking the active session, which shares this queue. A session with a
                 // queue of its own doesn't block anyone. Reschedule to resume processing once
@@ -947,6 +1081,19 @@ private class TokenExecutorImpl {
         accumulatedLength.total += group.lengthTotal
         accumulatedLength.excludingInBandSignaling += group.lengthExcludingInBandSignaling
         return true
+    }
+
+    // MARK: - Execution permits
+
+    // Any queue. Whether every current pause is a join. Joins are short, so a session paused only
+    // for joins keeps its permit.
+    private var isPausedOnlyForJoins: Bool {
+        return pauseCount.isPausedOnlyForJoins
+    }
+
+    // Any queue
+    var isPausedForTesting: Bool {
+        return pauseCount.isPaused
     }
 
     func rollBackCurrentToken() {
@@ -996,6 +1143,12 @@ private class TokenExecutorImpl {
 
     private func executeHighPriorityTasks() {
         if gDebugLogging.boolValue { DLog("begin") }
+        let start = statsSample != nil && taskQueue.count > 0 ? monotonicNanoseconds() : nil
+        defer {
+            if let start {
+                statsSample?.highPriorityTasks += secondsSince(start)
+            }
+        }
         while let task = taskQueue.dequeue() {
             if gDebugLogging.boolValue { DLog("execute task") }
             task()
@@ -1006,16 +1159,72 @@ private class TokenExecutorImpl {
 
 extension TokenExecutorImpl: CustomDebugStringConvertible {
     var debugDescription: String {
-        return "<TokenExecutorImpl: \(Unmanaged.passUnretained(self).toOpaque()): queue=\(queue.debugDescription) taskQueue=\(taskQueue.count) sideEffects=\(sideEffects.count) pauseCount=\(iTermAtomicInt64Get(pauseCount)) globalPauseCount=\(iTermAtomicInt64Get(TokenExecutor.globalPauseCount)) throughput=\(throughputEstimator.estimatedThroughput) delegate=\(String(describing: delegate))>"
+        return "<TokenExecutorImpl: \(Unmanaged.passUnretained(self).toOpaque()): queue=\(queue.debugDescription) taskQueue=\(taskQueue.count) sideEffects=\(sideEffects.count) pauseCount=\(pauseCount) globalPauseCount=\(iTermAtomicInt64Get(TokenExecutor.globalPauseCount)) throughput=\(throughputEstimator.estimatedThroughput) delegate=\(String(describing: delegate))>"
+    }
+}
+
+// Counts a token executor's pauses: joins, and every other kind (such as a paused side effect).
+// Both counts share one atomic word (joins in the high 32 bits, others in the low 32 bits), so a
+// single read can tell whether the session is paused only for joins. Such a session keeps its
+// execution permit, because joins are short and frequent (about once a frame for a visible session).
+private final class PauseCount: CustomStringConvertible {
+    private let value = iTermAtomicUInt64Create()
+    private static let join: UInt64 = 1 << 32
+    private static let othersMask: UInt64 = 0xFFFF_FFFF
+
+    deinit {
+        iTermAtomicUInt64Free(value)
+    }
+
+    // Any queue
+    var isPaused: Bool {
+        return iTermAtomicUInt64Get(value) != 0
+    }
+
+    // Any queue
+    var isPausedOnlyForJoins: Bool {
+        let pauses = iTermAtomicUInt64Get(value)
+        return pauses != 0 && (pauses & Self.othersMask) == 0
+    }
+
+    // Any queue. Returns whether this is the first pause of any kind.
+    func addOther() -> Bool {
+        let newValue = iTermAtomicUInt64Add(value, 1)
+        it_assert(newValue & Self.othersMask != 0, "Too many pauses")
+        return newValue == 1
+    }
+
+    // Any queue. Returns whether this is the first pause of any kind.
+    func addJoin() -> Bool {
+        let newValue = iTermAtomicUInt64Add(value, Self.join)
+        it_assert(newValue >= Self.join, "Too many joins")
+        return newValue == Self.join
+    }
+
+    // Any queue. Returns whether no pauses remain.
+    func removeOther() -> Bool {
+        let oldValue = iTermAtomicUInt64Subtract(value, 1)
+        it_assert(oldValue & Self.othersMask != 0, "Unpaused more than were paused")
+        return oldValue == 1
+    }
+
+    // Any queue. Returns whether no joins remain (other pauses may).
+    func removeJoin() -> Bool {
+        let oldValue = iTermAtomicUInt64Subtract(value, Self.join)
+        it_assert(oldValue >= Self.join, "Unpaused more joins than were paused")
+        return oldValue - Self.join < Self.join
+    }
+
+    var description: String {
+        let pauses = iTermAtomicUInt64Get(value)
+        return "joins=\(pauses >> 32) others=\(pauses & Self.othersMask)"
     }
 }
 
 extension TokenExecutorImpl: UnpauserDelegate {
     // You can call this on any queue.
     func unpause() {
-        let newCount = iTermAtomicInt64Add(pauseCount, -1)
-        precondition(newCount >= 0)
-        if newCount == 0 && iTermAtomicInt64Get(TokenExecutor.globalPauseCount) == 0 {
+        if pauseCount.removeOther() && iTermAtomicInt64Get(TokenExecutor.globalPauseCount) == 0 {
             if gDebugLogging.boolValue { DLog("Unpause") }
             schedule()
         }
@@ -1287,3 +1496,176 @@ class PeriodicScheduler: NSObject {
     }
 }
 
+
+func monotonicNanoseconds() -> UInt64 {
+    return DispatchTime.now().uptimeNanoseconds
+}
+
+func secondsSince(_ start: UInt64?) -> TimeInterval {
+    guard let start else {
+        return 0
+    }
+    return TimeInterval(monotonicNanoseconds() &- start) / TimeInterval(NSEC_PER_SEC)
+}
+
+// Measures how execute() divides its time between executing tokens and overhead (permits and
+// everything else), to tune the execution permits' time slice. Off unless the hidden default
+// NoSyncTokenExecutionStatsFile names a file. Once a second, a summary is appended to that file
+// and the full stats go to the debug log. Each summary starts with a line giving the Unix times of
+// the interval it covers ("start=... end=..."). The file grows by about 1 MB an hour while enabled.
+enum TokenExecutionStats {
+    enum Slot: Int, CaseIterable {
+        case tokens
+        case highPriorityTasks
+        case permits
+        case otherOverhead
+
+        var name: String {
+            switch self {
+            case .tokens: return "Tokens"
+            case .highPriorityTasks: return "High-pri tasks"
+            case .permits: return "Permits"
+            case .otherOverhead: return "Other overhead"
+            }
+        }
+    }
+
+    // Accumulates one execute() call's times, on its mutation queue.
+    struct Sample {
+        var start = UInt64(0)
+        var highPriorityTasks: TimeInterval = 0
+        var permits: TimeInterval = 0
+        var tokens: TimeInterval = 0
+        var waited = false
+        var yielded = false
+        var handoffGap: TimeInterval?
+    }
+
+    private static let path = ((iTermUserDefaults.userDefaults().string(forKey: "NoSyncTokenExecutionStatsFile") ?? "") as NSString).expandingTildeInPath
+    static let enabled = !path.isEmpty
+    // Writes the file off the mutex, so a slow disk never holds up execution or a join.
+    private static let writeQueue = DispatchQueue(label: "com.iterm2.token-execution-stats", qos: .utility)
+    // Guarded by mutex. When the interval the next block covers began.
+    private static var lastLogWallTime: TimeInterval = 0
+    // Writes a block every second, whether or not anything executed, so join waits recorded while
+    // output is idle are written in the block covering them. Started by the first thing recorded.
+    private static let timer: DispatchSourceTimer = {
+        let timer = DispatchSource.makeTimerSource(queue: writeQueue)
+        timer.schedule(deadline: .now() + 1, repeating: 1)
+        timer.setEventHandler {
+            // Write the file after releasing the mutex, which main takes to record a join wait.
+            append(mutex.sync { takeBlock() })
+        }
+        mutex.sync {
+            lastLogWallTime = Date().timeIntervalSince1970
+        }
+        timer.resume()
+        return timer
+    }()
+
+    private static let mutex = Mutex()
+    // Guarded by mutex, which makes each one single-writer as iTermPreciseTimerStats requires.
+    private static let stats: UnsafeMutablePointer<iTermPreciseTimerStats> = {
+        let stats = UnsafeMutablePointer<iTermPreciseTimerStats>.allocate(capacity: Slot.allCases.count)
+        for slot in Slot.allCases {
+            iTermPreciseTimerStatsInit(stats + slot.rawValue, slot.name)
+        }
+        return stats
+    }()
+    private static let joinWait = iTermHistogram()
+    private static let handoffGap = iTermHistogram()
+    private static var waits = 0
+    private static var yields = 0
+
+
+    static func record(_ sample: Sample) {
+        _ = timer
+        let total = secondsSince(sample.start)
+        let other = max(0, total - sample.tokens - sample.highPriorityTasks - sample.permits)
+        mutex.sync {
+            iTermPreciseTimerStatsRecord(stats + Slot.tokens.rawValue, sample.tokens, 1)
+            iTermPreciseTimerStatsRecord(stats + Slot.highPriorityTasks.rawValue, sample.highPriorityTasks, 1)
+            iTermPreciseTimerStatsRecord(stats + Slot.permits.rawValue, sample.permits, 1)
+            iTermPreciseTimerStatsRecord(stats + Slot.otherOverhead.rawValue, other, 1)
+            if sample.waited {
+                waits += 1
+            }
+            if sample.yielded {
+                yields += 1
+            }
+            if let gap = sample.handoffGap {
+                handoffGap.addValue(gap * 1000)
+            }
+        }
+    }
+
+    // writeQueue. Failures are ignored: this is a diagnostic.
+    private static func append(_ text: String) {
+        guard let data = text.data(using: .utf8) else {
+            return
+        }
+        guard let handle = FileHandle(forWritingAtPath: path) else {
+            FileManager.default.createFile(atPath: path, contents: data)
+            return
+        }
+        defer {
+            try? handle.close()
+        }
+        do {
+            try handle.seekToEnd()
+            try handle.write(contentsOf: data)
+        } catch {
+            DLog("Failed to write token execution stats to \(path): \(error)")
+        }
+    }
+
+    // Main queue. How long a join waited for the session's queue to reach it.
+    static func recordJoinWait(_ seconds: TimeInterval) {
+        _ = timer
+        mutex.sync {
+            joinWait.addValue(seconds * 1000)
+        }
+    }
+
+    // writeQueue, with mutex held. Returns a block describing what was recorded since the last
+    // one, and starts over.
+    private static func takeBlock() -> String {
+        mutex.assertOwned()
+        func total(_ slot: Slot) -> TimeInterval {
+            let s = stats + slot.rawValue
+            return iTermPreciseTimerStatsGetMean(s) * TimeInterval(iTermPreciseTimerStatsGetCount(s))
+        }
+        let tokens = total(.tokens)
+        let overhead = total(.permits) + total(.otherOverhead)
+        let busy = tokens + total(.highPriorityTasks) + overhead
+        let fraction = busy > 0 ? overhead / busy : 0
+        func percentiles(_ histogram: iTermHistogram) -> String {
+            guard histogram.count > 0 else {
+                return "none"
+            }
+            return String(format: "p50=%.2fms p95=%.2fms max=%.2fms n=%lld",
+                          histogram.value(atNTile: 0.5),
+                          histogram.value(atNTile: 0.95),
+                          histogram.max,
+                          histogram.count)
+        }
+        let additional = String(format: "Overhead fraction: %.4f (permits %.2fms, other %.2fms, tokens %.2fms, high-pri %.2fms)\n",
+                                fraction,
+                                total(.permits) * 1000,
+                                total(.otherOverhead) * 1000,
+                                tokens * 1000,
+                                total(.highPriorityTasks) * 1000) +
+            "Waits for a permit: \(waits), slice yields: \(yields)\n" +
+            "Permit handoff gap: \(percentiles(handoffGap))\n" +
+            "Join wait: \(percentiles(joinWait))"
+        iTermPreciseTimerLog("Token execution", stats, Slot.allCases.count, false, nil, additional)
+        let wallTime = Date().timeIntervalSince1970
+        let text = "start=\(lastLogWallTime) end=\(wallTime)\n\(additional)\n"
+        lastLogWallTime = wallTime
+        joinWait.clear()
+        handoffGap.clear()
+        waits = 0
+        yields = 0
+        return text
+    }
+}

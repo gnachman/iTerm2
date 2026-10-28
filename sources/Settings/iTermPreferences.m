@@ -97,6 +97,8 @@ NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnpl
 NSString *const kPreferenceKeyDisableInLowPowerMode = @"disableMetalInLowPowerMode";
 NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
 NSString *const kPreferenceKeyMaximizeThroughput = @"metalMaximizeThroughput";  // Used to be metal-specific but not any more
+NSString *const kPreferenceKeyMaximumConcurrentTokenExecutions = @"MaximumConcurrentTokenExecutions";
+NSString *const kPreferenceKeyMaximumConcurrentTokenExecutionsAutomatic = @"MaximumConcurrentTokenExecutionsAutomatic";
 NSString *const kPreferenceKeyEnableAPIServer = @"EnableAPIServer";
 NSString *const kPreferenceKeyAPIAuthentication = @"API Authentication Method";
 NSString *const kPreferenceKeyEnableAI = @"Enable AI";
@@ -773,6 +775,8 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyDisableInLowPowerMode: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,
                   kPreferenceKeyMaximizeThroughput: @YES,
+                  kPreferenceKeyMaximumConcurrentTokenExecutions: @0,
+                  kPreferenceKeyMaximumConcurrentTokenExecutionsAutomatic: @YES,  // ignored - synthetic value
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyEnableAI: @NO,  // ignored - synthetic value

@@ -75,7 +75,7 @@ TOP-LEVEL keys
     ScreenshotSaveLocation, PreferredBaseDir, DynamicProfilesPath,
     GitSearchPath, PathsToIgnore, NativeRenderingCSSLight/Dark,
     BrowserPluginPathHint, ImportPath, NoSyncLastSSHDirectory,
-    NoSyncClaudeCodeConfigDirPath  paths
+    NoSyncClaudeCodeConfigDirPath, NoSyncTokenExecutionStatsFile  paths
   NoSyncSavePanelSavedSettings_* ......... nested "InitialDirectory" path
   PathToDatabase_* ....................... password-manager backend URL
   NoSyncBrowserJavaScriptAllowed_* ....... site origin in the key name
@@ -259,6 +259,7 @@ CONTENT_KEYS = {
     "BrowserPluginPathHint": REDACT_V,
     "NoSyncLastSSHDirectory": REDACT_V,
     "NoSyncClaudeCodeConfigDirPath": REDACT_V,
+    "NoSyncTokenExecutionStatsFile": REDACT_V,
     "NoSyncRecentArchives": REDACT_V,
     "InitialDirectory": REDACT_V,
     # Removed rather than redacted: this blob is keyed BY endpoint URL (plus a

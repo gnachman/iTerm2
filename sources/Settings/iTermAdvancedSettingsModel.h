@@ -598,6 +598,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useDivorcedProfileToSplit;
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)useTaskIOMonitors;
++ (double)visibleSessionExecutionWeight;
++ (double)tokenExecutionTimeSlice;
 + (BOOL)useGCDUpdateTimer;
 
 #if ENABLE_LOW_POWER_GPU_DETECTION

@@ -43,3 +43,35 @@ long long iTermAtomicInt64Add(iTermAtomicInt64 *i, long long value) {
 long long iTermAtomicInt64Get(iTermAtomicInt64 *i) {
     return atomic_load(&i->value);
 }
+
+void iTermAtomicInt64Set(iTermAtomicInt64 *i, long long value) {
+    atomic_store(&i->value, value);
+}
+
+typedef struct iTermAtomicUInt64 {
+    atomic_ullong value;
+} iTermAtomicUInt64;
+
+iTermAtomicUInt64 *iTermAtomicUInt64Create(void) {
+    iTermAtomicUInt64 *ai = iTermMalloc(sizeof(iTermAtomicUInt64));
+    atomic_init(&ai->value, 0);
+    return ai;
+}
+
+void iTermAtomicUInt64Free(iTermAtomicUInt64 *i) {
+    if (i != NULL) {
+        free(i);
+    }
+}
+
+unsigned long long iTermAtomicUInt64Add(iTermAtomicUInt64 *i, unsigned long long value) {
+    return atomic_fetch_add(&i->value, value) + value;
+}
+
+unsigned long long iTermAtomicUInt64Subtract(iTermAtomicUInt64 *i, unsigned long long value) {
+    return atomic_fetch_sub(&i->value, value);
+}
+
+unsigned long long iTermAtomicUInt64Get(iTermAtomicUInt64 *i) {
+    return atomic_load(&i->value);
+}

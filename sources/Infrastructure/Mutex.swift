@@ -29,6 +29,11 @@ class Mutex {
         os_unfair_lock_unlock(unfairLock)
     }
 
+    // Crashes unless the calling thread holds the lock.
+    func assertOwned() {
+        os_unfair_lock_assert_owner(unfairLock)
+    }
+
     func sync<T>(_ closure: () throws -> T) rethrows -> T {
         lock()
         defer {

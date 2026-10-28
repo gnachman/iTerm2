@@ -202,6 +202,10 @@ extern NSString *const kPreferenceKeyDisableMetalWhenUnplugged;
 extern NSString *const kPreferenceKeyDisableInLowPowerMode;
 extern NSString *const kPreferenceKeyPreferIntegratedGPU;
 extern NSString *const kPreferenceKeyMaximizeThroughput;
+// How many sessions may execute tokens at once (with task I/O monitors). 0 means automatic.
+extern NSString *const kPreferenceKeyMaximumConcurrentTokenExecutions;
+// Synthetic: whether kPreferenceKeyMaximumConcurrentTokenExecutions is 0 (automatic).
+extern NSString *const kPreferenceKeyMaximumConcurrentTokenExecutionsAutomatic;
 extern NSString *const kPreferenceKeyEnableAPIServer;
 extern NSString *const kPreferenceKeyAPIAuthentication;
 extern NSString *const kPreferenceKeyEnableAI;

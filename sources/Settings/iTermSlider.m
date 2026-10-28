@@ -111,14 +111,7 @@ static char iTermSliderEnabledKVOKey;
         }
     }
     self.autoresizingMask = _slider.autoresizingMask;
-    _stepper.minValue = _slider.minValue;
-    _stepper.maxValue = _slider.maxValue;
-    _percentage = (_slider.minValue >= 0 && _slider.maxValue <= 1);
-    if (_percentage) {
-        _stepper.increment = 0.01;
-    } else {
-        _stepper.increment = 1;
-    }
+    [self copyRangeFromSlider];
     NSRect rect = _slider.frame;
     rect.origin.x = 0;
     const CGFloat margin = 0;
@@ -134,6 +127,22 @@ static char iTermSliderEnabledKVOKey;
               forKeyPath:@"enabled"
                  options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew
                  context:(void *)&iTermSliderEnabledKVOKey];
+    [self loadFromSlider];
+}
+
+- (void)copyRangeFromSlider {
+    _stepper.minValue = _slider.minValue;
+    _stepper.maxValue = _slider.maxValue;
+    _percentage = (_slider.minValue >= 0 && _slider.maxValue <= 1);
+    if (_percentage) {
+        _stepper.increment = 0.01;
+    } else {
+        _stepper.increment = 1;
+    }
+}
+
+- (void)sliderRangeDidChange {
+    [self copyRangeFromSlider];
     [self loadFromSlider];
 }
 
