@@ -291,7 +291,7 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and be
 
     iterm2_write_remotehost_currentdir_uservars
   end
-  printf "\033]1337;ShellIntegrationVersion=26;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=27;shell=fish\007"
 end
 
 # Put iTerm2's uploaded it2 on PATH, ahead of the shell function below. Exported, so a program
