@@ -7,8 +7,9 @@
 //  UITextView - not a bare UIKeyInput - on purpose: the system keyboard's dictation
 //  (mic) key only engages against a full UITextInput responder, so a UIKeyInput
 //  leaves that key inert. In normal use this view is a transparent pass-through - its
-//  own document is kept empty and every keystroke is forwarded straight to the
-//  session (the mac owns the real buffer) - and it hosts the SwiftUI accessory bar
+//  own document holds only an invisible sentinel (so a held Delete auto-repeats) and
+//  every keystroke is forwarded straight to the session (the mac owns the real
+//  buffer) - and it hosts the SwiftUI accessory bar
 //  (SessionKeyboardAccessory) as its inputAccessoryView. Every keypress (typed
 //  characters here, and accessory-button keys in the SwiftUI bar) funnels through the
 //  shared SessionKeyboardController.
@@ -29,7 +30,7 @@ import UIKit
 
 final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
     /// Pass-through routes every keystroke to the session and keeps this view's own
-    /// document empty; composer accumulates a local draft that Send delivers at once.
+    /// document to just the delete-repeat sentinel; composer accumulates a local draft that Send delivers at once.
     enum Mode { case passthrough, composer }
 
     weak var controller: SessionKeyboardController?
@@ -76,6 +77,7 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         smartDashesType = .no
         smartInsertDeleteType = .no
         delegate = self
+        ensureTextBeforeCaret()
     }
 
     required init?(coder: NSCoder) {
@@ -116,10 +118,34 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
     func sendComposerDraft() -> Bool {
         // Strip any stray dictation placeholder (U+FFFC object replacement char) so it
         // can never reach the shell.
-        let draft = (text ?? "").replacingOccurrences(of: "\u{FFFC}", with: "")
+        let draft = draftText.replacingOccurrences(of: "\u{FFFC}", with: "")
         guard !draft.isEmpty else { return false }
         onSendComposerText?(draft)
         return true
+    }
+
+    /// The composer's draft as the user sees it, without the delete-repeat sentinel.
+    var draftText: String {
+        (text ?? "").replacingOccurrences(of: Self.deleteRepeatSentinel, with: "")
+    }
+
+    /// The system keyboard only auto-repeats a held Delete key while the document has
+    /// text before the caret; on an empty document it delivers a single deleteBackward
+    /// and stops. Pass-through never inserts typed text into its own document, so it
+    /// keeps this invisible character there instead. Pass-through deleteBackward does
+    /// not call super, so the sentinel survives every forwarded backspace. It may ride
+    /// along into the composer, which strips it from the draft.
+    static let deleteRepeatSentinel = "\u{200B}"
+
+    /// In pass-through, make sure there is text before the caret so a held Delete
+    /// repeats. Setting `text` programmatically does not reach textViewDidChange, so this
+    /// never reads as dictation.
+    private func ensureTextBeforeCaret() {
+        guard mode == .passthrough else { return }
+        if (text ?? "").isEmpty {
+            text = Self.deleteRepeatSentinel
+        }
+        selectedRange = NSRange(location: textStorage.length, length: 0)
     }
 
     override var canBecomeFirstResponder: Bool { true }
@@ -144,6 +170,7 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         guard mode == .composer else { return }
         if clearDraft { text = "" }
         mode = .passthrough
+        ensureTextBeforeCaret()
         applyPassthroughStyling()
         inputAccessoryView = terminalAccessory
         reloadInputViews()
@@ -153,7 +180,7 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
 
     /// The composer placeholder shows only while composing with an empty draft.
     private func updatePlaceholderVisibility() {
-        placeholderLabel.isHidden = mode != .composer || !(text ?? "").isEmpty
+        placeholderLabel.isHidden = mode != .composer || !draftText.isEmpty
     }
 
     override func layoutSubviews() {
@@ -223,7 +250,8 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         let contents = attributedText.string as NSString
         if location > 0, location <= contents.length {
             let preceding = contents.substring(with: NSRange(location: location - 1, length: 1))
-            liveNeedsLeadingSpace = !preceding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            liveNeedsLeadingSpace = preceding != Self.deleteRepeatSentinel
+                && !preceding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         } else {
             liveNeedsLeadingSpace = false
         }
@@ -257,8 +285,8 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
 
     // MARK: Text entry
 
-    // Always report text so deleteBackward is delivered even when the (empty) document
-    // has nothing to delete - in pass-through the session, not this view, owns the
+    // Always report text so deleteBackward is delivered even though the document holds
+    // nothing real to delete - in pass-through the session, not this view, owns the
     // real buffer.
     override var hasText: Bool {
         mode == .composer ? super.hasText : true
@@ -305,7 +333,7 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
     // so that clear does not bounce us straight back open.
     func textViewDidChange(_ textView: UITextView) {
         updatePlaceholderVisibility()
-        guard mode == .passthrough, textStorage.length > 0 else { return }
+        guard mode == .passthrough, !draftText.isEmpty else { return }
         DispatchQueue.main.async { [weak self] in
             guard let self, self.mode == .passthrough else { return }
             self.enterComposer()

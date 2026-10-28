@@ -50,6 +50,8 @@ New Features:
 Improvements:
 - The session view no longer covers the top-left
   corner of the terminal with a “LIVE” badge.
+- Holding Delete while typing into a session now
+  repeats, like it does in other apps.
 
 Bug Fixes:
 - The QR scanner used to show a black preview the
