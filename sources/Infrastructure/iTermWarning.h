@@ -334,6 +334,10 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;
+// With a window, shows a sheet and returns at once; the completion runs on a later pass of the
+// main queue after the sheet has fully ended, so it may show another sheet on the same window.
+// If the window closes first, the completion never runs. Without a window, or when the warning is
+// silenced, the completion runs before this returns.
 - (void)runModalAsync:(void (^)(iTermWarningSelection result, iTermWarning *warning))completion;
 
 // How this warning would be described to iTermModalAlertRegistry if it were shown now. Builds the

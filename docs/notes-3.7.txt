@@ -2375,3 +2375,6 @@ Bug Fixes:
 - Fixed a hang of about a second each time
   Dynamic Profiles were reloaded when there were
   hundreds of them. Issue 13174.
+- Choosing Paste as Text for a pasted or dropped
+  file and then answering the paste confirmation
+  no longer freezes the window.

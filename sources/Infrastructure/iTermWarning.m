@@ -511,7 +511,15 @@ static NSMutableArray<iTermHeadlessModalSession *> *gHeadlessModalSessions;
                 headlessSession = nil;
                 [sheetRegistration unregister];
                 DLog(@"Result for %@ is %@", self, @(result));
-                completion([self handleResult:result alert:alert], self);
+                const iTermWarningSelection selection = [self handleResult:result alert:alert];
+                // AppKit calls this while it is still ending the sheet. A completion that shows
+                // another warning on the same window (a paste that needs confirming, say) would
+                // start a nested modal sheet before this one has detached, which can leave the
+                // new sheet unable to end its modal session: an unrecoverable hang. See issue
+                // 13169. Run the completion once the sheet is fully gone.
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completion(selection, self);
+                });
             };
             if (gRunsHeadlessModals) {
                 // Kept alive by gHeadlessModalSessions until a button is clicked.
