@@ -9,12 +9,14 @@ cost. Comparing two builds on the same workload shows which costs moved.
     short       Short lines (seq output) in large writes: line feeds and scrolling dominate.
     long70      70-character lines: the ASCII append path, no wrapping in an 80-column window.
     long500     500-character lines: the same, wrapping.
-    color       A color change every 4 characters: the parser and graphic renditions.
+    sgr         A color change every 4 characters: the parser and graphic renditions.
     unicode     CJK, emoji, and combining marks: the slow paths for wide and combining characters.
     fullscreen  Whole-screen redraws by cursor addressing, as full-screen apps do: no scrollback.
 
-Every workload but seq-direct is `cat` of a file generated once into OUT_DIR/data, so the producer is
-never the bottleneck and runs are repeatable. For each workload and session count, the sessions start
+Any other kind loadgen.py makes (see `loadgen.py --list`) can be named too.
+
+Every workload but seq-direct is `cat` of a file generated once into OUT_DIR/data (by loadgen.py's
+generators), so the producer is never the bottleneck and runs are repeatable. For each workload and session count, the sessions start
 together, run for a warm-up, then for the measured window, then stop.
 
 Usage:
@@ -38,70 +40,23 @@ import sys
 import time
 
 from harness import cpu_seconds, exec_stats, wait_for_exec_stats
+from loadgen import KINDS, make_chunk
 
-WORKLOADS = ["seq-direct", "short", "long70", "long500", "color", "unicode", "fullscreen"]
+WORKLOADS = ["seq-direct", "short", "long70", "long500", "sgr", "unicode", "fullscreen"]
+# Workloads that are a loadgen kind with a particular line length. Any other loadgen kind (see
+# loadgen.py --list) can be named as a workload too.
+WORKLOAD_KINDS = {"long70": ("long", 70), "long500": ("long", 500)}
 
 
 def generate(name, path, size):
-    """Writes about `size` bytes of the workload to path."""
-    rng = random.Random(13141)
-    letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 "
-    wide = "漢字仮名交じり文表示速度試験中日本語中文한국어"
-    emoji = "😀🎉🚀🌍🔥✨"
-    combining = ["é", "ä", "ô", "ñ"]
-
-    def line_of(length):
-        return "".join(rng.choices(letters, k=length))
-
-    chunks = []
-    written = 0
-    n = 1
-    while written < size:
-        if name == "short":
-            text = "".join(f"{i}\n" for i in range(n, n + 10000))
-            n += 10000
-        elif name == "long70":
-            text = "".join(line_of(70) + "\n" for _ in range(1000))
-        elif name == "long500":
-            text = "".join(line_of(500) + "\n" for _ in range(200))
-        elif name == "color":
-            lines = []
-            for _ in range(1000):
-                parts = []
-                for _ in range(18):
-                    parts.append(f"\x1b[3{rng.randrange(8)};4{rng.randrange(8)}m{line_of(4)}")
-                lines.append("".join(parts) + "\x1b[m\n")
-            text = "".join(lines)
-        elif name == "unicode":
-            lines = []
-            for _ in range(1000):
-                parts = []
-                for _ in range(20):
-                    kind = rng.randrange(3)
-                    if kind == 0:
-                        parts.append(rng.choice(wide))
-                    elif kind == 1:
-                        parts.append(rng.choice(emoji))
-                    else:
-                        parts.append(rng.choice(combining))
-                lines.append("".join(parts) + "\n")
-            text = "".join(lines)
-        elif name == "fullscreen":
-            frames = []
-            for _ in range(20):
-                rows = []
-                for r in range(1, 25):
-                    rows.append(f"\x1b[{r};1H{line_of(79)}")
-                frames.append("\x1b[H" + "".join(rows))
-            text = "".join(frames)
-        else:
-            raise SystemExit(f"Unknown workload {name}")
-        data = text.encode("utf-8")
-        chunks.append(data)
-        written += len(data)
+    """Writes about `size` bytes of the workload to path, using loadgen's generators."""
+    kind, line_length = WORKLOAD_KINDS.get(name, (name, 500))
+    chunk = make_chunk(kind, random.Random(13141), line_length=line_length)
     with open(path + ".tmp", "wb") as f:
-        for chunk in chunks:
+        written = 0
+        while written < size:
             f.write(chunk)
+            written += len(chunk)
     os.replace(path + ".tmp", path)
 
 
@@ -141,7 +96,8 @@ def main():
     ap.add_argument("--app", default="iTerm", help="app to open sessions in, passed to open -a")
     ap.add_argument("--pid", type=int, default=0, help="iTerm2 process id (default: the only one named iTerm2)")
     ap.add_argument("--sessions", default="1,4,16", help="session counts to run each workload with")
-    ap.add_argument("--workloads", default=",".join(WORKLOADS), help="comma-separated, from: " + ", ".join(WORKLOADS))
+    ap.add_argument("--workloads", default=",".join(WORKLOADS),
+                    help="comma-separated, from: " + ", ".join(WORKLOADS) + ", or any loadgen.py kind")
     ap.add_argument("--seconds", type=float, default=10, help="length of the measured window")
     ap.add_argument("--warmup", type=float, default=3, help="seconds of output before measuring")
     ap.add_argument("--size-mb", type=float, default=64, help="size of each generated data file")
@@ -149,7 +105,7 @@ def main():
 
     workloads = args.workloads.split(",")
     for w in workloads:
-        if w not in WORKLOADS:
+        if w not in WORKLOADS and w not in KINDS:
             raise SystemExit(f"Unknown workload {w}")
     counts = [int(x) for x in args.sessions.split(",")]
 
