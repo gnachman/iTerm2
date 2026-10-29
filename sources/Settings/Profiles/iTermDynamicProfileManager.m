@@ -295,9 +295,13 @@
 
 - (void)reloadDynamicProfiles {
     [self performReloadPass:^{
-        [[ProfileModel sharedInstance] performBlockWithCoalescedNotifications:^{
-            [ITAddressBookMgr performBlockWithCoalescedNotifications:^{
-                [self reallyReloadDynamicProfiles];
+        // Every existing dynamic profile gets replaced, so avoid symbolicating a
+        // call stack for each one.
+        [ProfileModel performWithLessLogging:YES block:^{
+            [[ProfileModel sharedInstance] performBlockWithCoalescedNotifications:^{
+                [ITAddressBookMgr performBlockWithCoalescedNotifications:^{
+                    [self reallyReloadDynamicProfiles];
+                }];
             }];
         }];
     }];

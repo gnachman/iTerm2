@@ -2372,3 +2372,6 @@ Bug Fixes:
 - iTerm2 no longer crashes or stops drawing
   terminal contents if a display reports a
   refresh rate of 0.
+- Fixed a hang of about a second each time
+  Dynamic Profiles were reloaded when there were
+  hundreds of them. Issue 13174.
