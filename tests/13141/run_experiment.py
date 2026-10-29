@@ -18,8 +18,9 @@ example:
 Results: OUT_DIR/run-*/run.log has one line per phase (key latency, DSR round trips, CPU, thread
 count, memory).
 --exec-stats FILE adds iTerm2's token execution stats for each phase (how long joins waited for a
-session, and what fraction of execution time was overhead). iTerm2 must be writing them to FILE,
-set in the defaults domain the build uses (com.googlecode.iterm2 for a normal install):
+session, what fraction of execution time was overhead, and how many MB of input a second finished
+executing). iTerm2 must be writing them to FILE, set in the defaults domain the build uses
+(com.googlecode.iterm2 for a normal install):
     defaults write com.googlecode.iterm2 NoSyncTokenExecutionStatsFile /tmp/exec-stats.txt
 """
 import argparse
@@ -108,6 +109,7 @@ def exec_stats(path, start, end):
     text = "\n".join(kept)
     overhead = busy = 0.0
     waits = yields = 0
+    mbps = []
     join_p50 = []
     join_p95 = []
     join_max = 0.0
@@ -119,11 +121,14 @@ def exec_stats(path, start, end):
     for m in re.finditer(r"Waits for a permit: (\d+), slice yields: (\d+)", text):
         waits += int(m.group(1))
         yields += int(m.group(2))
+    for m in re.finditer(r"Bytes executed: " + number + " MB/s", text):
+        mbps.append(float(m.group(1)))
     for m in re.finditer(r"Join wait: p50=" + number + r"ms p95=" + number + r"ms max=" + number + "ms", text):
         join_p50.append(float(m.group(1)))
         join_p95.append(float(m.group(2)))
         join_max = max(join_max, float(m.group(3)))
     return dict(overhead_frac=overhead / busy if busy else float("nan"),
+                mbps=statistics.mean(mbps) if mbps else float("nan"),
                 waits=waits, yields=yields,
                 join_p50=statistics.median(join_p50) if join_p50 else float("nan"),
                 join_p95=max(join_p95) if join_p95 else float("nan"),
@@ -301,7 +306,7 @@ try:
             "max={dsr_max:.1f} (n={dsr_n}) | threads max={threads_max} RSS={rss_mb:.0f}MB".format(**row))
         if args.exec_stats:
             say("  join wait ms p50={join_p50:.2f} p95={join_p95:.2f} max={join_max:.2f} | overhead={overhead_frac:.4f} "
-                "permit waits={waits} slice yields={yields}".format(**row))
+                "permit waits={waits} slice yields={yields} | executed MB/s={mbps:.1f}".format(**row))
 finally:
     for ctl in ctls:
         write(ctl, "stop")

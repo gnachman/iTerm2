@@ -899,7 +899,7 @@ private class TokenExecutorImpl {
         executingCount += 1
         // execute() can be reentered (a high-priority task may run it synchronously), so only the
         // call that starts a sample records it.
-        let ownsStatsSample = statsSample == nil && TokenExecutionStats.enabled && executionPermitHolder != nil
+        let ownsStatsSample = statsSample == nil && TokenExecutionStats.enabled
         if ownsStatsSample {
             statsSample = TokenExecutionStats.Sample(start: monotonicNanoseconds())
             executionPermitHolder?.stats = ExecutionPermitHolder.Stats()
@@ -987,6 +987,7 @@ private class TokenExecutorImpl {
                 if gDebugLogging.boolValue { DLog("Finished enumerating token arrays. \(tokenQueue.isEmpty ? "There are no more tokens in the queue" : "The queue is not empty")") }
             }
         }
+        statsSample?.bytes += accumulatedLength.total
         // A session waiting for a permit executed nothing, and will be scheduled again when it gets one.
         if accumulatedLength.total > 0 || (hadTokens && permitDecision != .waitForPermit) {
             delegate.tokenExecutorDidExecute(lengthTotal: accumulatedLength.total,
@@ -1539,14 +1540,20 @@ enum TokenExecutionStats {
         var waited = false
         var yielded = false
         var handoffGap: TimeInterval?
+        // Bytes of input whose tokens finished executing. A batch is counted when its last token
+        // executes.
+        var bytes = 0
     }
 
     private static let path = ((iTermUserDefaults.userDefaults().string(forKey: "NoSyncTokenExecutionStatsFile") ?? "") as NSString).expandingTildeInPath
     static let enabled = !path.isEmpty
     // Writes the file off the mutex, so a slow disk never holds up execution or a join.
     private static let writeQueue = DispatchQueue(label: "com.iterm2.token-execution-stats", qos: .utility)
-    // Guarded by mutex. When the interval the next block covers began.
+    // Guarded by mutex. When the interval the next block covers began: wall-clock time for the
+    // block's header, which the 13141 harness matches against its own clock, and monotonic time for
+    // rates.
     private static var lastLogWallTime: TimeInterval = 0
+    private static var lastLogMonotonic = UInt64(0)
     // Writes a block every second, whether or not anything executed, so join waits recorded while
     // output is idle are written in the block covering them. Started by the first thing recorded.
     private static let timer: DispatchSourceTimer = {
@@ -1558,6 +1565,7 @@ enum TokenExecutionStats {
         }
         mutex.sync {
             lastLogWallTime = Date().timeIntervalSince1970
+            lastLogMonotonic = monotonicNanoseconds()
         }
         timer.resume()
         return timer
@@ -1575,6 +1583,7 @@ enum TokenExecutionStats {
     private static let joinWait = iTermHistogram()
     private static let handoffGap = iTermHistogram()
     private static var waits = 0
+    private static var bytes = 0
     private static var yields = 0
 
 
@@ -1587,6 +1596,7 @@ enum TokenExecutionStats {
             iTermPreciseTimerStatsRecord(stats + Slot.highPriorityTasks.rawValue, sample.highPriorityTasks, 1)
             iTermPreciseTimerStatsRecord(stats + Slot.permits.rawValue, sample.permits, 1)
             iTermPreciseTimerStatsRecord(stats + Slot.otherOverhead.rawValue, other, 1)
+            bytes += sample.bytes
             if sample.waited {
                 waits += 1
             }
@@ -1649,6 +1659,8 @@ enum TokenExecutionStats {
                           histogram.max,
                           histogram.count)
         }
+        let wallTime = Date().timeIntervalSince1970
+        let elapsed = secondsSince(lastLogMonotonic)
         let additional = String(format: "Overhead fraction: %.4f (permits %.2fms, other %.2fms, tokens %.2fms, high-pri %.2fms)\n",
                                 fraction,
                                 total(.permits) * 1000,
@@ -1656,15 +1668,17 @@ enum TokenExecutionStats {
                                 tokens * 1000,
                                 total(.highPriorityTasks) * 1000) +
             "Waits for a permit: \(waits), slice yields: \(yields)\n" +
+            String(format: "Bytes executed: %.2f MB/s\n", Double(bytes) / max(0.001, elapsed) / 1e6) +
             "Permit handoff gap: \(percentiles(handoffGap))\n" +
             "Join wait: \(percentiles(joinWait))"
         iTermPreciseTimerLog("Token execution", stats, Slot.allCases.count, false, nil, additional)
-        let wallTime = Date().timeIntervalSince1970
         let text = "start=\(lastLogWallTime) end=\(wallTime)\n\(additional)\n"
         lastLogWallTime = wallTime
+        lastLogMonotonic = monotonicNanoseconds()
         joinWait.clear()
         handoffGap.clear()
         waits = 0
+        bytes = 0
         yields = 0
         return text
     }
