@@ -5958,6 +5958,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                        _originalProfile[KEY_GUID],
                        _overriddenFields]];
 
+    if (updatedProfile.profileIsBrowser != _profile.profileIsBrowser) {
+        // A session's type is fixed when it is created. Keep this session's
+        // command type and continue following the rest of the shared profile.
+        DLog(@"Shared profile changed type. Divorce and override %@ to keep this session's type.", KEY_CUSTOM_COMMAND);
+        [self divorceAddressBookEntryFromPreferences];
+        [_overriddenFields addObject:KEY_CUSTOM_COMMAND];
+    }
+
     if (!self.isDivorced) {
         [self setPreferencesFromAddressBookEntry:updatedProfile];
         [self setProfile:updatedProfile];
@@ -8802,6 +8810,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
                                  reload:(BOOL)reload
                   preserveColorBaselines:(BOOL)preserveColorBaselines {
     DLog(@"%@: setSessionSpecificProfilevalues:%@", self, newValues);
+    newValues = [self profileValuesPreservingSessionType:newValues];
 
     // Note: dropping an i:N palette binding when a color is overridden is NOT done
     // here. A generic write goes through this method for many reasons (profile
@@ -10914,6 +10923,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 - (BOOL)isBrowserSession {
     return self.view.isBrowser || self.profile.profileIsBrowser;
+}
+
+// A session's type is fixed when it is created. Returns newValues with any
+// command type that would change it replaced by this session's command type.
+- (NSDictionary *)profileValuesPreservingSessionType:(NSDictionary *)newValues {
+    id newCommand = newValues[KEY_CUSTOM_COMMAND];
+    if (!newCommand || !_profile) {
+        return newValues;
+    }
+    if (@{ KEY_CUSTOM_COMMAND: newCommand }.profileIsBrowser == _profile.profileIsBrowser) {
+        return newValues;
+    }
+    DLog(@"Refusing to change the type of %@ by setting %@ to %@", self, KEY_CUSTOM_COMMAND, newCommand);
+    NSMutableDictionary *temp = [[newValues mutableCopy] autorelease];
+    temp[KEY_CUSTOM_COMMAND] = _profile[KEY_CUSTOM_COMMAND];
+    return temp;
 }
 
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession

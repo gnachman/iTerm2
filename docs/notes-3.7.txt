@@ -1816,6 +1816,13 @@ Bug Fixes:
   images forwarded by some terminal multiplexers
   appeared with their rows in reverse order.
   Issue 13146.
+- Changing a profile’s Profile Type between
+  Terminal and Web Browser now leaves open
+  sessions that use it as they were, while they
+  still receive the profile’s other changes.
+  Previously, an open terminal session would
+  lose its tab and window names, and changing
+  the type back didn’t bring them back.
 - Pressing an arrow key or Tab while composing
   text with an input method now finishes the
   character and performs the key in one press, as
