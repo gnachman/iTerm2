@@ -22,7 +22,6 @@
 
 @protocol VT100GridDelegate <NSObject>
 - (iTermUnicodeNormalization)gridUnicodeNormalizationForm;
-- (void)gridCursorDidMove;
 - (void)gridCursorDidChangeLineFrom:(int)previuos;
 - (void)gridDidResize;
 @end

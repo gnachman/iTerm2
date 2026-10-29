@@ -603,7 +603,6 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
         DLog(@"Move cursor x to %d (requested %d)", newX, cursorX);
         cursor_.x = newX;
         VT100GridDidChangeContent(&_contentGeneration);
-        [delegate_ gridCursorDidMove];
     }
 }
 
@@ -621,7 +620,6 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
             [self resetDWCFreeCount];
         }
         [delegate_ gridCursorDidChangeLineFrom:prev];
-        [delegate_ gridCursorDidMove];
     }
 }
 

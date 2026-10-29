@@ -1912,14 +1912,18 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 }
 
 - (void)reallyExecuteToken:(VT100Token *)token {
-    [_delegate terminal:self willExecuteToken:token defaultChar:&_defaultChar encoding:_encoding];
+    // Loaded once: delegate is weak, so each use would load it through the runtime's weak
+    // reference table, which took about 2% of token execution. It can't change during a token: it
+    // changes only in a join, between tokens.
+    id<VT100TerminalDelegate> delegate = _delegate;
+    [delegate terminal:self willExecuteToken:token defaultChar:&_defaultChar encoding:_encoding];
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
-        [_delegate terminalStartTmuxModeWithDCSIdentifier:token.string];
+        [delegate terminalStartTmuxModeWithDCSIdentifier:token.string];
         DLog(@"starting tmux mode, do not execute token");
         return;
     } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
-        [_delegate terminalHandleTmuxInput:token];
+        [delegate terminalHandleTmuxInput:token];
         DLog(@"exiting tmux mode, do not execute token");
         return;
     }
@@ -1933,19 +1937,19 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         DLog(@"receiving file, might not execute token");
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             if (!_discardingFile) {
-                [_delegate terminalDidReceiveBase64FileData:token.string ?: @""];
+                [delegate terminalDidReceiveBase64FileData:token.string ?: @""];
             }
             return;
         } else if (token->type == VT100_ASCIISTRING ||
                    token->type == VT100_MIXED_ASCII_CR_LF ||
                    token->type == VT100_GANG) {
             if (!_discardingFile) {
-                [_delegate terminalDidReceiveBase64FileData:[token stringForAsciiData]];
+                [delegate terminalDidReceiveBase64FileData:[token stringForAsciiData]];
             }
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
             if (!_discardingFile) {
-                [_delegate terminalDidFinishReceivingFile];
+                [delegate terminalDidFinishReceivingFile];
             }
             receivingFile_ = NO;
             _discardingFile = NO;
@@ -1962,7 +1966,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // abort it. (SSH_IT2 was the token that made a shared predicate worthwhile.)
             RLog(@"Unexpected field receipt end");
             if (!_discardingFile) {
-                [_delegate terminalFileReceiptEndedUnexpectedly];
+                [delegate terminalFileReceiptEndedUnexpectedly];
             }
             receivingFile_ = NO;
             _discardingFile = NO;
@@ -1971,19 +1975,19 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         DLog(@"Token type=%@ copyMode=%@ receivingFile=%@", @(token->type), @(_copyMode), @(receivingFile_));
         DLog(@"copy mode, might not execute token");
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
-            [_delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
+            [delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
             return;
         } else if (token->type == VT100_ASCIISTRING ||
                    token->type == VT100_MIXED_ASCII_CR_LF ||
                    token->type == VT100_GANG) {
-            [_delegate terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
+            [delegate terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
             if (_copyMode == VT100TerminalCopyModeSegmented) {
                 // Ignore this as there can be many of these for a single copy.
                 return;
             }
-            [_delegate terminalDidFinishReceivingPasteboard];
+            [delegate terminalDidFinishReceivingPasteboard];
             _copyMode = VT100TerminalCopyModeNone;
             return;
         } else if (_copyMode != VT100TerminalCopyModeSegmented &&
@@ -1992,7 +1996,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // redrawing between passthroughs. The async SSH streams (%output wrappers and %it2
             // RPC frames) arrive interleaved on independent channels, so they are allowed too.
             // Otherwise something went wrong (ssh died?) and it's best to exit copy mode.
-            [_delegate terminalPasteboardReceiptEndedUnexpectedly];
+            [delegate terminalPasteboardReceiptEndedUnexpectedly];
             _copyMode = VT100TerminalCopyModeNone;
         }
     }
@@ -2005,14 +2009,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // Append text to clipboard except for initial command that turns on copying to
             // the clipboard.
 
-            [_delegate terminalAppendDataToPasteboard:token.savedData];
+            [delegate terminalAppendDataToPasteboard:token.savedData];
         }
     }
 
     // Disambiguate
     switch (token->type) {
         case VT100CSI_DECSLRM_OR_ANSICSI_SCP:
-            if ([_delegate terminalUseColumnScrollRegion]) {
+            if ([delegate terminalUseColumnScrollRegion]) {
                 token->type = VT100CSI_DECSLRM;
                 iTermParserSetCSIParameterIfDefault(token.csi, 0, 1);
                 iTermParserSetCSIParameterIfDefault(token.csi, 1, 1);
@@ -2030,18 +2034,18 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     switch (token->type) {
         // our special code
         case VT100_STRING:
-            [_delegate terminalAppendString:token.string
+            [delegate terminalAppendString:token.string
                           preconvertedData:token.preconvertedStringData];
             break;
         case VT100_ASCIISTRING:
-            [_delegate terminalAppendAsciiData:token.asciiData];
+            [delegate terminalAppendAsciiData:token.asciiData];
             break;
         case VT100_MIXED_ASCII_CR_LF:
-            [_delegate terminalAppendMixedAsciiCRLFData:token.asciiData
+            [delegate terminalAppendMixedAsciiCRLFData:token.asciiData
                                                   crlfs:token.crlfs];
             break;
         case VT100_GANG:
-            [_delegate terminalAppendMixedAsciiGang:token.subtokens];
+            [delegate terminalAppendMixedAsciiGang:token.subtokens];
             break;
         case VT100_UNKNOWNCHAR:
             break;
@@ -2050,24 +2054,24 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         //  VT100 CC
         case VT100CC_ENQ:
-            [_delegate terminalSendReport:[_answerBackString dataUsingEncoding:self.encoding]];
+            [delegate terminalSendReport:[_answerBackString dataUsingEncoding:self.encoding]];
             break;
         case VT100CC_BEL:
-            [_delegate terminalRingBell];
+            [delegate terminalRingBell];
             break;
         case VT100CC_BS:
-            [_delegate terminalBackspace];
+            [delegate terminalBackspace];
             break;
         case VT100CC_HT:
-            [_delegate terminalAppendTabAtCursor:!_softAlternateScreenMode];
+            [delegate terminalAppendTabAtCursor:!_softAlternateScreenMode];
             break;
         case VT100CC_LF:
         case VT100CC_VT:
         case VT100CC_FF:
-            [_delegate terminalLineFeed];
+            [delegate terminalLineFeed];
             break;
         case VT100CC_CR:
-            [_delegate terminalCarriageReturn];
+            [delegate terminalCarriageReturn];
             break;
         case VT100CC_SI:
             self.charset = 0;
@@ -2088,44 +2092,44 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_CPR:
             break;
         case VT100CSI_CUB:
-            [_delegate terminalCursorLeft:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
+            [delegate terminalCursorLeft:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
             break;
         case VT100CSI_CUD:
-            [_delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                          andToStartOfLine:NO];
             break;
         case VT100CSI_CUF:
-            [_delegate terminalCursorRight:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
+            [delegate terminalCursorRight:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
             break;
         case VT100CSI_CUP:
-            [_delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
+            [delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_CHT:
             for (int i = 0; i < token.csi->p[0]; i++) {
-                [_delegate terminalAppendTabAtCursor:!_softAlternateScreenMode];
+                [delegate terminalAppendTabAtCursor:!_softAlternateScreenMode];
             }
             break;
         case VT100CSI_CUU:
-            [_delegate terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [delegate terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                        andToStartOfLine:NO];
             break;
         case VT100CSI_CNL:
-            [_delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                          andToStartOfLine:YES];
             break;
         case VT100CSI_CPL:
-            [_delegate terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [delegate terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                        andToStartOfLine:YES];
             break;
         case VT100CSI_DA:
-            if (token.csi->p[0] == 0 && [_delegate terminalShouldSendReport:NO]) {
-                VT100OutputOptionalDeviceAttributes attrs = [_delegate terminalOptionalDeviceAttributes];
-                [_delegate terminalSendReport:[self.output reportDeviceAttribute:attrs]];
+            if (token.csi->p[0] == 0 && [delegate terminalShouldSendReport:NO]) {
+                VT100OutputOptionalDeviceAttributes attrs = [delegate terminalOptionalDeviceAttributes];
+                [delegate terminalSendReport:[self.output reportDeviceAttribute:attrs]];
             }
             break;
         case VT100CSI_DA2:
-            if ([_delegate terminalShouldSendReport:NO]) {
-                [_delegate terminalSendReport:[self.output reportSecondaryDeviceAttribute]];
+            if ([delegate terminalShouldSendReport:NO]) {
+                [delegate terminalSendReport:[self.output reportSecondaryDeviceAttribute]];
             }
             break;
         case VT100CSI_DA3:
@@ -2134,31 +2138,31 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             } else {
                 RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
-            if ([_delegate terminalShouldSendReport:NO]) {
-                [_delegate terminalSendReport:[self.output reportTertiaryDeviceAttribute]];
+            if ([delegate terminalShouldSendReport:NO]) {
+                [delegate terminalSendReport:[self.output reportTertiaryDeviceAttribute]];
             }
             break;
         case VT100CSI_XDA:
-            if ([_delegate terminalShouldSendReport:NO]) {
+            if ([delegate terminalShouldSendReport:NO]) {
                 if (token.csi->p[0] == 0 || token.csi->p[0] == -1) {
-                    [_delegate terminalSendReport:[self.output reportExtendedDeviceAttribute]];
+                    [delegate terminalSendReport:[self.output reportExtendedDeviceAttribute]];
                 }
             }
             break;
         case VT100CSI_DECALN:
-            [_delegate terminalShowTestPattern];
+            [delegate terminalShowTestPattern];
             break;
         case VT100CSI_DECDHL: {
             iTermLineAttribute attr = (token.csi->p[0] == 3) ? iTermLineAttributeDoubleHeightTop
                                                               : iTermLineAttributeDoubleHeightBottom;
-            [_delegate terminalSetLineAttribute:attr];
+            [delegate terminalSetLineAttribute:attr];
             break;
         }
         case VT100CSI_DECDWL:
-            [_delegate terminalSetLineAttribute:iTermLineAttributeDoubleWidth];
+            [delegate terminalSetLineAttribute:iTermLineAttributeDoubleWidth];
             break;
         case VT100CSI_DECSWL:
-            [_delegate terminalSetLineAttribute:iTermLineAttributeSingleWidth];
+            [delegate terminalSetLineAttribute:iTermLineAttributeSingleWidth];
             break;
         case VT100CSI_DECID:
             break;
@@ -2192,14 +2196,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
 
             int bottom;
-            const VT100GridSize size = [_delegate terminalSizeInCells];
+            const VT100GridSize size = [delegate terminalSizeInCells];
             if (token.csi->count < 2 || token.csi->p[1] <= 0) {
                 bottom = size.height - 1;
             } else {
                 bottom = MIN(size.height, token.csi->p[1]) - 1;
             }
 
-            [_delegate terminalSetScrollRegionTop:top
+            [delegate terminalSetScrollRegionTop:top
                                            bottom:bottom];
             // http://www.vt100.net/docs/vt510-rm/DECSTBM.html says:
             // “DECSTBM moves the cursor to column 1, line 1 of the page.”
@@ -2210,8 +2214,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
         case VT100CSI_DECRQCRA: {
             if (_vtLevel >= iTermEmulationLevel400) {
-                if ([_delegate terminalIsTrusted]) {
-                    if (![_delegate terminalCanUseDECRQCRA]) {
+                if ([delegate terminalIsTrusted]) {
+                    if (![delegate terminalCanUseDECRQCRA]) {
                         break;
                     }
                     [self sendChecksumReportWithId:token.csi->p[0]
@@ -2230,20 +2234,20 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_ED:
             switch (token.csi->p[0]) {
                 case 1:
-                    [_delegate terminalEraseInDisplayBeforeCursor:YES afterCursor:NO];
+                    [delegate terminalEraseInDisplayBeforeCursor:YES afterCursor:NO];
                     break;
 
                 case 2:
-                    [_delegate terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];
+                    [delegate terminalEraseInDisplayBeforeCursor:YES afterCursor:YES];
                     break;
 
                 case 3:
-                    [_delegate terminalClearScrollbackBuffer];
+                    [delegate terminalClearScrollbackBuffer];
                     break;
 
                 case 0:
                 default:
-                    [_delegate terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];
+                    [delegate terminalEraseInDisplayBeforeCursor:NO afterCursor:YES];
                     break;
             }
             break;
@@ -2251,7 +2255,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             graphicRendition_.reversed = !graphicRendition_.reversed;
             _currentLiteral = @(token->code);
             [self updateExternalAttributes];
-            [_delegate terminalAppendString:[[NSString stringWithLongCharacter:token->code] stringByReplacingControlCharactersWithCaretLetter]];
+            [delegate terminalAppendString:[[NSString stringWithLongCharacter:token->code] stringByReplacingControlCharactersWithCaretLetter]];
             _currentLiteral = nil;
             [self updateExternalAttributes];
             graphicRendition_.reversed = !graphicRendition_.reversed;
@@ -2260,18 +2264,18 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_EL:
             switch (token.csi->p[0]) {
                 case 1:
-                    [_delegate terminalEraseLineBeforeCursor:YES afterCursor:NO];
+                    [delegate terminalEraseLineBeforeCursor:YES afterCursor:NO];
                     break;
                 case 2:
-                    [_delegate terminalEraseLineBeforeCursor:YES afterCursor:YES];
+                    [delegate terminalEraseLineBeforeCursor:YES afterCursor:YES];
                     break;
                 case 0:
-                    [_delegate terminalEraseLineBeforeCursor:NO afterCursor:YES];
+                    [delegate terminalEraseLineBeforeCursor:NO afterCursor:YES];
                     break;
             }
             break;
         case VT100CSI_HTS:
-            [_delegate terminalSetTabStopAtCursor];
+            [delegate terminalSetTabStopAtCursor];
             break;
         case VT100CC_SPA:
             self.protectedMode = VT100TerminalProtectedModeISO;
@@ -2287,7 +2291,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_DECSERA:
             if (_vtLevel >= iTermEmulationLevel400) {
-                [_delegate terminalSelectiveEraseRectangle:[self rectangleInToken:token
+                [delegate terminalSelectiveEraseRectangle:[self rectangleInToken:token
                                                                   startingAtIndex:0
                                                                  defaultRectangle:[self defaultRectangle]]];
             } else {
@@ -2296,11 +2300,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_DECSED:
-            [_delegate terminalSelectiveEraseInDisplay:token.csi->p[0]];
+            [delegate terminalSelectiveEraseInDisplay:token.csi->p[0]];
             break;
 
         case VT100CSI_DECSEL:
-            [_delegate terminalSelectiveEraseInLine:token.csi->p[0]];
+            [delegate terminalSelectiveEraseInLine:token.csi->p[0]];
             break;
 
         case VT100CSI_DECSCA:
@@ -2317,13 +2321,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     _protectedMode = VT100TerminalProtectedModeDEC;
                     break;
             }
-            [_delegate terminalProtectedModeDidChangeTo:VT100TerminalProtectedModeDEC];
+            [delegate terminalProtectedModeDidChangeTo:VT100TerminalProtectedModeDEC];
             break;
 
         case VT100CSI_DECRQDE:
             if (_vtLevel >= iTermEmulationLevel300) {
-                if ([self.delegate terminalShouldSendReport:NO]) {
-                    [_delegate terminalSendReport:[_output reportDisplayedExtentOfSize:_delegate.terminalSizeInCells]];
+                if ([delegate terminalShouldSendReport:NO]) {
+                    [delegate terminalSendReport:[_output reportDisplayedExtentOfSize:delegate.terminalSizeInCells]];
                 }
             } else {
                 RLog(@"vtlevel %@ denied", @(_vtLevel));
@@ -2338,19 +2342,19 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_HVP:
-            [_delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
+            [delegate terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_NEL:
             // We do the linefeed first because it's a no-op if the cursor is outside the left-
             // right margin. Carriage return will move it to the left margin.
-            [_delegate terminalLineFeed];
-            [_delegate terminalCarriageReturn];
+            [delegate terminalLineFeed];
+            [delegate terminalCarriageReturn];
             break;
         case VT100CSI_IND:
-            [_delegate terminalLineFeed];
+            [delegate terminalLineFeed];
             break;
         case VT100CSI_RI:
-            [_delegate terminalReverseIndex];
+            [delegate terminalReverseIndex];
             break;
         case VT100CSI_RIS:
             // As far as I can tell, this is not part of the standard and should not be
@@ -2385,7 +2389,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
         }
         case VT100CSI_XTREPORTSGR: {
-            if ([_delegate terminalIsTrusted]) {
+            if ([delegate terminalIsTrusted]) {
                 [self sendSGRReportWithRectangle:[self rectangleInToken:token
                                                         startingAtIndex:0
                                                        defaultRectangle:[self defaultRectangle]]];
@@ -2420,31 +2424,31 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_DECSCUSR:
             switch (token.csi->p[0]) {
                 case 0:
-                    [_delegate terminalResetCursorTypeAndBlink];
+                    [delegate terminalResetCursorTypeAndBlink];
                     break;
                 case 1:
-                    [_delegate terminalSetCursorBlinking:YES];
-                    [_delegate terminalSetCursorType:CURSOR_BOX];
+                    [delegate terminalSetCursorBlinking:YES];
+                    [delegate terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 2:
-                    [_delegate terminalSetCursorBlinking:NO];
-                    [_delegate terminalSetCursorType:CURSOR_BOX];
+                    [delegate terminalSetCursorBlinking:NO];
+                    [delegate terminalSetCursorType:CURSOR_BOX];
                     break;
                 case 3:
-                    [_delegate terminalSetCursorBlinking:YES];
-                    [_delegate terminalSetCursorType:CURSOR_UNDERLINE];
+                    [delegate terminalSetCursorBlinking:YES];
+                    [delegate terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 4:
-                    [_delegate terminalSetCursorBlinking:NO];
-                    [_delegate terminalSetCursorType:CURSOR_UNDERLINE];
+                    [delegate terminalSetCursorBlinking:NO];
+                    [delegate terminalSetCursorType:CURSOR_UNDERLINE];
                     break;
                 case 5:
-                    [_delegate terminalSetCursorBlinking:YES];
-                    [_delegate terminalSetCursorType:CURSOR_VERTICAL];
+                    [delegate terminalSetCursorBlinking:YES];
+                    [delegate terminalSetCursorType:CURSOR_VERTICAL];
                     break;
                 case 6:
-                    [_delegate terminalSetCursorBlinking:NO];
-                    [_delegate terminalSetCursorType:CURSOR_VERTICAL];
+                    [delegate terminalSetCursorBlinking:NO];
+                    [delegate terminalSetCursorType:CURSOR_VERTICAL];
                     break;
             }
             break;
@@ -2452,7 +2456,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_DECSLRM: {
             int scrollLeft = token.csi->p[0] - 1;
             int scrollRight = token.csi->p[1] - 1;
-            const int width = [_delegate terminalSizeInCells].width;
+            const int width = [delegate terminalSizeInCells].width;
             if (scrollLeft < 0) {
                 scrollLeft = 0;
             }
@@ -2467,7 +2471,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (scrollRight > width - 1) {
                 scrollRight = width - 1;
             }
-            [_delegate terminalSetLeftMargin:scrollLeft rightMargin:scrollRight];
+            [delegate terminalSetLeftMargin:scrollLeft rightMargin:scrollRight];
             break;
         }
 
@@ -2503,16 +2507,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
              * doesn't work well with common behavior (esp line drawing).
              */
         case VT100CSI_SCS0:
-            [_delegate terminalSetCharset:0 toLineDrawingMode:(token->code=='0')];
+            [delegate terminalSetCharset:0 toLineDrawingMode:(token->code=='0')];
             break;
         case VT100CSI_SCS1:
-            [_delegate terminalSetCharset:1 toLineDrawingMode:(token->code=='0')];
+            [delegate terminalSetCharset:1 toLineDrawingMode:(token->code=='0')];
             break;
         case VT100CSI_SCS2:
-            [_delegate terminalSetCharset:2 toLineDrawingMode:(token->code=='0')];
+            [delegate terminalSetCharset:2 toLineDrawingMode:(token->code=='0')];
             break;
         case VT100CSI_SCS3:
-            [_delegate terminalSetCharset:3 toLineDrawingMode:(token->code=='0')];
+            [delegate terminalSetCharset:3 toLineDrawingMode:(token->code=='0')];
             break;
 
         // The parser sets its own encoding property when these codes are parsed because it must
@@ -2580,11 +2584,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case VT100CSI_TBC:
             switch (token.csi->p[0]) {
                 case 3:
-                    [_delegate terminalRemoveTabStops];
+                    [delegate terminalRemoveTabStops];
                     break;
 
                 case 0:
-                    [_delegate terminalRemoveTabStopAtCursor];
+                    [delegate terminalRemoveTabStopAtCursor];
             }
             break;
 
@@ -2594,18 +2598,18 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_REP:
-            [_delegate terminalRepeatPreviousCharacter:MIN(65535, token.csi->p[0])];
+            [delegate terminalRepeatPreviousCharacter:MIN(65535, token.csi->p[0])];
             break;
 
         case VT100CSI_DECST8C:
             if (_vtLevel >= iTermEmulationLevel500) {
                 if (token.csi->p[0] == 5) {
-                    const int width = [_delegate terminalScreenWidthInCells];
+                    const int width = [delegate terminalScreenWidthInCells];
                     NSMutableArray<NSNumber *> *stops = [NSMutableArray array];
                     for (int i = 8; i < width; i += 8) {
                         [stops addObject:@(i + 1)];
                     }
-                    [_delegate terminalSetTabStops:stops];
+                    [delegate terminalSetTabStops:stops];
                 }
             } else {
                 RLog(@"vtlevel %@ denied", @(_vtLevel));
@@ -2685,7 +2689,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                     _keyReportingFlags = effective;
                 }
                 // Mode 1 assigns the whole value; 2 and 3 only set or clear the named bits.
-                [self.delegate terminalKeyReportingFlagsDidChange:(token.csi->p[1] == 1)];
+                [delegate terminalKeyReportingFlagsDidChange:(token.csi->p[1] == 1)];
             }
             break;
 
@@ -2706,14 +2710,14 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_QUERY_KEY_REPORTING_MODE:
-            if ([_delegate terminalShouldSendReport:NO]) {
+            if ([delegate terminalShouldSendReport:NO]) {
                 VT100TerminalKeyReportingFlags flags;
                 if (self.currentKeyReportingModeStack.count) {
                     flags = self.currentKeyReportingModeStack.lastObject.unsignedIntegerValue;
                 } else {
                     flags = _keyReportingFlags;
                 }
-                [_delegate terminalSendReport:[_output reportKeyReportingMode:flags]];
+                [delegate terminalSendReport:[_output reportKeyReportingMode:flags]];
             }
             break;
 
@@ -2739,20 +2743,20 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
             // ANSI CSI
         case ANSICSI_CBT:
-            [_delegate terminalBackTab:token.csi->p[0]];
+            [delegate terminalBackTab:token.csi->p[0]];
             break;
         case ANSICSI_CHA:
-            [_delegate terminalSetCursorX:token.csi->p[0]];
+            [delegate terminalSetCursorX:token.csi->p[0]];
             break;
         case ANSICSI_VPA:
-            [_delegate terminalSetCursorY:token.csi->p[0]];
+            [delegate terminalSetCursorY:token.csi->p[0]];
             break;
         case ANSICSI_VPR:
-            [_delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+            [delegate terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
                          andToStartOfLine:NO];
             break;
         case ANSICSI_ECH:
-            [_delegate terminalEraseCharactersAfterCursor:token.csi->p[0]];
+            [delegate terminalEraseCharactersAfterCursor:token.csi->p[0]];
             break;
 
         case STRICT_ANSI_MODE:
@@ -2762,29 +2766,29 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case ANSICSI_PRINT:
             switch (token.csi->p[0]) {
                 case 4:
-                    [_delegate terminalPrintBuffer];
+                    [delegate terminalPrintBuffer];
                     break;
                 case 5:
-                    [_delegate terminalBeginRedirectingToPrintBuffer];
+                    [delegate terminalBeginRedirectingToPrintBuffer];
                     break;
                 default:
-                    [_delegate terminalPrintScreen];
+                    [delegate terminalPrintScreen];
             }
             break;
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [_delegate terminalSetWindowTitle:[[self sanitizedTitle:[self stringBeforeNewline:token.string]] stringByReplacingControlCharactersWithCaretLetter]];
+            [delegate terminalSetWindowTitle:[[self sanitizedTitle:[self stringBeforeNewline:token.string]] stringByReplacingControlCharactersWithCaretLetter]];
             break;
         case XTERMCC_WINICON_TITLE: {
             NSString *title = [[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter];
             NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
             if (!subtitle || title.length > 0) {
-                [_delegate terminalSetWindowTitle:title];
-                [_delegate terminalSetIconTitle:title];
+                [delegate terminalSetWindowTitle:title];
+                [delegate terminalSetIconTitle:title];
             }
             if (subtitle) {
-                [_delegate terminalSetSubtitle:subtitle];
+                [delegate terminalSetSubtitle:subtitle];
             }
             break;
         }
@@ -2793,9 +2797,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 NSString *query = nil;
                 NSString *decoded = [self decodedBase64PasteCommand:token.string query:&query];
                 if (decoded) {
-                    [_delegate terminalCopyStringToPasteboard:decoded];
-                } else if (query && [_delegate terminalShouldSendReport:YES]) {
-                    [_delegate terminalReportPasteboard:query];
+                    [delegate terminalCopyStringToPasteboard:decoded];
+                } else if (query && [delegate terminalShouldSendReport:YES]) {
+                    [delegate terminalReportPasteboard:query];
                 }
             }
             break;
@@ -2806,7 +2810,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // base64 payload). Chunk reassembly and interpretation happen in the
             // per-session controller; here we just forward the raw content.
             if (token.string) {
-                [_delegate terminalDidReceiveKittyDragAndDrop:token.string];
+                [delegate terminalDidReceiveKittyDragAndDrop:token.string];
             } else {
                 // The accumulated OSC bytes were not decodable in the session
                 // encoding (a corrupted or non-ASCII stream; conforming senders use
@@ -2820,19 +2824,19 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self resetColors:token.string];
             break;
         case XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR:
-            [_delegate terminalResetColor:VT100TerminalColorIndexText];
+            [delegate terminalResetColor:VT100TerminalColorIndexText];
             break;
         case XTERMCC_RESET_VT100_TEXT_BACKGROUND_COLOR:
-            [_delegate terminalResetColor:VT100TerminalColorIndexBackground];
+            [delegate terminalResetColor:VT100TerminalColorIndexBackground];
             break;
         case XTERMCC_RESET_TEXT_CURSOR_COLOR:
-            [_delegate terminalResetColor:VT100TerminalColorIndexCursor];
+            [delegate terminalResetColor:VT100TerminalColorIndexCursor];
             break;
         case XTERMCC_RESET_HIGHLIGHT_COLOR:
-            [_delegate terminalResetColor:VT100TerminalColorIndexSelectionBackground];
+            [delegate terminalResetColor:VT100TerminalColorIndexSelectionBackground];
             break;
         case XTERMCC_RESET_HIGHLIGHT_FOREGROUND_COLOR:
-            [_delegate terminalResetColor:VT100TerminalColorIndexSelectionForeground];
+            [delegate terminalResetColor:VT100TerminalColorIndexSelectionForeground];
             break;
 
         case XTERMCC_TEXT_FOREGROUND_COLOR:
@@ -2866,7 +2870,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case XTERMCC_SET_POINTER_SHAPE:
-            [_delegate terminalSetPointerShape:token.string];
+            [delegate terminalSetPointerShape:token.string];
             break;
 
         case XTERMCC_FINAL_TERM:
@@ -2877,7 +2881,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (token.csi->p[0] == self.framerBoundaryNumber) {
                 RLog(@"Recovery boundary received. Assuming future tokens were parsed correctly.");
                 self.framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
-                [self.delegate terminalDidResynchronizeSSH];
+                [delegate terminalDidResynchronizeSSH];
             } else {
                 DLog(@"Out-of-date boundary token ignored");
             }
@@ -2892,16 +2896,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                         // ignore it like any other unrecognized OSC.
                         DLog(@"Ignore framer output from an abandoned connection");
                     } else if (token.sshInfo.valid) {
-                        [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:token.sshInfo.depth];
+                        [delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:token.sshInfo.depth];
                     } else {
                         // The token description can embed the wrapped conductor payload; log the type only in the ring.
                         RLog(@"Invalid SSH info for framer wrapper. Begin recovery. Token is %@", RLogRedact(token, @(token.type)));
-                        [_delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:-1];
+                        [delegate terminalBeginFramerRecoveryForChildOfConductorAtDepth:-1];
                     }
                     break;
                 case VT100TerminalFramerRecoveryModeRecovering:
                     DLog(@"Handle token in framer recovery");
-                    [_delegate terminalHandleFramerRecoveryString:token.string];
+                    [delegate terminalHandleFramerRecoveryString:token.string];
                     break;
                 case VT100TerminalFramerRecoveryModeSyncing:
                     DLog(@"Drop token during framer recovery syncing %@", token);
@@ -2911,92 +2915,92 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case XTERMCC_ICON_TITLE: {
             NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
             if (!subtitle || token.string.length > 0) {
-                [_delegate terminalSetIconTitle:[[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter]];
+                [delegate terminalSetIconTitle:[[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter]];
             }
             if (subtitle) {
-                [_delegate terminalSetSubtitle:subtitle];
+                [delegate terminalSetSubtitle:subtitle];
             }
             break;
         }
         case VT100CSI_ICH:
-            [_delegate terminalInsertEmptyCharsAtCursor:token.csi->p[0]];
+            [delegate terminalInsertEmptyCharsAtCursor:token.csi->p[0]];
             break;
         case VT100CSI_SL:
-            [_delegate terminalShiftLeft:token.csi->p[0]];
+            [delegate terminalShiftLeft:token.csi->p[0]];
             break;
         case VT100CSI_SR:
-            [_delegate terminalShiftRight:token.csi->p[0]];
+            [delegate terminalShiftRight:token.csi->p[0]];
             break;
         case XTERMCC_INSLN:
-            [_delegate terminalInsertBlankLinesAfterCursor:token.csi->p[0]];
+            [delegate terminalInsertBlankLinesAfterCursor:token.csi->p[0]];
             break;
         case XTERMCC_DELCH:
-            [_delegate terminalDeleteCharactersAtCursor:token.csi->p[0]];
+            [delegate terminalDeleteCharactersAtCursor:token.csi->p[0]];
             break;
         case XTERMCC_DELLN:
-            [_delegate terminalDeleteLinesAtCursor:token.csi->p[0]];
+            [delegate terminalDeleteLinesAtCursor:token.csi->p[0]];
             break;
         case VT100_DECSLPP:
-            [_delegate terminalSetRows:MIN(kMaxScreenRows, token.csi->p[0])
+            [delegate terminalSetRows:MIN(kMaxScreenRows, token.csi->p[0])
                             andColumns:-1];
             break;
         case XTERMCC_WINDOWSIZE:
-            [_delegate terminalSetRows:MIN(token.csi->p[1], kMaxScreenRows)
+            [delegate terminalSetRows:MIN(token.csi->p[1], kMaxScreenRows)
                             andColumns:MIN(token.csi->p[2], kMaxScreenColumns)];
             break;
         case XTERMCC_WINDOWSIZE_PIXEL:
-            [_delegate terminalSetPixelWidth:token.csi->p[2]
+            [delegate terminalSetPixelWidth:token.csi->p[2]
                                       height:token.csi->p[1]];
 
             break;
         case XTERMCC_WINDOWPOS:
-            [_delegate terminalMoveWindowTopLeftPointTo:NSMakePoint(token.csi->p[1], token.csi->p[2])];
+            [delegate terminalMoveWindowTopLeftPointTo:NSMakePoint(token.csi->p[1], token.csi->p[2])];
             break;
         case XTERMCC_ICONIFY:
-            [_delegate terminalMiniaturize:YES];
+            [delegate terminalMiniaturize:YES];
             break;
         case XTERMCC_DEICONIFY:
-            [_delegate terminalMiniaturize:NO];
+            [delegate terminalMiniaturize:NO];
             break;
         case XTERMCC_RAISE:
-            [_delegate terminalRaise:YES];
+            [delegate terminalRaise:YES];
             break;
         case XTERMCC_LOWER:
-            [_delegate terminalRaise:NO];
+            [delegate terminalRaise:NO];
             break;
         case XTERMCC_SU:
-            [_delegate terminalScrollUp:token.csi->p[0]];
+            [delegate terminalScrollUp:token.csi->p[0]];
             break;
 
         case XTERMCC_SD:
             if (token.csi->count == 1) {
-                [_delegate terminalScrollDown:token.csi->p[0]];
+                [delegate terminalScrollDown:token.csi->p[0]];
             }
             break;
 
         case VT100CSI_SD:
-            [_delegate terminalScrollDown:token.csi->p[0]];
+            [delegate terminalScrollDown:token.csi->p[0]];
             break;
 
         case XTERMCC_REPORT_WIN_STATE: {
             NSString *s = [NSString stringWithFormat:@"\033[%dt",
-                           ([_delegate terminalWindowIsMiniaturized] ? 2 : 1)];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           ([delegate terminalWindowIsMiniaturized] ? 2 : 1)];
+            [delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_WIN_POS: {
-            NSPoint topLeft = [_delegate terminalWindowTopLeftPixelCoordinate];
+            NSPoint topLeft = [delegate terminalWindowTopLeftPixelCoordinate];
             NSString *s = [NSString stringWithFormat:@"\033[3;%d;%dt",
                            (int)topLeft.x, (int)topLeft.y];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_WIN_PIX_SIZE: {
             // TODO: Some kind of adjustment for panes?
             NSString *s = [NSString stringWithFormat:@"\033[4;%d;%dt",
-                           [_delegate terminalWindowHeightInPixels],
-                           [_delegate terminalWindowWidthInPixels]];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           [delegate terminalWindowHeightInPixels],
+                           [delegate terminalWindowWidthInPixels]];
+            [delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_CELL_SIZE_PIX: {
@@ -3009,50 +3013,50 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // make a client that computes columns = 14t-width / 16t-width get the
             // wrong answer here since our 14 t is in points.)
             double scale = 0;
-            const NSSize cellSize = [_delegate terminalCellSizeInPoints:&scale];
+            const NSSize cellSize = [delegate terminalCellSizeInPoints:&scale];
             NSString *s = [NSString stringWithFormat:@"\033[6;%d;%dt",
                            (int)round(cellSize.height),
                            (int)round(cellSize.width)];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_WIN_SIZE: {
-            const VT100GridSize size = [_delegate terminalSizeInCells];
+            const VT100GridSize size = [delegate terminalSizeInCells];
             NSString *s = [NSString stringWithFormat:@"\033[8;%d;%dt",
                            size.height,
                            size.width];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            [delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_SCREEN_SIZE: {
             NSString *s = [NSString stringWithFormat:@"\033[9;%d;%dt",
-                           [_delegate terminalScreenHeightInCells],
-                           [_delegate terminalScreenWidthInCells]];
-            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+                           [delegate terminalScreenHeightInCells],
+                           [delegate terminalScreenWidthInCells]];
+            [delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
         case XTERMCC_REPORT_ICON_TITLE: {
-            [_delegate terminalReportIconTitle];
+            [delegate terminalReportIconTitle];
             break;
         }
         case XTERMCC_REPORT_WIN_TITLE: {
             // NOTE: In versions prior to 2.9.20150415, we used "L" as the leader here, not "l".
             // That was wrong and may cause bug reports due to breaking bugward compatibility.
             // (see xterm docs)
-            [_delegate terminalReportWindowTitle];
+            [delegate terminalReportWindowTitle];
             break;
         }
         case XTERMCC_PUSH_TITLE: {
             switch (token.csi->p[1]) {
                 case 0:
-                    [_delegate terminalPushCurrentTitleForWindow:YES];
-                    [_delegate terminalPushCurrentTitleForWindow:NO];
+                    [delegate terminalPushCurrentTitleForWindow:YES];
+                    [delegate terminalPushCurrentTitleForWindow:NO];
                     break;
                 case 1:
-                    [_delegate terminalPushCurrentTitleForWindow:NO];
+                    [delegate terminalPushCurrentTitleForWindow:NO];
                     break;
                 case 2:
-                    [_delegate terminalPushCurrentTitleForWindow:YES];
+                    [delegate terminalPushCurrentTitleForWindow:YES];
                     break;
                 // TODO: Support 3 (UTF-8)
             }
@@ -3061,21 +3065,21 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case XTERMCC_POP_TITLE: {
             switch (token.csi->p[1]) {
                 case 0:
-                    [_delegate terminalPopCurrentTitleForWindow:YES];
-                    [_delegate terminalPopCurrentTitleForWindow:NO];
+                    [delegate terminalPopCurrentTitleForWindow:YES];
+                    [delegate terminalPopCurrentTitleForWindow:NO];
                     break;
                 case 1:
-                    [_delegate terminalPopCurrentTitleForWindow:NO];
+                    [delegate terminalPopCurrentTitleForWindow:NO];
                     break;
                 case 2:
-                    [_delegate terminalPopCurrentTitleForWindow:YES];
+                    [delegate terminalPopCurrentTitleForWindow:YES];
                     break;
             }
             break;
         }
         // Our iTerm specific codes
         case ITERM_USER_NOTIFICATION:
-            [_delegate terminalPostUserNotification:token.string];
+            [delegate terminalPostUserNotification:token.string];
             break;
 
         case XTERMCC_MULTITOKEN_HEADER_SET_KVP:
@@ -3089,7 +3093,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case XTERMCC_MULTITOKEN_BODY:
             // You'd get here if the user stops a file download before it finishes.
-            [_delegate terminalAppendString:token.string];
+            [delegate terminalAppendString:token.string];
             break;
 
         case XTERMCC_MULTITOKEN_END:
@@ -3135,7 +3139,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (resource >= 0 && resource < NUM_MODIFIABLE_RESOURCES) {
                 _sendModifiers[resource] = @-1;
                 self.dirty = YES;
-                [self.delegate terminalDidChangeSendModifiers];
+                [delegate terminalDidChangeSendModifiers];
             }
             break;
         }
@@ -3160,7 +3164,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             self.dirty = YES;
             _sendModifiers[resource] = @(value);
-            [self.delegate terminalDidChangeSendModifiers];
+            [delegate terminalDidChangeSendModifiers];
             break;
         }
 
@@ -3182,7 +3186,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_DECIC:
             if (_vtLevel >= iTermEmulationLevel400) {
-                [_delegate terminalInsertColumns:token.csi->p[0]];
+                [delegate terminalInsertColumns:token.csi->p[0]];
             } else {
                 RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
@@ -3190,7 +3194,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_DECDC:
             if (_vtLevel >= iTermEmulationLevel400) {
-                [_delegate terminalDeleteColumns:token.csi->p[0]];
+                [delegate terminalDeleteColumns:token.csi->p[0]];
             } else {
                 RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
@@ -3254,22 +3258,22 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 }
                 break;
             }
-            [self.delegate terminalDidHookSSHConductorWithParams:token.string parentDepth:parentDepth];
+            [delegate terminalDidHookSSHConductorWithParams:token.string parentDepth:parentDepth];
             break;
         }
 
         case SSH_LINE:
-            [self.delegate terminalDidReadSSHConductorLine:token.string
+            [delegate terminalDidReadSSHConductorLine:token.string
                                                      depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_UNHOOK:
-            [self.delegate terminalDidUnhookSSHConductorWithDCSID:token.string
+            [delegate terminalDidUnhookSSHConductorWithDCSID:token.string
                                                             depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_BEGIN:
-            [self.delegate terminalDidBeginSSHConductorCommandWithIdentifier:token.string
+            [delegate terminalDidBeginSSHConductorCommandWithIdentifier:token.string
                                                                        depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
             
@@ -3287,7 +3291,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 break;
             }
             NSString *type = parts[2];
-            [self.delegate terminalDidEndSSHConductorCommandWithIdentifier:parts[0]
+            [delegate terminalDidEndSSHConductorCommandWithIdentifier:parts[0]
                                                                       type:type
                                                                     status:status
                                                                      depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
@@ -3300,7 +3304,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (token.sshFlowControlled) {
                 // A frame's decoded contents run before its SSH_OUTPUT token (see
                 // VT100Parser), so they have all executed by now.
-                [self.delegate terminalDidExecuteFlowControlledSSHOutputOfLength:token.savedData.length
+                [delegate terminalDidExecuteFlowControlledSSHOutputOfLength:token.savedData.length
                                                                 sendMilliseconds:token.sshSendMilliseconds
                                                                            flags:token.sshFlowFlags
                                                                            depth:depth];
@@ -3311,31 +3315,31 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 break;
             }
             if (token.csi->p[1] == SSH_OUTPUT_PANE_CHANNEL) {
-                [self.delegate terminalDidReadSSHPaneOutput:token.savedData
+                [delegate terminalDidReadSSHPaneOutput:token.savedData
                                                         pid:token.csi->p[0]
                                                       depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
                 break;
             }
-            [self.delegate terminalDidReadRawSSHData:token.savedData
+            [delegate terminalDidReadRawSSHData:token.savedData
                                                  pid:token.csi->p[0]
                                              channel:token.csi->p[1]];
             break;
 
         case SSH_SIDE_CHANNEL:
-            [self.delegate terminalHandleSSHSideChannelOutput:token.string
+            [delegate terminalHandleSSHSideChannelOutput:token.string
                                                           pid:token.sshInfo.pid
                                                       channel:token.sshInfo.channel
                                                         depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_TERMINATE:
-            [self.delegate terminalHandleSSHTerminatePID:token.csi->p[0]
+            [delegate terminalHandleSSHTerminatePID:token.csi->p[0]
                                                 withCode:token.csi->p[1]
                                                    depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_IT2:
-            [self.delegate terminalHandleIT2:token.string
+            [delegate terminalHandleIT2:token.string
                                        depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
@@ -3353,7 +3357,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case DCS_SIXEL:
             if (_vtLevel >= iTermEmulationLevel200) {
-                [_delegate terminalAppendSixelData:token.savedData];
+                [delegate terminalAppendSixelData:token.savedData];
             } else {
                 RLog(@"vtlevel %@ denied", @(_vtLevel));
             }
@@ -3361,9 +3365,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case DCS_DECRQSS: {
             const NSStringEncoding encoding = _encoding;
-            __weak id<VT100TerminalDelegate> delegate = _delegate;
+            __weak id<VT100TerminalDelegate> weakDelegate = delegate;
             [[self decrqssPromise:token.string] then:^(NSString * _Nonnull value) {
-                [delegate terminalSendReport:[value dataUsingEncoding:encoding]];
+                [weakDelegate terminalSendReport:[value dataUsingEncoding:encoding]];
             }];
             break;
         }

@@ -1732,9 +1732,6 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return self.normalization;
 }
 
-- (void)gridCursorDidMove {
-}
-
 - (void)gridCursorDidChangeLineFrom:(int)previous {
 }
 

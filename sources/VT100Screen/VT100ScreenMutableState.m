@@ -8450,9 +8450,6 @@ launchCoprocessWithCommand:(NSString *)command
     return self.normalization;
 }
 
-- (void)gridCursorDidMove {
-}
-
 - (void)gridDidResize {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidResize];
