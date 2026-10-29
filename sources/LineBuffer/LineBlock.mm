@@ -131,6 +131,19 @@ struct iTermNumFullLinesCacheKeyHasher {
 
 static std::recursive_mutex gLineBlockMutex;
 
+// Returns a unique identifier for a new block: a UUID made once per process, plus a counter. Making a
+// UUID for every block took a global lock in the system's random number generator, which sessions
+// creating blocks at once (scrolling heavy output) contended for. Any thread.
+static NSString *LineBlockNewGuid(void) {
+    static NSString *prefix;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        prefix = [[NSUUID UUID] UUIDString];
+    });
+    static std::atomic<unsigned long long> counter(0);
+    return [NSString stringWithFormat:@"%@-%llu", prefix, counter.fetch_add(1, std::memory_order_relaxed)];
+}
+
 // Debugging instrumentation. Every write to a block's shared _characterBuffer or
 // cumulative_line_lengths asserts the documented copy-on-write invariant from LineBlock+Private.h:
 // "When owner is nonnil or clients is not empty, a copy must be made before mutation." A violation
@@ -310,7 +323,7 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
         }
     });
     if (!_guid) {
-        _guid = [[NSUUID UUID] UUIDString];
+        _guid = LineBlockNewGuid();
     }
     cached_numlines_width = -1;
     _bidiValidForMutationCounter = -1;  // Never computed; force the first reload.
@@ -503,7 +516,7 @@ NS_INLINE void iTermLineBlockDidMutateInPlace(__unsafe_unretained LineBlock *lin
 
 - (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber {
     LineBlock *theCopy = [self copyDeep:YES absoluteBlockNumber:absoluteBlockNumber];
-    theCopy->_guid = [[NSUUID UUID] UUIDString];
+    theCopy->_guid = LineBlockNewGuid();
     return theCopy;
 }
 

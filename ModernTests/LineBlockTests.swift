@@ -9,6 +9,21 @@ import XCTest
 @testable import iTerm2SharedARC
 
 class LineBlockTests: XCTestCase {
+    // New blocks get distinct identifiers without generating a UUID each: a UUID per process, plus a
+    // counter. Generating a UUID takes a global lock in the system's random number generator, which
+    // sessions scrolling at once contend for.
+    func testNewBlocksGetDistinctIdentifiersSharingAProcessPrefix() {
+        let a = LineBlock(rawBufferSize: 16, absoluteBlockNumber: 0).stringUniqueIdentifier()
+        let b = LineBlock(rawBufferSize: 16, absoluteBlockNumber: 1).stringUniqueIdentifier()
+        let c = LineBlock(rawBufferSize: 16, absoluteBlockNumber: 2).copy(withAbsoluteBlockNumber: 3).stringUniqueIdentifier()
+        XCTAssertEqual(Set([a, b, c]).count, 3)
+        func prefix(_ guid: String) -> Substring {
+            return guid[..<(guid.lastIndex(of: "-") ?? guid.endIndex)]
+        }
+        XCTAssertEqual(prefix(a), prefix(b))
+        XCTAssertEqual(prefix(a), prefix(c))
+    }
+
 
     private func makeLineString(_ string: String,
                                 eol: Int32 = EOL_HARD,
