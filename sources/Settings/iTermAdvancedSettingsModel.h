@@ -598,6 +598,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)useDivorcedProfileToSplit;
 + (BOOL)useExperimentalFontMetrics;
 + (BOOL)useTaskIOMonitors;
++ (BOOL)limitSessionsProcessingOutput;
 + (double)visibleSessionExecutionWeight;
 + (double)tokenExecutionTimeSlice;
 + (BOOL)useGCDUpdateTimer;

@@ -169,6 +169,16 @@ final class ExecutionPermits: NSObject {
         return permits
     }()
 
+    // Whether sessions take permits at all. Read once: an advanced setting turns the limit off, in
+    // case it causes trouble, and needs a restart.
+    @objc static let limitEnabled = iTermAdvancedSettingsModel.limitSessionsProcessingOutput()
+
+    // The permits a new token executor takes, if any. Only sessions with queues of their own take
+    // them: sessions on the shared queue already run one at a time.
+    static func forNewExecutor(ownsQueue: Bool, limitEnabled: Bool = ExecutionPermits.limitEnabled) -> ExecutionPermits? {
+        return ownsQueue && limitEnabled ? shared : nil
+    }
+
     private static var cores: Int {
         return ProcessInfo.processInfo.activeProcessorCount
     }

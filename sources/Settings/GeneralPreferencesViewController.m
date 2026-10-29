@@ -4021,9 +4021,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _maximumConcurrentTokenExecutions.allowsTickMarkValuesOnly = YES;
     [[iTermSlider castFrom:_maximumConcurrentTokenExecutions.superview] sliderRangeDidChange];
 
-    BOOL (^taskIOMonitorsInUse)(void) = ^BOOL{
+    BOOL (^limitApplies)(void) = ^BOOL{
         // With the old implementation every session shares one thread, so the limit does nothing.
-        return [TaskNotifier usesTaskIOMonitors];
+        // An advanced setting can also turn it off.
+        return [TaskNotifier usesTaskIOMonitors] && iTermExecutionPermits.limitEnabled;
     };
 
     PreferenceInfo *sliderInfo = [self defineControl:_maximumConcurrentTokenExecutions
@@ -4040,7 +4041,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                               forKey:kPreferenceKeyMaximumConcurrentTokenExecutions];
     };
     sliderInfo.shouldBeEnabled = ^BOOL{
-        return taskIOMonitorsInUse() &&
+        return limitApplies() &&
             [iTermPreferences integerForKey:kPreferenceKeyMaximumConcurrentTokenExecutions] != 0;
     };
     sliderInfo.observer = ^{
@@ -4060,7 +4061,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [iTermPreferences setInteger:newValue.boolValue ? 0 : iTermExecutionPermits.automaticCapacity
                               forKey:kPreferenceKeyMaximumConcurrentTokenExecutions];
     };
-    automaticInfo.shouldBeEnabled = taskIOMonitorsInUse;
+    automaticInfo.shouldBeEnabled = limitApplies;
     automaticInfo.observer = ^{
         [iTermExecutionPermits capacityPreferenceDidChange];
         [weakSelf updateValueForInfo:sliderInfo];

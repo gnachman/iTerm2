@@ -148,7 +148,7 @@ class TokenExecutor: NSObject {
                   slownessDetector: slownessDetector,
                   queue: queue,
                   ownsQueue: ownsQueue,
-                  permits: ownsQueue ? ExecutionPermits.shared : nil)
+                  permits: ExecutionPermits.forNewExecutor(ownsQueue: ownsQueue))
     }
 
     init(_ terminal: VT100Terminal,

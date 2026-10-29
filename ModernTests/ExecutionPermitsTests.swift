@@ -977,6 +977,14 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertEqual(ExecutionPermits.resolvedCapacity(configured: 64, cores: 16), 16)
     }
 
+    // Only sessions with queues of their own take permits, and none do when the limit is turned
+    // off in advanced settings.
+    func testWhichExecutorsTakePermits() {
+        XCTAssertTrue(ExecutionPermits.forNewExecutor(ownsQueue: true, limitEnabled: true) === ExecutionPermits.shared)
+        XCTAssertNil(ExecutionPermits.forNewExecutor(ownsQueue: true, limitEnabled: false))
+        XCTAssertNil(ExecutionPermits.forNewExecutor(ownsQueue: false, limitEnabled: true))
+    }
+
     func testAutomaticCapDependsOnCores() {
         XCTAssertEqual(ExecutionPermits.resolvedCapacity(configured: 0, cores: 1), 2)
         XCTAssertEqual(ExecutionPermits.resolvedCapacity(configured: 0, cores: 4), 2)
