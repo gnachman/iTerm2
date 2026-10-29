@@ -2,8 +2,20 @@ import Foundation
 
 /// Handles authentication with iTerm2's API server.
 enum CookieAuth {
+    /// How to ask iTerm2 for a cookie when the environment has none.
+    enum Policy {
+        /// Run osascript. What every command has always done, so existing scripts see no change.
+        case appleScript
+        /// Check for consent first and never let prompts pile up. See AgentHookAuth.
+        case agentHook
+    }
+
+    /// Set by `handle-agent-hook` around its work. A task-local rather than a parameter because the
+    /// connection is made several layers down, by whichever sub-command needs it first.
+    @TaskLocal static var policy: Policy = .appleScript
+
     /// Get cookie and key credentials for the WebSocket handshake.
-    /// Checks environment variables first, falls back to AppleScript.
+    /// Checks environment variables first, then asks iTerm2 as `policy` says.
     static func getCredentials() -> (cookie: String?, key: String?) {
         // Fast path: cookie from environment
         if let cookie = ProcessInfo.processInfo.environment["ITERM2_COOKIE"] {
@@ -11,8 +23,13 @@ enum CookieAuth {
             return (cookie, key)
         }
 
-        // Fallback: request single-use cookie via AppleScript
-        return runAppleScript(reusable: false)
+        switch policy {
+        case .appleScript:
+            // Fallback: request single-use cookie via AppleScript
+            return runAppleScript(reusable: false)
+        case .agentHook:
+            return AgentHookAuth.getCredentials()
+        }
     }
 
     /// Request a reusable cookie via AppleScript.

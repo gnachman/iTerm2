@@ -40,6 +40,7 @@ struct IT2: ParsableCommand {
             NewTabShortcut.self,
             Notify.self,
             Profile.self,
+            RequestConsent.self,
             RunShortcut.self,
             SendShortcut.self,
             Session.self,

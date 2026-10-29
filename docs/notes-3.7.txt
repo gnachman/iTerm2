@@ -2378,3 +2378,11 @@ Bug Fixes:
 - Choosing Paste as Text for a pasted or dropped
   file and then answering the paste confirmation
   no longer freezes the window.
+- Fixed a hang where every window beachballed
+  after the Mac sat idle with Claude Code
+  running. If macOS was waiting for you to allow
+  Claude Code’s status updates to control
+  iTerm2, each update piled up behind the
+  unanswered prompt until iTerm2 stopped
+  responding. Now only one request waits for an
+  answer at a time. Issue 13175.

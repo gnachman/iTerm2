@@ -6,7 +6,17 @@ class SocketConnection {
 
     /// Connect to the iTerm2 API unix domain socket.
     static func connect() throws -> SocketConnection {
-        let socketPath = Self.socketPath()
+        return try connect(toPath: socketPath())
+    }
+
+    /// Choose the socket without connecting to it. This also chooses the advertised instance
+    /// (chosenAdvertisedRecord) that CookieAuth asks for a cookie, so a caller that needs the
+    /// cookie before it connects calls this first and passes the result to connect(toPath:).
+    static func resolvePath() -> String {
+        return socketPath()
+    }
+
+    static func connect(toPath socketPath: String) throws -> SocketConnection {
         let conn = SocketConnection()
 
         conn.fd = socket(AF_UNIX, SOCK_STREAM, 0)

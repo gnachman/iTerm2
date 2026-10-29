@@ -26,14 +26,18 @@ struct HandleAgentHook: ParsableCommand, IT2Runnable {
     var agent: AgentKind = .claude
 
     func run(_ ctx: IT2Context) throws {
-        let backend = It2AgentStatusBackend(parent: ctx)
-        defer { backend.finish() }
-        try AgentHookHandler.handle(payload: ctx.stdin(),
-                                    agent: agent,
-                                    environment: ctx.environment,
-                                    originSessionID: ctx.originSessionID,
-                                    inProcess: ctx.isRemote,
-                                    backend: backend,
-                                    report: ctx.err)
+        // Hooks fire constantly, so they must not let consent prompts pile up (issue 13175).
+        // Scoped to this command so scripts running other commands keep the osascript behavior.
+        try CookieAuth.$policy.withValue(.agentHook) {
+            let backend = It2AgentStatusBackend(parent: ctx)
+            defer { backend.finish() }
+            try AgentHookHandler.handle(payload: ctx.stdin(),
+                                        agent: agent,
+                                        environment: ctx.environment,
+                                        originSessionID: ctx.originSessionID,
+                                        inProcess: ctx.isRemote,
+                                        backend: backend,
+                                        report: ctx.err)
+        }
     }
 }

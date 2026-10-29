@@ -696,6 +696,8 @@
 		1ED86583DBD2D4AFA13A058E /* TmuxWorkgroupState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620FD9A95A9347502629BCC7 /* TmuxWorkgroupState.swift */; };
 		1E491A470A315CF391869434 /* AppCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A66CD0466A0D99AC697D076 /* AppCommand.swift */; };
 		1E66B8BC8ED97F1A627B8EA3 /* CookieAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C1AC12DE361269AB8394573 /* CookieAuth.swift */; };
+		81F0AE182DCCC78C0DB8CCAA /* RequestConsentCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBA05C098145F9F4BE441B15 /* RequestConsentCommand.swift */; };
+		2EBED25261F2EEE519447AE8 /* AgentHookAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 617AC883C9DF5E42C2768D7B /* AgentHookAuth.swift */; };
 		1EB707937870C588BA26661D /* WorkgroupRestorationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3958B5886D15D42E92BF7392 /* WorkgroupRestorationCoordinator.swift */; };
 		201047D9DD48C9F4CCCD1A86 /* iTermScreenshotLineRangeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5145BCC5773DB25978071C5 /* iTermScreenshotLineRangeView.swift */; };
 		209F0A26446C06FAE37D67A0 /* iTermRowOutputCache.h in Sources */ = {isa = PBXBuildFile; fileRef = DF53E3C0036CD76566117D88 /* iTermRowOutputCache.h */; };
@@ -6050,6 +6052,8 @@
 		7BF1E9C79C30008CC546F987 /* iTermWordExtractor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWordExtractor.swift; sourceTree = "<group>"; };
 		7BF98E3604DF46619F026857 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermStatusBarLargeComposerViewController.xib; sourceTree = "<group>"; };
 		7C1AC12DE361269AB8394573 /* CookieAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CookieAuth.swift; path = it2cli/Sources/it2core/Auth/CookieAuth.swift; sourceTree = "<group>"; };
+		EBA05C098145F9F4BE441B15 /* RequestConsentCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RequestConsentCommand.swift; path = it2cli/Sources/it2core/Commands/RequestConsentCommand.swift; sourceTree = "<group>"; };
+		617AC883C9DF5E42C2768D7B /* AgentHookAuth.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AgentHookAuth.swift; path = it2cli/Sources/it2core/Auth/AgentHookAuth.swift; sourceTree = "<group>"; };
 		7C5A9B6A6426935855BB0ABB /* CodeReviewPromptMigration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodeReviewPromptMigration.swift; sourceTree = "<group>"; };
 		7C74C12959E7040AF3A3B12F /* iTermAnnotatedScreenshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermAnnotatedScreenshot.swift; sourceTree = "<group>"; };
 		7D2E85E9A8C2432B82F6723D /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/CommandHistoryPopup.xcstrings; sourceTree = "<group>"; };
@@ -9553,6 +9557,7 @@
 			isa = PBXGroup;
 			children = (
 				7C1AC12DE361269AB8394573 /* CookieAuth.swift */,
+				617AC883C9DF5E42C2768D7B /* AgentHookAuth.swift */,
 				0A66CD0466A0D99AC697D076 /* AppCommand.swift */,
 				C064EB0F853DE6D529AF6FD4 /* AuthCommand.swift */,
 				3C2A1099DFA4459A4A485034 /* ConfigCommand.swift */,
@@ -9570,6 +9575,7 @@
 				4E331BC658C4F2F1F394CC54 /* AgentHookEvent.swift */,
 				53EA9AFEC3BECD6B78B76385 /* AgentHookDetail.swift */,
 				618C4DEE2422C91AD54236D8 /* HandleAgentHookCommand.swift */,
+				EBA05C098145F9F4BE441B15 /* RequestConsentCommand.swift */,
 				EE75D56A9127A8D669FBC208 /* AgentHookAddress.swift */,
 				92FC80BA122066E3610BEA16 /* IT2.swift */,
 				4B8E9770112162992653D558 /* IT2Context.swift */,
@@ -18614,6 +18620,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E66B8BC8ED97F1A627B8EA3 /* CookieAuth.swift in Sources */,
+				81F0AE182DCCC78C0DB8CCAA /* RequestConsentCommand.swift in Sources */,
+				2EBED25261F2EEE519447AE8 /* AgentHookAuth.swift in Sources */,
 				1E491A470A315CF391869434 /* AppCommand.swift in Sources */,
 				95F16F4639DBF00DEBCCA4C5 /* AuthCommand.swift in Sources */,
 				A08917777C797D46F761CAD8 /* ConfigCommand.swift in Sources */,

@@ -26,10 +26,21 @@ final class SocketChannel: APIChannel {
     }
 
     static func connect() throws -> SocketChannel {
-        let socket = try SocketConnection.connect()
+        let socket: SocketConnection
+        let cookie: String?
+        let key: String?
+        switch CookieAuth.policy {
+        case .appleScript:
+            socket = try SocketConnection.connect()
+            (cookie, key) = CookieAuth.getCredentials()
+        case .agentHook:
+            // Credentials first: getting them can wait for the user to answer a consent prompt,
+            // and iTerm2 drops a connection that sends nothing for 30 seconds.
+            let path = SocketConnection.resolvePath()
+            (cookie, key) = CookieAuth.getCredentials()
+            socket = try SocketConnection.connect(toPath: path)
+        }
         let ws = WebSocketClient(socket: socket)
-
-        let (cookie, key) = CookieAuth.getCredentials()
 
         do {
             try ws.handshake(cookie: cookie, key: key)
