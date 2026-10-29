@@ -23,6 +23,12 @@
             "value" : "Macから離れているときもiTerm2を使用できます。AIチャットで操作したり、セッションの内容を表示したり、プッシュ通知を受け取ったりできます。エンドツーエンド暗号化によりデータは安全に保たれます。<a href=\"iterm2whatsnew:companion\">今すぐ試す!</a>"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac에서 떨어져 있을 때도 iTerm2를 사용하십시오. AI 채팅으로 제어하고, 세션 내용을 보고, 푸시 알림을 받을 수 있습니다. 종단 간 암호화로 데이터를 안전하게 보호합니다. <a href=\"iterm2whatsnew:companion\">지금 사용해 보기!</a>"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60,6 +66,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -107,6 +119,12 @@
             "value" : "新しいAIチャットモード「オーケストレーション」は、AIに主導権を委ねることができます。ウインドウを作成したり、（対話型アプリでも）タスクの完了を待機したりできるほか、新しい自動安全性チェッカーにより、ほとんどの許可プロンプトへの応答が不要になります。<a href=\"iterm2whatsnew:orchestration\">今すぐ試す!</a>"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 AI 채팅 모드인 오케스트레이션을 사용하면 AI가 작업을 주도합니다. 윈도우를 만들고 (대화형 앱에서도) 작업이 완료될 때까지 기다릴 수 있으며, 새로운 자동 안전 검사기 덕분에 거의 모든 권한 요청에 일일이 응답할 필요가 없습니다. <a href=\"iterm2whatsnew:orchestration\">지금 사용해 보기!</a>"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -144,6 +162,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -191,6 +215,12 @@
             "value" : "新しい「スクリーンショット」機能を使うと、ターミナルの内容のPNG画像を簡単に作成できます。編集（黒塗り）やハイライトにも対応しています。有効にするには<a href=\"iterm2whatsnew:screenshot\">セッション > スクリーンショットを作成</a>を使用してください。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 스크린샷 기능으로 터미널 내용을 PNG로 쉽게 만들 수 있습니다. 가리기 및 강조 표시를 지원합니다. 사용하려면 <a href=\"iterm2whatsnew:screenshot\">세션 > 스크린샷 찍기</a>를 선택하십시오."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +263,12 @@
             "value" : "バージョン3.7の新機能"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 3.7의 새로운 기능"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -270,6 +306,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -317,6 +359,12 @@
             "value" : "●"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +405,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code連携"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 통합"
           }
         },
         "pt-BR" : {
@@ -401,6 +455,12 @@
             "value" : "多数のタブを管理しやすくするため、タブを折りたたみ可能なグループにまとめられるようになりました。また、タブバーはオーバーフローメニューを表示する代わりにスクロールするようになりました。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "많은 탭을 관리하기 쉽도록 이제 탭을 접을 수 있는 그룹으로 묶을 수 있습니다. 또한 탭 막대는 이제 오버플로 메뉴를 표시하는 대신 스크롤됩니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -438,6 +498,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -485,6 +551,12 @@
             "value" : "Claude Code連携は、コードレビューや差分の確認など、複数の関連セッションをカスタマイズ可能なUIにまとめます。また、Claudeの状態を表示するので、あなたの対応が必要なインスタンスを簡単に見つけられます。<a href=\"iterm2whatsnew:claudecode\">今すぐ試す!</a>"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 통합은 코드 리뷰, diff 읽기 등 서로 관련된 여러 세션을 사용자 지정 가능한 UI로 정리합니다. 또한 Claude의 상태를 보여 주므로 사용자의 응답을 기다리며 멈춰 있는 인스턴스를 쉽게 찾을 수 있습니다. <a href=\"iterm2whatsnew:claudecode\">지금 사용해 보기!</a>"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -527,6 +599,12 @@
             "value" : "Companion iPhoneアプリ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 보조 앱"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -564,6 +642,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -611,6 +695,12 @@
             "value" : "オーケストレーション"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오케스트레이션"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -651,6 +741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "タブグループ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭 그룹"
           }
         },
         "pt-BR" : {
@@ -695,6 +791,12 @@
             "value" : "スクリーンショット"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크린샷"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -732,6 +834,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

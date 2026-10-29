@@ -23,6 +23,12 @@
             "value" : "メニューからコンポーネントを「アクティブなコンポーネント」にドラッグすると、ステータスバーに追加できます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메뉴에서 구성요소를 활성 구성요소로 드래그하여 상태 막대에 추가하십시오."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安定した配置よりも詰め込み配置を優先"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "안정적인 위치보다 빽빽한 배치 우선"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "OK"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "アクティブなコンポーネント"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활성 구성요소"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "無効"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "꺼짐"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "値が空のコンポーネントを削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "값이 비어 있는 구성요소 제거"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "ステータスバーとターミナルの間に区切り線を描画"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "상태 막대와 터미널 사이에 구분선 그리기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自動"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동"
           }
         },
         "pt-BR" : {
@@ -359,6 +407,12 @@
             "value" : "ステータスバーコンポーネントメニュー"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "상태 막대 구성요소 메뉴"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "詳細…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "고급…"
           }
         },
         "pt-BR" : {
@@ -443,6 +503,12 @@
             "value" : "詰め込み配置アルゴリズムでは、一度に表示できるステータスバーコンポーネントの数が増えますが、位置が変動しやすくなります。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 自動レインボー:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 자동 무지개:"
           }
         },
         "pt-BR" : {
@@ -527,6 +599,12 @@
             "value" : "ここにフォント名が表示されます"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서체 이름이 여기에 표시됩니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ダークカラー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "어두운 색상"
           }
         },
         "pt-BR" : {
@@ -611,6 +695,12 @@
             "value" : "変更"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -651,6 +741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "デフォルトのテキストカラー:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기본 텍스트 색상:"
           }
         },
         "pt-BR" : {
@@ -695,6 +791,12 @@
             "value" : "コンポーネントを設定"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구성요소 구성"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +837,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "詰め込み配置アルゴリズムでは、一度に表示できるステータスバーコンポーネントの数が増えますが、位置が変動しやすくなります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
           }
         },
         "pt-BR" : {
@@ -779,6 +887,12 @@
             "value" : "区切り線の色:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구분선 색상:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -819,6 +933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キャンセル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
           }
         },
         "pt-BR" : {
@@ -863,6 +983,12 @@
             "value" : "ライトカラー"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "밝은 색상"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +1029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "フォント:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서체:"
           }
         },
         "pt-BR" : {
@@ -947,6 +1079,12 @@
             "value" : "背景色:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "배경 색상:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -989,6 +1127,12 @@
             "value" : "OK"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1029,6 +1173,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ステータスバーとターミナルの内容の間に細い線を描画します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "상태 막대와 터미널 내용 사이에 가는 선을 그립니다."
           }
         },
         "pt-BR" : {

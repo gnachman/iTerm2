@@ -23,6 +23,12 @@
             "value": "書き出す…"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내보내기…"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "現在"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현재"
           }
         },
         "pt-BR": {
@@ -107,6 +119,12 @@
             "value": "インスタントリプレイコントロール"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "즉시 재생 제어"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -147,6 +165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "キャンセル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "취소"
           }
         },
         "pt-BR": {
@@ -191,6 +215,12 @@
             "value": "ライブビュー"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실시간 보기"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +261,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "時間"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시간"
           }
         },
         "pt-BR": {

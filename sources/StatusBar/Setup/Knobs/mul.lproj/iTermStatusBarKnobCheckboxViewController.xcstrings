@@ -23,6 +23,12 @@
             "value": "チェック"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "체크"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",

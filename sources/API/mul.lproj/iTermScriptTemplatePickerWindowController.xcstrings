@@ -23,6 +23,12 @@
             "value" : "iterm2ライブラリ以外に依存関係のないシンプルなスクリプトです。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iterm2 라이브러리 외에는 종속성이 없는 간단한 스크립트입니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -60,6 +66,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -107,6 +119,12 @@
             "value" : "基本"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기본"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -144,6 +162,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -191,6 +215,12 @@
             "value" : "長時間実行デーモン"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "장기 실행 데몬"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "シンプル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "단순"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "キャンセル"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "アクションを実行して終了するシンプルなスクリプトには、このテンプレートを選択してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동작을 수행하고 종료하는 간단한 스크립트에는 이 템플릿을 선택하십시오."
           }
         },
         "pt-BR" : {
@@ -359,6 +407,12 @@
             "value" : "iterm2ライブラリ以外のPyPIパッケージに依存するスクリプトです。このスクリプト専用のpyenvが作成されます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iterm2 라이브러리 이외의 PyPI 패키지에 의존하는 스크립트입니다. 이 스크립트 전용 pyenv가 생성됩니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +450,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -443,6 +503,12 @@
             "value" : "スクリプトテンプレートを選択:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크립트 템플릿 선택:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "フル環境"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 환경"
           }
         },
         "pt-BR" : {
@@ -527,6 +599,12 @@
             "value" : "実行し続けて通知に応答するスクリプトには、このテンプレートを選択してください。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속 실행되면서 알림에 응답하는 스크립트에는 이 템플릿을 선택하십시오."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -564,6 +642,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -609,6 +693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python環境を選択:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python 환경 선택:"
           }
         },
         "pt-BR" : {
