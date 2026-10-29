@@ -633,6 +633,12 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
         @"NSAutomaticCapitalizationEnabled": @NO,
         @"NSAutomaticQuoteSubstitutionEnabled": @NO,
         @"NSAutomaticDashSubstitutionEnabled": @NO,
+
+        // On macOS 26 AppKit donates every distinct window and tab title to CoreSpotlight, which
+        // runs each one through on-device text embedding. Terminal titles change constantly (job
+        // names, session status), so this burns a lot of CPU in mediaanalysisd and
+        // spotlightknowledged. AppKit reads this once at launch. Issue 13066.
+        @"NSEnableWindowTabIndexing": @NO,
     };
 }
 
