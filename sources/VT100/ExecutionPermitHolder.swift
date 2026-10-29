@@ -52,6 +52,13 @@ final class ExecutionPermitHolder {
     // Executor's queue. When the current run began (nil while stopped, as for a join or while
     // parked), and how long it had run in this slice before that.
     private var runStart: UInt64?
+    // Returns monotonic nanoseconds. Injectable for tests.
+    private let now: () -> UInt64
+    // Executor's queue. Reading the clock for every token cost about 2% of token execution, so the
+    // slice is checked only every tokensPerClockCheck tokens. A slice can then run a few tokens
+    // long, which takes microseconds. 0 means check at the next token, as after the clock restarts.
+    private var tokensUntilClockCheck = 0
+    private static let tokensPerClockCheck = 8
     private var ranBeforeJoin: TimeInterval = 0
     private static let timeSlice = max(0.0005, iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
 
@@ -68,7 +75,9 @@ final class ExecutionPermitHolder {
     init(permits: ExecutionPermits,
          queue: DispatchQueue,
          isPaused: @escaping () -> Bool,
-         execute: @escaping () -> Void) {
+         execute: @escaping () -> Void,
+         now: @escaping () -> UInt64 = monotonicNanoseconds) {
+        self.now = now
         self.permits = permits
         self.queue = queue
         self.execute = execute
@@ -77,7 +86,7 @@ final class ExecutionPermitHolder {
             // This must not strongly reference the holder or the executor, which own the client.
             // deinit gives up the permit, so a wake that reaches a dead executor isn't lost.
             if TokenExecutionStats.enabled {
-                iTermAtomicInt64Set(wokenAt, Int64(monotonicNanoseconds()))
+                iTermAtomicInt64Set(wokenAt, Int64(now()))
             }
             queue.async(execute: execute)
             return true
@@ -129,7 +138,8 @@ final class ExecutionPermitHolder {
             // The clock stops for a join and while parked. Restart it, or the slice would never
             // end and the time run would never be charged.
             if runStart == nil {
-                runStart = monotonicNanoseconds()
+                runStart = now()
+                tokensUntilClockCheck = 0
             }
             return .execute
         }
@@ -143,13 +153,14 @@ final class ExecutionPermitHolder {
         if stats != nil {
             let woken = iTermAtomicInt64GetAndReset(wokenAt)
             if woken != 0 {
-                stats?.handoffGap = secondsSince(UInt64(woken))
+                stats?.handoffGap = elapsed(since: UInt64(woken))
             }
         }
         holding = true
         inLine = false
         if runStart == nil {
-            runStart = monotonicNanoseconds()
+            runStart = now()
+            tokensUntilClockCheck = 0
         }
         return .execute
     }
@@ -160,13 +171,18 @@ final class ExecutionPermitHolder {
         guard holding, !parked, let runStart else {
             return false
         }
-        let ran = ranBeforeJoin + secondsSince(runStart)
+        if tokensUntilClockCheck > 0 {
+            tokensUntilClockCheck -= 1
+            return false
+        }
+        tokensUntilClockCheck = Self.tokensPerClockCheck - 1
+        let ran = ranBeforeJoin + elapsed(since: runStart)
         if ran < Self.timeSlice {
             return false
         }
         // Charge for the slice and start a new one, whether or not anyone is owed the permit.
         ranBeforeJoin = 0
-        self.runStart = monotonicNanoseconds()
+        self.runStart = now()
         let shouldYield = timing { permits.checkpoint(client, ran: ran) }
         if shouldYield {
             stats?.yielded = true
@@ -199,7 +215,7 @@ final class ExecutionPermitHolder {
         if yielded {
             // Owed to a waiter. Give it up even when paused for a join, or the waiter would wait
             // for this session's next slice.
-            let ran = ranBeforeJoin + secondsSince(runStart)
+            let ran = ranBeforeJoin + elapsed(since: runStart)
             ranBeforeJoin = 0
             runStart = nil
             let keeps = timing {
@@ -218,7 +234,7 @@ final class ExecutionPermitHolder {
             return
         }
         // Keep the permit, stopping the clock until execution resumes.
-        ranBeforeJoin += secondsSince(runStart)
+        ranBeforeJoin += elapsed(since: runStart)
         runStart = nil
         if !isPaused {
             queue.async(execute: execute)
@@ -245,7 +261,7 @@ final class ExecutionPermitHolder {
         guard !parked else {
             return
         }
-        let ran = ranBeforeJoin + secondsSince(runStart)
+        let ran = ranBeforeJoin + elapsed(since: runStart)
         runStart = nil
         if timing({ permits.park(client, uncharged: ran) }) {
             parked = true
@@ -263,7 +279,7 @@ final class ExecutionPermitHolder {
         guard holding || inLine else {
             return
         }
-        let ran = holding ? ranBeforeJoin + secondsSince(runStart) : 0
+        let ran = holding ? ranBeforeJoin + elapsed(since: runStart) : 0
         holding = false
         inLine = false
         ranBeforeJoin = 0
@@ -274,14 +290,21 @@ final class ExecutionPermitHolder {
         }
     }
 
+    private func elapsed(since start: UInt64?) -> TimeInterval {
+        guard let start else {
+            return 0
+        }
+        return TimeInterval(now() &- start) / TimeInterval(NSEC_PER_SEC)
+    }
+
     // Runs a call into ExecutionPermits, timing it for TokenExecutionStats.
     private func timing<T>(_ closure: () -> T) -> T {
         guard stats != nil else {
             return closure()
         }
-        let start = monotonicNanoseconds()
+        let start = now()
         defer {
-            stats?.permits += secondsSince(start)
+            stats?.permits += elapsed(since: start)
         }
         return closure()
     }

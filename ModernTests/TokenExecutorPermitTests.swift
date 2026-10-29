@@ -558,4 +558,26 @@ final class TokenExecutorPermitTests: XCTestCase {
         waitUntil("both ran") { a.delegate.tokensSeen == 100 && b.delegate.tokensSeen == 10 }
         XCTAssertEqual(aTokensWhenBStarted, 1)
     }
+
+    // Reading the clock costs a noticeable share of execution when done for every token, so a
+    // holder checks whether its slice is over only every few tokens, starting with the first.
+    func testSliceClockIsReadOnlyEveryFewTokens() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        var reads = 0
+        let holder = ExecutionPermitHolder(permits: permits,
+                                           queue: DispatchQueue(label: "test"),
+                                           isPaused: { false },
+                                           execute: {},
+                                           now: {
+            reads += 1
+            return UInt64(reads)
+        })
+        XCTAssertEqual(holder.decide(hasTokens: true, willQueueTokens: false, isPaused: false, isPausedOnlyForJoins: false),
+                       .execute)
+        let before = reads
+        for _ in 0..<80 {
+            XCTAssertFalse(holder.sliceIsOverAndShouldYield())
+        }
+        XCTAssertEqual(reads - before, 10)
+    }
 }
