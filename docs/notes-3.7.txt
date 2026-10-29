@@ -663,6 +663,11 @@ Improvements:
   takes effect at once instead of after minutes
   of buffered output on a slow link, and typing
   stays responsive while output streams.
+- On macOS 26, iTerm2 no longer lets macOS index
+  its window and tab titles for search. Titles
+  change constantly in a terminal, and indexing
+  each one used a lot of CPU in Spotlight’s
+  background processes.
 
 Bug Fixes:
 - If iTerm2 quits unexpectedly while tmux
