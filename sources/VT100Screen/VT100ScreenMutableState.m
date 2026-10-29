@@ -66,6 +66,8 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 @interface VT100ScreenTokenExecutorUpdate()
 
 @property (nonatomic, readonly) BOOL dirty;
+// Synchronized like the other fields: the mutation queue sets it, and fork reads it on the main
+// thread.
 @property (nonatomic, readwrite) NSInteger estimatedThroughput;
 
 - (void)addBytesExecutedTotal:(NSInteger)total excludingInBandSignaling:(NSInteger)excludingInBandSignaling;
@@ -83,6 +85,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     BOOL _echoProbeShouldSendPassword;
     _Atomic int _executorUpdatePending;
     VT100ScreenTokenExecutorUpdate *_executorUpdate;
+    // Only for sessions on the shared queue; see executorUpdateClient.
     iTermPeriodicScheduler *_executorUpdateScheduler;
     BOOL _screenNeedsUpdate;
     BOOL _alertOnNextMark;
@@ -171,10 +174,13 @@ static BOOL sOSC7DisabledWarningShown;
         _queue = queue;
         _joinState = [iTermGCD joinStateForQueue:queue];
         _executorUpdate = [[VT100ScreenTokenExecutorUpdate alloc] init];
-        __weak __typeof(self) weakSelf = self;
-        _executorUpdateScheduler = [[iTermPeriodicScheduler alloc] initWithQueue:queue period:1 / 120.0 block:^{
-            [weakSelf updateExecutor];
-        }];
+        _ownsQueue = ownsQueue;
+        if (!ownsQueue) {
+            __weak __typeof(self) weakSelf = self;
+            _executorUpdateScheduler = [[iTermPeriodicScheduler alloc] initWithQueue:queue period:1 / 120.0 block:^{
+                [weakSelf updateExecutor];
+            }];
+        }
         _derivativeIntervalTree = [[IntervalTree alloc] init];
         _derivativeSavedIntervalTree = [[IntervalTree alloc] init];
         self.intervalTree =
@@ -268,6 +274,11 @@ static BOOL sOSC7DisabledWarningShown;
     } name:@"mutateColorMap"];
 }
 
+- (VT100ScreenTokenExecutorUpdate *)forkExecutorUpdate {
+    return [_executorUpdate fork];
+}
+
+// Sessions on the shared queue only.
 - (void)updateExecutor {
     VT100ScreenTokenExecutorUpdate *update = [_executorUpdate fork];
 
@@ -8708,7 +8719,12 @@ launchCoprocessWithCommand:(NSString *)command
     [_executorUpdate addBytesExecutedTotal:lengthTotal
                   excludingInBandSignaling:lengthExcludingInBandSignaling];
     _executorUpdate.estimatedThroughput = throughput;
-    [_executorUpdateScheduler markNeedsUpdate];
+    iTermExecutorUpdateTickerClient *client = self.executorUpdateClient;
+    if (client) {
+        [client markNeedsUpdate];
+    } else {
+        [_executorUpdateScheduler markNeedsUpdate];
+    }
 }
 
 - (NSString *)tokenExecutorCursorCoordString {
@@ -8922,6 +8938,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 
 @implementation VT100ScreenTokenExecutorUpdate {
+    NSInteger _estimatedThroughput;
     NSInteger _numberOfBytesExecutedTotal;
     NSInteger _numberOfBytesExecutedExcludingInBandSignaling;
     BOOL _inputHandled;
@@ -8932,6 +8949,18 @@ launchCoprocessWithCommand:(NSString *)command
         _dirty = YES;
         _numberOfBytesExecutedTotal += total;
         _numberOfBytesExecutedExcludingInBandSignaling += excludingInBandSignaling;
+    }
+}
+
+- (NSInteger)estimatedThroughput {
+    @synchronized (self) {
+        return _estimatedThroughput;
+    }
+}
+
+- (void)setEstimatedThroughput:(NSInteger)estimatedThroughput {
+    @synchronized (self) {
+        _estimatedThroughput = estimatedThroughput;
     }
 }
 

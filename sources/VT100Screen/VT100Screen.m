@@ -57,6 +57,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 @implementation VT100Screen {
     // Read on the main thread, added to on the read thread.
     _Atomic(long long) _bytesReceived;
+    iTermExecutorUpdateTickerClient *_executorUpdateClient;
     // Used for recording instant replay.
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
@@ -89,6 +90,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (self) {
         _mutableState = queue ? [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self queue:queue ownsQueue:ownsQueue]
                               : [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
+        if (_mutableState.ownsQueue) {
+            // Sessions on the shared queue keep sending updates with their own timers.
+            __weak __typeof(self) weakSelf = self;
+            _executorUpdateClient = [iTermExecutorUpdateTicker.shared makeClientWithFire:^{
+                [weakSelf deliverExecutorUpdate];
+            }];
+            _mutableState.executorUpdateClient = _executorUpdateClient;
+        }
         _animatedLines = [[NSMutableIndexSet alloc] init];
         _state = [_mutableState copy];
         _mutableState.mainThreadCopy = _state;
@@ -2293,6 +2302,18 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 #pragma mark - VT100ScreenSideEffectPerforming
 
 // THis is accessed by both main and mutation queues and it must be atomic.
+// Main queue, called by the shared executor update ticker. Not a side effect, since the delegate
+// might join.
+- (void)deliverExecutorUpdate {
+    [self.delegate screenExecutorDidUpdate:[_mutableState forkExecutorUpdate]];
+}
+
+// Main queue, when the user presses a key. The executor update that reports the echo goes to the
+// main thread right away rather than waiting out the throttle, so the redraw isn't delayed.
+- (void)expediteExecutorUpdate {
+    [_executorUpdateClient expedite];
+}
+
 - (id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate {
     return self.delegate;
 }

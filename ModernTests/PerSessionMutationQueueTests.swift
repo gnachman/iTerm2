@@ -85,6 +85,15 @@ final class PerSessionMutationQueueTests: XCTestCase {
         XCTAssertEqual(usesShared, !TaskNotifier.usesTaskIOMonitors())
     }
 
+    // Executor updates go through the shared ticker only for sessions with queues of their own.
+    // Sessions on the shared queue keep their own timers, as before per-session queues existed.
+    func testOnlySessionsWithOwnQueuesUseTheSharedTicker() {
+        let own = makeScreen(queue: iTermGCD.newMutationQueue())
+        let shared = makeScreen(queue: iTermGCD.mutationQueue())
+        XCTAssertNotNil(mutableState(of: own).executorUpdateClient)
+        XCTAssertNil(mutableState(of: shared).executorUpdateClient)
+    }
+
     // Like VT100ScreenTests.testReentrantSafeJoinActuallyJoins, on a queue of its own.
     func testReentrantSafeJoinActuallyJoinsOnOwnQueue() {
         let screen = makeScreen(queue: iTermGCD.newMutationQueue())

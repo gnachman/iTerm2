@@ -12274,6 +12274,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const BOOL accept = [self shouldAcceptKeyDownEvent:event];
     if (accept) {
         [_cadenceController didHandleKeystroke];
+        [_screen expediteExecutorUpdate];
     }
     return accept;
 }

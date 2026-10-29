@@ -68,6 +68,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // for this session alone (from +[iTermGCD newMutationQueue]) or the queue every session shares.
 - (instancetype)initWithMutationQueue:(dispatch_queue_t)queue ownsQueue:(BOOL)ownsQueue;
 
+// Main queue. Call when the user presses a key, so the update reporting the echo isn't throttled.
+- (void)expediteExecutorUpdate;
+
 @property(nonatomic) BOOL terminalEnabled;
 @property(atomic, weak, nullable) id<VT100ScreenDelegate> delegate;
 @property(nonatomic, readonly) unsigned int maxScrollbackLines;

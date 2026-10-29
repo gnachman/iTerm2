@@ -13,6 +13,7 @@
 @class iTermByteBudget;
 @class iTermEchoProbe;
 @class iTermFramerFlowLedger;
+@class iTermExecutorUpdateTickerClient;
 @class iTermMutationQueueJoinState;
 @protocol iTermEchoProbeDelegate;
 @protocol iTermLargeContentProvider;
@@ -64,11 +65,21 @@ NS_ASSUME_NONNULL_BEGIN
 // that (a reattach reuses it). Tmux lines count against it, by their approximate length, from when
 // they are handed to the main queue until main has handled them.
 @property (atomic, strong, nullable) iTermByteBudget *tmuxInputBudget;
+// Set by VT100Screen once, when it creates this, if it owns its queue. Marked when tokens execute,
+// so the executor update (see -forkExecutorUpdate) gets to the main thread. Sessions that share the
+// queue send updates with a timer of their own instead, as they always have.
+@property (atomic, strong, nullable) iTermExecutorUpdateTickerClient *executorUpdateClient;
+// Whether this session's queue is its own rather than the one every session shares.
+@property (nonatomic, readonly) BOOL ownsQueue;
 @property (nonatomic) BOOL exited;
 @property (nonatomic, strong, readonly, nullable) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
 @property (nonatomic, weak, nullable) id<iTermEchoProbeDelegate> echoProbeDelegate;
 @property (nullable, nonatomic, strong) VT100ScreenState *mainThreadCopy;
+
+// Any queue. Returns what executed since the last call (bytes, estimated throughput) and starts
+// over.
+- (VT100ScreenTokenExecutorUpdate *)forkExecutorUpdate;
 
 // Saved-tree RC pool: distinct guid from the primary tree so resize /
 // fold / porthole notifications can target only the right tree's
