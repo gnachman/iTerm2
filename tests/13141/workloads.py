@@ -51,12 +51,11 @@ def generate(name, path, size):
     combining = ["é", "ä", "ô", "ñ"]
 
     def line_of(length):
-        return "".join(rng.choice(letters) for _ in range(length))
+        return "".join(rng.choices(letters, k=length))
 
     chunks = []
     written = 0
     n = 1
-    row = 0
     while written < size:
         if name == "short":
             text = "".join(f"{i}\n" for i in range(n, n + 10000))
@@ -94,7 +93,6 @@ def generate(name, path, size):
                 for r in range(1, 25):
                     rows.append(f"\x1b[{r};1H{line_of(79)}")
                 frames.append("\x1b[H" + "".join(rows))
-                row += 1
             text = "".join(frames)
         else:
             raise SystemExit(f"Unknown workload {name}")
