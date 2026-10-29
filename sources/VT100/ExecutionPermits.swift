@@ -71,6 +71,12 @@ final class ExecutionPermits: NSObject {
         // the permit charges it.
         fileprivate let unchargedNanoseconds = iTermAtomicInt64Create()
 
+        // Guarded by the mutex. When the client last got in line.
+        fileprivate var waitingSince = UInt64(0)
+        // When a running holder was last heard from (it got its permit, reached a checkpoint, or
+        // resumed). For the health check.
+        fileprivate let lastHeardFrom = iTermAtomicInt64Create()
+
         fileprivate var isParked: Bool {
             return iTermAtomicInt64Get(parking) == Parking.idle.rawValue
         }
@@ -85,6 +91,7 @@ final class ExecutionPermits: NSObject {
             iTermAtomicInt64Free(visible)
             iTermAtomicInt64Free(parking)
             iTermAtomicInt64Free(unchargedNanoseconds)
+            iTermAtomicInt64Free(lastHeardFrom)
         }
     }
 
@@ -112,11 +119,24 @@ final class ExecutionPermits: NSObject {
     private let waiterCount = iTermAtomicInt64Create()
     private var floor = 0.0
     private var nextWaitingSequence = 0
+    private let now: () -> UInt64
+    // Runs checkHealth() once a second while anyone waits or holds a running permit. Nil if the
+    // check isn't periodic (tests call it directly). Guarded by the mutex.
+    private let healthTimer: DispatchSourceTimer?
+    private var healthTimerRunning = false
+    private static let strandedWaiterThreshold = UInt64(NSEC_PER_SEC)
+    private static let silentHolderThreshold = 5 * UInt64(NSEC_PER_SEC)
+    // A check this long after the previous one means the process was stopped (as in a debugger),
+    // not that wakeups were lost.
+    private static let lateCheckThreshold = 2 * UInt64(NSEC_PER_SEC)
+    // When checkHealth() last ran, or 0 if the health timer stopped since. Guarded by the mutex.
+    private var lastHealthCheck = UInt64(0)
 
     // The shared instance used by sessions with mutation queues of their own.
     static let shared: ExecutionPermits = {
         return ExecutionPermits(capacity: configuredCapacity,
-                                visibleWeight: iTermAdvancedSettingsModel.visibleSessionExecutionWeight())
+                                visibleWeight: iTermAdvancedSettingsModel.visibleSessionExecutionWeight(),
+                                checksHealthPeriodically: true)
     }()
 
     private static var cores: Int {
@@ -165,13 +185,44 @@ final class ExecutionPermits: NSObject {
         return clampedCapacity(value, cores: cores)
     }
 
-    init(capacity: Int, visibleWeight: Double) {
+    // Called by the health check, without the mutex held, with a description of a state that is
+    // never expected (it means a bug). By default debug builds crash; release builds rely on the
+    // repair and the debug log.
+    private let onUnexpectedState: (String) -> Void
+
+    static func crashInDebugBuilds(_ message: String) {
+#if DEBUG
+        it_fatalError(message)
+#endif
+    }
+
+    init(capacity: Int,
+         visibleWeight: Double,
+         now: @escaping () -> UInt64 = monotonicNanoseconds,
+         checksHealthPeriodically: Bool = false,
+         onUnexpectedState: @escaping (String) -> Void = ExecutionPermits.crashInDebugBuilds) {
         _capacity = max(1, capacity)
         self.visibleWeight = max(1, visibleWeight)
+        self.now = now
+        self.onUnexpectedState = onUnexpectedState
+        healthTimer = checksHealthPeriodically ? DispatchSource.makeTimerSource(queue: DispatchQueue(label: "com.iterm2.execution-permits-health", qos: .utility)) : nil
         super.init()
+        if let healthTimer {
+            healthTimer.schedule(deadline: .now() + 1, repeating: 1, leeway: .milliseconds(500))
+            healthTimer.setEventHandler { [weak self] in
+                self?.checkHealth()
+            }
+        }
     }
 
     deinit {
+        if let healthTimer {
+            // A dispatch source must not be released while inactive or suspended.
+            if !healthTimerRunning {
+                healthTimer.resume()
+            }
+            healthTimer.cancel()
+        }
         iTermAtomicInt64Free(waiterCount)
     }
 
@@ -240,6 +291,8 @@ final class ExecutionPermits: NSObject {
                 return false
             }
             it_assert(!client.isParked, "Checkpoint with a parked permit")
+            iTermAtomicInt64Set(client.lastHeardFrom, Int64(now()))
+            startHealthTimerIfNeeded()
             charge(client, ran: ran)
             // Over the cap (it was lowered), idle permits go first, so only a running holder that is
             // really over the cap stops.
@@ -352,7 +405,9 @@ final class ExecutionPermits: NSObject {
         it_assert(!client.isParked, "Holding a permit while parked")
         client.state = .holding
         client.weight = iTermAtomicInt64Get(client.visible) != 0 ? visibleWeight : 1
+        iTermAtomicInt64Set(client.lastHeardFrom, Int64(now()))
         holders.append(client)
+        startHealthTimerIfNeeded()
     }
 
     private func unhold(_ client: Client) {
@@ -368,9 +423,11 @@ final class ExecutionPermits: NSObject {
         it_assert(client.state == .idle || client.state == .holding, "Waiting in line in state \(client.state)")
         it_assert(!waiters.contains { $0 === client }, "Client is already in line")
         client.state = .waiting
+        client.waitingSince = now()
         client.waitingSequence = nextWaitingSequence
         nextWaitingSequence += 1
         waiters.append(client)
+        startHealthTimerIfNeeded()
     }
 
     private func charge(_ client: Client, ran: TimeInterval) {
@@ -463,6 +520,7 @@ final class ExecutionPermits: NSObject {
     // it (charging the time run); the client must acquire a permit again.
     func resume(_ client: Client) -> Bool {
         if iTermAtomicInt64CompareAndSwap(client.parking, Parking.idle.rawValue, Parking.running.rawValue) {
+            iTermAtomicInt64Set(client.lastHeardFrom, Int64(now()))
             return true
         }
         it_assert(iTermAtomicInt64Get(client.parking) == Parking.taken.rawValue, "Resuming a permit that isn't parked")
@@ -481,6 +539,79 @@ final class ExecutionPermits: NSObject {
             return true
         }
         return false
+    }
+
+    // MARK: - Health check
+
+    // Any thread. A safety net for lost wakeups, which would otherwise leave a session frozen with
+    // no sign of why. Hands free and idle permits to waiters that can run and have been in line for
+    // over a second, and wakes running holders that haven't been heard from for five seconds (one
+    // that is really running reaches a checkpoint every slice). Waking a session that didn't need it
+    // only costs an extra execute(). Either repair is logged, since it suggests a bug. A silent
+    // holder is also reported to onUnexpectedState (debug builds crash), except in two cases that
+    // aren't bugs: a holder paused for a join is skipped (it reaches no checkpoint until the join
+    // ends, which schedules it), and a check that ran late means the process was stopped, so every
+    // holder looks silent. A waiter can look stranded without a bug too: if its queue is busy when
+    // its pause ends, its next execute() takes a while to ask for the free permit.
+    func checkHealth() {
+        var unexpected = [String]()
+        let woken = mutex.sync { () -> [Client] in
+            let now = self.now()
+            let ranLate = lastHealthCheck != 0 && now &- lastHealthCheck > Self.lateCheckThreshold
+            lastHealthCheck = now
+            var woken = [Client]()
+            let stranded = waiters.filter { !$0.isPaused() && now &- $0.waitingSince > Self.strandedWaiterThreshold }
+            if !stranded.isEmpty {
+                let handed = handOff().woken
+                if !handed.isEmpty {
+                    RLog("Execution permits: handed \(handed.count) permits to waiters, \(stranded.count) of which had waited over a second. A wakeup may have been lost. \(stateDescriptionLocked)")
+                }
+                woken += handed
+            }
+            for holder in holders where !holder.isParked && !holder.isPaused() {
+                let last = UInt64(iTermAtomicInt64Get(holder.lastHeardFrom))
+                if now &- last > Self.silentHolderThreshold {
+                    if ranLate {
+                        RLog("Execution permits: woke a holder not heard from for \(Double(now &- last) / 1e9)s, after a health check that ran late (the process was probably stopped). \(stateDescriptionLocked)")
+                    } else {
+                        let message = "Execution permits: woke a holder not heard from for \(Double(now &- last) / 1e9)s. A wakeup may have been lost. \(stateDescriptionLocked)"
+                        RLog("\(message)")
+                        unexpected.append(message)
+                    }
+                    woken.append(holder)
+                }
+                if ranLate || now &- last > Self.silentHolderThreshold {
+                    // Start over, so the next check judges only time after this one.
+                    iTermAtomicInt64Set(holder.lastHeardFrom, Int64(now))
+                }
+            }
+            if let healthTimer, healthTimerRunning, waiters.isEmpty, !holders.contains(where: { !$0.isParked }) {
+                // Nothing that could be stuck. Parked holders have nothing to run.
+                healthTimer.suspend()
+                healthTimerRunning = false
+                // The next check after the timer restarts isn't late.
+                lastHealthCheck = 0
+            }
+            return woken
+        }
+        for message in unexpected {
+            onUnexpectedState(message)
+        }
+        wake(woken)
+    }
+
+    private func startHealthTimerIfNeeded() {
+        mutex.assertOwned()
+        guard let healthTimer, !healthTimerRunning else {
+            return
+        }
+        healthTimerRunning = true
+        healthTimer.resume()
+    }
+
+    // With the mutex held.
+    private var stateDescriptionLocked: String {
+        return "capacity=\(_capacity) holders=\(holders.count) waiters=\(waiters.count) floor=\(floor)"
     }
 
     // MARK: - Testing

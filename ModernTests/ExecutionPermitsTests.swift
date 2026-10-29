@@ -615,6 +615,169 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertEqual(permits.idleHolderCountForTesting, 0)
     }
 
+    // MARK: - Health check
+
+    // Only moves when the test moves it.
+    private final class FakeClock {
+        var now = UInt64(1_000_000_000)
+        func advance(by seconds: TimeInterval) {
+            now += UInt64(seconds * 1e9)
+        }
+    }
+
+    // What the health check reported as never expected (debug builds crash instead).
+    private var unexpected = [String]()
+
+    private func makePermits(capacity: Int, clock: FakeClock) -> ExecutionPermits {
+        return ExecutionPermits(capacity: capacity,
+                                visibleWeight: 4,
+                                now: { clock.now },
+                                onUnexpectedState: { [weak self] in self?.unexpected.append($0) })
+    }
+
+    // A waiter that can run, left in line beside a free permit (as if a wakeup were lost), gets the
+    // permit from the health check.
+    func testHealthCheckHandsAFreePermitToAStrandedWaiter() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        b.paused = true
+        permits.release(a.client, ran: 0, hasMoreWork: false)
+        // b's pause ends, but it never asks again.
+        b.paused = false
+        clock.advance(by: 2)
+        permits.checkHealth()
+        XCTAssertEqual(b.wakes, 1)
+        XCTAssertTrue(permits.acquire(b.client))
+        // A waiter can look stranded without a bug (its queue was busy when its pause ended), so
+        // this isn't reported as unexpected.
+        XCTAssertTrue(unexpected.isEmpty)
+    }
+
+    // A waiter that only just got in line is left alone.
+    func testHealthCheckLeavesAWaiterThatJustStartedWaiting() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        b.paused = true
+        permits.release(a.client, ran: 0, hasMoreWork: false)
+        b.paused = false
+        clock.advance(by: 0.5)
+        permits.checkHealth()
+        XCTAssertEqual(b.wakes, 0)
+    }
+
+    // A holder that hasn't been heard from for a long time (its wakeup may have been lost) is
+    // reported as never expected (debug builds crash), and woken again, once.
+    func testHealthCheckWakesAHolderNotHeardFrom() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        clock.advance(by: 6)
+        permits.checkHealth()
+        XCTAssertEqual(a.wakes, 1)
+        XCTAssertEqual(unexpected.count, 1)
+        permits.checkHealth()
+        XCTAssertEqual(a.wakes, 1)
+        XCTAssertEqual(unexpected.count, 1)
+    }
+
+    // A holder paused for a join keeps its running permit and reaches no checkpoint until the join
+    // ends, which schedules it. However long the join, that isn't a lost wakeup.
+    func testHealthCheckLeavesAHolderPausedForAJoin() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        a.paused = true
+        clock.advance(by: 6)
+        permits.checkHealth()
+        XCTAssertTrue(unexpected.isEmpty)
+        XCTAssertEqual(a.wakes, 0)
+    }
+
+    // A check that runs well after its period means the process was stopped (as in a debugger), so
+    // every holder looks silent. It wakes them in case, but doesn't report them, and starts over.
+    func testHealthCheckThatRanLateDoesNotReportSilentHolders() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        permits.checkHealth()
+        clock.advance(by: 6)
+        permits.checkHealth()
+        XCTAssertTrue(unexpected.isEmpty)
+        XCTAssertEqual(a.wakes, 1)
+
+        clock.advance(by: 1)
+        permits.checkHealth()
+        XCTAssertTrue(unexpected.isEmpty)
+        XCTAssertEqual(a.wakes, 1)
+    }
+
+    // Checks that run on time still report a holder that stays silent.
+    func testHealthCheckOnTimeReportsASilentHolder() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        for _ in 0..<6 {
+            permits.checkHealth()
+            clock.advance(by: 1)
+        }
+        permits.checkHealth()
+        XCTAssertEqual(unexpected.count, 1)
+        XCTAssertEqual(a.wakes, 1)
+    }
+
+    // A running holder checks in at every checkpoint, so it isn't woken.
+    func testHealthCheckLeavesAHolderThatChecksIn() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        clock.advance(by: 3)
+        XCTAssertFalse(permits.checkpoint(a.client, ran: 0.005))
+        clock.advance(by: 3)
+        permits.checkHealth()
+        XCTAssertEqual(a.wakes, 0)
+    }
+
+    // A parked holder has nothing to run, so it isn't woken however long it has been idle.
+    func testHealthCheckLeavesParkedHolders() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.park(a.client, uncharged: 0))
+        clock.advance(by: 60)
+        permits.checkHealth()
+        XCTAssertEqual(a.wakes, 0)
+    }
+
+    // An instance that checks its health periodically can be freed whether or not its timer ever
+    // ran (a dispatch source released while inactive or suspended crashes).
+    func testFreeingAnInstanceThatChecksHealthPeriodically() {
+        autoreleasepool {
+            _ = ExecutionPermits(capacity: 1, visibleWeight: 4, checksHealthPeriodically: true)
+        }
+        autoreleasepool {
+            let permits = ExecutionPermits(capacity: 1, visibleWeight: 4, checksHealthPeriodically: true)
+            let a = FakeSession("a", permits: permits)
+            XCTAssertTrue(permits.acquire(a.client))
+            XCTAssertTrue(permits.park(a.client, uncharged: 0))
+            permits.checkHealth()
+            permits.remove(a.client)
+        }
+    }
+
     // MARK: - Closing
 
     func testRemovingAHolderHandsItsPermitOn() {
