@@ -248,6 +248,11 @@ void TurnOnDebugLoggingSilently(void);
 BOOL TurnOffDebugLoggingSilently(void);
 void TurnOnDebugLoggingAutomatically(void);
 
+// Any thread. Adds `provider`'s description of a subsystem's state, under `name`, to the header
+// and footer of debug logs. The provider is called with the debug log lock held, so it must not
+// log, and must not take a lock that is held anywhere logging happens.
+void iTermRegisterDebugLogStateProvider(NSString *name, NSString *(^provider)(void));
+
 void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) NS_FORMAT_FUNCTION(2,3);
 void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 

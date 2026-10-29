@@ -95,6 +95,36 @@ static NSString *iTermOSVersionInfo(void) {
     return value ?: @"(nil)";
 }
 
+static NSMutableDictionary<NSString *, NSString *(^)(void)> *DebugLogStateProviders(void) {
+    static NSMutableDictionary<NSString *, NSString *(^)(void)> *providers;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        providers = [NSMutableDictionary dictionary];
+    });
+    return providers;
+}
+
+void iTermRegisterDebugLogStateProvider(NSString *name, NSString *(^provider)(void)) {
+    NSMutableDictionary<NSString *, NSString *(^)(void)> *providers = DebugLogStateProviders();
+    @synchronized (providers) {
+        providers[name] = [provider copy];
+    }
+}
+
+// The registered providers' descriptions, sorted by name.
+static NSString *DebugLogStateString(void) {
+    NSMutableDictionary<NSString *, NSString *(^)(void)> *providers = DebugLogStateProviders();
+    NSDictionary<NSString *, NSString *(^)(void)> *copy;
+    @synchronized (providers) {
+        copy = [providers copy];
+    }
+    NSMutableString *result = [NSMutableString string];
+    for (NSString *name in [copy.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+        [result appendFormat:@"%@:\n%@\n", name, copy[name]()];
+    }
+    return result;
+}
+
 NSString *iTermDebugLogHeaderString(void) {
     NSMutableString *windows = [NSMutableString string];
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
@@ -114,6 +144,7 @@ NSString *iTermDebugLogHeaderString(void) {
                         @"Windows: %@\n"
                         @"Ordered windows: %@\n"
                         @"Pinned messages: %@\n"
+                        @"State: %@\n"
                         @"------ END HEADER ------\n\n",
 
                         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
@@ -125,7 +156,8 @@ NSString *iTermDebugLogHeaderString(void) {
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
                         [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
-                        pinnedMessages];
+                        pinnedMessages,
+                        DebugLogStateString()];
     return header;
 }
 
@@ -142,11 +174,13 @@ static NSString *DebugLogFooterString(void) {
           @"------ BEGIN FOOTER -----\n"
           @"Screens: %@\n"
           @"Windows: %@\n"
-          @"Ordered windows: %@\n",
+          @"Ordered windows: %@\n"
+          @"State: %@\n",
 
           iTermScreensInfo(),
           windows,
-          [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
+          [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
+          DebugLogStateString()];
 }
 
 // Replaces unpaired UTF-16 surrogates with U+FFFD. UTF-8 cannot represent a lone

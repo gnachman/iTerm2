@@ -762,6 +762,40 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertEqual(a.wakes, 0)
     }
 
+    // The state description shows each session's place: holding (running or parked) or waiting.
+    func testStateDescriptionListsHoldersAndWaiters() {
+        let permits = ExecutionPermits(capacity: 2, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        let c = FakeSession("c", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertTrue(permits.park(b.client, uncharged: 0))
+        // c takes b's idle permit; then a parks and c is the only runner. Make someone wait.
+        let d = FakeSession("d", permits: permits)
+        XCTAssertTrue(permits.acquire(c.client))
+        XCTAssertFalse(permits.acquire(d.client))
+        let description = permits.stateDescription
+        XCTAssertTrue(description.contains("capacity=2"), description)
+        XCTAssertTrue(description.contains("holding running"), description)
+        XCTAssertTrue(description.contains("waiting"), description)
+    }
+
+    // Waits of over a second are counted for the periodic summary in the debug log.
+    func testLongWaitsAreCounted() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        clock.advance(by: 2)
+        permits.release(a.client, ran: 0, hasMoreWork: false)
+        let (count, longest) = permits.longWaitsForTesting
+        XCTAssertEqual(count, 1)
+        XCTAssertEqual(longest, 2, accuracy: 1e-6)
+    }
+
     // An instance that checks its health periodically can be freed whether or not its timer ever
     // ran (a dispatch source released while inactive or suspended crashes).
     func testFreeingAnInstanceThatChecksHealthPeriodically() {

@@ -77,6 +77,26 @@ final class ExecutionPermits: NSObject {
         // resumed). For the health check.
         fileprivate let lastHeardFrom = iTermAtomicInt64Create()
 
+        // With the mutex held.
+        fileprivate func description(now: UInt64) -> String {
+            let id = String(UInt(bitPattern: ObjectIdentifier(self).hashValue), radix: 16)
+            var parts = ["client \(id)", "vtime=\(virtualTime)", "weight=\(weight)"]
+            switch state {
+            case .holding:
+                parts.append(isParked ? "holding parked" : "holding running")
+                let heardFrom = UInt64(iTermAtomicInt64Get(lastHeardFrom))
+                parts.append("heardFrom=\(Double(now &- heardFrom) / 1e9)s ago")
+            case .waiting:
+                parts.append("waiting for \(Double(now &- waitingSince) / 1e9)s")
+                parts.append(isPaused() ? "paused" : "runnable")
+            case .idle:
+                parts.append("idle")
+            case .removed:
+                parts.append("removed")
+            }
+            return parts.joined(separator: " ")
+        }
+
         fileprivate var isParked: Bool {
             return iTermAtomicInt64Get(parking) == Parking.idle.rawValue
         }
@@ -125,6 +145,12 @@ final class ExecutionPermits: NSObject {
     private let healthTimer: DispatchSourceTimer?
     private var healthTimerRunning = false
     private static let strandedWaiterThreshold = UInt64(NSEC_PER_SEC)
+    // Waits of over a second, since the last summary in the debug log. Guarded by the mutex.
+    private static let longWaitThreshold = UInt64(NSEC_PER_SEC)
+    private static let longWaitReportInterval = 10 * UInt64(NSEC_PER_SEC)
+    private var longWaitCount = 0
+    private var longestWait = UInt64(0)
+    private var lastLongWaitReport = UInt64(0)
     private static let silentHolderThreshold = 5 * UInt64(NSEC_PER_SEC)
     // A check this long after the previous one means the process was stopped (as in a debugger),
     // not that wakeups were lost.
@@ -134,9 +160,13 @@ final class ExecutionPermits: NSObject {
 
     // The shared instance used by sessions with mutation queues of their own.
     static let shared: ExecutionPermits = {
-        return ExecutionPermits(capacity: configuredCapacity,
-                                visibleWeight: iTermAdvancedSettingsModel.visibleSessionExecutionWeight(),
-                                checksHealthPeriodically: true)
+        let permits = ExecutionPermits(capacity: configuredCapacity,
+                                       visibleWeight: iTermAdvancedSettingsModel.visibleSessionExecutionWeight(),
+                                       checksHealthPeriodically: true)
+        iTermRegisterDebugLogStateProvider("Execution permits") { [weak permits] in
+            return permits?.stateDescription ?? "(none)"
+        }
+        return permits
     }()
 
     private static var cores: Int {
@@ -403,6 +433,13 @@ final class ExecutionPermits: NSObject {
         it_assert(!holders.contains { $0 === client }, "Client already holds a permit")
         it_assert(!waiters.contains { $0 === client }, "A client must leave the line before holding a permit")
         it_assert(!client.isParked, "Holding a permit while parked")
+        if client.state == .waiting {
+            let waited = now() &- client.waitingSince
+            if waited > Self.longWaitThreshold {
+                longWaitCount += 1
+                longestWait = max(longestWait, waited)
+            }
+        }
         client.state = .holding
         client.weight = iTermAtomicInt64Get(client.visible) != 0 ? visibleWeight : 1
         iTermAtomicInt64Set(client.lastHeardFrom, Int64(now()))
@@ -554,17 +591,26 @@ final class ExecutionPermits: NSObject {
     // holder looks silent. A waiter can look stranded without a bug too: if its queue is busy when
     // its pause ends, its next execute() takes a while to ask for the free permit.
     func checkHealth() {
+        // Logged after the mutex is released: the debug log's state provider takes the mutex while
+        // holding the debug log's lock.
+        var messages = [String]()
         var unexpected = [String]()
         let woken = mutex.sync { () -> [Client] in
             let now = self.now()
             let ranLate = lastHealthCheck != 0 && now &- lastHealthCheck > Self.lateCheckThreshold
             lastHealthCheck = now
             var woken = [Client]()
+            if longWaitCount > 0 && now &- lastLongWaitReport > Self.longWaitReportInterval {
+                messages.append("Execution permits: \(longWaitCount) waits of over a second recently, the longest \(Double(longestWait) / 1e9)s. \(stateDescriptionLocked)")
+                longWaitCount = 0
+                longestWait = 0
+                lastLongWaitReport = now
+            }
             let stranded = waiters.filter { !$0.isPaused() && now &- $0.waitingSince > Self.strandedWaiterThreshold }
             if !stranded.isEmpty {
                 let handed = handOff().woken
                 if !handed.isEmpty {
-                    RLog("Execution permits: handed \(handed.count) permits to waiters, \(stranded.count) of which had waited over a second. A wakeup may have been lost. \(stateDescriptionLocked)")
+                    messages.append("Execution permits: handed \(handed.count) permits to waiters, \(stranded.count) of which had waited over a second. A wakeup may have been lost. \(stateDescriptionLocked)")
                 }
                 woken += handed
             }
@@ -572,10 +618,10 @@ final class ExecutionPermits: NSObject {
                 let last = UInt64(iTermAtomicInt64Get(holder.lastHeardFrom))
                 if now &- last > Self.silentHolderThreshold {
                     if ranLate {
-                        RLog("Execution permits: woke a holder not heard from for \(Double(now &- last) / 1e9)s, after a health check that ran late (the process was probably stopped). \(stateDescriptionLocked)")
+                        messages.append("Execution permits: woke a holder not heard from for \(Double(now &- last) / 1e9)s, after a health check that ran late (the process was probably stopped). \(stateDescriptionLocked)")
                     } else {
                         let message = "Execution permits: woke a holder not heard from for \(Double(now &- last) / 1e9)s. A wakeup may have been lost. \(stateDescriptionLocked)"
-                        RLog("\(message)")
+                        messages.append(message)
                         unexpected.append(message)
                     }
                     woken.append(holder)
@@ -585,7 +631,8 @@ final class ExecutionPermits: NSObject {
                     iTermAtomicInt64Set(holder.lastHeardFrom, Int64(now))
                 }
             }
-            if let healthTimer, healthTimerRunning, waiters.isEmpty, !holders.contains(where: { !$0.isParked }) {
+            if let healthTimer, healthTimerRunning, waiters.isEmpty, longWaitCount == 0,
+               !holders.contains(where: { !$0.isParked }) {
                 // Nothing that could be stuck. Parked holders have nothing to run.
                 healthTimer.suspend()
                 healthTimerRunning = false
@@ -594,6 +641,10 @@ final class ExecutionPermits: NSObject {
             }
             return woken
         }
+        for message in messages {
+            RLog("\(message)")
+        }
+        // After logging, so the debug log has the message even if this crashes.
         for message in unexpected {
             onUnexpectedState(message)
         }
@@ -609,12 +660,26 @@ final class ExecutionPermits: NSObject {
         healthTimer.resume()
     }
 
+    // Any thread. For debug logs. Takes the mutex, so it must not be called while logging under
+    // the mutex (nothing logs under it).
+    var stateDescription: String {
+        return mutex.sync {
+            let now = self.now()
+            let clients = (holders + waiters).map { "  " + $0.description(now: now) }
+            return ([stateDescriptionLocked] + clients).joined(separator: "\n")
+        }
+    }
+
     // With the mutex held.
     private var stateDescriptionLocked: String {
         return "capacity=\(_capacity) holders=\(holders.count) waiters=\(waiters.count) floor=\(floor)"
     }
 
     // MARK: - Testing
+
+    var longWaitsForTesting: (Int, TimeInterval) {
+        return mutex.sync { (longWaitCount, TimeInterval(longestWait) / 1e9) }
+    }
 
     var idleHolderCountForTesting: Int {
         return mutex.sync { holders.filter(\.isParked).count }
