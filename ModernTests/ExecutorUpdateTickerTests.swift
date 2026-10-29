@@ -86,6 +86,7 @@ final class ExecutorUpdateTickerTests: XCTestCase {
     private var main: FakeMain!
     private var clock: FakeClock!
     private var ticker: ExecutorUpdateTicker!
+    private var echoes = [ExecutorUpdateTicker.EchoTiming]()
 
     override func setUp() {
         super.setUp()
@@ -97,7 +98,8 @@ final class ExecutorUpdateTickerTests: XCTestCase {
         ticker = ExecutorUpdateTicker(tickSource: tickSource,
                                       period: period,
                                       now: { clock.now },
-                                      deliver: { main.deliver($0) })
+                                      deliver: { main.deliver($0) },
+                                      onEcho: { [weak self] in self?.echoes.append($0) })
     }
 
     private func makeClient(_ counter: Counter) -> ExecutorUpdateTickerClient {
@@ -251,6 +253,60 @@ final class ExecutorUpdateTickerTests: XCTestCase {
         XCTAssertEqual(fired.value, 3)
     }
 
+    // MARK: - Echo timing
+
+    // The update after a keystroke (the echo) reports how long it took to execute, to reach main,
+    // and to be handled there.
+    func testEchoTimingIsReported() {
+        let client = ticker.makeClient { [clock] in
+            clock!.advance(by: 0.001)
+        }
+        client.markNeedsUpdate()
+        main.runAll()
+        XCTAssertTrue(echoes.isEmpty)
+
+        client.expedite()
+        clock.advance(by: 0.005)
+        client.markNeedsUpdate()
+        clock.advance(by: 0.002)
+        main.runAll()
+        XCTAssertEqual(echoes.count, 1)
+        XCTAssertEqual(echoes.first?.keyToExecuted ?? 0, 0.005, accuracy: 1e-9)
+        XCTAssertEqual(echoes.first?.executedToMain ?? 0, 0.002, accuracy: 1e-9)
+        XCTAssertEqual(echoes.first?.handlingOnMain ?? 0, 0.001, accuracy: 1e-9)
+    }
+
+    // An echo that was already waiting for the tick when it was expedited is timed the same way.
+    func testEchoTimingWhenTheUpdateWasWaitingForTheTick() {
+        let fired = Counter()
+        let client = makeClient(fired)
+        client.markNeedsUpdate()
+        main.runAll()
+        client.markNeedsUpdate()
+        client.expedite()
+        clock.advance(by: 0.003)
+        client.markNeedsUpdate()
+        clock.advance(by: 0.001)
+        main.runAll()
+        XCTAssertEqual(echoes.count, 1)
+        XCTAssertEqual(echoes.first?.keyToExecuted ?? 0, 0.003, accuracy: 1e-9)
+        XCTAssertEqual(echoes.first?.executedToMain ?? 0, 0.001, accuracy: 1e-9)
+    }
+
+    // Only the first update after a keystroke is timed.
+    func testOnlyTheFirstUpdateAfterAKeystrokeIsTimed() {
+        let fired = Counter()
+        let client = makeClient(fired)
+        client.expedite()
+        client.markNeedsUpdate()
+        main.runAll()
+        client.markNeedsUpdate()
+        tickSource.tick()
+        main.runAll()
+        XCTAssertEqual(fired.value, 2)
+        XCTAssertEqual(echoes.count, 1)
+    }
+
     // A tick with nothing to send stops the timer, and the next update goes out right away again.
     func testTickerStopsWhenIdleAndTheNextUpdateIsImmediate() {
         let fired = Counter()
@@ -301,7 +357,8 @@ final class ExecutorUpdateTickerTests: XCTestCase {
         let ticker = ExecutorUpdateTicker(tickSource: tickSource,
                                           period: period,
                                           now: { clock.now },
-                                          deliver: { serialMain.async(execute: $0) })
+                                          deliver: { serialMain.async(execute: $0) },
+                                          onEcho: { _ in })
         let sessions = (0..<16).map { _ in Session() }
         for session in sessions {
             session.client = ticker.makeClient { [session] in

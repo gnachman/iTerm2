@@ -18,20 +18,22 @@ example:
 Results: OUT_DIR/run-*/run.log has one line per phase (key latency, DSR round trips, CPU, thread
 count, memory).
 --exec-stats FILE adds iTerm2's token execution stats for each phase (how long joins waited for a
-session, what fraction of execution time was overhead, and how many MB of input a second finished
-executing). iTerm2 must be writing them to FILE, set in the defaults domain the build uses
+session, what fraction of execution time was overhead, how many MB of input a second finished
+executing, and how long each keystroke's echo took to execute, reach the main thread, and be handled
+there). iTerm2 must be writing them to FILE, set in the defaults domain the build uses
 (com.googlecode.iterm2 for a normal install):
     defaults write com.googlecode.iterm2 NoSyncTokenExecutionStatsFile /tmp/exec-stats.txt
 """
 import argparse
 import os
-import re
 import statistics
 import subprocess
 import time
 
 import ctypes
 import ctypes.util
+
+from harness import cpu_seconds, exec_stats, rss_mb, thread_count, wait_for_exec_stats
 
 _cg = ctypes.CDLL(ctypes.util.find_library("ApplicationServices"))
 _cg.CGEventCreateKeyboardEvent.restype = ctypes.c_void_p
@@ -45,94 +47,6 @@ def post_key(pid, keycode, down):
     ev = _cg.CGEventCreateKeyboardEvent(None, keycode, down)
     _cg.CGEventPostToPid(pid, ev)
     _cf.CFRelease(ev)
-
-
-def cpu_seconds(pid):
-    """User plus system CPU time of a process, from ps (e.g. "1:02.34" or "1:00:02.34")."""
-    text = subprocess.run(["ps", "-o", "time=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
-    total = 0.0
-    for part in text.split(":"):
-        total = total * 60 + float(part)
-    return total
-
-
-def thread_count(pid):
-    """Number of threads in a process, from ps -M (one line per thread plus a header)."""
-    text = subprocess.run(["ps", "-M", "-p", str(pid)], capture_output=True, text=True).stdout
-    return max(0, len(text.strip().splitlines()) - 1)
-
-
-def rss_mb(pid):
-    """Resident memory of a process in MB, from ps."""
-    text = subprocess.run(["ps", "-o", "rss=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
-    return int(text or 0) / 1024
-
-
-def complete_blocks(path):
-    """The blocks of token execution stats iTerm2 has finished writing to path."""
-    try:
-        blocks = open(path).read().split("start=")[1:]
-    except OSError:
-        return []
-    return [block for block in blocks if block.endswith("\n")]  # the last may still be being written
-
-
-def block_end(block):
-    m = re.match(r"[0-9.]+ end=([0-9.]+)", block)
-    return float(m.group(1)) if m else 0.0
-
-
-def wait_for_exec_stats(path, end, timeout=10):
-    """Waits until iTerm2 has written the block covering time end. It writes one a second."""
-    deadline = time.time() + timeout
-    while not any(block_end(block) >= end for block in complete_blocks(path)):
-        if time.time() > deadline:
-            say(f"warning: no token execution stats cover the end of the phase in {path}")
-            return
-        time.sleep(0.1)
-
-
-def exec_stats(path, start, end):
-    """Summarizes the token execution stats iTerm2 wrote once a second during a phase.
-
-    Each block starts with "start=S end=E", the interval it covers. A block counts toward the phase
-    if it began during the phase, so the one covering the time before the phase is left out and the
-    one written just after the phase ends is kept."""
-    kept = []
-    for block in complete_blocks(path):
-        try:
-            block_start = float(block.split(" ", 1)[0])
-        except ValueError:
-            continue
-        if start <= block_start < end:
-            kept.append(block)
-    text = "\n".join(kept)
-    overhead = busy = 0.0
-    waits = yields = 0
-    mbps = []
-    join_p50 = []
-    join_p95 = []
-    join_max = 0.0
-    number = r"([0-9.]+)"
-    for m in re.finditer(r"permits " + number + r"ms, other " + number + r"ms, tokens " + number + r"ms, high-pri " + number + "ms", text):
-        permits, other, tokens, high = (float(x) for x in m.groups())
-        overhead += permits + other
-        busy += permits + other + tokens + high
-    for m in re.finditer(r"Waits for a permit: (\d+), slice yields: (\d+)", text):
-        waits += int(m.group(1))
-        yields += int(m.group(2))
-    for m in re.finditer(r"Bytes executed: " + number + " MB/s", text):
-        mbps.append(float(m.group(1)))
-    for m in re.finditer(r"Join wait: p50=" + number + r"ms p95=" + number + r"ms max=" + number + "ms", text):
-        join_p50.append(float(m.group(1)))
-        join_p95.append(float(m.group(2)))
-        join_max = max(join_max, float(m.group(3)))
-    return dict(overhead_frac=overhead / busy if busy else float("nan"),
-                mbps=statistics.mean(mbps) if mbps else float("nan"),
-                waits=waits, yields=yields,
-                join_p50=statistics.median(join_p50) if join_p50 else float("nan"),
-                join_p95=max(join_p95) if join_p95 else float("nan"),
-                join_max=join_max if join_p50 else float("nan"))
 
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -296,7 +210,7 @@ try:
                    dsr_n=len(dsr), dsr_p50=q(dsr, 50), dsr_p95=q(dsr, 95), dsr_max=max(dsr) if dsr else float("nan"),
                    threads_max=max(threads) if threads else 0, rss_mb=rss_mb(iterm_pid))
         if args.exec_stats:
-            wait_for_exec_stats(args.exec_stats, phase_end)
+            wait_for_exec_stats(args.exec_stats, phase_end, say)
             row.update(exec_stats(args.exec_stats, phase_start, phase_end))
         results.append(row)
         with open(os.path.join(run, f"keys-phase{k}.txt"), "w") as f:
@@ -307,6 +221,9 @@ try:
         if args.exec_stats:
             say("  join wait ms p50={join_p50:.2f} p95={join_p95:.2f} max={join_max:.2f} | overhead={overhead_frac:.4f} "
                 "permit waits={waits} slice yields={yields} | executed MB/s={mbps:.1f}".format(**row))
+            say("  echo ms (n={echo_n}): key to executed p50={echo_exec_p50:.2f} p95={echo_exec_p95:.2f} | "
+                "executed to main p50={echo_main_p50:.2f} p95={echo_main_p95:.2f} max={echo_main_max:.2f} | "
+                "handling on main p50={echo_handle_p50:.2f} p95={echo_handle_p95:.2f}".format(**row))
 finally:
     for ctl in ctls:
         write(ctl, "stop")

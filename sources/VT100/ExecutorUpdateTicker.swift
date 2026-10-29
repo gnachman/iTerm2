@@ -37,6 +37,10 @@ final class ExecutorUpdateTickerClient: NSObject {
     fileprivate let lastDelivered = iTermAtomicInt64Create()
     // Set by expedite(), consumed by the next update to go out right away.
     fileprivate let expedited = iTermAtomicInt64Create()
+    // For timing the echo: when the last keystroke expedited this client, and when the update that
+    // consumed it was marked (0 once it has been reported).
+    private let expeditedAt = iTermAtomicInt64Create()
+    private let echoMarkedAt = iTermAtomicInt64Create()
 
     fileprivate init(ticker: ExecutorUpdateTicker, fire: @escaping () -> Void) {
         self.ticker = ticker
@@ -47,6 +51,8 @@ final class ExecutorUpdateTickerClient: NSObject {
         iTermAtomicInt64Free(pending)
         iTermAtomicInt64Free(lastDelivered)
         iTermAtomicInt64Free(expedited)
+        iTermAtomicInt64Free(expeditedAt)
+        iTermAtomicInt64Free(echoMarkedAt)
     }
 
     // Any queue. Cheap when an update is already waiting.
@@ -62,6 +68,7 @@ final class ExecutorUpdateTickerClient: NSObject {
     // Main queue, when the user presses a key. The session's next update, normally the echo, goes
     // out right away, so the redraw that shows it isn't throttled.
     @objc func expedite() {
+        iTermAtomicInt64Set(expeditedAt, Int64(ticker.now()))
         iTermAtomicInt64Set(expedited, 1)
     }
 
@@ -69,15 +76,34 @@ final class ExecutorUpdateTickerClient: NSObject {
     // that find it set (marking from the mutation queue, or adding to the ticker), exactly one acts
     // on it.
     fileprivate func takeExpedite() -> Bool {
-        return iTermAtomicInt64CompareAndSwap(expedited, 1, 0)
+        guard iTermAtomicInt64CompareAndSwap(expedited, 1, 0) else {
+            return false
+        }
+        // This update carries the echo. It was marked when the tokens that make it up finished
+        // executing.
+        iTermAtomicInt64Set(echoMarkedAt, Int64(ticker.now()))
+        return true
     }
 
     fileprivate func deliverNow() {
         // Clear first, so an update marked while this runs goes out at the next tick. fire()
         // collects everything marked before now.
         iTermAtomicInt64Set(pending, 0)
-        iTermAtomicInt64Set(lastDelivered, Int64(ticker.now()))
+        let delivered = ticker.now()
+        iTermAtomicInt64Set(lastDelivered, Int64(delivered))
+        let marked = UInt64(iTermAtomicInt64GetAndReset(echoMarkedAt))
         fire()
+        guard marked != 0 else {
+            return
+        }
+        let handled = ticker.now()
+        let key = UInt64(iTermAtomicInt64Get(expeditedAt))
+        func seconds(_ from: UInt64, _ to: UInt64) -> TimeInterval {
+            return TimeInterval(to &- from) / 1e9
+        }
+        ticker.onEcho(ExecutorUpdateTicker.EchoTiming(keyToExecuted: seconds(key, marked),
+                                                      executedToMain: seconds(marked, delivered),
+                                                      handlingOnMain: seconds(delivered, handled)))
     }
 }
 
@@ -87,7 +113,12 @@ final class ExecutorUpdateTicker: NSObject {
         tickSource: DispatchTimerTickSource(period: ExecutorUpdateTicker.period),
         period: ExecutorUpdateTicker.period,
         now: { DispatchTime.now().uptimeNanoseconds },
-        deliver: { DispatchQueue.main.async(execute: $0) })
+        deliver: { DispatchQueue.main.async(execute: $0) },
+        onEcho: { timing in
+            if TokenExecutionStats.enabled {
+                TokenExecutionStats.recordEcho(timing)
+            }
+        })
     private static let period = 1.0 / 120.0
 
     private let tickSource: ExecutorUpdateTickSource
@@ -97,6 +128,9 @@ final class ExecutorUpdateTicker: NSObject {
     // Runs its argument, a block that sends updates, on the queue updates go to (the main queue in
     // production). Called on any queue, without the ticker's lock held.
     private let deliver: (@escaping () -> Void) -> Void
+    // Called with the timing of each keystroke's echo, on the queue updates go to, after the update
+    // was handled.
+    fileprivate let onEcho: (EchoTiming) -> Void
 
     private struct State {
         // Whether the tick source is running.
@@ -106,10 +140,23 @@ final class ExecutorUpdateTicker: NSObject {
     }
     private let state = MutableAtomicObject(State())
 
+    // How long a keystroke's echo took, in three parts.
+    struct EchoTiming {
+        // From the keystroke until the tokens of the next output finished executing: the pty round
+        // trip, parsing, waiting for a permit, and execution.
+        var keyToExecuted: TimeInterval
+        // From then until the update started on main: the ticker and the dispatch.
+        var executedToMain: TimeInterval
+        // How long main took to handle the update, including the redraw it starts.
+        var handlingOnMain: TimeInterval
+    }
+
     init(tickSource: ExecutorUpdateTickSource,
          period: TimeInterval,
          now: @escaping () -> UInt64,
-         deliver: @escaping (@escaping () -> Void) -> Void) {
+         deliver: @escaping (@escaping () -> Void) -> Void,
+         onEcho: @escaping (EchoTiming) -> Void) {
+        self.onEcho = onEcho
         self.tickSource = tickSource
         self.periodNanoseconds = UInt64(period * 1e9)
         self.now = now

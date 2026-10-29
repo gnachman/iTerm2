@@ -1581,6 +1581,9 @@ enum TokenExecutionStats {
         return stats
     }()
     private static let joinWait = iTermHistogram()
+    private static let echoKeyToExecuted = iTermHistogram()
+    private static let echoExecutedToMain = iTermHistogram()
+    private static let echoHandlingOnMain = iTermHistogram()
     private static let handoffGap = iTermHistogram()
     private static var waits = 0
     private static var bytes = 0
@@ -1629,6 +1632,16 @@ enum TokenExecutionStats {
         }
     }
 
+    // Main queue. How long a keystroke's echo took; see ExecutorUpdateTicker.EchoTiming.
+    static func recordEcho(_ timing: ExecutorUpdateTicker.EchoTiming) {
+        _ = timer
+        mutex.sync {
+            echoKeyToExecuted.addValue(timing.keyToExecuted * 1000)
+            echoExecutedToMain.addValue(timing.executedToMain * 1000)
+            echoHandlingOnMain.addValue(timing.handlingOnMain * 1000)
+        }
+    }
+
     // Main queue. How long a join waited for the session's queue to reach it.
     static func recordJoinWait(_ seconds: TimeInterval) {
         _ = timer
@@ -1670,12 +1683,18 @@ enum TokenExecutionStats {
             "Waits for a permit: \(waits), slice yields: \(yields)\n" +
             String(format: "Bytes executed: %.2f MB/s\n", Double(bytes) / max(0.001, elapsed) / 1e6) +
             "Permit handoff gap: \(percentiles(handoffGap))\n" +
-            "Join wait: \(percentiles(joinWait))"
+            "Join wait: \(percentiles(joinWait))\n" +
+            "Echo key to executed: \(percentiles(echoKeyToExecuted))\n" +
+            "Echo executed to main: \(percentiles(echoExecutedToMain))\n" +
+            "Echo handling on main: \(percentiles(echoHandlingOnMain))"
         iTermPreciseTimerLog("Token execution", stats, Slot.allCases.count, false, nil, additional)
         let text = "start=\(lastLogWallTime) end=\(wallTime)\n\(additional)\n"
         lastLogWallTime = wallTime
         lastLogMonotonic = monotonicNanoseconds()
         joinWait.clear()
+        echoKeyToExecuted.clear()
+        echoExecutedToMain.clear()
+        echoHandlingOnMain.clear()
         handoffGap.clear()
         waits = 0
         bytes = 0
