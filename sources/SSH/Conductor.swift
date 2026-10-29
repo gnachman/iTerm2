@@ -786,9 +786,38 @@ extension Conductor {
     struct TTYState {
         var echo = true
         var icanon = true
+        // The process group with the login shell's pty's foreground, as of the same sample as the
+        // modes. nil when framer can't tell. Every common shell puts the tty in raw mode at its
+        // prompt, so icanon alone can't tell a prompt from a program: compare this with the
+        // program's process group.
+        var foregroundProcessGroup: pid_t?
 
         var atPasswordPrompt: Bool {
             return !echo && icanon
+        }
+
+        // Applies a `%notif tty` report, like "-echo -icanon fgpgid=4242". Each report carries
+        // everything framer knows, so fgpgid left out means unknown.
+        mutating func apply(ttyNotification message: String) {
+            var flags = [String: Bool]()
+            var values = [String: String]()
+            for word in message.split(separator: " ") {
+                if let equals = word.firstIndex(of: "=") {
+                    values[String(word[..<equals])] = String(word[word.index(after: equals)...])
+                    continue
+                }
+                guard word.count > 1, let sign = word.first, sign == "+" || sign == "-" else {
+                    continue
+                }
+                flags[String(word.dropFirst())] = (sign == "+")
+            }
+            if let value = flags["echo"] {
+                echo = value
+            }
+            if let value = flags["icanon"] {
+                icanon = value
+            }
+            foregroundProcessGroup = values["fgpgid"].flatMap { pid_t($0) }.flatMap { $0 > 0 ? $0 : nil }
         }
     }
 
@@ -3394,33 +3423,7 @@ extension Conductor {
 
     private func handleTTYNotif(_ message: String) {
         DLog("handleTTYNotif: \(message)")
-        let parts = message.components(separatedBy: " ")
-        struct Flag {
-            var enabled: Bool
-            var name: String
-            init?(_ string: String) {
-                if string.count <= 1 {
-                    return nil
-                }
-                if string.hasPrefix("-") {
-                    enabled = false
-                } else if string.hasPrefix("+") {
-                    enabled = true
-                } else {
-                    return nil
-                }
-                name = String(string.dropFirst())
-            }
-            var keyValueTuple: (String, Bool) { (name, enabled) }
-        }
-        let flagsArray = parts.compactMap { Flag($0) }
-        let flags = Dictionary.init(uniqueKeysWithValues: flagsArray.map { $0.keyValueTuple })
-        if let value = flags["echo"] {
-            ttyState.echo = value
-        }
-        if let value = flags["icanon"] {
-            ttyState.icanon = value
-        }
+        ttyState.apply(ttyNotification: message)
     }
 
     private func handleSearchNotif(_ message: String) {

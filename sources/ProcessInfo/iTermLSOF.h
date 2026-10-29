@@ -26,7 +26,10 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
 
 @interface iTermLSOF : NSObject
 
+// Each argument shell-escaped, so the joined result can be pasted into a shell.
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
+// Each argument exactly as the process received it.
++ (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName;
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName;
 // The process's environment as an array of "KEY=VALUE" strings, or nil if it
 // could not be read (e.g. the process is owned by another user). Extracted from

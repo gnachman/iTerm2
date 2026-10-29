@@ -39,6 +39,8 @@ fileprivate enum ProcessEdit {
 fileprivate struct PSRow {
     let pid: pid_t
     let ppid: pid_t
+    /// nil from a framer too old to report it.
+    let pgid: pid_t?
     let command: String
     let fg: Bool
     /// False when framer marked the process as in the foreground process group with neither its
@@ -47,47 +49,59 @@ fileprivate struct PSRow {
     let stdioOnTerminal: Bool
     let startTime: Date?
 
-    init?(_ line: String) {
-        let nsstring = line as NSString
+    // framer sends `pid ppid pgid stat start-time command`; one that predates pgid leaves it out.
+    // stat always starts with a letter, so the two can't be confused.
+    private static func pattern(withPGID: Bool) -> String {
         let whitespace = "\\s+"
         let number = "\\d+"
         let nonspace = "\\S+"
         let letters = "[\\p{Letter}]+"
 
-        let pattern = ["^",
-                       "\\s*",
-                       "(",
-                       number,  // pid [capture 1]
-                       ")",
-                       whitespace,
-                       "(",
-                       number,  // ppid [capture 2]
-                       ")",
-                       whitespace,
-                       "(",
-                       nonspace,  // stat [capture 3]
-                       ")",
-                       whitespace,
-                       "(",
-                       letters,  // day of week  [capture 4]
-                       whitespace,
-                       letters,  // name of month
-                       whitespace,
-                       number,  // day of month
-                       whitespace,
-                       number,  // hh
-                       ":",
-                       number,  // mm
-                       ":",
-                       number,  // ss
-                       whitespace,
-                       number,  // yyyy
-                       ")",
-                       whitespace,
-                       "(.*)"  // command  [capture 5]
+        return ["^",
+                "\\s*",
+                "(",
+                number,  // pid
+                ")",
+                whitespace,
+                "(",
+                number,  // ppid
+                ")",
+                whitespace,
+                withPGID ? "(" + number + ")" + whitespace : "",  // pgid
+                "(",
+                nonspace,  // stat
+                ")",
+                whitespace,
+                "(",
+                letters,  // day of week
+                whitespace,
+                letters,  // name of month
+                whitespace,
+                number,  // day of month
+                whitespace,
+                number,  // hh
+                ":",
+                number,  // mm
+                ":",
+                number,  // ss
+                whitespace,
+                number,  // yyyy
+                ")",
+                whitespace,
+                "(.*)"  // command
         ].joined(separator: "")
+    }
 
-        let ranges = line.captureGroups(regex: pattern)
+    init?(_ line: String) {
+        let nsstring = line as NSString
+        var ranges = line.captureGroups(regex: Self.pattern(withPGID: true))
+        var pgid: pid_t?
+        if ranges.count == 7 {
+            pgid = pid_t(nsstring.substring(with: ranges[3]))
+            ranges.remove(at: 3)
+        } else {
+            ranges = line.captureGroups(regex: Self.pattern(withPGID: false))
+        }
         guard ranges.count == 6,
               let pid = pid_t(nsstring.substring(with: ranges[1])),
               let ppid = pid_t(nsstring.substring(with: ranges[2])) else {
@@ -95,6 +109,7 @@ fileprivate struct PSRow {
         }
         self.pid = pid
         self.ppid = ppid
+        self.pgid = pgid
         let stat = nsstring.substring(with: ranges[3])
         self.fg = stat.contains("+")
         self.stdioOnTerminal = !stat.contains("!")
@@ -378,6 +393,13 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
             execName?.pointee = (first as NSString).removingPrefix("-") as NSString
         }
         return args
+    }
+
+    // No rawCommandLineArguments: ps joins the arguments with spaces, so splitting its command
+    // column can't recover them. `claude "update the readme"` comes back as four arguments.
+
+    func processGroupID(forProcess pid: pid_t) -> pid_t {
+        return row(pid: pid)?.pgid ?? 0
     }
 
     func startTime(forProcess pid: pid_t) -> Date? {

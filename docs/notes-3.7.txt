@@ -2400,3 +2400,7 @@ Bug Fixes:
   unanswered prompt until iTerm2 stopped
   responding. Now only one request waits for an
   answer at a time. Issue 13175.
+- The offer to try the Claude Code Integration
+  no longer appears for claude commands that
+  don’t start a session, such as “claude -p” or
+  “claude plugin list”.

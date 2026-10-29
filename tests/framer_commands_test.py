@@ -54,6 +54,15 @@ def env(**values):
                 os.environ[k] = v
 
 
+def tty_flags(event):
+    """The flags of a `tty` notification, e.g. {"-echo", "+icanon", "fgpgid=123"}, or None for any
+    other notification."""
+    words = event.text.split()
+    if not words or words[0] != "tty":
+        return None
+    return set(words[1:])
+
+
 @contextlib.contextmanager
 def patched(obj, name, value):
     saved = getattr(obj, name)
@@ -314,8 +323,72 @@ class RunTests(CommandTestCase):
         async def body():
             pid = await self.h.start("run", "stty -echo; echo ready; exec head -n 1")
             self.assertTrue(await self.h.wait_for(
-                lambda: any(e.text == "tty -echo +icanon"
+                lambda: any({"-echo", "+icanon"} <= (tty_flags(e) or set())
                             for e in self.h.parser.notifications("notif"))))
+            await self.h.command("send", str(pid), H.b64("\n"))
+            await self.h.wait_terminated(pid)
+        self.run_async(body)
+
+    def tty_reports(self):
+        return [f for f in (tty_flags(e) for e in self.h.parser.notifications("notif")) if f is not None]
+
+    def foreground_groups(self):
+        """The fgpgid of each tty report, None for a report without one."""
+        result = []
+        for flags in self.tty_reports():
+            values = [f.split("=", 1)[1] for f in flags if f.startswith("fgpgid=")]
+            result.append(int(values[0]) if values else None)
+        return result
+
+    # A login shell, unlike `run`, has its pty as its controlling terminal, so it has a foreground
+    # process group to report. Its terminal is checked once a second and whenever it writes, so
+    # each phase below writes something once it's in place to be reported without waiting.
+    def test_terminal_mode_reports_name_the_foreground_process_group(self):
+        async def body():
+            pid = await self.h.start("login", self.tmp, "echo ready; exec head -n 1")
+            # The login shell leads its own process group.
+            self.assertTrue(await self.h.wait_for(lambda: pid in self.foreground_groups()))
+            await self.h.command("send", str(pid), H.b64("\n"))
+            await self.h.wait_terminated(pid)
+        self.run_async(body)
+
+    def test_terminal_mode_reports_follow_a_job_into_the_foreground(self):
+        # With job control the shell runs perl in its own process group and gives it the terminal
+        # until it reads a line, then takes the terminal back before echoing.
+        job = "perl -e '$|=1; print \"injob \", getpgrp(), \"\\n\"; <STDIN>'"
+        async def body():
+            pid = await self.h.start("login", self.tmp, f"set -m; {job}; echo back; exec head -n 1")
+            self.assertTrue(await self.h.wait_for(lambda: b"injob " in self.output(pid)))
+            job_group = int(self.output(pid).split(b"injob ", 1)[1].split()[0])
+            self.assertNotEqual(job_group, pid)
+            self.assertTrue(await self.h.wait_for(lambda: self.foreground_groups()[-1] == job_group))
+            await self.h.command("send", str(pid), H.b64("\n"))
+            self.assertTrue(await self.h.wait_for(lambda: b"back" in self.output(pid)))
+            self.assertTrue(await self.h.wait_for(lambda: self.foreground_groups()[-1] == pid))
+            await self.h.command("send", str(pid), H.b64("\n"))
+            await self.h.wait_terminated(pid)
+        self.run_async(body)
+
+    def test_a_login_shells_mode_change_without_output_is_reported(self):
+        # Like Ink, which draws its first frame and only then turns raw mode on, the job changes the
+        # mode after its last output and then waits quietly for input.
+        job = "perl -e '$|=1; print \"drawn\\n\"; system(\"stty -icanon\"); <STDIN>'"
+        async def body():
+            pid = await self.h.start("login", self.tmp, f"set -m; {job}; exec head -n 1")
+            self.assertTrue(await self.h.wait_for(lambda: b"drawn" in self.output(pid)))
+            self.assertTrue(await self.h.wait_for(
+                lambda: any("-icanon" in f for f in self.tty_reports())))
+            await self.h.command("send", str(pid), H.b64("\n"))
+            await self.h.command("send", str(pid), H.b64("\n"))
+            await self.h.wait_terminated(pid)
+        self.run_async(body)
+
+    def test_a_run_process_has_no_foreground_to_report(self):
+        # `run` deliberately doesn't make the pty its controlling terminal, so it's left out.
+        async def body():
+            pid = await self.h.start("run", "stty -echo; echo ready; exec head -n 1")
+            self.assertTrue(await self.h.wait_for(lambda: len(self.tty_reports()) > 0))
+            self.assertEqual(set(self.foreground_groups()), {None})
             await self.h.command("send", str(pid), H.b64("\n"))
             await self.h.wait_terminated(pid)
         self.run_async(body)
@@ -634,13 +707,13 @@ class RegistrationTests(CommandTestCase):
         self.run_async(body)
 
 
-PS_OUTPUT = b"""  PID  PPID STAT STARTED                      COMMAND
-    1     0 Ss   Mon Oct 12 09:00:00 2026     /sbin/launchd
-  100     1 S    Mon Oct 12 09:00:01 2026     -zsh
-  101   100 S+   Mon Oct 12 09:00:02 2026     vim notes.txt
-  102   101 Z    Mon Oct 12 09:00:03 2026     (defunct)
-  103   101 S    Mon Oct 12 09:00:04 2026     python3 helper.py --flag
-  200     1 S    Mon Oct 12 09:00:05 2026     unrelated
+PS_OUTPUT = b"""  PID  PPID  PGID STAT STARTED                      COMMAND
+    1     0     1 Ss   Mon Oct 12 09:00:00 2026     /sbin/launchd
+  100     1   100 S    Mon Oct 12 09:00:01 2026     -zsh
+  101   100   101 S+   Mon Oct 12 09:00:02 2026     vim notes.txt
+  102   101   101 Z    Mon Oct 12 09:00:03 2026     (defunct)
+  103   101   101 S    Mon Oct 12 09:00:04 2026     python3 helper.py --flag
+  200     1   200 S    Mon Oct 12 09:00:05 2026     unrelated
 garbage line
 """
 
@@ -651,14 +724,25 @@ class PollTests(CommandTestCase):
         framer.REGISTERED = [100]
         first = framer.procmon_parse(PS_OUTPUT)
         self.assertEqual(sorted(first), [
-            "+100 1 S Mon Oct 12 09:00:01 2026 -zsh",
-            "+101 100 S+ Mon Oct 12 09:00:02 2026 vim notes.txt",
-            "+103 101 S Mon Oct 12 09:00:04 2026 python3 helper.py --flag"])
+            "+100 1 100 S Mon Oct 12 09:00:01 2026 -zsh",
+            "+101 100 101 S+ Mon Oct 12 09:00:02 2026 vim notes.txt",
+            "+103 101 101 S Mon Oct 12 09:00:04 2026 python3 helper.py --flag"])
         self.assertEqual(framer.procmon_parse(PS_OUTPUT), [], "no change, no diff")
-        changed = PS_OUTPUT.replace(b"101   100 S+", b"101   100 T+").replace(
-            b"  103   101 S    Mon Oct 12 09:00:04 2026     python3 helper.py --flag\n", b"")
+        changed = PS_OUTPUT.replace(b"101   100   101 S+", b"101   100   101 T+").replace(
+            b"  103   101   101 S    Mon Oct 12 09:00:04 2026     python3 helper.py --flag\n", b"")
         self.assertEqual(sorted(framer.procmon_parse(changed)), [
-            "-103", "~101 100 T+ Mon Oct 12 09:00:02 2026 vim notes.txt"])
+            "-103", "~101 100 101 T+ Mon Oct 12 09:00:02 2026 vim notes.txt"])
+
+    def test_marking_a_row_keeps_its_process_group(self):
+        async def body():
+            rows = {"301": ("301", "300", "S+", "Mon Oct 12 09:00:02 2026", "caffeinate", "301")}
+            self.framer.STDIO_ON_TERMINAL = {}
+            with patched(self.framer, "has_proc_fds", lambda: True), \
+                    patched(self.framer, "proc_stdio_on_terminal", lambda pid: False):
+                await self.framer.mark_foreground_jobs_off_the_terminal(rows)
+            self.assertEqual(self.framer.format_ps_row(rows["301"]),
+                             "301 300 301 S+! Mon Oct 12 09:00:02 2026 caffeinate")
+        self.run_async(body)
 
     # A foreground process whose stdio is not a terminal (claude's caffeinate, with its stdio on
     # /dev/null) is marked, so iTerm2 names the job after the one on the terminal, as it does
@@ -1109,6 +1193,7 @@ class TtyWatchTests(CommandTestCase):
             master = -1
             echo = True
             icanon = True
+            fgpgid = None
 
         async def body():
             await asyncio.wait_for(self.framer.watch_tty(Gone(), 0), H.TIMEOUT)
@@ -1122,7 +1207,7 @@ class TtyWatchTests(CommandTestCase):
             attrs[3] &= ~termios.ICANON
             termios.tcsetattr(proc.master, termios.TCSANOW, attrs)
             self.assertTrue(await self.h.wait_for(
-                lambda: any(e.text == "tty +echo -icanon"
+                lambda: any({"+echo", "-icanon"} <= (tty_flags(e) or set())
                             for e in self.h.parser.notifications("notif"))))
         self.run_async(body)
 

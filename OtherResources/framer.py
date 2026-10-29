@@ -780,6 +780,8 @@ class Process:
         self.__descr = descr
         self.echo = True
         self.icanon = True
+        # The process group with its pty's foreground; None until known.
+        self.fgpgid = None
         self.login = False
         # A pane process (see handle_pane) has its own window size and output channel.
         self.pane = False
@@ -1002,17 +1004,40 @@ async def watch_tty(proc, delay):
     except Exception as e:
         log(f'watch_tty threw {e}: {traceback.format_exc()}')
 
+def get_foreground_pgid(proc):
+    """The process group with proc's pty's foreground, or None if that can't be read. Every common
+    shell puts the tty in raw mode at its prompt, so iTerm2 compares this with the process group of
+    the program it asks about to tell a prompt's raw mode from the program's. A shell's own group
+    wouldn't do: the prompt may be drawn by a shell nested below the login shell."""
+    try:
+        foreground = os.tcgetpgrp(proc.master)
+        if foreground <= 0:
+            # No session has the pty as its controlling terminal, e.g. a `run` process. macOS
+            # says 0 rather than failing.
+            return None
+        return foreground
+    except Exception as e:
+        log(f'get_foreground_pgid threw {e}')
+        return None
+
 def poll_tty(proc):
     log(f"Check TTY with fd {proc.master}")
     new_echo, new_icanon = get_echo_icanon(proc.master)
-    if new_echo != proc.echo or new_icanon != proc.icanon:
-        log(f'echo: {proc.echo}->{new_echo}, icanon: {proc.icanon}->{new_icanon}')
+    # Read in the same sample as the modes, so iTerm2 never pairs a mode with a stale owner.
+    new_fgpgid = get_foreground_pgid(proc)
+    old_fgpgid = getattr(proc, 'fgpgid', None)
+    if new_echo != proc.echo or new_icanon != proc.icanon or new_fgpgid != old_fgpgid:
+        log(f'echo: {proc.echo}->{new_echo}, icanon: {proc.icanon}->{new_icanon}, fgpgid: {old_fgpgid}->{new_fgpgid}')
+        # Each report carries everything known. Something left out is unknown.
         parts = [
             ('+' if new_echo else '-') + 'echo',
             ('+' if new_icanon else '-') + 'icanon']
+        if new_fgpgid is not None:
+            parts.append(f'fgpgid={new_fgpgid}')
         print_tty(" ".join(parts))
     proc.echo = new_echo
     proc.icanon = new_icanon
+    proc.fgpgid = new_fgpgid
 
 async def poll():
     result = {}
@@ -1082,7 +1107,7 @@ async def poll_ps():
     # and OpenBSD read it as "also print each process's environment", which put every variable
     # (IT2_NONCE among them) in front of each command and made the first one its name.
     proc = await asyncio.create_subprocess_shell(
-        "ps -Ao pid,ppid,stat,lstart,command",
+        "ps -Ao pid,ppid,pgid,stat,lstart,command",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -1201,7 +1226,7 @@ async def mark_foreground_jobs_off_the_terminal(rows):
     for (pid, _, _), on_terminal in live.items():
         if on_terminal is False:
             row = rows[pid]
-            rows[pid] = (row[0], row[1], row[2] + OFF_TERMINAL_MARKER, row[3], row[4])
+            rows[pid] = (row[0], row[1], row[2] + OFF_TERMINAL_MARKER) + tuple(row[3:])
 
 async def register(pid):
     global REGISTERED
@@ -1219,7 +1244,8 @@ def procmon_parse(output):
     return procmon_diff(procmon_rows(output))
 
 def procmon_rows(output):
-    """pid -> (pid, ppid, stat, start time, command) for the registered pids' subtrees."""
+    """pid -> (pid, ppid, stat, start time, command, pgid) for the registered pids' subtrees. pgid
+    is last so the indices of the others stay put; format_ps_row puts it before stat."""
     output = output.decode("utf-8")
     lines = output.split("\n")
     whitespace = r'\s+'
@@ -1238,11 +1264,15 @@ def procmon_rows(output):
          r')',
          whitespace,
          r'(',
-         nonspace,  # stat [capture 3]
+         number,  # pgid [capture 3]
          r')',
          whitespace,
          r'(',
-         letters,  # day of week  [capture 4]
+         nonspace,  # stat [capture 4]
+         r')',
+         whitespace,
+         r'(',
+         letters,  # day of week  [capture 5]
          whitespace,
          letters,  # name of month
          whitespace,
@@ -1257,13 +1287,14 @@ def procmon_rows(output):
          number,  # yyyy
          r')',
          whitespace,
-         r'(.*)'  # command  [capture 5]
+         r'(.*)'  # command  [capture 6]
     ])
     def parse(line):
         match = re.search(pattern, line)
         if not match:
             return None
-        return (match.group(1), match.group(2), match.group(3), match.group(4), match.group(5))
+        return (match.group(1), match.group(2), match.group(4), match.group(5), match.group(6),
+                match.group(3))
     rows = map(parse, lines)
     # pid->ppid
     parent={}
@@ -1296,6 +1327,12 @@ def procmon_rows(output):
     log(f'procmon_parse: {len(results)} processes in output')
     return results
 
+def format_ps_row(row):
+    """As iTerm2 reads it: pid ppid pgid stat start-time command. The command comes last because it
+    has spaces in it. iTerm2 also takes a row without pgid, from a framer that predates it."""
+    pid, ppid, stat, start, command, pgid = row
+    return " ".join([pid, ppid, pgid, stat, start, command])
+
 def procmon_diff(results):
     """The edits since the last poll: +row for a new process, -pid for a gone one, ~row for a
     changed one."""
@@ -1309,14 +1346,14 @@ def procmon_diff(results):
         log(f'procmon_parse: diff current={currentkeys} last={lastkeys}')
         for addition in currentkeys - lastkeys:
             log(f'procmon_parse: add {addition}')
-            yield "+" + " ".join(map(str, results[addition]))
+            yield "+" + format_ps_row(results[addition])
         for removal in lastkeys - currentkeys:
             log(f'procmon_parse: remove {removal}')
             yield "-" + str(removal)
         for pid in results:
             if pid in last and results[pid] != last[pid]:
                 log(f'procmon_parse: edit {pid}')
-                yield "~" + " ".join(map(str, results[pid]))
+                yield "~" + format_ps_row(results[pid])
     return list(diff())
 
 
@@ -1458,6 +1495,9 @@ async def run_login_shell(identifier, login_shell, argv, directory, environment)
         send_esc(q, proc.pid)
         end(q, identifier, 0)
         await proc.handle_read(make_monitor_process(proc, True))
+        # Output also triggers a check, but a change with no output after it, like a program that
+        # draws and then turns on raw mode while it waits for a key, would never be reported.
+        start_tty_task(identifier, proc)
     except Exception as e:
         log(f'run_login_shell: {e}')
         q = begin(identifier)

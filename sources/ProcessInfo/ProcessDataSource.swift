@@ -17,6 +17,17 @@ protocol ProcessDataSource: AnyObject {
     func commandLineArguments(forProcess pid: pid_t,
                               execName: AutoreleasingUnsafeMutablePointer<NSString>?) -> [String]?
 
+    // The arguments exactly as the process received them, each one whole and unescaped.
+    // commandLineArguments can't promise that: it may shell-escape them for display, and a source
+    // that rebuilds argv by splitting a joined command line, like ps output, can't recover the
+    // boundaries at all. Such a source leaves this unimplemented.
+    @objc(rawCommandLineArgumentsForProcess:)
+    optional func rawCommandLineArguments(forProcess pid: pid_t) -> [String]?
+
+    // The process's process group, or 0 when unknown.
+    @objc(processGroupIDForProcess:)
+    optional func processGroupID(forProcess pid: pid_t) -> pid_t
+
     @objc(startTimeForProcess:)
     func startTime(forProcess pid: pid_t) -> Date?
 

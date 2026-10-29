@@ -18,6 +18,10 @@ import Foundation
 // thing that drives that status is the cc-status hook — and that
 // hook only exists after the user has opted into the integration.
 // Requiring it would mean a fresh user could never see the upsell.
+// We do wait until the run of claude looks like an interactive
+// session, judged by its command line and its tty's mode (see
+// ClaudeInteractivityPolicy), so `claude -p` and the like don't
+// trigger it.
 //
 // The user can dismiss the upsell forever via
 // iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed.
@@ -27,6 +31,35 @@ class ClaudeCodeModeController: NSObject {
 
     private static let monitoredJob = "claude"
     private static let announcementIdentifier = "ClaudeCodeWorkgroupUpsell"
+
+    // One run of claude in a session that we haven't yet decided is an
+    // interactive Claude Code session. Non-interactive runs (`claude -p`,
+    // `claude plugin list`, possibly from a script) don't get the upsell.
+    // See ClaudeInteractivityPolicy.
+    private final class PendingCheck {
+        let startTime = ProcessInfo.processInfo.systemUptime
+        let ttyModeReader: ClaudeTTYModeReading
+        var workItem: DispatchWorkItem?
+        private(set) var cancelled = false
+
+        init(ttyModeReader: ClaudeTTYModeReading) {
+            self.ttyModeReader = ttyModeReader
+        }
+
+        var elapsed: TimeInterval {
+            ProcessInfo.processInfo.systemUptime - startTime
+        }
+
+        // A tmux tty read may still be outstanding; its reply sees this.
+        func cancel() {
+            cancelled = true
+            workItem?.cancel()
+        }
+    }
+
+    // Per-session pending check, started when claude arrives and
+    // cancelled when it leaves before we decide.
+    private var pendingChecks = [String: PendingCheck]()
 
     private var claudeSessionGUIDs = Set<String>()
 
@@ -86,6 +119,7 @@ class ClaudeCodeModeController: NSObject {
         for guid in previous.symmetricDifference(sessions) {
             let claudeLeft = previous.contains(guid) && !sessions.contains(guid)
             if claudeLeft {
+                pendingChecks.removeValue(forKey: guid)?.cancel()
                 // Clear the "already prompted" flag so the next
                 // claude launch in this session can re-show the
                 // upsell. Without this, anyone who saw the upsell
@@ -104,8 +138,9 @@ class ClaudeCodeModeController: NSObject {
                 // "claude restarts immediately" race doesn't keep
                 // the trial flag dangling on the next entry.
                 autoExitTrialWorkgroupIfNeeded(guid: guid)
+            } else {
+                startChecking(guid: guid)
             }
-            reconcile(guid: guid)
         }
     }
 
@@ -118,6 +153,7 @@ class ClaudeCodeModeController: NSObject {
         claudeSessionGUIDs.remove(guid)
         shownThisRun.remove(guid)
         trialSessionGUIDs.remove(guid)
+        pendingChecks.removeValue(forKey: guid)?.cancel()
     }
 
     // Pulled out to keep jobMonitorDidChange readable. The active-
@@ -138,8 +174,10 @@ class ClaudeCodeModeController: NSObject {
 
     // MARK: - Upsell
 
-    private func reconcile(guid: String) {
-        guard !iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed else { return }
+    // The session to show the upsell on, or nil if it shouldn't be shown
+    // there now, whether or not claude turns out to be interactive.
+    private func sessionEligibleForUpsell(guid: String) -> PTYSession? {
+        guard !iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed else { return nil }
         // The upsell is an introduction to the feature. Once the user
         // has the workgroup in their config (via the installer, or via a
         // prior Try It Now), they've adopted it — don't keep nagging
@@ -147,22 +185,84 @@ class ClaudeCodeModeController: NSObject {
         // started in a profile without the trigger installed. They
         // already know the workgroup exists; let them enter it the
         // way they've configured (trigger, menu, manual).
-        guard !ClaudeCodeOnboarding.workgroupAlreadyInstalled() else { return }
+        guard !ClaudeCodeOnboarding.workgroupAlreadyInstalled() else { return nil }
         guard let session = iTermController.sharedInstance()?.session(withGUID: guid) else {
-            return
+            return nil
         }
         // Don't offer to enter a workgroup if there's already one
         // active — the user already has the feature in use here.
-        guard session.workgroupInstance == nil else { return }
-        guard claudeSessionGUIDs.contains(guid) else { return }
-        guard !shownThisRun.contains(guid) else { return }
+        guard session.workgroupInstance == nil else { return nil }
+        guard claudeSessionGUIDs.contains(guid) else { return nil }
+        guard !shownThisRun.contains(guid) else { return nil }
+        return session
+    }
+
+    private func reconcile(guid: String) {
+        guard let session = sessionEligibleForUpsell(guid: guid) else { return }
         shownThisRun.insert(guid)
         showAnnouncement(on: session)
     }
 
     private func reconcileAll() {
         for guid in claudeSessionGUIDs {
-            reconcile(guid: guid)
+            startChecking(guid: guid)
+        }
+    }
+
+    // Starts deciding whether this run of claude is an interactive
+    // session, and reconciles once it is. Cancelling on exit keeps a
+    // quick exit-then-relaunch from inheriting the first run's check.
+    private func startChecking(guid: String) {
+        pendingChecks.removeValue(forKey: guid)?.cancel()
+        // Skip the checks, which for a tmux pane run a command on the
+        // server's host, when the answer couldn't change anything.
+        guard let session = sessionEligibleForUpsell(guid: guid) else { return }
+        let check = PendingCheck(ttyModeReader: session.makeClaudeTTYModeReader())
+        pendingChecks[guid] = check
+        scheduleCheck(check, guid: guid, after: ClaudeInteractivityPolicy.checkInterval)
+    }
+
+    private func scheduleCheck(_ check: PendingCheck, guid: String, after delay: TimeInterval) {
+        // check holds the item, so the item holds check weakly. pendingChecks keeps a live check
+        // alive; once it's removed, the check is freed and a pending item does nothing.
+        let item = DispatchWorkItem { [weak self, weak check] in
+            guard let self, let check else { return }
+            performCheck(check, guid: guid)
+        }
+        check.workItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    }
+
+    private func performCheck(_ check: PendingCheck, guid: String) {
+        guard !check.cancelled, pendingChecks[guid] === check else { return }
+        guard let session = sessionEligibleForUpsell(guid: guid) else {
+            pendingChecks.removeValue(forKey: guid)
+            return
+        }
+        // Read every time: the process info may not have had claude's
+        // command line the first time.
+        let invocation = session.claudeInvocation()
+        if invocation == .nonInteractive {
+            DLog("claude in \(guid) is a non-interactive run; not offering the upsell")
+            pendingChecks.removeValue(forKey: guid)
+            return
+        }
+        check.ttyModeReader.read { [weak self] reading in
+            guard let self, !check.cancelled, pendingChecks[guid] === check else { return }
+            let elapsed = check.elapsed
+            let decision = ClaudeInteractivityPolicy.decide(invocation: invocation,
+                                                            reading: reading,
+                                                            elapsed: elapsed)
+            DLog("claude in \(guid): \(reading) after \(elapsed)s -> \(decision)")
+            switch decision {
+            case .offer:
+                pendingChecks.removeValue(forKey: guid)
+                reconcile(guid: guid)
+            case .decline:
+                pendingChecks.removeValue(forKey: guid)
+            case .checkAgain(after: let delay):
+                scheduleCheck(check, guid: guid, after: delay)
+            }
         }
     }
 

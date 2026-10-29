@@ -48,6 +48,11 @@
     return [iTermLSOF commandLineArgumentsForProcess:pid execName:execName];
 }
 
+// KERN_PROCARGS2 has each argument as its own string.
+- (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid {
+    return [iTermLSOF rawCommandLineArgumentsForProcess:pid execName:nil];
+}
+
 - (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground {
     return [iTermLSOF nameOfProcessWithPid:thePid isForeground:isForeground];
 }
