@@ -189,6 +189,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // Like readTmuxPaneOutputFrom:, but the session appends the pane's %output to `inputQueue`. Only
 // for use with task I/O monitors, since TaskNotifier's select loop can't watch a queue.
 - (void)readTmuxPaneOutputFromQueue:(iTermTaskInputQueue *)inputQueue;
+// Any thread. Runs `block` with the task's file descriptor, which stays open until it returns.
+// Returns NO without running it when there is no descriptor or it has been closed.
+- (BOOL)withFileDescriptor:(void (NS_NOESCAPE ^)(int fd))block;
 
 // This is used by clients so they can initialize the TTY size once when the view size is known
 // for real. It is never assigned to by PTYTask.

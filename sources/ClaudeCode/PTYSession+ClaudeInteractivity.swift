@@ -76,14 +76,20 @@ private final class ClaudeLocalTTYModeReader: ClaudeTTYModeReading {
     }
 
     func read(_ completion: @escaping (ClaudeTTYReading) -> Void) {
-        guard let session, session.shell.fd > 0 else {
+        guard let session else {
             completion(.unknown)
             return
         }
-        let fd = session.shell.fd
         var attributes = termios()
-        guard tcgetattr(fd, &attributes) == 0 else {
-            DLog("tcgetattr(\(fd)) failed: \(String(cString: strerror(errno)))")
+        var status = Int32(-1)
+        var error = Int32(0)
+        // The descriptor stays open until the block returns.
+        let wasOpen = session.shell.withFileDescriptor { fd in
+            status = tcgetattr(fd, &attributes)
+            error = errno
+        }
+        guard wasOpen, status == 0 else {
+            DLog("tcgetattr failed: \(wasOpen ? String(cString: strerror(error)) : "closed")")
             completion(.unknown)
             return
         }

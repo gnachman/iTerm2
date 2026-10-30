@@ -183,6 +183,10 @@ static void HandleSigChld(int n) {
     return self.jobManager.ownedFileDescriptor;
 }
 
+- (BOOL)withFileDescriptor:(void (NS_NOESCAPE ^)(int fd))block {
+    return [self.ownedFileDescriptor withFileDescriptor:block];
+}
+
 - (iTermTaskInputQueue *)inputQueue {
     return [iTermTmuxJobManager castFrom:self.jobManager].inputQueue;
 }
