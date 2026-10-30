@@ -108,24 +108,11 @@ enum ClaudeProcessLocator {
 enum ClaudeTTYMode: Equatable {
     case raw
     case canonical
-    // The tty can't be read from here, e.g. a tmux server too old to run the query.
+    // The tty can't be read from here, e.g. a tmux pane's.
     case unknown
 
     init(icanon: Bool) {
         self = icanon ? .canonical : .raw
-    }
-
-    // Parses `stty -a` output, which has the same words on macOS and Linux: "icanon" when
-    // canonical, "-icanon" when not.
-    init(sttyOutput: String) {
-        let words = Set(sttyOutput.split(whereSeparator: { $0.isWhitespace }).map(String.init))
-        if words.contains("-icanon") {
-            self = .raw
-        } else if words.contains("icanon") {
-            self = .canonical
-        } else {
-            self = .unknown
-        }
     }
 }
 

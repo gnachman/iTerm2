@@ -289,133 +289,63 @@ final class ClaudeForegroundOverSSHTests: XCTestCase {
 }
 
 final class ClaudeTTYModeTests: XCTestCase {
-    func testMacOSSttyOutput() {
-        let canonical = """
-            speed 9600 baud; 24 rows; 80 columns;
-            lflags: icanon isig iexten echo echoe -echok echoke -echonl echoctl
-            \t-echoprt -altwerase -noflsh -tostop -flusho pendin -nokerninfo
-            """
-        XCTAssertEqual(ClaudeTTYMode(sttyOutput: canonical), .canonical)
-        let raw = canonical.replacingOccurrences(of: " icanon ", with: " -icanon ")
-        XCTAssertEqual(ClaudeTTYMode(sttyOutput: raw), .raw)
-    }
-
-    func testLinuxSttyOutput() {
-        let raw = """
-            speed 38400 baud; rows 24; columns 80; line = 0;
-            -isig -icanon -iexten -echo echoe echok -echonl -noflsh -xcase
-            """
-        XCTAssertEqual(ClaudeTTYMode(sttyOutput: raw), .raw)
-    }
-
-    func testUnrecognizedOutputIsUnknown() {
-        XCTAssertEqual(ClaudeTTYMode(sttyOutput: "stty: stdin isn't a terminal"), .unknown)
-        XCTAssertEqual(ClaudeTTYMode(sttyOutput: ""), .unknown)
-    }
-
     func testIcanonFlag() {
         XCTAssertEqual(ClaudeTTYMode(icanon: true), .canonical)
         XCTAssertEqual(ClaudeTTYMode(icanon: false), .raw)
     }
+}
+
+// A tmux pane's tty is read with if-shell, whose branch replies YES or NO in a block of its own.
+// run-shell can't be used: in control mode its output arrives outside any reply and the gateway
+// detaches.
+final class ClaudeTmuxPaneTTYModeReaderTests: XCTestCase {
+    private typealias Reader = ClaudeTmuxPaneTTYModeReader
 
     func testReadingCommand() {
-        XCTAssertEqual(ClaudeTmuxPaneTTYModeReader.readingCommand(tty: "/dev/pts/7"),
-                       "stty -a < /dev/pts/7; ps -o tpgid= -o pgid= -o args= -t /dev/pts/7")
+        // Checked against tmux 2.1 through 3.8: tmux keeps the single-quoted test as is, and the
+        // shell turns \$ and \" inside the double quotes into $ and ". The reader is only used from
+        // 3.2, the first version whose reply to the branch the gateway can match.
+        XCTAssertEqual(Reader.readingCommand(tty: "/dev/ttys003"),
+                       #"if-shell 'stty -a < /dev/ttys003 | grep -q -- -icanon && ps -o tpgid= -o pgid= -o args= -t /dev/ttys003 | awk "\$1 > 0 && \$1 == \$2 { n = split(\$3, p, \"/\"); if (p[n] == \"claude\") f = 1 } END { exit !f }"' 'display-message -p YES' 'display-message -p NO'"#)
     }
 
-    private let rawStty = """
-        speed 38400 baud; rows 24; columns 80; line = 0;
-        -isig -icanon -iexten -echo echoe echok -echonl -noflsh -xcase
-        """
-
-    private func tmuxReading(_ ps: String) -> ClaudeTTYReading {
-        return ClaudeTmuxPaneTTYModeReader.reading(fromOutput: rawStty + "\n" + ps)
+    func testCapabilityCommand() {
+        XCTAssertEqual(Reader.capabilityCommand(tty: "/dev/pts/7"),
+                       "if-shell 'stty -a < /dev/pts/7 > /dev/null 2>&1 && ps -o tpgid= -o pgid= -o args= -t /dev/pts/7 > /dev/null 2>&1' 'display-message -p YES' 'display-message -p NO'")
     }
 
-    func testTmuxReadingWhileClaudeHasTheForeground() {
-        XCTAssertEqual(tmuxReading("""
-             5012  4242 -zsh
-             5012  5012 claude
-             5012  5012 node /usr/lib/mcp-server.js
-            """),
-            ClaudeTTYReading(mode: .raw, claudeHasForeground: true))
+    func testCommandsLeaveNothingForTmuxToExpandOrUnquote() {
+        for command in [Reader.readingCommand(tty: "/dev/pts/7"), Reader.capabilityCommand(tty: "/dev/pts/7")] {
+            XCTAssertFalse(command.contains("#"), "tmux would take # as the start of a format")
+            XCTAssertEqual(command.filter { $0 == "'" }.count, 6, "three single-quoted arguments")
+        }
     }
 
-    func testTmuxReadingAtTheLoginShellsPrompt() {
-        XCTAssertEqual(tmuxReading("""
-             4242  4242 -zsh
-            """),
-            ClaudeTTYReading(mode: .raw, claudeHasForeground: false))
+    func testBranchReplies() {
+        XCTAssertEqual(Reader.reading(fromBranchReply: "YES"),
+                       ClaudeTTYReading(mode: .raw, claudeHasForeground: true))
+        XCTAssertEqual(Reader.reading(fromBranchReply: "YES\n"),
+                       ClaudeTTYReading(mode: .raw, claudeHasForeground: true))
+        // NO can't lead to an offer: it reads as canonical, which keeps checking until giving up.
+        XCTAssertEqual(Reader.reading(fromBranchReply: "NO"),
+                       ClaudeTTYReading(mode: .canonical, claudeHasForeground: nil))
+        XCTAssertEqual(Reader.reading(fromBranchReply: ""),
+                       ClaudeTTYReading(mode: .canonical, claudeHasForeground: nil))
+        XCTAssertEqual(Reader.reading(fromBranchReply: nil), .unknown)
     }
 
-    func testTmuxReadingAtANestedShellsPrompt() {
-        // claude exited and bash, started from the login zsh, has its prompt up. bash isn't the
-        // pane's first process, but it isn't claude either.
-        XCTAssertEqual(tmuxReading("""
-             5100  4242 -zsh
-             5100  5100 bash
-             5100  5300 claude
-            """).claudeHasForeground,
-            false)
-    }
-
-    func testTmuxReadingWhenAWrapperRunsClaude() {
-        // A script that runs claude without exec: claude shares the script's process group.
-        XCTAssertEqual(tmuxReading("""
-             5100  4242 -zsh
-             5100  5100 /bin/bash /home/me/bin/my-claude.sh
-             5100  5100 claude
-            """).claudeHasForeground,
-            true)
-    }
-
-    func testTmuxReadingWhenThePaneStartedClaude() {
-        XCTAssertEqual(tmuxReading("""
-             4242  4242 claude --model opus
-            """).claudeHasForeground,
-            true)
-    }
-
-    func testTmuxModeComesOnlyFromStty() {
-        let canonicalStty = rawStty.replacingOccurrences(of: "-icanon", with: "icanon")
-        let output = canonicalStty + "\n" + """
-             5100  4242 -zsh
-             5100  5100 sh -c stty -icanon; read key
-             5100  5100 claude -p summarize -icanon
-            """
-        XCTAssertEqual(ClaudeTmuxPaneTTYModeReader.reading(fromOutput: output).mode, .canonical,
-                       "a process's command line can't change the mode")
-    }
-
-    func testTmuxReadingComparesWithinEachRow() {
-        // A stray line shaped like a row, ahead of the real ones, must not decide the tpgid.
-        XCTAssertEqual(tmuxReading("""
-             1793308210  330 1
-             5100  4242 -zsh
-             5100  5100 claude
-            """).claudeHasForeground,
-            true)
-    }
-
-    func testTmuxReadingWithoutAUsablePsLine() {
-        XCTAssertEqual(tmuxReading(""), ClaudeTTYReading(mode: .raw, claudeHasForeground: nil))
-        XCTAssertEqual(tmuxReading("ps: unknown option -- t\n"),
-                       ClaudeTTYReading(mode: .raw, claudeHasForeground: nil))
-    }
-
-    func testTmuxReadingWithNoControllingTerminalCantTell() {
-        // procps reports a tpgid of -1 for a process without one, and macOS reports 0.
-        XCTAssertNil(tmuxReading("   -1  4242 claude\n").claudeHasForeground)
-        XCTAssertNil(tmuxReading("    0  4242 claude\n").claudeHasForeground)
+    func testMinimumVersion() {
+        // Before 3.2 the branch's reply is flagged server-originated and the gateway's replies shift.
+        XCTAssertEqual(Reader.minimumTmuxVersion, "3.2")
     }
 
     func testTTYPathValidation() {
-        XCTAssertTrue(ClaudeTmuxPaneTTYModeReader.isSafeTTYPath("/dev/pts/7"))
-        XCTAssertTrue(ClaudeTmuxPaneTTYModeReader.isSafeTTYPath("/dev/ttys012"))
-        XCTAssertFalse(ClaudeTmuxPaneTTYModeReader.isSafeTTYPath("/dev/pts/7; rm -rf ~"))
-        XCTAssertFalse(ClaudeTmuxPaneTTYModeReader.isSafeTTYPath("/dev/pts/7'"))
-        XCTAssertFalse(ClaudeTmuxPaneTTYModeReader.isSafeTTYPath("/tmp/x"))
-        XCTAssertFalse(ClaudeTmuxPaneTTYModeReader.isSafeTTYPath(""))
+        XCTAssertTrue(Reader.isSafeTTYPath("/dev/pts/7"))
+        XCTAssertTrue(Reader.isSafeTTYPath("/dev/ttys012"))
+        XCTAssertFalse(Reader.isSafeTTYPath("/dev/pts/7; rm -rf ~"))
+        XCTAssertFalse(Reader.isSafeTTYPath("/dev/pts/7'"))
+        XCTAssertFalse(Reader.isSafeTTYPath("/tmp/x"))
+        XCTAssertFalse(Reader.isSafeTTYPath(""))
     }
 }
 

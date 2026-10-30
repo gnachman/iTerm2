@@ -44,10 +44,19 @@ extension TmuxGateway {
 
     /// See TmuxWorkgroupCommands for what a guarded command is.
     func sendGuarded(_ command: String, outcome: @escaping (TmuxWorkgroupCommands.GuardOutcome) -> Void) {
+        sendGuardedForBranchReply(command, reply: { reply in
+            outcome(TmuxWorkgroupCommands.GuardOutcome(branchReply: reply))
+        })
+    }
+
+    /// Sends a guarded command and calls branchReply with the text of the branch that ran, or nil
+    /// if it failed or the `if` itself failed. Works for `if-shell` as well as `if -F` on tmux 3.2
+    /// and later: tmux holds the client's later commands until the branch has run, so its reply
+    /// still comes next. Before 3.2, tmux flags the reply to an `if-shell` branch as
+    /// server-originated, so it isn't matched to this command and the replies that follow shift.
+    func sendGuardedForBranchReply(_ command: String, reply branchReply: @escaping (String?) -> Void) {
         sendGuardedCommand(command,
-                           responseTarget: TmuxGatewayReply { reply in
-                               outcome(TmuxWorkgroupCommands.GuardOutcome(branchReply: reply))
-                           },
+                           responseTarget: TmuxGatewayReply(branchReply),
                            responseSelector: #selector(TmuxGatewayReply.handle(_:)),
                            responseObject: nil)
     }

@@ -29,7 +29,7 @@ extension PTYSession {
     }
 
     // A reader for the tty claude runs on in this session. Make one per run of claude: the tmux
-    // reader remembers the pane's tty.
+    // reader remembers what it learned about the pane.
     func makeClaudeTTYModeReader() -> ClaudeTTYModeReading {
         if shell.framerPaneJobManager != nil {
             // A workgroup peer running inside its leader's framer. Its terminal modes aren't
@@ -39,7 +39,7 @@ extension PTYSession {
         if isTmuxClient {
             guard let gateway = tmuxController?.gateway,
                   gateway.versionAtLeastDecimalNumber(with: ClaudeTmuxPaneTTYModeReader.minimumTmuxVersion) else {
-                DLog("\(self): tmux server is too old or unknown; can't read the pane's tty mode")
+                DLog("\(self): tmux server is too old or unknown; can't read the pane's tty")
                 return ClaudeUnknownTTYModeReader()
             }
             return ClaudeTmuxPaneTTYModeReader(gateway: gateway, pane: tmuxPane)
@@ -148,15 +148,25 @@ private final class ClaudeConductorTTYModeReader: ClaudeTTYModeReading {
 }
 
 // A tmux pane: the tmux server owns the pane's pty and doesn't report its terminal modes, so ask
-// the server's host with run-shell. That works whether the server is local or remote.
+// the server's host with if-shell, which works whether the server is local or remote.
+// Not run-shell: in control mode tmux ends run-shell's reply right away and prints the output
+// afterward, outside any reply, which the gateway takes for a broken connection and detaches.
+// if-shell's branch replies in a block of its own, and a display-message there says which way the
+// shell test went.
 final class ClaudeTmuxPaneTTYModeReader: ClaudeTTYModeReading {
-    // Before 2.4, run-shell without -t shows its output in the client's active pane instead of
-    // returning it as the command's reply.
-    static let minimumTmuxVersion = "2.4"
+    // Before 3.2, tmux flags the reply to if-shell's branch as server-originated, so the gateway
+    // doesn't take it as the reply it's waiting for and hands it the next command's reply instead.
+    // (Before 2.1 the branch's output never arrives at all and the client exits.)
+    static let minimumTmuxVersion = "3.2"
+
+    static let yes = "YES"
+    static let no = "NO"
 
     private weak var gateway: TmuxGateway?
     private let pane: Int32
     private var paneTTY: String?
+    // Whether the server's host can run the reading's commands; nil until checked.
+    private var hostCanRead: Bool?
 
     init(gateway: TmuxGateway, pane: Int32) {
         self.gateway = gateway
@@ -164,27 +174,44 @@ final class ClaudeTmuxPaneTTYModeReader: ClaudeTTYModeReading {
     }
 
     func read(_ completion: @escaping (ClaudeTTYReading) -> Void) {
-        if let paneTTY {
-            read(paneTTY, completion)
-            return
-        }
         guard let gateway else {
             completion(.unknown)
             return
         }
-        gateway.send("display-message -p -t '%\(pane)' '#{pane_tty}'") { [weak self] reply in
-            guard let self else {
-                return
+        guard let paneTTY else {
+            gateway.send("display-message -p -t '%\(pane)' '#{pane_tty}'") { [weak self] reply in
+                guard let self else {
+                    return
+                }
+                guard let path = reply?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      Self.isSafeTTYPath(path) else {
+                    DLog("Unusable pane_tty for %\(pane): \(reply ?? "(nil)")")
+                    completion(.unknown)
+                    return
+                }
+                paneTTY = path
+                read(completion)
             }
-            guard let path = reply?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  Self.isSafeTTYPath(path) else {
-                DLog("Unusable pane_tty for %\(pane): \(reply ?? "(nil)")")
-                completion(.unknown)
-                return
-            }
-            paneTTY = path
-            read(path, completion)
+            return
         }
+        guard let hostCanRead else {
+            gateway.sendGuardedForBranchReply(Self.capabilityCommand(tty: paneTTY), reply: { [weak self] reply in
+                guard let self else {
+                    return
+                }
+                hostCanRead = Self.isYes(reply)
+                DLog("tmux host can read %\(pane)'s tty: \(hostCanRead ?? false)")
+                read(completion)
+            })
+            return
+        }
+        guard hostCanRead else {
+            completion(.unknown)
+            return
+        }
+        gateway.sendGuardedForBranchReply(Self.readingCommand(tty: paneTTY), reply: { reply in
+            completion(Self.reading(fromBranchReply: reply))
+        })
     }
 
     // The path goes into a shell command, so accept only what a tty path looks like.
@@ -192,65 +219,47 @@ final class ClaudeTmuxPaneTTYModeReader: ClaudeTTYModeReading {
         return path.range(of: "^/dev/[A-Za-z0-9._/-]+$", options: .regularExpression) != nil
     }
 
-    // The run-shell command for one reading: the tty's modes, then each process on the tty with
-    // the tty's foreground process group (tpgid), its own process group, and its command line.
+    // Whether stty and `ps -o ... -t` work on the server's host. Where they don't, a reading would
+    // always say NO, so fall back to the dwell time instead.
+    static func capabilityCommand(tty: String) -> String {
+        return ifShell("stty -a < \(tty) > /dev/null 2>&1 && " +
+                       "ps -o tpgid= -o pgid= -o args= -t \(tty) > /dev/null 2>&1")
+    }
+
+    // YES when the tty is in raw mode and a process whose argv[0] is claude is in the tty's
+    // foreground process group. That asks about claude, not a shell, so a prompt drawn by a shell
+    // nested anywhere never counts, and a claude that shares a wrapper script's process group still
+    // does. A tpgid of 0 (macOS) or -1 (procps) means no controlling terminal, which isn't YES.
     // stty works on its stdin, which spells the same on macOS and Linux, and `ps -o` with these
     // fields and `-t` with a /dev path work on macOS and with procps on Linux. args rather than
-    // comm: comm is the executable's file name, which for claude depends on how it was installed,
-    // while args starts with the argv[0] the job ancestry matches on.
+    // comm: comm is the executable's file name, which for claude depends on how it was installed.
     static func readingCommand(tty: String) -> String {
-        return "stty -a < \(tty); ps -o tpgid= -o pgid= -o args= -t \(tty)"
+        // In double quotes for the shell, because tmux takes the whole test in single quotes.
+        let claudeInForeground = "\\$1 > 0 && \\$1 == \\$2 { n = split(\\$3, p, \\\"/\\\"); if (p[n] == \\\"claude\\\") f = 1 } END { exit !f }"
+        return ifShell("stty -a < \(tty) | grep -q -- -icanon && " +
+                       "ps -o tpgid= -o pgid= -o args= -t \(tty) | awk \"\(claudeInForeground)\"")
     }
 
-    // A ps row: tpgid, pgid, then a command line. stty -a never prints a line shaped like this.
-    private static let psRowPattern = "^\\s*-?[0-9]+\\s+[0-9]+\\s+\\S"
-
-    // Parses the output of readingCommand. Each part is parsed from its own lines: a ps row's
-    // command line can contain anything, including the "-icanon" the mode is read from.
-    static func reading(fromOutput output: String) -> ClaudeTTYReading {
-        let lines = output.split(separator: "\n")
-        let isPSRow = { (line: Substring) in line.range(of: psRowPattern, options: .regularExpression) != nil }
-        let sttyOutput = lines.filter { !isPSRow($0) }.joined(separator: "\n")
-        return ClaudeTTYReading(mode: ClaudeTTYMode(sttyOutput: sttyOutput),
-                                claudeHasForeground: claudeHasForeground(psRows: lines.filter(isPSRow)))
+    // YES: raw with claude in the foreground. NO covers canonical, claude without the foreground,
+    // and anything that failed, so it can't lead to an offer; it reads as canonical, which keeps
+    // checking until the policy gives up.
+    static func reading(fromBranchReply reply: String?) -> ClaudeTTYReading {
+        guard let reply else {
+            return .unknown
+        }
+        if isYes(reply) {
+            return ClaudeTTYReading(mode: .raw, claudeHasForeground: true)
+        }
+        return ClaudeTTYReading(mode: .canonical, claudeHasForeground: nil)
     }
 
-    // Whether a process whose argv[0] is claude is in the tty's foreground process group. That
-    // asks about claude, not a shell, so a prompt drawn by a shell nested anywhere never counts,
-    // and a claude that shares a wrapper script's process group still does. nil without a usable
-    // ps row, e.g. from a ps that doesn't take these options.
-    private static func claudeHasForeground(psRows: [Substring]) -> Bool? {
-        let processes = psRows.compactMap { line -> (tpgid: Int, pgid: Int, argv0: String)? in
-            let fields = line.split(whereSeparator: { $0.isWhitespace }).map(String.init)
-            guard fields.count >= 3, let tpgid = Int(fields[0]), let pgid = Int(fields[1]) else {
-                return nil
-            }
-            return (tpgid, pgid, fields[2])
-        }
-        // A tpgid of 0 (macOS) or -1 (procps) means no controlling terminal: no answer. Each row
-        // carries the tty's tpgid, so compare within the row rather than trusting any one line.
-        let onTerminal = processes.filter { $0.tpgid > 0 }
-        guard !onTerminal.isEmpty else {
-            return nil
-        }
-        return onTerminal.contains { process in
-            process.pgid == process.tpgid && (process.argv0 as NSString).lastPathComponent.lowercased() == "claude"
-        }
+    private static func isYes(_ reply: String?) -> Bool {
+        return reply?.trimmingCharacters(in: .whitespacesAndNewlines) == yes
     }
 
-    private func read(_ tty: String, _ completion: @escaping (ClaudeTTYReading) -> Void) {
-        guard let gateway else {
-            completion(.unknown)
-            return
-        }
-        // run-shell gets no -t: with it, tmux shows the output in that pane instead of replying.
-        gateway.send("run-shell '\(Self.readingCommand(tty: tty))'") { reply in
-            guard let reply else {
-                DLog("Reading \(tty) failed")
-                completion(.unknown)
-                return
-            }
-            completion(Self.reading(fromOutput: reply))
-        }
+    // Neither branch may contain a single quote, and the test must not contain one or a #, which
+    // tmux would take as the start of a format.
+    private static func ifShell(_ test: String) -> String {
+        return "if-shell '\(test)' 'display-message -p \(yes)' 'display-message -p \(no)'"
     }
 }
