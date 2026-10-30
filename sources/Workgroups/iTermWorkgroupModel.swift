@@ -21,10 +21,20 @@ final class iTermWorkgroupModel: NSObject {
     @objc static let didChangeNotification =
         Notification.Name("iTermWorkgroupModelDidChange")
 
-    private(set) var workgroups: [iTermWorkgroup]
+    // Any thread. Only main changes it, but triggers read it on sessions' mutation queues (see
+    // EnterWorkgroupTrigger), so the list is kept behind a lock and readers get a whole one.
+    private(set) var workgroups: [iTermWorkgroup] {
+        get {
+            return storage.value
+        }
+        set {
+            storage.set(newValue)
+        }
+    }
+    private let storage: MutableAtomicObject<[iTermWorkgroup]>
 
     private override init() {
-        self.workgroups = Self.load()
+        storage = MutableAtomicObject(Self.load())
         super.init()
         backfillToolbarShortcutsIfNeeded()
         backfillClaudeCodeDiffModeIfNeeded()
