@@ -176,7 +176,11 @@ public class iTermMTKView: iTermMetalView {
     @objc
     override public var colorspace: CGColorSpace? {
         set {
-            RLog("Set colorspace of \(self) to \(String(describing: newValue))")
+            // This is called whenever the window moves or backing properties change,
+            // usually with the same value, so only log actual changes.
+            if newValue != super.colorspace {
+                RLog("Set colorspace of \(self) to \(String(describing: newValue))")
+            }
             super.colorspace = newValue
         }
         get {
