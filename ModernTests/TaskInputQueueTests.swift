@@ -220,11 +220,13 @@ final class TaskInputQueueTests: XCTestCase {
         XCTAssertEqual(second.inUse, 0)
     }
 
-    // However appends and reads interleave, nothing stays counted once the queue is closed.
-    func testConcurrentUseLeavesNothingCounted() {
+    // However appends and reads interleave, the budget counts exactly the bytes not read yet.
+    func testConcurrentUseCountsExactlyTheUnreadBytes() {
         let budget = ByteBudget(capacity: 1000)
         let queue = TaskInputQueue()
         queue.budget = budget
+        let appended = 4 * (0..<500).reduce(0) { $0 + 1 + $1 % 7 }
+        let readDuringRace = MutableAtomicObject(0)
         let group = DispatchGroup()
         for i in 0..<4 {
             DispatchQueue.global().async(group: group) {
@@ -235,11 +237,17 @@ final class TaskInputQueueTests: XCTestCase {
         }
         DispatchQueue.global().async(group: group) {
             for _ in 0..<2000 {
-                _ = self.read(queue, maxLength: 5)
+                let count = self.read(queue, maxLength: 5).0.count
+                readDuringRace.mutate { $0 + count }
             }
         }
         group.wait()
-        queue.close()
+        XCTAssertEqual(budget.inUse, appended - readDuringRace.value)
+        var drained = 0
+        while case let data = read(queue, maxLength: 64).0, !data.isEmpty {
+            drained += data.count
+        }
+        XCTAssertEqual(readDuringRace.value + drained, appended)
         XCTAssertEqual(budget.inUse, 0)
     }
 }

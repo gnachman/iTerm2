@@ -95,10 +95,12 @@ final class ComplexCharRegistryTests: XCTestCase {
     }
 
     // Threads looking up and creating codes for overlapping strings all agree on each string's
-    // code, and every code maps back to its string.
+    // code, every code maps back to its string, and racing to create one string's code allocates
+    // only one.
     func testConcurrentLookupsAgree() {
         let registry = ComplexCharRegistry()
         let strings = (0..<200).map { "x\($0)\u{301}" }
+        let firstCode = Int(registry.peekNextCode)
         let results = MutableAtomicObject([[unichar]]())
         DispatchQueue.concurrentPerform(iterations: 8) { worker in
             var codes = [unichar]()
@@ -120,5 +122,8 @@ final class ComplexCharRegistryTests: XCTestCase {
         for (string, c) in zip(strings, all[0]) {
             XCTAssertEqual(registry.string(for: Int(c)), string as NSString)
         }
+        XCTAssertEqual(Int(registry.peekNextCode) - firstCode, strings.count)
+        XCTAssertEqual(registry.complexCharMap.count, strings.count)
+        XCTAssertEqual(Set(registry.complexCharMap.values).count, strings.count)
     }
 }

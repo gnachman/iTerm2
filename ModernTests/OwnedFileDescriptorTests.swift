@@ -150,37 +150,61 @@ final class OwnedFileDescriptorTests: XCTestCase {
         XCTAssertEqual(closer.closed, [42])
     }
 
-    // However leases, accesses, and closes interleave, the descriptor is closed exactly once and
-    // never while in use.
-    func testConcurrentUseClosesOnceAndNeverWhileInUse() {
+    // Uses that began on other threads before close() keep the descriptor open until the last of
+    // them ends, and then it is closed exactly once.
+    func testCloseFromAnotherThreadWaitsForEveryUse() {
+        let owned = make(7)
+        let holders = 6
+        let started = DispatchSemaphore(value: 0)
+        let mayFinish = (0..<holders).map { _ in DispatchSemaphore(value: 0) }
+        let finished = (0..<holders).map { _ in DispatchSemaphore(value: 0) }
+        for i in 0..<holders {
+            DispatchQueue.global().async {
+                if i % 2 == 0, let lease = owned.lease() {
+                    started.signal()
+                    _ = mayFinish[i].wait(timeout: .now() + 30)
+                    lease.release()
+                } else {
+                    owned.withFileDescriptor { _ in
+                        started.signal()
+                        _ = mayFinish[i].wait(timeout: .now() + 30)
+                    }
+                }
+                finished[i].signal()
+            }
+        }
+        for _ in 0..<holders {
+            XCTAssertEqual(started.wait(timeout: .now() + 30), .success)
+        }
+        DispatchQueue.global().sync {
+            owned.close()
+        }
+        XCTAssertNil(owned.lease())
+        for i in 0..<holders {
+            XCTAssertEqual(closer.closed, [], "Closed while \(holders - i) uses remained")
+            mayFinish[i].signal()
+            XCTAssertEqual(finished[i].wait(timeout: .now() + 30), .success)
+        }
+        XCTAssertEqual(closer.closed, [7])
+    }
+
+    // However leases, accesses, and closes interleave, the descriptor is closed exactly once.
+    func testConcurrentUseClosesOnce() {
         for _ in 0..<200 {
             let closer = Closer()
-            let inUse = MutableAtomicObject(0)
-            var sawCloseWhileInUse = false
-            let owned = OwnedFileDescriptor(7, close: { fd in
-                if inUse.value > 0 {
-                    sawCloseWhileInUse = true
-                }
-                return closer.close(fd)
-            })
+            let owned = OwnedFileDescriptor(7, close: closer.close)
             DispatchQueue.concurrentPerform(iterations: 16) { i in
                 if i == 8 {
                     owned.close()
                     return
                 }
                 if i % 2 == 0, let lease = owned.lease() {
-                    inUse.mutate { $0 + 1 }
-                    inUse.mutate { $0 - 1 }
                     lease.release()
                 } else {
-                    owned.withFileDescriptor { _ in
-                        inUse.mutate { $0 + 1 }
-                        inUse.mutate { $0 - 1 }
-                    }
+                    owned.withFileDescriptor { _ in }
                 }
             }
             XCTAssertEqual(closer.closed, [7])
-            XCTAssertFalse(sawCloseWhileInUse)
         }
     }
 

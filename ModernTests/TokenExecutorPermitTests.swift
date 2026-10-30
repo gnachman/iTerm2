@@ -116,13 +116,27 @@ final class TokenExecutorPermitTests: XCTestCase {
         wait(for: [expectation], timeout: 30)
     }
 
-    private func spin(until condition: () -> Bool) {
-        while !condition() {}
+    // Spins (for use inside a token, where waiting on the main queue would deadlock) until
+    // `condition` holds. Gives up after 30 seconds, so a regression fails the test instead of
+    // hanging it.
+    private static func spin(_ description: String, until condition: () -> Bool) {
+        let deadline = DispatchTime.now().uptimeNanoseconds + 30 * NSEC_PER_SEC
+        while !condition() {
+            if DispatchTime.now().uptimeNanoseconds > deadline {
+                XCTFail("Gave up waiting: \(description)")
+                return
+            }
+        }
     }
 
     private func spin(for seconds: TimeInterval) {
         let start = DispatchTime.now().uptimeNanoseconds
-        spin { TimeInterval(DispatchTime.now().uptimeNanoseconds - start) / 1e9 >= seconds }
+        while TimeInterval(DispatchTime.now().uptimeNanoseconds - start) / 1e9 < seconds {}
+    }
+
+    // Runs on the executor's queue, in a token, until a join pauses the executor.
+    private static func spinUntilPaused(_ executor: TokenExecutor) {
+        spin("the join pauses the executor") { executor.isPausedForTesting }
     }
 
     // With one permit, a second session waits in line, holding no thread, until the first is done.
@@ -186,11 +200,11 @@ final class TokenExecutorPermitTests: XCTestCase {
             if count == 1 {
                 started.signal()
                 // Stay in the first token until the join has paused a, so the join lands mid-run.
-                while !executor.isPausedForTesting {}
+                Self.spinUntilPaused(executor)
             }
         }
         addTokens(10, to: a)
-        started.wait()
+        XCTAssertEqual(started.wait(timeout: .now() + 30), .success, "The first token never ran")
         addTokens(10, to: b)
 
         var inUseDuringJoin = -1
@@ -214,7 +228,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         let b = makeSession(permits: permits)
         a.delegate.onToken = { count in
             if count == 1 {
-                self.spin { permits.waitingCountForTesting == 1 }
+                Self.spin("b waits") { permits.waitingCountForTesting == 1 }
                 self.spin(for: 2 * iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
             }
         }
@@ -327,11 +341,11 @@ final class TokenExecutorPermitTests: XCTestCase {
         a.delegate.onToken = { [executor = a.executor] count in
             if count == 1 {
                 started.signal()
-                while !executor.isPausedForTesting {}
+                Self.spinUntilPaused(executor)
             }
         }
         addTokens(10, to: a)
-        started.wait()
+        XCTAssertEqual(started.wait(timeout: .now() + 30), .success, "The first token never ran")
         addTokens(10, to: b)
         waitUntil("b waits") { permits.waitingCountForTesting == 1 }
 
@@ -358,10 +372,10 @@ final class TokenExecutorPermitTests: XCTestCase {
             case 1:
                 started.signal()
                 // Stay in the first token until the join has paused a, so the join lands mid-run.
-                while !executor.isPausedForTesting {}
+                Self.spinUntilPaused(executor)
             case 2:
                 // b got in line during the join. Run past the time slice.
-                self.spin { permits.waitingCountForTesting == 1 }
+                Self.spin("b waits") { permits.waitingCountForTesting == 1 }
                 self.spin(for: 2 * iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
             default:
                 break
@@ -374,7 +388,7 @@ final class TokenExecutorPermitTests: XCTestCase {
             }
         }
         addTokens(100, to: a)
-        started.wait()
+        XCTAssertEqual(started.wait(timeout: .now() + 30), .success, "The first token never ran")
         // Nobody is owed the permit until the join, so a doesn't yield at its first token.
         a.executor.whilePaused {
             self.addTokens(10, to: b)
@@ -393,7 +407,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         a.delegate.discardTokens = false
         a.delegate.onToken = { count in
             if count == 1 {
-                self.spin { permits.waitingCountForTesting == 1 }
+                Self.spin("b waits") { permits.waitingCountForTesting == 1 }
                 self.spin(for: 2 * iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
                 self.addTokens(5, to: a, highPriority: true)
             }
@@ -459,11 +473,11 @@ final class TokenExecutorPermitTests: XCTestCase {
         a.delegate.onToken = { [executor = a.executor] count in
             if count == 1 {
                 started.signal()
-                while !executor.isPausedForTesting {}
+                Self.spinUntilPaused(executor)
             }
         }
         addTokens(1, to: a)
-        started.wait()
+        XCTAssertEqual(started.wait(timeout: .now() + 30), .success, "The first token never ran")
 
         var runningDuringJoin = -1
         a.executor.whilePaused {
@@ -536,10 +550,10 @@ final class TokenExecutorPermitTests: XCTestCase {
         let joinNow = DispatchSemaphore(value: 0)
         a.delegate.onToken = { [executor = a.executor] count in
             if count == 1 {
-                self.spin { permits.waitingCountForTesting == 1 }
+                Self.spin("b waits") { permits.waitingCountForTesting == 1 }
                 // Pause for a join as the slice ends, before execute() settles.
                 joinNow.signal()
-                self.spin { executor.isPausedForTesting }
+                Self.spinUntilPaused(executor)
                 self.spin(for: 2 * iTermAdvancedSettingsModel.tokenExecutionTimeSlice())
             }
         }
@@ -552,7 +566,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         addTokens(100, to: a)
         waitUntil("a holds the permit") { permits.inUseForTesting == 1 }
         addTokens(10, to: b)
-        joinNow.wait()
+        XCTAssertEqual(joinNow.wait(timeout: .now() + 30), .success, "a never asked for the join")
         a.executor.whilePaused {}
 
         waitUntil("both ran") { a.delegate.tokensSeen == 100 && b.delegate.tokensSeen == 10 }

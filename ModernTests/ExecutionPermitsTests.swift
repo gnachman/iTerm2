@@ -1042,6 +1042,10 @@ final class ExecutionPermitsTests: XCTestCase {
                 }
                 let now = iTermAtomicInt64Add(active, 1)
                 highWater.mutableAccess { $0 = max($0, now) }
+                // Stay running for a little while, so sessions running at once overlap here.
+                for _ in 0..<1000 {
+                    highWater.mutableAccess { $0 = max($0, iTermAtomicInt64Get(active)) }
+                }
                 iTermAtomicInt64Add(active, -1)
                 let keeps = permits.release(session.client, ran: 0.001, hasMoreWork: round + 1 < rounds)
                 if round + 1 < rounds && !keeps {
