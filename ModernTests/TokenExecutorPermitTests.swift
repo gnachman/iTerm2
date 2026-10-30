@@ -139,6 +139,24 @@ final class TokenExecutorPermitTests: XCTestCase {
         spin("the join pauses the executor") { executor.isPausedForTesting }
     }
 
+    // While the main thread has one session joined, other sessions keep executing their output.
+    // Before sessions had queues of their own, a join paused every session (issue 13141).
+    func testJoiningOneSessionLeavesAnotherExecuting() {
+        let permits = ExecutionPermits(capacity: 2, visibleWeight: 4)
+        let a = makeSession(permits: permits)
+        let b = makeSession(permits: permits)
+        var aTokensWhileJoined = -1
+        a.executor.whilePaused {
+            self.addTokens(10, to: a)
+            self.addTokens(10, to: b)
+            Self.spin("b executes while a is joined") { b.delegate.tokensSeen == 10 }
+            aTokensWhileJoined = a.delegate.tokensSeen
+        }
+        XCTAssertEqual(b.delegate.tokensSeen, 10)
+        XCTAssertEqual(aTokensWhileJoined, 0)
+        waitUntil("a runs after the join") { a.delegate.tokensSeen == 10 }
+    }
+
     // With one permit, a second session waits in line, holding no thread, until the first is done.
     func testSessionWaitsForAPermitAndRunsWhenOneFrees() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
