@@ -588,8 +588,8 @@ private final class FakeTask: NSObject, iTermTask {
 class TaskIOCharacterizationTests: XCTestCase {
     fileprivate var probe: SelectProbe!
     fileprivate var notifier: TaskNotifier!
-    private var coprocessChanges = 0
-    private let coprocessChangeSignal = Signal()
+    fileprivate var coprocessChanges = 0
+    fileprivate let coprocessChangeSignal = Signal()
     // Nil when the notifier reaps with its dead pool.
     fileprivate var reaper: ChildReaper?
     // Pids the reaper has stopped watching, in order.
@@ -598,6 +598,8 @@ class TaskIOCharacterizationTests: XCTestCase {
     fileprivate var abandonedPids = [pid_t]()
     // Pids handed to the reaper, in order. Empty when the notifier reaps with its dead pool.
     fileprivate var reapRequests = [pid_t]()
+    // Called with reapSignal held as each pid is handed to the reaper.
+    fileprivate var onReapRequest: ((pid_t) -> Void)?
     fileprivate let reapSignal = Signal()
 
     // Subclasses override this to reap with a ChildReaper instead of the dead pool.
@@ -634,7 +636,10 @@ class TaskIOCharacterizationTests: XCTestCase {
         }
         let reapPid: ((pid_t) -> Void)? = reaper.map { reaper in
             { [weak self] pid in
-                self?.reapSignal.notify { self?.reapRequests.append(pid) }
+                self?.reapSignal.notify {
+                    self?.reapRequests.append(pid)
+                    self?.onReapRequest?(pid)
+                }
                 reaper.reap(pid)
             }
         }
@@ -1336,6 +1341,32 @@ class TaskIOCharacterizationTests: XCTestCase {
 class TaskIOCharacterizationWithChildReaperTests: TaskIOCharacterizationTests {
     fileprivate override func makeReaper(didReap: @escaping (pid_t, Bool) -> Void) -> ChildReaper? {
         return ChildReaper(didReap: didReap)
+    }
+
+    // At coprocess EOF the coprocess is terminated before its pid is handed to the reaper:
+    // terminate() signals the pid, which could belong to an unrelated process once it is reaped.
+    func testCoprocessIsTerminatedBeforeItsPidIsReaped() throws {
+        let (task, pty) = try makeTask()
+        let cat = try makeCatCoprocess()
+        let pid = cat.pid
+        var pidWhenReapRequested: pid_t?
+        onReapRequest = { requested in
+            if requested == pid {
+                pidWhenReapRequested = cat.pid
+            }
+        }
+        task.coprocess = cat
+        notifier.register(task)
+        XCTAssertTrue(flush())
+
+        kill(pid, SIGKILL)
+        XCTAssertTrue(coprocessChangeSignal.wait { self.coprocessChanges > 0 })
+        assertEventuallyReaped(pid)
+        reapSignal.notify {
+            XCTAssertEqual(pidWhenReapRequested, -1, "Reaped before it was terminated")
+        }
+        deregisterAndFlush(task)
+        withExtendedLifetime(pty) {}
     }
 
     func testReapingTheSamePidTwiceReportsOnce() throws {
