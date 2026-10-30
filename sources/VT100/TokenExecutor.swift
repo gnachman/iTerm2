@@ -430,6 +430,14 @@ class TokenExecutor: NSObject {
         return impl.isPausedForTesting
     }
 
+    // Mutation queue, or main while joined. What hasPendingWork found, for test failure messages.
+    var pendingWorkDescriptionForTesting: String {
+#if DEBUG
+        iTermGCD.assertSafe(forMutationQueue: queue)
+#endif
+        return impl.pendingWorkDescriptionForTesting
+    }
+
     // Main queue, outside a joined block. For tests: executes pending work on this executor's
     // queue now, unless execution is paused. Doesn't depend on how many hops an unpause takes to
     // schedule execution.
@@ -582,6 +590,10 @@ private class TokenExecutorImpl {
     // Mutation queue, or the main queue in a joined block.
     var hasPendingWork: Bool {
         return !tokenQueue.isEmpty || taskQueue.count > 0
+    }
+
+    var pendingWorkDescriptionForTesting: String {
+        return "tokens queued=\(!tokenQueue.isEmpty) tasks=\(taskQueue.count) paused=\(isPausedForTesting)"
     }
 
     // Mutation queue

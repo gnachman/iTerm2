@@ -219,14 +219,18 @@ extension VT100Screen {
     /// Main queue. Returns once the tokens and tasks waiting in this screen's executor (such as
     /// injected or read bytes) have executed and the side effects they queued have run. A single
     /// join isn't enough: it pauses token execution, so tokens scheduled before it can run after
-    /// it instead.
+    /// it instead. Executes without an execution permit, so screen tests don't depend on how
+    /// many the app has free; TokenExecutorPermitTests covers permits.
     func waitForQueuedTokensForTesting(file: StaticString = #filePath, line: UInt = #line) {
-        for _ in 0..<10_000 {
+        let deadline = Date(timeIntervalSinceNow: 30)
+        var pending = ""
+        while Date() < deadline {
             var executor: TokenExecutor?
             // Runs pending side effects, which may unpause execution, then checks for work.
             performBlock(joinedThreads: { _, mutableState, _ in
                 if mutableState.tokenExecutor.hasPendingWork {
                     executor = mutableState.tokenExecutor
+                    pending = mutableState.tokenExecutor.pendingWorkDescriptionForTesting
                 }
             })
             guard let executor else {
@@ -237,6 +241,6 @@ extension VT100Screen {
             RunLoop.current.run(mode: .default, before: Date())
             executor.executeForTesting()
         }
-        XCTFail("Queued tokens never finished executing", file: file, line: line)
+        XCTFail("Queued tokens never finished executing: \(pending)", file: file, line: line)
     }
 }
