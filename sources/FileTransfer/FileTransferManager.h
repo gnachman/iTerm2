@@ -18,8 +18,11 @@
 + (instancetype)sharedInstance;
 - (void)removeItem:(TransferrableFileMenuItemViewController *)viewController;
 - (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen;
+// These act on a later turn of the run loop, never on the caller's stack.
 - (void)openDownloadsMenu;
 - (void)openUploadsMenu;
+// Refresh the menu bar once per launch after adding a transfer menu on macOS 27.
+- (void)refreshMenuBarIfNeeded;
 
 #pragma mark - Calls made by subclasses of TransferrableFile
 

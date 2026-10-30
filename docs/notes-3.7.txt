@@ -2503,3 +2503,14 @@ Bug Fixes:
 - After dragging a tab, other windows go back to
   exactly their original size. A window as tall
   as the screen used to end up shorter.
+- The Uploads menu no longer pops open while
+  “Upload and Paste Path” is uploading and
+  pasting. If an upload fails, the menu opens
+  once pasting finishes, and now lists files
+  that could not be read or folders that could
+  not be archived.
+- Pressing Esc to cancel a paste that is waiting
+  for a shell prompt now also discards
+  keystrokes typed while it waited and any
+  pastes queued after it. They used to be held
+  until the next paste.

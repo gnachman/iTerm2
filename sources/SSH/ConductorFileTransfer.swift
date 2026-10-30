@@ -159,6 +159,20 @@ class ConductorFileTransfer: TransferrableFile {
         state = .failed
     }
 
+    // Registers the transfer so a failure found before uploading starts, such as a folder that
+    // couldn't be archived or a file that's gone, shows in the Uploads menu.
+    func failBeforeUpload(reason: String) {
+        state = .uploading
+        status = .starting
+        FileTransferManager.sharedInstance().files.add(self)
+        FileTransferManager.sharedInstance().transferrableFileDidStartTransfer(self)
+        // Fail on a later turn, like a transfer that fails partway through, so a caller starting a
+        // batch of files finishes starting them before any completion runs.
+        DispatchQueue.main.async {
+            self.fail(reason: reason)
+        }
+    }
+
     // The source URL recorded when the file is quarantined. Nil if the host or path can't be
     // put in a URL, in which case the file is quarantined without one (F-920).
     private var url: URL? {
@@ -297,36 +311,34 @@ class ConductorFileTransfer: TransferrableFile {
         }
     }
 
-    private func sizeToUpload() -> Int? {
+    // Returns the size to upload, or an error message if it can't be determined.
+    private func sizeToUpload() -> Result<Int, ConductorFileTransferError> {
         if let data {
-            return data.count
+            return .success(data.count)
         }
         let path = localPath()!
         do {
             let attrs = try FileManager.default.attributesOfItem(atPath: path)
             guard let size = attrs[FileAttributeKey.size] as? Int else {
-                _error = String(localized: "ConductorFileTransfer.CouldNotGetSize", defaultValue: "Could not get size of file: \(path)", comment: "Error shown when the size of a file to upload cannot be determined")
-                state = .failed
-                FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: ConductorFileTransferError(_error))
-                return nil
+                return .failure(ConductorFileTransferError(String(localized: "ConductorFileTransfer.CouldNotGetSize", defaultValue: "Could not get size of file: \(path)", comment: "Error shown when the size of a file to upload cannot be determined")))
             }
-            return size
+            return .success(size)
         } catch {
-            _error = String(localized: "ConductorFileTransfer.NoSuchFile", defaultValue: "No such file: \(path)", comment: "Error shown when a file to upload does not exist")
-            FileTransferManager.sharedInstance().transferrableFile(self, didFinishTransmissionWithError: error)
-            state = .failed
-            return nil
+            return .failure(ConductorFileTransferError(String(localized: "ConductorFileTransfer.NoSuchFile", defaultValue: "No such file: \(path)", comment: "Error shown when a file to upload does not exist")))
         }
     }
 
     override func upload() {
-        state = .uploading
-        status = .starting
-        if let size = sizeToUpload() {
+        switch sizeToUpload() {
+        case .success(let size):
             fileSize = size
-        } else {
+        case .failure(let error):
+            // Register the transfer so the failure shows in the Uploads menu.
+            failBeforeUpload(reason: error.description)
             return
         }
+        state = .uploading
+        status = .starting
         FileTransferManager.sharedInstance().files.add(self)
         FileTransferManager.sharedInstance().transferrableFileDidStartTransfer(self)
         status = .transferring

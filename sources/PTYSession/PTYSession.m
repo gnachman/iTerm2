@@ -22277,9 +22277,9 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
         [remotePaths addObject:[NSNull null]];
     }
 
-    // Finish only once every upload has reported and the loop below has started them all. Without
-    // the second condition a synchronous failure (an unreadable file reports before its upload
-    // call even returns) would finish the group while later files were still to be started.
+    // Finish only once every upload has reported and the loop below has started them all. Uploads
+    // report on a later turn of the run loop, so the second condition is a safeguard against a
+    // transfer that ever reports before its upload call returns.
     __block NSInteger completed = 0;
     __block BOOL allStarted = NO;
     void (^finishIfDone)(void) = ^{
@@ -22319,11 +22319,9 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     finishIfDone();
 }
 
-// Pastes the paths of the uploads that succeeded. A file that failed contributes nothing: its
-// name would point at something that is not there, and the failure is already reported in the
-// file transfers window. Pasting nothing at all is the right outcome when every one failed.
-// Nothing is pasted if, while uploading, the session ended or moved to another host or ssh
-// connection, since the paths would name files that are not there.
+// Ends an upload-and-paste group. The indicator can't show errors, so open the Uploads menu after
+// the paste if any upload failed. Open it only after every transfer reports, because the menu's
+// nested event loop stops the default-mode timers that deliver SCP completions.
 - (void)finishUploadAndPasteWithRemotePaths:(NSArray *)remotePaths
                                 destination:(SCPPath *)destination
                                   conductor:(iTermConductor *)conductor {
@@ -22332,6 +22330,31 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     _uploadAndPasteTransfers = nil;
     [_view hideUploadIndicator];
 
+    const BOOL anyFailed = [remotePaths containsObject:[NSNull null]];
+    [self pasteUploadedPaths:remotePaths destination:destination conductor:conductor];
+    // Wait for both the path paste and any queued pastes to drain before entering the menu's
+    // nested event loop. The callback runs asynchronously, off the paste helper's stack.
+    __weak __typeof(self) weakSelf = self;
+    [_pasteHelper performAfterPasting:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || strongSelf.exited) {
+            DLog(@"Session went away before pasting drained, not opening the Uploads menu");
+            return;
+        }
+        if (anyFailed) {
+            DLog(@"Upload failed, opening the Uploads menu");
+            [[FileTransferManager sharedInstance] openUploadsMenu];
+        } else if (@available(macOS 27.0, *)) {
+            [[FileTransferManager sharedInstance] refreshMenuBarIfNeeded];
+        }
+    }];
+}
+
+// Pastes the paths of the uploads that succeeded. Pastes nothing if the session ended, or its host
+// or ssh connection changed, during the upload.
+- (void)pasteUploadedPaths:(NSArray *)remotePaths
+               destination:(SCPPath *)destination
+                 conductor:(iTermConductor *)conductor {
     if (self.exited || [self nonTextPasteConductor] != conductor) {
         DLog(@"Session exited or its ssh connection changed during upload, so not pasting");
         return;
@@ -22398,9 +22421,8 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     path.path = [destinationPath.path stringByAppendingPathComponent:filename];
     DLog(@"Will upload local:%@ to remote:%@", localPath, path.path);
 
-    // Assigned before any completion can run: the conductor finishes on a later turn of the run
-    // loop, and the SCPFile branch assigns before starting the upload. The one case that reports
-    // synchronously (an archive that could not be built) reports failure, where the path is unused.
+    // Assigned before any completion can run: both branches report completion, including failures
+    // found before uploading starts, on a later turn of the run loop.
     __block TransferrableFile *transfer = nil;
     NSString *predictedPath = path.path;
     void (^wrapper)(BOOL, NSString *) = [[^(BOOL success, NSString *error) {
@@ -22410,7 +22432,7 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     iTermConductor *conductor = [self nonTextPasteConductor];
     if ([conductor canTransferFilesTo:path]) {
         DLog(@"Using conductor for upload with completion");
-        transfer = [conductor uploadFile:localPath to:path withCompletion:wrapper];
+        transfer = [conductor uploadFile:localPath to:path suppressingAutomaticMenu:YES withCompletion:wrapper];
         return transfer;
     }
 
@@ -22419,6 +22441,7 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     scpFile.path = path;
     scpFile.localPath = localPath;
     scpFile.completionBlock = wrapper;
+    scpFile.suppressesAutomaticMenu = YES;
     DLog(@"SCPFile localPath=%@ remotePath=%@", scpFile.localPath, scpFile.path.path);
     transfer = scpFile;
     [scpFile upload];

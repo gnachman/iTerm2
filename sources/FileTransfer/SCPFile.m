@@ -848,8 +848,9 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
 }
 
 // If localPath is a directory, creates a tgz archive and updates localPath and path.path.
-// Returns the file attributes on success, or nil on failure (after reporting the error).
-- (NSDictionary *)archiveDirectoryIfNeededWithAttributes:(NSDictionary *)attrs {
+// Returns the file attributes on success, or nil on failure with *errorOut set.
+- (NSDictionary *)archiveDirectoryIfNeededWithAttributes:(NSDictionary *)attrs
+                                                   error:(NSError **)errorOut {
     NSString *fileType = attrs[NSFileType];
     if (![fileType isEqualToString:NSFileTypeDirectory]) {
         return attrs;
@@ -860,9 +861,7 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     NSError *error = nil;
     _tempArchivePath = [NSData temporaryTGZArchiveOfDirectory:self.localPath error:&error];
     if (!_tempArchivePath) {
-        self.error = error.localizedDescription;
-        [[FileTransferManager sharedInstance] transferrableFile:self
-                                 didFinishTransmissionWithError:error];
+        *errorOut = error;
         return nil;
     }
 
@@ -872,6 +871,19 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
 
     // Return updated attrs for the new file
     return [[NSFileManager defaultManager] attributesOfItemAtPath:self.localPath error:nil];
+}
+
+// Registers the transfer so a failure found before uploading starts, such as a file that can't be
+// read or a folder that couldn't be archived, shows in the Uploads menu. Fails on a later turn, like
+// a transfer that fails partway through, so a caller starting a batch of files finishes starting
+// them before any completion runs.
+- (void)failBeforeUploadWithError:(NSError *)error {
+    [[[FileTransferManager sharedInstance] files] addObject:self];
+    [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[FileTransferManager sharedInstance] transferrableFile:self
+                                 didFinishTransmissionWithError:error];
+    });
 }
 
 - (void)upload {
@@ -884,14 +896,17 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
     if (attributesError) {
         RLog(@"Failed to get attributes for %@: %@", self.localPath, attributesError);
         self.error = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SCPFile.CannotReadFile", nil, [NSBundle mainBundle], @"Cannot read file: %@", @"Error shown when a file to upload cannot be read; %@ is the underlying error"), attributesError.localizedDescription];
-        [[FileTransferManager sharedInstance] transferrableFile:self
-                                 didFinishTransmissionWithError:attributesError];
+        [self failBeforeUploadWithError:attributesError];
         return;
     }
 
     // If it's a directory, create a tgz archive
-    attrs = [self archiveDirectoryIfNeededWithAttributes:attrs];
+    NSError *archiveError = nil;
+    attrs = [self archiveDirectoryIfNeededWithAttributes:attrs error:&archiveError];
     if (!attrs) {
+        RLog(@"Failed to archive %@: %@", self.localPath, archiveError);
+        self.error = archiveError.localizedDescription;
+        [self failBeforeUploadWithError:archiveError];
         return;
     }
 
