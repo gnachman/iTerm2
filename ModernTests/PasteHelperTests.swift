@@ -389,6 +389,43 @@ final class PasteHelperTests: XCTestCase, iTermPasteHelperDelegate, iTermWarning
 
     // MARK: - Chunking and queueing
 
+    func testDrainCallbackRunsImmediatelyWhenIdle() {
+        var drained = false
+        helper.perform(afterPasting: { drained = true })
+        XCTAssertTrue(drained)
+    }
+
+    func testDrainCallbackWaitsForLaterQueuedPaste() {
+        let first = String(repeating: "1", count: 2000)
+        let second = String(repeating: "2", count: 2000)
+        paste(first)
+        paste(second)
+        var drained = false
+        helper.perform(afterPasting: {
+            XCTAssertEqual(self.writeBuffer, first + second)
+            drained = true
+        })
+        XCTAssertFalse(drained)
+        helper.fireTimer()
+        // Finish the first paste and start the queued one.
+        helper.fireTimer()
+        XCTAssertFalse(drained)
+        runTimer()
+        XCTAssertTrue(drained)
+    }
+
+    func testAbortRunsDrainCallbackExactlyOnce() {
+        paste(String(repeating: "1", count: 2000))
+        paste("queued")
+        var calls = 0
+        helper.perform(afterPasting: { calls += 1 })
+        XCTAssertEqual(calls, 0)
+        helper.abort()
+        helper.abort()
+        XCTAssertEqual(calls, 1)
+        XCTAssertEqual(writeBuffer, String(repeating: "1", count: 768))
+    }
+
     // 2000 bytes at the default 768 bytes per chunk is three chunks, so two delays of 0.01.
     func testTwoChunkPasteString() {
         let test = String(repeating: " ", count: 2000)

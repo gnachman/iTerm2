@@ -1972,11 +1972,14 @@ extension Conductor {
 
     @objc(uploadFile:to:)
     func upload(file: String, to destinationPath: SCPPath) {
-        _ = upload(file: file, to: destinationPath, completion: { _, _ in })
+        _ = upload(file: file, to: destinationPath, suppressesAutomaticMenu: false, completion: { _, _ in })
     }
 
-    @objc(uploadFile:to:withCompletion:)
-    func upload(file: String, to destinationPath: SCPPath, completion: @escaping (Bool, String?) -> Void) -> TransferrableFile? {
+    @objc(uploadFile:to:suppressingAutomaticMenu:withCompletion:)
+    func upload(file: String,
+                to destinationPath: SCPPath,
+                suppressesAutomaticMenu: Bool,
+                completion: @escaping (Bool, String?) -> Void) -> TransferrableFile? {
         let localPath: String
         let remotePath: SCPPath
         let tempArchivePath: String?
@@ -1991,8 +1994,14 @@ extension Conductor {
                 tempArchivePath = result.tempArchivePath
             } catch {
                 DLog("Failed to create tgz archive: \(error)")
-                completion(false, error.localizedDescription)
-                return nil
+                let transfer = ConductorFileTransfer(path: destinationPath,
+                                                     localPath: file,
+                                                     data: nil,
+                                                     delegate: self)
+                transfer.suppressesAutomaticMenu = suppressesAutomaticMenu
+                transfer.completionBlock = completion
+                transfer.failBeforeUpload(reason: error.localizedDescription)
+                return transfer
             }
         } else {
             localPath = file
@@ -2011,6 +2020,8 @@ extension Conductor {
             }
             completion(success, error)
         }
+        // Set before upload(): a synchronous failure reaches the menu during upload().
+        transfer.suppressesAutomaticMenu = suppressesAutomaticMenu
         transfer.upload()
         return transfer
     }

@@ -19,11 +19,13 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
 @interface FileTransferManager ()<iTermPasswordManagerDelegate>
 @property(nonatomic, retain) NSMutableArray *files;
+- (BOOL)brieflyOpenMenu:(NSMenu *)menu accessibilityIdentifier:(NSString *)identifier;
 @end
 
 @implementation FileTransferManager {
     NSMutableArray *_viewControllers;
     NSTimer *_timer;  // cleanUpMenus timer. weak reference.
+    BOOL _hasRefreshedMenuBar;
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
     void (^_passwordCompletion)(NSString *password);
 }
@@ -246,6 +248,47 @@ static BOOL gFileTransferManagerOpensMenus = YES;
         AXUIElementPerformAction(menuElement, kAXPressAction);
         CFRelease(menuElement);
     }
+}
+
+- (void)refreshMenuBarIfNeeded {
+    if (!gFileTransferManagerOpensMenus || _hasRefreshedMenuBar) {
+        return;
+    }
+    _hasRefreshedMenuBar = YES;
+    if (![self brieflyOpenMenu:[self uploadsMenu] accessibilityIdentifier:iTermUploadsMenuAXIdentifier]) {
+        _hasRefreshedMenuBar = NO;
+    }
+}
+
+// On macOS 27, inserting a top-level menu can update the menu model and bar layout
+// while leaving its title blank until the next menu interaction. Briefly opening
+// and closing a menu forces AppKit to redraw the bar. Unlike replacing NSApp.mainMenu,
+// this preserves the installed menu objects and avoids the related shortcut-tracking bug.
+// See https://github.com/AvaloniaUI/Avalonia/issues/22285.
+// Call only after pending pastes drain: menu tracking pauses their default-mode timers.
+- (BOOL)brieflyOpenMenu:(NSMenu *)menu accessibilityIdentifier:(NSString *)identifier {
+    AXUIElementRef menuElement = [self menuElementWithAXIdentifier:identifier];
+    if (!menuElement) {
+        DLog(@"Can't briefly open menu %@: no menu-bar element", identifier);
+        return NO;
+    }
+    NSTimer *closeTimer = [NSTimer timerWithTimeInterval:0.01 repeats:NO block:^(NSTimer *timer) {
+        DLog(@"Closing briefly opened menu %@", identifier);
+        [menu cancelTrackingWithoutAnimation];
+    }];
+    // Menu tracking pauses default-mode timers. Also register in default mode in case
+    // pressing the menu fails, so the one-shot timer is still retired.
+    NSRunLoop *runLoop = [NSRunLoop mainRunLoop];
+    [runLoop addTimer:closeTimer forMode:NSEventTrackingRunLoopMode];
+    [runLoop addTimer:closeTimer forMode:NSDefaultRunLoopMode];
+    DLog(@"Briefly opening menu %@ for 10 ms", identifier);
+    const AXError error = AXUIElementPerformAction(menuElement, kAXPressAction);
+    DLog(@"Brief menu %@ press returned %d", identifier, (int)error);
+    if (error != kAXErrorSuccess) {
+        [closeTimer invalidate];
+    }
+    CFRelease(menuElement);
+    return error == kAXErrorSuccess;
 }
 
 - (void)removeAllDownloads {
