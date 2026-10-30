@@ -183,7 +183,7 @@ final class FramerProcessListingTests: XCTestCase {
         let framer = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("OtherResources/framer.py")
         let source = try String(contentsOf: framer, encoding: .utf8)
-        XCTAssertTrue(source.contains(#""ps -Ao pid,ppid,stat,lstart,command""#))
+        XCTAssertTrue(source.contains(#""ps -Ao pid,ppid,pgid,stat,lstart,command""#))
         XCTAssertNil(source.range(of: #"ps -e[a-z]*o"#, options: .regularExpression))
     }
 }
