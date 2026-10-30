@@ -118,6 +118,12 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 - (void)setUpdatingDividerLayer:(BOOL)value;
 - (void)it_moveToScreen:(NSScreen *)screen;
 
+// AppKit can set minSize or contentMinSize to the current frame when a window
+// manager moves a window partly off screen before shrinking it. That clamp is
+// applied before -windowWillResize:toSize:, so the window can then only grow.
+// These properties are not how iTerm2 enforces its real minimum.
+- (void)it_clearLatchedMinSize;
+
 @end
 
 typedef NSWindow<iTermWeaklyReferenceable, PTYWindow> iTermTerminalWindow;
