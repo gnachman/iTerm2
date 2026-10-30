@@ -235,9 +235,13 @@ final class ExecutorUpdateTicker: NSObject {
 }
 
 // A repeating timer on a private queue.
-private final class DispatchTimerTickSource: ExecutorUpdateTickSource {
+final class DispatchTimerTickSource: ExecutorUpdateTickSource {
     private let period: TimeInterval
     private let timer: DispatchSourceTimer
+    // Whether the timer is resumed. Dispatch crashes when a source is resumed or suspended more
+    // often than the other, or released while suspended. Changed only by start() and stop(), which
+    // the ticker calls under its lock.
+    private var running = false
 
     init(period: TimeInterval) {
         self.period = period
@@ -245,13 +249,27 @@ private final class DispatchTimerTickSource: ExecutorUpdateTickSource {
                                                                      qos: .userInteractive))
     }
 
+    deinit {
+        timer.setEventHandler(handler: nil)
+        if !running {
+            // A source starts out inactive, and it is suspended after stop(). Either way it must be
+            // resumed before it is released.
+            timer.resume()
+        }
+        timer.cancel()
+    }
+
     func start(_ handler: @escaping () -> Void) {
+        it_assert(!running, "Started a tick source that is already running")
+        running = true
         timer.setEventHandler(handler: handler)
         timer.schedule(deadline: .now() + period, repeating: period, leeway: .milliseconds(1))
         timer.resume()
     }
 
     func stop() {
+        it_assert(running, "Stopped a tick source that isn't running")
+        running = false
         timer.suspend()
     }
 }

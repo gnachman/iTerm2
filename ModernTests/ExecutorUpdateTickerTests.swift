@@ -394,4 +394,67 @@ final class ExecutorUpdateTickerTests: XCTestCase {
             XCTAssertEqual(session.marksSeenByLastDelivery, iTermAtomicInt64Get(session.marks))
         }
     }
+
+    // MARK: - Expedite racing other marks
+
+    // A keystroke's expedite can race the mutation queue marking updates. Whatever the order, the
+    // update waiting for the tick goes out right away exactly once, and the ticker isn't left
+    // holding it.
+    func testExpediteRacingMarksDeliversTheWaitingUpdateOnce() {
+        for round in 0..<2000 {
+            let fired = Counter()
+            let firedLock = Mutex()
+            let client = ticker.makeClient {
+                firedLock.sync { fired.value += 1 }
+            }
+            client.markNeedsUpdate()
+            main.runAll()
+            client.markNeedsUpdate()
+            XCTAssertEqual(main.dispatchCount, 0)
+
+            DispatchQueue.concurrentPerform(iterations: 3) { i in
+                if i == 0 {
+                    client.expedite()
+                } else {
+                    client.markNeedsUpdate()
+                }
+            }
+            // The next mark consumes the expedite if every mark above came before it.
+            client.markNeedsUpdate()
+            let immediate = main.dispatchCount
+            main.runAll()
+            tickSource.tick()
+            main.runAll()
+            let total = firedLock.sync { fired.value }
+            guard immediate == 1, total == 2 else {
+                XCTFail("Round \(round): \(immediate) immediate deliveries, \(total) in all")
+                break
+            }
+            // Let the ticker stop, so the next round's first update goes out right away.
+            tickSource.tick()
+            XCTAssertFalse(tickSource.isRunning)
+        }
+    }
+
+    // MARK: - The real tick source
+
+    // It ticks after each start, including after a stop, and can be released whether it never
+    // started, stopped, or is running.
+    func testDispatchTimerTickSourceStartsStopsAndRestarts() {
+        let source = DispatchTimerTickSource(period: 0.001)
+        for run in 0..<3 {
+            let ticked = expectation(description: "Ticked in run \(run)")
+            let once = MutableAtomicObject(false)
+            source.start {
+                if !once.getAndSet(true) {
+                    ticked.fulfill()
+                }
+            }
+            wait(for: [ticked], timeout: 10)
+            source.stop()
+        }
+        _ = DispatchTimerTickSource(period: 0.001)
+        let running = DispatchTimerTickSource(period: 0.001)
+        running.start {}
+    }
 }
