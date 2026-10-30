@@ -82,6 +82,13 @@ final class TokenExecutorPermitTests: XCTestCase {
     }
 
     private func makeSession(permits: ExecutionPermits) -> Session {
+        let session = makeUnretainedSession(permits: permits)
+        sessions.append(session)
+        return session
+    }
+
+    // Like makeSession, but the test doesn't keep it alive.
+    private func makeUnretainedSession(permits: ExecutionPermits) -> Session {
         let queue = iTermGCD.newMutationQueue()
         let executor = TokenExecutor(VT100Terminal(),
                                      slownessDetector: SlownessDetector(),
@@ -90,9 +97,7 @@ final class TokenExecutorPermitTests: XCTestCase {
                                      permits: permits)
         let delegate = FakeDelegate()
         executor.delegate = delegate
-        let session = Session(executor: executor, delegate: delegate, queue: queue)
-        sessions.append(session)
-        return session
+        return Session(executor: executor, delegate: delegate, queue: queue)
     }
 
     private func addTokens(_ count: Int, to session: Session, highPriority: Bool = false) {
@@ -137,6 +142,53 @@ final class TokenExecutorPermitTests: XCTestCase {
     // Runs on the executor's queue, in a token, until a join pauses the executor.
     private static func spinUntilPaused(_ executor: TokenExecutor) {
         spin("the join pauses the executor") { executor.isPausedForTesting }
+    }
+
+    // A session closed while it waits for a permit leaves the line.
+    func testSessionFreedWhileWaitingLeavesTheLine() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = makeSession(permits: permits)
+        let release = DispatchSemaphore(value: 0)
+        a.delegate.onToken = { count in
+            if count == 1 {
+                _ = release.wait(timeout: .now() + 30)
+            }
+        }
+        addTokens(10, to: a)
+        waitUntil("a holds the permit") { permits.inUseForTesting == 1 }
+
+        weak var weakExecutor: TokenExecutor?
+        do {
+            let b = makeUnretainedSession(permits: permits)
+            weakExecutor = b.executor
+            addTokens(10, to: b)
+            waitUntil("b waits") { permits.waitingCountForTesting == 1 }
+        }
+        waitUntil("b is freed") { weakExecutor == nil }
+        XCTAssertEqual(permits.waitingCountForTesting, 0)
+
+        release.signal()
+        waitUntil("a ran") { a.delegate.tokensSeen == 10 }
+        waitUntil("nobody runs or waits") { permits.runningCountForTesting == 0 && permits.waitingCountForTesting == 0 }
+    }
+
+    // A session closed while it holds an idle permit gives it up, so another session can run.
+    func testSessionFreedWhileHoldingAnIdlePermitGivesItUp() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        weak var weakExecutor: TokenExecutor?
+        do {
+            let a = makeUnretainedSession(permits: permits)
+            weakExecutor = a.executor
+            addTokens(10, to: a)
+            waitUntil("a ran") { a.delegate.tokensSeen == 10 }
+            waitUntil("a's permit is idle") { permits.idleHolderCountForTesting == 1 }
+        }
+        waitUntil("a is freed") { weakExecutor == nil }
+        XCTAssertEqual(permits.inUseForTesting, 0)
+
+        let b = makeSession(permits: permits)
+        addTokens(10, to: b)
+        waitUntil("b ran") { b.delegate.tokensSeen == 10 }
     }
 
     // While the main thread has one session joined, other sessions keep executing their output.
