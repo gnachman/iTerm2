@@ -8,6 +8,7 @@
 
 #import "CommandHistoryPopup.h"
 
+#import "DebugLogging.h"
 #import "iTermApplication.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermShellHistoryController.h"
@@ -112,18 +113,43 @@
     }
 }
 
+// Returns nil if the selected command doesn't begin with what's been typed.
 - (NSString *)insertableString {
     CommandHistoryPopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
     if (entry.prefix.length > 0) {
         return entry.command;
-    } else {
-        return [entry.command substringFromIndex:_partialCommandLength];
     }
+    // The popup may not have reloaded since the last keystroke (for example,
+    // when an autosuggestion after the cursor makes the session ineligible for
+    // updates), so measure what's typed now rather than trusting the length
+    // from the last load. Issue 13168.
+    NSString *typed = _autocomplete ? [self.delegate popupTypedCommand] : nil;
+    DLog(@"command=%@ typed=%@ partialCommandLength=%@", entry.command, typed, @(_partialCommandLength));
+    if (typed) {
+        // History matches prefixes case-insensitively, so match the same way
+        // here and cut at the matched length, which can differ from
+        // typed.length when case folding changes the length.
+        const NSRange match = [entry.command rangeOfString:typed
+                                                   options:NSAnchoredSearch | NSCaseInsensitiveSearch];
+        if (match.location == NSNotFound) {
+            return nil;
+        }
+        return [entry.command substringFromIndex:NSMaxRange(match)];
+    }
+    if (entry.command.length < _partialCommandLength) {
+        return nil;
+    }
+    return [entry.command substringFromIndex:_partialCommandLength];
 }
 
 - (void)rowSelected:(id)sender {
     if ([_tableView selectedRow] >= 0) {
         NSString *const string = [self insertableString];
+        if (!string) {
+            DLog(@"Nothing to insert");
+            [super rowSelected:sender];
+            return;
+        }
         const NSEventModifierFlags flags = [[iTermApplication sharedApplication] it_modifierFlags];
         const NSEventModifierFlags mask = NSEventModifierFlagShift | NSEventModifierFlagOption;
         if (!_autocomplete || (flags & mask) == NSEventModifierFlagShift) {
@@ -143,7 +169,10 @@
 
 - (void)previewCurrentRow {
     if ([_tableView selectedRow] >= 0) {
-        [self.delegate popupPreview:[self insertableString]];
+        NSString *const string = [self insertableString];
+        if (string) {
+            [self.delegate popupPreview:string];
+        }
     }
 }
 

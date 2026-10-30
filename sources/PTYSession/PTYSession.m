@@ -20862,6 +20862,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _textview.window.firstResponder == _textview;
 }
 
+- (NSString *)popupTypedCommand {
+    if ([self popupHost] || _composerManager.dropDownComposerViewIsVisible) {
+        return nil;
+    }
+    // The command range ends at the cursor, so this leaves out text drawn after
+    // it, such as a zsh autosuggestion.
+    return [self currentCommand];
+}
+
 // If the cursor is preceded by whitespace the last word will be empty. Words go in reverse order.
 - (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count {
     id<iTermPopupWindowHosting> host = [self popupHost];

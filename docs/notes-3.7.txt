@@ -670,6 +670,13 @@ Improvements:
   background processes.
 
 Bug Fixes:
+- Commands saved to Command History no longer
+  include a right-hand prompt (such as zsh’s
+  RPROMPT) drawn on the same line.
+- Choosing a command from Auto Command
+  Completion could repeat the last character you
+  typed (“aws” became “awss”), especially with
+  zsh-autosuggestions.
 - If iTerm2 quits unexpectedly while tmux
   integration is attached, and you switched to
   another app at some point after attaching,

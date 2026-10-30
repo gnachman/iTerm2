@@ -482,6 +482,10 @@
     return NO;
 }
 
+- (NSString *)popupTypedCommand {
+    return nil;
+}
+
 - (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count {
     const NSRange insertionPoint = self.textView.selectedRangeExcludingPrefix;
     NSString *string = [[self.textView stringExcludingPrefix] substringToIndex:insertionPoint.location];

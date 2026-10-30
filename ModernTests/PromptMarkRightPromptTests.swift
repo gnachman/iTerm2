@@ -339,6 +339,45 @@ final class PromptMarkRightPromptTests: XCTestCase {
         XCTAssertEqual(mark.firstLineOfCommand, "echo hi")
     }
 
+    // MARK: - zsh RPROMPT without P;k=r (iTerm2's own zsh integration)
+
+    /// iTerm2's zsh integration doesn't mark RPROMPT, so there is no excluded
+    /// subrange. zsh leaves RPROMPT on screen after Return (unless
+    /// TRANSIENT_RPROMPT is set) and C arrives from preexec after the newline,
+    /// so the command range covers the whole line. The blank cells between the
+    /// typed text and RPROMPT must end the command, as they did before
+    /// excludedSubranges was introduced. Otherwise the right prompt is recorded
+    /// in the mark and in command history. Issue 13168.
+    func test_zsh_unmarkedRightPrompt_isNotRecordedInCommand() {
+        let harness = makeHarness()
+
+        harness.feedEscapeSequence(zshUnmarkedRightPromptCycle(buffer: "echo hi",
+                                                               rightPromptColumn: zshRightPromptColumn(indent: 1)))
+        harness.sync()
+
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
+        XCTAssertNil(mark.excludedSubranges, "Precondition: nothing marks the right prompt")
+        XCTAssertEqual(mark.fullCommand, "echo hi")
+        XCTAssertEqual(mark.firstLineOfCommand, "echo hi")
+    }
+
+    /// Same, with the multi-word command from the report.
+    func test_zsh_unmarkedRightPrompt_longCommand_isNotRecordedInCommand() {
+        let harness = makeHarness()
+        let command = "aws sso login --profile=athena-dev"
+
+        harness.feedEscapeSequence(zshUnmarkedRightPromptCycle(buffer: command,
+                                                               rightPromptColumn: zshRightPromptColumn(indent: 1)))
+        harness.sync()
+
+        guard let mark = onlyPromptMark(in: harness) else {
+            return
+        }
+        XCTAssertEqual(mark.fullCommand, command)
+    }
+
     // MARK: - P;k=i (Ghostty and WezTerm bash/zsh)
 
     /// Ghostty's and WezTerm's bash integrations send A once, then wrap PS1 in
@@ -479,6 +518,25 @@ final class PromptMarkRightPromptTests: XCTestCase {
     /// A p10k paint followed by Return, C, output, and D;0.
     private func p10kCycle(buffer: String, rightPromptColumn: Int) -> [UInt8] {
         var bytes = p10kPaint(buffer: buffer, rightPromptColumn: rightPromptColumn)
+        bytes += Array("\r\n".utf8)
+        bytes += osc133("C")
+        bytes += Array("hi\r\n".utf8)
+        bytes += osc133("D;0")
+        return bytes
+    }
+
+    /// A full cycle as iTerm2's zsh integration sends it with an RPROMPT set:
+    /// PS1 is wrapped in A … B, but RPROMPT is not marked. zsh draws the left
+    /// prompt and buffer, moves right to draw RPROMPT, and moves back. On
+    /// Return it prints the newline, then preexec sends C.
+    private func zshUnmarkedRightPromptCycle(buffer: String, rightPromptColumn: Int) -> [UInt8] {
+        var bytes = osc133("A")
+        bytes += Array("$ ".utf8)
+        bytes += osc133("B")
+        bytes += Array(buffer.utf8)
+        bytes += moveToPromptRow(column: rightPromptColumn)
+        bytes += Array(rightPrompt.utf8)
+        bytes += moveToPromptRow(column: 2 + buffer.count)
         bytes += Array("\r\n".utf8)
         bytes += osc133("C")
         bytes += Array("hi\r\n".utf8)

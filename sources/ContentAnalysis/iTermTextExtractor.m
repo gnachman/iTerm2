@@ -1279,79 +1279,61 @@ const NSInteger kLongMaximumWordLength = 100000;
     }
 
     // Resolve resilient excluded subranges to concrete grid-coord ranges,
-    // dropping any whose endpoints aren't currently resolvable. mapWithBlock
-    // filters nils, so .invalid / .unresolved* / .scrolledOff entries
-    // drop out naturally. Sort by start so isExcluded can walk a single
-    // monotonic index forward alongside the cell enumeration.
+    // dropping any whose endpoints aren't currently resolvable. .invalid /
+    // .unresolved* / .scrolledOff entries are skipped.
     const long long overflow = [_dataSource totalScrollbackOverflow];
-    NSArray<NSValue *> *excludedGridRanges =
-        [[(excludedSubranges ?: @[]) mapWithBlock:^id(iTermResilientCoordinateRange *r) {
-            if (r.start.status != StatusValid || r.end.status != StatusValid) {
-                return nil;
-            }
-            const VT100GridAbsCoordRange a = r.absRange;
-            const VT100GridCoordRange g =
-                VT100GridCoordRangeMake(a.start.x, (int)(a.start.y - overflow),
-                                        a.end.x,   (int)(a.end.y   - overflow));
-            return [NSValue valueWithBytes:&g objCType:@encode(VT100GridCoordRange)];
-        }] sortedArrayUsingComparator:^NSComparisonResult(NSValue *aV, NSValue *bV) {
-            VT100GridCoordRange a, b;
-            [aV getValue:&a];
-            [bV getValue:&b];
-            return VT100GridCoordCompare(a.start, b.start);
-        }];
-
-    // Cell enumeration walks forward in row-major order; excludedGridRanges
-    // is sorted the same way. Park nextIdx at the lowest range whose end
-    // might still cover a future coord; advance past any range we've
-    // walked past entirely. Per-call cost is amortized O(1).
-    __block NSUInteger nextIdx = 0;
-    BOOL (^isExcluded)(VT100GridCoord) = ^BOOL(VT100GridCoord coord) {
-        while (nextIdx < excludedGridRanges.count) {
-            VT100GridCoordRange g;
-            [excludedGridRanges[nextIdx] getValue:&g];
-            // [g.start, g.end) half-open. If coord >= g.end, the range
-            // is fully behind us; no future coord can land in it either.
-            if (VT100GridCoordCompare(coord, g.end) == NSOrderedAscending) {
-                return VT100GridCoordCompare(coord, g.start) != NSOrderedAscending;
-            }
-            nextIdx++;
+    const NSUInteger maxExcluded = excludedSubranges.count;
+    VT100GridCoordRange *excludedGridRanges = maxExcluded > 0 ? iTermMalloc(maxExcluded * sizeof(VT100GridCoordRange)) : NULL;
+    NSUInteger numExcluded = 0;
+    for (iTermResilientCoordinateRange *r in excludedSubranges) {
+        if (r.start.status != StatusValid || r.end.status != StatusValid) {
+            continue;
         }
-        return NO;
-    };
-
-    NSMutableString *result = [NSMutableString string];
-    [self enumerateCharsInRange:windowedRange
-                    supportBidi:NO
-                      charBlock:^BOOL(const screen_char_t *line,
-                                      screen_char_t c,
-                                      iTermExternalAttribute *ea,
-                                      VT100GridCoord logicalCoord,
-                                      VT100GridCoord visualCoord) {
-        // Return value: YES stops enumeration, NO continues. We always
-        // want to keep walking until the range is exhausted.
-        if (isExcluded(visualCoord)) {
-            return NO;
-        }
-        if (c.image) {
-            return NO;
-        }
-        if (!c.complexChar && (c.code == 0 ||
-                               (c.code >= ITERM2_PRIVATE_BEGIN && c.code <= ITERM2_PRIVATE_END))) {
-            return NO;
-        }
-        NSString *s = ScreenCharToStr(&c);
-        if (s) {
-            [result appendString:s];
-        }
-        return NO;
+        const VT100GridAbsCoordRange a = r.absRange;
+        excludedGridRanges[numExcluded++] = VT100GridCoordRangeMake(a.start.x, (int)(a.start.y - overflow),
+                                                                    a.end.x,   (int)(a.end.y   - overflow));
     }
-                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
-        if (code == EOL_HARD) {
-            [result appendString:@"\n"];
+
+    iTermLocatedString *located = [self locatedStringInRange:windowedRange
+                                           attributeProvider:nil
+                                                  nullPolicy:kiTermTextExtractorNullPolicyMidlineEndsLine
+                                                         pad:NO
+                                          includeLastNewline:NO
+                                      trimTrailingWhitespace:NO
+                                                cappedAtSize:-1
+                                                truncateTail:YES
+                                           continuationChars:nil
+                                           deduplicateDECDHL:NO];
+    NSString *result = located.string;
+    if (numExcluded > 0) {
+        // Each UTF-16 unit has the logical coord of its cell, so a surrogate
+        // pair or composed character is kept or dropped as a whole. Within a
+        // right-to-left line the coords aren't monotonic, so check every
+        // range; there are rarely more than a couple.
+        iTermGridCoordArray *coords = located.gridCoords;
+        const NSUInteger length = result.length;
+        unichar *kept = iTermMalloc(MAX(1, length) * sizeof(unichar));
+        NSUInteger numKept = 0;
+        for (NSUInteger i = 0; i < length; i++) {
+            const unichar c = [result characterAtIndex:i];
+            BOOL excluded = NO;
+            if (c != '\n') {
+                // Newlines are located past the end of their line, not in a
+                // cell, so they're never excluded.
+                const VT100GridCoord coord = [coords coordAt:i];
+                for (NSUInteger j = 0; j < numExcluded && !excluded; j++) {
+                    // [start, end) half-open.
+                    excluded = (VT100GridCoordCompare(coord, excludedGridRanges[j].start) != NSOrderedAscending &&
+                                VT100GridCoordCompare(coord, excludedGridRanges[j].end) == NSOrderedAscending);
+                }
+            }
+            if (!excluded) {
+                kept[numKept++] = c;
+            }
         }
-        return NO;
-    }];
+        result = [[NSString alloc] initWithCharactersNoCopy:kept length:numKept freeWhenDone:YES];
+    }
+    free(excludedGridRanges);
 
     NSString *trimmed = [result stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     return trimmed.length > 0 ? trimmed : nil;
@@ -1426,6 +1408,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     __block BOOL lineContainsImage = NO;
     __block BOOL copiedImage = NO;
     __block BOOL needsTimestamps = self.addTimestamps;
+    // For kiTermTextExtractorNullPolicyMidlineEndsLine: the last line that got a character, and the
+    // line whose remainder is being dropped.
+    __block int lastLineWithContent = -1;
+    __block int endedLine = -1;
     [self enumerateCharsInRange:windowedRange
                     supportBidi:YES
             deduplicateDECDHL:deduplicateDECDHL
@@ -1435,6 +1421,9 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                       VT100GridCoord logicalCoord,
                                       VT100GridCoord visualCoord,
                                       const iTermImmutableMetadata *lineMetadata) {
+        if (logicalCoord.y == endedLine) {
+            return NO;
+        }
         if (needsTimestamps) {
             appendString([self formattedTimestampForLine:logicalCoord.y],
                          (screen_char_t) { .code = 0, .complexChar = 0, .image = 0}, nil, logicalCoord, lineMetadata);
@@ -1462,12 +1451,14 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         } else if (ea.controlCode.valid) {
             if (theChar.code != '^') {
                 appendString([NSString stringWithLongCharacter:ea.controlCode.code], theChar, ea, logicalCoord, lineMetadata);
+                lastLineWithContent = logicalCoord.y;
             }
         } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
             // Convert orphan tab fillers (those without a subsequent
             // tab character) into spaces.
             if ([self tabFillerAtIndex:logicalCoord.x isOrphanInLine:currentLine]) {
                 appendString(@" ", theChar, ea, logicalCoord, lineMetadata);
+                lastLineWithContent = logicalCoord.y;
             }
         } else if (theChar.code == 0 && !theChar.complexChar) {
             // This is only reached for midline nulls; nulls at the end of the
@@ -1481,6 +1472,11 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 case kiTermTextExtractorNullPolicyTreatAsSpace:
                 case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
                     appendString(@" ", theChar, ea, logicalCoord, lineMetadata);
+                    break;
+                case kiTermTextExtractorNullPolicyMidlineEndsLine:
+                    if (lastLineWithContent == logicalCoord.y) {
+                        endedLine = logicalCoord.y;
+                    }
                     break;
             }
         } else if (theChar.complexChar || (theChar.code != DWC_RIGHT &&
@@ -1498,6 +1494,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             } else {
                 // Normal character.
                 appendString(ScreenCharToStr(&theChar) ?: @"", theChar, ea, logicalCoord, lineMetadata);
+                lastLineWithContent = logicalCoord.y;
             }
         }
         if (truncateTail) {
@@ -1558,6 +1555,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                  NULL);
                     break;
                 case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
+                case kiTermTextExtractorNullPolicyMidlineEndsLine:
                     break;
             }
         }

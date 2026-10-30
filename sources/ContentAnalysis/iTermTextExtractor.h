@@ -25,6 +25,10 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyFromLastToEnd,  // Ignore content before last null
     kiTermTextExtractorNullPolicyTreatAsSpace,  // Treat midline nulls as spaces and a range of terminal nulls as a single space
     kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
+    // A midline null that follows content on a line drops the rest of that line, and terminal nulls
+    // are stripped. Later lines are still extracted. A shell draws an unmarked right prompt (e.g.,
+    // zsh's RPROMPT) by moving the cursor over nulls, while it writes spaces for spaces in a command.
+    kiTermTextExtractorNullPolicyMidlineEndsLine,
 };
 
 typedef NS_ENUM(NSInteger, iTermTextRadiusType) {
@@ -160,9 +164,11 @@ extern const NSInteger kLongMaximumWordLength;
 
 // Extracts the content of `range`, dropping any cell that falls inside any
 // excluded subrange. Cells are walked in row-major order; cell-by-cell
-// skipping means nulls, image cells, and iTerm2 private codes (DWC_RIGHT,
-// TAB_FILLER, etc.) are omitted from the result. Hard EOLs introduce a
-// real newline; soft / DWC wraps are joined as a single logical line.
+// skipping means image cells and iTerm2 private codes (DWC_RIGHT, etc.)
+// are omitted from the result. Nulls follow
+// kiTermTextExtractorNullPolicyMidlineEndsLine, so an unmarked right prompt
+// past a run of nulls is dropped. Hard EOLs introduce a real newline; soft /
+// DWC wraps are joined as a single logical line.
 // Surrounding whitespace and newlines on the returned string are trimmed;
 // an empty result returns nil. Excluded subranges with unresolvable
 // endpoints (status != .valid) are silently skipped. Order of
