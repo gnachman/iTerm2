@@ -690,6 +690,9 @@ Bug Fixes:
 - Commands saved to Command History no longer
   include a right-hand prompt (such as zsh’s
   RPROMPT) drawn on the same line.
+- With powerlevel10k, a command long enough to
+  reach the right-hand prompt was saved to
+  Command History with characters missing.
 - Choosing a command from Auto Command
   Completion could repeat the last character you
   typed (“aws” became “awss”), especially with

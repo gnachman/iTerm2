@@ -168,6 +168,9 @@ static BOOL sOSC7DisabledWarningShown;
         // -rcGuid below returns _uniqueIdentifier so the mutation-thread
         // pool gets its own stable guid distinct from the main-thread one.
         _pendingNonInitialPromptStart = nil;
+        _excludedSubrangeTexts =
+            [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsWeakMemory | NSPointerFunctionsObjectPointerPersonality
+                                  valueOptions:NSPointerFunctionsStrongMemory];
         _marksByAid = [NSMutableDictionary dictionary];
         // _openAidStack is owned and initialized by the base class
         // (VT100ScreenState) so the base's openAidStack getter sees it.
@@ -3466,6 +3469,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (range.start.x != -1) {
         mark = [self screenMarkOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
     }
+    // A right prompt hidden by a long command or erased by a transient prompt leaves an exclusion
+    // over cells that now hold command text or nothing.
+    [self dropStaleExcludedSubrangesOfMark:mark];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
     NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
@@ -3819,6 +3825,69 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     count += 1;
     return count;
 }
+- (NSString *)textInExcludedAbsRange:(VT100GridAbsCoordRange)absRange {
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    const VT100GridCoordRange range = VT100GridCoordRangeMake(absRange.start.x,
+                                                              (int)(absRange.start.y - overflow),
+                                                              absRange.end.x,
+                                                              (int)(absRange.end.y - overflow));
+    if (range.start.y < 0 || range.end.y < 0) {
+        return @"";
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    return [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                  excludingSubranges:nil] ?: @"";
+}
+
+- (void)replaceExcludedSubrangesOfMark:(id<VT100ScreenMarkReading>)mark
+                             atIndexes:(NSIndexSet *)indexes
+                     withMutationRange:(iTermResilientCoordinateRange *)mutationRange
+                          unboundRange:(iTermResilientCoordinateRange *)unboundRange {
+    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+        VT100ScreenMark *m = (VT100ScreenMark *)obj;
+        if (indexes.count > 0) {
+            NSMutableArray<iTermResilientCoordinateRange *> *ranges = [m.excludedSubranges mutableCopy];
+            NSMutableIndexSet *valid = [indexes mutableCopy];
+            [valid removeIndexesInRange:NSMakeRange(ranges.count, NSNotFound - ranges.count)];
+            [ranges removeObjectsAtIndexes:valid];
+            m.excludedSubranges = ranges.count > 0 ? ranges : nil;
+        }
+        // Discriminate by the authoritative iTermMark.isDoppelganger property rather than by
+        // identity with `mark`, in case mutateObject: ever hands the closure only the
+        // doppelganger. The tree's mutate side effect binds the doppelganger's unbound range to
+        // the main-thread pool after this closure returns.
+        iTermResilientCoordinateRange *range = m.isDoppelganger ? unboundRange : mutationRange;
+        if (range) {
+            [m appendExcludedSubrange:range];
+        }
+    }];
+}
+
+- (void)dropStaleExcludedSubrangesOfMark:(id<VT100ScreenMarkReading>)mark {
+    NSArray<iTermResilientCoordinateRange *> *ranges = mark.excludedSubranges;
+    if (ranges.count == 0) {
+        return;
+    }
+    NSMutableIndexSet *stale = [NSMutableIndexSet indexSet];
+    [ranges enumerateObjectsUsingBlock:^(iTermResilientCoordinateRange *range, NSUInteger i, BOOL *stop) {
+        // A range with no recorded text (e.g., restored from an arrangement) can't be checked, so
+        // it's kept. Unresolvable ranges are ignored by every consumer anyway.
+        NSString *expected = [self.excludedSubrangeTexts objectForKey:range];
+        if (!expected || range.start.status != StatusValid || range.end.status != StatusValid) {
+            return;
+        }
+        NSString *actual = [self textInExcludedAbsRange:range.absRange];
+        if (![actual isEqualToString:expected]) {
+            DLog(@"Excluded subrange %@ is stale", VT100GridAbsCoordRangeDescription(range.absRange));
+            [stale addIndex:i];
+        }
+    }];
+    if (stale.count == 0) {
+        return;
+    }
+    [self replaceExcludedSubrangesOfMark:mark atIndexes:stale withMutationRange:nil unboundRange:nil];
+}
+
 // Removes the excluded subranges of the prompt mark on lastPromptLine if its command hasn't been
 // recorded yet. Mutates only when there is something to clear so shells that redraw their prompt
 // on every keystroke without non-initial prompts pay nothing.

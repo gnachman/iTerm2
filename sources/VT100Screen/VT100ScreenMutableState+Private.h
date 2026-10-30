@@ -203,4 +203,19 @@ iTermTriggerScopeProvider> {
 // repositions folds in the grid (fold create/unfold, the fold-preserving scroll, reflow).
 - (void)recomputeBottommostFoldAbsLine;
 
+// The trimmed text in `absRange`, or the empty string.
+- (NSString *)textInExcludedAbsRange:(VT100GridAbsCoordRange)absRange;
+
+// Removes the excluded subranges of `mark` at `indexes`, then appends `mutationRange` (bound to
+// the mutation-thread pool) and its unbound twin `unboundRange` for the doppelganger, if given.
+// The progenitor's and doppelganger's arrays are parallel, so the same indexes apply to both.
+- (void)replaceExcludedSubrangesOfMark:(id<VT100ScreenMarkReading>)mark
+                             atIndexes:(NSIndexSet *)indexes
+                     withMutationRange:(iTermResilientCoordinateRange * _Nullable)mutationRange
+                          unboundRange:(iTermResilientCoordinateRange * _Nullable)unboundRange;
+
+// Drops excluded subranges of `mark` whose cells no longer hold the text they held when their
+// prompt closed: the shell erased or typed over them.
+- (void)dropStaleExcludedSubrangesOfMark:(id<VT100ScreenMarkReading>)mark;
+
 @end

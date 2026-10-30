@@ -22,6 +22,7 @@
 @class TmuxHistory;
 @class iTermEventuallyConsistentIntervalTree;
 @class iTermResilientCoordinate;
+@class iTermResilientCoordinateRange;
 @protocol iTermResilientCoordinateDataSource;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -510,6 +511,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // happens between the A and the B doesn't corrupt the recorded coord.
 // nil means "no pending range".
 @property (nonatomic, strong, nullable) iTermResilientCoordinate *pendingNonInitialPromptStart;
+
+// The text in each excluded subrange when its non-initial prompt closed, keyed by the
+// mutation-thread range object. When the command ends, a subrange whose cells no longer hold
+// that text was erased or typed over (e.g., a right prompt hidden by a long command) and is
+// dropped. Keys are weak, so entries go away with the ranges.
+@property (nonatomic, strong, readonly) NSMapTable<iTermResilientCoordinateRange *, NSString *> *excludedSubrangeTexts;
 
 // YES between an initial OSC 133;A and the B that ends that prompt. A B ends
 // the whole prompt, so a B that closes a right or continuation prompt nested

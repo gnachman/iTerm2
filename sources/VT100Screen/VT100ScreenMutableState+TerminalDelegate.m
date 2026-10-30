@@ -2824,33 +2824,38 @@ typedef struct {
     // progenitor, then derive an unbound twin via -unboundCopy for the
     // doppelganger. The EventuallyConsistentIntervalTree's mutate side
     // effect binds the unbound twin to the main-thread pool's dataSource
-    // right after this closure runs on the doppelganger side. The
-    // mutation thread no longer reaches for self.mainThreadCopy here.
+    // right after this closure runs on the doppelganger side.
     iTermResilientCoordinateRange *mutationRange =
         [[iTermResilientCoordinateRange alloc] initWithDataSource:self absRange:absRange];
     iTermResilientCoordinateRange *unboundRange = [mutationRange unboundCopy];
+    // Remember what the prompt showed so a later erase or overwrite can be detected when the
+    // command ends.
+    [self.excludedSubrangeTexts setObject:[self textInExcludedAbsRange:absRange] forKey:mutationRange];
 
-    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-        VT100ScreenMark *m = (VT100ScreenMark *)obj;
-        // Discriminate by the authoritative iTermMark.isDoppelganger
-        // property rather than by identity comparison against the
-        // captured `mark` reference. mutateObject:'s contract today
-        // invokes the closure once with the progenitor and once with
-        // its doppelganger, but a future refactor that always hands
-        // user closures the doppelganger would silently flip identity
-        // comparisons into the wrong branch and append two unbound
-        // ranges to the progenitor.
-        if (!m.isDoppelganger) {
-            // Mutation-thread side: append the already-bound RC.
-            [m appendExcludedSubrange:mutationRange];
-        } else {
-            // Main-thread side: append the unbound RC. The tree's
-            // mutate side-effect wrapper (in JournalingIntervalTree.swift)
-            // binds it to the main-pool DS via the holder protocol
-            // immediately after this closure returns.
-            [m appendExcludedSubrange:unboundRange];
+    // A prompt drawn over cells that an earlier one covered replaces it. fish redraws its right
+    // prompt after every keystroke, which would otherwise add an exclusion each time.
+    NSMutableIndexSet *overlapping = [NSMutableIndexSet indexSet];
+    [mark.excludedSubranges enumerateObjectsUsingBlock:^(iTermResilientCoordinateRange *existing,
+                                                         NSUInteger i,
+                                                         BOOL *stop) {
+        if (existing.start.status != StatusValid || existing.end.status != StatusValid) {
+            return;
+        }
+        const VT100GridAbsCoordRange other = existing.absRange;
+        // Half-open ranges overlap when each starts before the other ends.
+        if (VT100GridAbsCoordOrder(other.start, absRange.end) == NSOrderedAscending &&
+            VT100GridAbsCoordOrder(absRange.start, other.end) == NSOrderedAscending) {
+            [overlapping addIndex:i];
         }
     }];
+    if (overlapping.count > 0) {
+        DLog(@"New excluded subrange %@ replaces %@ overlapping ones",
+             VT100GridAbsCoordRangeDescription(absRange), @(overlapping.count));
+    }
+    [self replaceExcludedSubrangesOfMark:mark
+                               atIndexes:overlapping
+                       withMutationRange:mutationRange
+                            unboundRange:unboundRange];
 }
 
 // FTCS C
