@@ -18,6 +18,8 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermUserDefaultsObserver.h"
 #import <objc/runtime.h>
+#import <os/lock.h>
+#import <stdatomic.h>
 
 
 NSString *const kAdvancedSettingIdentifier = @"kAdvancedSettingIdentifier";
@@ -30,6 +32,35 @@ NSString *const kAdvancedSettingOptions = @"kAdvancedSettingOptions";
 NSString *const kAdvancedSettingCategory = @"kAdvancedSettingCategory";
 
 NSString *const iTermAdvancedSettingsDidChange = @"iTermAdvancedSettingsDidChange";
+
+// Settings are read on every thread (mutation queues, parser threads) and changed on whichever
+// thread reloads them, so each value lives in an atomic slot that readers load without a lock.
+typedef _Atomic(void *) iTermAdvancedSettingSlot;
+
+static id iTermAdvancedSettingLoad(iTermAdvancedSettingSlot *slot) {
+    return (__bridge id)atomic_load_explicit(slot, memory_order_acquire);
+}
+
+// A replaced value is never released: a reader may have loaded it and not retained it yet. Values
+// are swapped only when they change, which happens when someone edits a setting, so few are kept.
+static void iTermAdvancedSettingStore(iTermAdvancedSettingSlot *slot, id value) {
+    static os_unfair_lock lock = OS_UNFAIR_LOCK_INIT;
+    static NSMutableArray *replaced;
+    os_unfair_lock_lock(&lock);
+    id current = iTermAdvancedSettingLoad(slot);
+    if (current == value || [current isEqual:value]) {
+        os_unfair_lock_unlock(&lock);
+        return;
+    }
+    void *old = atomic_exchange_explicit(slot, (__bridge_retained void *)value, memory_order_acq_rel);
+    if (old) {
+        if (!replaced) {
+            replaced = [NSMutableArray array];
+        }
+        [replaced addObject:(__bridge_transfer id)old];
+    }
+    os_unfair_lock_unlock(&lock);
+}
 
 static inline BOOL iTermAdvancedSettingsModelTransformBool(id object) {
     return [object boolValue];
@@ -100,7 +131,7 @@ static inline id iTermAdvancedSettingsModelInverseTransformString(NSString *valu
 // transformation: Name of a function (as a token) that converts podtype to id
 // inverseTransformation: Name of a function (as a token) that converts id to podtype
 #define DEFINE_BOILERPLATE(name, podtype, type, default, category, description, transformation, inverseTransformation) \
-static id sAdvancedSetting_##name; \
+static iTermAdvancedSettingSlot sAdvancedSetting_##name; \
 + (NSDictionary *)advancedSettingsModelDictionary_##name { \
     return @{ kAdvancedSettingIdentifier: [@#name stringByCapitalizingFirstLetter], \
               kAdvancedSettingType: @(type), \
@@ -115,11 +146,11 @@ static id sAdvancedSetting_##name; \
 + (NSString *)load_##name { \
     NSString *key = [self name##UserDefaultsKey]; \
     id valueFromUserDefaults = [[iTermUserDefaults userDefaults] objectForKey:key]; \
-    sAdvancedSetting_##name = valueFromUserDefaults ?: inverseTransformation(default); \
+    iTermAdvancedSettingStore(&sAdvancedSetting_##name, valueFromUserDefaults ?: inverseTransformation(default)); \
     return key; \
 } \
 + (podtype)name { \
-    return transformation(sAdvancedSetting_##name); \
+    return transformation(iTermAdvancedSettingLoad(&sAdvancedSetting_##name)); \
 }
 
 // See DEFINE_BOILERPLATE.
@@ -127,14 +158,15 @@ static id sAdvancedSetting_##name; \
 #define DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, podtype, type, default, category, description, transformation, inverseTransformation) \
 DEFINE_BOILERPLATE(name, podtype, type, default, category, description, transformation, inverseTransformation) \
 + (void)set##capitalizedName :(podtype)newValue { \
-    sAdvancedSetting_##name = inverseTransformation(newValue); \
-    [[iTermUserDefaults userDefaults] setObject:sAdvancedSetting_##name forKey:@#capitalizedName]; \
+    id object = inverseTransformation(newValue); \
+    iTermAdvancedSettingStore(&sAdvancedSetting_##name, object); \
+    [[iTermUserDefaults userDefaults] setObject:object forKey:@#capitalizedName]; \
 }
 
 #if ITERM2_SHARED_ARC
 
 #define DEFINE_SECURE_BOILERPLATE(name, capitalizedName, podtype, type, category, description, transformation, inverseTransformation) \
-static podtype sAdvancedSetting_##name; \
+static iTermAdvancedSettingSlot sAdvancedSetting_##name; \
 + (NSDictionary *)advancedSettingsModelDictionary_##name { \
     podtype defaultValue = iTermSecureUserDefaults.instance.defaultValue_##name; \
     return @{ kAdvancedSettingIdentifier: [@#name stringByCapitalizingFirstLetter], \
@@ -153,14 +185,14 @@ static podtype sAdvancedSetting_##name; \
 + (NSString *)load_##name { \
     NSString *key = [self name##UserDefaultsKey]; \
     podtype valueFromUserDefaults = [[iTermSecureUserDefaults instance] name]; \
-    sAdvancedSetting_##name = valueFromUserDefaults; \
+    iTermAdvancedSettingStore(&sAdvancedSetting_##name, inverseTransformation(valueFromUserDefaults)); \
     return key; \
 } \
 + (podtype)name { \
-    return sAdvancedSetting_##name; \
+    return transformation(iTermAdvancedSettingLoad(&sAdvancedSetting_##name)); \
 } \
 + (id)object_##name { \
-    return inverseTransformation(sAdvancedSetting_##name); \
+    return iTermAdvancedSettingLoad(&sAdvancedSetting_##name); \
 } \
 + (void)set##capitalizedName :(podtype)newValue { \
     [[iTermSecureUserDefaults instance] set##capitalizedName :newValue]; \
@@ -169,7 +201,7 @@ static podtype sAdvancedSetting_##name; \
 + (id)setFromObject_##capitalizedName :(id)newValue { \
     [[iTermSecureUserDefaults instance] set##capitalizedName :transformation(newValue)]; \
     [self load_##name]; \
-    return inverseTransformation(sAdvancedSetting_##name); \
+    return iTermAdvancedSettingLoad(&sAdvancedSetting_##name); \
 }
 
 
@@ -215,7 +247,7 @@ DEFINE_BOILERPLATE(name, int *, kiTermAdvancedSettingTypeOptionalInteger, theDef
 // stored value is the index of the selected title. Because the value is just an
 // int, a setting that used to be DEFINE_BOOL migrates transparently (NO=0, YES=1).
 #define DEFINE_INT_ENUM(name, theDefault, theOptions, theCategory, theDescription) \
-static id sAdvancedSetting_##name; \
+static iTermAdvancedSettingSlot sAdvancedSetting_##name; \
 + (NSDictionary *)advancedSettingsModelDictionary_##name { \
     return @{ kAdvancedSettingIdentifier: [@#name stringByCapitalizingFirstLetter], \
               kAdvancedSettingType: @(kiTermAdvancedSettingTypeIntEnum), \
@@ -230,11 +262,11 @@ static id sAdvancedSetting_##name; \
 + (NSString *)load_##name { \
     NSString *key = [self name##UserDefaultsKey]; \
     id valueFromUserDefaults = [[iTermUserDefaults userDefaults] objectForKey:key]; \
-    sAdvancedSetting_##name = valueFromUserDefaults ?: @(theDefault); \
+    iTermAdvancedSettingStore(&sAdvancedSetting_##name, valueFromUserDefaults ?: @(theDefault)); \
     return key; \
 } \
 + (int)name { \
-    return [sAdvancedSetting_##name intValue]; \
+    return [iTermAdvancedSettingLoad(&sAdvancedSetting_##name) intValue]; \
 }
 
 #define DEFINE_FLOAT(name, theDefault, theCategory, theDescription) \
@@ -1042,7 +1074,7 @@ DEFINE_SETTABLE_BOOL(setIT2AppPath, SetIT2AppPath, NO, SECTION_SCRIPTING, NSLoca
 
 + (void)updateSettingsForUnitTestsIfNeeded {
     if ([NSApp isRunningUnitTests]) {
-        sAdvancedSetting_runJobsInServers = @NO;
+        iTermAdvancedSettingStore(&sAdvancedSetting_runJobsInServers, @NO);
     }
 }
 
