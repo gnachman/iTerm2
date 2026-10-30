@@ -79,6 +79,7 @@ extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
 extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 
 @class CapturedOutput;
+@class iTermByteBudget;
 @protocol ExternalSearchResultsController;
 @class FakeWindow;
 @class PTYSessionSwiftState;
@@ -1522,6 +1523,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Shows a notification about one OSC 7501 record. Exposed so tests can observe
 // which record changes reach it.
 - (void)postProgramStatusNotificationWithDescription:(NSString *)description;
+
+// Testing only. The budget for a gateway's panes' unread output, and the session's tmux mode.
+- (void)setTmuxOutputBudgetForTesting:(nullable iTermByteBudget *)budget;
+- (void)setTmuxModeForTesting:(PTYSessionTmuxMode)tmuxMode;
 
 @end
 

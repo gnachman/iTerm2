@@ -264,12 +264,16 @@ private final class FakeTask: NSObject, iTermTask {
     // _ignoresOutputBudget is set (the gateway left tmux mode).
     private var _outputBudget: ByteBudget?
     private var _ignoresOutputBudget = false
+    // The same decisions PTYSession makes, over the budgets above.
+    private var readCapacity: TaskReadCapacity!
 
     init(fd: OwnedFileDescriptor, notifier: TaskNotifier, pidToWaitOn: pid_t = 0) {
         ownedFileDescriptor = fd
         inputQueue = nil
         self.notifier = notifier
         self.pidToWaitOn = pidToWaitOn
+        super.init()
+        readCapacity = makeReadCapacity()
     }
 
     init(inputQueue: TaskInputQueue, notifier: TaskNotifier) {
@@ -277,6 +281,28 @@ private final class FakeTask: NSObject, iTermTask {
         self.inputQueue = inputQueue
         self.notifier = notifier
         pidToWaitOn = 0
+        super.init()
+        readCapacity = makeReadCapacity()
+    }
+
+    private func makeReadCapacity() -> TaskReadCapacity {
+        return TaskReadCapacity(
+            tokenHasCapacity: { [weak self] in
+                guard let self else {
+                    return true
+                }
+                return self.locked { self._budget?.hasCapacity ?? true }
+            },
+            notifyWhenTokenCapacityAvailable: { [weak self] queue, block in
+                guard let self, let budget = self.locked({ self._budget }) else {
+                    queue.async(execute: block)
+                    return
+                }
+                budget.notifyWhenCapacityAvailable(on: queue, block)
+            },
+            gatewayBudget: { [weak self] in
+                self?.activeOutputBudget
+            })
     }
 
     private func locked<T>(_ block: () -> T) -> T {
@@ -531,22 +557,12 @@ private final class FakeTask: NSObject, iTermTask {
 
     // Like -[PTYSession taskHasReadCapacity].
     var hasReadCapacity: Bool {
-        guard locked({ _budget?.hasCapacity ?? true }) else {
-            return false
-        }
-        return activeOutputBudget?.hasCapacity ?? true
+        return readCapacity.hasCapacity
     }
 
     // Like -[PTYSession taskNotifyWhenReadCapacityAvailableOnQueue:block:].
     func notifyWhenReadCapacityAvailable(on queue: DispatchQueue!, block: (() -> Void)!) {
-        let budget = locked({ _budget })
-        if let budget, !budget.hasCapacity {
-            budget.notifyWhenCapacityAvailable(on: queue, block)
-        } else if let outputBudget = activeOutputBudget, !outputBudget.hasCapacity {
-            outputBudget.notifyWhenCapacityAvailable(on: queue, block)
-        } else {
-            queue.async(execute: block)
-        }
+        readCapacity.notifyWhenCapacityAvailable(on: queue, block: block)
     }
 
     // Guarded by TaskNotifier's lock.

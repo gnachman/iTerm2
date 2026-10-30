@@ -579,6 +579,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // Used in place of _tmuxClientWritePipe with task I/O monitors. The task reads what is
     // appended to it.
     iTermTaskInputQueue *_tmuxPaneInputQueue;
+    // Whether the task may read more. Used on the task's monitor queue.
+    iTermTaskReadCapacity *_readCapacity;
     NSInteger _requestAttentionId;  // Last request-attention identifier
 
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
@@ -1019,6 +1021,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _jobPidRef.onChangeBlock = ^{
             [weakSelf jobPidDidChange];
         };
+        // Like PTYTask without a delegate, a session that is gone has room: what is read goes
+        // nowhere, so it can't back up.
+        _readCapacity = [[iTermTaskReadCapacity alloc] initWithTokenHasCapacity:^BOOL{
+            VT100Screen *screen = weakSelf.screen;
+            return !screen || [screen threadedHasTokenCapacity];
+        } notifyWhenTokenCapacityAvailable:^(dispatch_queue_t queue, void (^block)(void)) {
+            VT100Screen *screen = weakSelf.screen;
+            if (!screen) {
+                dispatch_async(queue, block);
+                return;
+            }
+            [screen threadedNotifyWhenTokenCapacityAvailableOnQueue:queue block:block];
+        } gatewayBudget:^iTermByteBudget *{
+            return [weakSelf tmuxOutputBudgetIfGateway];
+        }];
         _passwordInputDebouncer.onRecheck = ^{
             [weakSelf updateDisplayBecause:@"password input debounce expired"];
         };
@@ -1413,6 +1430,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxPaneInputQueue close];
     [_tmuxPaneInputQueue release];
     [_tmuxOutputBudget release];
+    [_readCapacity release];
     [_arrangementGUID release];
     [_triggerWindowController release];
     [_hardStopDeadline release];
@@ -4810,36 +4828,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_screen threadedReadTask:buffer length:length];
 }
 
-// A gateway also stops reading while its panes have too much output waiting, counting lines the
-// main queue hasn't handled yet. That holds back everything tmux sends, including command replies,
-// so it relies on main and every pane that is still open draining their queues.
 - (BOOL)taskHasReadCapacity {
-    if (![_screen threadedHasTokenCapacity]) {
-        return NO;
-    }
-    iTermByteBudget *budget = [self tmuxOutputBudgetIfGateway];
-    return !budget || budget.hasCapacity;
+    return _readCapacity.hasCapacity;
 }
 
 - (void)taskNotifyWhenReadCapacityAvailableOnQueue:(dispatch_queue_t)queue block:(void (^)(void))block {
-    iTermByteBudget *budget = [self tmuxOutputBudgetIfGateway];
-    if (!budget || ![_screen threadedHasTokenCapacity]) {
-        [_screen threadedNotifyWhenTokenCapacityAvailableOnQueue:queue block:block];
-        return;
-    }
-    if (budget.hasCapacity) {
-        // The token executor was what was full, and it has drained since the caller checked.
-        // Waiting on the budget would wait for its low watermark, which reading doesn't need.
-        dispatch_async(queue, block);
-        return;
-    }
-    // The block checks again, and waits for the token executor next if it has to.
-    [budget notifyWhenCapacityAvailableOnQueue:queue block:block];
-    if (self.tmuxMode != TMUX_GATEWAY) {
-        // Gateway mode ended after the check above, and its wake may have come before the block
-        // was registered.
-        [budget wake];
-    }
+    [_readCapacity notifyWhenCapacityAvailableOnQueue:queue block:block];
 }
 
 // Any thread. Panes' unread output limits reading only while this is a tmux gateway.
@@ -10482,6 +10476,14 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self reallySetTmuxMode:tmuxMode];
     });
+}
+
+- (void)setTmuxOutputBudgetForTesting:(iTermByteBudget *)budget {
+    self.tmuxOutputBudget = budget;
+}
+
+- (void)setTmuxModeForTesting:(PTYSessionTmuxMode)tmuxMode {
+    self.tmuxMode = tmuxMode;
 }
 
 - (void)reallySetTmuxMode:(PTYSessionTmuxMode)tmuxMode {
