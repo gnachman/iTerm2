@@ -142,7 +142,7 @@ static const CharRange sFlagRanges[] = {
 };
 static const int sFlagRangesCount = sizeof(sFlagRanges) / sizeof(sFlagRanges[0]);
 
-// Initialization flag
+// Initialization state: 0 not started, 1 being initialized by one thread, 2 done.
 static atomic_int sInitialized = 0;
 
 // Helper to set a bit in a bitmap
@@ -678,7 +678,9 @@ static void initAmbiguous9(void) {
 
 // Initialize all bitmaps
 static void ensureInitialized(void) {
-    if (atomic_load(&sInitialized)) {
+    // Only when done: a thread that saw 1 and returned would read half-filled bitmaps. Sessions
+    // convert text on their own queues at once, so several threads can get here together.
+    if (atomic_load(&sInitialized) == 2) {
         return;
     }
 
