@@ -704,6 +704,28 @@ class TaskIOCharacterizationTests: XCTestCase {
 
     // MARK: Registration
 
+    // Job managers start without a descriptor, so a task can be registered without one (as when a
+    // launch fails). Nothing reads it, and it is deregistered, which hands its process to be reaped.
+    func testRegisteringATaskWithoutADescriptorDeregistersIt() throws {
+        let child = try spawn("/usr/bin/true", [])
+        waitForExitWithoutReaping(child)
+        let task = FakeTask(fd: OwnedFileDescriptor(-1), notifier: notifier, pidToWaitOn: child)
+        notifier.register(task)
+        XCTAssertTrue(flush())
+        assertEventuallyReaped(child)
+        XCTAssertEqual(task.readCalls, 0)
+    }
+
+    // The same when the descriptor was closed before the task was registered.
+    func testRegisteringATaskWhoseDescriptorIsClosedDeregistersIt() throws {
+        let (task, _) = try makeTask()
+        task.ownedFileDescriptor?.close()
+        notifier.register(task)
+        XCTAssertTrue(flush())
+        XCTAssertEqual(task.readCalls, 0)
+        XCTAssertEqual(task.brokenPipeCalls, 0)
+    }
+
     func testDidRegisterIsCalledOnMain() throws {
         let (task, pty) = try makeTask()
         notifier.register(task)
@@ -754,9 +776,8 @@ class TaskIOCharacterizationTests: XCTestCase {
         withExtendedLifetime((registeredPTY, unregisteredPTY)) {}
     }
 
-    // Documents current behavior: a task registered twice is still read once per iteration,
-    // because the loop skips an fd it has already handled. Deregistering once removes both
-    // entries.
+    // Registering a task that is already registered is ignored, so it is read once and one
+    // deregister removes it.
     func testDoubleRegistrationDeliversBytesOnce() throws {
         let (task, pty) = try makeTask()
         notifier.register(task)
@@ -1472,6 +1493,28 @@ final class TaskIOMonitorCharacterizationTests: TaskIOCharacterizationWithChildR
 
     override func testBlockedReadStallsOtherTasks() throws {
         throw XCTSkip("See testBlockedReadDoesNotStallOtherTasks")
+    }
+
+    // A redundant registration builds a monitor, which leases the descriptor, and then discards
+    // it. Unless that monitor gives its leases back, the descriptor can never be closed.
+    func testRedundantRegistrationDoesNotKeepTheDescriptorOpen() throws {
+        var fds: [Int32] = [-1, -1]
+        XCTAssertEqual(pipe(&fds), 0)
+        defer {
+            Darwin.close(fds[1])
+        }
+        let closed = Signal()
+        var closeCalls = 0
+        let readEnd = OwnedFileDescriptor(fds[0], close: { fd in
+            closed.notify { closeCalls += 1 }
+            return Darwin.close(fd)
+        })
+        let task = FakeTask(fd: readEnd, notifier: notifier)
+        notifier.register(task)
+        notifier.register(task)
+        deregisterAndFlush(task)
+        readEnd.close()
+        XCTAssertTrue(closed.wait { closeCalls == 1 })
     }
 
     // Each task has its own queue, so a task blocked in processRead doesn't hold up another.
