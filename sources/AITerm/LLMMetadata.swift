@@ -49,7 +49,7 @@ class LLMMetadata: NSObject {
         return true
     }
 
-    // All five host tests compare against the lowercased host: they pick which
+    // Host tests compare against the normalized host: they pick which
     // vendor's key to send (and, for Azure, which header name), so a host typed
     // in capitals must not fall through to the .openAI default and carry the
     // user's OpenAI key to someone else (issue 13021).
@@ -95,6 +95,11 @@ class LLMMetadata: NSObject {
         return (url?.it_normalizedHost ?? "").hasSuffix(".deepseek.com")
     }
 
+    @objc(hostIsXAIAIAPIForURL:)
+    static func hostIsXAIAIAPI(url: URL?) -> Bool {
+        return url?.it_normalizedHost == "api.x.ai"
+    }
+
     @objc(hostIsAnthropicAIAPIForURL:)
     static func hostIsAnthropicAIAPI(url: URL?) -> Bool {
         return (url?.it_normalizedHost ?? "").hasSuffix(".anthropic.com")
@@ -119,6 +124,8 @@ class LLMMetadata: NSObject {
             return hostIsGoogleAIAPI(url: parsedURL)
         case .deepSeek:
             return hostIsDeepSeekAIAPI(url: parsedURL)
+        case .xAI:
+            return hostIsXAIAIAPI(url: parsedURL)
         case .llama, .apple:
             return nil
         @unknown default:
@@ -159,6 +166,8 @@ class LLMMetadata: NSObject {
             return AIMetadata.alternateOpenAIModels
         case .deepSeek:
             return AIMetadata.alternateDeepSeekModels
+        case .xAI:
+            return AIMetadata.alternateXAIModels
         case .gemini:
             return AIMetadata.alternateGeminiModels
         case .llama:
@@ -180,6 +189,8 @@ class LLMMetadata: NSObject {
             return AIMetadata.recommendedOpenAIModel
         case .deepSeek:
             return AIMetadata.recommendedDeepSeekModel
+        case .xAI:
+            return AIMetadata.recommendedXAIModel
         case .gemini:
             return AIMetadata.recommendedGeminiModel
         case .llama:
@@ -367,6 +378,8 @@ class LLMMetadata: NSObject {
             return hostIsGoogleAIAPI(url: url) ? vendor : nil
         case .deepSeek:
             return hostIsDeepSeekAIAPI(url: url) ? vendor : nil
+        case .xAI:
+            return hostIsXAIAIAPI(url: url) ? vendor : nil
         case .llama, .apple:
             return nil
         @unknown default:
@@ -995,6 +1008,9 @@ class LLMMetadata: NSObject {
         if lowercased.contains("llama") {
             return .llama
         }
+        if lowercased.contains("grok") {
+            return .xAI
+        }
         return nil
     }
 
@@ -1029,6 +1045,9 @@ class LLMMetadata: NSObject {
         }
         if hostIsDeepSeekAIAPI(url: parsedURL) {
             return .deepSeek
+        }
+        if hostIsXAIAIAPI(url: parsedURL) {
+            return .xAI
         }
         if hostIsOpenAIAPI(url: parsedURL) || hostIsAzureAIAPI(url: parsedURL) {
             return .openAI

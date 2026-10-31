@@ -90,6 +90,10 @@ struct LLMProvider {
                                                      streaming: false)) {
             return "Anthropic"
         }
+        if LLMMetadata.hostIsXAIAIAPI(url: url(apiKey: "placeholder",
+                                               streaming: false)) {
+            return "Grok"
+        }
         // The .llama API type is Ollama's native /api/chat dialect regardless of
         // which model (llama, qwen, ...) is served, so name it for the runner, not
         // the model family. This is what error prefixes ("Error from Ollama") use.
@@ -228,6 +232,9 @@ struct LLMProvider {
         if LLMMetadata.hostIsGoogleAIAPI(url: url) {
             return true
         }
+        if LLMMetadata.hostIsXAIAIAPI(url: url) {
+            return true
+        }
         return false
     }
 
@@ -251,6 +258,7 @@ struct LLMProvider {
         return LLMMetadata.hostIsAnthropicAIAPI(url: url)
             || LLMMetadata.hostIsGoogleAIAPI(url: url)
             || LLMMetadata.hostIsOpenAIAPI(url: url)
+            || LLMMetadata.hostIsXAIAIAPI(url: url)
     }
 
     // Gemini accepts video via inlineData; no other wired vendor takes video.

@@ -2,7 +2,7 @@
 //  AILiveAttachmentTests.swift
 //  iTerm2 AI live harness
 //
-//  The 96 live test methods that exercise the attachment matrix.
+//  The 112 live test methods that exercise the attachment matrix.
 //  Each test method is a one-liner that resolves a (lane, kind) pair
 //  from AttachmentMatrix and forwards to runAttachmentCase. The shared
 //  runner bypasses LLMProvider.accepts(_:), feeds the fixture through
@@ -172,6 +172,7 @@ extension AILiveHarness {
         case "anthropic": envKey = "ANTHROPIC_API_KEY"
         case "gemini":    envKey = "GEMINI_API_KEY"
         case "deepseek":  envKey = "DEEPSEEK_API_KEY"
+        case "xai":       envKey = "XAI_API_KEY"
         case "llama":
             // Ollama needs no real key, but LLAMA_API_KEY gates the lane (and
             // satisfies the driver's Registration, which requires a non-empty
@@ -246,7 +247,7 @@ extension AILiveHarness {
         print("[fixtures] regenerated image fixtures (magic.png/heic/tiff, number.png) in \(dir)")
     }
 
-    // MARK: - 96 test methods
+    // MARK: - 112 test methods
     //
     // Generated explicitly so xctest discovers each as a distinct
     // method, which means individual filters (e.g. test_attachmentMatrix_anthropic_imagePNG)
@@ -341,6 +342,24 @@ extension AILiveHarness {
     func test_attachmentMatrix_deepseek_applicationDOCX()  throws { try runAttachmentCase(lane: .deepseek,        kind: .applicationDOCX) }
     func test_attachmentMatrix_deepseek_applicationZIP()   throws { try runAttachmentCase(lane: .deepseek,        kind: .applicationZIP) }
     func test_attachmentMatrix_deepseek_applicationOctet() throws { try runAttachmentCase(lane: .deepseek,        kind: .applicationOctet) }
+
+    // xai (16)
+    func test_attachmentMatrix_xai_textPlain()        throws { try runAttachmentCase(lane: .xai,             kind: .textPlain) }
+    func test_attachmentMatrix_xai_textMarkdown()     throws { try runAttachmentCase(lane: .xai,             kind: .textMarkdown) }
+    func test_attachmentMatrix_xai_applicationJSON()  throws { try runAttachmentCase(lane: .xai,             kind: .applicationJSON) }
+    func test_attachmentMatrix_xai_applicationXML()   throws { try runAttachmentCase(lane: .xai,             kind: .applicationXML) }
+    func test_attachmentMatrix_xai_imageSVG()         throws { try runAttachmentCase(lane: .xai,             kind: .imageSVG) }
+    func test_attachmentMatrix_xai_yamlAsUnknown()    throws { try runAttachmentCase(lane: .xai,             kind: .yamlAsUnknown) }
+    func test_attachmentMatrix_xai_imagePNG()         throws { try runAttachmentCase(lane: .xai,             kind: .imagePNG) }
+    func test_attachmentMatrix_xai_imageWEBP()        throws { try runAttachmentCase(lane: .xai,             kind: .imageWEBP) }
+    func test_attachmentMatrix_xai_imageHEIC()        throws { try runAttachmentCase(lane: .xai,             kind: .imageHEIC) }
+    func test_attachmentMatrix_xai_imageTIFF()        throws { try runAttachmentCase(lane: .xai,             kind: .imageTIFF) }
+    func test_attachmentMatrix_xai_applicationPDF()   throws { try runAttachmentCase(lane: .xai,             kind: .applicationPDF) }
+    func test_attachmentMatrix_xai_audioMPEG()        throws { try runAttachmentCase(lane: .xai,             kind: .audioMPEG) }
+    func test_attachmentMatrix_xai_videoMP4()         throws { try runAttachmentCase(lane: .xai,             kind: .videoMP4) }
+    func test_attachmentMatrix_xai_applicationDOCX()  throws { try runAttachmentCase(lane: .xai,             kind: .applicationDOCX) }
+    func test_attachmentMatrix_xai_applicationZIP()   throws { try runAttachmentCase(lane: .xai,             kind: .applicationZIP) }
+    func test_attachmentMatrix_xai_applicationOctet() throws { try runAttachmentCase(lane: .xai,             kind: .applicationOctet) }
 
     // llama (16) — all skip
     func test_attachmentMatrix_llama_textPlain()        throws { try runAttachmentCase(lane: .llama,           kind: .textPlain) }
