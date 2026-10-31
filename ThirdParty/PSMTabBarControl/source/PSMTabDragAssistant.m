@@ -156,6 +156,15 @@ static os_log_t PSMTabDragLog(void) {
     BOOL _dragThresholdExceeded;
     BOOL _dragWindowOriginInitialized;
 
+    // Until the threshold is exceeded the drag is locked to its source tab bar: it
+    // can only reorder, wherever it is released. Off when the source has one tab,
+    // since there is nothing to reorder.
+    BOOL _dragCanLockToSourceTabBar;
+
+    // AppKit reported the pointer leaving the source tab bar while the drag was
+    // locked to it. The exit is replayed when the drag unlocks.
+    BOOL _deferredSourceTabBarExit;
+
     NSPoint _lastPolledMouseLocation;
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
@@ -424,6 +433,9 @@ static os_log_t PSMTabDragLog(void) {
     // Retain the control in case the drag operation causes the control to be released
     [control retain];
 
+    _dragCanLockToSourceTabBar = [[control tabView] numberOfTabViewItems] > 1;
+    _deferredSourceTabBarExit = NO;
+
     NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
     [pbItem setString:[@([[control cells] indexOfObject:cell]) stringValue]
               forType:@"com.iterm2.psm.controlitem"];
@@ -590,6 +602,9 @@ static os_log_t PSMTabDragLog(void) {
     }
     [self setDestinationTabBar:control];
     [self setCurrentMouseLoc:mouseLoc];
+    if (control == [self sourceTabBar]) {
+        _deferredSourceTabBarExit = NO;
+    }
     // hide UI buttons
     [[control overflowPopUpButton] setHidden:YES];
     [[control addTabButton] setHidden:YES];
@@ -1275,6 +1290,14 @@ static os_log_t PSMTabDragLog(void) {
         // There was not a successful drop (performDragOperation).
         return;
     }
+    if (_deferredSourceTabBarExit && [self dragIsLockedToSourceTabBar]) {
+        // Released off the source bar but too close to it to mean anything but a
+        // reorder. Every other drop target refused the tab, so AppKit calls this a
+        // failed drop. Drop the tab into the slot it was tracking instead.
+        _deferredSourceTabBarExit = NO;
+        [self performDragOperation:nil];
+        return;
+    }
     PSMTabBarControl *destination = [[[self destinationTabBar] retain] autorelease];
     PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
     id sourceDelegate = [[self sourceTabBar] delegate];
@@ -1378,6 +1401,8 @@ static os_log_t PSMTabDragLog(void) {
     const BOOL wasDragging = self.isDragging;
     [self setIsDragging:NO];
     _dragWindowOriginInitialized = NO;
+    _dragCanLockToSourceTabBar = NO;
+    _deferredSourceTabBarExit = NO;
     [self removeAllPlaceholdersFromTabBar:[self sourceTabBar]];
     // The drag ran chip-free (see distributePlaceholdersInTabBar:); now
     // that the reorder is committed, re-derive chip cells from the new tab
@@ -1449,40 +1474,78 @@ static os_log_t PSMTabDragLog(void) {
     return aPoint;
 }
 
+// How far the pointer must move across the tab bar (Y for horizontal bars, X for
+// vertical) before the drag leaves its rails. A drag that can lock to its source
+// bar gets a generous allowance so a sloppy reorder doesn't tear the tab off or
+// drop it into a pane.
+- (CGFloat)dragThreshold {
+    if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
+        return _dragCanLockToSourceTabBar ? 40.0 : 20.0;
+    }
+    return 40.0;
+}
+
+- (void)updateDragThresholdForMouseLocation:(NSPoint)mouseLocation {
+    // Pinned tabs never exceed the threshold, so they can never be dragged out to a
+    // new window.
+    if (_dragThresholdExceeded || !_dragWindowOriginInitialized || [[self draggedCell] isPinned]) {
+        return;
+    }
+    const NSPoint windowOrigin = NSMakePoint(mouseLocation.x - _dragTabOffset.width,
+                                             mouseLocation.y - _dragTabOffset.height);
+    CGFloat deviation;
+    if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
+        deviation = fabs(windowOrigin.y - _initialDragWindowOrigin.y);
+    } else {
+        deviation = fabs(windowOrigin.x - _initialDragWindowOrigin.x);
+    }
+    if (deviation <= [self dragThreshold]) {
+        return;
+    }
+    DLog(@"Tab drag exceeded its threshold with deviation %f", deviation);
+    _dragThresholdExceeded = YES;
+    [self replayDeferredSourceTabBarExit];
+}
+
+// The drag just unlocked. If AppKit said the pointer left the source bar while it
+// was locked, act on that now.
+- (void)replayDeferredSourceTabBarExit {
+    if (!_deferredSourceTabBarExit) {
+        return;
+    }
+    _deferredSourceTabBarExit = NO;
+    PSMTabBarControl *source = [self sourceTabBar];
+    const NSPoint pointInWindow = [source.window convertPointFromScreen:self.dragSessionDriver.currentMouseLocation];
+    if (NSPointInRect([source convertPoint:pointInWindow fromView:nil], source.bounds)) {
+        DLog(@"Pointer is back over the source tab bar; not replaying its exit");
+        return;
+    }
+    DLog(@"Replaying deferred exit from source tab bar %@", source);
+    [self draggingExitedTabBar:source];
+}
+
+- (BOOL)dragIsLockedToSourceTabBar {
+    if (![self isDragging] || !_dragCanLockToSourceTabBar) {
+        return NO;
+    }
+    [self updateDragThresholdForMouseLocation:self.dragSessionDriver.currentMouseLocation];
+    return !_dragThresholdExceeded;
+}
+
+- (BOOL)shouldDeferDraggingExitFromTabBar:(PSMTabBarControl *)control {
+    if (control != [self sourceTabBar] || ![self dragIsLockedToSourceTabBar]) {
+        return NO;
+    }
+    DLog(@"Deferring exit from source tab bar %@ because the drag is locked to it", control);
+    _deferredSourceTabBarExit = YES;
+    return YES;
+}
+
 // Adjusts the mouse location to keep the drag window stable along the cross-axis
 // (Y for horizontal tab bars, X for vertical) until movement exceeds a threshold.
 - (NSPoint)adjustedMouseLocationForDrag:(NSPoint)mouseLocation {
+    [self updateDragThresholdForMouseLocation:mouseLocation];
     if (_dragThresholdExceeded) {
-        return mouseLocation;
-    }
-
-    NSPoint windowOrigin = NSMakePoint(mouseLocation.x - _dragTabOffset.width,
-                                       mouseLocation.y - _dragTabOffset.height);
-
-    // Pinned tabs use infinite threshold so they can never be dragged out to a new window.
-    if ([[self draggedCell] isPinned]) {
-        // Clamp to initial position along the cross-axis (never exceed threshold).
-        if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
-            mouseLocation.y = _initialDragWindowOrigin.y + _dragTabOffset.height;
-        } else {
-            mouseLocation.x = _initialDragWindowOrigin.x + _dragTabOffset.width;
-        }
-        return mouseLocation;
-    }
-
-    const NSSize kDragThreshold = { .width = 40.0, .height = 20.0 };
-    CGFloat deviation;
-    CGFloat threshold;
-    if ([[self sourceTabBar] orientation] == PSMTabBarHorizontalOrientation) {
-        deviation = fabs(windowOrigin.y - _initialDragWindowOrigin.y);
-        threshold = kDragThreshold.height;
-    } else {
-        deviation = fabs(windowOrigin.x - _initialDragWindowOrigin.x);
-        threshold = kDragThreshold.width;
-    }
-
-    if (deviation > threshold) {
-        _dragThresholdExceeded = YES;
         return mouseLocation;
     }
 
@@ -1605,6 +1668,15 @@ static os_log_t PSMTabDragLog(void) {
     // Apply the cross-axis clamping logic and update window positions
     NSPoint adjustedPoint = [self adjustedMouseLocationForDrag:screenPoint];
     [self moveDragTabWindowForMouseLocation:adjustedPoint];
+
+    if (_deferredSourceTabBarExit) {
+        // The pointer is off the source bar but the drag is still locked to it, so
+        // AppKit no longer reports positions over the bar. Follow the pointer along
+        // the bar so the drop slot keeps tracking it.
+        PSMTabBarControl *source = [self sourceTabBar];
+        const NSPoint pointInWindow = [source.window convertPointFromScreen:adjustedPoint];
+        [self setCurrentMouseLoc:[source convertPoint:pointInWindow fromView:nil]];
+    }
 
     if (_dragViewWindow) {
         [_dragViewWindow setFrameTopLeftPoint:[self topLeftPointOfDragViewWindowForMouseLocation:adjustedPoint]];

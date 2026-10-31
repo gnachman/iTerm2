@@ -125,6 +125,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @implementation SessionView {
     // The pane drag over this view will place a float rather than split this view.
     BOOL _dragPlacesFloatingPane;
+    // A tab drag entered while locked to its tab bar, so it was refused. It is let
+    // in once it unlocks.
+    BOOL _tabDragEntryDeferred;
     // Whether the pointer is over a part of this view that nothing covers, as far as entered, exited
     // and moved events tell. Tracking areas ignore floating panes, so crossing a float's edge inside
     // this view's tracking area produces no event of its own.
@@ -2071,6 +2074,13 @@ typedef struct {
     return [[sender draggingPasteboard] availableTypeFromArray:@[ PSMTabDragIsGroupPasteboardType ]] != nil;
 }
 
+// A tab drag still locked to its tab bar can only reorder, so it must not split
+// this pane.
+- (BOOL)draggingIsLockedTab:(id<NSDraggingInfo>)sender {
+    return [[sender draggingPasteboard] availableTypeFromArray:@[ @"com.iterm2.psm.controlitem" ]] != nil &&
+           [[PSMTabDragAssistant sharedDragAssistant] dragIsLockedToSourceTabBar];
+}
+
 - (BOOL)isInFloatingPane {
     for (NSView *view = self.superview; view; view = view.superview) {
         if ([view isKindOfClass:[iTermFloatingPaneView class]]) {
@@ -2093,6 +2103,10 @@ typedef struct {
     if ([self draggingIsWholeTabGroup:sender]) {
         return NSDragOperationNone;
     }
+    if ([self draggingIsLockedTab:sender]) {
+        _tabDragEntryDeferred = YES;
+        return NSDragOperationNone;
+    }
     _dragPlacesFloatingPane = [self dragPlacesFloatingPane:sender];
     if (_dragPlacesFloatingPane) {
         return NSDragOperationMove;
@@ -2105,6 +2119,11 @@ typedef struct {
 }
 
 - (void)draggingExited:(id<NSDraggingInfo>)sender {
+    if (_tabDragEntryDeferred) {
+        // It was never let in, so there is nothing to exit.
+        _tabDragEntryDeferred = NO;
+        return;
+    }
     [_delegate sessionViewDraggingExited:sender];
     [_splitSelectionView removeFromSuperview];
     _splitSelectionView = nil;
@@ -2113,6 +2132,13 @@ typedef struct {
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
     if ([self draggingIsWholeTabGroup:sender]) {
         return NSDragOperationNone;
+    }
+    if (_tabDragEntryDeferred) {
+        if ([self draggingIsLockedTab:sender]) {
+            return NSDragOperationNone;
+        }
+        _tabDragEntryDeferred = NO;
+        return [self draggingEntered:sender];
     }
     // Pressing or releasing Control mid-drag switches between placing a float and docking it.
     const BOOL placesFloatingPane = [self dragPlacesFloatingPane:sender];
@@ -2146,7 +2172,7 @@ typedef struct {
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     RLog(@"performDragOperation: %@", sender);
-    if ([self draggingIsWholeTabGroup:sender]) {
+    if ([self draggingIsWholeTabGroup:sender] || [self draggingIsLockedTab:sender]) {
         return NO;
     }
     if ([self dragPlacesFloatingPane:sender]) {
@@ -2163,7 +2189,7 @@ typedef struct {
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
-    return ![self draggingIsWholeTabGroup:sender];
+    return ![self draggingIsWholeTabGroup:sender] && ![self draggingIsLockedTab:sender];
 }
 
 - (BOOL)wantsPeriodicDraggingUpdates {

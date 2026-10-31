@@ -163,6 +163,10 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     // is checked against _cells before use.
     PSMTabBarCell *_springLoadingCell;
 
+    // A tab drag entered while locked to another tab bar, so it was refused. It is
+    // let in once it unlocks.
+    BOOL _tabDragEntryDeferred;
+
     // control basics
     NSMutableArray<PSMTabBarCell *> *_cells; // the cells that draw the tabs
     NSButton *_overflowPopUpButton; // for too many tabs
@@ -4112,8 +4116,13 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
                      moveSourceWindow:nil]) {
             return NSDragOperationNone;
         }
+        PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
+        if (self != [assistant sourceTabBar] && [assistant dragIsLockedToSourceTabBar]) {
+            _tabDragEntryDeferred = YES;
+            return NSDragOperationNone;
+        }
 
-        [[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBar:self atPoint:[self freshDragMouseLocation]];
+        [assistant draggingEnteredTabBar:self atPoint:[self freshDragMouseLocation]];
         return NSDragOperationMove;
     } else if ([[self delegate] respondsToSelector:@selector(tabView:draggingEnteredTabBarForSender:)]) {
         NSDragOperation op = [[self delegate] tabView:_tabView draggingEnteredTabBarForSender:sender];
@@ -4140,8 +4149,17 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
                      moveSourceWindow:nil]) {
             return NSDragOperationNone;
         }
+        PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
+        if (self != [assistant sourceTabBar] && [assistant dragIsLockedToSourceTabBar]) {
+            return NSDragOperationNone;
+        }
+        if (_tabDragEntryDeferred) {
+            _tabDragEntryDeferred = NO;
+            [assistant draggingEnteredTabBar:self atPoint:[self freshDragMouseLocation]];
+            return NSDragOperationMove;
+        }
 
-        [[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBar:self atPoint:[self freshDragMouseLocation]];
+        [assistant draggingUpdatedInTabBar:self atPoint:[self freshDragMouseLocation]];
         return NSDragOperationMove;
     } else if ([[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
                [[self delegate] tabView:_tabView shouldAcceptDragFromSender:sender]) {
@@ -4159,7 +4177,16 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (void)draggingExited:(id <NSDraggingInfo>)sender {
     [self cancelSpringLoading];
-    [[PSMTabDragAssistant sharedDragAssistant] draggingExitedTabBar:self];
+    if (_tabDragEntryDeferred) {
+        // It was never let in, so there is nothing to exit.
+        _tabDragEntryDeferred = NO;
+        return;
+    }
+    PSMTabDragAssistant *assistant = [PSMTabDragAssistant sharedDragAssistant];
+    if ([assistant shouldDeferDraggingExitFromTabBar:self]) {
+        return;
+    }
+    [assistant draggingExitedTabBar:self];
 }
 
 #pragma mark Spring loading

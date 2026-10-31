@@ -2467,3 +2467,9 @@ Bug Fixes:
 - Some apps that ask to be told about mouse
   movement, such as those built with Lanterna,
   received clicks but not movement. Issue 13184.
+- Dragging a tab to reorder it no longer tears
+  it off into a new window or drops it into a
+  split pane when the pointer strays a little
+  above or below the tab bar. The pointer must
+  move about 40 points away from the bar first.
+  Issue 13151.

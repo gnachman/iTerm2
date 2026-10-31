@@ -40,6 +40,12 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 // drag can assert that the image tracks the pointer.
 @property (nonatomic, readonly) NSRect dragTabWindowFrame;
 
+// YES while a tab drag is locked to its source tab bar because the pointer hasn't
+// moved far enough across the bar to mean anything but a reorder. Other drop
+// targets must refuse a tab drag while this is YES; releasing it anywhere drops the
+// tab into the source bar. Brings the lock up to date with the pointer first.
+@property (nonatomic, readonly) BOOL dragIsLockedToSourceTabBar;
+
 // Creation/destruction
 + (PSMTabDragAssistant *)sharedDragAssistant;
 
@@ -81,6 +87,10 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 - (void)draggingEnteredTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc;
 - (void)draggingUpdatedInTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc;
 - (void)draggingExitedTabBar:(PSMTabBarControl *)control;
+// AppKit says the pointer left `control`. Returns YES if the exit should be ignored
+// for now because the drag is locked to `control`; it is replayed if the drag
+// unlocks while the pointer is still outside.
+- (BOOL)shouldDeferDraggingExitFromTabBar:(PSMTabBarControl *)control;
 - (void)performDragOperation:(id<NSDraggingInfo>)sender;
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation;
 - (void)finishDrag;
