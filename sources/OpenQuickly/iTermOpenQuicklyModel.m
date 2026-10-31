@@ -59,6 +59,9 @@ static const double kSnippetMultiplier = 0.3;
 // Named Marks
 static const double kNamedMarkMultiplier = 0.5;
 
+// Sessions whose contents match the query. These only appear with the /g command.
+static const double kSessionContentsMultiplier = 1;
+
 // Multipliers for arrangement items. Arrangements rank just above profiles
 static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
@@ -81,7 +84,9 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 // Multipliers for windows items. Windows rank below scripts since it's a redundant feature.
 static const double kProfileNameMultiplierForWindowItem = 0.08;
 
-@implementation iTermOpenQuicklyModel
+@implementation iTermOpenQuicklyModel {
+    iTermOpenQuicklyContentSearch *_contentSearch;
+}
 
 #pragma mark - Commands
 
@@ -92,6 +97,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         commands = @[ [iTermOpenQuicklyInTabsWindowArrangementCommand class],
                       [iTermOpenQuicklyWindowArrangementCommand class],
                       [iTermOpenQuicklySearchSessionsCommand class],
+                      [iTermOpenQuicklySearchSessionContentsCommand class],
                       [iTermOpenQuicklySwitchProfileCommand class],
                       [iTermOpenQuicklySearchWindowsCommand class],
                       [iTermOpenQuicklyCreateTabCommand class],
@@ -154,7 +160,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                         value:[commandClass tipDetail]
                                                            highlightedIndexes:nil];
-        item.identifier = [NSString stringWithFormat:@"/%@ ", [commandClass command]];
+        item.identifier = [commandClass queryPrefix];
         [items addObject:item];
     }
 }
@@ -365,6 +371,70 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             [items addObject:item];
         }
     }
+}
+
+- (void)addSessionContentsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                            query:(NSString *)query {
+    if (!_contentSearch) {
+        _contentSearch = [[iTermOpenQuicklyContentSearch alloc] init];
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_contentSearch searchFor:query
+                     sessions:self.sessions
+                     onUpdate:^{
+        [weakSelf.delegate openQuicklyModelDidChangeAsynchronously];
+    }];
+    PTYSession *currentSession = [[iTermController sharedInstance] currentTerminal].currentSession;
+    NSInteger maxOrdinal = 0;
+    for (PTYSession *session in self.sessions) {
+        maxOrdinal = MAX(maxOrdinal, session.lastActivityOrdinal);
+    }
+    for (iTermOpenQuicklyContentMatch *match in _contentSearch.matches) {
+        PTYSession *session = match.session;
+        if (session == currentSession) {
+            continue;
+        }
+        iTermOpenQuicklyContentMatchItem *item = [[iTermOpenQuicklyContentMatchItem alloc] init];
+        item.session = session;
+        item.result = match.result;
+        item.logoGenerator.textColor = session.foregroundColor;
+        item.logoGenerator.backgroundColor = session.backgroundColor;
+        item.logoGenerator.tabColor = session.tabColor;
+        item.logoGenerator.cursorColor = session.cursorColor;
+        // Most recently used first. Ranking by match count instead would reorder
+        // rows while counts are still coming in.
+        item.score = kSessionContentsMultiplier;
+        if (maxOrdinal > 0) {
+            item.score += 0.0099 * ((double)session.lastActivityOrdinal / (double)maxOrdinal);
+        }
+        item.title = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                       value:[self documentForSession:session]
+                                                          highlightedIndexes:nil];
+        item.detail = [self detailForContentMatch:match];
+        item.identifier = session.guid;
+        [items addObject:item];
+    }
+}
+
+// The number of matches followed by the snippet around the first one, with the
+// matching text emphasized as in Find Globally.
+- (NSAttributedString *)detailForContentMatch:(iTermOpenQuicklyContentMatch *)match {
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
+    style.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSDictionary *attributes = @{ NSParagraphStyleAttributeName: style };
+    NSString *count = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.ContentMatchCount", nil, [NSBundle mainBundle], @"%ld matches", @"Open Quickly detail: number of times the query appears in a session’s contents"), (long)match.count];
+    NSMutableAttributedString *detail = [[NSMutableAttributedString alloc] initWithString:count attributes:attributes];
+    NSMutableAttributedString *snippet = [match.result.snippet mutableCopy];
+    [snippet.mutableString replaceOccurrencesOfString:@"\n"
+                                           withString:@" "
+                                              options:0
+                                                range:NSMakeRange(0, snippet.length)];
+    if (snippet.length > 0) {
+        [snippet addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, snippet.length)];
+        [detail appendAttributedString:[[NSAttributedString alloc] initWithString:@": " attributes:attributes]];
+        [detail appendAttributedString:snippet];
+    }
+    return detail;
 }
 
 - (iTermOpenQuicklyMenuItem *)itemForMenuItem:(NSMenuItem *)menuItem
@@ -863,6 +933,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)removeAllItems {
     [_items removeAllObjects];
+    [_contentSearch stop];
 }
 
 - (void)updateWithQuery:(NSString *)queryString {
@@ -881,6 +952,11 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
     if ([command supportsSessionLocation]) {
         [self addSessionLocationToItems:items withMatcher:matcher];
+    }
+    if ([command supportsSessionContents]) {
+        [self addSessionContentsToItems:items query:command.text];
+    } else {
+        [_contentSearch stop];
     }
     if ([command supportsWindowLocation]) {
         [self addWindowLocationToItems:items withMatcher:matcher];
@@ -1008,6 +1084,8 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                [item isKindOfClass:[iTermOpenQuicklyHelpItem class]]) {
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
+        return item;
+    } else if ([item isKindOfClass:[iTermOpenQuicklyContentMatchItem class]]) {
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
         NSString *guid = item.identifier;

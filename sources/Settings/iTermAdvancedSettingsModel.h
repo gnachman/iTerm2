@@ -395,6 +395,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)openNewWindowAtStartup;
 + (double)openQuicklyAnimationDuration;
++ (BOOL)openQuicklySearchesClaudeCodeTranscripts;
 + (BOOL)openUntitledFile;
 + (int)optimumTabWidth;
 + (int)scrollableTabWidth;

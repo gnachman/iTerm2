@@ -1262,6 +1262,13 @@ Gw
                                     <action selector="openQuickly:" target="201" id="B7o-gt-d3A"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Search Session Contents…" keyEquivalent="o" identifier="Search Session Contents" id="sSc-Qk-7Rt">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="searchSessionContents:" target="201" id="sSc-Ac-2Wn"/>
+                                </connections>
+                                <accessibility identifier="Search Session Contents"/>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="VKC-UO-5Cj">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
