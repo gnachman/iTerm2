@@ -180,6 +180,11 @@ final class ExecutionPermitHolder {
         if ran < Self.timeSlice {
             return false
         }
+        guard permits.checkpointIsNeeded(client) else {
+            // Nobody to yield to. Keep running without the lock, and be charged for this time
+            // later.
+            return false
+        }
         // Charge for the slice and start a new one, whether or not anyone is owed the permit.
         ranBeforeJoin = 0
         self.runStart = now()

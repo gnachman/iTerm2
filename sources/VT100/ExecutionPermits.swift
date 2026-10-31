@@ -129,10 +129,21 @@ final class ExecutionPermits: NSObject {
     }
 
     private let mutex = Mutex()
-    private var _capacity: Int
+    private var _capacity: Int {
+        didSet {
+            updateOverCapacity()
+        }
+    }
     private let visibleWeight: Double
     // Clients holding a permit. Its count is the number of permits in use.
-    private var holders = [Client]()
+    private var holders = [Client]() {
+        didSet {
+            updateOverCapacity()
+        }
+    }
+    // 1 while more permits are held than there are (the cap was lowered), readable without the
+    // lock. Updated with the mutex held.
+    private let overCapacity = iTermAtomicInt64Create()
     private var inUse: Int {
         return holders.count
     }
@@ -282,6 +293,7 @@ final class ExecutionPermits: NSObject {
         }
         iTermAtomicInt64Free(waiterCount)
         iTermAtomicInt64Free(waiterMayTakePermit)
+        iTermAtomicInt64Free(overCapacity)
         iTermAtomicInt64Free(lockedAcquires)
     }
 
@@ -346,6 +358,16 @@ final class ExecutionPermits: NSObject {
         }
         wake(woken)
         return acquired
+    }
+
+    // The session's queue, holding a running permit, when its slice is over. Whether checkpoint()
+    // has anything to decide: someone is in line, or more permits are held than there are. If not,
+    // the holder keeps running and is charged for the time later, at its next checkpoint, release,
+    // or park. Counts as hearing from the holder for the health check. Doesn't take the lock. A
+    // waiter that gets in line just after this is seen at the holder's next check.
+    func checkpointIsNeeded(_ client: Client) -> Bool {
+        iTermAtomicInt64Set(client.lastHeardFrom, Int64(now()))
+        return iTermAtomicInt64Get(waiterCount) != 0 || iTermAtomicInt64Get(overCapacity) != 0
     }
 
     // The session's queue, while holding a permit. Charges the time run since the last checkpoint
@@ -481,6 +503,10 @@ final class ExecutionPermits: NSObject {
         iTermAtomicInt64Set(client.lastHeardFrom, Int64(now()))
         holders.append(client)
         startHealthTimerIfNeeded()
+    }
+
+    private func updateOverCapacity() {
+        iTermAtomicInt64Set(overCapacity, holders.count > _capacity ? 1 : 0)
     }
 
     private func unhold(_ client: Client) {

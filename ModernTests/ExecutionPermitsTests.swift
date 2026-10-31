@@ -225,6 +225,43 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertFalse(permits.checkpoint(a.client, ran: 0.005))
     }
 
+    // A holder whose slice is over takes the lock to checkpoint only when there is something to
+    // decide: someone in line, or more permits held than there are.
+    func testCheckpointIsNeededOnlyWithAWaiterOrOverTheCap() {
+        let permits = ExecutionPermits(capacity: 2, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        let c = FakeSession("c", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.checkpointIsNeeded(a.client))
+
+        XCTAssertTrue(permits.acquire(b.client))
+        XCTAssertFalse(permits.acquire(c.client))
+        XCTAssertTrue(permits.checkpointIsNeeded(a.client))
+        permits.relinquish(c.client, ran: 0)
+        XCTAssertFalse(permits.checkpointIsNeeded(a.client))
+
+        permits.capacity = 1
+        XCTAssertTrue(permits.checkpointIsNeeded(a.client))
+        XCTAssertTrue(permits.checkpoint(a.client, ran: 0.005))
+    }
+
+    // Asking counts as being heard from, so a holder that runs on without checkpointing isn't
+    // mistaken for one whose wakeup was lost.
+    func testAskingWhetherACheckpointIsNeededCountsAsHeardFrom() {
+        let clock = FakeClock()
+        let permits = makePermits(capacity: 1, clock: clock)
+        let a = FakeSession("a", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        for _ in 0..<6 {
+            clock.advance(by: 1)
+            XCTAssertFalse(permits.checkpointIsNeeded(a.client))
+            permits.checkHealth()
+        }
+        XCTAssertEqual(a.wakes, 0)
+        XCTAssertTrue(unexpected.isEmpty)
+    }
+
     // MARK: - Fair sharing
 
     // Runs `sessions` (all always busy) for `slices` slices of `slice` seconds with the given number
