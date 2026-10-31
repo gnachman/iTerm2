@@ -158,7 +158,7 @@ final class TokenExecutorPermitTests: XCTestCase {
         waitUntil("a holds the permit") { permits.inUseForTesting == 1 }
 
         weak var weakExecutor: TokenExecutor?
-        do {
+        autoreleasepool {
             let b = makeUnretainedSession(permits: permits)
             weakExecutor = b.executor
             addTokens(10, to: b)
@@ -176,11 +176,14 @@ final class TokenExecutorPermitTests: XCTestCase {
     func testSessionFreedWhileHoldingAnIdlePermitGivesItUp() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
         weak var weakExecutor: TokenExecutor?
-        do {
+        // The waits capture only what they read: an expectation can outlive its wait, and holding
+        // the session would keep its executor alive.
+        autoreleasepool {
             let a = makeUnretainedSession(permits: permits)
             weakExecutor = a.executor
             addTokens(10, to: a)
-            waitUntil("a ran") { a.delegate.tokensSeen == 10 }
+            let delegate = a.delegate
+            waitUntil("a ran") { delegate.tokensSeen == 10 }
             waitUntil("a's permit is idle") { permits.idleHolderCountForTesting == 1 }
         }
         waitUntil("a is freed") { weakExecutor == nil }
