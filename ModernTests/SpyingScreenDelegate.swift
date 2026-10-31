@@ -69,8 +69,27 @@ class SpyingScreenDelegate: FakeSession {
     /// "mouse mode did change" side effect).
     private(set) var mouseModeDidChangeCount = 0
 
+    /// The mouse mode the main-thread state reported each time
+    /// screenMouseModeDidChange fired. PTYSession reads it there to decide
+    /// whether to track mouse-moved events.
+    private(set) var mouseModesSeenOnChange: [MouseMode] = []
+
     override func screenMouseModeDidChange() {
         mouseModeDidChangeCount += 1
+        if let screen {
+            mouseModesSeenOnChange.append(screen.terminalMouseMode)
+        }
+    }
+
+    /// FakeSession leaves the screen on shared state after a join, so the
+    /// main thread always reads live mutation-thread state. Set this to make
+    /// the main thread read its own snapshot between syncs, as PTYSession does.
+    var restoresStateAfterJoin = false
+
+    override func screenRestore(_ state: VT100ScreenState) {
+        if restoresStateAfterJoin {
+            screen?.restore(state)
+        }
     }
 
     /// Every report the terminal sent back to the "process", in order. This is
@@ -182,6 +201,7 @@ class SpyingScreenDelegate: FakeSession {
         promptDidEndCalls.removeAll()
         commandDidChangeCalls.removeAll()
         mouseModeDidChangeCount = 0
+        mouseModesSeenOnChange.removeAll()
         setWindowFrameCalls.removeAll()
         sentReports.removeAll()
         currentHostDidChangeCalls.removeAll()

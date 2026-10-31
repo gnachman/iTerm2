@@ -2384,3 +2384,6 @@ Bug Fixes:
 - Choosing Paste as Text for a pasted or dropped
   file and then answering the paste confirmation
   no longer freezes the window.
+- Some apps that ask to be told about mouse
+  movement, such as those built with Lanterna,
+  received clicks but not movement. Issue 13184.
