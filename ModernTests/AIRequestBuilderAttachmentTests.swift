@@ -777,4 +777,28 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         XCTAssertTrue(content.contains("Hello, world!"),
                       "text-file content was dropped; got \(content)")
     }
+
+    // MARK: - xAI (chat completions on api.x.ai)
+
+    /// api.x.ai accepts the chat-completions image and PDF content parts.
+    /// A look-alike host must not inherit that gate.
+    func testXAI_acceptsImageAndPDF_lookAlikeHostDoesNot() {
+        let provider = LLMProvider(model: xaiModel(url: "https://api.x.ai/v1/chat/completions"))
+        XCTAssertTrue(provider.accepts(mimeType: "image/png"))
+        XCTAssertTrue(provider.accepts(mimeType: "application/pdf"))
+
+        let lookalike = LLMProvider(model: xaiModel(url: "https://api.x.ai.evil.example/v1/chat/completions"))
+        XCTAssertFalse(lookalike.accepts(mimeType: "image/png"))
+        XCTAssertFalse(lookalike.accepts(mimeType: "application/pdf"))
+    }
+
+    private func xaiModel(url: String) -> AIMetadata.Model {
+        return AIMetadata.Model(name: "grok-4.7",
+                                contextWindowTokens: 500_000,
+                                maxResponseTokens: 128_000,
+                                url: url,
+                                api: .chatCompletions,
+                                features: [.functionCalling, .streaming],
+                                vendor: .xAI)
+    }
 }

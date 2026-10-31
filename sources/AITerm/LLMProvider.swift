@@ -232,6 +232,9 @@ struct LLMProvider {
         if LLMMetadata.hostIsGoogleAIAPI(url: url) {
             return true
         }
+        if LLMMetadata.hostIsXAIAIAPI(url: url) {
+            return true
+        }
         return false
     }
 
@@ -255,6 +258,7 @@ struct LLMProvider {
         return LLMMetadata.hostIsAnthropicAIAPI(url: url)
             || LLMMetadata.hostIsGoogleAIAPI(url: url)
             || LLMMetadata.hostIsOpenAIAPI(url: url)
+            || LLMMetadata.hostIsXAIAIAPI(url: url)
     }
 
     // Gemini accepts video via inlineData; no other wired vendor takes video.
