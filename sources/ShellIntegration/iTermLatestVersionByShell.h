@@ -3,7 +3,7 @@ latestVersionByShell = @{
     @"bash": @24,
     @"fish": @28,
     @"nu": @2,
-    @"tcsh": @11,
+    @"tcsh": @12,
     @"xonsh": @6,
     @"zsh": @22,
 };

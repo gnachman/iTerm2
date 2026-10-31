@@ -136,7 +136,7 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       endif
 
       # Define aliases for printing the shell integration version this script is written against
-      alias _iterm2_shell_integration_version 'printf "\033]1337;ShellIntegrationVersion=11;shell=tcsh\007"'
+      alias _iterm2_shell_integration_version 'printf "\033]1337;ShellIntegrationVersion=12;shell=tcsh\007"'
 
       # Define aliases for defining the boundary between a command prompt and the
       # output of a command started from that prompt. $_iterm2_current_aid is
@@ -158,6 +158,13 @@ if ( ! ($?iterm2_shell_integration_installed)) then
 
       # Define aliases for defining the end of a command prompt.
       alias _iterm2_after_prompt 'printf "\033]133;B;aid=$_iterm2_current_aid\007"'
+
+      # Define aliases for defining the start of a right prompt (Semantic Prompt
+      # k=r). The receiver records the right prompt's cells as an excluded
+      # subrange on the active primary mark, so they aren't saved as part of the
+      # command. tcsh pads the gap before rprompt with spaces, so nothing else
+      # can tell the right prompt apart from the command.
+      alias _iterm2_before_right_prompt 'printf "\033]133;P;k=r;aid=$_iterm2_current_aid\007"'
 
       # Define aliases for printing the status of the last command.
       alias _iterm2_last_status 'printf "\033]133;D;$?;aid=$_iterm2_current_aid\007"'
@@ -198,6 +205,22 @@ if ( ! ($?iterm2_shell_integration_installed)) then
 
       # Wrap the prompt in FinalTerm escape codes and re-add a terminal space.
       set prompt="%{"`_iterm2_before_prompt`"%}$_iterm2_truncated_prompt%{"`_iterm2_after_prompt`"%} "
+
+      # Wrap the right prompt the same way. tcsh draws a %{...%} sequence
+      # together with the character after it and drops one at the very end
+      # ("we lose the last literal, if it is not followed by a normal
+      # character", ed.refresh.c), so the closing B needs a visible character
+      # after it. That trailing space moves the right prompt one column left;
+      # there's no way to close the mark without one. The value is substituted
+      # inside double quotes rather than run through a subshell, which would
+      # collapse runs of spaces in it. Skip a right prompt that already
+      # contains a 133;P mark, since a second, nested mark would confuse the
+      # receiver. ITERM2_SQUELCH_RPROMPT_MARK opts out.
+      if ($?rprompt && ! $?ITERM2_SQUELCH_RPROMPT_MARK) then
+        if ( "$rprompt" != "" && "$rprompt" !~ *133\;P* ) then
+          set rprompt="%{"`_iterm2_before_right_prompt`"%}$rprompt%{"`_iterm2_after_prompt`"%} "
+        endif
+      endif
 
       # Turn globbing back on.
       unset noglob

@@ -211,6 +211,60 @@ final class ShellIntegrationLiveHarness: XCTestCase {
                        "[fish] expected the command to be recorded")
     }
 
+    /// tcsh pads the gap before rprompt with spaces, so nothing but a mark keeps
+    /// the right prompt out of the recorded command. The integration wraps
+    /// rprompt in OSC 133;P;k=r … B.
+    func testTcsh_rightPrompt_isMarkedAndExcludedFromCommand() throws {
+        let output = try runShell(.tcsh,
+                                  beforeSourcing: ["set rprompt='tcsh_rp_token'"],
+                                  steps: [.command("echo hi\n")])
+        let recorded = Data(output.utf8)
+        XCTAssertTrue(recorded.osc133Args(forKind: "P").contains { $0.split(separator: ";").contains("k=r") },
+                      "[tcsh] expected the right prompt to be marked with OSC 133;P;k=r")
+
+        let harness = TerminalTestHarness(width: LiveShell.columns, height: LiveShell.rows)
+        harness.feedEscapeSequence(Array(recorded))
+        harness.sync()
+        let marks = harness.allScreenMarks().filter { $0.isPrompt && $0.fullCommand != nil }
+        XCTAssertTrue(marks.contains { $0.fullCommand == "echo hi" },
+                      "[tcsh] recorded commands: \(marks.map { $0.fullCommand ?? "" })")
+        XCTAssertEqual(marks.first { $0.fullCommand == "echo hi" }?.excludedSubranges?.count, 1,
+                       "[tcsh] expected the right prompt's cells to be excluded")
+    }
+
+    /// Wrapping rprompt must not change how it looks: runs of spaces inside it
+    /// survive. Only the right prompt drawn inside our mark counts; tcsh draws
+    /// the unwrapped one at the prompt before the integration is sourced.
+    func testTcsh_rightPromptWithRunsOfSpaces_isUnchanged() throws {
+        let output = try runShell(.tcsh,
+                                  beforeSourcing: ["set rprompt='rp1   rp2'"],
+                                  steps: [.command("echo hi\n")])
+        let drawn = Self.markedRightPrompts(in: output)
+        XCTAssertFalse(drawn.isEmpty, "[tcsh] expected a marked right prompt")
+        XCTAssertTrue(drawn.allSatisfy { $0 == "rp1   rp2" }, "[tcsh] marked right prompts: \(drawn)")
+    }
+
+    /// ITERM2_SQUELCH_RPROMPT_MARK leaves rprompt alone.
+    func testTcsh_squelchRightPromptMark_leavesRightPromptUnmarked() throws {
+        let output = try runShell(.tcsh,
+                                  beforeSourcing: ["set ITERM2_SQUELCH_RPROMPT_MARK", "set rprompt='tcsh_rp_token'"],
+                                  steps: [.command("echo hi\n")])
+        XCTAssertTrue(output.contains("tcsh_rp_token"), "[tcsh] expected the right prompt to be drawn")
+        XCTAssertEqual(Self.markedRightPrompts(in: output), [], "[tcsh] the right prompt was marked")
+    }
+
+    /// A right prompt that already carries a 133;P mark must not get a second,
+    /// nested mark from the integration.
+    func testTcsh_alreadyMarkedRightPrompt_isNotMarkedAgain() throws {
+        let output = try runShell(.tcsh,
+                                  beforeSourcing: ["set rprompt=\"%{`printf '\\033]133;P;k=r\\007'`%}hand%{`printf '\\033]133;B\\007'`%} \""],
+                                  steps: [.command("echo hi\n")])
+        let marks = Data(output.utf8).osc133Args(forKind: "P").filter { $0.split(separator: ";").contains("k=r") }
+        XCTAssertFalse(marks.isEmpty, "[tcsh] the hand-added mark should be drawn")
+        XCTAssertTrue(marks.allSatisfy { !$0.contains("aid=") },
+                      "[tcsh] the integration added its own mark: \(marks)")
+    }
+
     func testBash_baseline_emitsOnePromptAPerCommand() throws {
         try runShellBaseline(.bash)
     }
@@ -291,6 +345,18 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         return process.terminationStatus == 1
     }
 
+    /// The text between each OSC 133;P;k=r and the B that closes it.
+    private static func markedRightPrompts(in output: String) -> [String] {
+        let pattern = "\u{1B}\\]133;P;k=r[^\u{07}]*\u{07}([^\u{1B}]*)\u{1B}\\]133;B"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return []
+        }
+        let range = NSRange(output.startIndex..., in: output)
+        return regex.matches(in: output, range: range).compactMap {
+            Range($0.range(at: 1), in: output).map { String(output[$0]) }
+        }
+    }
+
     private static func printedValues(in output: String) -> String? {
         guard let start = output.range(of: "[["),
               let end = output.range(of: "]]", range: start.upperBound..<output.endIndex) else {
@@ -325,6 +391,12 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         env["LC_TERMINAL"] = "iTerm2"
         env["TERM"] = "xterm-256color"
         env.removeValue(forKey: "ITERM_SHELL_INTEGRATION_INSTALLED")
+        // Xcode's malloc diagnostics describe the test runner, not a user's
+        // shell, and every subprocess the integration starts would print their
+        // log lines into the terminal, where they'd land in recorded commands.
+        for key in env.keys where key.hasPrefix("Malloc") {
+            env.removeValue(forKey: key)
+        }
         env.merge(environment) { _, new in new }
 
         let captured = NSMutableData()
@@ -482,12 +554,14 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         // line. zle enables bracketed paste each time it starts reading. fish
         // enables it before drawing the prompt, and the integration's D may
         // come from fish_prompt, so use the B that ends fish_prompt instead;
-        // fish reads keys in raw mode, so anything typed after it is kept.
+        // fish reads keys in raw mode, so anything typed after it is kept, and
+        // the same goes for tcsh.
         var lineEditorReadingMarker: Data {
             switch self {
-            case .fish:
+            case .fish, .tcsh:
+                // tcsh's line editor doesn't use bracketed paste at all.
                 return Data("\u{1B}]133;B".utf8)
-            case .zsh, .bash, .tcsh, .xonsh, .nu:
+            case .zsh, .bash, .xonsh, .nu:
                 return Data("\u{1B}[?2004h".utf8)
             }
         }

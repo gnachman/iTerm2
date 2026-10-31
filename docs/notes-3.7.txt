@@ -360,9 +360,11 @@ New Features:
   connected to.
 
 Improvements:
-- zsh and fish Shell Integration now mark the
-  right-hand prompt, so Select Current Command
-  and saved commands leave it out.
+- zsh, fish, and tcsh Shell Integration now mark
+  the right-hand prompt, so Select Current Command
+  and saved commands leave it out. In tcsh this
+  moves the right-hand prompt one column to the
+  left.
 - Pausing a spinning progress indicator with
   OSC 9;4;4 now shows a paused spinner: a still
   yellow band in the session and a pause symbol
