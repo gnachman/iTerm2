@@ -682,6 +682,7 @@ DEFINE_BOOL(logAITabTitleCorpus, NO, SECTION_DEBUGGING, NSLocalizedStringWithDef
 #if DEBUG
 // Localization unneeded
 DEFINE_STRING(alternateSSHIntegrationScript, @"", SECTION_DEBUGGING, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.alternateSSHIntegrationScript", nil, [NSBundle mainBundle], @"Alternate SSH integration python script", @"Advanced setting: alternateSSHIntegrationScript"));
+DEFINE_SETTABLE_BOOL(engageLayoutEngineInTerminalWindows, EngageLayoutEngineInTerminalWindows, NO, SECTION_DEBUGGING, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.engageLayoutEngineInTerminalWindows", nil, [NSBundle mainBundle], @"Engage Auto Layout in new terminal windows.\nAdds a hidden glass effect view (before macOS 26, a view with constraints) to each new terminal window, which turns on AppKit’s layout engine for the whole window. Use it to check that windows still lay out and resize correctly with the engine on. Development builds only.", @"Advanced setting: engageLayoutEngineInTerminalWindows"));
 #endif
 
 #pragma mark - Session

@@ -563,7 +563,12 @@ static NSString *const kDynamicToolURL = @"URL";
     }
     [wrapper.container addSubview:theTool];
 
-    [wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    // The splitter's delegate sizes the wrappers, and NSSplitView switches its
+    // subviews to this fixed-size mask whenever it resizes. Use it from the
+    // start: a sizable wrapper would keep its siblings' heights as fixed
+    // margins until the next resize, and if the layout engine were engaged
+    // those margins would become a minimum window height. Issue 13118.
+    [wrapper setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
     [theTool setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [self adjustSubviews];
     [_tools setObject:wrapper forKey:[wrapper.name copy]];

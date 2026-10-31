@@ -431,8 +431,11 @@ class iTermURLBarGuts: NSView {
             progressIndicator.stopAnimation(nil)
         }
         
-        // Trigger layout update to resize text field when progress indicator visibility changes
-        needsLayout = true
+        // Resize the text field around the progress indicator now. Setting
+        // needsLayout is not enough: terminal windows are laid out by hand and
+        // AppKit does not call -layout for it there, so the text field would
+        // keep running under the indicator until something resized the bar.
+        layoutComponents()
     }
     
     private func updateFavicon() {

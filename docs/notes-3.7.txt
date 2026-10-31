@@ -680,6 +680,11 @@ Improvements:
   General > Magic.
 
 Bug Fixes:
+- The browser’s address field no longer runs
+  under the loading spinner while a page loads,
+  and returns to its full width afterward.
+- Fixed more cases where a window could be made
+  wider but not narrower.
 - Commands saved to Command History no longer
   include a right-hand prompt (such as zsh’s
   RPROMPT) drawn on the same line.
