@@ -2342,6 +2342,121 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     return @"";
 }
 
+// Names of the jobs running in all the live sessions in `sessions`, excluding login.
+- (NSArray<NSString *> *)jobNamesForSessions:(NSArray<PTYSession *> *)sessions {
+    NSMutableArray<NSString *> *names = [NSMutableArray array];
+    for (PTYSession *aSession in sessions) {
+        if ([aSession exited]) {
+            continue;
+        }
+        [names addObjectsFromArray:[aSession.childJobNameTuples mapWithBlock:^id(iTermTuple<NSString *,NSString *> *tuple) {
+            if ([tuple.firstObject isEqualToString:@"login"]) {
+                return nil;
+            }
+            return tuple.secondObject.lastPathComponent;
+        }]];
+    }
+    return names;
+}
+
+// Describes the jobs running in a batch of tabs being closed together. Returns nil if none are
+// running anything. A few jobs get a sentence; more get one bullet per tab.
+- (NSString *)closeConfirmationBodyForTabs:(NSArray<PTYTab *> *)tabs {
+    const NSUInteger maxJobsInSentence = 3;
+    NSMutableArray<NSString *> *allNames = [NSMutableArray array];
+    NSMutableArray<NSString *> *bullets = [NSMutableArray array];
+    PTYTab *lastTabWithJobs = nil;
+    NSUInteger numberOfTabsWithJobs = 0;
+    for (PTYTab *aTab in tabs) {
+        NSArray<NSString *> *names = [self jobNamesForSessions:aTab.sessions];
+        if (names.count == 0) {
+            continue;
+        }
+        numberOfTabsWithJobs += 1;
+        lastTabWithJobs = aTab;
+        [allNames addObjectsFromArray:names];
+        NSString *line = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseBody.Tabs.Bullet", nil, [NSBundle mainBundle], @"Tab #%1$d: %2$@", @"One line in a list of tabs being closed and the jobs each is running; %1$d is the tab number and %2$@ is its job list"),
+                          aTab.tabNumber,
+                          [[names countedInstancesStrings] componentsJoinedWithOxfordComma]];
+        // Localization unneeded
+        [bullets addObject:[@"• " stringByAppendingString:line]];
+    }
+    if (allNames.count == 0) {
+        return nil;
+    }
+    NSArray<NSString *> *sortedNames = [allNames countedInstancesStrings];
+    if (sortedNames.count <= maxJobsInSentence) {
+        NSString *joined = [sortedNames componentsJoinedWithOxfordComma];
+        if (numberOfTabsWithJobs == 1) {
+            return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseBody.Tabs.OneTab", nil, [NSBundle mainBundle], @"Tab #%1$d is running %2$@.", @"Close-confirmation body when closing several tabs and only one is running jobs; %1$d is the tab number and %2$@ is its job list"), lastTabWithJobs.tabNumber, joined];
+        }
+        return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseBody.Tabs.Jobs", nil, [NSBundle mainBundle], @"The tabs being closed are running %@.", @"Close-confirmation body when closing several tabs that are running a few jobs; %@ is the job list"), joined];
+    }
+    NSString *heading = NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseBody.Tabs.List", nil, [NSBundle mainBundle], @"The tabs being closed are running the following jobs:", @"Close-confirmation body when closing several tabs that are running many jobs; a bulleted list of tabs and their jobs follows");
+    return [[@[ heading ] arrayByAddingObjectsFromArray:bullets] componentsJoinedByString:@"\n"];
+}
+
+// Asks before closing a batch of tabs if any of them would ask when closed on its own, or if the
+// multiple-sessions preference applies. `alwaysConfirm` asks even if nothing else calls for it.
+// Returns YES if the tabs should be closed.
+- (BOOL)confirmCloseTabs:(NSArray<PTYTab *> *)tabs
+                question:(NSString *)question
+           alwaysConfirm:(BOOL)alwaysConfirm {
+    BOOL mustAsk = alwaysConfirm;
+    NSMutableArray<PTYSession *> *sessions = [NSMutableArray array];
+    NSUInteger numClosing = 0;
+    for (PTYTab *aTab in tabs) {
+        const NSUInteger numLive = [[aTab.sessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+            return !session.exited;
+        }] count];
+        if (aTab.isPinned) {
+            mustAsk = YES;
+        }
+        if (numLive > 0 && aTab.promptOnCloseReason.hasReason) {
+            mustAsk = YES;
+        }
+        numClosing += numLive;
+        [sessions addObjectsFromArray:aTab.sessions];
+    }
+    if (numClosing > 1 &&
+        [iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs]) {
+        mustAsk = YES;
+    }
+    DLog(@"Closing %@ tabs with %@ live sessions. mustAsk=%@", @(tabs.count), @(numClosing), @(mustAsk));
+    if (!mustAsk) {
+        return YES;
+    }
+
+    NSString *count = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.TabCount", nil, [NSBundle mainBundle], @"%lu tabs", @"A count of tabs shown in a close-confirmation; %lu is the number of tabs"), (unsigned long)tabs.count];
+    NSMutableArray<NSString *> *paragraphs = [NSMutableArray arrayWithObject:[NSString stringWithFormat:@"%@ (%@)", question, count]];
+    NSString *body = [self closeConfirmationBodyForTabs:tabs];
+    if (body) {
+        [paragraphs addObject:body];
+    }
+    const BOOL anyIsLocked = [sessions anyWithBlock:^BOOL(PTYSession *session) {
+        return session.locked;
+    }];
+    if (anyIsLocked) {
+        [paragraphs addObject:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseBody.Tabs.Locked", nil, [NSBundle mainBundle], @"Some of these tabs have locked sessions.", @"Added to a close-confirmation for several tabs when at least one has a locked session")];
+    }
+    NSString *cascade = [iTermWorkgroupInstance closeCascadeWarningForSessions:sessions];
+    if (cascade.length > 0) {
+        [paragraphs addObject:cascade];
+    }
+
+    // The PseudoTerminal might close while the dialog is open so keep it around for now.
+    [[self retain] autorelease];
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:[paragraphs componentsJoinedByString:@"\n\n"]
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"General.Close", nil, [NSBundle mainBundle], @"Close", @"Close: used on buttons and menu items"), iTermLocalizedCancel() ]
+                                 accessory:nil
+                                identifier:@"NoSyncCloseTabGroup"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsHeading", nil, [NSBundle mainBundle], @"Close Tabs", @"Warning heading shown when closing multiple tabs")
+                                    window:self.window];
+    return selection == kiTermWarningSelection0;
+}
+
 - (BOOL)confirmCloseForSessions:(NSArray *)sessions
                         subject:(iTermCloseSubject)subject
                      closeTitle:(NSString *)closeTitle {
@@ -2356,18 +2471,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
                      closeTitle:(NSString *)closeTitle
               additionalMessage:(NSString *)additionalMessage
 {
-    NSArray *names = @[];
-    for (PTYSession *aSession in sessions) {
-        if (![aSession exited]) {
-            names = [aSession.childJobNameTuples mapWithBlock:^id(iTermTuple<NSString *,NSString *> *tuple) {
-                if ([tuple.firstObject isEqualToString:@"login"]) {
-                    return nil;
-                }
-                return tuple.secondObject.lastPathComponent;
-            }];
-        }
-    }
-    NSArray *sortedNames = [names countedInstancesStrings];
+    NSArray *sortedNames = [[self jobNamesForSessions:sessions] countedInstancesStrings];
     NSString *message = [self closeConfirmationBodyForSubject:subject sortedNames:sortedNames];
     if (additionalMessage.length > 0) {
         message = [NSString stringWithFormat:@"%@\n\n%@", message, additionalMessage];
@@ -10087,7 +10191,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // Close every member, including pinned ones -- the pinned tabs are the group.
     [self closeTabs:[self tabsInGroup:[sender representedObject]]
         confirmWith:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabGroupPrompt", nil, [NSBundle mainBundle], @"Close this tab group?", @"Confirmation prompt for closing a tab group")
-      skippingPinned:NO];
+      skippingPinned:NO
+       alwaysConfirm:YES];
 }
 
 - (void)closeTabsOutsideGroup:(id)sender {
@@ -10098,7 +10203,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [others addObject:aTab];
         }
     }
-    [self closeTabs:others confirmWith:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsOutsideGroupPrompt", nil, [NSBundle mainBundle], @"Close all tabs outside this group?", @"Confirmation prompt for closing tabs outside a group") skippingPinned:YES];
+    [self closeTabs:others confirmWith:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsOutsideGroupPrompt", nil, [NSBundle mainBundle], @"Close all tabs outside this group?", @"Confirmation prompt for closing tabs outside a group") skippingPinned:YES alwaysConfirm:YES];
 }
 
 - (void)closeTabsRightOfGroup:(id)sender {
@@ -10115,15 +10220,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     NSArray<PTYTab *> *toRight = [tabs subarrayWithRange:NSMakeRange(lastIndex + 1, tabs.count - lastIndex - 1)];
     NSString *question = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelowGroupPrompt", nil, [NSBundle mainBundle], @"Close all tabs below this group?", @"Confirmation prompt for closing tabs below a group, shown when the tab bar is vertical")
                                                  : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsRightOfGroupPrompt", nil, [NSBundle mainBundle], @"Close all tabs to the right of this group?", @"Confirmation prompt for closing tabs to the right of a group");
-    [self closeTabs:toRight confirmWith:question skippingPinned:YES];
+    [self closeTabs:toRight confirmWith:question skippingPinned:YES alwaysConfirm:YES];
 }
 
 // Close a batch of tabs with a single confirmation. `skipPinned` protects
-// pinned tabs when closing things *around* a group (Close Other / to the
+// pinned tabs when closing things *around* a group or tab (Close Other / to the
 // Right); Close Group passes NO so it can close its own pinned members.
+// `alwaysConfirm` asks even when no tab would ask if closed on its own.
 - (void)closeTabs:(NSArray<PTYTab *> *)tabsToClose
       confirmWith:(NSString *)question
-   skippingPinned:(BOOL)skipPinned {
+   skippingPinned:(BOOL)skipPinned
+    alwaysConfirm:(BOOL)alwaysConfirm {
     if (_layoutLocked) {
         RLog(@"Layout is locked, refusing to close tabs");
         return;
@@ -10137,19 +10244,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (closable.count == 0) {
         return;
     }
-    NSString *count = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.TabCount", nil, [NSBundle mainBundle], @"%lu tabs", @"A count of tabs shown in a close-confirmation; %lu is the number of tabs"), (unsigned long)closable.count];
-    const iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ (%@)", question, count]
-                                   actions:@[ NSLocalizedStringWithDefaultValue(@"General.Close", nil, [NSBundle mainBundle], @"Close", @"Close: used on buttons and menu items"), iTermLocalizedCancel() ]
-                                 accessory:nil
-                                identifier:@"NoSyncCloseTabGroup"
-                               silenceable:kiTermWarningTypePersistent
-                                   heading:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsHeading", nil, [NSBundle mainBundle], @"Close Tabs", @"Warning heading shown when closing multiple tabs")
-                                    window:self.window];
-    if (selection != kiTermWarningSelection0) {
+    if (![self confirmCloseTabs:closable question:question alwaysConfirm:alwaysConfirm]) {
         return;
     }
+    // -closeTab: won't remove a tmux tab from -tabs immediately, so iterate over our own copy.
     for (PTYTab *aTab in closable) {
+        // A tab might have closed on its own while the confirmation was open.
+        if (![[self tabs] containsObject:aTab]) {
+            DLog(@"Tab %@ is already gone; not closing it", aTab);
+            continue;
+        }
         [self closeTab:aTab];
     }
 }
@@ -15327,48 +15431,29 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }];
 }
 
-// These two methods are delicate because -closeTab: won't remove the tab from
-// the -tabs array immediately for tmux tabs.
-- (void)closeOtherTabs:(id)sender
-{
-    if (_layoutLocked) {
-        RLog(@"Layout is locked, refusing to close other tabs");
-        return;
-    }
+- (void)closeOtherTabs:(id)sender {
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
-    NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
+    NSMutableArray<PTYTab *> *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
     [tabsToRemove removeObject:tabToKeep];
-    for (PTYTab *tab in tabsToRemove) {
-        if (tab.isPinned) {
-            continue;
-        }
-        [self closeTab:tab];
-    }
+    [self closeTabs:tabsToRemove
+        confirmWith:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseOtherTabsPrompt", nil, [NSBundle mainBundle], @"Close all other tabs?", @"Confirmation prompt for closing every tab except the one that was clicked")
+     skippingPinned:YES
+      alwaysConfirm:NO];
 }
 
-- (void)closeTabsToTheRight:(id)sender
-{
-    if (_layoutLocked) {
-        RLog(@"Layout is locked, refusing to close tabs to the right");
-        return;
-    }
+- (void)closeTabsToTheRight:(id)sender {
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *tabToKeep = [aTabViewItem identifier];
-
-    NSMutableArray *tabsToRemove = [[[self tabs] mutableCopy] autorelease];
-    PTYTab *current;
-    do {
-        current = tabsToRemove[0];
-        [tabsToRemove removeObjectAtIndex:0];
-    } while (current != tabToKeep);
-
-    for (PTYTab *tab in tabsToRemove) {
-        if (tab.isPinned) {
-            continue;
-        }
-        [self closeTab:tab];
+    NSArray<PTYTab *> *tabs = [self tabs];
+    const NSUInteger index = [tabs indexOfObject:tabToKeep];
+    if (index == NSNotFound || index + 1 >= tabs.count) {
+        return;
     }
+    NSArray<PTYTab *> *tabsToRemove = [tabs subarrayWithRange:NSMakeRange(index + 1, tabs.count - index - 1)];
+    NSString *question = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelowPrompt", nil, [NSBundle mainBundle], @"Close all tabs below this one?", @"Confirmation prompt for closing tabs below the one that was clicked, shown when the tab bar is vertical")
+                                                 : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsToTheRightPrompt", nil, [NSBundle mainBundle], @"Close all tabs to the right of this one?", @"Confirmation prompt for closing tabs to the right of the one that was clicked");
+    [self closeTabs:tabsToRemove confirmWith:question skippingPinned:YES alwaysConfirm:NO];
 }
 
 - (IBAction)exitWorkgroup:(id)sender {

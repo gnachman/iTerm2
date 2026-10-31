@@ -2433,3 +2433,9 @@ Bug Fixes:
   window arrangement no longer moves its windows
   to the display with the active Space. They
   open where they were saved. Issue 13002.
+- Close Other Tabs and Close Tabs to the Right
+  now ask before closing tabs with running jobs,
+  following Prompt Before Closing. Issue 13185.
+- The prompt shown when closing a window or a
+  tab with split panes now lists the jobs in
+  every pane, not just one of them.

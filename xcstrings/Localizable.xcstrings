@@ -45006,6 +45006,18 @@
         }
       }
     },
+    "ChatClient.RemoteCommandFailed" : {
+      "comment" : "Notice shown in AI chat when a tool the AI asked to run could not be run. The argument is the reason.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The function call failed: %@"
+          }
+        }
+      }
+    },
     "ChatClient.RevealAnnotationHint" : {
       "comment" : "Hint appended to a chat message explaining how to reveal terminal annotations",
       "extractionState" : "extracted_with_value",
@@ -46001,6 +46013,18 @@
         }
       }
     },
+    "ChatInputView.MentionSessionReason" : {
+      "comment" : "Prompt shown over each session while the user types an @-mention in the AI chat, letting them pick the session to mention by clicking it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mention this session in AI chat?"
+          }
+        }
+      }
+    },
     "ChatInputView.Placeholder" : {
       "comment" : "Placeholder in the chat input field",
       "extractionState" : "extracted_with_value",
@@ -46249,6 +46273,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ 不接受此文件类型作为聊天附件：%2$@。"
+          }
+        }
+      }
+    },
+    "ChatListModel.BrowserCannotBeTerminal" : {
+      "comment" : "Error shown when trying to link a web browser session to an AI chat in the terminal slot",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A web browser session cannot be linked as a terminal."
+          }
+        }
+      }
+    },
+    "ChatListModel.TerminalCannotBeBrowser" : {
+      "comment" : "Error shown when trying to link a terminal session to an AI chat in the web browser slot",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A terminal session cannot be linked as a web browser."
           }
         }
       }
@@ -151601,6 +151649,216 @@
         }
       }
     },
+    "PseudoTerminal.CloseBody.Tabs.Bullet" : {
+      "comment" : "One line in a list of tabs being closed and the jobs each is running; %1$d is the tab number and %2$@ is its job list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tab #%1$d: %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Nr. %1$d: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブ#%1$d: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aba nº %1$d: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вкладка №%1$d: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%1$d个标签页：%2$@"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.CloseBody.Tabs.Jobs" : {
+      "comment" : "Close-confirmation body when closing several tabs that are running a few jobs; %@ is the job list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The tabs being closed are running %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die zu schließenden Tabs führen %@ aus."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じるタブでは%@が実行されています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As abas que serão fechadas estão executando %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В закрываемых вкладках выполняется %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将要关闭的标签页正在运行 %@。"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.CloseBody.Tabs.List" : {
+      "comment" : "Close-confirmation body when closing several tabs that are running many jobs; a bulleted list of tabs and their jobs follows",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The tabs being closed are running the following jobs:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die zu schließenden Tabs führen die folgenden Jobs aus:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じるタブでは、次のジョブが実行されています:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As abas que serão fechadas estão executando os seguintes processos:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В закрываемых вкладках выполняются следующие процессы:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将要关闭的标签页正在运行以下任务："
+          }
+        }
+      }
+    },
+    "PseudoTerminal.CloseBody.Tabs.Locked" : {
+      "comment" : "Added to a close-confirmation for several tabs when at least one has a locked session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Some of these tabs have locked sessions."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einige dieser Tabs haben gesperrte Sitzungen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これらのタブの一部には、ロックされたセッションがあります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algumas dessas abas têm sessões bloqueadas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Некоторые из этих вкладок содержат заблокированные сессии."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其中一些标签页包含锁定会话。"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.CloseBody.Tabs.OneTab" : {
+      "comment" : "Close-confirmation body when closing several tabs and only one is running jobs; %1$d is the tab number and %2$@ is its job list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tab #%1$d is running %2$@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab Nr. %1$d führt %2$@ aus."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブ#%1$dでは%2$@が実行されています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A aba nº %1$d está executando %2$@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Во вкладке №%1$d выполняется %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%1$d个标签页正在运行 %2$@。"
+          }
+        }
+      }
+    },
     "PseudoTerminal.CloseBody.Window.Closed" : {
       "comment" : "Close-confirmation body when a window with no running jobs will be closed",
       "extractionState" : "extracted_with_value",
@@ -152021,6 +152279,48 @@
         }
       }
     },
+    "PseudoTerminal.CloseOtherTabsPrompt" : {
+      "comment" : "Confirmation prompt for closing every tab except the one that was clicked",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close all other tabs?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle anderen Tabs schließen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "他のすべてのタブを閉じますか?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar todas as outras abas?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрыть все остальные вкладки?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭所有其他标签页？"
+          }
+        }
+      }
+    },
     "PseudoTerminal.CloseSessionTitle" : {
       "comment" : "Close-confirmation title for a session; %@ is the session name",
       "extractionState" : "extracted_with_value",
@@ -152273,6 +152573,48 @@
         }
       }
     },
+    "PseudoTerminal.CloseTabsBelowPrompt" : {
+      "comment" : "Confirmation prompt for closing tabs below the one that was clicked, shown when the tab bar is vertical",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close all tabs below this one?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Tabs unterhalb dieses Tabs schließen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このタブの下側のすべてのタブを閉じますか?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar todas as abas abaixo desta?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрыть все вкладки ниже этой?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭此标签页下方的所有标签页？"
+          }
+        }
+      }
+    },
     "PseudoTerminal.CloseTabsHeading" : {
       "comment" : "Warning heading shown when closing multiple tabs",
       "extractionState" : "extracted_with_value",
@@ -152437,6 +152779,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭右侧标签页"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.CloseTabsToTheRightPrompt" : {
+      "comment" : "Confirmation prompt for closing tabs to the right of the one that was clicked",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close all tabs to the right of this one?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Tabs rechts von diesem Tab schließen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このタブの右側のすべてのタブを閉じますか?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar todas as abas à direita desta?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрыть все вкладки справа от этой?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭此标签页右侧的所有标签页？"
           }
         }
       }
@@ -174568,6 +174952,18 @@
         }
       }
     },
+    "SelectSessionButton.RevealChat" : {
+      "comment" : "Button that shows the AI chat where the user is typing an @-mention of a session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reveal Chat"
+          }
+        }
+      }
+    },
     "SelectSessionButton.SelectThisSession" : {
       "comment" : "Button to select the current session",
       "extractionState" : "extracted_with_value",
@@ -175408,6 +175804,18 @@
         }
       }
     },
+    "SessionLauncher.EmptyManPageMessage" : {
+      "comment" : "Warning message shown when an x-man-page URL has no page name or apropos search term.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The man page URL did not name a man page or search term."
+          }
+        }
+      }
+    },
     "SessionLauncher.FontNotFoundMessage" : {
       "comment" : "Warning shown when the profile’s font and the fallback font cannot be loaded. %@ is the font name.",
       "extractionState" : "extracted_with_value",
@@ -175446,6 +175854,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "找不到指定的字体“%@”或回退的标准等宽字体 Menlo。请确保至少安装了其中一种。"
+          }
+        }
+      }
+    },
+    "SessionLauncher.IllegalManPageHeading" : {
+      "comment" : "Heading of a warning that an x-man-page URL is not allowed.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Illegal Man Page URL"
+          }
+        }
+      }
+    },
+    "SessionLauncher.IllegalManPageMessage" : {
+      "comment" : "Warning message shown when an x-man-page URL contains disallowed characters.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The man page URL contained a disallowed character. The set of allowed characters is limited for security reasons."
           }
         }
       }
