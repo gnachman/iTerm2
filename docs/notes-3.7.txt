@@ -437,6 +437,10 @@ Improvements:
   says so and lets you finish setup anyway.
 - Reduced idle CPU usage that previously grew
   with the number of open windows.
+- Reduced background CPU usage for tracking
+  each session’s running job, which previously
+  grew with the number of processes running on
+  your Mac.
 - AI command safety checks now prefer the cheaper
   "economy" model when one is available, so the
   frequent low-stakes safety side-query costs

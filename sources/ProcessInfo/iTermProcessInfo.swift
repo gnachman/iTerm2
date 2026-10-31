@@ -28,15 +28,34 @@ class iTermProcessInfo: NSObject {
     // is no parent -> child strong edge.
     @objc var parent: iTermProcessInfo?
 
+    // Name and foreground state read from a process-table snapshot, or nil to ask the
+    // data source lazily.
+    private let snapshot: (name: String, isForeground: Bool)?
+
     @objc(initWithPid:ppid:collection:dataSource:)
+    convenience init(processID: pid_t,
+                     parentProcessID: pid_t,
+                     collection: ProcessCollectionProvider,
+                     dataSource: ProcessDataSource) {
+        self.init(processID: processID,
+                  parentProcessID: parentProcessID,
+                  collection: collection,
+                  dataSource: dataSource,
+                  snapshotName: nil,
+                  snapshotIsForeground: false)
+    }
+
     init(processID: pid_t,
          parentProcessID: pid_t,
          collection: ProcessCollectionProvider,
-         dataSource: ProcessDataSource) {
+         dataSource: ProcessDataSource,
+         snapshotName: String?,
+         snapshotIsForeground: Bool) {
         self.processID = processID
         self.parentProcessID = parentProcessID
         self.collection = collection
         self.dataSource = dataSource
+        self.snapshot = snapshotName.map { (name: $0, isForeground: snapshotIsForeground) }
 
         super.init()
 
@@ -361,9 +380,17 @@ class iTermProcessInfo: NSObject {
         var argv0Value: String?
         var nameValue: String?
 
-        init(processID: pid_t, parent: iTermProcessInfo?, dataSource: ProcessDataSource) {
+        init(processID: pid_t,
+             parent: iTermProcessInfo?,
+             snapshot: (name: String, isForeground: Bool)?,
+             dataSource: ProcessDataSource) {
             var fg = ObjCBool(false)
-            nameValue = dataSource.nameOfProcess(withPid: processID, isForeground: &fg)
+            if let snapshot {
+                nameValue = snapshot.name
+                fg = ObjCBool(snapshot.isForeground)
+            } else {
+                nameValue = dataSource.nameOfProcess(withPid: processID, isForeground: &fg)
+            }
             DLog("Making expensive values for \(processID). fg=\(fg) parent.name=\(parent?.name ?? "(nil)")")
             if fg.boolValue || parent?.name == "login" || parent == nil {
                 // Full command line with hacked command name
@@ -383,6 +410,7 @@ class iTermProcessInfo: NSObject {
     private lazy var expensiveValues: ExpensiveValues = {
         ExpensiveValues(processID: processID,
                         parent: parent,
+                        snapshot: snapshot,
                         dataSource: dataSource)
     }()
 

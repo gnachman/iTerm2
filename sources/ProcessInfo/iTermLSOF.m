@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <libproc.h>
 #include <netinet/in.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,19 +77,17 @@
 }
 
 + (int)maximumLengthOfProcargs {
-    int mib[3];
-    int argmax;
-    size_t syssize;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    syssize = sizeof(argmax);
-    if (sysctl(mib, 2, &argmax, &syssize, NULL, 0) == -1) {
-        return -1;
-    } else {
-        return argmax;
-    }
+    // KERN_ARGMAX is fixed for the life of the kernel, so read it once.
+    static int argmax;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        int mib[2] = { CTL_KERN, KERN_ARGMAX };
+        size_t syssize = sizeof(argmax);
+        if (sysctl(mib, 2, &argmax, &syssize, NULL, 0) == -1) {
+            argmax = -1;
+        }
+    });
+    return argmax;
 }
 
 + (char *)procargsForProcess:(pid_t)pid {
@@ -494,6 +493,81 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     }
 }
 
+// has a controlling terminal and
+// process group id = tty process group id
+static BOOL iTermKinfoProcIsForeground(const struct kinfo_proc *kp) {
+    return ((kp->kp_proc.p_flag & P_CONTROLT) &&
+            kp->kp_eproc.e_pgid == kp->kp_eproc.e_tpgid);
+}
+
+// A failed KERN_PROC_ALL read is unexpected, so it goes to RLog. The process cache
+// refreshes up to twice a second, so only log when reads start or stop failing; a
+// persistent failure would otherwise flood the ring buffer. failure is nil on success.
+static void iTermNoteProcessTableReadResult(NSString *failure) {
+    static atomic_bool failing;
+    const bool wasFailing = atomic_exchange(&failing, failure != nil);
+    if (failure && !wasFailing) {
+        RLog(@"%@; falling back to per-pid process lookups until it succeeds", failure);
+    } else if (failure) {
+        DLog(@"%@", failure);
+    } else if (wasFailing) {
+        RLog(@"KERN_PROC_ALL read succeeded again; no longer falling back to per-pid process lookups");
+    }
+}
+
++ (BOOL)enumerateProcessTable:(void (^ NS_NOESCAPE)(pid_t pid, pid_t ppid, NSString *name, BOOL isForeground))block {
+    // KERN_PROC_PID walks the kernel's whole process list to find one pid, so asking
+    // about every process one at a time costs O(n^2). One KERN_PROC_ALL read returns
+    // the same kinfo_proc for every process at once.
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+    NSMutableData *data = nil;
+    size_t size = 0;
+    // The table can grow between the size query and the read, so leave headroom and
+    // retry a few times if it still outgrows the buffer.
+    for (int attempt = 0; ; attempt++) {
+        size = 0;
+        if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
+            const int savedErrno = errno;
+            iTermNoteProcessTableReadResult([NSString stringWithFormat:@"KERN_PROC_ALL size query failed: errno=%d (%s), attempt %d",
+                                             savedErrno, strerror(savedErrno), attempt + 1]);
+            return NO;
+        }
+        size += size / 8 + 64 * sizeof(struct kinfo_proc);
+        const size_t bufferSize = size;
+        data = [NSMutableData dataWithLength:bufferSize];
+        if (sysctl(mib, 3, data.mutableBytes, &size, NULL, 0) == 0) {
+            break;
+        }
+        const int savedErrno = errno;
+        if (savedErrno != ENOMEM || attempt == 3) {
+            iTermNoteProcessTableReadResult([NSString stringWithFormat:@"KERN_PROC_ALL read failed: errno=%d (%s), buffer %zu bytes, attempt %d",
+                                             savedErrno, strerror(savedErrno), bufferSize, attempt + 1]);
+            return NO;
+        }
+        DLog(@"KERN_PROC_ALL table outgrew a %zu-byte buffer; retrying", bufferSize);
+    }
+    iTermNoteProcessTableReadResult(nil);
+    const struct kinfo_proc *procs = data.bytes;
+    const size_t count = size / sizeof(struct kinfo_proc);
+    for (size_t i = 0; i < count; i++) {
+        const struct kinfo_proc *kp = &procs[i];
+        // proc_pidinfo, which this replaces, fails for zombies, so they were never in
+        // the collection. Keep it that way.
+        if (kp->kp_proc.p_stat == SZOMB) {
+            continue;
+        }
+        NSString *name = nil;
+        if (kp->kp_proc.p_comm[0]) {
+            char comm[MAXCOMLEN + 1];
+            memcpy(comm, kp->kp_proc.p_comm, MAXCOMLEN);
+            comm[MAXCOMLEN] = 0;
+            name = [NSString stringWithUTF8String:comm];
+        }
+        block(kp->kp_proc.p_pid, kp->kp_eproc.e_ppid, name, iTermKinfoProcIsForeground(kp));
+    }
+    return YES;
+}
+
 // Use sysctl magic to get the name of a process and whether it is controlling
 // the tty. This code was adapted from ps, here:
 // http://opensource.apple.com/source/adv_cmds/adv_cmds-138.1/ps/
@@ -512,11 +586,8 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
         return nil;
     }
 
-    // has a controlling terminal and
-    // process group id = tty process group id
     if (isForeground) {
-        *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
-                         kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
+        *isForeground = iTermKinfoProcIsForeground(&kp);
     }
 
     if (kp.kp_proc.p_comm[0]) {

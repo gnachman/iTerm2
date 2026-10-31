@@ -14,9 +14,11 @@ final class ProcessCollectionTests: XCTestCase {
     // Answers isForeground from a fixed set of pids; everything else is inert.
     private final class ForegroundSetDataSource: NSObject, ProcessDataSource {
         var foregroundPIDs = Set<pid_t>()
+        private(set) var nameQueries = [pid_t]()
 
         func nameOfProcess(withPid thePid: pid_t,
                            isForeground: UnsafeMutablePointer<ObjCBool>) -> String? {
+            nameQueries.append(thePid)
             isForeground.pointee = ObjCBool(foregroundPIDs.contains(thePid))
             return "process\(thePid)"
         }
@@ -180,5 +182,60 @@ final class ProcessCollectionTests: XCTestCase {
         collection.commit()
 
         XCTAssertEqual(deepestForegroundPID(of: a), c)
+    }
+
+    // MARK: - Process-table snapshot
+
+    func testSnapshotValuesAreUsedWithoutQueryingDataSource() {
+        collection.addProcess(withProcessID: a, parentProcessID: 0, name: "login", isForeground: false)
+        collection.addProcess(withProcessID: b, parentProcessID: a, name: "zsh", isForeground: false)
+        collection.addProcess(withProcessID: c, parentProcessID: b, name: "vim", isForeground: true)
+        // The data source would say b is the foreground job; the snapshot wins.
+        dataSource.foregroundPIDs = [b]
+        collection.commit()
+
+        XCTAssertEqual(deepestForegroundPID(of: a), c)
+        XCTAssertEqual(collection.info(forProcessID: c)?.name, "vim")
+        XCTAssertEqual(collection.info(forProcessID: b)?.name, "zsh")
+        XCTAssertEqual(dataSource.nameQueries, [])
+    }
+
+    func testNilSnapshotNameFallsBackToDataSource() {
+        collection.addProcess(withProcessID: a, parentProcessID: 0, name: "login", isForeground: false)
+        // Empty p_comm (mid-exec): the snapshot's foreground flag is ignored too.
+        collection.addProcess(withProcessID: b, parentProcessID: a, name: nil, isForeground: false)
+        dataSource.foregroundPIDs = [b]
+        collection.commit()
+
+        XCTAssertEqual(deepestForegroundPID(of: a), b)
+        XCTAssertEqual(collection.info(forProcessID: b)?.name, "process\(b)")
+        XCTAssertEqual(dataSource.nameQueries, [b])
+    }
+
+    // Exercises the real sysctl(KERN_PROC_ALL) read against the per-pid path for this
+    // test process, whose pid, parent, and name are stable while the test runs.
+    func testProcessTableSnapshotMatchesPerPidLookupForSelf() {
+        let me = getpid()
+        var found: (ppid: pid_t, name: String?, isForeground: Bool)?
+        var count = 0
+        let ok = iTermLSOF.enumerateProcessTable { pid, ppid, name, isForeground in
+            count += 1
+            if pid == me {
+                found = (ppid, name, isForeground)
+            }
+        }
+        XCTAssertTrue(ok)
+        XCTAssertGreaterThan(count, 1)
+        guard let found else {
+            XCTFail("Own pid missing from process table snapshot")
+            return
+        }
+        XCTAssertEqual(found.ppid, getppid())
+        XCTAssertEqual(found.ppid, iTermLSOF.ppid(forPid: me))
+        var isForeground = ObjCBool(false)
+        let name = iTermLSOF.nameOfProcess(withPid: me, isForeground: &isForeground)
+        XCTAssertNotNil(found.name)
+        XCTAssertEqual(found.name, name)
+        XCTAssertEqual(found.isForeground, isForeground.boolValue)
     }
 }

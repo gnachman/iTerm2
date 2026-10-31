@@ -352,20 +352,26 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
 }
 
 + (iTermProcessCollection *)newProcessCollection {
-    NSArray<NSNumber *> *allPids = [iTermLSOF allPids];
-    // pid -> ppid
-    NSMutableDictionary<NSNumber *, NSNumber *> *parentmap = [NSMutableDictionary dictionary];
     iTermProcessCollection *collection = [[iTermProcessCollection alloc] initWithDataSource:[iTermLSOF processDataSource]];
-    for (NSNumber *pidNumber in allPids) {
-        pid_t pid = pidNumber.intValue;
-
-        pid_t ppid = [iTermLSOF ppidForPid:pid];
+    // One read of the whole process table supplies each process's parent, name, and
+    // foreground state. Per-pid lookups cost O(n) each in the kernel, which made a
+    // refresh O(n^2) in the number of processes on the system (issue 13182).
+    const BOOL ok = [iTermLSOF enumerateProcessTable:^(pid_t pid, pid_t ppid, NSString *name, BOOL isForeground) {
         if (!ppid) {
-            continue;
+            return;
         }
-
-        parentmap[@(pid)] = @(ppid);
-        [collection addProcessWithProcessID:pid parentProcessID:ppid];
+        [collection addProcessWithProcessID:pid parentProcessID:ppid name:name isForeground:isForeground];
+    }];
+    if (!ok) {
+        DLog(@"Process table snapshot failed; falling back to per-pid lookups");
+        for (NSNumber *pidNumber in [iTermLSOF allPids]) {
+            const pid_t pid = pidNumber.intValue;
+            const pid_t ppid = [iTermLSOF ppidForPid:pid];
+            if (!ppid) {
+                continue;
+            }
+            [collection addProcessWithProcessID:pid parentProcessID:ppid];
+        }
     }
     [collection commit];
     return collection;
@@ -496,9 +502,10 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                                  deepest ? @(deepest.processID) : @"nil");
                             // For each vanished ancestor, report what became of the pid
                             // that held it last cycle. "ABSENT from collection but
-                            // aliveNow=YES" is the fingerprint of the allPids/ppid TOCTOU
-                            // in newProcessCollection (a live process dropped because its
-                            // ppid read failed after the pid snapshot).
+                            // aliveNow=YES" means newProcessCollection dropped a live
+                            // process (missing from the process-table snapshot, or, on
+                            // the per-pid fallback path, a ppid read that failed after
+                            // the pid list was taken).
                             for (NSString *removedName in removedNames) {
                                 const NSUInteger idx = [oldAncestors indexOfObject:removedName];
                                 if (idx == NSNotFound || idx >= oldChainPids.count) {
@@ -514,7 +521,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                                          stillHere.parent ? @(stillHere.parent.processID) : @"nil",
                                          @(stillHere.isForegroundJob), @(aliveNow));
                                 } else {
-                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\" was pid %@: ABSENT from this cycle's collection; aliveNow=%@ -- if YES, we dropped a live process (allPids/ppid TOCTOU in newProcessCollection)",
+                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\" was pid %@: ABSENT from this cycle's collection; aliveNow=%@ -- if YES, newProcessCollection dropped a live process",
                                          removedName, @(droppedPid), @(aliveNow));
                                 }
                             }
