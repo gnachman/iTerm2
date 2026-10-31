@@ -122,6 +122,8 @@ final class AIMetadataFixtureCoverageTest: XCTestCase {
         case .gemini:    return "gemini"
         case .deepSeek:  return "deepseek"
         case .llama:     return "llama"
+        case .xAI:       return "xai"
+        case .apple:     return "apple"
         @unknown default: return "unknown"
         }
     }

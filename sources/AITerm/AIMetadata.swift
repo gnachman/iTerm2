@@ -75,6 +75,11 @@ class AIModel: NSObject {
             apiGuess = .deepSeek
             featuresGuess = [.functionCalling, .streaming]
             vendorGuess = .deepSeek
+        } else if modelName.contains("grok") {
+            urlGuess = "https://api.x.ai/v1/chat/completions"
+            apiGuess = .chatCompletions
+            featuresGuess = [.functionCalling, .streaming]
+            vendorGuess = .xAI
         } else if modelName.contains("llama") {
             urlGuess = "http://localhost:11434/api/chat"
             apiGuess = .llama
@@ -437,6 +442,9 @@ class AIMetadata: NSObject {
     func api(for model: String, fallback: iTermAIAPI) -> iTermAIAPI {
         if let modelIndex = models.firstIndex(where: { $0.name == model }) {
             return models[modelIndex].api
+        }
+        if model.contains("grok") {
+            return .chatCompletions
         }
         if model.contains("gpt") {
             return .responses

@@ -5,6 +5,9 @@ right-to-left rendering, selection, and copy
 improvements in this release.
 
 Major New Features:
+- Grok is now a built-in AI provider. An
+  xAI API key in Settings chats with
+  grok-4.7.
 - Support for the Program Status Protocol
   (OSC 7501), which lets a program report that it
   is working, waiting on you, done, or failed.
