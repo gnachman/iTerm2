@@ -670,6 +670,11 @@ Improvements:
   background processes.
 
 Bug Fixes:
+- The browser’s address field no longer runs
+  under the loading spinner while a page loads,
+  and returns to its full width afterward.
+- Fixed more cases where a window could be made
+  wider but not narrower.
 - If iTerm2 quits unexpectedly while tmux
   integration is attached, and you switched to
   another app at some point after attaching,

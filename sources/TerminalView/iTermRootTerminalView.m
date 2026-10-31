@@ -51,6 +51,23 @@ const CGFloat iTermStoplightHotboxHeight = iTermStandardButtonsViewHeight + 8;
 // hotbox shows this much of itself behind the toggle.
 static const CGFloat iTermStoplightHotboxToggleWidth = 12;
 
+// The layout passes position the views that use this explicitly, so their masks
+// matter only between AppKit's autoresizing and the next pass, and when the
+// layout engine is engaged and translates them into constraints. On an axis
+// whose size is flexible, a fixed margin then becomes a minimum window size:
+// the toolbelt's width, a side tab bar's width, or the height of the bars above
+// and below. Flexible margins translate into proportional constraints, which
+// impose no minimum. Issue 13118.
+static NSAutoresizingMaskOptions iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSAutoresizingMaskOptions mask) {
+    if (mask & NSViewWidthSizable) {
+        mask |= NSViewMinXMargin | NSViewMaxXMargin;
+    }
+    if (mask & NSViewHeightSizable) {
+        mask |= NSViewMinYMargin | NSViewMaxYMargin;
+    }
+    return mask;
+}
+
 typedef NS_ENUM(NSInteger, iTermStoplightHotboxSlidePosition) {
     // Entirely past the window's left edge.
     iTermStoplightHotboxSlidePositionOut,
@@ -235,7 +252,7 @@ typedef struct {
         // Create the tab view.
         self.tabView = [[PTYTabView alloc] initWithFrame:self.bounds];
         self.tabView.drawsBackground = NO;
-        _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+        _tabView.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewHeightSizable);
         _tabView.autoresizesSubviews = YES;
         _tabView.allowsTruncatedLabels = NO;
         _tabView.controlSize = NSControlSizeSmall;
@@ -339,7 +356,8 @@ typedef struct {
         _windowTitleLabel.alphaValue = 1;
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
-        _windowTitleLabel.autoresizingMask = (NSViewMinYMargin | NSViewWidthSizable);
+        // The label is centered with fixed insets.
+        _windowTitleLabel.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewMinYMargin | NSViewWidthSizable);
         [self addSubview:_windowTitleLabel];
         
         _windowBorderView = [[iTermWindowBorderView alloc] initWithFrame:self.bounds];
@@ -355,9 +373,39 @@ typedef struct {
                                                  selector:@selector(advancedSettingsDidChange:)
                                                      name:iTermAdvancedSettingsDidChange
                                                    object:nil];
+#if DEBUG
+        if ([iTermAdvancedSettingsModel engageLayoutEngineInTerminalWindows]) {
+            [self engageLayoutEngine];
+        }
+#endif
     }
     return self;
 }
+
+#if DEBUG
+// Turns on AppKit's layout engine for the whole window, so views that use
+// constraints can be tried out in a terminal window. A hidden glass effect view
+// does it the way a real one would, since it uses constraints internally. It
+// is 1x1 and fixed-size, so it adds no minimum window size of its own.
+- (void)engageLayoutEngine {
+    DLog(@"Engaging the layout engine in %@", self);
+    if (@available(macOS 26, *)) {
+        NSGlassEffectView *glass = [[NSGlassEffectView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
+        glass.hidden = YES;
+        [self addSubview:glass];
+        return;
+    }
+    NSView *view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
+    view.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:view];
+    [NSLayoutConstraint activateConstraints:@[
+        [view.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
+        [view.topAnchor constraintEqualToAnchor:self.topAnchor],
+        [view.widthAnchor constraintEqualToConstant:1],
+        [view.heightAnchor constraintEqualToConstant:1],
+    ]];
+}
+#endif
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -1464,7 +1512,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                 theClass = _useMetal ? [iTermLayerBackedSolidColorView class] : [SolidColorView class];
             }
             _divisionView = [[theClass alloc] initWithFrame:divisionViewFrame];
-            _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
+            _divisionView.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMinYMargin);
             [self addSubview:_divisionView];
         }
         iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
@@ -1532,7 +1580,21 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                minSize);
 }
 
+// The layout calculator gives a hidden toolbelt a zero frame, which would lay
+// out its tools at zero width, where their contents' margins do not fit and
+// constraints break if the layout engine is engaged. Keep it against the right
+// edge at its own width, or the width it gets when first shown, and the full
+// height. Its width is fixed and its left margin flexible, so this imposes no
+// minimum window size.
+- (NSRect)hiddenToolbeltFrame {
+    const CGFloat width = NSWidth(_toolbelt.frame) > 0 ? NSWidth(_toolbelt.frame) : [iTermPreferences floatForKey:kPreferenceKeyDefaultToolbeltWidth];
+    return NSMakeRect(NSMaxX(self.bounds) - width, NSMinY(self.bounds), width, NSHeight(self.bounds));
+}
+
 - (NSRect)toolbeltFrameInWindow:(NSWindow *)thisWindow {
+    if (![self shouldShowToolbelt]) {
+        return [self hiddenToolbeltFrame];
+    }
     // Use calculator for toolbelt frame calculation
     iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
     return [iTermLayoutCalculator toolbeltFrameWithInputs:inputs];
@@ -1805,6 +1867,15 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)setTabBarFrame:(NSRect)frame {
     assert(!_tabBarControlOnLoan);
+    if (NSIsEmptyRect(frame)) {
+        // The layout calculator reports a hidden top tab bar as CGRectZero. The
+        // backing can stay visible in that case and its width is flexible, so a
+        // zero frame would leave a right margin as wide as the window. If the
+        // layout engine is ever engaged that margin becomes a minimum window
+        // width equal to the current width. A zero-height strip across the top
+        // has no margin. See -spanHiddenSubviewsAlongFlexibleAxes.
+        frame = NSMakeRect(NSMinX(self.bounds), NSMaxY(self.bounds), NSWidth(self.bounds), 0);
+    }
     _tabBarBacking.frame = frame;
     self.tabBarControl.frame = _tabBarBacking.bounds;
 }
@@ -1837,12 +1908,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)setTabBarControlAutoresizingMask:(NSAutoresizingMaskOptions)mask {
     if (_tabBarBacking) {
-        _tabBarBacking.autoresizingMask = mask;
+        _tabBarBacking.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(mask);
         _tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         return;
     }
 
-    _tabBarControl.autoresizingMask = mask;
+    _tabBarControl.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(mask);
 }
 
 - (void)layoutSubviewsWithVisibleLeftTabBarAndInlineToolbelt:(BOOL)showToolbeltInline forWindow:(NSWindow *)thisWindow {
@@ -2075,8 +2146,56 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if (!_tabBarControlOnLoan) {
         [self.tabBarControl updateFlashing];
     }
+    [self spanHiddenSubviewsAlongFlexibleAxes];
+#if DEBUG
+    [iTermAutoresizingFloorAuditor checkRootView:self];
+#endif
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewDidLayoutSubviews];
+}
+
+// The passes above only lay out views that are showing, so a hidden view keeps
+// whatever frame it last had. That is harmless until something engages the
+// layout engine in this window. AppKit then turns each autoresizing mask into
+// required constraints, and on an axis where a view's size is flexible its
+// fixed margins become a minimum size for this view and so for the window.
+// A stale frame then stops the user from making the window smaller. Spanning
+// the flexible axes leaves no margin to become a floor. The other axes keep
+// their values, which code reads back (the toolbelt's width, for one).
+// Issue 13118.
+- (void)spanHiddenSubviewsAlongFlexibleAxes {
+    const NSRect bounds = self.bounds;
+    for (NSView *view in self.subviews) {
+        if (!view.isHidden || !view.translatesAutoresizingMaskIntoConstraints) {
+            continue;
+        }
+        const NSAutoresizingMaskOptions mask = view.autoresizingMask;
+        NSRect frame = view.frame;
+        if (mask & NSViewWidthSizable) {
+            frame.origin.x = NSMinX(bounds);
+            frame.size.width = NSWidth(bounds);
+        }
+        if (mask & NSViewHeightSizable) {
+            frame.origin.y = NSMinY(bounds);
+            frame.size.height = NSHeight(bounds);
+        }
+        if (!NSEqualRects(frame, view.frame)) {
+            DLog(@"Span hidden %@ from %@ to %@", view, NSStringFromRect(view.frame), NSStringFromRect(frame));
+            view.frame = frame;
+        }
+    }
+    if (_toolbelt.isHidden && !NSEqualRects(_toolbelt.frame, [self hiddenToolbeltFrame])) {
+        DLog(@"Move hidden toolbelt from %@ to %@", NSStringFromRect(_toolbelt.frame), NSStringFromRect([self hiddenToolbeltFrame]));
+        _toolbelt.frame = [self hiddenToolbeltFrame];
+    }
+    // The tab bar control fills its backing whenever the bar is laid out, but
+    // a bar that has never been shown keeps the frame it was created with.
+    // With a side tab bar the backing's height is flexible, so the control's
+    // stale margin inside the spanned backing would reach the window.
+    if (_tabBarBacking.isHidden && !_tabBarControlOnLoan &&
+        !NSEqualRects(self.tabBarControl.frame, _tabBarBacking.bounds)) {
+        self.tabBarControl.frame = _tabBarBacking.bounds;
+    }
 }
 
 - (CGFloat)minimumTabBarWidth {
@@ -2136,13 +2255,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 - (NSAutoresizingMaskOptions)statusBarContainerAutoresizingMask {
     switch ([iTermPreferences unsignedIntegerForKey:kPreferenceKeyStatusBarPosition]) {
         case iTermStatusBarPositionTop:
-            return NSViewWidthSizable | NSViewMinYMargin;
+            return iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMinYMargin);
 
         case iTermStatusBarPositionBottom:
-            return NSViewWidthSizable | NSViewMaxYMargin;
+            return iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMaxYMargin);
     }
 
-    return NSViewWidthSizable | NSViewMinYMargin;
+    return iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewWidthSizable | NSViewMinYMargin);
 }
 
 - (void)updateDecorationHeightsForStatusBar:(iTermDecorationHeights *)decorationHeights {

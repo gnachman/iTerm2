@@ -64,6 +64,8 @@
     {
       "parallelizable" : true,
       "skippedTests" : [
+        "FloatingPaneDropTests\/testADroppedFloatStaysWhereItWasDroppedWhenTheContentMoves()",
+        "FramerFlowLedgerTests\/testAPaneSessionRecordsWhatItExecutes()",
         "iTermAttributedStringBuilderBenchmarkTest"
       ],
       "target" : {

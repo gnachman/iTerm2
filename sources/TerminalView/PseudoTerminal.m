@@ -12430,10 +12430,14 @@ typedef struct {
         // mask or autoresizing is off for the content view. I'm sure this isn't
         // the best fix, but it's all I could find: I turn off the autoresizing
         // mask for the _contentView.tabView (which I really don't want autoresized--it needs to
-        // be done by hand in fitTabToWindow), and add a silly one pixel view
+        // be done by hand in fitTabToWindow), and add a silly view
         // that lives just long enough to be resized in this function. I don't know
         // why it works but it does.
-        bugFixView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)] autorelease];
+        // Fill the content view rather than being one pixel. A sizable view's
+        // margins become a minimum window size if the layout engine is ever
+        // engaged, and that floor clamps the setFrame:display: this view
+        // surrounds. With no margins there is no floor. Issue 13118.
+        bugFixView = [[[NSView alloc] initWithFrame:[[[self window] contentView] bounds]] autorelease];
         bugFixView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         [[[self window] contentView] addSubview:bugFixView];
         *savedMaskPtr = _contentView.tabView.autoresizingMask;

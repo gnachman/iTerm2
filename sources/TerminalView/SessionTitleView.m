@@ -120,7 +120,11 @@ static const CGFloat kLockButtonSize = 14;
         [self layoutSubviews];
         [menuButton_ setAutoresizingMask:NSViewMinXMargin];
         [lockButton_ setAutoresizingMask:NSViewMinXMargin]; // Stay at right side
-        [label_ setAutoresizingMask:NSViewMaxYMargin | NSViewWidthSizable];
+        // -layoutSubviews positions the label on every resize, so it does not
+        // need to autoresize. A flexible width would make its insets a minimum
+        // pane width if the layout engine were engaged, breaking constraints in
+        // a narrow pane.
+        [label_ setAutoresizingMask:NSViewNotSizable];
 
         [self updateTextColor];
     }
@@ -155,6 +159,7 @@ static const CGFloat kLockButtonSize = 14;
     if (!lockButton_.isHidden) {
         lframe.size.width -= kMargin + kLockButtonSize;
     }
+    lframe.size.width = MAX(0, lframe.size.width);
     label_.frame = lframe;
 }
 
@@ -178,6 +183,11 @@ static const CGFloat kLockButtonSize = 14;
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
+    // Lay out from scratch rather than trusting autoresizing. Once a pane is
+    // narrower than the label's margins, autoresizing loses track of them, and
+    // it loses them differently when the layout engine is engaged, so the
+    // label would come back misplaced when the pane grows again.
+    [self layoutSubviews];
     [self layoutStatusBar];
 }
 

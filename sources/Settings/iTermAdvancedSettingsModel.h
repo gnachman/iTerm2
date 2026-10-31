@@ -109,6 +109,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)alphaForDeselectedCommandShade;
 #if DEBUG
 + (NSString *)alternateSSHIntegrationScript;
++ (BOOL)engageLayoutEngineInTerminalWindows;
++ (void)setEngageLayoutEngineInTerminalWindows:(BOOL)value;
 #endif
 + (BOOL)animateGraphStatusBarComponents;
 + (BOOL)autoSearch;
