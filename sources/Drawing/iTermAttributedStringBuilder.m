@@ -27,31 +27,6 @@
 #define iTermASBTimerStart(stats) do { if (unlikely(_timersEnabled)) { iTermPreciseTimerStatsStartTimer(stats); } } while (0)
 #define iTermASBTimerAccumulate(stats) do { if (unlikely(_timersEnabled)) { iTermPreciseTimerStatsMeasureAndAccumulate(stats); } } while (0)
 
-// Lowest code point in any box- or block-drawing character set (U+2500 today).
-// Cells below it skip the NSCharacterSet lookups that otherwise run for nearly
-// every cell. Computed from the sets themselves so it stays right if they change.
-static UTF32Char iTermBoxDrawingLowerBound(void) {
-    static UTF32Char bound;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSArray<NSCharacterSet *> *sets = @[
-            [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:YES],
-            [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:NO],
-            [iTermBoxDrawingBezierCurveFactory blockDrawingCharacters],
-        ];
-        bound = 0x2500;
-        for (UTF32Char c = 0; c < bound; c++) {
-            for (NSCharacterSet *set in sets) {
-                if ([set longCharacterIsMember:c]) {
-                    bound = c;
-                    break;
-                }
-            }
-        }
-    });
-    return bound;
-}
-
 typedef struct iTermTextColorContext {
     NSColor *lastUnprocessedColor;
     CGFloat dimmingAmount;
@@ -851,12 +826,11 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     const unichar code = c->code;
 
     const UTF32Char longCode = isComplex ? BaseCharacterForComplexChar(code) : code;
-    const UTF32Char boxDrawingLowerBound = iTermBoxDrawingLowerBound();
-    attributes->boxDrawing = (longCode >= boxDrawingLowerBound &&
+    attributes->boxDrawing = (longCode >= iTermBoxDrawingCharacterLowerBound &&
                               [[iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs] longCharacterIsMember:longCode]);
 
     attributes->contrastIneligible = (!isComplex &&
-                                      code >= boxDrawingLowerBound &&
+                                      code >= iTermBoxDrawingCharacterLowerBound &&
                                       [[iTermBoxDrawingBezierCurveFactory blockDrawingCharacters] characterIsMember:code]);
 
     if (forceTextColor) {
@@ -1206,9 +1180,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         dispatch_once(&onceToken, ^{
             boxSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_useNativePowerlineGlyphs];
         });
-        const UTF32Char boxDrawingLowerBound = iTermBoxDrawingLowerBound();
-        BOOL box = c->code >= boxDrawingLowerBound && [boxSet characterIsMember:c->code];
-        BOOL pcBox = pc->code >= boxDrawingLowerBound && [boxSet characterIsMember:pc->code];
+        BOOL box = c->code >= iTermBoxDrawingCharacterLowerBound && [boxSet characterIsMember:c->code];
+        BOOL pcBox = pc->code >= iTermBoxDrawingCharacterLowerBound && [boxSet characterIsMember:pc->code];
         if (box != pcBox) {
             return NO;
         }

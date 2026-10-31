@@ -17,6 +17,19 @@
 
 @implementation iTermBoxDrawingBezierCurveFactory
 
+// iTermBoxDrawingCharacterLowerBound lets callers skip set lookups for smaller codes, so a
+// smaller member would silently never be drawn as box drawing.
+static void iTermAssertNoCharactersBelowBoxDrawingLowerBound(NSCharacterSet *set) {
+#if DEBUG
+    NSData *bitmap = [set bitmapRepresentation];
+    const unsigned char *bytes = bitmap.bytes;
+    for (UTF32Char c = 0; c < iTermBoxDrawingCharacterLowerBound; c++) {
+        ITAssertWithMessage(!(bytes[c >> 3] & (1 << (c & 7))),
+                            @"U+%04X is below iTermBoxDrawingCharacterLowerBound. Lower the bound.", c);
+    }
+#endif
+}
+
 + (NSCharacterSet *)boxDrawingCharactersWithBezierPathsIncludingPowerline:(BOOL)includingPowerline {
     if (includingPowerline) {
         return [self boxDrawingCharactersWithBezierPathsIncludingPowerline];
@@ -164,6 +177,7 @@
             [temp addCharactersInRange:NSMakeRange(extendedChars[i], 1)];
         }
         characterSet = [temp copy];
+        iTermAssertNoCharactersBelowBoxDrawingLowerBound(characterSet);
     });
     return characterSet;
 }
@@ -277,6 +291,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
 
             sBoxDrawingCharactersWithBezierPaths = temp;
         };
+        iTermAssertNoCharactersBelowBoxDrawingLowerBound(sBoxDrawingCharactersWithBezierPaths);
     });
     return sBoxDrawingCharactersWithBezierPaths;
 }
@@ -297,6 +312,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
                                                     @"🬼🬽🬾🬿🭀🭁🭂🭃🭄🭅🭆🭇🭈🭉🭊🭋🭌🭍🭎🭏🭐🭑🭒🭓🭔🭕🭖🭗🭘🭙🭚🭛🭜🭝🭞🭟🭠🭡🭢🭣🭤🭥🭦🭧🭨🭩🭪🭫🭬🭭🭮🭯"
             ];
         };
+        iTermAssertNoCharactersBelowBoxDrawingLowerBound(sBoxDrawingCharactersWithBezierPaths);
     });
     return sBoxDrawingCharactersWithBezierPaths;
 }

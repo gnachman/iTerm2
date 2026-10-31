@@ -8,6 +8,11 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Every character in boxDrawingCharactersWithBezierPathsIncludingPowerline: (either value) and
+// blockDrawingCharacters is at least this. Callers use it to skip set lookups for ordinary text.
+// If you add a smaller character to one of those sets, lower this.
+static const UTF32Char iTermBoxDrawingCharacterLowerBound = 0x2500;
+
 @interface iTermBoxDrawingBezierCurveFactory : NSObject
 
 + (NSCharacterSet *)boxDrawingCharactersWithBezierPathsIncludingPowerline:(BOOL)includingPowerline;
