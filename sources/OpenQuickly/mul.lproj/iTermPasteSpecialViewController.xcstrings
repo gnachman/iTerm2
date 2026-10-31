@@ -23,6 +23,12 @@
             "value" : "プロンプト検出にはシェル統合が必要です"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프롬프트를 감지하려면 셸 통합이 필요함"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "実行中のアプリが「Bracketed Paste Mode」をオンにするエスケープコードを送信すると有効になります。貼り付けられた文字列は、その内容が貼り付け操作によるものであることを示すエスケープコードで「囲まれ」ます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실행 중인 앱이 “브래킷 붙여넣기 모드”를 켜는 이스케이프 코드를 보낸 경우 켜집니다. 붙여넣은 문자열은 그 안의 텍스트가 붙여넣기 작업에서 왔음을 나타내는 이스케이프 코드로 “감싸집니다.”"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "^Vでタブをエスケープ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^V로 탭 이스케이프"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "タブ付きで貼り付け"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭을 포함하여 붙여넣기"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "置換"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대치"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unicodeの句読点を変換"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "유니코드 구두점 변환"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "vimのエスケープシーケンスに対応"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vim 이스케이프 시퀀스 준수"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1ミリ秒"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1ms"
           }
         },
         "pt-BR" : {
@@ -359,6 +407,12 @@
             "value" : "さまざまな形式の引用符やダッシュをASCII相当の文字に変換します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다양한 형태의 따옴표와 대시를 해당하는 ASCII 문자로 변환합니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "タブをスペースに変換:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭을 공백으로 변환:"
           }
         },
         "pt-BR" : {
@@ -443,6 +503,12 @@
             "value" : "DOSおよびUNIXの改行は通常、入力には使用されません。CRが標準です。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS 및 UNIX 줄바꿈은 일반적으로 입력으로 사용되지 않습니다. CR이 표준입니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "シェル文字を\\でエスケープ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "셸 문자를 \\로 이스케이프"
           }
         },
         "pt-BR" : {
@@ -527,6 +599,12 @@
             "value" : "チャンクサイズ:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "청크 크기:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "置換文字列"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대치 문자열"
           }
         },
         "pt-BR" : {
@@ -611,6 +695,12 @@
             "value" : "DOSおよびUNIXの改行は通常、入力には使用されません。CRが標準です。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS 및 UNIX 줄바꿈은 일반적으로 입력으로 사용되지 않습니다. CR이 표준입니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -651,6 +741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "タブ、ラインフィード、フォームフィード、キャリッジリターンのみが「安全な」制御コードです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭, 줄바꿈(LF), 폼 피드, 캐리지 리턴만 “안전한” 제어 코드입니다."
           }
         },
         "pt-BR" : {
@@ -695,6 +791,12 @@
             "value" : "変換"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변환"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +837,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ICU正規表現構文"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICU 정규 표현식 구문"
           }
         },
         "pt-BR" : {
@@ -779,6 +887,12 @@
             "value" : "100ミリ秒"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100ms"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -816,6 +930,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 kB"
@@ -863,6 +983,12 @@
             "value" : "→"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "→"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +1029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "速度"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "속도"
           }
         },
         "pt-BR" : {
@@ -947,6 +1079,12 @@
             "value" : "安全でない制御コードを削除"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "안전하지 않은 제어 코드 제거"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -987,6 +1125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "各行を貼り付ける前にシェルプロンプトを待つ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 줄을 붙여넣기 전에 셸 프롬프트 기다리기"
           }
         },
         "pt-BR" : {
@@ -1031,6 +1175,12 @@
             "value" : "チャンク間の遅延:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "청크 간 지연:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1071,6 +1221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1バイト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1바이트"
           }
         },
         "pt-BR" : {
@@ -1115,6 +1271,12 @@
             "value" : "正規表現"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "정규 표현식"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1152,6 +1314,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.2 kB"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1.2 kB"
@@ -1199,6 +1367,12 @@
             "value" : "150ミリ秒"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150ms"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1236,6 +1410,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -1283,6 +1463,12 @@
             "value" : "ラジオ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라디오"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1323,6 +1509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "改行を削除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "줄바꿈 제거"
           }
         },
         "pt-BR" : {
@@ -1367,6 +1559,12 @@
             "value" : "キャプチャグループには $1, $2 などを使用"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "캡처 그룹에는 $1, $2 등을 사용하십시오"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1409,6 +1607,12 @@
             "value" : "Bracketed Paste Mode"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "브래킷 붙여넣기 모드"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1446,6 +1650,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
@@ -1493,6 +1703,12 @@
             "value" : "CRLFとLFをCRに変換"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CRLF 및 LF를 CR로 변환"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1535,6 +1751,12 @@
             "value" : "Base64エンコード"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base-64 인코딩"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10秒"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10초"
           }
         },
         "pt-BR" : {

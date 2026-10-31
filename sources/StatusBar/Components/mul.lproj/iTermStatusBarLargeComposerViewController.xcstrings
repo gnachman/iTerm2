@@ -23,6 +23,12 @@
             "value" : "AI補完が有効: すべてのテキストがAIに送信されます"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 완성 켜짐: 모든 텍스트가 AI로 전송됨"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コンポーザーの使い方を説明します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴포저 사용 방법을 설명합니다."
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "⇧↩ を押して送信します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보내려면 ⇧↩를 누르십시오."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -144,6 +162,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

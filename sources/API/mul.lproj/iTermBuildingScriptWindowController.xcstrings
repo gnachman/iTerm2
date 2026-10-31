@@ -23,6 +23,12 @@
             "value" : "少々お待ちください。新しいPython環境をインストールしています…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잠시만 기다려 주십시오! 새로운 Python 환경을 설치하는 중…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",

@@ -23,6 +23,12 @@
             "value" : "クイックオープン"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "빠르게 열기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65,6 +71,12 @@
             "value" : "詳細"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "세부사항"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -105,6 +117,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "セッション、プロファイル、アレンジメントを検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "세션, 프로파일 또는 윈도우 배치 검색"
           }
         },
         "pt-BR" : {

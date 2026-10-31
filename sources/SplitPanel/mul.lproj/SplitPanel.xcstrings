@@ -23,6 +23,12 @@
             "value" : "現在のペインをXXXallyに分割"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 패널을 XXX로 분할"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65,6 +71,12 @@
             "value" : "キャンセル"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -105,6 +117,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "分割"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "분할"
           }
         },
         "pt-BR" : {

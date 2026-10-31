@@ -29,6 +29,12 @@
             "value" : "状態"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "상태"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -71,6 +77,12 @@
             "value" : "読み込み中…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가져오는 중…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -111,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "設定とデータを読み込んでいます…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 및 데이터를 가져오는 중…"
           }
         },
         "ru" : {
