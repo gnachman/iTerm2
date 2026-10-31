@@ -62,6 +62,26 @@ final class ExecutionPermitsTests: XCTestCase {
         XCTAssertEqual(permits.waitingCountForTesting, 1)
     }
 
+    // A session in line asks again each time output arrives. With no permit it could take, that
+    // must not take the lock: with many sessions waiting, those calls were most of its traffic.
+    func testWaiterAskingAgainWithNoPermitAvailableDoesNotTakeTheLock() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let a = FakeSession("a", permits: permits)
+        let b = FakeSession("b", permits: permits)
+        XCTAssertTrue(permits.acquire(a.client))
+        XCTAssertFalse(permits.acquire(b.client))
+        let lockedBefore = permits.lockedAcquireCountForTesting
+        for _ in 0..<100 {
+            XCTAssertFalse(permits.acquire(b.client))
+        }
+        XCTAssertEqual(permits.lockedAcquireCountForTesting, lockedBefore)
+
+        // A permit handed to it is still taken up when it asks.
+        permits.release(a.client, ran: 0.005, hasMoreWork: false)
+        XCTAssertEqual(b.wakes, 1)
+        XCTAssertTrue(permits.acquire(b.client))
+    }
+
     func testReleaseHandsThePermitToTheWaiterAndWakesIt() {
         let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
         let a = FakeSession("a", permits: permits)

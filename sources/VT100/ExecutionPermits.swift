@@ -40,7 +40,13 @@ final class ExecutionPermits: NSObject {
             case removed
         }
         // These are guarded by the ExecutionPermits' mutex.
-        fileprivate var state = State.idle
+        fileprivate var state = State.idle {
+            didSet {
+                iTermAtomicInt64Set(isWaiting, state == .waiting ? 1 : 0)
+            }
+        }
+        // Whether state is .waiting, readable without the mutex.
+        fileprivate let isWaiting = iTermAtomicInt64Create()
         fileprivate var virtualTime: Double
         // Atomic rather than guarded by the mutex, so main can set it inside a join without taking
         // the permits' lock.
@@ -108,6 +114,7 @@ final class ExecutionPermits: NSObject {
         }
 
         deinit {
+            iTermAtomicInt64Free(isWaiting)
             iTermAtomicInt64Free(visible)
             iTermAtomicInt64Free(parking)
             iTermAtomicInt64Free(unchargedNanoseconds)
@@ -137,6 +144,16 @@ final class ExecutionPermits: NSObject {
         }
     }
     private let waiterCount = iTermAtomicInt64Create()
+    // 1 when a waiter might be able to take a permit by asking: one is free or idle beside waiters
+    // that were all paused when it was given up or parked, since paused waiters are passed over.
+    // Whoever is about to leave a permit so sets this and then checks again whether the waiters are
+    // paused, and it is cleared only when no permit is free or idle. A waiter's pause ends before it
+    // asks again, so either the second check saw it unpaused and handed it the permit, or the
+    // waiter sees this set and asks under the lock. It is set only then, not on every handoff:
+    // waiters that see it set take the lock, which is what this exists to avoid.
+    private let waiterMayTakePermit = iTermAtomicInt64Create()
+    // How many times acquire() took the lock. For tests.
+    private let lockedAcquires = iTermAtomicInt64Create()
     private var floor = 0.0
     private var nextWaitingSequence = 0
     private let now: () -> UInt64
@@ -264,6 +281,8 @@ final class ExecutionPermits: NSObject {
             healthTimer.cancel()
         }
         iTermAtomicInt64Free(waiterCount)
+        iTermAtomicInt64Free(waiterMayTakePermit)
+        iTermAtomicInt64Free(lockedAcquires)
     }
 
     // Any thread. Raising it hands permits to waiters right away. Lowering it lets holders run
@@ -299,6 +318,13 @@ final class ExecutionPermits: NSObject {
     // handed one) or because one was free and no waiter that can run is ahead of it. Otherwise the
     // client waits in line and is woken once a permit is handed to it.
     func acquire(_ client: Client) -> Bool {
+        // A client in line is woken when a permit is handed to it, so asking again (as it does each
+        // time output arrives) matters only if a waiter could take one now. See
+        // waiterMayTakePermit.
+        if iTermAtomicInt64Get(client.isWaiting) != 0 && iTermAtomicInt64Get(waiterMayTakePermit) == 0 {
+            return false
+        }
+        iTermAtomicInt64Add(lockedAcquires, 1)
         let (acquired, woken) = mutex.sync { () -> (Bool, [Client]) in
             switch client.state {
             case .holding:
@@ -499,8 +525,15 @@ final class ExecutionPermits: NSObject {
     // to wake if it gets a permit; instead, callerHolds is true.
     private func handOff(caller: Client? = nil) -> (callerHolds: Bool, woken: [Client]) {
         mutex.assertOwned()
+        let permitAvailable = { self.inUse < self._capacity || self.holders.contains { $0.isParked } }
+        defer {
+            if !permitAvailable() {
+                iTermAtomicInt64Set(waiterMayTakePermit, 0)
+            }
+        }
         var callerHolds = false
         var woken = [Client]()
+        var published = false
         while true {
             var best: Client?
             for waiter in waiters where waiter === caller || !waiter.isPaused() {
@@ -511,6 +544,13 @@ final class ExecutionPermits: NSObject {
                 best = waiter
             }
             guard let best else {
+                if !published && !waiters.isEmpty && permitAvailable() {
+                    // About to leave a permit beside paused waiters. Publish that, then look again
+                    // for a waiter whose pause has ended; see waiterMayTakePermit.
+                    published = true
+                    iTermAtomicInt64Set(waiterMayTakePermit, 1)
+                    continue
+                }
                 break
             }
             // Over the cap (it was lowered), it may take more than one idle permit to make room.
@@ -547,7 +587,14 @@ final class ExecutionPermits: NSObject {
         }
         let (parked, woken) = mutex.sync { () -> (Bool, [Client]) in
             it_assert(client.state == .holding, "Parking a permit in state \(client.state)")
-            guard waiters.contains(where: { !$0.isPaused() }) else {
+            var runnableWaiter = waiters.contains { !$0.isPaused() }
+            if !runnableWaiter {
+                // About to leave the permit idle beside paused waiters. Publish that, then look
+                // again for a waiter whose pause has ended; see waiterMayTakePermit.
+                iTermAtomicInt64Set(waiterMayTakePermit, 1)
+                runnableWaiter = waiters.contains { !$0.isPaused() }
+            }
+            guard runnableWaiter else {
                 // Only paused waiters, which can't use it. Park after all: one takes the idle
                 // permit when it asks again after its pause.
                 iTermAtomicInt64Set(client.parking, Parking.idle.rawValue)
@@ -697,6 +744,10 @@ final class ExecutionPermits: NSObject {
 
     var runningCountForTesting: Int {
         return mutex.sync { holders.filter { !$0.isParked }.count }
+    }
+
+    var lockedAcquireCountForTesting: Int64 {
+        return iTermAtomicInt64Get(lockedAcquires)
     }
 
     var inUseForTesting: Int {
