@@ -103,7 +103,7 @@
 - (long long)memoryUsage {
     mach_port_t host_port = mach_host_self();
     vm_statistics64_data_t vm_stat;
-    mach_msg_type_number_t host_size = HOST_VM_INFO64_COUNT;
+    mach_msg_type_number_t host_size = HOST_VM_INFO64_REV1_COUNT;
 
     kern_return_t status = host_statistics64(host_port, HOST_VM_INFO64, (host_info64_t)&vm_stat, &host_size);
     mach_port_deallocate(mach_task_self(), host_port);

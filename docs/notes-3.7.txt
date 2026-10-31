@@ -2439,3 +2439,6 @@ Bug Fixes:
 - The prompt shown when closing a window or a
   tab with split panes now lists the jobs in
   every pane, not just one of them.
+- The Memory Utilization status bar component no
+  longer makes macOS log a kernel warning about
+  host_statistics64 every second. Issue 13164.
