@@ -10,9 +10,15 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
+#import "iTermController.h"
+#import "iTermVariables.h"
+#import "iTermVariableScope+Global.h"
 #import "NSData+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "PseudoTerminal.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
 #import <Cocoa/Cocoa.h>
 
 #import <os/log.h>
@@ -125,6 +131,37 @@ static NSString *DebugLogStateString(void) {
     return result;
 }
 
+static void AppendVariables(iTermVariables *variables, NSString *indent, NSMutableString *result) {
+    NSDictionary<NSString *, NSString *> *dict = variables.stringValuedDictionary;
+    for (NSString *name in [dict.allKeys sortedArrayUsingSelector:@selector(compare:)]) {
+        [result appendFormat:@"%@%@=%@\n", indent, name, dict[name]];
+    }
+}
+
+// Every window, tab, and session's variables plus the global variables.
+static NSString *DebugLogVariablesString(void) {
+    NSMutableString *result = [NSMutableString string];
+    [result appendString:@"Global:\n"];
+    for (iTermVariables *variables in [[iTermVariableScope globalsScope] variablesInScopeNamed:nil]) {
+        AppendVariables(variables, @"  ", result);
+    }
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        [result appendFormat:@"%@:\n", term];
+        for (iTermVariables *variables in [term.scope variablesInScopeNamed:nil]) {
+            AppendVariables(variables, @"  ", result);
+        }
+        for (PTYTab *tab in term.tabs) {
+            [result appendFormat:@"  %@:\n", tab];
+            AppendVariables(tab.variables, @"    ", result);
+            for (PTYSession *session in tab.sessions) {
+                [result appendFormat:@"    %@:\n", session];
+                AppendVariables(session.variables, @"      ", result);
+            }
+        }
+    }
+    return result;
+}
+
 NSString *iTermDebugLogHeaderString(void) {
     NSMutableString *windows = [NSMutableString string];
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
@@ -145,6 +182,7 @@ NSString *iTermDebugLogHeaderString(void) {
                         @"Ordered windows: %@\n"
                         @"Pinned messages: %@\n"
                         @"State: %@\n"
+                        @"Variables:\n%@\n"
                         @"------ END HEADER ------\n\n",
 
                         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
@@ -157,7 +195,8 @@ NSString *iTermDebugLogHeaderString(void) {
                         windows,
                         [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
                         pinnedMessages,
-                        DebugLogStateString()];
+                        DebugLogStateString(),
+                        DebugLogVariablesString()];
     return header;
 }
 
@@ -175,12 +214,14 @@ static NSString *DebugLogFooterString(void) {
           @"Screens: %@\n"
           @"Windows: %@\n"
           @"Ordered windows: %@\n"
-          @"State: %@\n",
+          @"State: %@\n"
+          @"Variables:\n%@\n",
 
           iTermScreensInfo(),
           windows,
           [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
-          DebugLogStateString()];
+          DebugLogStateString(),
+          DebugLogVariablesString()];
 }
 
 // Replaces unpaired UTF-16 surrogates with U+FFFD. UTF-8 cannot represent a lone
