@@ -83,6 +83,12 @@ const NSInteger iTermRootTerminalViewWindowNumberLabelWidth = 40;
 static const CGFloat iTermRootTerminalViewWindowNumberLabelAlpha = 0.75;
 // Padding after the compact proxy icon when no window number follows it.
 static const CGFloat iTermRootTerminalViewCompactProxyIconExtraPadding = 4;
+// Height of the strip atop a left or right tab bar that holds the window's
+// identity: the stoplight buttons (left only), proxy icon, and window number.
+static const CGFloat iTermRootTerminalViewVerticalTabBarStripHeight = 26;
+// What a compact window's left or right tab bar reserves at its top for that
+// strip.
+static const CGFloat iTermRootTerminalViewVerticalTabBarTopInset = 24;
 
 static const CGFloat iTermWindowNameBesideTabsLeftMargin = 6;
 // Wide enough to read as a separator on its own, so the name needs no rule or
@@ -586,7 +592,9 @@ typedef struct {
 // the window number and the window name sit side by side.
 - (CGFloat)tabBarStripLabelOriginYForFont:(NSFont *)font {
     const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
-    const CGFloat tabBarHeight = (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) ? 26.0 : _tabBarControl.height;
+    const CGFloat tabBarHeight = ((tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)
+                                  ? iTermRootTerminalViewVerticalTabBarStripHeight
+                                  : _tabBarControl.height);
     const CGFloat baselineOffset = -font.descender;
     const CGFloat capHeight = font.capHeight;
     const CGFloat myHeight = self.frame.size.height;
@@ -605,13 +613,54 @@ typedef struct {
         return NSZeroRect;
     }
     [_windowNumberLabel sizeToFit];
-    const NSRect standardButtonsFrame = [self frameForStandardWindowButtons];
     const CGFloat windowNumberHeight = _windowNumberLabel.frame.size.height;
-    NSRect rect = NSMakeRect(NSMaxX(standardButtonsFrame) + [self compactProxyIconWidthIncludingMargin] + iTermRootTerminalViewWindowNumberLabelMargin,
+    const CGFloat x = ([self windowIdentityIsInRightTabBar]
+                       ? [self leadingEdgeOfWindowIdentityInRightTabBar] + [self compactProxyIconWidthIncludingMargin]
+                       : NSMaxX([self frameForStandardWindowButtons]) + [self compactProxyIconWidthIncludingMargin] + iTermRootTerminalViewWindowNumberLabelMargin);
+    NSRect rect = NSMakeRect(x,
                              [self tabBarStripLabelOriginYForFont:_windowNumberLabel.font],
                              iTermRootTerminalViewWindowNumberLabelWidth,
                              windowNumberHeight);
     return [self retinaRoundRect:rect];
+}
+
+// A visible right-side tab bar leaves the window's top-left corner over the
+// session, so the stoplight buttons go in the hotbox there while the proxy icon
+// and window number sit in the strip atop the tab bar, where they don't cover
+// anything.
+- (BOOL)windowIdentityIsInRightTabBar {
+    return ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab &&
+            [self tabBarShouldBeVisible] &&
+            [self.delegate enableStoplightHotbox]);
+}
+
+- (CGFloat)leadingEdgeOfWindowIdentityInRightTabBar {
+    // The tab bar's frame is relative to its backing view.
+    const NSRect tabBarFrame = [_tabBarControl convertRect:_tabBarControl.bounds toView:self];
+    return NSMinX(tabBarFrame) + iTermRootTerminalViewWindowNumberLabelMargin;
+}
+
+- (CGFloat)topInsetForCompactVerticalTabBar {
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_RightTab) {
+        // The stoplight buttons sit atop a left tab bar.
+        return iTermRootTerminalViewVerticalTabBarTopInset;
+    }
+    if ([self shouldShowCompactProxyIcon] ||
+        [self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible] ||
+        _windowNameBesideTabsLabel.stringValue.length > 0) {
+        return iTermRootTerminalViewVerticalTabBarTopInset;
+    }
+    // Nothing to show atop a right tab bar, so don't waste the space.
+    return 0;
+}
+
+// The proxy icon when it accompanies the stoplight buttons, appearing,
+// disappearing, and sliding with them. Nil when it doesn't.
+- (iTermCompactProxyIconView *)proxyIconBesideStoplightButtons {
+    if ([self windowIdentityIsInRightTabBar]) {
+        return nil;
+    }
+    return _compactProxyIconView;
 }
 
 // Width the tab bar's left inset reserves before the window name: the stoplight
@@ -640,8 +689,54 @@ typedef struct {
 // X origin of the window name: after the stoplight buttons, the proxy icon and
 // the window number, which together read as the window's identity.
 - (CGFloat)leadingEdgeForWindowNameBesideTabs {
+    if ([self windowNameIsInVerticalTabBarStrip]) {
+        return [self leadingEdgeForWindowNameInVerticalTabBarStrip];
+    }
     return ([self widthOfDecorationsBeforeWindowNameBesideTabs] +
             iTermWindowNameBesideTabsLeftMargin);
+}
+
+// Whether the window name goes in the strip atop a visible left or right tab
+// bar rather than beside top tabs.
+- (BOOL)windowNameIsInVerticalTabBarStrip {
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_LeftTab:
+        case PSMTab_RightTab:
+            return [self tabBarShouldBeVisible];
+        case PSMTab_TopTab:
+        case PSMTab_BottomTab:
+            return NO;
+    }
+    return NO;
+}
+
+// Follows the stoplight buttons (left tab bar only), proxy icon, and window
+// number in the strip atop a vertical tab bar.
+- (CGFloat)leadingEdgeForWindowNameInVerticalTabBarStrip {
+    const CGFloat proxyIconWidth = [self compactProxyIconWidthIncludingMargin];
+    CGFloat x;
+    if ([self windowIdentityIsInRightTabBar]) {
+        x = [self leadingEdgeOfWindowIdentityInRightTabBar] + proxyIconWidth;
+    } else {
+        x = NSMaxX([self frameForStandardWindowButtons]) + proxyIconWidth + iTermRootTerminalViewWindowNumberLabelMargin;
+    }
+    if ([self.delegate rootTerminalViewWindowNumberLabelShouldBeVisible]) {
+        x += iTermRootTerminalViewWindowNumberLabelWidth + iTermWindowNameBesideTabsLeftMargin;
+    } else if (proxyIconWidth > 0) {
+        x += iTermRootTerminalViewCompactProxyIconExtraPadding;
+    }
+    return x;
+}
+
+// The window name's width depends on the tab bar's, which -layoutWindowPaneDecorations
+// runs too early to know.
+- (void)layoutWindowNameInVerticalTabBarStrip {
+    [self invalidateWindowNameBesideTabsTextWidth];
+    const BOOL hideWindowNameBesideTabs = ([self windowNameBesideTabsTextWidth] == 0);
+    if (!hideWindowNameBesideTabs) {
+        _windowNameBesideTabsLabel.frame = [self frameForWindowNameBesideTabsLabel];
+    }
+    _windowNameBesideTabsLabel.hidden = hideWindowNameBesideTabs;
 }
 
 // The per-tab minimum pushed into the tab bar, which is what decides when the
@@ -671,6 +766,14 @@ typedef struct {
 // tabs need whenever a group is collapsed to a chip), and hardcoded the right
 // margin at whatever the style happened to return.
 - (CGFloat)allowanceForWindowNameBesideTabs {
+    if ([self windowNameIsInVerticalTabBarStrip]) {
+        // It has the strip atop the tab bar to itself, so it takes nothing from
+        // the tabs.
+        const NSRect tabBarFrame = [_tabBarControl convertRect:_tabBarControl.bounds toView:self];
+        return (NSMaxX(tabBarFrame) -
+                [self leadingEdgeForWindowNameInVerticalTabBarStrip] -
+                iTermRootTerminalViewWindowNumberLabelMargin);
+    }
     // The tab bar's frame is not assigned until after the insets are, so its own
     // width is a pass stale here. The strip minus the toolbelt is what the
     // layout calculator starts from.
@@ -971,17 +1074,7 @@ typedef struct {
         return;
     }
 
-    const NSRect stoplightFrame = [self frameForStandardWindowButtons];
-    // Stoplight buttons are 12pt tall at y=4 within the buttons view.
-    const CGFloat buttonSize = 12;
-    const CGFloat buttonYInView = 4;
-    const CGFloat buttonCenterY = NSMinY(stoplightFrame) + buttonYInView + buttonSize / 2.0;
-    const CGFloat y = buttonCenterY - iTermCompactProxyIconSize / 2.0 + 1;
-    NSRect frame = NSMakeRect(NSMaxX(stoplightFrame) + iTermCompactProxyIconLeftMargin,
-                              y,
-                              iTermCompactProxyIconSize,
-                              iTermCompactProxyIconSize);
-    _compactProxyIconView = [[iTermCompactProxyIconView alloc] initWithFrame:frame];
+    _compactProxyIconView = [[iTermCompactProxyIconView alloc] initWithFrame:[self frameForCompactProxyIcon]];
     _compactProxyIconView.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
     [self addSubview:_compactProxyIconView];
 }
@@ -1001,7 +1094,16 @@ typedef struct {
 }
 
 - (NSRect)frameForCompactProxyIcon {
+    if ([self windowIdentityIsInRightTabBar]) {
+        // Centered in the strip atop the tab bar, like the window number.
+        const CGFloat centerY = NSHeight(self.bounds) - iTermRootTerminalViewVerticalTabBarStripHeight / 2.0;
+        return [self retinaRoundRect:NSMakeRect([self leadingEdgeOfWindowIdentityInRightTabBar],
+                                                centerY - iTermCompactProxyIconSize / 2.0,
+                                                iTermCompactProxyIconSize,
+                                                iTermCompactProxyIconSize)];
+    }
     const NSRect stoplightFrame = [self frameForStandardWindowButtons];
+    // Stoplight buttons are 12pt tall at y=4 within the buttons view.
     const CGFloat buttonSize = 12;
     const CGFloat buttonYInView = 4;
     const CGFloat buttonCenterY = NSMinY(stoplightFrame) + buttonYInView + buttonSize / 2.0;
@@ -1942,6 +2044,8 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
     // Handle left tab bar drag handle
     [self updateLeftTabBarDragHandleForTabBarFrame:outputs.tabBarFrame];
+
+    [self layoutWindowNameInVerticalTabBarStrip];
 }
 
 - (void)layoutSubviewsWithVisibleRightTabBarAndInlineToolbelt:(BOOL)showToolbeltInline forWindow:(NSWindow *)thisWindow {
@@ -1965,6 +2069,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [self updateDivisionViewAndWindowNumberLabel];
 
     [self updateRightTabBarDragHandleForTabBarFrame:outputs.tabBarFrame];
+
+    if ([self windowIdentityIsInRightTabBar]) {
+        // -layoutWindowPaneDecorations ran before the tab bar got its frame.
+        _windowNumberLabel.frame = [self frameForWindowNumberLabel];
+        [self updateCompactProxyIconFrame];
+    }
+    [self layoutWindowNameInVerticalTabBarStrip];
 }
 
 - (void)updateLeftTabBarDragHandleForTabBarFrame:(CGRect)tabBarFrame {
@@ -2021,6 +2132,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [self updateWindowNumberFont];
 
     const BOOL enableStoplightHotbox = [self.delegate enableStoplightHotbox];
+    const BOOL windowIdentityIsInRightTabBar = [self windowIdentityIsInRightTabBar];
     if (enableStoplightHotbox) {
         _stoplightHotbox.hidden = NO;
         [_stoplightHotbox setFrameOrigin:NSMakePoint(0, self.frame.size.height - _stoplightHotbox.frame.size.height)];
@@ -2030,7 +2142,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
             _stoplightHotbox.revealed = NO;
             [self resetStoplightHotboxSlide];
         }
-        if (_windowNumberLabel.superview != _stoplightHotbox) {
+        if (windowIdentityIsInRightTabBar) {
+            [self moveWindowNumberLabelToTabBarStrip];
+        } else if (_windowNumberLabel.superview != _stoplightHotbox) {
             [_stoplightHotbox addSubview:_windowNumberLabel];
         }
     } else {
@@ -2039,11 +2153,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         [self resetStoplightHotboxSlide];
         _stoplightHotbox.hidden = YES;
         _standardWindowButtonsView.alphaValue = 1;
-        if (_windowNumberLabel.superview != self) {
-            [self addSubview:_windowNumberLabel];
-        }
-        [_windowNumberLabel sizeToFit];
-        _windowNumberLabel.frame = [self frameForWindowNumberLabel];
+        [self moveWindowNumberLabelToTabBarStrip];
     }
     const BOOL hideWindowTitleLabel = ![self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
     if (!hideWindowTitleLabel) {
@@ -2076,13 +2186,33 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // The proxy icon lives next to the stoplight buttons and must appear and
     // disappear in lockstep with them (e.g., when the stoplight hotbox hides
     // the buttons in the minimal theme). Messaging a nil proxy icon is a no-op.
-    _compactProxyIconView.alphaValue = _standardWindowButtonsView.alphaValue;
+    if (windowIdentityIsInRightTabBar) {
+        _compactProxyIconView.alphaValue = 1;
+    } else {
+        _compactProxyIconView.alphaValue = _standardWindowButtonsView.alphaValue;
+    }
+    // Keep them with the tab bar they sit atop as the window resizes.
+    const NSAutoresizingMaskOptions windowIdentityMask = ((windowIdentityIsInRightTabBar ? NSViewMinXMargin : NSViewMaxXMargin) |
+                                                          NSViewMinYMargin);
+    _compactProxyIconView.autoresizingMask = windowIdentityMask;
+    _windowNumberLabel.autoresizingMask = windowIdentityMask;
+    _windowNameBesideTabsLabel.autoresizingMask = windowIdentityMask;
     if (enableStoplightHotbox && _stoplightHotboxIsCollapsible) {
         // Put back the frames and alphas the slide set, which the code above
         // overwrote.
         [self slideStoplightHotboxTo:_stoplightHotboxSlidePosition animated:NO];
     }
     [self updateTitleAndBorderViews];
+}
+
+- (void)moveWindowNumberLabelToTabBarStrip {
+    if (_windowNumberLabel.superview != self) {
+        [self addSubview:_windowNumberLabel];
+    }
+    // A slide of the stoplight hotbox may have faded it.
+    _windowNumberLabel.alphaValue = iTermRootTerminalViewWindowNumberLabelAlpha;
+    [_windowNumberLabel sizeToFit];
+    _windowNumberLabel.frame = [self frameForWindowNumberLabel];
 }
 
 - (void)layoutSubviews {
@@ -2463,11 +2593,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)concealStoplightHotbox {
+    iTermCompactProxyIconView *proxyIcon = [self proxyIconBesideStoplightButtons];
     [NSView animateWithDuration:0.25
                      animations:^{
                          self->_stoplightHotbox.animator.alphaValue = 0;
                          self->_standardWindowButtonsView.animator.alphaValue = 0;
-                         self->_compactProxyIconView.animator.alphaValue = 0;
+                         proxyIcon.animator.alphaValue = 0;
                      }
                      completion:^(BOOL finished) {
                          if (!finished) {
@@ -2587,8 +2718,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     _stoplightHotboxSlideOffset = offset;
     _stoplightHotbox.slideOffset = offset;
     _standardWindowButtonsView.frame = NSOffsetRect([self frameForStandardWindowButtons], -offset, 0);
-    if (_compactProxyIconView) {
-        _compactProxyIconView.frame = NSOffsetRect([self frameForCompactProxyIcon], -offset, 0);
+    iTermCompactProxyIconView *proxyIcon = [self proxyIconBesideStoplightButtons];
+    if (proxyIcon) {
+        proxyIcon.frame = NSOffsetRect([self frameForCompactProxyIcon], -offset, 0);
     }
     // The toggle rides on the hotbox's trailing edge until it reaches its
     // usual place, where it stays while the hotbox expands beneath it.
@@ -2599,6 +2731,10 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // The window number and proxy icon would poke out of the collapsed sliver,
     // so they fade in only as the hotbox expands past it.
     const CGFloat collapsedOffset = width - iTermStoplightHotboxToggleWidth;
+    if ([self windowIdentityIsInRightTabBar]) {
+        // They're in the tab bar, not the hotbox.
+        return;
+    }
     const CGFloat detailAlpha = MAX(0, MIN(1, 1 - offset / collapsedOffset));
     _windowNumberLabel.alphaValue = iTermRootTerminalViewWindowNumberLabelAlpha * detailAlpha;
     _compactProxyIconView.alphaValue = detailAlpha;
@@ -2670,7 +2806,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     self.stoplightHotboxSlideOffset = 0;
     _stoplightHotbox.alphaValue = 0;
     _standardWindowButtonsView.alphaValue = 0;
-    _compactProxyIconView.alphaValue = 0;
+    [self proxyIconBesideStoplightButtons].alphaValue = 0;
     _stoplightHotboxToggle.hidden = YES;
 }
 
@@ -2682,11 +2818,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // Fades in place, so cancel and undo any slide left over from the toggle.
     [self resetStoplightHotboxSlide];
     [_stoplightHotbox setNeedsDisplay:YES];
+    iTermCompactProxyIconView *proxyIcon = [self proxyIconBesideStoplightButtons];
     [NSView animateWithDuration:0.25
                      animations:^{
                          self->_stoplightHotbox.animator.alphaValue = 1;
                          self->_standardWindowButtonsView.animator.alphaValue = 1;
-                         self->_compactProxyIconView.animator.alphaValue = 1;
+                         proxyIcon.animator.alphaValue = 1;
                      }
                      completion:nil];
     return YES;

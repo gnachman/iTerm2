@@ -689,6 +689,11 @@ Improvements:
   General > Magic.
 - Drawing text uses less CPU when the GPU
   renderer is off.
+- With the Minimal or Compact theme and the tab
+  bar on the left or right, the window’s title
+  is shown at the top of the tab bar, beside the
+  window buttons, window number, or proxy icon,
+  even if you haven’t named the window.
 
 Bug Fixes:
 - The browser’s address field no longer runs
@@ -1575,6 +1580,15 @@ Bug Fixes:
   impossible to click. A small arrow appears in
   the corner instead; click it to show or hide
   the window buttons. Issue 13100.
+- With the Minimal or Compact theme and the tab
+  bar on the right, the window buttons no longer
+  permanently cover the top-left corner of the
+  terminal or web browser. They now appear when
+  you point at the corner, and the window
+  number, proxy icon, and window name move to
+  the top of the tab bar. If none of them is
+  shown, the tab bar no longer leaves empty
+  space at its top. Issue 13153.
 - Restarting or logging out of macOS while
   Claude Code was running in iTerm2 could cause
   your windows not to be restored at the next

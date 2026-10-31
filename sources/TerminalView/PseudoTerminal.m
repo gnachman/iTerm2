@@ -1222,8 +1222,23 @@ ITERM_WEAKLY_REFERENCEABLE
         // Every other window type has a title bar to show the name in.
         return nil;
     }
-    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_TopTab) {
-        return nil;
+    // Beside top tabs the name takes space from them. Atop a left or right tab
+    // bar it takes nothing as long as something else already holds the strip
+    // there open.
+    BOOL nameIsFree = NO;
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+        case PSMTab_TopTab:
+            break;
+        case PSMTab_LeftTab:
+            // The stoplight buttons are always atop a left tab bar.
+            nameIsFree = YES;
+            break;
+        case PSMTab_RightTab:
+            nameIsFree = ([self rootTerminalViewWindowNumberLabelShouldBeVisible] ||
+                          [iTermPreferences boolForKey:kPreferenceKeyEnableProxyIcon]);
+            break;
+        case PSMTab_BottomTab:
+            return nil;
     }
     if (!self.tabBarShouldBeVisible) {
         // The window title is already drawn in place of the tab bar.
@@ -1236,7 +1251,10 @@ ITERM_WEAKLY_REFERENCEABLE
             return nil;
 
         case iTermWindowNameBesideTabsModeWhenCustom:
-            return haveCustomName ? self.scope.windowTitleOverride : nil;
+            if (haveCustomName) {
+                return self.scope.windowTitleOverride;
+            }
+            return nameIsFree ? self.currentSession.nameController.presentationWindowTitle : nil;
 
         case iTermWindowNameBesideTabsModeAlways:
             if (haveCustomName) {
@@ -5836,8 +5854,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case PSMTab_TopTab:
             return NO;
         case PSMTab_LeftTab:
-        case PSMTab_RightTab:
+            // A visible left tab bar has room for the buttons atop it.
             return !self.tabBarShouldBeVisible;
+        case PSMTab_RightTab:
+            // The buttons go in the top-left corner, over the session.
+            return YES;
     }
 
     return NO;
@@ -5957,7 +5978,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
         case PSMTab_LeftTab:
         case PSMTab_RightTab:
-            return NSEdgeInsetsMake(24, 0, 0, 0);
+            return NSEdgeInsetsMake([_contentView topInsetForCompactVerticalTabBar], 0, 0, 0);
 
         case PSMTab_BottomTab:
             return NSEdgeInsetsZero;

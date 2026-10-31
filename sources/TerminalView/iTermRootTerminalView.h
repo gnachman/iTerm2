@@ -175,6 +175,11 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)updateProxyIcon;
 - (CGFloat)compactProxyIconWidthIncludingMargin;
 
+// Space a compact window's left or right tab bar reserves at its top for the
+// stoplight buttons (left only), proxy icon, and window number. 0 for a right
+// tab bar with no proxy icon or window number to show.
+- (CGFloat)topInsetForCompactVerticalTabBar;
+
 // Horizontal space the window name beside the tabs occupies, including its
 // margins, or 0 when it is not shown. The tab bar's left inset must reserve it.
 - (CGFloat)windowNameBesideTabsWidthIncludingMargin;
