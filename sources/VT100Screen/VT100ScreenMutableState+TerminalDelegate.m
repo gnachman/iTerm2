@@ -1916,7 +1916,11 @@ typedef struct {
 
 - (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode {
     DLog(@"begin");
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    // Joined because the delegate reads the mouse mode back from the screen to decide whether to
+    // track mouse-moved events. An ordinary side effect can be drained before the next sync and
+    // would see the old mode, leaving motion unreported (issue 13184). setMouseMode: only calls
+    // this on a real change, so the cost of joining is rare.
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenMouseModeDidChange];
     } name:@"mouse mode did change"];

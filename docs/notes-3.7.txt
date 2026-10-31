@@ -2448,3 +2448,6 @@ Bug Fixes:
   window now fills the window. Before, the panes
   kept their old size, leaving an empty area or
   extending past the window’s edge.
+- Some apps that ask to be told about mouse
+  movement, such as those built with Lanterna,
+  received clicks but not movement. Issue 13184.
