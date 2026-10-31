@@ -23,6 +23,12 @@
             "value" : "項目1"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "항목 1"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "項目2"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "항목 2"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "項目3"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "항목 3"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンド"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령"
           }
         },
         "pt-BR" : {

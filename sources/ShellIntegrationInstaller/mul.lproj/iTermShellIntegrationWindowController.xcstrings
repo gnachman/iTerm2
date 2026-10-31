@@ -23,6 +23,12 @@
             "value" : "最新バージョンをダウンロードします。curl | bashを実行します"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최신 버전을 다운로드합니다. curl | bash를 실행합니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "続ける"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "OK"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キャンセル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "1. 使用しているシェルを判別します。\n2. ホームディレクトリ配下にスクリプトファイルを追加します。\n3. ユーティリティスクリプトをインストールします。\n4. シェルの起動スクリプトを変更します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 사용 중인 셸을 확인합니다.\n2. 홈 디렉토리에 스크립트 파일을 추가합니다.\n3. 유틸리티 스크립트를 설치합니다.\n4. 셸의 시동 스크립트를 수정합니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "戻る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "뒤로"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "ユーティリティには、ファイルのダウンロード、画像のインライン表示などを行うスクリプトが含まれます。 "
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "유틸리티에는 파일 다운로드, 인라인 이미지 표시 등을 위한 스크립트가 포함되어 있습니다. "
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "戻る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "뒤로"
           }
         },
         "pt-BR" : {
@@ -359,6 +407,12 @@
             "value" : "続ける"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キャンセル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
           }
         },
         "pt-BR" : {
@@ -443,6 +503,12 @@
             "value" : "スキップ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건너뛰기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キャンセル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
           }
         },
         "pt-BR" : {
@@ -527,6 +599,12 @@
             "value" : "コマンドをプレビュー"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 미리보기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "インターネット不要のインストール"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인터넷 없이 설치"
           }
         },
         "pt-BR" : {
@@ -611,6 +695,12 @@
             "value" : "インストーラーをダウンロードして実行"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설치 프로그램 다운로드 및 실행"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -651,6 +741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2ユーティリティもインストールする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 유틸리티도 설치"
           }
         },
         "pt-BR" : {
@@ -695,6 +791,12 @@
             "value" : "ガイド付き手動インストール。ダウンロードは不要です。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "안내에 따른 수동 설치. 다운로드가 필요하지 않습니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +837,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンドをプレビュー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 미리보기"
           }
         },
         "pt-BR" : {
@@ -779,6 +887,12 @@
             "value" : "続ける"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -816,6 +930,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -863,6 +983,12 @@
             "value" : "コマンドをプレビュー"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 미리보기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +1029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "戻る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "뒤로"
           }
         },
         "pt-BR" : {
@@ -947,6 +1079,12 @@
             "value" : "シェル統合をどのようにインストールしますか？\n\nこの処理では、シェルの起動スクリプトが変更されます。このインストーラーがターミナルウィンドウにコマンドを入力します。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "셸 통합을 어떻게 설치하겠습니까?\n\n이 과정에서 셸의 시동 스크립트가 수정됩니다. 이 설치 프로그램이 터미널 윈도우에 명령을 대신 입력합니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -987,6 +1125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンドをプレビュー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 미리보기"
           }
         },
         "pt-BR" : {
@@ -1031,6 +1175,12 @@
             "value" : "インストールが完了しました！"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설치가 완료되었습니다!"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1071,6 +1221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以下のコマンドを実行します:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음 명령을 실행합니다:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "pt-BR" : {
@@ -1115,6 +1271,12 @@
             "value" : "新しいタブを作成して試してみてください。\n\n最良の結果を得るには、SSHで接続するすべてのホストにシェル統合をインストールしてください。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 탭을 만들어 사용해 보십시오.\n\n최상의 결과를 얻으려면 ssh로 접속하는 모든 호스트에 셸 통합을 설치하십시오."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "シェル統合は、シェルがiTerm2と通信できるようにするスクリプト群で構成されており、実行中のコマンドや現在のディレクトリなどの状態を追跡できるようにします。 "
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "셸 통합은 셸이 iTerm2와 통신하도록 돕는 스크립트로 구성되어 있어, 실행 중인 명령, 현재 디렉토리 및 기타 상태를 추적할 수 있습니다. "
           }
         },
         "pt-BR" : {
@@ -1199,6 +1367,12 @@
             "value" : "シェル統合をインストール"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "셸 통합 설치"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キャンセル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
           }
         },
         "pt-BR" : {

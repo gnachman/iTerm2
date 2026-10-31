@@ -23,6 +23,12 @@
             "value" : "オートコンプリート"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동 완성"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",

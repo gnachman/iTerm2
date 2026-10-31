@@ -23,6 +23,12 @@
             "value": "タブサイズ(スペース数):"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "탭 크기(공백 수):"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -60,6 +66,12 @@
           }
         },
         "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "ko": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

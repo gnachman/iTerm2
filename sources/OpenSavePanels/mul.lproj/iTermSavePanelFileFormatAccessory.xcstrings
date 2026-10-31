@@ -23,6 +23,12 @@
             "value": "タイムスタンプを含める"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "타임스탬프 포함"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "ファイル形式:"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "파일 형식:"
           }
         },
         "pt-BR": {

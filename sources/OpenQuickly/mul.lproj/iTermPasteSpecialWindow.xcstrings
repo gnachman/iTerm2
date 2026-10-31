@@ -23,6 +23,12 @@
             "value" : "mm:ss"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx行、xxxバイト。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx줄, xxx바이트."
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "貼り付け"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "붙여넣기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -149,6 +167,12 @@
             "value" : "キャンセル"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -189,6 +213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最小継続時間:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최소 지속 시간:"
           }
         },
         "pt-BR" : {

@@ -23,6 +23,12 @@
             "value" : "ヘッダーセル"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "헤더 셀"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全体を検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전역 찾기"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "部分文字列（大文字と小文字を区別）"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "부분 문자열(대소문자 구분)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "部分文字列（自動）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "부분 문자열(자동)"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "正規表現（大文字と小文字を区別しない）"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "정규 표현식(대소문자 구분 안 함)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찾기"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "正規表現（大文字と小文字を区別）"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "정규 표현식(대소문자 구분)"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "部分文字列（大文字と小文字を区別しない）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "부분 문자열(대소문자 구분 안 함)"
           }
         },
         "pt-BR" : {

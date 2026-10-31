@@ -23,6 +23,12 @@
             "value" : "説明"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설명"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "クラッシュログ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "충돌 로그"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "クラッシュレポーター"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "충돌 리포터"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前回使用した際に{APPNAME}がクラッシュしたようです。クラッシュログを開発者に送信しますか？\n\nAppleのクラッシュログは他の開発者には送信されないため、これが{APPNAME}の開発者がこのクラッシュを把握して修正できる唯一の方法です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{APPNAME}이(가) 지난번 사용할 때 충돌한 것 같습니다. 개발자에게 충돌 로그를 보내겠습니까?\n\nApple의 충돌 로그는 다른 개발자에게 전송되지 않으므로, 이것이 {APPNAME} 개발자가 이 충돌에 대해 알고 수정할 수 있는 유일한 방법입니다."
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "送信したくない情報は削除できますが、そうするとバグの特定が難しくなります。デフォルトでは、クラッシュログに加えて、使用しているMacの種類や設定も送信されます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전송하고 싶지 않은 정보는 삭제할 수 있지만, 그렇게 하면 버그를 찾기가 더 어려워집니다. 기본적으로 충돌 로그와 함께 사용 중인 Mac 기종 및 설정이 전송됩니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "送信"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보내기"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "後で通知"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나중에 알림"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "破棄"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버리기"
           }
         },
         "pt-BR" : {

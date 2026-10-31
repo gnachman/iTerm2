@@ -23,6 +23,12 @@
             "value" : "プロファイル"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로파일"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "プロファイルを編集…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로파일 편집…"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "新規タブ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 탭"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新規ウィンドウ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 윈도우"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "プロファイルを開いた後にこのウィンドウを閉じる"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로파일을 연 후 이 윈도우 닫기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新規ウィンドウに新規タブ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 윈도우에 새로운 탭으로"
           }
         },
         "pt-BR" : {
@@ -359,6 +395,12 @@
             "value" : "タグ >"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "태그 >"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新規フローティングペイン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 플로팅 패널"
           }
         },
         "pt-BR" : {

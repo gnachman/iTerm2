@@ -23,6 +23,12 @@
             "value": "貼り付け中…"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "붙여넣는 중…"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "キャンセル"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "취소"
           }
         },
         "pt-BR": {

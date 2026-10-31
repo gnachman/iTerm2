@@ -23,6 +23,12 @@
             "value" : "検索履歴を消去"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 기록 지우기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "大文字小文字を区別する部分一致"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대소문자 구분 부분 문자열"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "大文字小文字を区別しない部分一致"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대소문자 무시 부분 문자열"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "大文字小文字を区別する正規表現"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대소문자 구분 정규 표현식"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +263,12 @@
             "value" : "スマートケース部分一致"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스마트 대소문자 부분 문자열"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "大文字小文字を区別しない正規表現"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대소문자 무시 정규 표현식"
           }
         },
         "pt-BR" : {

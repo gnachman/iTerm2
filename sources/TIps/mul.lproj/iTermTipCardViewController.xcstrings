@@ -23,6 +23,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "シェル統合"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "셸 통합"
           }
         },
         "pt-BR": {

@@ -23,6 +23,12 @@
             "value" : "前回のセッションのディレクトリを再利用"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 세션의 디렉토리 재사용"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ホームディレクトリ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "홈 디렉토리"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "新しいタブの作業ディレクトリ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 탭의 작업 디렉토리"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ラジオ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라디오"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "新しいウィンドウの作業ディレクトリ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 윈도우의 작업 디렉토리"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前回のセッションのディレクトリを再利用"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 세션의 디렉토리 재사용"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "ラジオ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라디오"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前回のセッションのディレクトリを再利用"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 세션의 디렉토리 재사용"
           }
         },
         "pt-BR" : {
@@ -359,6 +407,12 @@
             "value" : "ディレクトリ:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "디렉토리:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新しい分割ペインの作業ディレクトリ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 분할 패널의 작업 디렉토리"
           }
         },
         "pt-BR" : {
@@ -443,6 +503,12 @@
             "value" : "詳細な作業ディレクトリ設定"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "고급 작업 디렉토리 설정"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ディレクトリ:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "디렉토리:"
           }
         },
         "pt-BR" : {
@@ -527,6 +599,12 @@
             "value" : "ディレクトリ:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "디렉토리:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ラジオ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라디오"
           }
         },
         "pt-BR" : {
@@ -611,6 +695,12 @@
             "value" : "ホームディレクトリ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "홈 디렉토리"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -653,6 +743,12 @@
             "value" : "ホームディレクトリ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "홈 디렉토리"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -693,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
           }
         },
         "pt-BR" : {

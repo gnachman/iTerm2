@@ -23,6 +23,12 @@
             "value" : "⌥ Option"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ホットキーウインドウを固定する（キーボードフォーカスを失っても開いたままにする）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "단축키 윈도우 고정(키보드 포커스를 잃어도 열린 상태 유지)"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "ホットキー:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "단축키:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "注: このウインドウは、他のアプリがアクティブになったために閉じられた場合にのみ再度開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "참고: 다른 앱이 활성화되어 윈도우가 닫힌 경우에만 윈도우가 다시 열립니다."
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "追加のホットキー"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추가 단축키"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "このプロファイルに割り当てられたホットキーを押すと、専用のウインドウが表示または非表示になります。ホットキーを持つ各プロファイルは、それぞれ独自のホットキーウインドウを制御します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 프로파일에 지정된 단축키를 누르면 전용 윈도우가 보이거나 가려집니다. 단축키가 있는 각 프로파일은 자체 단축키 윈도우를 제어합니다."
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "特に何もしない"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "특별한 동작 안 함"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +354,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -359,6 +407,12 @@
             "value" : "このホットキーウインドウを表示する"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 단축키 윈도우 보기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -401,6 +455,12 @@
             "value" : "ホットキーウインドウの環境設定"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "단축키 윈도우 설정"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -438,6 +498,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -485,6 +551,12 @@
             "value" : "⚠️ 他のプロファイルがこのショートカットを使用しています"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 다른 프로파일에서 이 단축키를 사용합니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -522,6 +594,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -569,6 +647,12 @@
             "value" : "ダブルタップキー:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이중 탭 키:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -609,6 +693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "アプリの再アクティブ化時に自動的に再度開く"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱이 다시 활성화될 때 자동으로 다시 열기"
           }
         },
         "pt-BR" : {
@@ -653,6 +743,12 @@
             "value" : "⚠️ 他のプロファイルがこのダブルタップを使用しています"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 다른 프로파일에서 이 이중 탭을 사용합니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -693,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "他のウインドウが開いていない場合はこのホットキーウインドウを表示する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "열려 있는 다른 윈도우가 없으면 이 단축키 윈도우 보기"
           }
         },
         "pt-BR" : {
@@ -737,6 +839,12 @@
             "value" : "フローティングウインドウは、他のウインドウやDock、および他のアプリのフルスクリーンウインドウ（ホットキーウインドウのSpaceが「すべてのSpace」に設定されている場合）の上に重なって表示されます。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플로팅 윈도우는 다른 윈도우와 Dock, 그리고 다른 앱의 전체 화면 윈도우 위에 겹쳐 표시됩니다(단축키 윈도우의 데스크탑이 모든 데스크탑으로 설정된 경우)."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -777,6 +885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "キャンセル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
           }
         },
         "pt-BR" : {
@@ -821,6 +935,12 @@
             "value" : "Dockアイコンをクリックしたとき:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock 아이콘 클릭 시:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -861,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "表示・非表示をアニメーションする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보기 및 가리기에 애니메이션 적용"
           }
         },
         "pt-BR" : {
@@ -905,6 +1031,12 @@
             "value" : "OK"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +1077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
           }
         },
         "pt-BR" : {
@@ -989,6 +1127,12 @@
             "value" : "フローティングウインドウ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플로팅 윈도우"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1026,6 +1170,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -1071,6 +1221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "追加のホットキー…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추가 단축키…"
           }
         },
         "pt-BR" : {

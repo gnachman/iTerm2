@@ -23,6 +23,12 @@
             "value": "iTerm2"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "作成者: George Nachman およびコントリビューター一同"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "제작: George Nachman 및 기여자"
           }
         },
         "pt-BR": {

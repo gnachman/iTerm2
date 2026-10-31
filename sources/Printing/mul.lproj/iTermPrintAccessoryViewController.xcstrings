@@ -23,6 +23,12 @@
             "value": "白黒"
           }
         },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "흑백"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",

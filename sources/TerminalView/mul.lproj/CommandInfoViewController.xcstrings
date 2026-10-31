@@ -23,6 +23,12 @@
             "value" : "/directory"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ディレクトリをコピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "디렉토리 복사"
           }
         },
         "pt-BR" : {
@@ -107,6 +119,12 @@
             "value" : "12バイト"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12바이트"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンドの出力を選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 출력 선택"
           }
         },
         "pt-BR" : {
@@ -191,6 +215,12 @@
             "value" : "1時間35分"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1시간 35분"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "出力:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "출력:"
           }
         },
         "pt-BR" : {
@@ -275,6 +311,12 @@
             "value" : "コピーしました"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "복사됨"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンドをクリップボードにコピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령을 클립보드에 복사"
           }
         },
         "pt-BR" : {
@@ -359,6 +407,12 @@
             "value" : "%@に開始しました"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에 시작됨"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンドをコンポーザーで開く"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "컴포저에서 명령 열기"
           }
         },
         "pt-BR" : {
@@ -443,6 +503,12 @@
             "value" : "ドラッグ可能なフォルダ"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "드래그 가능한 폴더"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンド"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령"
           }
         },
         "pt-BR" : {
@@ -527,6 +599,12 @@
             "value" : "コマンドをターミナルに書き込む"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령을 터미널에 쓰기"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ディレクトリ:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "디렉토리:"
           }
         },
         "pt-BR" : {
@@ -611,6 +695,12 @@
             "value" : "戻り値:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "반환 코드:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -651,6 +741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ディレクトリをターミナルに書き込む"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "디렉토리를 터미널에 쓰기"
           }
         },
         "pt-BR" : {
@@ -695,6 +791,12 @@
             "value" : "実行時間:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실행 시간:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +837,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンドの出力をコピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 출력 복사"
           }
         },
         "pt-BR" : {
@@ -779,6 +887,12 @@
             "value" : "コマンドを共有…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령 공유…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,6 +935,12 @@
             "value" : "コマンド:"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "명령:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -858,6 +978,12 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -903,6 +1029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画面外のコマンドの表示を無効にする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화면 밖 명령 보기 끄기"
           }
         },
         "pt-BR" : {

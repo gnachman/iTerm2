@@ -17112,6 +17112,7 @@
 				de,
 				ja,
 				ru,
+				ko,
 				en,
 				Base,
 			);
