@@ -98,7 +98,7 @@ final class MouseModeChangeCoalescingTests: XCTestCase {
     /// CSI ? 1003 h), a stale copy says reporting is off and motion is never
     /// reported.
     func testSideEffectSeesNewModeWhenDrainedBeforeSync() {
-        let harness = TerminalTestHarness(restoresStateAfterJoin: true)
+        let harness = TerminalTestHarness()
         harness.sync()
         harness.resetCalls()
 

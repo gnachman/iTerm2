@@ -81,17 +81,6 @@ class SpyingScreenDelegate: FakeSession {
         }
     }
 
-    /// FakeSession leaves the screen on shared state after a join, so the
-    /// main thread always reads live mutation-thread state. Set this to make
-    /// the main thread read its own snapshot between syncs, as PTYSession does.
-    var restoresStateAfterJoin = false
-
-    override func screenRestore(_ state: VT100ScreenState) {
-        if restoresStateAfterJoin {
-            screen?.restore(state)
-        }
-    }
-
     /// Every report the terminal sent back to the "process", in order. This is
     /// the data that would be written to the tty (e.g. a DSR reply or an OSC 4
     /// color report).

@@ -15,12 +15,8 @@ class TerminalTestHarness {
     let screen: VT100Screen
     let delegate: SpyingScreenDelegate
 
-    /// Pass restoresStateAfterJoin to make the main thread read its own
-    /// snapshot between syncs, as it does in the app. See
-    /// SpyingScreenDelegate.restoresStateAfterJoin.
-    init(width: Int = 80, height: Int = 24, restoresStateAfterJoin: Bool = false) {
+    init(width: Int = 80, height: Int = 24) {
         delegate = SpyingScreenDelegate()
-        delegate.restoresStateAfterJoin = restoresStateAfterJoin
         screen = VT100Screen()
 
         screen.delegate = delegate
