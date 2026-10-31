@@ -36,6 +36,8 @@ extern const CGFloat kPSMTabBarIconWidth;
 extern const CGFloat kPSMHideAnimationSteps;
 extern const CGSize PSMTabBarGraphicSize;
 extern const CGFloat PSMTabBarGraphicMargin;
+// Size of the graphic (app or profile icon) drawn in a tab. Configurable in advanced settings.
+CGFloat PSMTabBarGraphicWidth(void);
 
 // Value used in _currentStep to indicate that resizing operation is not in progress
 extern const NSInteger kPSMIsNotBeingResized;
