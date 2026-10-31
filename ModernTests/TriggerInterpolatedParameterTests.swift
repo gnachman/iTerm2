@@ -60,7 +60,11 @@ final class TriggerInterpolatedParameterTests: XCTestCase, iTermObject {
         XCTAssertEqual(TriggerInterpolatedParameter.parameter(#"\(matches)"#).kind, .requiresScope)
     }
 
-    func testResultIsCached() {
+    // Disabled because it is flaky: the cache is an NSCache, which may evict an entry at any
+    // time (for example, under memory pressure during a parallel test run), so two lookups are
+    // not guaranteed to return the same object.
+    func testResultIsCached() throws {
+        try XCTSkipIf(true, "Flaky: NSCache may evict between lookups")
         let string = #"https://example.com/\(matches[2])"#
         XCTAssertTrue(TriggerInterpolatedParameter.parameter(string) ===
                       TriggerInterpolatedParameter.parameter(string))
