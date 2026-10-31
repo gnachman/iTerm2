@@ -132,6 +132,15 @@ if [[ -o interactive ]]; then
       printf "\033]133;A;k=s;aid=%s\007" "$ITERM2_CURRENT_AID"
     }
 
+    # Mark start of a right prompt (RPROMPT or RPS2; Semantic Prompt k=r). The
+    # receiver records the right prompt's cells as an excluded subrange on the
+    # active primary mark, so they aren't saved as part of the command, and drops
+    # the subrange if zsh later erases the right prompt or draws the command over
+    # it.
+    iterm2_right_prompt_mark() {
+      printf "\033]133;P;k=r;aid=%s\007" "$ITERM2_CURRENT_AID"
+    }
+
     # Mark end of prompt
     iterm2_prompt_end() {
       printf "\033]133;B;aid=%s\007" "$ITERM2_CURRENT_AID"
@@ -206,6 +215,45 @@ if [[ -o interactive ]]; then
         PS2="%{$(iterm2_ps2_mark)%}$PS2%{$(iterm2_prompt_end)%}"
       fi
       ITERM2_DECORATED_PS2="$PS2"
+
+      iterm2_decorate_right_prompts
+    }
+
+    # Put the right prompts back to their raw values, but only if they still
+    # hold what iterm2_decorate_right_prompts made of them. Anything else was
+    # set since then by the user or a plugin (e.g., an async theme updating
+    # RPROMPT from a zle callback) and is left alone.
+    iterm2_undecorate_right_prompts() {
+      if [[ "${RPROMPT-}" == "${ITERM2_DECORATED_RPROMPT-}" ]]; then
+        RPROMPT="${ITERM2_PRECMD_RPROMPT-}"
+      fi
+      if [[ "${RPS2-}" == "${ITERM2_DECORATED_RPS2-}" ]]; then
+        RPS2="${ITERM2_PRECMD_RPS2-}"
+      fi
+    }
+
+    # Wrap the right prompts with k=r, saving their raw values for
+    # iterm2_preexec to restore. Skip an empty one, since there is nothing to
+    # mark, and one that already contains a 133;P mark, since a second, nested
+    # mark would confuse the receiver. That guards against a theme that marks
+    # its own right prompt (as some do for Warp) or a mark added by hand.
+    # ITERM2_SQUELCH_RPROMPT_MARK opts out.
+    iterm2_decorate_right_prompts() {
+      # After ^C, iterm2_preexec didn't run, so the right prompts may still be
+      # wrapped from the previous prompt. Start from their raw values.
+      iterm2_undecorate_right_prompts
+      ITERM2_PRECMD_RPROMPT="${RPROMPT-}"
+      ITERM2_PRECMD_RPS2="${RPS2-}"
+      if [[ "${ITERM2_SQUELCH_RPROMPT_MARK-}" == "" ]]; then
+        if [[ -n "${RPROMPT-}" && $RPROMPT != *"133;P"* ]]; then
+          RPROMPT="%{$(iterm2_right_prompt_mark)%}$RPROMPT%{$(iterm2_prompt_end)%}"
+        fi
+        if [[ -n "${RPS2-}" && $RPS2 != *"133;P"* ]]; then
+          RPS2="%{$(iterm2_right_prompt_mark)%}$RPS2%{$(iterm2_prompt_end)%}"
+        fi
+      fi
+      ITERM2_DECORATED_RPROMPT="${RPROMPT-}"
+      ITERM2_DECORATED_RPS2="${RPS2-}"
     }
 
     iterm2_precmd() {
@@ -216,6 +264,10 @@ if [[ -o interactive ]]; then
         if [ "$PS1" != "${ITERM2_DECORATED_PS1-}" ]; then
           # PS1 changed, perhaps in another precmd. See issue 9938.
           ITERM2_SHOULD_DECORATE_PROMPT="1"
+        elif [ "${RPROMPT-}" != "${ITERM2_DECORATED_RPROMPT-}" ] || [ "${RPS2-}" != "${ITERM2_DECORATED_RPS2-}" ]; then
+          # Only a right prompt changed. PS1 still has our escape sequences, so
+          # wrap just the right prompts rather than decorating PS1 a second time.
+          iterm2_decorate_right_prompts
         fi
       fi
 
@@ -235,9 +287,10 @@ if [[ -o interactive ]]; then
 
     # This is not run if you press ^C while entering a command.
     iterm2_preexec() {
-      # Set PS1 and PS2 back to their raw values prior to executing the command.
+      # Set the prompts back to their raw values prior to executing the command.
       PS1="$ITERM2_PRECMD_PS1"
       PS2="$ITERM2_PRECMD_PS2"
+      iterm2_undecorate_right_prompts
       ITERM2_SHOULD_DECORATE_PROMPT="1"
       iterm2_before_cmd_executes
     }
@@ -293,7 +346,7 @@ if [[ -o interactive ]]; then
     preexec_functions=($preexec_functions iterm2_preexec)
 
     iterm2_print_state_data
-    printf "\033]1337;ShellIntegrationVersion=21;shell=zsh\007"
+    printf "\033]1337;ShellIntegrationVersion=22;shell=zsh\007"
   fi
 fi
 

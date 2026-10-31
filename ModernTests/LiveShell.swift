@@ -42,6 +42,10 @@ final class LiveShell {
         return _exited
     }
 
+    /// The size of the pseudo-terminal the shell runs in.
+    static let columns = 80
+    static let rows = 24
+
     /// Launch `shellPath` with the supplied argv (argv[0] included) and env.
     /// Each chunk the shell writes is delivered to `onBytes` synchronously
     /// from the reader thread.
@@ -64,7 +68,7 @@ final class LiveShell {
 
         var masterFD: Int32 = -1
         var term = termios.shellIntegrationDefault
-        var size = winsize(ws_row: 24, ws_col: 80, ws_xpixel: 0, ws_ypixel: 0)
+        var size = winsize(ws_row: UInt16(Self.rows), ws_col: UInt16(Self.columns), ws_xpixel: 0, ws_ypixel: 0)
         // Build the C argv and envp arrays before forking. After forkpty
         // returns 0 in the child, we cannot safely call into Swift; only
         // POSIX C primitives are safe.

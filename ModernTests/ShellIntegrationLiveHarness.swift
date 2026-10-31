@@ -64,6 +64,90 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         try runShellBaseline(.zsh)
     }
 
+    /// The zsh integration wraps RPROMPT in OSC 133;P;k=r … B, so iTerm2 keeps
+    /// the right prompt out of the recorded command.
+    func testZsh_rightPrompt_isMarkedAndExcludedFromCommand() throws {
+        let rightPrompt = "iterm2_right_prompt_token"
+        guard let recorded = try runShellBaseline(.zsh,
+                                                  beforeSourcing: "RPROMPT='\(rightPrompt)'\n") else {
+            return
+        }
+        XCTAssertTrue(recorded.osc133Args(forKind: "P").contains { $0.split(separator: ";").contains("k=r") },
+                      "[zsh] expected the right prompt to be marked with OSC 133;P;k=r")
+
+        // Replay what the shell wrote through the real parser.
+        let harness = TerminalTestHarness(width: LiveShell.columns, height: LiveShell.rows)
+        harness.feedEscapeSequence(Array(recorded))
+        harness.sync()
+        let marks = harness.allScreenMarks().filter {
+            $0.fullCommand == SupportedShell.zsh.testCommand.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        XCTAssertEqual(marks.count, 1, "[zsh] expected one mark for the test command")
+        XCTAssertEqual(marks.first?.excludedSubranges?.count, 1,
+                       "[zsh] expected the right prompt's cells to be excluded")
+    }
+
+    /// A theme that rebuilds PS1 in a precmd hook makes the ^C path decorate
+    /// the prompt again while RPROMPT and RPS2 still hold their wrapped values.
+    /// Those must not be saved as the raw ones: commands must still see the
+    /// user's own right prompts.
+    func testZsh_ctrlCAfterThemeRebuildsPS1_keepsRawRightPrompts() throws {
+        let output = try runZsh(beforeSourcing: [Self.bindSendBreak, "RPROMPT='%T'", "RPS2='r2'"],
+                                steps: [.command("theme() { PS1=\"%~ $RANDOM %# \" }\n"),
+                                        .command("precmd_functions+=(theme)\n"),
+                                        .keys("abc"),
+                                        .command(Self.sendBreak),
+                                        .keys(Self.printValues("$RPROMPT|$RPS2"))])
+        XCTAssertEqual(Self.printedValues(in: output), "%T|r2")
+    }
+
+    /// After ^C, a precmd hook that runs before ours changes RPROMPT and RPS2.
+    /// The new RPS2 is the user's and must not be replaced by the one saved at
+    /// the previous prompt.
+    func testZsh_ctrlCAfterHookChangesRightPrompts_keepsNewRPS2() throws {
+        let output = try runZsh(beforeSourcing: [Self.bindSendBreak,
+                                                 "typeset -gi n=0",
+                                                 "rp() { n=$((n+1)); RPROMPT=\"rp$n\"; RPS2=\"rps2_$n\" }",
+                                                 "precmd_functions=(rp)"],
+                                steps: [.command("true\n"),
+                                        .keys("abc"),
+                                        .command(Self.sendBreak),
+                                        .keys(Self.printValues("$RPS2|$n"))])
+        guard let printed = Self.printedValues(in: output) else {
+            XCTFail("[zsh] values were not printed")
+            return
+        }
+        let parts = printed.split(separator: "|", omittingEmptySubsequences: false)
+        XCTAssertEqual(parts.count, 2)
+        XCTAssertEqual(parts.first.map(String.init), parts.last.map { "rps2_\($0)" })
+    }
+
+    /// An async theme sets RPROMPT from a zle callback after precmd. Running a
+    /// command must not put back the value precmd saw.
+    func testZsh_rightPromptSetAfterPrecmd_survivesPreexec() throws {
+        let output = try runZsh(beforeSourcing: ["RPROMPT='sync_A'"],
+                                // async_""B so that waiting for async_B matches the redrawn
+                                // prompt, not the echoed definition.
+                                steps: [.command("TRAPALRM() { RPROMPT=async_\"\"B; zle && zle reset-prompt; TMOUT=0 }\n"),
+                                        .command("TMOUT=1\n"),
+                                        .waitFor("async_B"),
+                                        .keys(Self.printValues("$RPROMPT"))])
+        XCTAssertEqual(Self.printedValues(in: output), "async_B")
+    }
+
+    /// A right prompt that already carries a 133;P mark (a theme that marks
+    /// its own, like powerlevel10k's unreleased master in iTerm2 3.7+, or one
+    /// added by hand) must not get a second, nested mark from the integration.
+    func testZsh_alreadyMarkedRightPrompt_isNotMarkedAgain() throws {
+        let output = try runZsh(beforeSourcing: ["RPROMPT=$'%{\\e]133;P;k=r\\a%}hand%{\\e]133;B\\a%}'"],
+                                steps: [.command("echo hi\n")])
+        let recorded = Data(output.utf8)
+        let rightPromptMarks = recorded.osc133Args(forKind: "P").filter { $0.split(separator: ";").contains("k=r") }
+        XCTAssertFalse(rightPromptMarks.isEmpty, "[zsh] the hand-added mark should be drawn")
+        XCTAssertTrue(rightPromptMarks.allSatisfy { !$0.contains("aid=") },
+                      "[zsh] the integration added its own mark: \(rightPromptMarks)")
+    }
+
     func testBash_baseline_emitsOnePromptAPerCommand() throws {
         try runShellBaseline(.bash)
     }
@@ -93,6 +177,131 @@ final class ShellIntegrationLiveHarness: XCTestCase {
     }
 
     // MARK: - Implementation
+
+    /// Aborting the line at the prompt makes zsh run precmd without preexec,
+    /// which is what ^C does. A real ^C arrives as SIGINT, and the terminal
+    /// flushes pending input when it does; depending on when it lands, zsh can
+    /// lose the keys and never redraw. A key bound to send-break takes the same
+    /// path as an ordinary character.
+    private static let bindSendBreak = "bindkey '^X' send-break"
+    private static let sendBreak = "\u{18}"
+
+    private enum ZshStep {
+        // Type text without waiting for anything.
+        case keys(String)
+        // Type text, then wait until zle is reading the next line.
+        case command(String)
+        // Wait until zsh has written `text`.
+        case waitFor(String)
+    }
+
+    /// A command that prints `values` between [[ and ]]. The brackets are
+    /// split in the typed text so the echoed command can't be mistaken for
+    /// the output.
+    private static func printValues(_ values: String) -> String {
+        return "print -r -- \"[\"\"[\(values)]\"\"]\"\n"
+    }
+
+    /// What the command from printValues(_:) printed.
+    private static func printedValues(in output: String) -> String? {
+        guard let start = output.range(of: "[["),
+              let end = output.range(of: "]]", range: start.upperBound..<output.endIndex) else {
+            return nil
+        }
+        return String(output[start.upperBound..<end.lowerBound])
+    }
+
+    /// Runs zsh, sends `beforeSourcing`, sources the integration, performs
+    /// `steps`, and returns everything zsh wrote once it has printed a
+    /// sentinel after the last step. Throws XCTSkip when zsh or the project
+    /// root is unavailable.
+    private func runZsh(beforeSourcing: [String], steps: [ZshStep]) throws -> String {
+        let shell = SupportedShell.zsh
+        guard let executable = shell.executablePath() else {
+            throw XCTSkip("zsh is not installed on this machine")
+        }
+        guard let projectRoot = Self.projectRoot() else {
+            throw XCTSkip("PROJECT_ROOT not set; run via tools/run_shell_integration_live.sh")
+        }
+        let integrationPath = (projectRoot as NSString)
+            .appendingPathComponent("Resources/shell_integration/\(shell.integrationFilename())")
+
+        var env = ProcessInfo.processInfo.environment
+        env["TERM_PROGRAM"] = "iTerm.app"
+        env["LC_TERMINAL"] = "iTerm2"
+        env["TERM"] = "xterm-256color"
+        env.removeValue(forKey: "ITERM_SHELL_INTEGRATION_INSTALLED")
+
+        let captured = NSMutableData()
+        let lock = NSLock()
+        let liveShell = try LiveShell(shellPath: executable,
+                                      arguments: shell.arguments(for: executable),
+                                      environment: env,
+                                      onBytes: { bytes, length in
+                                          lock.lock()
+                                          captured.append(bytes, length: length)
+                                          lock.unlock()
+                                      })
+        defer {
+            liveShell.terminate()
+        }
+        func snapshot() -> Data {
+            lock.lock(); defer { lock.unlock() }
+            return captured as Data
+        }
+        for line in beforeSourcing {
+            liveShell.send(line + "\n")
+        }
+        // zle writes this each time it starts reading a line. Our precmd sends
+        // OSC 133;D early on, then runs subprocesses while it decorates the
+        // prompt, so D alone doesn't mean zsh is ready: a ^C sent then would
+        // interrupt precmd instead of the line editor. A theme may also
+        // rebuild PS1 without our A mark, so A can't be relied on either.
+        let zleReading = Data("\u{1B}[?2004h".utf8)
+        func zleIsReading(afterFirst marker: Data, from offset: Int) -> Bool {
+            let data = snapshot()
+            guard let found = data.range(of: marker, in: offset..<data.count) else {
+                return false
+            }
+            return data.range(of: zleReading, in: found.upperBound..<data.count) != nil
+        }
+        func waitForZle(afterFirst marker: Data, from offset: Int, _ description: String) throws {
+            do {
+                try liveShell.waitUntil(description, timeout: 8.0) {
+                    zleIsReading(afterFirst: marker, from: offset)
+                }
+            } catch {
+                print("[zsh] \(error); captured:\n" + snapshot().escapedForLog)
+                throw error
+            }
+        }
+
+        let sourced = snapshot().count
+        liveShell.send(shell.sourceCommand(integrationPath: integrationPath))
+        try waitForZle(afterFirst: Data("ShellIntegrationVersion=".utf8), from: sourced, "integration loaded")
+        for step in steps {
+            switch step {
+            case .keys(let text):
+                liveShell.send(text)
+            case .command(let text):
+                let sent = snapshot().count
+                liveShell.send(text)
+                // The next precmd reports with D, then zle starts reading.
+                try waitForZle(afterFirst: Data("\u{1B}]133;D".utf8),
+                               from: sent,
+                               "zle reading after \(text.debugDescription)")
+            case .waitFor(let text):
+                try liveShell.waitUntil(text, timeout: 8.0) {
+                    snapshot().contains(asciiString: text)
+                }
+            }
+        }
+        liveShell.send("print -r -- \"DONE_\"\"SENTINEL\"\n")
+        try liveShell.waitUntil("sentinel", timeout: 8.0) {
+            snapshot().contains(asciiString: "DONE_SENTINEL")
+        }
+        return String(decoding: snapshot(), as: UTF8.self)
+    }
 
     private enum SupportedShell: String {
         case zsh, bash, fish, tcsh, xonsh, nu
@@ -170,7 +379,12 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         var testCommand: String { "echo iterm2_shell_test_token\n" }
     }
 
-    private func runShellBaseline(_ shell: SupportedShell) throws {
+    /// Runs `shell` with the integration, sends one command, and checks the
+    /// baseline OSC 133 traffic. `beforeSourcing` is sent to the shell before
+    /// the integration is sourced. Returns everything the shell wrote, or nil
+    /// if the integration file is missing.
+    @discardableResult
+    private func runShellBaseline(_ shell: SupportedShell, beforeSourcing: String? = nil) throws -> Data? {
         guard let executable = shell.executablePath() else {
             throw XCTSkip("\(shell.rawValue) is not installed on this machine")
         }
@@ -181,7 +395,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             .appendingPathComponent("Resources/shell_integration/\(shell.integrationFilename())")
         guard FileManager.default.fileExists(atPath: integrationPath) else {
             XCTFail("Shell integration file not found at \(integrationPath)")
-            return
+            return nil
         }
 
         var env = ProcessInfo.processInfo.environment
@@ -228,6 +442,9 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             }
         }
 
+        if let beforeSourcing {
+            liveShell.send(beforeSourcing)
+        }
         liveShell.send(shell.sourceCommand(integrationPath: integrationPath))
 
         // Wait for the integration's ShellIntegrationVersion announcement
@@ -301,6 +518,7 @@ final class ShellIntegrationLiveHarness: XCTestCase {
                                 "[\(shell.rawValue)] OSC 133;D arg '\(args)' should start with a numeric return code")
             }
         }
+        return recorded
     }
 }
 

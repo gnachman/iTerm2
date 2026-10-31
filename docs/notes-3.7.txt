@@ -360,6 +360,9 @@ New Features:
   connected to.
 
 Improvements:
+- zsh Shell Integration now marks the right-hand
+  prompt (RPROMPT), so Select Current Command
+  and saved commands leave it out.
 - Pausing a spinning progress indicator with
   OSC 9;4;4 now shows a paused spinner: a still
   yellow band in the session and a pause symbol
@@ -690,9 +693,10 @@ Bug Fixes:
 - Commands saved to Command History no longer
   include a right-hand prompt (such as zsh’s
   RPROMPT) drawn on the same line.
-- With powerlevel10k, a command long enough to
-  reach the right-hand prompt was saved to
-  Command History with characters missing.
+- When the shell marked its right-hand prompt
+  for iTerm2, a command long enough to reach it
+  was saved to Command History with characters
+  missing.
 - Choosing a command from Auto Command
   Completion could repeat the last character you
   typed (“aws” became “awss”), especially with
