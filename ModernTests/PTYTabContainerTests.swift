@@ -103,3 +103,55 @@ final class PTYTabContainerTests: XCTestCase {
         assertRootFillsContainer()
     }
 }
+
+extension PTYTabContainerTests {
+    private func assertContainerAndPanesFillTabView(file: StaticString = #filePath, line: UInt = #line) {
+        guard let container = tab.realRootView, let tabView = container.superview, let root = tab.rootView else {
+            XCTFail("The container is not installed", file: file, line: line)
+            return
+        }
+        XCTAssertEqual(container.frame.size, tabView.bounds.size, "the container fills the tab view", file: file, line: line)
+        assertRootFillsContainer(file: file, line: line)
+        // The panes span the root rather than keeping their pre-maximize size.
+        let maxX = root.subviews.map { $0.frame.maxX }.max() ?? 0
+        XCTAssertEqual(maxX, root.bounds.width, accuracy: 1, "the panes fill the root", file: file, line: line)
+    }
+
+    // Issue 13161
+    func testUnmaximizeAfterWindowGrowsFillsTheWindow() {
+        guard let first = fixture.terminal.currentSession() else {
+            XCTFail("No session")
+            return
+        }
+        fixture.split(first, vertically: true)
+        tab.maximize()
+
+        var frame = fixture.window.frame
+        frame.size.width += 120
+        frame.size.height += 60
+        fixture.window.setFrame(frame, display: true)
+
+        tab.perform(NSSelectorFromString("unmaximize"))
+        XCTAssertFalse(tab.isMaximized)
+        assertContainerAndPanesFillTabView()
+    }
+
+    // Issue 13161
+    func testUnmaximizeAfterWindowShrinksFillsTheWindow() {
+        guard let first = fixture.terminal.currentSession() else {
+            XCTFail("No session")
+            return
+        }
+        fixture.split(first, vertically: true)
+        tab.maximize()
+
+        var frame = fixture.window.frame
+        frame.size.width -= 120
+        frame.size.height -= 60
+        fixture.window.setFrame(frame, display: true)
+
+        tab.perform(NSSelectorFromString("unmaximize"))
+        XCTAssertFalse(tab.isMaximized)
+        assertContainerAndPanesFillTabView()
+    }
+}

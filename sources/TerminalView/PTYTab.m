@@ -7358,8 +7358,22 @@ typedef struct {
                                               revivedSessions:nil];
     [PTYTab _recursiveSetDelegateIn:newRoot to:self];
 
+    // The container tracked window resizes while maximized, but the restored tree has its
+    // pre-maximize size and -setRoot: shrinks or grows the container to match. Put the
+    // container back to its current size so the panes fill the tab. Issue 13161.
+    const NSSize containerSize = _containerView.frame.size;
+    const BOOL shouldRestoreContainerSize = (!_tmuxContainer &&
+                                             _containerView.superview != nil &&
+                                             containerSize.width > 0 &&
+                                             containerSize.height > 0);
+
     // Create a tab.
     [self setRoot:newRoot];
+    if (shouldRestoreContainerSize) {
+        DLog(@"unmaximize: restore container size %@ (restored root was %@)",
+             NSStringFromSize(containerSize), NSStringFromSize(newRoot.frame.size));
+        [self setNativeRootFrameSize:containerSize];
+    }
 
     idMap_ = nil;
     savedArrangement_ = nil;
