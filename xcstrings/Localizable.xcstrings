@@ -77878,6 +77878,48 @@
         }
       }
     },
+    "EditKeyAction.ActionSetCharacterEncoding" : {
+      "comment" : "Action name: Set Character Encoding",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichenkodierung festlegen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Set Character Encoding…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字エンコーディングを設定…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir codificação de caracteres…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Задать кодировку…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置字符编码…"
+          }
+        }
+      }
+    },
     "EditKeyAction.ActionSplitHorizontallyWithProfile" : {
       "comment" : "Action name: Split Horizontally with Profile",
       "extractionState" : "extracted_with_value",
@@ -98893,6 +98935,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : ", 然后"
+          }
+        }
+      }
+    },
+    "KeyBindingAction.SetCharacterEncoding" : {
+      "comment" : "Key binding action name; %@ is the name of the character encoding",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichenkodierung auf „%@“ festlegen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Set Character Encoding to “%@”"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字エンコーディングを「%@」に設定"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir codificação de caracteres para “%@”"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Задать кодировку «%@»"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将字符编码设置为“%@”"
+          }
+        }
+      }
+    },
+    "KeyBindingAction.SetCharacterEncodingToast" : {
+      "comment" : "Toast shown after changing the character encoding with a key binding; %@ is the name of the encoding",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichenkodierung auf %@ gesetzt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Character encoding set to %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字エンコーディングを%@に設定しました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codificação de caracteres definida como %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кодировка изменена на %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字符编码已设置为%@"
           }
         }
       }

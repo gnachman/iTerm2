@@ -511,6 +511,10 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_TOGGLE_SETTING:
             actionString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.ToggleSetting", nil, [NSBundle mainBundle], @"Toggle %@", @"Key binding action name; %@ is the name of the setting to toggle"), self.toggleSettingLabel];
             break;
+
+        case KEY_ACTION_SET_CHARACTER_ENCODING:
+            actionString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SetCharacterEncoding", nil, [NSBundle mainBundle], @"Set Character Encoding to “%@”", @"Key binding action name; %@ is the name of the character encoding"), [NSString localizedNameOfStringEncoding:_parameter.integerValue]];
+            break;
     }
 
     switch (self.applyMode) {
@@ -612,6 +616,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COPY_INTERPOLATED_STRING:
         case KEY_ACTION_COPY_MODE:
         case KEY_ACTION_TOGGLE_SETTING:
+        case KEY_ACTION_SET_CHARACTER_ENCODING:
             break;
 
         case KEY_ACTION_SEQUENCE:
@@ -704,6 +709,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COPY_INTERPOLATED_STRING:
         case KEY_ACTION_COPY_MODE:
         case KEY_ACTION_TOGGLE_SETTING:
+        case KEY_ACTION_SET_CHARACTER_ENCODING:
             break;
 
         case KEY_ACTION_SEQUENCE:
