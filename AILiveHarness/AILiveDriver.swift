@@ -520,6 +520,8 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
             case .gemini:    return "gemini"
             case .deepSeek:  return "deepseek"
             case .llama:     return "llama"
+            case .xAI:       return "xai"
+            case .apple:     return "apple"
             case .none:      return nil
             @unknown default: return nil
             }
@@ -533,6 +535,7 @@ final class AILiveDriver: NSObject, AITermControllerDelegate {
         if lower.hasPrefix("claude") { return "anthropic" }
         if lower.hasPrefix("gemini") { return "gemini" }
         if lower.hasPrefix("deepseek") { return "deepseek" }
+        if lower.contains("grok") { return "xai" }
         return nil
     }
 
