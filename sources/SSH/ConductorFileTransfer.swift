@@ -159,6 +159,15 @@ class ConductorFileTransfer: TransferrableFile {
         state = .failed
     }
 
+    // Archive preparation can fail before upload() has registered the transfer.
+    func failBeforeUpload(reason: String) {
+        state = .uploading
+        status = .starting
+        FileTransferManager.sharedInstance().files.add(self)
+        FileTransferManager.sharedInstance().transferrableFileDidStartTransfer(self)
+        fail(reason: reason)
+    }
+
     // The source URL recorded when the file is quarantined. Nil if the host or path can't be
     // put in a URL, in which case the file is quarantined without one (F-920).
     private var url: URL? {

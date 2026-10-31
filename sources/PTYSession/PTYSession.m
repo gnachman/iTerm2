@@ -22319,11 +22319,9 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     finishIfDone();
 }
 
-// Pastes the paths of the uploads that succeeded. A file that failed contributes nothing: its
-// name would point at something that is not there, and the failure is already reported in the
-// file transfers window. Pasting nothing at all is the right outcome when every one failed.
-// Nothing is pasted if, while uploading, the session ended or moved to another host or ssh
-// connection, since the paths would name files that are not there.
+// Ends an upload-and-paste group. The indicator can't show errors, so open the Uploads menu after
+// the paste if any upload failed. Open it only after every transfer reports, because the menu's
+// nested event loop stops the default-mode timers that deliver SCP completions.
 - (void)finishUploadAndPasteWithRemotePaths:(NSArray *)remotePaths
                                 destination:(SCPPath *)destination
                                   conductor:(iTermConductor *)conductor {
@@ -22332,6 +22330,30 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     _uploadAndPasteTransfers = nil;
     [_view hideUploadIndicator];
 
+    const BOOL anyFailed = [remotePaths containsObject:[NSNull null]];
+    [self pasteUploadedPaths:remotePaths destination:destination conductor:conductor];
+    // Leave the paste helper's stack before entering the menu's nested event loop,
+    // and wait for both the path paste and any queued pastes to drain.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) return;
+        [strongSelf->_pasteHelper performAfterPasting:^{
+            if (anyFailed) {
+                DLog(@"Upload failed, opening the Uploads menu");
+                [[FileTransferManager sharedInstance] openUploadsMenu];
+            } else if (@available(macOS 27.0, *)) {
+                [[FileTransferManager sharedInstance] refreshMenuBarIfNeeded];
+            }
+        }];
+    });
+}
+
+// Pastes the paths of the uploads that succeeded. Pastes nothing if the session ended, or its host
+// or ssh connection changed, during the upload.
+- (void)pasteUploadedPaths:(NSArray *)remotePaths
+               destination:(SCPPath *)destination
+                 conductor:(iTermConductor *)conductor {
     if (self.exited || [self nonTextPasteConductor] != conductor) {
         DLog(@"Session exited or its ssh connection changed during upload, so not pasting");
         return;
@@ -22410,7 +22432,7 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     iTermConductor *conductor = [self nonTextPasteConductor];
     if ([conductor canTransferFilesTo:path]) {
         DLog(@"Using conductor for upload with completion");
-        transfer = [conductor uploadFile:localPath to:path withCompletion:wrapper];
+        transfer = [conductor uploadFile:localPath to:path suppressingAutomaticMenu:YES withCompletion:wrapper];
         return transfer;
     }
 
@@ -22419,6 +22441,7 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     scpFile.path = path;
     scpFile.localPath = localPath;
     scpFile.completionBlock = wrapper;
+    scpFile.suppressesAutomaticMenu = YES;
     DLog(@"SCPFile localPath=%@ remotePath=%@", scpFile.localPath, scpFile.path.path);
     transfer = scpFile;
     [scpFile upload];

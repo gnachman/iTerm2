@@ -116,10 +116,12 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 @end
 
 @interface iTermPasteHelper () <iTermPasteViewManagerDelegate>
+- (void)runPasteDrainCallbacksIfIdle;
 @end
 
 @implementation iTermPasteHelper {
     NSMutableArray *_eventQueue;
+    NSMutableArray<void (^)(void)> *_pasteDrainCallbacks;
     PasteContext *_pasteContext;
 
     // Paste from the head of this string from a timer until it's empty.
@@ -275,15 +277,17 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
     if (_timer) {
         [_timer invalidate];
         _timer = nil;
-        if (cancel) {
-            [_eventQueue removeAllObjects];
-        }
+    }
+    if (cancel) {
+        [_eventQueue removeAllObjects];
     }
     _buffer = [[iTermCharacterQueue alloc] initWithString:@""];
     [self hidePasteIndicator];
     _pasteContext = nil;
     if (!cancel) {
         [self dequeueEvents];
+    } else {
+        [self runPasteDrainCallbacksIfIdle];
     }
 }
 
@@ -637,6 +641,26 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
         }
     }
     DLog(@"Done dequeueing paste events.");
+    [self runPasteDrainCallbacksIfIdle];
+}
+
+- (void)performAfterPasting:(void (^)(void))block {
+    if (!_pasteDrainCallbacks) {
+        _pasteDrainCallbacks = [NSMutableArray array];
+    }
+    [_pasteDrainCallbacks addObject:[block copy]];
+    [self runPasteDrainCallbacksIfIdle];
+}
+
+- (void)runPasteDrainCallbacksIfIdle {
+    if (self.isPasting || _eventQueue.count || !_pasteDrainCallbacks.count) {
+        return;
+    }
+    NSArray<void (^)(void)> *callbacks = [_pasteDrainCallbacks copy];
+    [_pasteDrainCallbacks removeAllObjects];
+    for (void (^callback)(void) in callbacks) {
+        callback();
+    }
 }
 
 - (void)enqueueEvent:(NSEvent *)event {
