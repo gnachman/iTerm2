@@ -587,6 +587,7 @@ extension ChatViewController {
         .anthropic,
         .gemini,
         .deepSeek,
+        .xAI,
         .llama
     ]
 

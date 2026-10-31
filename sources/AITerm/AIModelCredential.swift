@@ -78,7 +78,7 @@ enum AIModelCredential: Equatable {
 
     // The vendors whose stored key a model can be pointed at: those with a key
     // the user can enter in Settings.
-    static let selectableVendors: [iTermAIVendor] = [.openAI, .anthropic, .gemini, .deepSeek]
+    static let selectableVendors: [iTermAIVendor] = [.openAI, .anthropic, .gemini, .deepSeek, .xAI]
 }
 
 extension AIMetadata.Model {

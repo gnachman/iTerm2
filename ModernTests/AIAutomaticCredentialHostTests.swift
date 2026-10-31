@@ -20,6 +20,7 @@ final class AIAutomaticCredentialHostTests: XCTestCase {
     private let anthropicURL = "https://api.anthropic.com/v1/messages"
     private let geminiURL = "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}"
     private let deepSeekURL = "https://api.deepseek.com/chat/completions"
+    private let xAIURL = "https://api.x.ai/v1/chat/completions"
     private let openRouterURL = "https://openrouter.ai/api/v1/chat/completions"
     private let zaiURL = "https://api.z.ai/api/paas/v4/chat/completions"
     private let localURL = "http://localhost:1234/v1/chat/completions"
@@ -32,12 +33,13 @@ final class AIAutomaticCredentialHostTests: XCTestCase {
         case .anthropic: return [anthropicURL]
         case .gemini: return [geminiURL]
         case .deepSeek: return [deepSeekURL]
+        case .xAI: return [xAIURL]
         default: return []
         }
     }
 
     func testAutomaticSendsVendorKeyOnlyToThatVendorsHost() {
-        let allURLs = [openAIURL, azureURL, anthropicURL, geminiURL, deepSeekURL, openRouterURL, zaiURL]
+        let allURLs = [openAIURL, azureURL, anthropicURL, geminiURL, deepSeekURL, xAIURL, openRouterURL, zaiURL]
         for vendor in AIModelCredential.selectableVendors {
             for url in allURLs {
                 let expected: AITermController.APIKeyPolicy =
@@ -59,12 +61,18 @@ final class AIAutomaticCredentialHostTests: XCTestCase {
                                                      credential: .automatic,
                                                      keyVendor: .openAI),
                        .vendorKey)
+        XCTAssertEqual(AITermController.apiKeyPolicy(url: "https://API.X.AI./v1/chat/completions",
+                                                     api: .chatCompletions,
+                                                     credential: .automatic,
+                                                     keyVendor: .xAI),
+                       .vendorKey)
     }
 
     // A look-alike host is not the vendor's.
     func testLookAlikeHostIsNotOwnHost() {
         for url in ["https://api.openai.com.evil.example/v1", "https://notapi.openai.co/v1",
-                    "https://anthropic.com.example.net/v1/messages"] {
+                    "https://anthropic.com.example.net/v1/messages",
+                    "https://api.x.ai.evil.example/v1"] {
             for vendor in AIModelCredential.selectableVendors {
                 XCTAssertEqual(AITermController.apiKeyPolicy(url: url,
                                                              api: .chatCompletions,

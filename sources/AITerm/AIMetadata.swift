@@ -349,6 +349,10 @@ class AIMetadata: NSObject {
         return recommendedModel(for: .apple)
     }
 
+    static var recommendedXAIModel: Model {
+        return recommendedModel(for: .xAI)
+    }
+
     static var alternateOpenAIModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .openAI
@@ -376,6 +380,12 @@ class AIMetadata: NSObject {
     static var alternateAppleModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .apple
+        }
+    }
+
+    static var alternateXAIModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .xAI
         }
     }
 
