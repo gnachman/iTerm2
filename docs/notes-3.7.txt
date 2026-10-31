@@ -2424,3 +2424,8 @@ Bug Fixes:
   open each time. After many coprocesses,
   iTerm2 could run out of open files and fail
   to create new sessions.
+- With several displays and “Displays have
+  separate Spaces” turned on, restoring a
+  window arrangement no longer moves its windows
+  to the display with the active Space. They
+  open where they were saved. Issue 13002.

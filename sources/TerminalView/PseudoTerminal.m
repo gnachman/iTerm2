@@ -237,7 +237,12 @@ typedef NS_OPTIONS(NSUInteger, iTermSuppressMakeCurrentTerminal) {
     iTermSuppressMakeCurrentTerminalHotkey = 1 << 0,
 
     // This window is being restored miniaturized and restoration should not reveal it.
-    iTermSuppressMakeCurrentTerminalMiniaturized = 1 << 1
+    iTermSuppressMakeCurrentTerminalMiniaturized = 1 << 1,
+
+    // This window is being created from a saved arrangement. Adding a tab should not reveal it
+    // yet; it is revealed once, after all its tabs are in and its saved frame is applied. See
+    // -endDeferringMakeCurrentTerminal.
+    iTermSuppressMakeCurrentTerminalLoadingArrangement = 1 << 2
 };
 
 typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
@@ -427,6 +432,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     BOOL _anyPaneIsTransparent;
     BOOL _windowDidResize;
     iTermSuppressMakeCurrentTerminal _suppressMakeCurrentTerminal;
+    // Set when adding a tab would have made this window current but
+    // iTermSuppressMakeCurrentTerminalLoadingArrangement deferred it.
+    BOOL _makeCurrentTerminalDeferred;
     BOOL _deallocing;
     iTermOrderEnforcer *_proxyIconOrderEnforcer;
     BOOL _restorableStateInvalid;
@@ -3858,15 +3866,56 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
             RLog(@"Failed to revive session %@", session);
         }
     }
-    if ([term loadArrangement:arrangement
-                        named:arrangementName
-                     sessions:revivedSessions
-           partialAttachments:nil
-         largeContentProvider:nil]) {
-        return term;
-    } else {
-        return term;
+    [term beginDeferringMakeCurrentTerminalForArrangement:arrangement];
+    [term loadArrangement:arrangement
+                    named:arrangementName
+                 sessions:revivedSessions
+       partialAttachments:nil
+     largeContentProvider:nil];
+    [term endDeferringMakeCurrentTerminal];
+    return term;
+}
+
+// Restoring tabs used to reveal the window when its first tab was added, before the saved frame
+// was applied. Ordering a window in lets -[NSWindow _reallyDoOrderWindowAboveOrBelow:] move it, and
+// with separate Spaces per display it moves it to whichever display holds the active Space. Defer
+// revealing the window until the arrangement is fully loaded so it goes on screen exactly once, at
+// its saved frame. Issue 13002.
+- (void)beginDeferringMakeCurrentTerminalForArrangement:(NSDictionary *)arrangement {
+    iTermPercentage percentage;
+    const iTermWindowType windowType = [PseudoTerminal _windowTypeForArrangement:arrangement
+                                                                      percentage:&percentage];
+    if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
+        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        // Full screen windows depend on AppKit sizing them as they are ordered in.
+        RLog(@"Not deferring make-current for full screen window %@", self);
+        return;
     }
+    RLog(@"Begin deferring make-current while loading arrangement in %@", self);
+    _suppressMakeCurrentTerminal |= iTermSuppressMakeCurrentTerminalLoadingArrangement;
+    _makeCurrentTerminalDeferred = NO;
+}
+
+- (void)endDeferringMakeCurrentTerminal {
+    if (!(_suppressMakeCurrentTerminal & iTermSuppressMakeCurrentTerminalLoadingArrangement)) {
+        return;
+    }
+    _suppressMakeCurrentTerminal &= ~iTermSuppressMakeCurrentTerminalLoadingArrangement;
+    const BOOL deferred = _makeCurrentTerminalDeferred;
+    _makeCurrentTerminalDeferred = NO;
+    RLog(@"End deferring make-current in %@. deferred=%@ frame=%@",
+         self, @(deferred), NSStringFromRect(self.window.frame));
+    if (!deferred) {
+        return;
+    }
+    // The frame is now the arrangement's, which reflects the user's intent regardless of AppKit's
+    // opinion about secondary displays (see the comment in -loadArrangement:...), so refuse any
+    // frame change AppKit makes while ordering the window in.
+    const BOOL savedPreventFrameChange = self.ptyWindow.it_preventFrameChange;
+    self.ptyWindow.it_preventFrameChange = YES;
+    [[iTermController sharedInstance] setCurrentTerminal:self];
+    self.ptyWindow.it_preventFrameChange = savedPreventFrameChange;
+    RLog(@"Made restored window current. Frame is now %@", NSStringFromRect(self.window.frame));
 }
 
 + (PseudoTerminal *)terminalWithArrangement:(NSDictionary *)arrangement
@@ -14262,15 +14311,19 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone &&
-            !openInBackground &&
+        if (!openInBackground &&
             (_automaticallyOrderFrontNewTabs || self.tabs.count == 1)) {
             // A background tab (automaticallyOrderFrontNewTabs == NO), or a tab
             // the caller asked to open in the background, should not become the
             // current terminal: doing so moves iTerm's current-window pointer to
             // it, which clients observe as a focus/window steal even though the
             // window itself was not ordered front above.
-            [[iTermController sharedInstance] setCurrentTerminal:self];
+            if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalNone) {
+                [[iTermController sharedInstance] setCurrentTerminal:self];
+            } else if (_suppressMakeCurrentTerminal == iTermSuppressMakeCurrentTerminalLoadingArrangement) {
+                RLog(@"Deferring make-current until the arrangement is loaded");
+                _makeCurrentTerminalDeferred = YES;
+            }
         }
     }
 }
