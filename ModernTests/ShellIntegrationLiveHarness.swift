@@ -148,6 +148,69 @@ final class ShellIntegrationLiveHarness: XCTestCase {
                       "[zsh] the integration added its own mark: \(rightPromptMarks)")
     }
 
+    /// fish never marks its right prompt itself, so the integration wraps
+    /// fish_right_prompt's output in OSC 133;P;k=r … B and iTerm2 keeps it out
+    /// of the recorded command.
+    func testFish_rightPrompt_isMarkedAndExcludedFromCommand() throws {
+        let output = try runShell(.fish,
+                                  beforeSourcing: ["function fish_right_prompt; echo fish_right_prompt_token; end"],
+                                  steps: [.command("echo hi\n")])
+        let recorded = Data(output.utf8)
+        XCTAssertTrue(recorded.osc133Args(forKind: "P").contains { $0.split(separator: ";").contains("k=r") },
+                      "[fish] expected the right prompt to be marked with OSC 133;P;k=r")
+
+        let harness = TerminalTestHarness(width: LiveShell.columns, height: LiveShell.rows)
+        harness.feedEscapeSequence(Array(recorded))
+        harness.sync()
+        let marks = harness.allScreenMarks().filter { $0.fullCommand == "echo hi" }
+        XCTAssertEqual(marks.count, 1, "[fish] expected one mark for the test command")
+        XCTAssertEqual(marks.first?.excludedSubranges?.count, 1,
+                       "[fish] expected the right prompt's cells to be excluded")
+    }
+
+    /// The wrapped right prompt must still see the previous command's status.
+    func testFish_rightPrompt_seesLastStatus() throws {
+        let output = try runShell(.fish,
+                                  beforeSourcing: ["function fish_right_prompt; echo \"rp_st\"\"atus=$status\"; end"],
+                                  steps: [.command("false\n")])
+        XCTAssertTrue(output.contains("rp_status=1"),
+                      "[fish] the right prompt should show the status of `false`")
+    }
+
+    /// A right prompt that already carries a 133;P mark must not get a second,
+    /// nested mark from the integration.
+    func testFish_alreadyMarkedRightPrompt_isNotMarkedAgain() throws {
+        let output = try runShell(.fish,
+                                  beforeSourcing: ["function fish_right_prompt; printf '\\e]133;P;k=r\\ahand\\e]133;B\\a'; end"],
+                                  steps: [.command("echo hi\n")])
+        let marks = Data(output.utf8).osc133Args(forKind: "P").filter { $0.split(separator: ";").contains("k=r") }
+        XCTAssertFalse(marks.isEmpty, "[fish] the hand-added mark should be drawn")
+        XCTAssertTrue(marks.allSatisfy { !$0.contains("aid=") },
+                      "[fish] the integration added its own mark: \(marks)")
+    }
+
+    /// fish 4.0 and later send their own A, C and D unless the mark-prompt
+    /// feature (fish 4.0.6 and later) is turned off. Then the integration must
+    /// send them.
+    func testFish_markPromptFeatureOff_integrationSendsMarks() throws {
+        try XCTSkipUnless(Self.fishTurnsOffMarkPrompt(),
+                          "This fish doesn't have the mark-prompt feature (fish 4.0.6 and later)")
+        let output = try runShell(.fish,
+                                  environment: ["fish_features": "no-mark-prompt"],
+                                  beforeSourcing: [],
+                                  steps: [.command("echo hi\n")])
+        let recorded = Data(output.utf8)
+        for kind in ["A", "C"] {
+            XCTAssertTrue(recorded.osc133Args(forKind: kind).contains { $0.contains("aid=") },
+                          "[fish] expected the integration to send OSC 133;\(kind)")
+        }
+        let harness = TerminalTestHarness(width: LiveShell.columns, height: LiveShell.rows)
+        harness.feedEscapeSequence(Array(recorded))
+        harness.sync()
+        XCTAssertEqual(harness.allScreenMarks().filter { $0.fullCommand == "echo hi" }.count, 1,
+                       "[fish] expected the command to be recorded")
+    }
+
     func testBash_baseline_emitsOnePromptAPerCommand() throws {
         try runShellBaseline(.bash)
     }
@@ -186,10 +249,10 @@ final class ShellIntegrationLiveHarness: XCTestCase {
     private static let bindSendBreak = "bindkey '^X' send-break"
     private static let sendBreak = "\u{18}"
 
-    private enum ZshStep {
+    private enum ShellStep {
         // Type text without waiting for anything.
         case keys(String)
-        // Type text, then wait until zle is reading the next line.
+        // Type text, then wait until the line editor is reading the next line.
         case command(String)
         // Wait until zsh has written `text`.
         case waitFor(String)
@@ -197,12 +260,37 @@ final class ShellIntegrationLiveHarness: XCTestCase {
 
     /// A command that prints `values` between [[ and ]]. The brackets are
     /// split in the typed text so the echoed command can't be mistaken for
-    /// the output.
-    private static func printValues(_ values: String) -> String {
-        return "print -r -- \"[\"\"[\(values)]\"\"]\"\n"
+    /// the output. `print -r` is zsh's; fish has no print builtin.
+    private static func printValues(_ values: String, shell: SupportedShell = .zsh) -> String {
+        let command = shell == .zsh ? "print -r --" : "echo"
+        return "\(command) \"[\"\"[\(values)]\"\"]\"\n"
     }
 
     /// What the command from printValues(_:) printed.
+    /// Whether the installed fish reports mark-prompt as off when
+    /// fish_features=no-mark-prompt is set. `status test-feature` exits 1 for a
+    /// feature that is off and 2 for one this fish doesn't know.
+    private static func fishTurnsOffMarkPrompt() -> Bool {
+        guard let fish = SupportedShell.fish.executablePath() else {
+            return false
+        }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: fish)
+        process.arguments = ["-N", "-c", "status test-feature mark-prompt"]
+        var env = ProcessInfo.processInfo.environment
+        env["fish_features"] = "no-mark-prompt"
+        process.environment = env
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            return false
+        }
+        process.waitUntilExit()
+        return process.terminationStatus == 1
+    }
+
     private static func printedValues(in output: String) -> String? {
         guard let start = output.range(of: "[["),
               let end = output.range(of: "]]", range: start.upperBound..<output.endIndex) else {
@@ -211,14 +299,20 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         return String(output[start.upperBound..<end.lowerBound])
     }
 
-    /// Runs zsh, sends `beforeSourcing`, sources the integration, performs
-    /// `steps`, and returns everything zsh wrote once it has printed a
-    /// sentinel after the last step. Throws XCTSkip when zsh or the project
-    /// root is unavailable.
-    private func runZsh(beforeSourcing: [String], steps: [ZshStep]) throws -> String {
-        let shell = SupportedShell.zsh
+    private func runZsh(beforeSourcing: [String], steps: [ShellStep]) throws -> String {
+        return try runShell(.zsh, beforeSourcing: beforeSourcing, steps: steps)
+    }
+
+    /// Runs `shell` with `environment` added, sends `beforeSourcing`, sources
+    /// the integration, performs `steps`, and returns everything the shell
+    /// wrote once it has printed a sentinel after the last step. Throws
+    /// XCTSkip when the shell or the project root is unavailable.
+    private func runShell(_ shell: SupportedShell,
+                          environment: [String: String] = [:],
+                          beforeSourcing: [String],
+                          steps: [ShellStep]) throws -> String {
         guard let executable = shell.executablePath() else {
-            throw XCTSkip("zsh is not installed on this machine")
+            throw XCTSkip("\(shell.rawValue) is not installed on this machine")
         }
         guard let projectRoot = Self.projectRoot() else {
             throw XCTSkip("PROJECT_ROOT not set; run via tools/run_shell_integration_live.sh")
@@ -231,12 +325,14 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         env["LC_TERMINAL"] = "iTerm2"
         env["TERM"] = "xterm-256color"
         env.removeValue(forKey: "ITERM_SHELL_INTEGRATION_INSTALLED")
+        env.merge(environment) { _, new in new }
 
         let captured = NSMutableData()
         let lock = NSLock()
         let liveShell = try LiveShell(shellPath: executable,
                                       arguments: shell.arguments(for: executable),
                                       environment: env,
+                                      answersTerminalQueries: shell.waitsForTerminalQueryReplies,
                                       onBytes: { bytes, length in
                                           lock.lock()
                                           captured.append(bytes, length: length)
@@ -252,33 +348,36 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         for line in beforeSourcing {
             liveShell.send(line + "\n")
         }
-        // zle writes this each time it starts reading a line. Our precmd sends
-        // OSC 133;D early on, then runs subprocesses while it decorates the
-        // prompt, so D alone doesn't mean zsh is ready: a ^C sent then would
-        // interrupt precmd instead of the line editor. A theme may also
-        // rebuild PS1 without our A mark, so A can't be relied on either.
-        let zleReading = Data("\u{1B}[?2004h".utf8)
-        func zleIsReading(afterFirst marker: Data, from offset: Int) -> Bool {
+        // What the shell writes once its line editor is reading again. zsh's
+        // precmd sends OSC 133;D early on, then runs subprocesses while it
+        // decorates the prompt, so D alone doesn't mean the shell is ready: a
+        // key sent then would reach precmd instead of the line editor. A theme
+        // may also rebuild the prompt without our A mark, so A can't be relied
+        // on either.
+        let lineEditorReading = shell.lineEditorReadingMarker
+        func lineEditorIsReading(afterFirst marker: Data, from offset: Int) -> Bool {
             let data = snapshot()
             guard let found = data.range(of: marker, in: offset..<data.count) else {
                 return false
             }
-            return data.range(of: zleReading, in: found.upperBound..<data.count) != nil
+            return data.range(of: lineEditorReading, in: found.upperBound..<data.count) != nil
         }
-        func waitForZle(afterFirst marker: Data, from offset: Int, _ description: String) throws {
+        func waitForLineEditor(afterFirst marker: Data, from offset: Int, _ description: String) throws {
             do {
                 try liveShell.waitUntil(description, timeout: 8.0) {
-                    zleIsReading(afterFirst: marker, from: offset)
+                    lineEditorIsReading(afterFirst: marker, from: offset)
                 }
             } catch {
-                print("[zsh] \(error); captured:\n" + snapshot().escapedForLog)
+                print("[\(shell.rawValue)] \(error); captured:\n" + snapshot().escapedForLog)
                 throw error
             }
         }
 
         let sourced = snapshot().count
         liveShell.send(shell.sourceCommand(integrationPath: integrationPath))
-        try waitForZle(afterFirst: Data("ShellIntegrationVersion=".utf8), from: sourced, "integration loaded")
+        try waitForLineEditor(afterFirst: Data("ShellIntegrationVersion=".utf8),
+                              from: sourced,
+                              "integration loaded")
         for step in steps {
             switch step {
             case .keys(let text):
@@ -286,17 +385,18 @@ final class ShellIntegrationLiveHarness: XCTestCase {
             case .command(let text):
                 let sent = snapshot().count
                 liveShell.send(text)
-                // The next precmd reports with D, then zle starts reading.
-                try waitForZle(afterFirst: Data("\u{1B}]133;D".utf8),
-                               from: sent,
-                               "zle reading after \(text.debugDescription)")
+                // The command's exit status is reported with D before the next
+                // prompt, then the line editor starts reading.
+                try waitForLineEditor(afterFirst: Data("\u{1B}]133;D".utf8),
+                                      from: sent,
+                                      "line editor reading after \(text.debugDescription)")
             case .waitFor(let text):
                 try liveShell.waitUntil(text, timeout: 8.0) {
                     snapshot().contains(asciiString: text)
                 }
             }
         }
-        liveShell.send("print -r -- \"DONE_\"\"SENTINEL\"\n")
+        liveShell.send("echo \"DONE_\"\"SENTINEL\"\n")
         try liveShell.waitUntil("sentinel", timeout: 8.0) {
             snapshot().contains(asciiString: "DONE_SENTINEL")
         }
@@ -377,6 +477,20 @@ final class ShellIntegrationLiveHarness: XCTestCase {
         }
 
         var testCommand: String { "echo iterm2_shell_test_token\n" }
+
+        // Written after a command's D once the line editor is reading the next
+        // line. zle enables bracketed paste each time it starts reading. fish
+        // enables it before drawing the prompt, and the integration's D may
+        // come from fish_prompt, so use the B that ends fish_prompt instead;
+        // fish reads keys in raw mode, so anything typed after it is kept.
+        var lineEditorReadingMarker: Data {
+            switch self {
+            case .fish:
+                return Data("\u{1B}]133;B".utf8)
+            case .zsh, .bash, .tcsh, .xonsh, .nu:
+                return Data("\u{1B}[?2004h".utf8)
+            }
+        }
     }
 
     /// Runs `shell` with the integration, sends one command, and checks the

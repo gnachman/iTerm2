@@ -360,8 +360,8 @@ New Features:
   connected to.
 
 Improvements:
-- zsh Shell Integration now marks the right-hand
-  prompt (RPROMPT), so Select Current Command
+- zsh and fish Shell Integration now mark the
+  right-hand prompt, so Select Current Command
   and saved commands leave it out.
 - Pausing a spinning progress indicator with
   OSC 9;4;4 now shows a paused spinner: a still
@@ -690,6 +690,9 @@ Bug Fixes:
   and returns to its full width afterward.
 - Fixed more cases where a window could be made
   wider but not narrower.
+- With fish 4.0.6 or later and its mark-prompt
+  feature turned off, Shell Integration recorded
+  no commands.
 - Commands saved to Command History no longer
   include a right-hand prompt (such as zsh’s
   RPROMPT) drawn on the same line.

@@ -12,23 +12,24 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-function is_fish_4_1_or_later
+# Whether fish writes its own OSC 133 A, C and D. fish 4.0 and later do, unless
+# the mark-prompt feature is turned off (set -Ua fish_features no-mark-prompt),
+# which fish 4.0.6 introduced. `status test-feature` exits 1 only for a feature
+# that is off; it exits 2 for one this fish doesn't know, as 4.0.0 through 4.0.2
+# don't know mark-prompt, and those always mark. Earlier versions never mark.
+function iterm2_fish_marks_prompt
     if test -z "$FISH_VERSION"
         # Not fish
         return 1
     end
 
-    set -l parts (string split . $FISH_VERSION)
-    set -l major $parts[1]
-    set -l minor $parts[2]
-
-    if test $major -gt 4
-        return 0
-    else if test $major -eq 4 -a $minor -ge 1
-        return 0
-    else
-        return 1
+    set -l major (string split . $FISH_VERSION)[1]
+    if test $major -ge 4
+        status test-feature mark-prompt
+        test $status -ne 1
+        return
     end
+    return 1
 end
 
 
@@ -104,26 +105,31 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and be
     # is rolled once at shell-source time; the counter increments per
     # prompt cycle inside iterm2_common_prompt.
     #
-    # NOTE: fish 4.1+ emits OSC 133 natively and the script's A/C/D
-    # paths short-circuit via is_fish_4_1_or_later. Native fish doesn't
-    # know about aid yet, so on fish 4.1+ the only marker that carries
-    # aid is B (iterm2_prompt_end). That's fine — the receiver still
-    # closes inner marks by the topmost-open path when no aid is present;
-    # the nested-session benefit only kicks in once fish native emits
-    # aid too.
+    # NOTE: fish 4.0 and later emit OSC 133 natively and the script's A/C/D
+    # paths short-circuit when ITERM2_FISH_MARKS_PROMPT is set. Native fish
+    # doesn't know about aid yet, so then the only markers that carry aid
+    # are the script's B (iterm2_prompt_end) and right prompt marks. That's
+    # fine — the receiver still closes inner marks by the topmost-open path
+    # when no aid is present; the nested-session benefit only kicks in once
+    # fish native emits aid too. The answer can't change while fish runs,
+    # so it's computed once.
+    set -g ITERM2_FISH_MARKS_PROMPT
+    if iterm2_fish_marks_prompt
+      set ITERM2_FISH_MARKS_PROMPT 1
+    end
     set -g ITERM2_AID_SALT (random)(random)
     set -g ITERM2_AID_COUNTER 0
     set -g ITERM2_CURRENT_AID "$ITERM2_AID_SALT-0"
 
     function iterm2_status
-        if not is_fish_4_1_or_later
+        if test -z "$ITERM2_FISH_MARKS_PROMPT"
           printf "\033]133;D;%s;aid=%s\007" $argv $ITERM2_CURRENT_AID
         end
     end
 
     # Mark start of prompt
     function iterm2_prompt_mark
-        if not is_fish_4_1_or_later
+        if test -z "$ITERM2_FISH_MARKS_PROMPT"
           printf "\033]133;A;aid=%s\007" $ITERM2_CURRENT_AID
         end
     end
@@ -136,7 +142,7 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and be
     # Tell terminal to create a mark at this location
     function iterm2_preexec --on-event fish_preexec
       # For other shells we would output status here but we can't do that in fish.
-      if not is_fish_4_1_or_later
+      if test -z "$ITERM2_FISH_MARKS_PROMPT"
         if test "$TERM_PROGRAM" = "iTerm.app"
             printf "\033]133;C;aid=%s\r\007" $ITERM2_CURRENT_AID
         else
@@ -206,6 +212,35 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and be
         iterm2_prompt_mark
       end
       return $last_status
+    end
+
+    # Mark the right prompt (Semantic Prompt k=r), which fish never does
+    # itself. The receiver records its cells as an excluded subrange on the
+    # active primary mark, so they aren't saved as part of the command, and
+    # drops the subrange if fish later erases the right prompt or draws the
+    # command over it.
+    if functions -q fish_right_prompt
+      functions -c fish_right_prompt iterm2_fish_right_prompt
+      function fish_right_prompt --description 'Write out the right prompt; do not replace this. Instead, change fish_right_prompt before sourcing .iterm2_shell_integration.fish, or modify iterm2_fish_right_prompt instead.'
+        set -l last_status $status
+        # Give the original the status it would have seen. A function that
+        # returns it sets $status for the command that follows.
+        set -l right_prompt (iterm2_return $last_status; iterm2_fish_right_prompt $argv | string collect)
+        # Don't nest a second mark inside one the right prompt already
+        # carries. An empty right prompt needs no special case: fish doesn't
+        # draw a right prompt with no width, marks and all.
+        if string match -q -- '*133;P*' "$right_prompt"
+          printf "%s" "$right_prompt"
+          return $last_status
+        end
+        printf "\033]133;P;k=r;aid=%s\007%s" $ITERM2_CURRENT_AID "$right_prompt"
+        iterm2_prompt_end
+        return $last_status
+      end
+    end
+
+    function iterm2_return
+      return $argv[1]
     end
 
     function iterm2_check_function -d "Check if function is defined and non-empty"
@@ -291,7 +326,7 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and be
 
     iterm2_write_remotehost_currentdir_uservars
   end
-  printf "\033]1337;ShellIntegrationVersion=27;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=28;shell=fish\007"
 end
 
 # Put iTerm2's uploaded it2 on PATH, ahead of the shell function below. Exported, so a program
