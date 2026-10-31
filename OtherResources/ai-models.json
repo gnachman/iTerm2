@@ -1007,6 +1007,12 @@
         "streaming"
       ],
       "economyModel": "grok-4.3",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
       "recommended": true
     },
     {
@@ -1019,6 +1025,13 @@
       "features": [
         "functionCalling",
         "streaming"
+      ],
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
       ]
     },
     {

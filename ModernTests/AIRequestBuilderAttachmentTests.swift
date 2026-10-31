@@ -778,6 +778,29 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
                       "text-file content was dropped; got \(content)")
     }
 
+    // MARK: - Chat completions reasoning effort
+
+    /// reasoning_effort is sent only when the caller selected one. An empty
+    /// effort list leaves the field nil, and the key stays out of the body.
+    func testChatCompletions_reasoningEffort_presentOnlyWhenSelected() throws {
+        let model = xaiModel(url: "https://api.x.ai/v1/chat/completions")
+        let message = LLM.Message(role: .user, content: "Hi")
+        let omitted = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        XCTAssertNil(try decode(omitted)["reasoning_effort"])
+
+        let selected = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false,
+            reasoningEffort: .high).body()
+        XCTAssertEqual(try decode(selected)["reasoning_effort"] as? String, "high")
+    }
+
     // MARK: - xAI (chat completions on api.x.ai)
 
     /// api.x.ai accepts the chat-completions image and PDF content parts.

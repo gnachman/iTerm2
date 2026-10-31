@@ -100,7 +100,7 @@ final class AIModelCatalogTest: XCTestCase {
         XCTAssertTrue(grok.features.contains(.streaming))
         XCTAssertTrue(grok.recommended)
         XCTAssertEqual(grok.economyModelName, "grok-4.3")
-        XCTAssertTrue(grok.reasoningEfforts.isEmpty)
+        XCTAssertEqual(grok.reasoningEfforts, [.low, .medium, .high, .xhigh])
 
         guard let grok43 = models.first(where: { $0.name == "grok-4.3" }) else {
             XCTFail("grok-4.3 missing from catalog")
@@ -111,6 +111,7 @@ final class AIModelCatalogTest: XCTestCase {
         XCTAssertEqual(grok43.contextWindowTokens, 1_000_000)
         XCTAssertEqual(grok43.maxResponseTokens, 128_000)
         XCTAssertFalse(grok43.recommended)
+        XCTAssertEqual(grok43.reasoningEfforts, [.none, .low, .medium, .high, .xhigh])
     }
 
     func testGrokNameGuessUsesChatCompletions() {
