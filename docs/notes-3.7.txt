@@ -2444,7 +2444,6 @@ Bug Fixes:
 - The Memory Utilization status bar component no
   longer makes macOS log a kernel warning about
   host_statistics64 every second. Issue 13164.
-||||||| parent of 06536e9c4 (Fill the window when unmaximizing a pane after a window resize)
 - Restoring a maximized pane after resizing the
   window now fills the window. Before, the panes
   kept their old size, leaving an empty area or
