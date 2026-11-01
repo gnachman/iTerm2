@@ -6117,7 +6117,9 @@ typedef struct {
     } else {
         SessionView *sessionView = (SessionView *)view;
         PTYSession *theSession = [self sessionForSessionView:sessionView];
-        [theSession resizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
+        if (theSession != _tmuxZoomedSession) {
+            [theSession resizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
+        }
         assert([arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]);
         NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
         [sessionView setFrame:aFrame];
@@ -6804,6 +6806,10 @@ typedef struct {
     if (zoomed) {
         shouldZoom = zoomed.boolValue;
     }
+    _tmuxZoomedSession = shouldZoom
+        ? (visibleParseTree ? [self tmuxZoomedSessionInVisibleParseTree:visibleParseTree]
+                            : [self sessionToMaximize])
+        : nil;
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_
                              zoomed:shouldZoom
@@ -6840,7 +6846,6 @@ typedef struct {
     [self activateJuniorSession];
 
     if (shouldZoom) {
-        _tmuxZoomedSession = [self tmuxZoomedSessionInVisibleParseTree:visibleParseTree];
         [self maximizeAfterApplyingTmuxParseTree:visibleParseTree ?: parseTree
                                   tmuxController:tmuxController];
     } else {
