@@ -2487,3 +2487,11 @@ Bug Fixes:
   above or below the tab bar. The pointer must
   move about 40 points away from the bar first.
   Issue 13151.
+- “Preserve window size when tab bar shows or
+  hides” now also applies when the tab bar hides
+  after dragging a tab out of a window, and when
+  you change “Show tab bar even when there is
+  only one tab”.
+- After dragging a tab, other windows go back to
+  exactly their original size. A window as tall
+  as the screen used to end up shorter.

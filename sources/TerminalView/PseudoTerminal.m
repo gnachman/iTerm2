@@ -483,6 +483,24 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     CGFloat _rightExtraWindowGrowthDelta;
     BOOL _excursionPrevented;
 
+    // While a tab drag is in flight every window shows its tab bar (issue 12846). These remember
+    // the window as it was before the drag so it can go back to exactly that frame afterwards,
+    // even if the screen kept it from growing to fit the tab bar (issue 13165).
+    BOOL _sawHideTabBarSuppressedDuringDrag;
+    BOOL _haveFrameBeforeTabDrag;
+    NSRect _frameBeforeTabDrag;
+    // The frame after the drag showed the tab bar. A change after that (e.g., dropping a lone
+    // tab on the desktop moves its window) is not the drag's to undo.
+    NSRect _frameAfterTabDragBegan;
+    NSInteger _numberOfTabsBeforeTabDrag;
+    BOOL _excursionPreventedBeforeTabDrag;
+
+    // Whether the tab bar was visible as of the last updateTabBarControlIsTitlebarAccessory, so
+    // refreshTerminal: can tell whether a settings change showed or hid it. The tab bar control's
+    // hidden flag doesn't say this reliably, nor does tabBarShouldBeVisible while the tab bar is a
+    // titlebar accessory.
+    BOOL _tabBarWasVisibleAtLastUpdate;
+
 }
 
 @synthesize scope = _scope;
@@ -807,6 +825,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     [self updateTabBarStyle];
     self.window.delegate = self;
+    // A window created mid-drag (e.g., by dragging a tab out) has no pre-drag frame to restore.
+    _sawHideTabBarSuppressedDuringDrag = [iTermPreferences hideTabBarSuppressedDuringDrag];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateWindowNumberVisibility:)
@@ -7242,6 +7262,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 //  menu bar.
 - (void)updateTabBarControlIsTitlebarAccessory {
     RLog(@"updateTabBarControlIsTitlebarAccessory %@", self);
+    _tabBarWasVisibleAtLastUpdate = [self tabBarShouldBeVisibleWithAdditionalTabs:0];
     if ((self.window.styleMask & NSWindowStyleMaskTitled) == 0) {
         RLog(@"Style mask does not include titled");
         return;
@@ -8436,12 +8457,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         if (willShowTabBar && (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)) {
             [_contentView willShowTabBar];
         }
-        const BOOL generallyPreserveWindowSize = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges];
-        const BOOL preserveOnlyIfExcursion = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges];
         const BOOL wouldCauseExcursion = willShowTabBar && [self fittingWindowToTabsWouldCauseExcursion];
-        const BOOL preserveDueToShowing = generallyPreserveWindowSize && (!preserveOnlyIfExcursion || wouldCauseExcursion);
-        const BOOL preserveDueToHiding = willHideTabBar && _excursionPrevented;
-        const BOOL actuallyPreserve = preserveDueToHiding || preserveDueToShowing;
+        const BOOL actuallyPreserve = [self shouldPreserveWindowSizeWhenShowingTabBar:willShowTabBar
+                                                                        hidingTabBar:willHideTabBar
+                                                                 wouldCauseExcursion:wouldCauseExcursion];
         const BOOL shouldResizeWindow = _windowNeedsInitialSize || !actuallyPreserve;
 
         if (shouldResizeWindow) {
@@ -8467,15 +8486,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 // Minimal theme.
                 [self fitTabsToWindow];
             }
-        } else if (!_windowNeedsInitialSize &&
-                   wouldCauseExcursion &&
-                   preserveDueToShowing &&
-                   preserveOnlyIfExcursion) {
-            RLog(@"Prevented due to excursion.");
-            // Set this flag because if the tab bar goes away later we don't want it to shrink.
-            _excursionPrevented = YES;
-        } else if (preserveDueToHiding) {
-            _excursionPrevented = NO;
+        } else {
+            [self didPreserveWindowSizeWhenShowingTabBar:willShowTabBar
+                                            hidingTabBar:willHideTabBar
+                                     wouldCauseExcursion:wouldCauseExcursion];
         }
         // May need to enter or exit being a titlebar accessory if its visibility changed.
         [self updateTabBarControlIsTitlebarAccessory];
@@ -8547,8 +8561,39 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 
+// Decides whether showing or hiding the tab bar keeps the window's size (Settings > Appearance >
+// Resizing > Preserve window size when tab bar shows or hides).
+- (BOOL)shouldPreserveWindowSizeWhenShowingTabBar:(BOOL)showing
+                                     hidingTabBar:(BOOL)hiding
+                              wouldCauseExcursion:(BOOL)wouldCauseExcursion {
+    const BOOL generallyPreserveWindowSize = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges];
+    const BOOL preserveOnlyIfExcursion = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges];
+    const BOOL preserveDueToShowing = generallyPreserveWindowSize && (!preserveOnlyIfExcursion || wouldCauseExcursion);
+    const BOOL preserveDueToHiding = hiding && _excursionPrevented;
+    return preserveDueToHiding || preserveDueToShowing;
+}
+
+// Call after keeping the window's size because of
+// -shouldPreserveWindowSizeWhenShowingTabBar:hidingTabBar:wouldCauseExcursion:.
+- (void)didPreserveWindowSizeWhenShowingTabBar:(BOOL)showing
+                                  hidingTabBar:(BOOL)hiding
+                           wouldCauseExcursion:(BOOL)wouldCauseExcursion {
+    const BOOL generallyPreserveWindowSize = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeWhenTabBarVisibilityChanges];
+    const BOOL preserveOnlyIfExcursion = [iTermPreferences boolForKey:kPreferenceKeyPreserveWindowSizeToKeepOnScreenWhenTabBarVisibilityChanges];
+    if (showing && wouldCauseExcursion && generallyPreserveWindowSize && preserveOnlyIfExcursion) {
+        RLog(@"Prevented due to excursion.");
+        // Set this flag because if the tab bar goes away later we don't want it to shrink.
+        _excursionPrevented = YES;
+    } else if (hiding && _excursionPrevented) {
+        _excursionPrevented = NO;
+    }
+}
+
 - (BOOL)fittingWindowToTabsWouldCauseExcursion {
-    const NSRect proposedFrame = [self frameFittingWindowToTabs];
+    return [self fittingWindowToFrameWouldCauseExcursion:[self frameFittingWindowToTabs]];
+}
+
+- (BOOL)fittingWindowToFrameWouldCauseExcursion:(NSRect)proposedFrame {
     if (isnan(proposedFrame.origin.x) ||
         isnan(proposedFrame.origin.y) ||
         isnan(proposedFrame.size.width) ||
@@ -13304,6 +13349,89 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
 }
 
+- (void)rememberFrameBeforeTabDrag {
+    _haveFrameBeforeTabDrag = (!_windowNeedsInitialSize && !togglingFullScreen_ && ![self anyFullScreen]);
+    if (!_haveFrameBeforeTabDrag) {
+        return;
+    }
+    _frameBeforeTabDrag = self.window.frame;
+    _frameAfterTabDragBegan = _frameBeforeTabDrag;
+    _numberOfTabsBeforeTabDrag = self.numberOfTabs;
+    _excursionPreventedBeforeTabDrag = _excursionPrevented;
+    RLog(@"Remember frame %@ with %@ tabs before tab drag",
+         NSStringFromRect(_frameBeforeTabDrag), @(_numberOfTabsBeforeTabDrag));
+}
+
+// Undoes the size change the drag made by showing the tab bar. If the window moved during the
+// drag (dropping its lone tab on the desktop moves it), it keeps that move. Returns NO if this
+// doesn't apply, for example because a tab was dragged into or out of this window or something
+// else resized it; then the usual refit decides its size, as it would without a drag.
+- (BOOL)restoreFrameFromBeforeTabDrag {
+    if (!_haveFrameBeforeTabDrag) {
+        return NO;
+    }
+    _haveFrameBeforeTabDrag = NO;
+    if (togglingFullScreen_ || [self anyFullScreen]) {
+        RLog(@"Not restoring frame from before tab drag: full screen");
+        return NO;
+    }
+    if (self.numberOfTabs != _numberOfTabsBeforeTabDrag) {
+        RLog(@"Not restoring frame from before tab drag: tab count went from %@ to %@",
+             @(_numberOfTabsBeforeTabDrag), @(self.numberOfTabs));
+        return NO;
+    }
+    const NSRect currentFrame = self.window.frame;
+    if (!NSEqualSizes(currentFrame.size, _frameAfterTabDragBegan.size)) {
+        RLog(@"Not restoring frame from before tab drag: size changed from %@ to %@ during the drag",
+             NSStringFromRect(_frameAfterTabDragBegan), NSStringFromRect(currentFrame));
+        return NO;
+    }
+    NSRect frame = _frameBeforeTabDrag;
+    frame.origin.x += NSMinX(currentFrame) - NSMinX(_frameAfterTabDragBegan);
+    frame.origin.y += NSMinY(currentFrame) - NSMinY(_frameAfterTabDragBegan);
+    RLog(@"Restore frame %@ (%@ before tab drag, %@ after it began). Current frame is %@",
+         NSStringFromRect(frame),
+         NSStringFromRect(_frameBeforeTabDrag),
+         NSStringFromRect(_frameAfterTabDragBegan),
+         NSStringFromRect(currentFrame));
+    _excursionPrevented = _excursionPreventedBeforeTabDrag;
+    [self.window setFrame:frame display:YES];
+    [self repositionWidgets];
+    [self fitTabsToWindow];
+    [self notifyTmuxOfWindowResize];
+    return YES;
+}
+
+// refreshTerminal: runs when settings change, including the tab bar showing or hiding because the
+// tab bar visibility setting changed or a tab drag began or ended. This applies the
+// preserve-window-size setting to those, as tabViewDidChangeNumberOfTabViewItems: does when the
+// tab count changes. Returns YES if the window should keep its size.
+- (BOOL)shouldPreserveWindowSizeInRefreshWhenTabBarWasVisible:(BOOL)tabBarWasVisible
+                                             sizeOfLargestTab:(NSSize)sizeOfLargestTab {
+    if (_windowNeedsInitialSize || togglingFullScreen_ || [self anyFullScreen]) {
+        return NO;
+    }
+    const BOOL tabBarIsVisible = [self tabBarShouldBeVisibleWithAdditionalTabs:0];
+    if (tabBarIsVisible == tabBarWasVisible) {
+        return NO;
+    }
+    const BOOL showing = tabBarIsVisible;
+    const BOOL hiding = !tabBarIsVisible;
+    const NSRect proposedFrame = [self frameFittingWindowToTabsExcludingTmuxTabs:NO
+                                                                preservingHeight:NO
+                                                                sizeOfLargestTab:sizeOfLargestTab];
+    const BOOL wouldCauseExcursion = showing && [self fittingWindowToFrameWouldCauseExcursion:proposedFrame];
+    if (![self shouldPreserveWindowSizeWhenShowingTabBar:showing
+                                            hidingTabBar:hiding
+                                     wouldCauseExcursion:wouldCauseExcursion]) {
+        return NO;
+    }
+    [self didPreserveWindowSizeWhenShowingTabBar:showing
+                                    hidingTabBar:hiding
+                             wouldCauseExcursion:wouldCauseExcursion];
+    return YES;
+}
+
 - (void)refreshTerminal:(NSNotification *)aNotification {
     RLog(@"refreshTerminal: trigger=%@ effective=%@ desiredAppearance=%@ fullScreen=%@ lionFullScreen=%@ key=%@ main=%@ appActive=%@",
          aNotification ? aNotification.name : @"(nil/internal)",
@@ -13319,6 +13447,15 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         });
         return;
     }
+    const BOOL hideTabBarSuppressedDuringDrag = [iTermPreferences hideTabBarSuppressedDuringDrag];
+    const BOOL tabDragBegan = hideTabBarSuppressedDuringDrag && !_sawHideTabBarSuppressedDuringDrag;
+    const BOOL tabDragEnded = !hideTabBarSuppressedDuringDrag && _sawHideTabBarSuppressedDuringDrag;
+    _sawHideTabBarSuppressedDuringDrag = hideTabBarSuppressedDuringDrag;
+    if (tabDragBegan) {
+        [self rememberFrameBeforeTabDrag];
+    }
+    const BOOL tabBarWasVisible = _tabBarWasVisibleAtLastUpdate;
+
     if (self.windowType != _windowType) {
         [self updateWindowType];
     }
@@ -13343,9 +13480,19 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         [self.window setFrame:[self traditionalFullScreenFrame] display:YES];
     }
 
-    [self fitWindowToTabsExcludingTmuxTabs:NO
-                          preservingHeight:NO
-                          sizeOfLargestTab:tabSizeBeforeUpdatingTitleBarAccessories];
+    if (tabDragEnded && [self restoreFrameFromBeforeTabDrag]) {
+        RLog(@"refreshTerminal: restored frame from before tab drag");
+    } else if ([self shouldPreserveWindowSizeInRefreshWhenTabBarWasVisible:tabBarWasVisible
+                                                          sizeOfLargestTab:tabSizeBeforeUpdatingTitleBarAccessories]) {
+        RLog(@"refreshTerminal: preserving window size as tab bar visibility changes");
+        [self repositionWidgets];
+        [self fitTabsToWindow];
+        [self notifyTmuxOfWindowResize];
+    } else {
+        [self fitWindowToTabsExcludingTmuxTabs:NO
+                              preservingHeight:NO
+                              sizeOfLargestTab:tabSizeBeforeUpdatingTitleBarAccessories];
+    }
 
     // If tab style or position changed.
     [self repositionWidgets];
@@ -13408,6 +13555,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
     // If the theme changed from light to dark make sure split pane dividers redraw.
     [_contentView.tabView setNeedsDisplay:YES];
+    if (tabDragBegan && _haveFrameBeforeTabDrag) {
+        _frameAfterTabDragBegan = self.window.frame;
+    }
 }
 
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible {
