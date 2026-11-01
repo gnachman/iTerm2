@@ -391,6 +391,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                 ("OpenAI", Int(iTermAIVendor.openAI.rawValue)),
                 ("Gemini", Int(iTermAIVendor.gemini.rawValue)),
                 ("DeepSeek", Int(iTermAIVendor.deepSeek.rawValue)),
+                ("Grok", Int(iTermAIVendor.xAI.rawValue)),
                 ("Llama", Int(iTermAIVendor.llama.rawValue))]
             for (title, tag) in vendors {
                 popup.addItem(withTitle: title)
@@ -923,6 +924,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         case Int(iTermAIVendor.openAI.rawValue): return "https://platform.openai.com/api-keys"
         case Int(iTermAIVendor.gemini.rawValue): return "https://aistudio.google.com/app/api-keys"
         case Int(iTermAIVendor.deepSeek.rawValue): return "https://platform.deepseek.com/api_keys"
+        case Int(iTermAIVendor.xAI.rawValue): return "https://console.x.ai/team/default/api-keys"
         default: return nil
         }
     }

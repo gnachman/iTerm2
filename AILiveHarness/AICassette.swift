@@ -462,7 +462,8 @@ final class AICassetteSession {
         }
 
         let secrets = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY",
-                       "GEMINI_API_KEY", "DEEPSEEK_API_KEY"]
+                       "GEMINI_API_KEY", "DEEPSEEK_API_KEY",
+                       "XAI_API_KEY"]
             .compactMap { cfg($0) }
             .filter { !$0.isEmpty }
 

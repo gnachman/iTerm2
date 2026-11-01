@@ -229,6 +229,9 @@ final class AISafetyRefusalParserTests: XCTestCase {
         case "deepseek":
             var parser = DeepSeekResponseParser()
             return (try parser.parse(data: body))?.choiceMessages ?? []
+        case "xai":
+            var parser = LLMModernResponseParser()
+            return (try parser.parse(data: body))?.choiceMessages ?? []
         default:
             return []
         }
@@ -252,6 +255,9 @@ final class AISafetyRefusalParserTests: XCTestCase {
             return try drive(parser: &p, sse: sse)
         case "deepseek":
             var p = DeepSeekStreamingResponseParser()
+            return try drive(parser: &p, sse: sse)
+        case "xai":
+            var p = LLMModernStreamingResponseParser()
             return try drive(parser: &p, sse: sse)
         default:
             return ""

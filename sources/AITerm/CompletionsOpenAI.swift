@@ -15,6 +15,9 @@ struct ModernBodyRequestBuilder {
     // messages array after the system message(s). nil for the normal path, where
     // `messages` already holds the whole conversation.
     var frozenHistoryElements: Data? = nil
+    // Chat-completions reasoning control (xAI). Nil omits the key so models
+    // that have no effort list keep the body they had before.
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? = nil
 
     private struct Tool: Codable {
         var type = "function"
@@ -29,6 +32,7 @@ struct ModernBodyRequestBuilder {
         var tools: [Tool]? = nil
         var tool_choice: String? = nil  // "none" and "auto" also allowed
         var stream: Bool
+        var reasoning_effort: ResponsesRequestBody.ReasoningOptions.Effort? = nil
     }
 
     func body() throws -> Data {
@@ -51,7 +55,8 @@ struct ModernBodyRequestBuilder {
             temperature: provider.model.supportsTemperature ? 0 : nil,
             tools: maybeTools,
             tool_choice: functions.isEmpty ? nil : "auto",
-            stream: stream)
+            stream: stream,
+            reasoning_effort: reasoningEffort)
         DLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
