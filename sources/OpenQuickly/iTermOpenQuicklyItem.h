@@ -40,6 +40,14 @@
 
 @end
 
+// A session whose contents match the query. The result gives the snippet and the
+// place to scroll to.
+@protocol iTermGlobalSearchResultProtocol;
+@interface iTermOpenQuicklyContentMatchItem : iTermOpenQuicklySessionItem
+@property(nonatomic, weak) PTYSession *session;
+@property(nonatomic, strong) id<iTermGlobalSearchResultProtocol> result;
+@end
+
 @interface iTermOpenQuicklyWindowItem : iTermOpenQuicklyItem
 @end
 
