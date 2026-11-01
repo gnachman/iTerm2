@@ -803,12 +803,13 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
 
     // MARK: - xAI (chat completions on api.x.ai)
 
-    /// api.x.ai accepts the chat-completions image and PDF content parts.
-    /// A look-alike host must not inherit that gate.
-    func testXAI_acceptsImageAndPDF_lookAlikeHostDoesNot() {
+    /// api.x.ai accepts chat-completions image parts. Inline PDF file
+    /// parts are rejected by that endpoint, so the PDF gate stays off.
+    /// A look-alike host must not inherit the image gate.
+    func testXAI_acceptsImage_rejectsPDF_lookAlikeHostDoesNot() {
         let provider = LLMProvider(model: xaiModel(url: "https://api.x.ai/v1/chat/completions"))
         XCTAssertTrue(provider.accepts(mimeType: "image/png"))
-        XCTAssertTrue(provider.accepts(mimeType: "application/pdf"))
+        XCTAssertFalse(provider.accepts(mimeType: "application/pdf"))
 
         let lookalike = LLMProvider(model: xaiModel(url: "https://api.x.ai.evil.example/v1/chat/completions"))
         XCTAssertFalse(lookalike.accepts(mimeType: "image/png"))

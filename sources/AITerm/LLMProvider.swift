@@ -232,9 +232,9 @@ struct LLMProvider {
         if LLMMetadata.hostIsGoogleAIAPI(url: url) {
             return true
         }
-        if LLMMetadata.hostIsXAIAIAPI(url: url) {
-            return true
-        }
+        // api.x.ai chat completions rejects an inline file part with
+        // HTTP 400 and points at /v1/responses. Images stay on
+        // supportsInlineImageBlock.
         return false
     }
 

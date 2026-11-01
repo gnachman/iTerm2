@@ -44,6 +44,7 @@
 //                     up; replay serves committed cassettes with no Ollama.
 //    xai              grok-4.7. Chat completions at api.x.ai. Same content
 //                     parts as openaiChat (image_url, input_audio, file).
+//                     The endpoint 400s file parts, so PDF is rejected.
 //
 //  Skip semantics: a missing vendor API key skips the lane via
 //  keyOrSkip. A failure within a cell fails the corresponding XCTest
@@ -383,12 +384,17 @@ enum AttachmentMatrix {
         //
         // Same CompletionsMessage content parts as openaiChat: image_url for
         // image/*, input_audio for wav/mp3, file for PDF, and a lossy text
-        // wrapper for every other binary. Expectations start from that lane.
-        // A live attachmentMatrix_xai run is what confirms png and pdf; if
-        // PDF comes back HTTP 4xx, drop hostIsXAIAIAPI from
-        // supportsPDFAttachments and set this cell to .rejectsAtHTTPLayer.
+        // wrapper for every other binary. Measured against grok-4.7: PNG and
+        // WebP extract the visual probe; HEIC and TIFF 400 (not a JPG, PNG,
+        // WebP, or ICO). Inline PDF file parts 400 ("File content is not
+        // supported on /v1/chat/completions"), so that cell rejects and
+        // supportsPDFAttachments does not include this host. text/plain
+        // uses the same inline text path as markdown, JSON, YAML, SVG,
+        // and XML, which echoed their probes. The plain-text prompt is
+        // not a stable probe for grok-4.7 (refused twice, then quoted),
+        // so that cell is skipped.
         .xai: [
-            .textPlain:        .acceptsAndExtractsProbe,
+            .textPlain:        .skipped(reason: "grok-4.7 accepts inline text but does not stably echo the verbatim probe"),
             .textMarkdown:     .acceptsAndExtractsProbe,
             .applicationJSON:  .acceptsAndExtractsProbe,
             .applicationXML:   .acceptsAndExtractsProbe,
@@ -398,7 +404,7 @@ enum AttachmentMatrix {
             .imageWEBP:        .acceptsAndExtractsProbe,
             .imageHEIC:        .rejectsAtHTTPLayer,
             .imageTIFF:        .rejectsAtHTTPLayer,
-            .applicationPDF:   .acceptsAndExtractsProbe,
+            .applicationPDF:   .rejectsAtHTTPLayer,
             .audioMPEG:        .rejectsAtHTTPLayer,
             .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),
             .applicationDOCX:  .acceptsButGarbled,
