@@ -43,7 +43,7 @@
 //        ITERM2_AI_LIVE_REFUSAL=missing ITERM2_AI_LIVE_<VENDOR>_MODELS=<modelname> \
 //            tools/run_ai_live.sh test_<vendor>_refusal
 //
-//     <vendor> is openai / anthropic / gemini / deepseek (lowercase). The
+//     <vendor> is openai / anthropic / gemini / deepseek / xai (lowercase). The
 //     refusal prompt is a request vendors flag as abuse, so the scenario is
 //     opt-in and "missing" skips models already fixtured. Don't run it more
 //     than needed.
