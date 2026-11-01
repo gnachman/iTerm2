@@ -147,6 +147,8 @@ final class ExecutionPermits: NSObject {
     private var inUse: Int {
         return holders.count
     }
+    // In order of virtual time, then of arrival, so the next in line is the first one that isn't
+    // paused. A waiter's virtual time doesn't change while it is in line: only holders are charged.
     private var waiters = [Client]() {
         didSet {
             // Parking reads this without the lock. It's stored before handOff() looks for idle
@@ -388,7 +390,11 @@ final class ExecutionPermits: NSObject {
             if inUse > _capacity {
                 return true
             }
-            return waiters.contains { !$0.isPaused() && $0.virtualTime <= client.virtualTime }
+            // The line is in order, so the first waiter that can run has run the least.
+            guard let next = waiters.first(where: { !$0.isPaused() }) else {
+                return false
+            }
+            return next.virtualTime <= client.virtualTime
         }
     }
 
@@ -525,7 +531,19 @@ final class ExecutionPermits: NSObject {
         client.waitingSince = now()
         client.waitingSequence = nextWaitingSequence
         nextWaitingSequence += 1
-        waiters.append(client)
+        // Insert in order; see waiters.
+        let key = (client.virtualTime, client.waitingSequence)
+        var low = 0
+        var high = waiters.count
+        while low < high {
+            let mid = (low + high) / 2
+            if (waiters[mid].virtualTime, waiters[mid].waitingSequence) < key {
+                low = mid + 1
+            } else {
+                high = mid
+            }
+        }
+        waiters.insert(client, at: low)
         startHealthTimerIfNeeded()
     }
 
@@ -539,7 +557,7 @@ final class ExecutionPermits: NSObject {
     private func raiseFloor() {
         mutex.assertOwned()
         let lowest = min(holders.lazy.filter { !$0.isParked }.map(\.virtualTime).min() ?? .infinity,
-                         waiters.lazy.map(\.virtualTime).min() ?? .infinity)
+                         waiters.first?.virtualTime ?? .infinity)
         if lowest.isFinite {
             floor = max(floor, lowest)
         }
@@ -561,14 +579,8 @@ final class ExecutionPermits: NSObject {
         var woken = [Client]()
         var published = false
         while true {
-            var best: Client?
-            for waiter in waiters where waiter === caller || !waiter.isPaused() {
-                if let current = best,
-                   (current.virtualTime, current.waitingSequence) <= (waiter.virtualTime, waiter.waitingSequence) {
-                    continue
-                }
-                best = waiter
-            }
+            // The line is in order, so the first waiter that can run is the one owed a permit.
+            let best = waiters.first { $0 === caller || !$0.isPaused() }
             guard let best else {
                 if !published && !waiters.isEmpty && permitAvailable() {
                     // About to leave a permit beside paused waiters. Publish that, then look again

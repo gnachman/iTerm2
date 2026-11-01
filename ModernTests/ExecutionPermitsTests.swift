@@ -11,6 +11,8 @@ final class ExecutionPermitsTests: XCTestCase {
     private final class FakeSession {
         let name: String
         var paused = false
+        // How many times the permits asked whether this session is paused.
+        var pausedChecks = 0
         var alive = true
         var wakes = 0
         // Runs when the session is woken.
@@ -19,7 +21,10 @@ final class ExecutionPermitsTests: XCTestCase {
 
         init(_ name: String, permits: ExecutionPermits, visible: Bool = false) {
             self.name = name
-            client = permits.makeClient(isPaused: { [unowned self] in self.paused },
+            client = permits.makeClient(isPaused: { [unowned self] in
+                self.pausedChecks += 1
+                return self.paused
+            },
                                         wake: { [unowned self] in
                 self.wakes += 1
                 self.onWake?()
@@ -260,6 +265,59 @@ final class ExecutionPermitsTests: XCTestCase {
         }
         XCTAssertEqual(a.wakes, 0)
         XCTAssertTrue(unexpected.isEmpty)
+    }
+
+    // With many sessions in line, deciding who is next looks at the front of the line, not at
+    // every waiter: these run with the lock held, several hundred times a second.
+    func testCheckpointAndHandoffLookOnlyAtTheFrontOfTheLine() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        let holder = FakeSession("holder", permits: permits)
+        XCTAssertTrue(permits.acquire(holder.client))
+        let waiters = (0..<100).map { FakeSession("w\($0)", permits: permits) }
+        for waiter in waiters {
+            XCTAssertFalse(permits.acquire(waiter.client))
+        }
+        let checks = { waiters.reduce(0) { $0 + $1.pausedChecks } }
+        let before = checks()
+        XCTAssertTrue(permits.checkpoint(holder.client, ran: 0.005))
+        XCTAssertLessThanOrEqual(checks() - before, 2)
+
+        let beforeRelease = checks()
+        permits.release(holder.client, ran: 0, hasMoreWork: false)
+        XCTAssertEqual(waiters[0].wakes, 1)
+        XCTAssertLessThanOrEqual(checks() - beforeRelease, 2)
+    }
+
+    // The line stays in order of virtual time, whatever order sessions join it in.
+    func testHandoffsFollowVirtualTimeWhateverOrderSessionsJoinTheLine() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 1)
+        let holder = FakeSession("holder", permits: permits)
+        XCTAssertTrue(permits.acquire(holder.client))
+        let sessions = (0..<8).map { FakeSession("s\($0)", permits: permits) }
+        for session in sessions {
+            XCTAssertFalse(permits.acquire(session.client))
+        }
+        // Each takes one turn of a different length and rejoins the line, in arrival order, so
+        // the line's order of arrival isn't its order of virtual time.
+        let runTimes: [TimeInterval] = [0.07, 0.02, 0.05, 0.01, 0.08, 0.03, 0.06, 0.04]
+        permits.release(holder.client, ran: 0, hasMoreWork: false)
+        for (session, ran) in zip(sessions, runTimes) {
+            XCTAssertEqual(session.wakes, 1, session.name)
+            XCTAssertTrue(permits.acquire(session.client))
+            permits.release(session.client, ran: ran, hasMoreWork: true)
+        }
+        // The next round goes in order of time run.
+        var order = [String]()
+        for _ in sessions {
+            guard let next = sessions.first(where: { $0.wakes == 2 && !order.contains($0.name) }) else {
+                XCTFail("Nobody was handed the permit after \(order)")
+                return
+            }
+            order.append(next.name)
+            XCTAssertTrue(permits.acquire(next.client))
+            permits.release(next.client, ran: 0, hasMoreWork: false)
+        }
+        XCTAssertEqual(order, ["s3", "s1", "s5", "s7", "s2", "s6", "s0", "s4"])
     }
 
     // MARK: - Fair sharing
