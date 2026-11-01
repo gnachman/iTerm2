@@ -39,12 +39,16 @@ _cg = ctypes.CDLL(ctypes.util.find_library("ApplicationServices"))
 _cg.CGEventCreateKeyboardEvent.restype = ctypes.c_void_p
 _cg.CGEventCreateKeyboardEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint16, ctypes.c_bool]
 _cg.CGEventPostToPid.argtypes = [ctypes.c_int, ctypes.c_void_p]
+_cg.CGEventSetFlags.argtypes = [ctypes.c_void_p, ctypes.c_uint64]
 _cf = ctypes.CDLL(ctypes.util.find_library("CoreFoundation"))
 _cf.CFRelease.argtypes = [ctypes.c_void_p]
 
 
 def post_key(pid, keycode, down):
     ev = _cg.CGEventCreateKeyboardEvent(None, keycode, down)
+    # A new event takes the system's current modifiers. Clear them so a modifier left down
+    # (e.g. by an earlier synthetic Cmd-key) doesn't turn the space into a shortcut.
+    _cg.CGEventSetFlags(ev, 0)
     _cg.CGEventPostToPid(pid, ev)
     _cf.CFRelease(ev)
 
@@ -128,7 +132,10 @@ for i in range(nflood):
 subprocess.run(["open", "-a", args.app, command_file("probe", f"python3 '{TOOLS}/probe.py' '{run}' {max_s}")], check=True)
 
 # Focus is reported only when it changes, so make sure the app becomes active after the probe starts.
+# If it's already active, activating it changes nothing, so activate Finder first.
 time.sleep(3)
+subprocess.run(["open", "-a", "Finder"], check=True)
+time.sleep(1)
 subprocess.run(["open", "-a", args.app], check=True)
 
 focus = os.path.join(run, "probe-focus")
