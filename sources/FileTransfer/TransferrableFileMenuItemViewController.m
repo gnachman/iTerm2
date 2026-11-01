@@ -9,6 +9,7 @@
 #import "TransferrableFileMenuItemViewController.h"
 #import "FileTransferManager.h"
 #import "TransferrableFileMenuItemView.h"
+#import "DebugLogging.h"
 #import "iTermWarning.h"
 
 static const CGFloat kWidth = 300;
@@ -92,6 +93,10 @@ static const CGFloat kCollapsedHeight = 51;
 }
 
 - (void)showMenu {
+    if (self.transferrableFile.suppressesAutomaticMenu) {
+        DLog(@"Automatic menu suppressed");
+        return;
+    }
     if (!_hasOpenedMenu) {
         if (self.transferrableFile.isDownloading) {
             [[FileTransferManager sharedInstance] openDownloadsMenu];

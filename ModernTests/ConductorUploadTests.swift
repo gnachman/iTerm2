@@ -2,6 +2,36 @@ import XCTest
 @testable import iTerm2SharedARC
 
 @MainActor
+final class ConductorUploadPreparationFailureTests: XCTestCase {
+    private final class Delegate: ConductorFileTransferDelegate {
+        func beginDownload(fileTransfer: ConductorFileTransfer) { XCTFail("Unexpected download") }
+        func beginUpload(fileTransfer: ConductorFileTransfer) { XCTFail("Unexpected upload") }
+    }
+
+    func testPreparationFailureRegistersFailedTransferBeforeCompletion() {
+        let manager = FileTransferManager.sharedInstance()!
+        let path = SCPPath()
+        path.hostname = "example.com"
+        path.path = "/tmp/folder"
+        let delegate = Delegate()
+        let transfer = ConductorFileTransfer(path: path, localPath: "/tmp/folder", data: nil, delegate: delegate)
+        transfer.suppressesAutomaticMenu = true
+        var completed = false
+        transfer.completionBlock = { success, error in
+            XCTAssertFalse(success)
+            XCTAssertEqual(error, "archive failed")
+            XCTAssertTrue(manager.files.contains(transfer))
+            completed = true
+        }
+        transfer.failBeforeUpload(reason: "archive failed")
+        XCTAssertTrue(completed)
+        XCTAssertEqual(transfer.error(), "archive failed")
+        XCTAssertTrue(transfer.isStopped)
+        manager.removeAllUploads()
+    }
+}
+
+@MainActor
 final class ConductorUploadTests: XCTestCase {
     func testScreenshotUsesThirtyOneRequestsAndPreservesBytes() async throws {
         let data = Data((0..<(490 * 1024)).map { UInt8(truncatingIfNeeded: $0) })

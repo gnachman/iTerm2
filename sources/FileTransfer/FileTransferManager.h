@@ -20,6 +20,8 @@
 - (void)animateImage:(NSImage *)image intoDownloadsMenuFromPoint:(NSPoint)point onScreen:(NSScreen *)screen;
 - (void)openDownloadsMenu;
 - (void)openUploadsMenu;
+// Refresh the menu bar once per launch after adding a transfer menu on macOS 27.
+- (void)refreshMenuBarIfNeeded;
 
 #pragma mark - Calls made by subclasses of TransferrableFile
 

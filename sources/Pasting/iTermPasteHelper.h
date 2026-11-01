@@ -115,6 +115,9 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 // Save an event to process after pasting is done.
 - (void)enqueueEvent:(NSEvent *)event;
 
+// Run after the current paste and any queued events have drained.
+- (void)performAfterPasting:(void (^)(void))block;
+
 // Remove all queued events and pending pastes, and hide the paste indicator if shown.
 - (void)abort;
 
