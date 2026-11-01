@@ -50078,25 +50078,25 @@
       }
     },
     "WVK-xs-N2h.ibShadowedToolTip" : {
-      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When enabled, small horizontal cursor movements are animated. Not available for block cursors.\"; ObjectID = \"WVK-xs-N2h\";",
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When enabled, small horizontal cursor movements are animated.\"; ObjectID = \"WVK-xs-N2h\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wenn aktiviert, werden kleine horizontale Cursorbewegungen animiert. Nicht verfügbar für Blockcursor."
+            "state" : "needs_review",
+            "value" : "Wenn aktiviert, werden kleine horizontale Cursorbewegungen animiert."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "When enabled, small horizontal cursor movements are animated. Not available for block cursors."
+            "value" : "When enabled, small horizontal cursor movements are animated."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "有効にすると、小さな水平方向のカーソル移動がアニメーション化されます。ブロックカーソルでは使用できません。"
+            "state" : "needs_review",
+            "value" : "有効にすると、小さな水平方向のカーソル移動がアニメーション化されます。"
           }
         },
         "ko" : {
@@ -50107,20 +50107,20 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quando ativado, pequenos movimentos horizontais do cursor são animados. Não disponível para cursores em bloco."
+            "state" : "needs_review",
+            "value" : "Quando ativado, pequenos movimentos horizontais do cursor são animados."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Если этот параметр включён, небольшие горизонтальные перемещения курсора анимируются. Недоступно для блочных курсоров."
+            "state" : "needs_review",
+            "value" : "Если этот параметр включён, небольшие горизонтальные перемещения курсора анимируются."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "启用后，小幅水平光标移动会带有动画。方块光标不可用。"
+            "state" : "needs_review",
+            "value" : "启用后，小幅水平光标移动会带有动画。"
           }
         }
       }
