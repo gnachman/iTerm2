@@ -20328,6 +20328,54 @@
         }
       }
     },
+    "AdvancedSetting.engageLayoutEngineInTerminalWindows" : {
+      "comment" : "Advanced setting: engageLayoutEngineInTerminalWindows",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Engage Auto Layout in new terminal windows.\nAdds a hidden glass effect view (before macOS 26, a view with constraints) to each new terminal window, which turns on AppKit’s layout engine for the whole window. Use it to check that windows still lay out and resize correctly with the engine on. Development builds only."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Layout in neuen Terminalfenstern aktivieren.\nFügt jedem neuen Terminalfenster eine verborgene Glaseffekt-Ansicht hinzu (vor macOS 26 eine Ansicht mit Constraints), wodurch die Layout-Engine von AppKit für das gesamte Fenster eingeschaltet wird. Damit lässt sich prüfen, ob Fenster bei eingeschalteter Engine weiterhin korrekt angeordnet und in der Größe geändert werden. Nur in Entwicklungs-Builds."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいターミナルウインドウで Auto Layout を有効にします。\n新しい各ターミナルウインドウに非表示のガラス効果ビュー (macOS 26 より前では制約付きのビュー) を追加し、ウインドウ全体で AppKit のレイアウトエンジンをオンにします。エンジンがオンの状態でもウインドウのレイアウトとサイズ変更が正しく行われるかを確認するのに使用します。開発ビルドのみ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 터미널 윈도우에서 Auto Layout을 사용합니다.\n새 터미널 윈도우마다 숨겨진 글래스 효과 보기(macOS 26 이전에는 제약 조건이 있는 보기)를 추가하여 윈도우 전체에 AppKit의 레이아웃 엔진을 켭니다. 엔진이 켜진 상태에서도 윈도우가 올바르게 배치되고 크기가 조정되는지 확인할 때 사용하십시오. 개발 빌드 전용입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar o Auto Layout em novas janelas de terminal.\nAdiciona uma visualização oculta de efeito de vidro (antes do macOS 26, uma visualização com restrições) a cada nova janela de terminal, o que ativa o mecanismo de layout do AppKit para a janela inteira. Use isto para verificar se as janelas continuam sendo dispostas e redimensionadas corretamente com o mecanismo ativado. Apenas em builds de desenvolvimento."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включать Auto Layout в новых окнах терминала.\nДобавляет в каждое новое окно терминала скрытое представление с эффектом стекла (до macOS 26 это представление с ограничениями), что включает механизм компоновки AppKit для всего окна. Используйте, чтобы проверить, что окна по-прежнему правильно компонуются и меняют размер при включённом механизме. Только для сборок разработки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在新终端窗口中启用 Auto Layout。\n向每个新终端窗口添加一个隐藏的玻璃效果视图（macOS 26 之前为一个带约束的视图），从而为整个窗口开启 AppKit 的布局引擎。可用来检查在启用该引擎时窗口是否仍能正确布局和调整大小。仅限开发版本。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.errorSound" : {
       "comment" : "Advanced setting: errorSound",
       "extractionState" : "extracted_with_value",
@@ -22958,6 +23006,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "非 Minimal 主题的浅色模式下，未选中标签页的暗度（在 [0…1] 范围内）。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.limitSessionsProcessingOutput" : {
+      "comment" : "Advanced setting: limitSessionsProcessingOutput",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Limit how many sessions process output at once, as set by “Sessions processing output at once” in Settings > General > Magic?\nTurn this off if you suspect the limit of causing a problem, such as a session that stops updating. This applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begrenzen, wie viele Sitzungen gleichzeitig Ausgabe verarbeiten, wie unter „Gleichzeitig Ausgabe verarbeitende Sitzungen“ in Einstellungen > Allgemein > Magie festgelegt?\nSchalten Sie dies aus, wenn Sie vermuten, dass die Begrenzung ein Problem verursacht, etwa eine Sitzung, die nicht mehr aktualisiert wird. Dies gilt nur für die neue Implementierung der Sitzungsein- und -ausgabe. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定 > 一般 > Magic」の「同時に出力を処理するセッション数」の設定に従って、同時に出力を処理するセッションの数を制限しますか?\n更新が止まるセッションなど、この制限が問題の原因と思われる場合はオフにしてください。これはセッションの入出力の新しい実装を使用している場合にのみ適用されます。この設定を反映するには iTerm2 を再起動する必要があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 > 일반 > 매직의 “동시에 출력을 처리하는 세션 수”에 따라 동시에 출력을 처리하는 세션 수를 제한하겠습니까?\n업데이트가 멈춘 세션처럼 이 제한이 문제를 일으킨다고 의심되면 끄십시오. 새로운 세션 입출력 구현을 사용할 때만 적용됩니다. 이 설정을 적용하려면 iTerm2를 재시작해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limitar quantas sessões processam saída ao mesmo tempo, conforme definido em “Sessões processando saída ao mesmo tempo” em Ajustes > Geral > Magic?\nDesative isto se suspeitar que o limite está causando um problema, como uma sessão que para de atualizar. Isto se aplica apenas à nova implementação de entrada e saída das sessões. Você deve reiniciar o iTerm2 para que este ajuste tenha efeito."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ограничивать число сеансов, одновременно обрабатывающих вывод, значением параметра «Сеансов, одновременно обрабатывающих вывод» в разделе Настройки > Общие > Магия?\nОтключите, если подозреваете, что ограничение вызывает проблему, например сеанс перестаёт обновляться. Это действует только при новой реализации ввода и вывода сеансов. Для вступления настройки в силу нужно перезапустить iTerm2."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是否按“设置 > 通用 > Magic”中的“同时处理输出的会话数”限制同时处理输出的会话数量？\n如果你怀疑此限制导致了问题（例如某个会话停止更新），请关闭此项。此设置仅适用于会话输入输出的新实现。必须重启 iTerm2 才能使此设置生效。"
           }
         }
       }
@@ -31410,6 +31506,54 @@
         }
       }
     },
+    "AdvancedSetting.showSSHFlowControlMonitor" : {
+      "comment" : "Advanced setting: showSSHFlowControlMonitor",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show a window with SSH Integration’s flow control state.\nFor the current session’s connection and every connection nested in it: the credit outstanding, the measured delays and rates, and charts of the last minute. Closing the window turns this off."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Fenster mit dem Flusssteuerungsstatus der SSH-Integration anzeigen.\nFür die Verbindung der aktuellen Sitzung und jede darin verschachtelte Verbindung: das ausstehende Guthaben, die gemessenen Verzögerungen und Raten sowie Diagramme der letzten Minute. Durch Schließen des Fensters wird dies ausgeschaltet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH統合のフロー制御の状態を表示するウインドウを表示します。\n現在のセッションの接続と、その中にネストされたすべての接続について、未消化のクレジット、計測された遅延とレート、直近 1 分間のグラフを表示します。ウインドウを閉じるとこの設定はオフになります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH 통합의 흐름 제어 상태를 보여 주는 윈도우를 표시합니다.\n현재 세션의 연결과 그 안에 중첩된 모든 연결에 대해 미사용 크레딧, 측정된 지연 및 속도, 최근 1분간의 차트를 보여 줍니다. 윈도우를 닫으면 이 설정이 꺼집니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar uma janela com o estado do controle de fluxo da Integração SSH.\nPara a conexão da sessão atual e cada conexão aninhada nela: o crédito pendente, os atrasos e taxas medidos e gráficos do último minuto. Fechar a janela desativa este ajuste."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать окно с состоянием управления потоком интеграции с SSH.\nДля подключения текущего сеанса и каждого вложенного в него подключения: неизрасходованный кредит, измеренные задержки и скорости, а также графики за последнюю минуту. Закрытие окна отключает этот параметр."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示一个窗口，展示 SSH 集成的流量控制状态。\n针对当前会话的连接以及嵌套在其中的每个连接：显示未用完的额度、测得的延迟和速率，以及最近一分钟的图表。关闭该窗口会关闭此项。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.showSecureKeyboardEntryIndicator" : {
       "comment" : "Advanced setting: showSecureKeyboardEntryIndicator",
       "extractionState" : "extracted_with_value",
@@ -32812,10 +32956,40 @@
             "value" : "Pace output from remote hosts.\nWith SSH Integration, iTerm2 tells the remote host how much output to send, so a program that prints a lot cannot fill the connection’s buffers, and Control-C takes effect at once instead of after the buffered output. Takes effect for new connections."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgabe von Remote-Hosts drosseln.\nMit der SSH-Integration teilt iTerm2 dem Remote-Host mit, wie viel Ausgabe er senden soll, sodass ein Programm, das viel ausgibt, die Puffer der Verbindung nicht füllen kann und Control-C sofort wirkt statt erst nach der gepufferten Ausgabe. Wird für neue Verbindungen wirksam."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホストからの出力のペースを調整します。\nSSH統合では、iTerm2 がリモートホストに送信すべき出力量を伝えるため、大量に出力するプログラムが接続のバッファを埋め尽くすことがなく、Control-C はバッファされた出力の後ではなくすぐに反映されます。新しい接続から反映されます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트의 출력 속도를 조절합니다.\nSSH 통합을 사용하면 iTerm2가 원격 호스트에 보낼 출력의 양을 알려 주므로, 출력이 많은 프로그램이 연결 버퍼를 가득 채울 수 없고 Control-C가 버퍼에 쌓인 출력이 끝난 뒤가 아니라 즉시 적용됩니다. 새 연결부터 적용됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlar o ritmo da saída de hosts remotos.\nCom a Integração SSH, o iTerm2 informa ao host remoto quanta saída enviar, para que um programa que imprime muito não possa encher os buffers da conexão, e Control-C tenha efeito imediatamente em vez de depois da saída em buffer. Tem efeito para novas conexões."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регулировать темп вывода с удалённых хостов.\nПри интеграции с SSH iTerm2 сообщает удалённому хосту, сколько вывода отправлять, поэтому программа, выводящая много данных, не может переполнить буферы подключения, а Control-C срабатывает сразу, а не после буферизованного вывода. Действует для новых подключений."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "控制远程主机的输出节奏。\n使用 SSH 集成时，iTerm2 会告诉远程主机应发送多少输出，这样大量输出的程序就无法填满连接的缓冲区，按下 Control-C 也会立即生效，而不必等缓冲的输出完成。对新连接生效。"
           }
         }
       }
@@ -34500,6 +34674,54 @@
         }
       }
     },
+    "AdvancedSetting.tokenExecutionTimeSlice" : {
+      "comment" : "Advanced setting: tokenExecutionTimeSlice",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Seconds a session processes output before letting a waiting session take a turn.\nThis applies only with the new implementation of session input and output, when more sessions have output to process than can run at once. You must restart iTerm2 for this setting to take effect."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekunden, die eine Sitzung Ausgabe verarbeitet, bevor eine wartende Sitzung an die Reihe kommt.\nDies gilt nur für die neue Implementierung der Sitzungsein- und -ausgabe, wenn mehr Sitzungen Ausgabe zu verarbeiten haben, als gleichzeitig laufen können. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待機中のセッションに順番を譲るまでに、セッションが出力を処理する秒数。\nこれはセッションの入出力の新しい実装を使用しており、同時に実行できる数より多くのセッションに処理すべき出力がある場合にのみ適用されます。この設定を反映するには iTerm2 を再起動する必要があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "대기 중인 세션에 차례를 넘기기 전에 한 세션이 출력을 처리하는 시간(초).\n새로운 세션 입출력 구현을 사용하고, 출력을 처리할 세션이 동시에 실행할 수 있는 수보다 많을 때만 적용됩니다. 이 설정을 적용하려면 iTerm2를 재시작해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segundos que uma sessão processa saída antes de deixar uma sessão em espera ter sua vez.\nIsto se aplica apenas à nova implementação de entrada e saída das sessões, quando há mais sessões com saída a processar do que podem ser executadas ao mesmo tempo. Você deve reiniciar o iTerm2 para que este ajuste tenha efeito."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сколько секунд сеанс обрабатывает вывод, прежде чем уступить очередь ожидающему сеансу.\nЭто действует только при новой реализации ввода и вывода сеансов, когда вывод для обработки есть у большего числа сеансов, чем может работать одновременно. Для вступления настройки в силу нужно перезапустить iTerm2."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会话处理输出多少秒后，让等待中的会话轮到处理。\n此设置仅适用于会话输入输出的新实现，且仅在有输出待处理的会话多于可同时运行的数量时生效。必须重启 iTerm2 才能使此设置生效。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.tolerateUnrecognizedTmuxCommands" : {
       "comment" : "Advanced setting: tolerateUnrecognizedTmuxCommands",
       "extractionState" : "extracted_with_value",
@@ -36180,6 +36402,54 @@
         }
       }
     },
+    "AdvancedSetting.useTaskIOMonitors" : {
+      "comment" : "Advanced setting: useTaskIOMonitors",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use the new implementation of session input and output, which keeps sessions with heavy output from slowing down typing in other sessions?\nTurn this off if you suspect it of causing a problem. You must restart iTerm2 for this setting to take effect."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die neue Implementierung der Sitzungsein- und -ausgabe verwenden, die verhindert, dass Sitzungen mit viel Ausgabe das Tippen in anderen Sitzungen verlangsamen?\nSchalten Sie dies aus, wenn Sie vermuten, dass sie ein Problem verursacht. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大量に出力するセッションが他のセッションでの入力を遅くしないようにする、セッションの入出力の新しい実装を使用しますか?\nこれが問題の原因と思われる場合はオフにしてください。この設定を反映するには iTerm2 を再起動する必要があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "출력이 많은 세션이 다른 세션의 입력을 느리게 만들지 않도록 하는 새로운 세션 입출력 구현을 사용하겠습니까?\n이 구현이 문제를 일으킨다고 의심되면 끄십시오. 이 설정을 적용하려면 iTerm2를 재시작해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar a nova implementação de entrada e saída das sessões, que impede que sessões com muita saída deixem a digitação lenta em outras sessões?\nDesative isto se suspeitar que está causando um problema. Você deve reiniciar o iTerm2 para que este ajuste tenha efeito."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использовать новую реализацию ввода и вывода сеансов, при которой сеансы с интенсивным выводом не замедляют ввод текста в других сеансах?\nОтключите, если подозреваете, что она вызывает проблему. Для вступления настройки в силу нужно перезапустить iTerm2."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是否使用会话输入输出的新实现，以防止大量输出的会话拖慢其他会话中的输入？\n如果你怀疑它导致了问题，请关闭此项。必须重启 iTerm2 才能使此设置生效。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.useUnevenTabs" : {
       "comment" : "Advanced setting: useUnevenTabs",
       "extractionState" : "extracted_with_value",
@@ -36512,6 +36782,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查看 man 页面命令。\n当点击触摸栏上的 man 页面按钮时使用。%@ 被替换为命令，以 & 结束命令可避免打开 iTerm2 窗口（例如，如果正在启动外部查看器）。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.visibleSessionExecutionWeight" : {
+      "comment" : "Advanced setting: visibleSessionExecutionWeight",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "How many times as much processing time a visible session gets as a hidden one when more sessions have output to process than can run at once.\nThis applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie viel Mal mehr Verarbeitungszeit eine sichtbare Sitzung gegenüber einer verborgenen erhält, wenn mehr Sitzungen Ausgabe zu verarbeiten haben, als gleichzeitig laufen können.\nDies gilt nur für die neue Implementierung der Sitzungsein- und -ausgabe. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同時に実行できる数より多くのセッションに処理すべき出力がある場合に、表示中のセッションが非表示のセッションの何倍の処理時間を得るか。\nこれはセッションの入出力の新しい実装を使用している場合にのみ適用されます。この設定を反映するには iTerm2 を再起動する必要があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "출력을 처리할 세션이 동시에 실행할 수 있는 수보다 많을 때, 보이는 세션이 숨겨진 세션보다 몇 배의 처리 시간을 받을지 지정합니다.\n새로운 세션 입출력 구현을 사용할 때만 적용됩니다. 이 설정을 적용하려면 iTerm2를 재시작해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quantas vezes mais tempo de processamento uma sessão visível recebe em relação a uma oculta quando há mais sessões com saída a processar do que podem ser executadas ao mesmo tempo.\nIsto se aplica apenas à nova implementação de entrada e saída das sessões. Você deve reiniciar o iTerm2 para que este ajuste tenha efeito."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Во сколько раз больше времени обработки получает видимый сеанс по сравнению со скрытым, когда вывод для обработки есть у большего числа сеансов, чем может работать одновременно.\nЭто действует только при новой реализации ввода и вывода сеансов. Для вступления настройки в силу нужно перезапустить iTerm2."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当有输出待处理的会话多于可同时运行的数量时，可见会话获得的处理时间是隐藏会话的多少倍。\n此设置仅适用于会话输入输出的新实现。必须重启 iTerm2 才能使此设置生效。"
           }
         }
       }
@@ -51409,6 +51727,42 @@
             "state" : "new",
             "value" : "The function call failed: %@"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Funktionsaufruf ist fehlgeschlagen: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "関数呼び出しに失敗しました: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "함수 호출에 실패했습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A chamada de função falhou: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось выполнить вызов функции: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "函数调用失败：%@"
+          }
         }
       }
     },
@@ -52554,6 +52908,42 @@
             "state" : "new",
             "value" : "Mention this session in AI chat?"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sitzung im KI-Chat erwähnen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIチャットでこのセッションをメンションしますか?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 채팅에서 이 세션을 멘션하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mencionar esta sessão no chat de IA?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Упомянуть эту сессию в чате ИИ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AI 聊天中提及此会话？"
+          }
         }
       }
     },
@@ -52854,6 +53244,42 @@
             "state" : "new",
             "value" : "A web browser session cannot be linked as a terminal."
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Webbrowser-Sitzung kann nicht als Terminal verknüpft werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webブラウザのセッションはターミナルとしてリンクできません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "웹 브라우저 세션은 터미널로 연결할 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma sessão de navegador web não pode ser vinculada como terminal."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сессию веб-браузера нельзя связать как терминал."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网页浏览器会话不能作为终端关联。"
+          }
         }
       }
     },
@@ -52865,6 +53291,42 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "A terminal session cannot be linked as a web browser."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Terminalsitzung kann nicht als Webbrowser verknüpft werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ターミナルのセッションはWebブラウザとしてリンクできません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "터미널 세션은 웹 브라우저로 연결할 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma sessão de terminal não pode ser vinculada como navegador web."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сессию терминала нельзя связать как веб-браузер."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "终端会话不能作为网页浏览器关联。"
           }
         }
       }
@@ -60886,10 +61348,40 @@
             "value" : "Keep Allowing"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiterhin erlauben"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可を維持"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "계속 허용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar permitindo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжать разрешать"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续允许"
           }
         }
       }
@@ -60952,10 +61444,40 @@
             "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it left Claude Code’s settings there unchanged."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte nicht feststellen, ob %@ dieser Mac ist, daher hat es die Einstellungen von Claude Code dort nicht verändert."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2は%@がこのMacかどうかを判断できなかったため、そこにあるClaude Codeの設定を変更しませんでした。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2가 %@이(가) 이 Mac인지 확인할 수 없어 그곳의 Claude Code 설정을 변경하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu determinar se %@ é este Mac, por isso não alterou os ajustes do Claude Code lá."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не смог определить, является ли %@ этим Mac, поэтому не стал изменять настройки Claude Code на нём."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法判断 %@ 是否就是这台 Mac，因此未更改该处的 Claude Code 设置。"
           }
         }
       }
@@ -60970,10 +61492,40 @@
             "value" : "Claude Code’s settings on %@ couldn’t be parsed as JSON."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen von Claude Code auf %@ konnten nicht als JSON geparst werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のClaude Codeの設定をJSONとして解析できませんでした。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@의 Claude Code 설정을 JSON으로 파싱할 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível analisar os ajustes do Claude Code em %@ como JSON."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось разобрать настройки Claude Code на %@ как JSON."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 上的 Claude Code 设置无法被解析为 JSON。"
           }
         }
       }
@@ -61036,10 +61588,40 @@
             "value" : "Couldn’t read Claude Code’s settings on %@."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen von Claude Code auf %@ konnten nicht gelesen werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のClaude Codeの設定を読み取れませんでした。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@의 Claude Code 설정을 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler os ajustes do Claude Code em %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать настройки Claude Code на %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取 %@ 上的 Claude Code 设置。"
           }
         }
       }
@@ -61054,10 +61636,40 @@
             "value" : "Couldn’t write Claude Code’s settings on %@."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen von Claude Code auf %@ konnten nicht geschrieben werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のClaude Codeの設定を書き込めませんでした。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@의 Claude Code 설정을 쓸 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível gravar os ajustes do Claude Code em %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось записать настройки Claude Code на %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法写入 %@ 上的 Claude Code 设置。"
           }
         }
       }
@@ -61072,10 +61684,40 @@
             "value" : "Stop Allowing"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht mehr erlauben"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可を停止"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "허용 중단"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de permitir"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Больше не разрешать"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止允许"
           }
         }
       }
@@ -61090,10 +61732,40 @@
             "value" : "Other uses of it2 on %@ may rely on it. You can also change this later in Settings > General > Magic > API access over ssh."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere Verwendungen von it2 auf %@ sind möglicherweise darauf angewiesen. Sie können dies auch später unter Einstellungen > Allgemein > Magie > API-Zugriff über SSH ändern."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@上の他のit2の用途がこれに依存している可能性があります。これは後で「設定 > 一般 > Magic > SSH経由のAPIアクセス」で変更することもできます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@에서 it2를 사용하는 다른 기능이 이 허용에 의존할 수 있습니다. 나중에 설정 > 일반 > 매직 > SSH를 통한 API 접근에서 변경할 수도 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outros usos do it2 em %@ podem depender disso. Você também pode alterar isso mais tarde em Ajustes > Geral > Magic > Acesso à API via SSH."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другие способы использования it2 на %@ могут зависеть от этого разрешения. Это также можно изменить позже в разделе Настройки > Общие > Магия > Доступ к API через SSH."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 上 it2 的其他用途可能依赖于此。你也可以稍后在“设置 > 通用 > Magic > 通过 SSH 访问 API”中更改。"
           }
         }
       }
@@ -61108,10 +61780,40 @@
             "value" : "Also Stop Always Allowing %@ to Use the iTerm2 API?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ auch nicht mehr dauerhaft die Verwendung der iTerm2-API erlauben?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@にiTerm2 APIの使用を常に許可することも停止しますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@이(가) iTerm2 API를 항상 사용하도록 허용하는 것도 중단하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Também parar de sempre permitir que %@ use a API do iTerm2?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Также перестать всегда разрешать %@ использовать API iTerm2?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时停止始终允许 %@ 使用 iTerm2 API？"
           }
         }
       }
@@ -61222,10 +61924,40 @@
             "value" : "It also removes the hook from Claude Code’s settings on %@, if it’s there."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Außerdem wird der Hook aus den Einstellungen von Claude Code auf %@ entfernt, sofern er dort vorhanden ist."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "また、%@のClaude Codeの設定にフックがあれば、それも削除します。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@의 Claude Code 설정에 훅이 있으면 그것도 제거합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Também remove o hook dos ajustes do Claude Code em %@, se estiver lá."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Также будет удалён хук из настроек Claude Code на %@, если он там есть."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果 %@ 上 Claude Code 的设置中有该钩子，也会将其移除。"
           }
         }
       }
@@ -61240,10 +61972,40 @@
             "value" : "Hosts that aren’t connected keep their hook. Connect to one with SSH Integration and uninstall again to remove it there."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts, die nicht verbunden sind, behalten ihren Hook. Verbinden Sie sich mit der SSH-Integration mit einem solchen Host und deinstallieren Sie erneut, um ihn dort zu entfernen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続されていないホストのフックはそのまま残ります。SSH統合でそのホストに接続し、もう一度アンインストールすると、そこからも削除されます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "연결되어 있지 않은 호스트의 훅은 그대로 남습니다. 해당 호스트에서 제거하려면 SSH 통합으로 연결한 후 다시 제거하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts que não estão conectados mantêm o hook. Conecte-se a um deles com a Integração SSH e desinstale novamente para removê-lo lá."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На неподключённых хостах хук останется. Чтобы удалить его там, подключитесь к хосту через интеграцию с SSH и снова выполните удаление."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未连接的主机会保留其钩子。要从某台主机上移除，请通过 SSH 集成连接到该主机，然后再次卸载。"
           }
         }
       }
@@ -61450,10 +62212,40 @@
             "value" : "Always Allow"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Immer erlauben"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常に許可"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "항상 허용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir sempre"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всегда разрешать"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始终允许"
           }
         }
       }
@@ -61468,10 +62260,40 @@
             "value" : "Claude Code on %1$@ reports its status to iTerm2 through the iTerm2 API.\n\nIf you always allow %2$@, any program running as you on that host can see and control your terminal sessions, reading their contents and typing into them, without asking, on this and every future connection.\n\nIf you choose Ask Each Connection, iTerm2 asks the first time Claude Code reports on each new connection.\n\nYou can stop always allowing a host in Settings > General > Magic > API access over ssh."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code auf %1$@ meldet seinen Status über die iTerm2-API an iTerm2.\n\nWenn Sie %2$@ immer erlauben, kann jedes Programm, das auf diesem Host unter Ihrem Benutzer läuft, Ihre Terminalsitzungen sehen und steuern, ihren Inhalt lesen und darin tippen, ohne nachzufragen, bei dieser und jeder künftigen Verbindung.\n\nWenn Sie „Bei jeder Verbindung fragen“ wählen, fragt iTerm2 bei jeder neuen Verbindung nach, wenn Claude Code zum ersten Mal einen Status meldet.\n\nSie können einem Host die dauerhafte Erlaubnis unter Einstellungen > Allgemein > Magie > API-Zugriff über SSH wieder entziehen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@上のClaude Codeは、iTerm2 APIを通じてiTerm2にステータスを報告します。\n\n%2$@を常に許可すると、そのホスト上であなたとして実行されているすべてのプログラムが、今回およびそれ以降のすべての接続で、確認なしにあなたのターミナルセッションを表示および操作し、その内容を読み取ったり入力したりできるようになります。\n\n「接続ごとに確認」を選択すると、新しい接続ごとにClaude Codeが最初に報告するときにiTerm2が確認します。\n\nホストの常時許可は「設定 > 一般 > Magic > SSH経由のAPIアクセス」で停止できます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@의 Claude Code는 iTerm2 API를 통해 iTerm2에 상태를 보고합니다.\n\n%2$@을(를) 항상 허용하면 해당 호스트에서 사용자 권한으로 실행되는 모든 프로그램이 이번 연결과 이후의 모든 연결에서 묻지 않고 터미널 세션을 보고 제어할 수 있습니다. 세션 내용을 읽고 입력하는 것도 포함됩니다.\n\n연결할 때마다 묻기를 선택하면 새 연결마다 Claude Code가 처음 상태를 보고할 때 iTerm2가 묻습니다.\n\n설정 > 일반 > 매직 > SSH를 통한 API 접근에서 호스트를 항상 허용하는 것을 중단할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Claude Code em %1$@ informa seu status ao iTerm2 por meio da API do iTerm2.\n\nSe você sempre permitir %2$@, qualquer programa executado como você nesse host poderá ver e controlar suas sessões de terminal, lendo o conteúdo delas e digitando nelas, sem perguntar, nesta e em todas as conexões futuras.\n\nSe você escolher “Perguntar a cada conexão”, o iTerm2 perguntará na primeira vez que o Claude Code informar o status em cada nova conexão.\n\nVocê pode deixar de sempre permitir um host em Ajustes > Geral > Magic > Acesso à API via SSH."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code на %1$@ сообщает iTerm2 свой статус через API iTerm2.\n\nЕсли всегда разрешать %2$@, любая программа, запущенная от вашего имени на этом хосте, сможет видеть ваши сессии терминала и управлять ими, читая их содержимое и вводя в них текст, без запроса, как при этом, так и при каждом будущем подключении.\n\nЕсли выбрать «Спрашивать при каждом подключении», iTerm2 будет спрашивать, когда Claude Code впервые сообщит статус в каждом новом подключении.\n\nПерестать всегда разрешать хост можно в разделе Настройки > Общие > Магия > Доступ к API через SSH."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 上的 Claude Code 通过 iTerm2 API 向 iTerm2 报告其状态。\n\n如果你始终允许 %2$@，该主机上以你的身份运行的任何程序都可以查看和控制你的终端会话，读取其内容并向其中输入，而无需询问，本次连接及以后的每次连接都是如此。\n\n如果你选择“每次连接时询问”，iTerm2 会在每个新连接上 Claude Code 首次报告时询问。\n\n你可以在“设置 > 通用 > Magic > 通过 SSH 访问 API”中停止始终允许某台主机。"
           }
         }
       }
@@ -61486,10 +62308,40 @@
             "value" : "Always Allow %@ to Use the iTerm2 API?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ immer die Verwendung der iTerm2-API erlauben?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@にiTerm2 APIの使用を常に許可しますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@이(가) iTerm2 API를 항상 사용하도록 허용하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sempre permitir que %@ use a API do iTerm2?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всегда разрешать %@ использовать API iTerm2?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始终允许 %@ 使用 iTerm2 API？"
           }
         }
       }
@@ -61504,10 +62356,40 @@
             "value" : "Ask Each Connection"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei jeder Verbindung fragen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続ごとに確認"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "연결할 때마다 묻기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perguntar a cada conexão"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спрашивать при каждом подключении"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次连接时询问"
           }
         }
       }
@@ -61666,10 +62548,40 @@
             "value" : "%1$@ is what your login shell, %2$@, reports."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ist der Wert, den Ihre Login-Shell %2$@ meldet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は、ログインシェル%2$@が報告する値です。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@은(는) 로그인 셸 %2$@이(가) 보고한 값입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ é o que seu shell de login, %2$@, informa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ сообщает ваша оболочка входа, %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 是你的登录 Shell %2$@ 报告的值。"
           }
         }
       }
@@ -61684,10 +62596,40 @@
             "value" : "%1$@ is what this session’s shell, %2$@, reports."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ist der Wert, den die Shell dieser Sitzung, %2$@, meldet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は、このセッションのシェル%2$@が報告する値です。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@은(는) 이 세션의 셸 %2$@이(가) 보고한 값입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ é o que o shell desta sessão, %2$@, informa."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ сообщает оболочка этой сессии, %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 是此会话的 Shell %2$@ 报告的值。"
           }
         }
       }
@@ -61702,10 +62644,40 @@
             "value" : "%1$@ is what %2$@, running in this session now, was started with."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ist der Wert, mit dem %2$@, das gerade in dieser Sitzung läuft, gestartet wurde."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は、現在このセッションで実行中の%2$@が起動されたときの値です。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@은(는) 현재 이 세션에서 실행 중인 %2$@이(가) 시작될 때 사용된 값입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ é o valor com que %2$@, em execução nesta sessão agora, foi iniciado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "С %1$@ была запущена программа %2$@, работающая сейчас в этой сессии."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 是当前在此会话中运行的 %2$@ 启动时使用的值。"
           }
         }
       }
@@ -62344,10 +63316,40 @@
             "value" : "Install the Claude Code hook on %1$@, so Claude Code running there shows its state (working, waiting, idle) in the Session Status tool too.\n\nThis adds a hook to Claude Code’s settings on %2$@. It runs the it2 command that SSH Integration keeps up to date on that host."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installiert den Claude-Code-Hook auf %1$@, damit auch das dort laufende Claude Code seinen Status (Arbeitet, Wartet, Inaktiv) im Werkzeug „Sitzungsstatus“ anzeigt.\n\nDadurch wird den Einstellungen von Claude Code auf %2$@ ein Hook hinzugefügt. Er führt den it2-Befehl aus, den die SSH-Integration auf diesem Host aktuell hält."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@にClaude Codeフックをインストールし、そこで実行されているClaude Codeの状態（作業中、待機中、アイドル）もSession Statusツールに表示されるようにします。\n\nこれにより、%2$@のClaude Codeの設定にフックが追加されます。このフックは、SSH統合がそのホスト上で最新の状態に保っているit2コマンドを実行します。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@에 Claude Code 훅을 설치하여 그곳에서 실행되는 Claude Code도 세션 상태 도구에 상태(작업 중, 대기 중, 유휴)를 표시하게 합니다.\n\n%2$@의 Claude Code 설정에 훅이 추가됩니다. 이 훅은 SSH 통합이 해당 호스트에서 최신 상태로 유지하는 it2 명령을 실행합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instale o hook do Claude Code em %1$@, para que o Claude Code executado lá também mostre seu estado (trabalhando, aguardando, ocioso) na ferramenta Status da sessão.\n\nIsso adiciona um hook aos ajustes do Claude Code em %2$@. Ele executa o comando it2 que a Integração SSH mantém atualizado nesse host."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установите хук Claude Code на %1$@, чтобы Claude Code, работающий там, тоже показывал своё состояние (работает, ожидает, простаивает) в инструменте «Статус сессии».\n\nЭто добавляет хук в настройки Claude Code на %2$@. Хук запускает команду it2, которую интеграция с SSH поддерживает в актуальном состоянии на этом хосте."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 %1$@ 上安装 Claude Code 钩子，使在那里运行的 Claude Code 也能在“会话状态”工具中显示其状态（工作中、等待中、空闲）。\n\n这会在 %2$@ 上 Claude Code 的设置中添加一个钩子。该钩子运行由 SSH 集成在该主机上保持最新的 it2 命令。"
           }
         }
       }
@@ -62362,10 +63364,40 @@
             "value" : "Install on Remote Host"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Remote-Host installieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リモートホストにインストール"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트에 설치"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar no host remoto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установить на удалённый хост"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装到远程主机"
           }
         }
       }
@@ -62908,10 +63940,40 @@
             "value" : "iTerm2 couldn’t read CLAUDE_CONFIG_DIR from your login shell on %@, so it doesn’t know where Claude Code keeps its settings there. Try again?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte CLAUDE_CONFIG_DIR nicht aus Ihrer Login-Shell auf %@ lesen und weiß daher nicht, wo Claude Code dort seine Einstellungen speichert. Erneut versuchen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2は%@のログインシェルからCLAUDE_CONFIG_DIRを読み取れなかったため、そこでClaude Codeが設定をどこに保存しているかわかりません。もう一度試しますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2가 %@의 로그인 셸에서 CLAUDE_CONFIG_DIR을 읽을 수 없어 그곳에서 Claude Code가 설정을 어디에 보관하는지 알 수 없습니다. 다시 시도하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu ler CLAUDE_CONFIG_DIR do seu shell de login em %@, portanto não sabe onde o Claude Code guarda as configurações lá. Tentar novamente?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не смог прочитать CLAUDE_CONFIG_DIR из вашей оболочки входа на %@, поэтому не знает, где Claude Code хранит там настройки. Попробовать снова?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法从 %@ 上的登录 Shell 读取 CLAUDE_CONFIG_DIR，因此不知道 Claude Code 在那里将设置保存在何处。要重试吗？"
           }
         }
       }
@@ -62926,10 +63988,40 @@
             "value" : "The connection to %@ has ended. Reconnect and try again."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Verbindung zu %@ wurde beendet. Stellen Sie die Verbindung wieder her und versuchen Sie es erneut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@への接続が終了しました。再接続してもう一度試してください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 연결이 종료되었습니다. 다시 연결한 후 다시 시도하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A conexão com %@ foi encerrada. Reconecte e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подключение к %@ завершено. Подключитесь снова и повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 %@ 的连接已结束。请重新连接后重试。"
           }
         }
       }
@@ -62944,10 +64036,40 @@
             "value" : "%@ is already always allowed to use the iTerm2 API. You can change that in Settings > General > Magic > API access over ssh."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ darf die iTerm2-API bereits dauerhaft verwenden. Sie können dies unter Einstellungen > Allgemein > Magie > API-Zugriff über SSH ändern."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はすでにiTerm2 APIの使用を常に許可されています。これは「設定 > 一般 > Magic > SSH経由のAPIアクセス」で変更できます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@은(는) 이미 iTerm2 API를 항상 사용하도록 허용되어 있습니다. 설정 > 일반 > 매직 > SSH를 통한 API 접근에서 변경할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ já tem permissão permanente para usar a API do iTerm2. Você pode alterar isso em Ajustes > Geral > Magic > Acesso à API via SSH."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ уже всегда разрешено использовать API iTerm2. Это можно изменить в разделе Настройки > Общие > Магия > Доступ к API через SSH."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 已被始终允许使用 iTerm2 API。你可以在“设置 > 通用 > Magic > 通过 SSH 访问 API”中更改。"
           }
         }
       }
@@ -62962,10 +64084,40 @@
             "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it didn’t change Claude Code’s settings there. Reconnect and try again."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte nicht feststellen, ob %@ dieser Mac ist, daher hat es die Einstellungen von Claude Code dort nicht verändert. Stellen Sie die Verbindung wieder her und versuchen Sie es erneut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2は%@がこのMacかどうかを判断できなかったため、そこにあるClaude Codeの設定を変更しませんでした。再接続してもう一度試してください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2가 %@이(가) 이 Mac인지 확인할 수 없어 그곳의 Claude Code 설정을 변경하지 않았습니다. 다시 연결한 후 다시 시도하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu determinar se %@ é este Mac, por isso não alterou os ajustes do Claude Code lá. Reconecte e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не смог определить, является ли %@ этим Mac, поэтому не стал изменять настройки Claude Code на нём. Подключитесь снова и повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法判断 %@ 是否就是这台 Mac，因此未更改该处的 Claude Code 设置。请重新连接后重试。"
           }
         }
       }
@@ -62980,10 +64132,40 @@
             "value" : "%@ is this Mac. Claude Code here is set up by the Install Hook step instead."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist dieser Mac. Claude Code wird hier stattdessen im Schritt „Hook installieren“ eingerichtet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はこのMacです。ここでのClaude Codeは、代わりに「フックをインストール」ステップで設定されます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@은(는) 이 Mac입니다. 이 Mac의 Claude Code는 대신 훅 설치 단계에서 설정됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ é este Mac. O Claude Code aqui é configurado pela etapa “Instalar hook”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ и есть этот Mac. Claude Code здесь настраивается на шаге «Установить хук»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 就是这台 Mac。此处的 Claude Code 改由“安装 Hook”步骤进行设置。"
           }
         }
       }
@@ -62998,10 +64180,40 @@
             "value" : "SSH Integration couldn’t set up the it2 command on %@, so the hook would have nothing to run. This happens when the login shell there is not one SSH Integration supports: zsh, bash, fish, or xonsh."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die SSH-Integration konnte den it2-Befehl auf %@ nicht einrichten, daher hätte der Hook nichts auszuführen. Das passiert, wenn die Login-Shell dort keine von der SSH-Integration unterstützte Shell ist: zsh, bash, fish oder xonsh."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH統合が%@にit2コマンドを設定できなかったため、フックが実行するものがありません。これは、そこのログインシェルがSSH統合のサポートするシェル（zsh、bash、fish、xonsh）ではない場合に発生します。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "SSH 통합이 %@에 it2 명령을 설정할 수 없어 훅이 실행할 것이 없습니다. 이는 해당 호스트의 로그인 셸이 SSH 통합이 지원하는 셸(zsh, bash, fish, xonsh)이 아닐 때 발생합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Integração SSH não conseguiu configurar o comando it2 em %@, então o hook não teria nada para executar. Isso acontece quando o shell de login lá não é um dos compatíveis com a Integração SSH: zsh, bash, fish ou xonsh."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интеграции с SSH не удалось настроить команду it2 на %@, поэтому хуку нечего запускать. Так бывает, когда оболочка входа там не поддерживается интеграцией с SSH. Поддерживаются zsh, bash, fish и xonsh."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH 集成无法在 %@ 上设置 it2 命令，因此钩子将无可运行的命令。当该主机上的登录 Shell 不是 SSH 集成支持的 Shell（zsh、bash、fish 或 xonsh）时，就会出现这种情况。"
           }
         }
       }
@@ -63016,10 +64228,40 @@
             "value" : "%1$@ on %2$@ isn’t valid JSON. iTerm2 left it unchanged. Fix or remove it and try again."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ auf %2$@ ist kein gültiges JSON. iTerm2 hat die Datei nicht verändert. Korrigieren oder entfernen Sie sie und versuchen Sie es erneut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@上の%1$@は有効なJSONではありません。iTerm2は変更しませんでした。修正または削除してから、もう一度試してください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%2$@의 %1$@은(는) 유효한 JSON이 아닙니다. iTerm2는 이 파일을 변경하지 않았습니다. 파일을 수정하거나 제거한 후 다시 시도하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ em %2$@ não é um JSON válido. O iTerm2 o deixou inalterado. Corrija-o ou remova-o e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ на %2$@ не является допустимым JSON. iTerm2 не стал изменять файл. Исправьте или удалите его и повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@ 上的 %1$@ 不是有效的 JSON。iTerm2 未对其进行更改。请修复或删除该文件，然后重试。"
           }
         }
       }
@@ -63034,10 +64276,40 @@
             "value" : "iTerm2 couldn’t read %1$@ on %2$@."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte %1$@ auf %2$@ nicht lesen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2は%2$@上の%1$@を読み取れませんでした。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2가 %2$@의 %1$@을(를) 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu ler %1$@ em %2$@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не смог прочитать %1$@ на %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法读取 %2$@ 上的 %1$@。"
           }
         }
       }
@@ -63052,10 +64324,40 @@
             "value" : "iTerm2 couldn’t write %1$@ on %2$@."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 konnte %1$@ auf %2$@ nicht schreiben."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2は%2$@上の%1$@に書き込めませんでした。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2가 %2$@의 %1$@에 쓸 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não conseguiu gravar %1$@ em %2$@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не смог записать %1$@ на %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法写入 %2$@ 上的 %1$@。"
           }
         }
       }
@@ -63550,10 +64852,40 @@
             "value" : "Which Settings Location Should the Claude Code Hook Be Installed In?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In welchem Einstellungsort soll der Claude-Code-Hook installiert werden?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Codeフックをどの設定の場所にインストールしますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 훅을 어느 설정 위치에 설치하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em qual local de configurações o hook do Claude Code deve ser instalado?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В какое расположение настроек установить хук Claude Code?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应将 Claude Code 钩子安装到哪个设置位置？"
           }
         }
       }
@@ -63706,10 +65038,40 @@
             "value" : "Install"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インストール"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "설치"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装"
           }
         }
       }
@@ -63820,10 +65182,40 @@
             "value" : "Claude Code Integration on %@ Looks Broken"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude-Code-Integration auf %@ scheint defekt zu sein"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のClaude Code連携が壊れているようです"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@의 Claude Code 통합이 손상된 것 같음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A integração do Claude Code em %@ parece estar quebrada"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интеграция Claude Code на %@ выглядит неработающей"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 上的 Claude Code 集成似乎已损坏"
           }
         }
       }
@@ -63838,10 +65230,40 @@
             "value" : "iTerm2’s hook is no longer complete in Claude Code’s settings on %@. This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Hook von iTerm2 ist in den Einstellungen von Claude Code auf %@ nicht mehr vollständig. Das bedeutet meist, dass Claude Code diese Datei überschrieben hat. Soll der Hook neu installiert werden, damit die Statusanzeigen pro Tab („Arbeitet…“, „Wartet…“) wieder funktionieren?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のClaude Codeの設定で、iTerm2のフックが不完全になっています。通常、これはClaude Codeがそのファイルを書き換えたことを意味します。タブごとのステータス表示（「作業中…」、「待機中…」）が再び機能するよう、フックを再インストールしますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@의 Claude Code 설정에 있는 iTerm2 훅이 더 이상 완전하지 않습니다. 보통 Claude Code가 해당 파일을 다시 작성했기 때문입니다. 탭별 상태 표시기(“작업 중…”, “대기 중…”)가 다시 작동하도록 훅을 다시 설치하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O hook do iTerm2 não está mais completo nos ajustes do Claude Code em %@. Isso geralmente significa que o Claude Code reescreveu esse arquivo. Reinstalar o hook para que os indicadores de status por aba (“Trabalhando…”, “Aguardando…”) voltem a funcionar?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хук iTerm2 в настройках Claude Code на %@ больше не полон. Обычно это означает, что Claude Code перезаписал этот файл. Переустановить хук, чтобы индикаторы статуса на вкладках («Работает…», «Ожидание…») снова работали?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 上 Claude Code 的设置中，iTerm2 的钩子已不完整。这通常意味着 Claude Code 重写了该文件。重新安装钩子，以便每个标签页的状态指示器（“正在处理…”、“正在等待…”）重新工作？"
           }
         }
       }
@@ -63856,10 +65278,40 @@
             "value" : "Install Claude Code Integration on %@?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude-Code-Integration auf %@ installieren?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@にClaude Code連携をインストールしますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@에 Claude Code 통합을 설치하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar a integração do Claude Code em %@?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Установить интеграцию Claude Code на %@?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 %@ 上安装 Claude Code 集成？"
           }
         }
       }
@@ -63874,10 +65326,40 @@
             "value" : "Claude Code is running on %@, but iTerm2’s hook isn’t installed there, so its status won’t appear in the Session Status tool. Install it?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code läuft auf %@, aber der Hook von iTerm2 ist dort nicht installiert, daher erscheint sein Status nicht im Werkzeug „Sitzungsstatus“. Jetzt installieren?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@でClaude Codeが実行されていますが、iTerm2のフックがそこにインストールされていないため、そのステータスはSession Statusツールに表示されません。インストールしますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@에서 Claude Code가 실행 중이지만 그곳에 iTerm2 훅이 설치되어 있지 않아 세션 상태 도구에 상태가 표시되지 않습니다. 설치하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Claude Code está em execução em %@, mas o hook do iTerm2 não está instalado lá, então seu status não aparecerá na ferramenta Status da sessão. Instalá-lo?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code работает на %@, но хук iTerm2 там не установлен, поэтому его статус не будет отображаться в инструменте «Статус сессии». Установить его?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 正在 %@ 上运行，但那里未安装 iTerm2 的钩子，因此其状态不会显示在“会话状态”工具中。要安装吗？"
           }
         }
       }
@@ -63892,10 +65374,40 @@
             "value" : "Update Shell Integration on %@?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell-Integration auf %@ aktualisieren?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のシェル統合を更新しますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@의 셸 통합을 업데이트하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar a Shell Integration em %@?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновить интеграцию с оболочкой на %@?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新 %@ 上的 Shell 集成？"
           }
         }
       }
@@ -63910,10 +65422,40 @@
             "value" : "Claude Code on %1$@ can’t find the it2 command, which features such as Code Review ask it to run. The shell integration installed on %2$@ is too old to make it available. To update it, exit Claude Code and choose iTerm2 > Install Shell Integration in that session."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code auf %1$@ findet den it2-Befehl nicht, den Funktionen wie Code-Review ausführen lassen. Die auf %2$@ installierte Shell-Integration ist zu alt, um ihn bereitzustellen. Beenden Sie zum Aktualisieren Claude Code und wählen Sie in dieser Sitzung „iTerm2 > Shell-Integration installieren“."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@上のClaude Codeは、コードレビューなどの機能が実行を求めるit2コマンドを見つけられません。%2$@にインストールされているシェル統合は古すぎるため、it2コマンドを利用できるようにできません。更新するには、Claude Codeを終了し、そのセッションで「iTerm2 > シェル統合をインストール」を選択してください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@의 Claude Code가 코드 리뷰 같은 기능에서 실행을 요청하는 it2 명령을 찾을 수 없습니다. %2$@에 설치된 셸 통합이 너무 오래되어 이 명령을 제공할 수 없습니다. 업데이트하려면 Claude Code를 종료하고 해당 세션에서 iTerm2 > 셸 통합 설치를 선택하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Claude Code em %1$@ não encontra o comando it2, que recursos como a revisão de código pedem que ele execute. A Shell Integration instalada em %2$@ é antiga demais para disponibilizá-lo. Para atualizá-la, saia do Claude Code e escolha iTerm2 > Instalar Shell Integration nessa sessão."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code на %1$@ не может найти команду it2, которую его просят запускать такие функции, как проверка кода. Интеграция с оболочкой, установленная на %2$@, слишком старая, чтобы сделать её доступной. Чтобы обновить её, выйдите из Claude Code и выберите iTerm2 > Install Shell Integration в этой сессии."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 上的 Claude Code 找不到 it2 命令，而代码审查等功能需要它运行该命令。%2$@ 上安装的 Shell 集成版本太旧，无法提供该命令。要更新，请退出 Claude Code，然后在该会话中选择 iTerm2 > 安装 Shell 集成。"
           }
         }
       }
@@ -67007,10 +68549,40 @@
             "value" : "The default prompt has changed since then: it runs iTerm2’s own it2 command, so reviews work on remote hosts without a current shell integration install, and it tells it2 which tmux pane the review runs in, so reviews work in tmux."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Standard-Prompt hat sich seitdem geändert: Er führt den eigenen it2-Befehl von iTerm2 aus, sodass Reviews auf Remote-Hosts auch ohne aktuelle Shell-Integration funktionieren, und er teilt it2 mit, in welchem tmux-Bereich das Review läuft, sodass Reviews in tmux funktionieren."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "それ以降、デフォルトのプロンプトは変更されています。iTerm2独自のit2コマンドを実行するため、最新のシェル統合がインストールされていないリモートホストでもレビューが機能し、またレビューを実行するtmuxペインをit2に伝えるため、tmux内でもレビューが機能します。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "그 이후 기본 프롬프트가 변경되었습니다. 이제 iTerm2 자체의 it2 명령을 실행하므로 최신 셸 통합이 설치되지 않은 원격 호스트에서도 리뷰가 작동하며, 리뷰가 실행되는 tmux 패널을 it2에 알려 주므로 tmux에서도 리뷰가 작동합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O prompt padrão mudou desde então: ele executa o próprio comando it2 do iTerm2, para que as revisões funcionem em hosts remotos sem uma instalação atualizada da Shell Integration, e informa ao it2 em qual painel do tmux a revisão é executada, para que as revisões funcionem no tmux."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "С тех пор промпт по умолчанию изменился: он запускает собственную команду it2 из iTerm2, поэтому проверка кода работает на удалённых хостах без актуальной установки интеграции с оболочкой, и сообщает it2, в какой панели tmux выполняется проверка, поэтому проверка кода работает в tmux."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自那以后默认提示已有更改：它会运行 iTerm2 自带的 it2 命令，因此即使远程主机上没有安装最新的 Shell 集成，代码审查也能正常工作；它还会告诉 it2 审查在哪个 tmux 窗格中运行，因此代码审查在 tmux 中也能正常工作。"
           }
         }
       }
@@ -67025,10 +68597,40 @@
             "value" : "Update Your Code Review Prompt?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihren Code-Review-Prompt aktualisieren?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コードレビュープロンプトを更新しますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "코드 리뷰 프롬프트를 업데이트하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar seu prompt de revisão de código?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновить ваш промпт для проверки кода?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新你的代码审查提示？"
           }
         }
       }
@@ -67043,10 +68645,40 @@
             "value" : "Keep My Prompt"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meinen Prompt behalten"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分のプロンプトを維持"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "내 프롬프트 유지"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter meu prompt"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оставить мой промпт"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留我的提示"
           }
         }
       }
@@ -67061,10 +68693,40 @@
             "value" : "Update Prompt makes only the changes shown below. The rest of your prompt stays as you wrote it."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„Prompt aktualisieren“ nimmt nur die unten gezeigten Änderungen vor. Der Rest Ihres Prompts bleibt so, wie Sie ihn geschrieben haben."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「プロンプトを更新」を選択すると、以下に示す変更のみが加えられます。プロンプトの残りの部分はあなたが書いたまま残ります。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "프롬프트 업데이트는 아래에 표시된 변경 사항만 적용합니다. 프롬프트의 나머지 부분은 작성한 그대로 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Atualizar prompt” faz apenas as alterações mostradas abaixo. O restante do seu prompt permanece como você o escreveu."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Обновить промпт» вносит только изменения, показанные ниже. Остальная часть промпта останется такой, как вы её написали."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“更新提示”只会进行下方所示的更改。提示的其余部分将保持你编写的原样。"
           }
         }
       }
@@ -67079,10 +68741,40 @@
             "value" : "You customized your Code Review system prompt in Settings > General > AI > Prompts."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie haben Ihren Code-Review-System-Prompt unter Einstellungen > Allgemein > KI > Prompts angepasst."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定 > 一般 > AI > プロンプト」でコードレビューのシステムプロンプトをカスタマイズしています。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "설정 > 일반 > AI > 프롬프트에서 코드 리뷰 시스템 프롬프트를 사용자 지정했습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você personalizou seu prompt de sistema de revisão de código em Ajustes > Geral > IA > Prompts."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы изменили системный промпт для проверки кода в разделе Настройки > Общие > ИИ > Промпты."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你已在“设置 > 通用 > AI > 提示”中自定义了代码审查系统提示。"
           }
         }
       }
@@ -67097,10 +68789,40 @@
             "value" : "Update Prompt replaces it with the current default, which then stays up to date."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„Prompt aktualisieren“ ersetzt ihn durch den aktuellen Standard, der dann auf dem neuesten Stand bleibt."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「プロンプトを更新」を選択すると、現在のデフォルトに置き換えられ、以降は常に最新の状態に保たれます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "프롬프트 업데이트는 이 프롬프트를 현재 기본값으로 바꾸며, 이후에는 기본값이 계속 최신 상태로 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Atualizar prompt” o substitui pelo padrão atual, que passa a ser mantido atualizado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Обновить промпт» заменит его текущим промптом по умолчанию, который затем будет обновляться автоматически."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“更新提示”会将其替换为当前的默认提示，之后它将保持最新。"
           }
         }
       }
@@ -67115,10 +68837,40 @@
             "value" : "Your Code Review system prompt in Settings > General > AI > Prompts is a saved copy of an older default."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr Code-Review-System-Prompt unter Einstellungen > Allgemein > KI > Prompts ist eine gespeicherte Kopie eines älteren Standards."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定 > 一般 > AI > プロンプト」のコードレビューのシステムプロンプトは、古いデフォルトの保存済みコピーです。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "설정 > 일반 > AI > 프롬프트의 코드 리뷰 시스템 프롬프트는 이전 기본값을 저장한 사본입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu prompt de sistema de revisão de código em Ajustes > Geral > IA > Prompts é uma cópia salva de um padrão mais antigo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш системный промпт для проверки кода в разделе Настройки > Общие > ИИ > Промпты является сохранённой копией более старого промпта по умолчанию."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在“设置 > 通用 > AI > 提示”中的代码审查系统提示是旧版默认提示的保存副本。"
           }
         }
       }
@@ -67133,10 +68885,40 @@
             "value" : "Update Prompt"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prompt aktualisieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロンプトを更新"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "프롬프트 업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar prompt"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновить промпт"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新提示"
           }
         }
       }
@@ -97988,10 +99770,40 @@
             "value" : "Open in Tabs"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Tabs öffnen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブで開く"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭으로 열기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir em abas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть во вкладках"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在标签页中打开"
           }
         }
       }
@@ -98006,10 +99818,40 @@
             "value" : "Stop Them"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beenden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止する"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 중단"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encerrá-los"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Остановить их"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止它们"
           }
         }
       }
@@ -98035,6 +99877,36 @@
             }
           }
         },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ein als Peer einer Arbeitsgruppe gestartetes Programm läuft auf diesem Host noch, hat aber keine Sitzung."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld als Peers einer Arbeitsgruppe gestartete Programme laufen auf diesem Host noch, haben aber keine Sitzung."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ワークグループのピアとして起動された%lld個のプログラムが、このホスト上でまだ実行中ですが、セッションがありません。"
+                }
+              }
+            }
+          }
+        },
         "ko" : {
           "variations" : {
             "plural" : {
@@ -98042,6 +99914,66 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "워크그룹 피어로 시작된 프로그램 %lld개가 이 호스트에서 아직 실행 중이지만 세션이 없습니다."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Um programa iniciado como par de grupo de trabalho ainda está em execução neste host, mas não tem sessão."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld programas iniciados como pares de grupo de trabalho ainda estão em execução neste host, mas não têm sessão."
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программа, запущенная как участник рабочей группы, всё ещё работает на этом хосте, но не имеет сессии."
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программы, запущенные как участники рабочей группы, всё ещё работают на этом хосте, но не имеют сессии."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программ, запущенных как участники рабочей группы, всё ещё работают на этом хосте, но не имеют сессии."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программы, запущенные как участники рабочей группы, всё ещё работают на этом хосте, но не имеют сессии."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 个作为工作组对等会话启动的程序仍在此主机上运行，但没有对应的会话。"
                 }
               }
             }
@@ -101643,6 +103575,54 @@
         }
       }
     },
+    "GeneralPrefs.MaximumConcurrentTokenExecutions" : {
+      "comment" : "Search index name for the setting that limits how many sessions process terminal output at the same time",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sessions processing output at once"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gleichzeitig Ausgabe verarbeitende Sitzungen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同時に出力を処理するセッション数"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동시에 출력을 처리하는 세션 수"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessões processando saída ao mesmo tempo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сеансов, одновременно обрабатывающих вывод"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时处理输出的会话数"
+          }
+        }
+      }
+    },
     "GeneralPrefs.ModelUpdateBusy" : {
       "comment" : "Alert shown when an AI model update check is already running",
       "extractionState" : "extracted_with_value",
@@ -104706,10 +106686,40 @@
             "value" : "it2: this it2 is newer than the iTerm2 it is connected to. Upgrade iTerm2."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "it2: Dieses it2 ist neuer als das iTerm2, mit dem es verbunden ist. Aktualisieren Sie iTerm2."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "it2: このit2は、接続先のiTerm2より新しいバージョンです。iTerm2をアップグレードしてください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "it2: 이 it2가 연결된 iTerm2보다 최신 버전입니다. iTerm2를 업그레이드하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "it2: este it2 é mais recente que o iTerm2 ao qual está conectado. Atualize o iTerm2."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "it2: эта версия it2 новее, чем iTerm2, к которому она подключена. Обновите iTerm2."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "it2：此 it2 比它所连接的 iTerm2 更新。请升级 iTerm2。"
           }
         }
       }
@@ -105444,10 +107454,40 @@
             "value" : "Saved Passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespeicherte Passwörter"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されたパスワード"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "저장된 암호"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senhas salvas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранённые пароли"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已保存的密码"
           }
         }
       }
@@ -125108,10 +127148,40 @@
             "value" : "Confirm"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestätigen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подтверждение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认"
           }
         }
       }
@@ -150803,10 +152873,40 @@
             "value" : "Always Replace"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Immer ersetzen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常に置き換える"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "항상 대치"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir sempre"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заменять всегда"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始终替换"
           }
         }
       }
@@ -150821,10 +152921,40 @@
             "value" : "Authentication Failed"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Authentifizierung fehlgeschlagen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認証に失敗しました"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "인증 실패"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falha na autenticação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ошибка аутентификации"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身份验证失败"
           }
         }
       }
@@ -150839,10 +152969,40 @@
             "value" : "iTerm2 can’t export or import passwords because macOS couldn’t confirm your identity. %@"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 kann keine Passwörter exportieren oder importieren, weil macOS Ihre Identität nicht bestätigen konnte. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSが本人確認を行えなかったため、iTerm2はパスワードをエクスポートまたはインポートできません。%@"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "macOS가 사용자 신원을 확인할 수 없어 iTerm2가 암호를 내보내거나 가져올 수 없습니다. %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 não pode exportar nem importar senhas porque o macOS não conseguiu confirmar sua identidade. %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 не может экспортировать или импортировать пароли, потому что macOS не удалось подтвердить вашу личность. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 无法导出或导入密码，因为 macOS 无法确认你的身份。%@"
           }
         }
       }
@@ -150857,10 +153017,40 @@
             "value" : "A saved password for “%1$@” with user name “%2$@” already exists. Replace it with the imported one?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gespeichertes Passwort für „%1$@“ mit dem Benutzernamen „%2$@“ ist bereits vorhanden. Durch das importierte ersetzen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」のユーザー名「%2$@」の保存済みパスワードがすでに存在します。インポートしたパスワードで置き換えますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "사용자 이름이 “%2$@”인 “%1$@”의 저장된 암호가 이미 있습니다. 가져온 암호로 대치하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já existe uma senha salva para “%1$@” com o nome de usuário “%2$@”. Substituí-la pela importada?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранённый пароль для «%1$@» с именем пользователя «%2$@» уже существует. Заменить его импортированным?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已存在“%1$@”的已保存密码，用户名为“%2$@”。要用导入的密码替换它吗？"
           }
         }
       }
@@ -150875,10 +153065,40 @@
             "value" : "Password Already Saved"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwort bereits gespeichert"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードはすでに保存されています"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호가 이미 저장되어 있음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senha já salva"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароль уже сохранён"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码已保存"
           }
         }
       }
@@ -150893,10 +153113,40 @@
             "value" : "A saved password for “%@” already exists. Replace it with the imported one?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein gespeichertes Passwort für „%@“ ist bereits vorhanden. Durch das importierte ersetzen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の保存済みパスワードがすでに存在します。インポートしたパスワードで置き換えますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%@”의 저장된 암호가 이미 있습니다. 가져온 암호로 대치하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já existe uma senha salva para “%@”. Substituí-la pela importada?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранённый пароль для «%@» уже существует. Заменить его импортированным?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已存在“%@”的已保存密码。要用导入的密码替换它吗？"
           }
         }
       }
@@ -150911,10 +153161,40 @@
             "value" : "iTerm2 Passwords.iterm2passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2-Passwörter.iterm2passwords"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 パスワード.iterm2passwords"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 암호.iterm2passwords"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senhas do iTerm2.iterm2passwords"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароли iTerm2.iterm2passwords"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 Passwords.iterm2passwords"
           }
         }
       }
@@ -150929,10 +153209,40 @@
             "value" : "Don’t Replace"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht ersetzen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "置き換えない"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "대치 안 함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não substituir"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не заменять"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不替换"
           }
         }
       }
@@ -150947,10 +153257,40 @@
             "value" : "The passphrase can’t be empty."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Passphrase darf nicht leer sein."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスフレーズを空にすることはできません。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 문구는 비워 둘 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A frase secreta não pode ficar vazia."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Парольная фраза не может быть пустой."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "口令不能为空。"
           }
         }
       }
@@ -150965,10 +153305,40 @@
             "value" : "export saved passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gespeicherte Passwörter zu exportieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されたパスワードをエクスポート"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "저장된 암호 내보내기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "exportar as senhas salvas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "экспортировать сохранённые пароли"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出已保存的密码"
           }
         }
       }
@@ -150983,10 +153353,40 @@
             "value" : "Export Passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwörter exportieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードをエクスポート"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 내보내기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar senhas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экспорт паролей"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出密码"
           }
         }
       }
@@ -151001,10 +153401,40 @@
             "value" : "Export Passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwörter exportieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードをエクスポート"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 내보내기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar senhas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экспорт паролей"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出密码"
           }
         }
       }
@@ -151019,10 +153449,40 @@
             "value" : "Problem Exporting Passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problem beim Exportieren der Passwörter"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードのエクスポート中に問題が発生しました"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 내보내기 문제"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problema ao exportar senhas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проблема при экспорте паролей"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出密码时出现问题"
           }
         }
       }
@@ -151037,10 +153497,40 @@
             "value" : "import saved passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gespeicherte Passwörter zu importieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されたパスワードをインポート"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "저장된 암호 가져오기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "importar as senhas salvas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "импортировать сохранённые пароли"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入已保存的密码"
           }
         }
       }
@@ -151055,10 +153545,40 @@
             "value" : "Passwords Imported"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwörter importiert"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードをインポートしました"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 가져옴"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senhas importadas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароли импортированы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码已导入"
           }
         }
       }
@@ -151073,10 +153593,40 @@
             "value" : "Problem Importing Passwords"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problem beim Importieren der Passwörter"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードのインポート中に問題が発生しました"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 가져오기 문제"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problema ao importar senhas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проблема при импорте паролей"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入密码时出现问题"
           }
         }
       }
@@ -151091,10 +153641,40 @@
             "value" : "Include saved passwords (encrypted with a passphrase)"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespeicherte Passwörter einschließen (mit einer Passphrase verschlüsselt)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されたパスワードを含める（パスフレーズで暗号化）"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "저장된 암호 포함(암호 문구로 암호화됨)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incluir senhas salvas (criptografadas com uma frase secreta)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включить сохранённые пароли (зашифрованные парольной фразой)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包含已保存的密码（使用口令加密）"
           }
         }
       }
@@ -151109,10 +153689,40 @@
             "value" : "The keychain reported an error: %@"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Schlüsselbund hat einen Fehler gemeldet: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーチェーンがエラーを報告しました: %@"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "키체인에서 오류를 보고했습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Keychain informou um erro: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Связка ключей сообщила об ошибке: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "钥匙串报告了一个错误：%@"
           }
         }
       }
@@ -151127,10 +153737,40 @@
             "value" : "The passwords file is damaged."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Passwortdatei ist beschädigt."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードファイルが破損しています。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 파일이 손상되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo de senhas está danificado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Файл паролей повреждён."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码文件已损坏。"
           }
         }
       }
@@ -151145,10 +153785,40 @@
             "value" : "Never Replace"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie ersetzen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "置き換えない（以降すべて）"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "항상 대치 안 함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nunca substituir"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не заменять никогда"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从不替换"
           }
         }
       }
@@ -151163,10 +153833,40 @@
             "value" : "The exported passwords will be encrypted. You will need this passphrase to import them."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die exportierten Passwörter werden verschlüsselt. Sie benötigen diese Passphrase, um sie zu importieren."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エクスポートされたパスワードは暗号化されます。インポートするにはこのパスフレーズが必要です。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "내보낸 암호는 암호화됩니다. 암호를 가져오려면 이 암호 문구가 필요합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As senhas exportadas serão criptografadas. Você precisará desta frase secreta para importá-las."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Экспортированные пароли будут зашифрованы. Эта парольная фраза понадобится для их импорта."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出的密码将被加密。导入它们时需要此口令。"
           }
         }
       }
@@ -151181,10 +153881,40 @@
             "value" : "Choose a passphrase"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie eine Passphrase"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスフレーズを選択してください"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 문구를 정하십시오"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha uma frase secreta"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Придумайте парольную фразу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个口令"
           }
         }
       }
@@ -151199,10 +153929,40 @@
             "value" : "Passwords can be imported only into the macOS Keychain password manager. To import them, open the password manager, choose macOS Keychain from its gear menu, and then open this file again."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwörter können nur in den Passwort-Manager „macOS-Schlüsselbund“ importiert werden. Öffnen Sie dazu den Passwort-Manager, wählen Sie im Zahnradmenü „macOS-Schlüsselbund“ und öffnen Sie diese Datei dann erneut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードは macOS キーチェーンのパスワードマネージャーにのみインポートできます。インポートするには、パスワードマネージャーを開き、歯車メニューから「macOS キーチェーン」を選択してから、このファイルをもう一度開いてください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호는 macOS 키체인 암호 관리자로만 가져올 수 있습니다. 가져오려면 암호 관리자를 열고 톱니바퀴 메뉴에서 macOS 키체인을 선택한 다음 이 파일을 다시 여십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As senhas só podem ser importadas para o cofre de senhas da Keychain do macOS. Para importá-las, abra o cofre de senhas, escolha Keychain do macOS no menu de engrenagem e abra este arquivo novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароли можно импортировать только в менеджер паролей «Связка ключей macOS». Чтобы импортировать их, откройте менеджер паролей, выберите «Связка ключей macOS» в меню с шестерёнкой, а затем снова откройте этот файл."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码只能导入到 macOS 钥匙串密码管理器中。要导入它们，请打开密码管理器，从其齿轮菜单中选择“macOS 钥匙串”，然后再次打开此文件。"
           }
         }
       }
@@ -151217,10 +153977,40 @@
             "value" : "This is not an iTerm2 passwords file."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dies ist keine iTerm2-Passwortdatei."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これは iTerm2 のパスワードファイルではありません。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 파일은 iTerm2 암호 파일이 아닙니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este não é um arquivo de senhas do iTerm2."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это не файл паролей iTerm2."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这不是 iTerm2 密码文件。"
           }
         }
       }
@@ -151235,10 +154025,40 @@
             "value" : "There are no saved passwords to export."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es sind keine gespeicherten Passwörter zum Exportieren vorhanden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エクスポートする保存済みパスワードがありません。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "내보낼 저장된 암호가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não há senhas salvas para exportar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет сохранённых паролей для экспорта."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可导出的已保存密码。"
           }
         }
       }
@@ -151253,10 +154073,40 @@
             "value" : "The passphrases don’t match. Try again."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Passphrasen stimmen nicht überein. Versuchen Sie es erneut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスフレーズが一致しません。もう一度試してください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 문구가 일치하지 않습니다. 다시 시도하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As frases secretas não coincidem. Tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Парольные фразы не совпадают. Повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "两次输入的口令不一致。请重试。"
           }
         }
       }
@@ -151271,10 +154121,40 @@
             "value" : "Enter the passphrase for the passwords file"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie die Passphrase für die Passwortdatei ein"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードファイルのパスフレーズを入力してください"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 파일의 암호 문구를 입력하십시오"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite a frase secreta do arquivo de senhas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите парольную фразу для файла паролей"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入密码文件的口令"
           }
         }
       }
@@ -151289,10 +154169,40 @@
             "value" : "The passwords file could not be read: %@"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Passwortdatei konnte nicht gelesen werden: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードファイルを読み取れませんでした: %@"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 파일을 읽을 수 없습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler o arquivo de senhas: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать файл паролей: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取密码文件：%@"
           }
         }
       }
@@ -151307,10 +154217,40 @@
             "value" : "The saved password for “%1$@” with user name “%2$@” could not be read. %3$@"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gespeicherte Passwort für „%1$@“ mit dem Benutzernamen „%2$@“ konnte nicht gelesen werden. %3$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」のユーザー名「%2$@」の保存済みパスワードを読み取れませんでした。%3$@"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "사용자 이름이 “%2$@”인 “%1$@”의 저장된 암호를 읽을 수 없습니다. %3$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler a senha salva para “%1$@” com o nome de usuário “%2$@”. %3$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать сохранённый пароль для «%1$@» с именем пользователя «%2$@». %3$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取“%1$@”（用户名为“%2$@”）的已保存密码。%3$@"
           }
         }
       }
@@ -151325,10 +154265,40 @@
             "value" : "The saved password for “%1$@” could not be read. %2$@"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das gespeicherte Passwort für „%1$@“ konnte nicht gelesen werden. %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」の保存済みパスワードを読み取れませんでした。%2$@"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "“%1$@”의 저장된 암호를 읽을 수 없습니다. %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler a senha salva para “%1$@”. %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось прочитать сохранённый пароль для «%1$@». %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取“%1$@”的已保存密码。%2$@"
           }
         }
       }
@@ -151343,10 +154313,40 @@
             "value" : "Replace"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersetzen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "置き換える"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "대치"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Substituir"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Заменить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换"
           }
         }
       }
@@ -151361,10 +154361,40 @@
             "value" : "This export includes saved passwords. Enter the passphrase that was used to export them, or cancel to import everything else without them."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Export enthält gespeicherte Passwörter. Geben Sie die Passphrase ein, mit der sie exportiert wurden, oder brechen Sie ab, um alles andere ohne sie zu importieren."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このエクスポートには保存されたパスワードが含まれています。エクスポート時に使用したパスフレーズを入力するか、キャンセルしてパスワード以外のすべてをインポートしてください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 내보내기 파일에는 저장된 암호가 포함되어 있습니다. 암호를 내보낼 때 사용한 암호 문구를 입력하거나, 취소하여 암호를 제외한 나머지를 모두 가져오십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta exportação inclui senhas salvas. Digite a frase secreta usada para exportá-las ou cancele para importar todo o resto sem elas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этот экспорт содержит сохранённые пароли. Введите парольную фразу, использованную при их экспорте, или отмените, чтобы импортировать всё остальное без них."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此导出包含已保存的密码。请输入导出时使用的口令，或取消以导入除密码之外的所有其他内容。"
           }
         }
       }
@@ -151379,10 +154409,40 @@
             "value" : "Added: %1$lld\nReplaced: %2$lld\nKept existing: %3$lld"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzugefügt: %1$lld\nErsetzt: %2$lld\nVorhandene beibehalten: %3$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加: %1$lld\n置き換え: %2$lld\n既存を維持: %3$lld"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "추가됨: %1$lld\n대치됨: %2$lld\n기존 항목 유지: %3$lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionadas: %1$lld\nSubstituídas: %2$lld\nExistentes mantidas: %3$lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавлено: %1$lld\nЗаменено: %2$lld\nОставлено существующих: %3$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已添加：%1$lld\n已替换：%2$lld\n保留现有：%3$lld"
           }
         }
       }
@@ -151397,10 +154457,40 @@
             "value" : "The import was canceled. Passwords imported before canceling were kept."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Import wurde abgebrochen. Vor dem Abbruch importierte Passwörter wurden beibehalten."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インポートはキャンセルされました。キャンセル前にインポートされたパスワードは保持されています。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "가져오기가 취소되었습니다. 취소하기 전에 가져온 암호는 유지되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importação foi cancelada. As senhas importadas antes do cancelamento foram mantidas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Импорт отменён. Пароли, импортированные до отмены, сохранены."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入已取消。取消前已导入的密码均已保留。"
           }
         }
       }
@@ -151415,10 +154505,40 @@
             "value" : "The import stopped because of an error. Passwords imported before the error were kept.\n\n%@"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Import wurde wegen eines Fehlers angehalten. Vor dem Fehler importierte Passwörter wurden beibehalten.\n\n%@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エラーのためインポートが停止しました。エラー前にインポートされたパスワードは保持されています。\n\n%@"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "오류 때문에 가져오기가 중단되었습니다. 오류가 발생하기 전에 가져온 암호는 유지되었습니다.\n\n%@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importação foi interrompida por causa de um erro. As senhas importadas antes do erro foram mantidas.\n\n%@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Импорт остановлен из-за ошибки. Пароли, импортированные до ошибки, сохранены.\n\n%@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入因出错而停止。出错前已导入的密码均已保留。\n\n%@"
           }
         }
       }
@@ -151433,10 +154553,40 @@
             "value" : "Not imported because that password manager doesn’t use the Keychain: %lld"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht importiert, weil dieser Passwort-Manager den Schlüsselbund nicht verwendet: %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのパスワードマネージャーがキーチェーンを使用していないためインポートされなかった項目: %lld"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "해당 암호 관리자가 키체인을 사용하지 않아 가져오지 않음: %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não importadas porque esse cofre de senhas não usa a Keychain: %lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не импортировано, так как этот менеджер паролей не использует Связку ключей: %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "因该密码管理器未使用钥匙串而未导入：%lld"
           }
         }
       }
@@ -151451,10 +154601,40 @@
             "value" : "Already saved: %lld"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereits gespeichert: %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存済み: %lld"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미 저장됨: %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já salvas: %lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже сохранено: %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已保存：%lld"
           }
         }
       }
@@ -151469,10 +154649,40 @@
             "value" : "This passwords file was made by a newer version of iTerm2. Upgrade iTerm2 and try again."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Passwortdatei wurde mit einer neueren Version von iTerm2 erstellt. Aktualisieren Sie iTerm2 und versuchen Sie es erneut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このパスワードファイルは新しいバージョンの iTerm2 で作成されました。iTerm2 をアップグレードしてもう一度試してください。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 암호 파일은 최신 버전의 iTerm2에서 만들어졌습니다. iTerm2를 업그레이드한 후 다시 시도하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este arquivo de senhas foi criado por uma versão mais recente do iTerm2. Atualize o iTerm2 e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этот файл паролей создан более новой версией iTerm2. Обновите iTerm2 и повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此密码文件由更新版本的 iTerm2 创建。请升级 iTerm2 后重试。"
           }
         }
       }
@@ -151487,10 +154697,40 @@
             "value" : "The passwords file could not be saved: %@"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Passwortdatei konnte nicht gespeichert werden: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワードファイルを保存できませんでした: %@"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 파일을 저장할 수 없습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível salvar o arquivo de senhas: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить файл паролей: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存密码文件：%@"
           }
         }
       }
@@ -151505,10 +154745,40 @@
             "value" : "The passphrase is incorrect, or the file is damaged."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Passphrase ist falsch, oder die Datei ist beschädigt."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスフレーズが正しくないか、ファイルが破損しています。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 문구가 올바르지 않거나 파일이 손상되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A frase secreta está incorreta ou o arquivo está danificado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Неверная парольная фраза, или файл повреждён."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "口令不正确，或文件已损坏。"
           }
         }
       }
@@ -173287,22 +176557,28 @@
       "comment" : "One line in a list of tabs being closed and the jobs each is running; %1$d is the tab number and %2$@ is its job list",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Tab #%1$d: %2$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab Nr. %1$d: %2$@"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tab #%1$d: %2$@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "タブ#%1$d: %2$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭 #%1$d: %2$@"
           }
         },
         "pt-BR" : {
@@ -173329,22 +176605,28 @@
       "comment" : "Close-confirmation body when closing several tabs that are running a few jobs; %@ is the job list",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The tabs being closed are running %@."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die zu schließenden Tabs führen %@ aus."
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The tabs being closed are running %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "閉じるタブでは%@が実行されています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닫으려는 탭에서 %@이(가) 실행 중입니다."
           }
         },
         "pt-BR" : {
@@ -173371,22 +176653,28 @@
       "comment" : "Close-confirmation body when closing several tabs that are running many jobs; a bulleted list of tabs and their jobs follows",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The tabs being closed are running the following jobs:"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die zu schließenden Tabs führen die folgenden Jobs aus:"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The tabs being closed are running the following jobs:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "閉じるタブでは、次のジョブが実行されています:"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닫으려는 탭에서 다음 작업이 실행 중입니다:"
           }
         },
         "pt-BR" : {
@@ -173413,22 +176701,28 @@
       "comment" : "Added to a close-confirmation for several tabs when at least one has a locked session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Some of these tabs have locked sessions."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Einige dieser Tabs haben gesperrte Sitzungen."
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Some of these tabs have locked sessions."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "これらのタブの一部には、ロックされたセッションがあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 탭 중 일부에 잠긴 세션이 있습니다."
           }
         },
         "pt-BR" : {
@@ -173455,22 +176749,28 @@
       "comment" : "Close-confirmation body when closing several tabs and only one is running jobs; %1$d is the tab number and %2$@ is its job list",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Tab #%1$d is running %2$@."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab Nr. %1$d führt %2$@ aus."
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tab #%1$d is running %2$@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "タブ#%1$dでは%2$@が実行されています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭 #%1$d에서 %2$@이(가) 실행 중입니다."
           }
         },
         "pt-BR" : {
@@ -173977,22 +177277,28 @@
       "comment" : "Confirmation prompt for closing every tab except the one that was clicked",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Close all other tabs?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle anderen Tabs schließen?"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close all other tabs?"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "他のすべてのタブを閉じますか?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 모든 탭을 닫겠습니까?"
           }
         },
         "pt-BR" : {
@@ -174307,22 +177613,28 @@
       "comment" : "Confirmation prompt for closing tabs below the one that was clicked, shown when the tab bar is vertical",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Close all tabs below this one?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle Tabs unterhalb dieses Tabs schließen?"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close all tabs below this one?"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "このタブの下側のすべてのタブを閉じますか?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 탭 아래의 모든 탭을 닫겠습니까?"
           }
         },
         "pt-BR" : {
@@ -174541,22 +177853,28 @@
       "comment" : "Confirmation prompt for closing tabs to the right of the one that was clicked",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Close all tabs to the right of this one?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle Tabs rechts von diesem Tab schließen?"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close all tabs to the right of this one?"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "このタブの右側のすべてのタブを閉じますか?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 탭 오른쪽에 있는 모든 탭을 닫겠습니까?"
           }
         },
         "pt-BR" : {
@@ -199841,6 +203159,42 @@
             "state" : "new",
             "value" : "Reveal Chat"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chat anzeigen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チャットを表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "채팅 보기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar chat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать чат"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示聊天"
+          }
         }
       }
     },
@@ -200813,6 +204167,42 @@
             "state" : "new",
             "value" : "The man page URL did not name a man page or search term."
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Man-Page-URL hat weder eine Man-Page noch einen Suchbegriff angegeben."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "man ページの URL に man ページ名または検索語が指定されていませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "man 페이지 URL에 man 페이지 이름이나 검색어가 지정되지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A URL de man page não indicou uma man page nem um termo de busca."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В URL man-страницы не указана man-страница или поисковый запрос."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该 man page URL 未指定 man page 或搜索词。"
+          }
         }
       }
     },
@@ -200873,6 +204263,42 @@
             "state" : "new",
             "value" : "Illegal Man Page URL"
           }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unzulässige Man-Page-URL"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不正な man ページ URL"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "허용되지 않는 man 페이지 URL"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL de man page não permitida"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недопустимый URL man-страницы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非法的 Man Page URL"
+          }
         }
       }
     },
@@ -200884,6 +204310,42 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "The man page URL contained a disallowed character. The set of allowed characters is limited for security reasons."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Man-Page-URL enthielt ein unzulässiges Zeichen. Die zulässigen Zeichen sind aus Sicherheitsgründen eingeschränkt."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "man ページの URL に使用できない文字が含まれていました。セキュリティ上の理由から、使用できる文字は制限されています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "man 페이지 URL에 허용되지 않는 문자가 포함되어 있습니다. 보안상의 이유로 허용되는 문자가 제한되어 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A URL de man page continha um caractere não permitido. O conjunto de caracteres permitidos é limitado por motivos de segurança."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL man-страницы содержит недопустимый символ. Набор разрешённых символов ограничен из соображений безопасности."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该 man page URL 包含不允许的字符。出于安全考虑，允许使用的字符范围有限。"
           }
         }
       }
@@ -201858,10 +205320,40 @@
             "value" : "Unknown progress “%@”. The supported values are running and stopped."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannter Fortschritt „%@“. Unterstützte Werte sind running und stopped."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不明な進行状況「%@」です。サポートされている値は running と stopped です。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "알 수 없는 진행 상태 “%@”입니다. 지원되는 값은 running과 stopped입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progresso desconhecido “%@”. Os valores aceitos são running e stopped."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Неизвестное значение прогресса «%@». Поддерживаются значения running и stopped."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知的进度“%@”。支持的值为 running 和 stopped。"
           }
         }
       }
@@ -230500,6 +233992,36 @@
             }
           }
         },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ein Programm aus einer beendeten Arbeitsgruppe läuft noch in einem verborgenen tmux-Fenster."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Programme aus einer beendeten Arbeitsgruppe laufen noch in verborgenen tmux-Fenstern."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "終了したワークグループの%lld個のプログラムが、非表示のtmuxウインドウでまだ実行中です。"
+                }
+              }
+            }
+          }
+        },
         "ko" : {
           "variations" : {
             "plural" : {
@@ -230507,6 +234029,66 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "종료된 워크그룹의 프로그램 %lld개가 숨겨진 tmux 윈도우에서 아직 실행 중입니다."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Um programa de um grupo de trabalho que foi encerrado ainda está em execução em uma janela oculta do tmux."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld programas de um grupo de trabalho que foi encerrado ainda estão em execução em janelas ocultas do tmux."
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программа из завершившейся рабочей группы всё ещё работает в скрытом окне tmux."
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программы из завершившейся рабочей группы всё ещё работают в скрытых окнах tmux."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программ из завершившейся рабочей группы всё ещё работают в скрытых окнах tmux."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программы из завершившейся рабочей группы всё ещё работают в скрытых окнах tmux."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 个来自已结束工作组的程序仍在隐藏的 tmux 窗口中运行。"
                 }
               }
             }
@@ -230535,6 +234117,36 @@
             }
           }
         },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ein Programm aus einer Arbeitsgruppe, die dieser Mac nicht verwendet, befindet sich in einem verborgenen tmux-Fenster. Macs, die diese Arbeitsgruppe verwenden, verlieren es, wenn Sie es hier öffnen oder beenden."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Programme aus einer Arbeitsgruppe, die dieser Mac nicht verwendet, befinden sich in verborgenen tmux-Fenstern. Macs, die diese Arbeitsgruppe verwenden, verlieren sie, wenn Sie sie hier öffnen oder beenden."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "このMacが使用していないワークグループの%lld個のプログラムが、非表示のtmuxウインドウにあります。ここで開いたり停止したりすると、そのワークグループを使用しているMacではそれらが失われます。"
+                }
+              }
+            }
+          }
+        },
         "ko" : {
           "variations" : {
             "plural" : {
@@ -230542,6 +234154,66 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "이 Mac이 사용하지 않는 워크그룹의 프로그램 %lld개가 숨겨진 tmux 윈도우에 있습니다. 여기에서 열거나 중단하면 해당 워크그룹을 사용하는 Mac에서는 이 프로그램을 잃게 됩니다."
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Um programa de um grupo de trabalho que este Mac não usa está em uma janela oculta do tmux. Os Macs que usam esse grupo de trabalho vão perdê-lo se você o abrir ou encerrar aqui."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld programas de um grupo de trabalho que este Mac não usa estão em janelas ocultas do tmux. Os Macs que usam esse grupo de trabalho vão perdê-los se você os abrir ou encerrar aqui."
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программа из рабочей группы, которую этот Mac не использует, находится в скрытом окне tmux. Компьютеры Mac, использующие эту рабочую группу, потеряют её, если вы откроете или остановите её здесь."
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программы из рабочей группы, которую этот Mac не использует, находятся в скрытых окнах tmux. Компьютеры Mac, использующие эту рабочую группу, потеряют их, если вы откроете или остановите их здесь."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программ из рабочей группы, которую этот Mac не использует, находятся в скрытых окнах tmux. Компьютеры Mac, использующие эту рабочую группу, потеряют их, если вы откроете или остановите их здесь."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программы из рабочей группы, которую этот Mac не использует, находятся в скрытых окнах tmux. Компьютеры Mac, использующие эту рабочую группу, потеряют их, если вы откроете или остановите их здесь."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 个来自这台 Mac 未使用的工作组的程序位于隐藏的 tmux 窗口中。如果你在此处打开或停止它们，使用该工作组的 Mac 将失去它们。"
                 }
               }
             }
@@ -230559,10 +234231,40 @@
             "value" : "Open in Tabs"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Tabs öffnen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブで開く"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭으로 열기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir em abas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть во вкладках"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在标签页中打开"
           }
         }
       }
@@ -230577,10 +234279,40 @@
             "value" : "Stop Them"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beenden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止する"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 중단"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encerrá-los"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Остановить их"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止它们"
           }
         }
       }
@@ -230595,10 +234327,40 @@
             "value" : "Stop Waiting"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht mehr warten"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待機を中止"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "대기 중단"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parar de esperar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прекратить ожидание"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止等待"
           }
         }
       }
@@ -230613,10 +234375,40 @@
             "value" : "Take Over"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übernehmen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "引き継ぐ"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "넘겨받기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assumir"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перехватить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接管"
           }
         }
       }
@@ -230631,10 +234423,40 @@
             "value" : "Another iTerm2 attached to this tmux session is setting up a workgroup. This one is waiting for it to finish."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein anderes iTerm2, das mit dieser tmux-Sitzung verbunden ist, richtet gerade eine Arbeitsgruppe ein. Dieses wartet, bis es fertig ist."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このtmuxセッションに接続している別のiTerm2がワークグループを設定しています。このiTerm2はその完了を待っています。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 tmux 세션에 연결된 다른 iTerm2가 워크그룹을 설정하는 중입니다. 이 iTerm2는 그 작업이 끝나기를 기다리고 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outro iTerm2 conectado a esta sessão do tmux está configurando um grupo de trabalho. Este está aguardando que ele termine."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другой экземпляр iTerm2, подключённый к этой сессии tmux, настраивает рабочую группу. Этот экземпляр ждёт завершения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接到此 tmux 会话的另一个 iTerm2 正在设置工作组。此 iTerm2 正在等待其完成。"
           }
         }
       }
@@ -230649,10 +234471,40 @@
             "value" : "tmux session “%@” has a workgroup that more than one of your workgroups match. Which one should it use?"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die tmux-Sitzung „%@“ hat eine Arbeitsgruppe, auf die mehr als eine Ihrer Arbeitsgruppen passt. Welche soll verwendet werden?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmuxセッション「%@」には、あなたのワークグループのうち複数に一致するワークグループがあります。どれを使用しますか?"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux 세션 “%@”에 사용자의 워크그룹 중 둘 이상과 일치하는 워크그룹이 있습니다. 어느 워크그룹을 사용하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sessão do tmux “%@” tem um grupo de trabalho que corresponde a mais de um dos seus grupos de trabalho. Qual deles deve ser usado?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В сессии tmux «%@» есть рабочая группа, которой соответствуют несколько ваших рабочих групп. Какую из них использовать?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux 会话“%@”中有一个工作组与你的多个工作组匹配。它应该使用哪一个？"
           }
         }
       }
@@ -230667,10 +234519,40 @@
             "value" : "Leave as Ordinary Panes"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als normale Bereiche belassen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通常のペインのままにする"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "일반 패널로 두기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixar como painéis comuns"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оставить обычными панелями"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留为普通窗格"
           }
         }
       }
@@ -230685,10 +234567,40 @@
             "value" : "Choose a Workgroup"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeitsgruppe auswählen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ワークグループを選択"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "워크그룹 선택"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha um grupo de trabalho"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите рабочую группу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择工作组"
           }
         }
       }
@@ -230703,10 +234615,40 @@
             "value" : "tmux session “%@” has a workgroup that none of your workgroups match, so its panes are shown as ordinary panes."
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die tmux-Sitzung „%@“ hat eine Arbeitsgruppe, auf die keine Ihrer Arbeitsgruppen passt, daher werden ihre Bereiche als normale Bereiche angezeigt."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmuxセッション「%@」には、あなたのどのワークグループにも一致しないワークグループがあるため、そのペインは通常のペインとして表示されます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux 세션 “%@”에 사용자의 어떤 워크그룹과도 일치하지 않는 워크그룹이 있어 해당 패널을 일반 패널로 표시합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sessão do tmux “%@” tem um grupo de trabalho que não corresponde a nenhum dos seus grupos de trabalho, por isso seus painéis são mostrados como painéis comuns."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В сессии tmux «%@» есть рабочая группа, которой не соответствует ни одна из ваших рабочих групп, поэтому её панели показаны как обычные панели."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux 会话“%@”中有一个工作组与你的任何工作组都不匹配，因此其窗格显示为普通窗格。"
           }
         }
       }
@@ -230721,10 +234663,40 @@
             "value" : "Workgroup Not Recognized"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeitsgruppe nicht erkannt"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認識されないワークグループ"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "워크그룹을 인식할 수 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupo de trabalho não reconhecido"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рабочая группа не распознана"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法识别工作组"
           }
         }
       }
