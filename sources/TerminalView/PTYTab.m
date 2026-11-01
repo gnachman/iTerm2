@@ -5495,6 +5495,7 @@ static NSString *const PTYTabParseTreeRightExtraKey = @"iTerm2RightExtra";
 
 - (void)reloadTmuxLayout {
     BOOL shouldZoom = isMaximized_;
+    PTYSession *const sessionKeepingGrid = shouldZoom ? [self sessionToMaximize] : nil;
     if (isMaximized_) {
         DLog(@"Unmaximizing");
         [self unmaximize];
@@ -5504,7 +5505,7 @@ static NSString *const PTYTabParseTreeRightExtraKey = @"iTerm2RightExtra";
                              zoomed:isMaximized_
                             profile:[self.tmuxController profileForWindow:self.tmuxWindow]
                      tmuxController:self.tmuxController];
-    [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
+    [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_ sessionKeepingGrid:sessionKeepingGrid];
     if (shouldZoom) {
         [self maximizeAfterApplyingTmuxParseTree:visibleParseTree_ ?: parseTree_
                                   tmuxController:self.tmuxController];
@@ -6106,6 +6107,7 @@ typedef struct {
 // It updates the SessionView and nested PTYSplitView frames for a new layout.
 - (void)_recursiveResizeViewsInViewHierarchy:(NSView *)view
                               forArrangement:(NSDictionary *)arrangement
+                          sessionKeepingGrid:(PTYSession *)sessionKeepingGrid
 {
     assert(arrangement);
     [view setNeedsDisplay:YES];
@@ -6118,13 +6120,16 @@ typedef struct {
         NSArray *subarrangements = [arrangement objectForKey:SUBVIEWS];
         for (NSView *child in [view subviews]) {
             [self _recursiveResizeViewsInViewHierarchy:child
-                                        forArrangement:[subarrangements objectAtIndex:i]];
+                                        forArrangement:[subarrangements objectAtIndex:i]
+                                    sessionKeepingGrid:sessionKeepingGrid];
             i++;
         }
     } else {
         SessionView *sessionView = (SessionView *)view;
         PTYSession *theSession = [self sessionForSessionView:sessionView];
-        [theSession resizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
+        if (theSession != sessionKeepingGrid) {
+            [theSession resizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
+        }
         assert([arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]);
         NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
         [sessionView setFrame:aFrame];
@@ -6293,7 +6298,9 @@ typedef struct {
     }
 }
 
-- (void)resizeViewsInViewHierarchy:(NSView *)view forNewLayout:(NSMutableDictionary *)parseTree {
+- (void)resizeViewsInViewHierarchy:(NSView *)view
+                      forNewLayout:(NSMutableDictionary *)parseTree
+                sessionKeepingGrid:(PTYSession *)sessionKeepingGrid {
     Profile *bookmark = [[ProfileModel sharedInstance] defaultBookmark];
     NSDictionary *arrangement = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                               bookmark:bookmark
@@ -6303,7 +6310,9 @@ typedef struct {
                                                                                 window:self.tmuxWindow];
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
-    [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
+    [self _recursiveResizeViewsInViewHierarchy:view
+                                forArrangement:arrangement
+                            sessionKeepingGrid:sessionKeepingGrid];
     [realParentWindow_ tmuxTabLayoutDidChange:NO tab:nil variableWindowSize:tmuxController_.variableWindowSize];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
@@ -6753,7 +6762,9 @@ typedef struct {
                             profile:[tmuxController profileForWindow:self.tmuxWindow]
                      tmuxController:tmuxController];
     DLog(@"PTYTab maximizeAfterApplyingTmuxParseTree using width of %@", parseTree[kLayoutDictMaximumPixelWidthKey]);
-    [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
+    [self resizeViewsInViewHierarchy:root_
+                        forNewLayout:maximizedParseTree
+                  sessionKeepingGrid:[self sessionToMaximize]];
     DLog(@"After resizing views in maximize, root_.width=%f, _containerView.width=%f",
           root_.frame.size.width, _containerView.frame.size.width);
     [self fitSubviewsToRoot];
@@ -6811,6 +6822,13 @@ typedef struct {
     if (zoomed) {
         shouldZoom = zoomed.boolValue;
     }
+    PTYSession *const zoomedSession = shouldZoom ? [self tmuxZoomedSessionInVisibleParseTree:visibleParseTree] : nil;
+    // Predict what -maximize will pick once the junior session is active and _tmuxZoomedSession is
+    // updated below.
+    PTYSession *const sessionKeepingGrid =
+        shouldZoom ? [self sessionToMaximizeWithActiveSession:[self juniorSession] ?: activeSession_
+                                                zoomedSession:zoomedSession]
+                   : nil;
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_
                              zoomed:shouldZoom
@@ -6828,7 +6846,7 @@ typedef struct {
              parseTree[kLayoutDictMaximumPixelWidthKey],
              root_.frame.size.width,
              _containerView.frame.size.width);
-        [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
+        [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree sessionKeepingGrid:sessionKeepingGrid];
         [self fitSubviewsToRoot];
     } else {
         DLog(@"Parse tree does not match the root's view hierarchy.");
@@ -6847,7 +6865,7 @@ typedef struct {
     [self activateJuniorSession];
 
     if (shouldZoom) {
-        _tmuxZoomedSession = [self tmuxZoomedSessionInVisibleParseTree:visibleParseTree];
+        _tmuxZoomedSession = zoomedSession;
         [self maximizeAfterApplyingTmuxParseTree:visibleParseTree ?: parseTree
                                   tmuxController:tmuxController];
     } else {
@@ -7025,10 +7043,15 @@ typedef struct {
 // The tiled session maximizing shows. A float can be active, over the zoomed pane in tmux or after
 // activating one in a maximized tab; it is never what gets maximized.
 - (PTYSession *)sessionToMaximize {
-    if (![self sessionIsFloating:activeSession_]) {
-        return activeSession_;
+    return [self sessionToMaximizeWithActiveSession:activeSession_ zoomedSession:_tmuxZoomedSession];
+}
+
+- (PTYSession *)sessionToMaximizeWithActiveSession:(PTYSession *)activeSession
+                                     zoomedSession:(PTYSession *)zoomedSession {
+    if (![self sessionIsFloating:activeSession]) {
+        return activeSession;
     }
-    return _tmuxZoomedSession ?: [self mostRecentlyActiveTiledSession];
+    return zoomedSession ?: [self mostRecentlyActiveTiledSession];
 }
 
 // A session for a float tmux added, from its decorated leaf (with history and state).
@@ -7133,6 +7156,18 @@ typedef struct {
     }
 }
 
+// The session -activateJuniorSession will make active, or nil if this isn't a user-driven split.
+- (PTYSession *)juniorSession {
+    if (![self.sessions anyWithBlock:^BOOL(PTYSession *aSession) {
+        return aSession.sessionIsSeniorToTmuxSplitPane;
+    }]) {
+        return nil;
+    }
+    return [self.sessions objectPassingTest:^BOOL(PTYSession *aSession, NSUInteger index, BOOL *stop) {
+        return !aSession.sessionIsSeniorToTmuxSplitPane;
+    }];
+}
+
 // Find a session that is not "senior" to a tmux pane getting split by the user and make it
 // active.
 - (void)activateJuniorSession {
@@ -7151,15 +7186,7 @@ typedef struct {
         return;
     }
 
-    // Find a non-senior pane.
-    PTYSession *newSession = nil;
-    for (PTYSession *aSession in self.sessions) {
-        if (!aSession.sessionIsSeniorToTmuxSplitPane) {
-            newSession = aSession;
-            DLog(@"Found a junior session");
-            break;
-        }
-    }
+    PTYSession *newSession = [self juniorSession];
     if (newSession) {
         DLog(@"Activate junior session");
         [self setActiveSession:newSession];

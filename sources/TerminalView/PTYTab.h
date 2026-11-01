@@ -379,8 +379,12 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 - (BOOL)updatePaneTitles;
 - (void)updateSessionOrdinals;
 
+// sessionKeepingGrid's views are laid out but its grid is not resized. This is for the session a
+// zoomed layout will maximize, since shrinking it to its hidden split size first would discard rows
+// tmux won't redraw.
 - (void)resizeViewsInViewHierarchy:(NSView *)view
-                      forNewLayout:(NSMutableDictionary *)parseTree;
+                      forNewLayout:(NSMutableDictionary *)parseTree
+                sessionKeepingGrid:(PTYSession *)sessionKeepingGrid;
 - (void)reloadTmuxLayout;
 // Size we are given the current layout
 
