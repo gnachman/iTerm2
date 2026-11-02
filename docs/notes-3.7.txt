@@ -701,6 +701,9 @@ Improvements:
   even if you haven’t named the window.
 
 Bug Fixes:
+- Dragging a tab or pane no longer stutters
+  with many windows open when the tab bar is
+  always shown.
 - The browser’s address field no longer runs
   under the loading spinner while a page loads,
   and returns to its full width afterward.
