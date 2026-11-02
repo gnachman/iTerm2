@@ -61,13 +61,17 @@ final class WorkgroupUsageTests: XCTestCase {
     // alert must not try to show a megabyte of text. QA finding F-375.
     func test_decode_outputAtCapSaysItWasCutOff() throws {
         let data = Data(repeating: UInt8(ascii: "y"), count: WorkgroupUsageToolbarItem.maximumOutputSize)
-        let report = WorkgroupUsageToolbarItem.decode(data: data)
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: data, exitStatus: 0, timedOut: false),
+            bundledScriptName: nil)
         XCTAssertEqual(report.reportable, true)
         XCTAssertTrue(report.diagnostic?.hasPrefix("(The command’s output was cut off at") ?? false)
     }
 
     func test_decode_shortGarbageIsNotCalledCutOff() throws {
-        let report = WorkgroupUsageToolbarItem.decode(data: Data("y\ny\n".utf8))
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: Data("y\ny\n".utf8), exitStatus: 0, timedOut: false),
+            bundledScriptName: nil)
         XCTAssertEqual(report.diagnostic, "y\ny\n")
     }
 
@@ -178,36 +182,32 @@ final class WorkgroupUsageTests: XCTestCase {
         let data = try runScript(fixture: fixture)
         let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
         XCTAssertNil(report.error)
-        XCTAssertEqual(report.bars.count, 3)
+        XCTAssertEqual(report.bars.count, 2)
 
-        XCTAssertEqual(report.bars[0].label, "Session")
-        XCTAssertEqual(report.bars[0].short, "S")
-        XCTAssertEqual(report.bars[1].short, "W")
-        XCTAssertEqual(report.bars[2].short, "WF")
-        XCTAssertEqual(report.bars[0].fraction, 0.02, accuracy: 1e-6)
+        XCTAssertEqual(report.bars[0].label, "Week")
+        XCTAssertEqual(report.bars[0].short, "W")
+        XCTAssertEqual(report.bars[0].fraction, 0.67, accuracy: 1e-6)
 
-        XCTAssertEqual(report.bars[1].label, "Week")
-        XCTAssertEqual(report.bars[1].fraction, 0.67, accuracy: 1e-6)
-
-        XCTAssertEqual(report.bars[2].label, "Week (Fable)")
-        XCTAssertEqual(report.bars[2].fraction, 0.12, accuracy: 1e-6)
+        XCTAssertEqual(report.bars[1].label, "Week (Fable)")
+        XCTAssertEqual(report.bars[1].short, "WF")
+        XCTAssertEqual(report.bars[1].fraction, 0.12, accuracy: 1e-6)
 
         // The reset detail is carried through for the tooltip.
         XCTAssertEqual(report.bars[0].detail,
-                       "resets Sep 15 at 5pm (America/Los_Angeles)")
+                       "resets Sep 19 at 1pm (America/Los_Angeles)")
     }
 
     func test_script_reportsErrorOnUsageShapedButUnparseable() throws {
         // Output that *looks* like a usage report but no bar parses (a
         // changed or localized format) is the one reportable case, and it
         // carries the raw text as a diagnostic.
-        let data = try runScript(fixture: "Current session: deux pour cent\n")
+        let data = try runScript(fixture: "Current week (all models): deux pour cent\n")
         let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
         XCTAssertTrue(report.bars.isEmpty)
         XCTAssertNotNil(report.error)
         XCTAssertEqual(report.reportable, true)
         XCTAssertNotNil(report.diagnostic)
-        XCTAssertTrue(report.diagnostic?.contains("Current session") ?? false)
+        XCTAssertTrue(report.diagnostic?.contains("Current week") ?? false)
     }
 
     func test_script_unparseableDiagnosticStaysValidJSON() throws {
@@ -215,7 +215,7 @@ final class WorkgroupUsageTests: XCTestCase {
         // not break the emitted JSON string. (Usage-shaped so it takes the
         // reportable path that carries a diagnostic.)
         let data = try runScript(
-            fixture: "Current session: \"weird\" \\ back\ttab\nsecond line\n")
+            fixture: "Current week (all models): \"weird\" \\ back\ttab\nsecond line\n")
         let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
         XCTAssertEqual(report.reportable, true)
         XCTAssertTrue(report.diagnostic?.contains("\"weird\"") ?? false)
@@ -234,7 +234,7 @@ final class WorkgroupUsageTests: XCTestCase {
 
     func test_script_controlBytesInUsageLineStayValidJSON() throws {
         let data = try runScript(
-            fixture: "Current session: 5% used \u{00b7} resets \u{1b}[1msoon\u{1b}[0m\n")
+            fixture: "Current week (all models): 5% used \u{00b7} resets \u{1b}[1msoon\u{1b}[0m\n")
         let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
         XCTAssertEqual(report.bars.count, 1)
         XCTAssertEqual(report.bars.first?.detail, "resets \u{1b}[1msoon\u{1b}[0m")
@@ -269,6 +269,17 @@ final class WorkgroupUsageTests: XCTestCase {
         XCTAssertTrue(report.bars.isEmpty)
         XCTAssertEqual(report.reportable, true)
         XCTAssertNotNil(report.diagnostic)
+    }
+
+    // Session limits are gone, so a session line alone is valid output
+    // with nothing to show, not format drift.
+    func test_script_sessionLineAloneIsNotReportable() throws {
+        let data = try runScript(fixture: "Current session: 2% used · resets 5pm\n")
+        let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: data)
+        XCTAssertTrue(report.bars.isEmpty)
+        XCTAssertEqual(report.error, "Claude Code reported no weekly usage limits.")
+        XCTAssertEqual(report.reportable, false)
+        XCTAssertNil(report.diagnostic)
     }
 
     func test_script_nonLatinModelEmitsEmptyShort() throws {
@@ -335,7 +346,7 @@ final class WorkgroupUsageTests: XCTestCase {
                 capturedArguments = arguments
                 capturedEnvironment = environment
                 ran.fulfill()
-                return nil
+                return Self.emptyResult
             })
         item.tick()
         wait(for: [ran], timeout: 10)
@@ -357,7 +368,7 @@ final class WorkgroupUsageTests: XCTestCase {
             commandRunner: { _, _, environment, _ in
                 XCTAssertEqual(environment["PATH"], "/late/bin")
                 ran.fulfill()
-                return nil
+                return Self.emptyResult
             })
         item.tick()
         XCTAssertNotNil(pending)
@@ -501,7 +512,7 @@ final class WorkgroupUsageTests: XCTestCase {
             },
             commandRunner: { _, _, _, _ in
                 ran.fulfill()
-                return nil
+                return Self.emptyResult
             })
         item.tick()
         item.tick()
@@ -523,7 +534,7 @@ final class WorkgroupUsageTests: XCTestCase {
         let claude = dir.appendingPathComponent("claude")
         try """
         #!/bin/sh
-        echo 'Current session: 42% used · resets soon'
+        echo 'Current week (all models): 42% used · resets soon'
         """.write(to: claude, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: claude.path)
 
@@ -533,7 +544,7 @@ final class WorkgroupUsageTests: XCTestCase {
         let data = WorkgroupUsageToolbarItem.runCommand(launchPath: "/bin/sh",
                                                         arguments: [script.path],
                                                         environment: environment,
-                                                        timeout: 20)
+                                                        timeout: 20).output
         let report = try JSONDecoder().decode(WorkgroupUsageReport.self, from: try XCTUnwrap(data))
         XCTAssertNil(report.error)
         XCTAssertEqual(report.bars.count, 1)
@@ -544,9 +555,9 @@ final class WorkgroupUsageTests: XCTestCase {
 
     private func runCommandOffMain(arguments: [String],
                                    timeout: TimeInterval,
-                                   deadline: TimeInterval) -> Data? {
+                                   deadline: TimeInterval) -> WorkgroupUsageRunResult? {
         let done = expectation(description: "runCommand returned")
-        var result: Data?
+        var result: WorkgroupUsageRunResult?
         DispatchQueue.global().async {
             result = WorkgroupUsageToolbarItem.runCommand(launchPath: "/bin/sh",
                                                           arguments: arguments,
@@ -564,14 +575,94 @@ final class WorkgroupUsageTests: XCTestCase {
         let data = runCommandOffMain(arguments: ["-c", "/usr/bin/yes"],
                                      timeout: 35,
                                      deadline: 30)
-        XCTAssertEqual(data?.count, 1024 * 1024)
+        XCTAssertEqual(data?.output?.count, 1024 * 1024)
+        XCTAssertEqual(data?.timedOut, false)
     }
 
     // The timeout kills the whole command, including a child that keeps
     // stdout open after its parent dies.
     func test_runCommand_timeoutKillsChildHoldingStdout() {
-        _ = runCommandOffMain(arguments: ["-c", "/bin/sleep 600; true"],
-                              timeout: 1,
-                              deadline: 30)
+        let result = runCommandOffMain(arguments: ["-c", "/bin/sleep 600; true"],
+                                       timeout: 1,
+                                       deadline: 30)
+        XCTAssertEqual(result?.timedOut, true)
+    }
+
+    func test_runCommand_reportsExitStatus() {
+        let result = runCommandOffMain(arguments: ["-c", "exit 3"],
+                                       timeout: 20,
+                                       deadline: 30)
+        XCTAssertEqual(result?.exitStatus, 3)
+        XCTAssertEqual(result?.timedOut, false)
+        XCTAssertNil(result?.output)
+    }
+
+    // MARK: - Run outcomes
+
+    private static let emptyResult = WorkgroupUsageRunResult(output: nil, exitStatus: 0, timedOut: false)
+
+    // A timeout is transient (a slow claude on a busy machine), not a bug.
+    func test_decodeResult_timeoutIsNotReportable() {
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: nil, exitStatus: 9, timedOut: true),
+            bundledScriptName: "claude_usage.sh")
+        XCTAssertTrue(report.bars.isEmpty)
+        XCTAssertEqual(report.error, "Claude Code took too long to report usage")
+        XCTAssertEqual(report.reportable, false)
+    }
+
+    // The timeout can elapse after the command finished but before its
+    // output was read; a complete report must not be thrown away.
+    func test_decodeResult_timedOutRunWithValidOutputIsUsed() {
+        let json = #"{"bars":[{"label":"Week","fraction":0.5}],"error":null}"#
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: Data(json.utf8), exitStatus: 0, timedOut: true),
+            bundledScriptName: "claude_usage.sh")
+        XCTAssertEqual(report.bars.count, 1)
+        XCTAssertNil(report.error)
+    }
+
+    func test_decodeResult_timedOutRunWithPartialOutputIsATimeout() {
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: Data(#"{"bars":["#.utf8), exitStatus: 9, timedOut: true),
+            bundledScriptName: "claude_usage.sh")
+        XCTAssertEqual(report.error, "Claude Code took too long to report usage")
+        XCTAssertEqual(report.reportable, false)
+    }
+
+    func test_decodeResult_customCommandTimeout() {
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: nil, exitStatus: 9, timedOut: true),
+            bundledScriptName: nil)
+        XCTAssertEqual(report.error, "The AI usage command took too long")
+        XCTAssertEqual(report.reportable, false)
+    }
+
+    // The bundled script prints JSON on every path, so silence from it is a bug.
+    func test_decodeResult_bundledScriptWithoutOutputIsReportable() {
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: Data(), exitStatus: 2, timedOut: false),
+            bundledScriptName: "claude_usage.sh")
+        XCTAssertEqual(report.reportable, true)
+        XCTAssertEqual(report.diagnostic,
+                       "claude_usage.sh exited with status 2 and wrote nothing to stdout")
+    }
+
+    func test_decodeResult_customCommandWithoutOutputShowsStatus() {
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: nil, exitStatus: 127, timedOut: false),
+            bundledScriptName: nil)
+        XCTAssertEqual(report.error,
+                       "The AI usage command exited with status 127 without printing anything")
+        XCTAssertEqual(report.reportable, false)
+    }
+
+    func test_decodeResult_parsesOutput() {
+        let json = #"{"bars":[{"label":"Week","fraction":0.5}],"error":null}"#
+        let report = WorkgroupUsageToolbarItem.decode(
+            result: WorkgroupUsageRunResult(output: Data(json.utf8), exitStatus: 0, timedOut: false),
+            bundledScriptName: "claude_usage.sh")
+        XCTAssertEqual(report.bars.count, 1)
+        XCTAssertNil(report.error)
     }
 }

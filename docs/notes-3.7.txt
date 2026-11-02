@@ -263,8 +263,8 @@ New Features:
   setting “Show the window name beside the
   tabs” can turn it off or always show it.
 - The workgroup toolbar can show an AI Usage
-  gauge with your Claude subscription’s session
-  and weekly usage as progress bars. Add it to a
+  gauge with your Claude subscription’s weekly
+  usage as progress bars. Add it to a
   session’s toolbar in the workgroup settings and
   choose how often it refreshes; it reads the
   numbers by running the Claude Code command-line

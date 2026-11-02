@@ -256888,6 +256888,132 @@
         }
       }
     },
+    "WorkgroupUsage.CheckingClaude" : {
+      "comment" : "Placeholder shown in the AI usage toolbar item while waiting for Claude Code to report usage for the first time",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Checking Claude usage…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude-Nutzung wird geprüft…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claudeの使用状況を確認中…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificando o uso do Claude…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверка использования Claude…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在检查 Claude 用量…"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.CheckingClaudeTooltip" : {
+      "comment" : "Tooltip on the AI usage toolbar item while waiting for Claude Code to report usage for the first time",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 is asking Claude Code for your usage. This can take several seconds."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 fragt Claude Code nach Ihrer Nutzung. Das kann einige Sekunden dauern."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2がClaude Codeに使用状況を問い合わせています。数秒かかることがあります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 está consultando o Claude Code sobre o seu uso. Isso pode levar alguns segundos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 запрашивает у Claude Code данные об использовании. Это может занять несколько секунд."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 正在向 Claude Code 查询用量。这可能需要几秒钟。"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.ClaudeTimedOut" : {
+      "comment" : "AI usage toolbar item message when `claude -p /usage` ran past the time limit and was stopped",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code took too long to report usage"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code hat zu lange gebraucht, um die Nutzung zu melden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Codeからの使用状況の取得に時間がかかりすぎました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Claude Code demorou demais para informar o uso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code слишком долго не сообщал данные об использовании"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 报告用量耗时过长"
+          }
+        }
+      }
+    },
     "WorkgroupUsage.ClickForDetails" : {
       "comment" : "Tooltip on the AI usage toolbar item when an error can be reported; the placeholder is the short error summary",
       "extractionState" : "extracted_with_value",
@@ -256936,9 +257062,135 @@
         }
       }
     },
+    "WorkgroupUsage.CommandNoOutput" : {
+      "comment" : "AI usage toolbar item message when the user’s custom usage command printed nothing; the placeholder is its exit status",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage command exited with status %d without printing anything"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Befehl für die KI-Nutzung wurde mit Status %d beendet, ohne etwas auszugeben"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況コマンドは何も出力せずにステータス %d で終了しました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O comando de uso de IA terminou com status %d sem imprimir nada"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Команда использования ИИ завершилась с кодом %d, ничего не выведя"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 用量命令以状态 %d 退出，未输出任何内容"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.CommandTimedOut" : {
+      "comment" : "AI usage toolbar item message when the user’s custom usage command ran past the time limit and was stopped",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage command took too long"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Befehl für die KI-Nutzung hat zu lange gedauert"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況コマンドの実行に時間がかかりすぎました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O comando de uso de IA demorou demais"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Команда использования ИИ выполнялась слишком долго"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 用量命令耗时过长"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.HelperNoOutput" : {
+      "comment" : "AI usage toolbar item message when iTerm2’s bundled usage script exited without printing anything",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage helper stopped without reporting usage"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Hilfsprogramm für die KI-Nutzung wurde beendet, ohne die Nutzung zu melden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI使用状況のヘルパーが使用状況を報告せずに終了しました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O auxiliar de uso de IA parou sem informar o uso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вспомогательный компонент для использования ИИ завершился, не сообщив данные об использовании"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 用量辅助程序未报告用量便已停止"
+          }
+        }
+      }
+    },
     "WorkgroupUsage.Loading" : {
       "comment" : "Placeholder shown in the AI usage toolbar item before the first result arrives",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -256986,7 +257238,7 @@
     },
     "WorkgroupUsage.NoOutput" : {
       "comment" : "AI usage toolbar item message when the command produced no output",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -257172,6 +257424,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "…（已截断；完整报告已拷贝到剪贴板）"
+          }
+        }
+      }
+    },
+    "WorkgroupUsage.RunningCommand" : {
+      "comment" : "Placeholder shown in the AI usage toolbar item while waiting for the user’s custom usage command to finish for the first time",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Running usage command…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzungsbefehl wird ausgeführt…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用状況コマンドを実行中…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executando o comando de uso…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выполнение команды использования…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在运行用量命令…"
           }
         }
       }
