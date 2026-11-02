@@ -217196,26 +217196,26 @@
         }
       }
     },
-    "StatusPriority.ShowStatusInTabSubtitle" : {
-      "comment" : "Checkbox to show status in the tab subtitle",
+    "StatusPriority.ShowStatusOnTabs" : {
+      "comment" : "Checkbox in the Session Status settings popover. When on, a session’s status appears on its tab, both as a colored dot and as text in the tab subtitle.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Status im Tab-Untertitel anzeigen"
+            "value" : "Status auf Tabs anzeigen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Show status in tab subtitle"
+            "value" : "Show status on tabs"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "タブのサブタイトルにステータスを表示"
+            "value" : "タブにステータスを表示"
           }
         },
         "ko" : {
@@ -217227,19 +217227,19 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mostrar status no subtítulo da aba"
+            "value" : "Mostrar status nas abas"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Показывать статус в подзаголовке вкладки"
+            "value" : "Показывать статус на вкладках"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在标签页副标题中显示状态"
+            "value" : "在标签页上显示状态"
           }
         }
       }

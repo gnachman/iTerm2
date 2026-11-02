@@ -17,7 +17,7 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
     private struct Titles {
         var notify: String
         var mergeWorkgroups: String
-        var showStatusInTabSubtitle: String
+        var showStatusOnTabs: String
         var instructions: String
     }
 
@@ -41,14 +41,14 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
         let strings = try catalog()
         return Titles(notify: try value("StatusPriority.NotifyColumn", language: language, in: strings),
                       mergeWorkgroups: try value("StatusPriority.MergeWorkgroups", language: language, in: strings),
-                      showStatusInTabSubtitle: try value("StatusPriority.ShowStatusInTabSubtitle", language: language, in: strings),
+                      showStatusOnTabs: try value("StatusPriority.ShowStatusOnTabs", language: language, in: strings),
                       instructions: try value("StatusPriority.InstructionsLabel", language: language, in: strings))
     }
 
     private func layout(_ titles: Titles) -> StatusPriorityPopoverLayout {
         return StatusPriorityPopoverLayout(notifyTitle: titles.notify,
                                            checkboxTitles: [titles.mergeWorkgroups,
-                                                            titles.showStatusInTabSubtitle],
+                                                            titles.showStatusOnTabs],
                                            instructions: titles.instructions)
     }
 
@@ -56,7 +56,7 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
         for language in languages {
             let titles = try titles(language)
             let layout = layout(titles)
-            for title in [titles.mergeWorkgroups, titles.showStatusInTabSubtitle] {
+            for title in [titles.mergeWorkgroups, titles.showStatusOnTabs] {
                 let needed = NSButton(checkboxWithTitle: title, target: nil, action: nil).fittingSize.width
                 XCTAssertLessThanOrEqual(needed,
                                          layout.width - 2 * StatusPriorityPopoverLayout.margin,
@@ -111,14 +111,14 @@ final class StatusPriorityPopoverLayoutTests: XCTestCase {
             let titles = try titles(language)
             let vc = StatusPriorityViewController(
                 titles: .init(instructions: titles.instructions,
-                              showStatusInTabSubtitle: titles.showStatusInTabSubtitle,
+                              showStatusOnTabs: titles.showStatusOnTabs,
                               mergeWorkgroups: titles.mergeWorkgroups,
                               notify: titles.notify))
             let view = vc.view
             XCTAssertEqual(view.frame.size.width, layout(titles).width, language)
 
             let checkboxes = view.subviews.compactMap { $0 as? NSButton }.filter {
-                [titles.mergeWorkgroups, titles.showStatusInTabSubtitle].contains($0.title)
+                [titles.mergeWorkgroups, titles.showStatusOnTabs].contains($0.title)
             }
             XCTAssertEqual(checkboxes.count, 2, language)
             for checkbox in checkboxes {

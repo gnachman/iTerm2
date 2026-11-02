@@ -360,6 +360,11 @@ New Features:
   connected to.
 
 Improvements:
+- The “Show status in tab subtitle” checkbox in
+  the Session Status tool’s settings is now
+  “Show status on tabs”. Turning it off hides
+  the colored status dot on the tab too, not
+  just the status text.
 - zsh, fish, and tcsh Shell Integration now mark
   the right-hand prompt, so Select Current Command
   and saved commands leave it out. In tcsh this

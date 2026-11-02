@@ -605,7 +605,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                  name:iTermAnnotationVisibilityDidChange
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_refreshLabels:)
+                                             selector:@selector(showSessionStatusInTabSubtitleDidChange:)
                                                  name:iTermShowSessionStatusInTabSubtitleDidChange
                                                object:nil];
     [iTermPreferenceDidChangeNotification subscribe:self selector:@selector(preferenceDidChange:)];
@@ -911,7 +911,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)updateIcon {
-    if (_aggregatedTabStatus.hasActiveStatus && _aggregatedTabStatus.hasIndicator) {
+    if (_aggregatedTabStatus.hasActiveStatus &&
+        _aggregatedTabStatus.hasIndicator &&
+        iTermUserDefaults.showSessionStatusInTabSubtitle) {
         [self setIcon:[self tabStatusDotImage]];
     } else if (_state & kPTYTabDeadState) {
         [self setIcon:[PTYTab deadImageWithAppearance:self.realParentWindow.window.effectiveAppearance]];
@@ -926,6 +928,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     } else {
         [self setIcon:nil];
     }
+}
+
+- (void)showSessionStatusInTabSubtitleDidChange:(NSNotification *)notification {
+    [self _refreshLabels:nil];
+    [self updateIcon];
 }
 
 - (NSImage *)tabStatusDotImage {

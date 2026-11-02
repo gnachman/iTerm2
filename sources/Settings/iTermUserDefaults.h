@@ -77,13 +77,12 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // rewriting ~/.claude/settings.json) silently strips our hook.
 @property (class, nonatomic) BOOL claudeCodeIntegrationCompleted;
 
-// Whether session-status text (from cc-status, OSC 21337, the SetTabStatus
-// trigger, or iterm2.set_status) is woven into the tab’s subtitle and
-// allowed to tint that subtitle text. The colored dot on the tab is
-// independent and always visible regardless of this setting. Default YES
-// preserves the existing behavior. Posted as
-// iTermShowSessionStatusInTabSubtitleDidChange when toggled so tabs can
-// refresh their labels live.
+// Whether session status (from cc-status, OSC 21337, OSC 7501, the
+// SetTabStatus trigger, or iterm2.set_status) appears on the tab at all: the
+// status text woven into the tab’s subtitle, the tint on that subtitle text,
+// and the colored dot drawn as the tab’s icon. Default YES preserves the
+// existing behavior. Posted as iTermShowSessionStatusInTabSubtitleDidChange
+// when toggled so tabs can refresh their labels and icons live.
 @property (class, nonatomic) BOOL showSessionStatusInTabSubtitle;
 @property (class, nonatomic) BOOL haveExplainedHowToAddTouchbarControls;
 
