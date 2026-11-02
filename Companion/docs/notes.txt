@@ -110,6 +110,10 @@ Bug Fixes:
   showing “The request timed out.” Tap Details
   to see each server it tried and what went
   wrong with each.
+- Switching away from iTerm2 Buddy while it was
+  connecting, then coming back later, could
+  wrongly say your Mac’s iTerm2 was too old. It
+  now reconnects instead.
 
 New Features:
 - You can now type into a live session. Tap the

@@ -1585,7 +1585,7 @@ final class AppModel {
                     pairingStatus = "Loading chats"
                     companionLog("Pairing succeeded; loading home")
                     try await loadHome()
-                    companionLog("Home loaded")
+                    companionLog(phase == .home ? "Home loaded" : "Pairing finished without loading home (phase: \(phase))")
                     storePairing(code)
                     reportPushStatus()
                 } catch is CancellationError {
@@ -2103,11 +2103,15 @@ final class AppModel {
         // the channel is up and the Mac is authenticated. Race .hello against a
         // timeout and keep the outcomes distinct:
         //   - TIMED OUT: the Mac is present but never answers .hello at all - an
-        //     older Mac that predates the handshake. (A network drop in the very
-        //     next operation after a clean establish is far less likely; the Retry
-        //     button recovers that rare false positive.) Treat it as "the Mac must
+        //     older Mac that predates the handshake. Treat it as "the Mac must
         //     upgrade" so a phone-first updater gets a clear panel, not a silent
-        //     reconnect loop.
+        //     reconnect loop. But first confirm the Mac is still there with a ping,
+        //     which every Mac answers off its main thread: a timer can also elapse
+        //     because the connection died, or because iOS suspended the app while
+        //     it waited and the deadline passed during the suspension. Then the
+        //     ping fails with a TransportError and takes the retry path below.
+        //     Replies arrive in order, so a hello reply that was on its way
+        //     reaches the handshake child before the ping's reply does.
         //   - FAILED with a CompanionError: the Mac RESPONDED but with a rejection
         //     or a reply we can't make sense of (an older Mac that forward-compat-
         //     decodes .hello as .unsupported and replies .error, or any unexpected
@@ -2126,6 +2130,9 @@ final class AppModel {
                     // throws CancellationError instead, so a teardown is never
                     // mistaken for a timeout.
                     try await Task.sleep(nanoseconds: 15 * 1_000_000_000)
+                    try await withTimeout(5, "Liveness check after hello timeout") {
+                        try await client.ping()
+                    }
                     throw HelloHandshakeTimedOut()
                 }
                 defer { group.cancelAll() }
@@ -2137,7 +2144,7 @@ final class AppModel {
                 return result
             }
         } catch is HelloHandshakeTimedOut {
-            companionLog("Version handshake timed out after a successful establish; assuming the Mac app must upgrade")
+            companionLog("Version handshake timed out after a successful establish, but the Mac answers pings; assuming the Mac app must upgrade")
             phase = .needsUpgrade(.mac)
             return
         } catch let error as CompanionError {
