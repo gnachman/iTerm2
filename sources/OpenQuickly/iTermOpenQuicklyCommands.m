@@ -33,6 +33,10 @@
     return nil;
 }
 
++ (NSString *)queryPrefix {
+    return [NSString stringWithFormat:@"/%@ ", [self command]];
+}
+
 - (BOOL)supportsSessionLocation {
     return NO;
 }
@@ -85,6 +89,10 @@
     return NO;
 }
 
+- (BOOL)supportsSessionContents {
+    return NO;
+}
+
 @end
 
 @implementation iTermOpenQuicklyInTabsWindowArrangementCommand
@@ -132,6 +140,22 @@
 }
 
 - (BOOL)supportsSessionLocation {
+    return YES;
+}
+
+@end
+
+@implementation iTermOpenQuicklySearchSessionContentsCommand
+
++ (NSString *)restrictionDescription {
+    return NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestrictionSessionContents", nil, [NSBundle mainBundle], @"sessions containing text", @"Open Quickly restriction description");
+}
+
++ (NSString *)command {
+    return @"g";
+}
+
+- (BOOL)supportsSessionContents {
     return YES;
 }
 

@@ -23,6 +23,9 @@
 
 @end
 
+@implementation iTermOpenQuicklyContentMatchItem
+@end
+
 @implementation iTermOpenQuicklyWindowItem
 
 - (NSImage *)icon {

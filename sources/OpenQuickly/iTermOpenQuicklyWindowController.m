@@ -6,8 +6,10 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermGlobalSearchResult.h"
 #import "iTermHotKeyController.h"
 #import "iTermProfileHotKey.h"
+#import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermOpenQuicklyModel.h"
 #import "iTermOpenQuicklyTableCellView.h"
@@ -29,6 +31,7 @@
 #import "PTYTab.h"
 #import "SolidColorView.h"
 #import "VT100RemoteHost.h"
+#import "VT100Screen.h"
 
 @interface iTermOpenQuicklyWindowController () <
     iTermOpenQuicklyTextFieldDelegate,
@@ -139,6 +142,25 @@
 }
 
 - (void)presentWindow {
+    [self presentWindowWithQuery:nil];
+}
+
+- (void)presentWindowWithCommand:(Class)commandClass {
+    NSString *query = [commandClass queryPrefix];
+    if (self.window.isVisible) {
+        // Keep what was already typed, switched to this mode.
+        query = [query stringByAppendingString:[[_model commandForQuery:_textField.stringValue] text] ?: @""];
+    }
+    [self presentWindowWithQuery:query];
+}
+
+// Puts the query in the field with the cursor after it, so typing extends it.
+- (void)setQuery:(NSString *)query {
+    _textField.stringValue = query;
+    _textField.currentEditor.selectedRange = NSMakeRange(query.length, 0);
+}
+
+- (void)presentWindowWithQuery:(NSString *)query {
     [_previewPanel teardown];
     [_model removeAllItems];
     [_table reloadData];
@@ -177,12 +199,28 @@
         [self.window makeKeyAndOrderFront:nil];
     }
 
+    if (query) {
+        [self setQuery:query];
+    }
+
     // After the window is rendered, call update which will animate to the new frame.
     [self performSelector:@selector(update) withObject:nil afterDelay:0];
 }
 
 // Recompute the model and update the window frame.
 - (void)update {
+    [self updatePreservingSelection:NO];
+}
+
+// If preserveSelection is set, the selected item stays selected if it is still
+// present. This is for results that arrive while the user is looking at them.
+- (void)updatePreservingSelection:(BOOL)preserveSelection {
+    NSString *selectedIdentifier = nil;
+    const NSInteger selectedRow = _table.selectedRow;
+    if (preserveSelection && selectedRow >= 0 && selectedRow < (NSInteger)_model.items.count) {
+        selectedIdentifier = [_model.items[selectedRow] identifier];
+    }
+    const NSUInteger previousCount = _model.items.count;
     _suppressSelectionPreviewUpdates = YES;
     [self.model updateWithQuery:_textField.stringValue];
     _xButton.hidden = _textField.stringValue.length == 0;
@@ -196,11 +234,25 @@
                                    contentViewFrame.size.width,
                                    contentViewFrame.size.height - _scrollView.frame.origin.y - 10);
     if (self.model.items.count) {
-        [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
-        [_table scrollRowToVisible:0];
+        NSUInteger row = 0;
+        if (selectedIdentifier) {
+            row = [_model.items indexOfObjectPassingTest:^BOOL(iTermOpenQuicklyItem *item, NSUInteger idx, BOOL *stop) {
+                return [item.identifier isEqualToString:selectedIdentifier];
+            }];
+            if (row == NSNotFound) {
+                row = 0;
+            }
+        }
+        [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
+        [_table scrollRowToVisible:row];
     }
     [self refreshPreview];
 
+    if (preserveSelection && _model.items.count == previousCount) {
+        // The window's size depends only on the number of rows.
+        _suppressSelectionPreviewUpdates = NO;
+        return;
+    }
     [self performSelector:@selector(resizeWindowAnimatedToFrame:)
                withObject:[NSValue valueWithRect:frame]
                afterDelay:0];
@@ -280,6 +332,9 @@
     if ([obj isKindOfClass:[iTermOpenQuicklyNamedMarkItem class]]) {
         return ((iTermOpenQuicklyNamedMarkItem *)obj).session;
     }
+    if ([obj isKindOfClass:[iTermOpenQuicklyContentMatchItem class]]) {
+        return ((iTermOpenQuicklyContentMatchItem *)obj).session;
+    }
     return nil;
 }
 
@@ -318,6 +373,7 @@
 // Bound to the close button.
 - (IBAction)close:(id)sender {
     [_previewPanel teardown];
+    [_model removeAllItems];
     // Use orderOut, not close. -close on a non-activating panel can leave the
     // window in a state where the window-server refuses to re-elevate it on
     // subsequent shows from a background app (iTermProfileHotKey's floating
@@ -439,7 +495,7 @@
             }
         } else if ([object isKindOfClass:[iTermOpenQuicklyHelpItem class]]) {
             iTermOpenQuicklyHelpItem *item = object;
-            _textField.stringValue = [item identifier];
+            [self setQuery:[item identifier]];
             [self update];
             return;
         } else if ([object isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {
@@ -468,6 +524,8 @@
                 [item.session reveal];
                 [item.session scrollToNamedMark:item.namedMark];
             }
+        } else if ([object isKindOfClass:[iTermOpenQuicklyContentMatchItem class]]) {
+            [self revealContentMatch:object];
         } else if ([object isKindOfClass:[iTermOpenQuicklyMenuItem class]]) {
             iTermOpenQuicklyMenuItem *item = [iTermOpenQuicklyMenuItem castFrom:object];
             if (item.valid) {
@@ -533,6 +591,22 @@
     }
 
     [self close:nil];
+}
+
+// Switches to the session and scrolls to its first match.
+- (void)revealContentMatch:(iTermOpenQuicklyContentMatchItem *)item {
+    PTYSession *session = item.session;
+    if (!session) {
+        return;
+    }
+    [session reveal];
+    iTermGlobalSearchResult *result = [iTermGlobalSearchResult castFrom:item.result];
+    if (result && result.onMainScreen == session.screen.showingAlternateScreen) {
+        // Showing the match would mean swapping the main and alternate screens,
+        // and nothing would swap them back after Open Quickly closes.
+        return;
+    }
+    [item.result revealWithState:[NSMutableDictionary dictionary] completion:^(NSRect hull) {}];
 }
 
 // Returns an almost-black color. NSTableView treats actual black specially,
@@ -603,6 +677,7 @@
 
 - (void)windowDidResignKey:(NSNotification *)notification {
     [_previewPanel teardown];
+    [_model removeAllItems];
     [self.window orderOut:nil];
 }
 
@@ -707,6 +782,13 @@
     }
     return [self attributedStringFromString:composite
                       byHighlightingIndices:nil];
+}
+
+- (void)openQuicklyModelDidChangeAsynchronously {
+    if (!self.window.isVisible) {
+        return;
+    }
+    [self updatePreservingSelection:YES];
 }
 
 #pragma mark - String Formatting

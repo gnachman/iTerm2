@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
                      sessions:(NSArray<PTYSession *> *)sessions
                          mode:(iTermFindMode)mode
                       handler:(void (^)(PTYSession * _Nullable session,
-                                        NSArray<id<iTermGlobalSearchResultProtocol>> * _Nullableresults,
+                                        NSArray<id<iTermGlobalSearchResultProtocol>> * _Nullable results,
                                         double))handler NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
