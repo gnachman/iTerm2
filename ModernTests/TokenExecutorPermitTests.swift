@@ -667,4 +667,52 @@ final class TokenExecutorPermitTests: XCTestCase {
         }
         XCTAssertEqual(reads - before, 10)
     }
+
+    // Running alone owes nobody anything. A busy session that joins a long solo run takes turns
+    // with the holder instead of waiting for it to run as long again.
+    func testHolderThatRanAloneTakesTurnsWithANewcomer() {
+        let permits = ExecutionPermits(capacity: 1, visibleWeight: 4)
+        var clock: UInt64 = 1
+        let queue = DispatchQueue(label: "test")
+        func makeHolder() -> ExecutionPermitHolder {
+            return ExecutionPermitHolder(permits: permits,
+                                         queue: queue,
+                                         isPaused: { false },
+                                         execute: {},
+                                         now: { clock })
+        }
+        let a = makeHolder()
+        let b = makeHolder()
+        func decide(_ holder: ExecutionPermitHolder) -> ExecutionPermitHolder.Decision {
+            return holder.decide(hasTokens: true, willQueueTokens: false, isPaused: false, isPausedOnlyForJoins: false)
+        }
+        // Executes a slice's worth of tokens over a second, much longer than a slice. Returns
+        // whether the holder yielded.
+        func runSlice(_ holder: ExecutionPermitHolder) -> Bool {
+            clock += NSEC_PER_SEC
+            for _ in 0..<8 where holder.sliceIsOverAndShouldYield() {
+                return true
+            }
+            return false
+        }
+        // Gives up the permit after yielding and waits in line again with more to do.
+        func settle(_ holder: ExecutionPermitHolder) {
+            holder.settle(isPaused: false, isPausedOnlyForJoins: false, hasTokensToExecute: { true })
+        }
+
+        XCTAssertEqual(decide(a), .execute)
+        for _ in 0..<60 {
+            XCTAssertFalse(runSlice(a))
+        }
+        XCTAssertEqual(decide(b), .waitForPermit)
+
+        for turn in 0..<3 {
+            XCTAssertTrue(runSlice(a), "turn \(turn): a kept the permit")
+            settle(a)
+            XCTAssertEqual(decide(b), .execute, "turn \(turn)")
+            XCTAssertTrue(runSlice(b), "turn \(turn): b kept the permit")
+            settle(b)
+            XCTAssertEqual(decide(a), .execute, "turn \(turn)")
+        }
+    }
 }

@@ -180,14 +180,15 @@ final class ExecutionPermitHolder {
         if ran < Self.timeSlice {
             return false
         }
-        guard permits.checkpointIsNeeded(client) else {
-            // Nobody to yield to. Keep running without the lock, and be charged for this time
-            // later.
-            return false
-        }
-        // Charge for the slice and start a new one, whether or not anyone is owed the permit.
         ranBeforeJoin = 0
         self.runStart = now()
+        guard permits.checkpointIsNeeded(client) else {
+            // Nobody to yield to. Keep running without the lock, and drop the slice instead of
+            // charging it: running while nobody else wanted a permit takes nothing from anyone,
+            // and charging it later would put this holder far behind whoever joins next.
+            return false
+        }
+        // Someone may be owed the permit. Charge for the slice.
         let shouldYield = timing { permits.checkpoint(client, ran: ran) }
         if shouldYield {
             stats?.yielded = true
