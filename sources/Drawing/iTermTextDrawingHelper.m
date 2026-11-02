@@ -3104,6 +3104,8 @@ BOOL iTermDecodeKittyUnicodePlaceholder(const screen_char_t *c,
         case iTermThinStrokesSettingRetinaOnly:
             return _isRetina;
     }
+    ITAssertWithMessage(CGColorGetNumberOfComponents(foregroundColor) >= 3,
+                        @"Foreground color %@ has too few components", foregroundColor);
     return [backgroundColor brightnessComponent] < PerceivedBrightness(components[0], components[1], components[2]);
 }
 
@@ -4155,7 +4157,7 @@ typedef struct {
         if ([iTermCursor shouldUseHDRCursorOnBackground:[self defaultBackgroundColor]
                                          profileEnabled:self.hdrCursorEnabled
                                       potentialHeadroom:headroom]) {
-            cursorColor = [NSColor whiteColor];
+            cursorColor = [NSColor it_colorInDefaultColorSpaceWithRed:1 green:1 blue:1 alpha:1];
             hdrComponentValue = [iTermCursor hdrCursorComponentValueForRequestedBrightness:self.hdrCursorBrightness
                                                                                   headroom:headroom];
             hdrCursor = YES;
