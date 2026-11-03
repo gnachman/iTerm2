@@ -54,6 +54,7 @@ NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersion
 // Progress bar color scheme constants
 NSString *const iTermProgressBarColorSchemeDefault = @"default";
 NSString *const iTermProgressBarColorSchemeRainbow = @"rainbow";
+NSString *const iTermProgressBarColorSchemeRotatingRainbow = @"rotating-rainbow";
 NSString *const iTermProgressBarColorSchemeRed = @"red";
 NSString *const iTermProgressBarColorSchemeGreen = @"green";
 NSString *const iTermProgressBarColorSchemeBlue = @"blue";

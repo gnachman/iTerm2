@@ -245,6 +245,7 @@
 // Progress bar color scheme constants
 extern NSString *const iTermProgressBarColorSchemeDefault;
 extern NSString *const iTermProgressBarColorSchemeRainbow;
+extern NSString *const iTermProgressBarColorSchemeRotatingRainbow;
 extern NSString *const iTermProgressBarColorSchemeRed;
 extern NSString *const iTermProgressBarColorSchemeGreen;
 extern NSString *const iTermProgressBarColorSchemeBlue;

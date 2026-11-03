@@ -65,6 +65,9 @@ class iTermProgressBarView: NSView {
     @objc var transparent = false {
         didSet {
             updateBackgroundColor()
+            if mode == .indeterminate {
+                installIndeterminateLayer()
+            }
         }
     }
     // The color to render behind the bar so it blends with the session's theme.
@@ -131,6 +134,22 @@ class iTermProgressBarView: NSView {
                                                                          dark: darkMode))
     }()
     private var indeterminateAnimationWidth: CGFloat = 0
+    // indeterminateContainer or rotatingRainbowContainer while in .indeterminate.
+    private var installedIndeterminateLayer: CALayer?
+    private lazy var rotatingRainbowLayer: CAGradientLayer = {
+        let layer = CAGradientLayer()
+        layer.type = .conic
+        layer.startPoint = CGPoint(x: 0.5, y: 0.5)
+        layer.endPoint = CGPoint(x: 1.0, y: 0.5)
+        layer.colors = Self.rotatingRainbowColors(step: 0)
+        return layer
+    }()
+    private lazy var rotatingRainbowContainer: CALayer = {
+        let layer = CALayer()
+        layer.masksToBounds = true
+        layer.addSublayer(rotatingRainbowLayer)
+        return layer
+    }()
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -240,9 +259,10 @@ private extension iTermProgressBarView {
 
     private func colorSchemeColors(scheme: String, dark: Bool, isIndeterminate: Bool) -> [NSColor] {
         switch scheme {
-        case iTermProgressBarColorSchemeRainbow:
-            return [
-                NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0),
+        case iTermProgressBarColorSchemeRainbow, iTermProgressBarColorSchemeRotatingRainbow:
+            let red = NSColor(srgbRed: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
+            let colors = [
+                red,
                 NSColor(srgbRed: 1.0, green: 0.5, blue: 0.0, alpha: 1.0),
                 NSColor(srgbRed: 1.0, green: 1.0, blue: 0.0, alpha: 1.0),
                 NSColor(srgbRed: 0.0, green: 1.0, blue: 0.0, alpha: 1.0),
@@ -250,6 +270,8 @@ private extension iTermProgressBarView {
                 NSColor(srgbRed: 0.5, green: 0.0, blue: 1.0, alpha: 1.0),
                 NSColor(srgbRed: 1.0, green: 0.0, blue: 0.5, alpha: 1.0)
             ]
+            // The scrolling band tiles end to end, so close the loop at the seam.
+            return isIndeterminate ? colors + [red] : colors
         case iTermProgressBarColorSchemeRed:
             return [
                 NSColor(srgbRed: 0.8, green: 0.0, blue: 0.0, alpha: 1.0),
@@ -330,6 +352,10 @@ private extension iTermProgressBarView {
     }
 
     private func updateLayerColors() {
+        if mode == .indeterminate {
+            installIndeterminateLayer()
+        }
+
         // Update error layer colors
         if let errorGradient = errorLayer as? CAGradientLayer {
             let colors = errorColors(dark: darkMode)
@@ -345,10 +371,13 @@ private extension iTermProgressBarView {
         if let indeterminate1 = indeterminateLayer1 as? CAGradientLayer {
             let colors = indeterminateColors(dark: darkMode)
             indeterminate1.colors = colors.map { $0.cgColor }
+            // Evenly spaced; the stop count changes with the scheme.
+            indeterminate1.locations = nil
         }
         if let indeterminate2 = indeterminateLayer2 as? CAGradientLayer {
             let colors = indeterminateColors(dark: darkMode)
             indeterminate2.colors = colors.map { $0.cgColor }
+            indeterminate2.locations = nil
         }
         // If indeterminate animations are running, restart them to keep them synchronized
         if indeterminateLayer1.animation(forKey: "indeterminateScroll") != nil {
@@ -417,24 +446,22 @@ private extension iTermProgressBarView {
         }
         switch mode {
         case .ground:
-            layer(for: oldValue)?.removeFromSuperlayer()
+            removeLayer(for: oldValue)
         case .error:
-            layer(for: oldValue)?.removeFromSuperlayer()
+            removeLayer(for: oldValue)
             layer?.addSublayer(errorLayer)
             startErrorPulseAnimation()
         case .indeterminate:
-            layer(for: oldValue)?.removeFromSuperlayer()
-            layer?.addSublayer(indeterminateContainer)
-            setupIndeterminateLayers()
-            startIndeterminateAnimation()
+            removeLayer(for: oldValue)
+            installIndeterminateLayer()
         case .pausedIndeterminate:
-            layer(for: oldValue)?.removeFromSuperlayer()
+            removeLayer(for: oldValue)
             layer?.addSublayer(pausedLayer)
         case let .determinate(success: success, percentage: percentage):
             if case .determinate = oldValue {
                 setDeterminate(success: success, percentage: percentage, animated: true)
             } else {
-                layer(for: oldValue)?.removeFromSuperlayer()
+                removeLayer(for: oldValue)
                 layer?.addSublayer(determinateLayer)
                 setDeterminate(success: success, percentage: percentage, animated: false)
             }
@@ -558,14 +585,152 @@ private extension iTermProgressBarView {
         }
     }
 
+    private func removeLayer(for mode: Mode) {
+        layer(for: mode)?.removeFromSuperlayer()
+        if mode == .indeterminate {
+            installedIndeterminateLayer = nil
+        }
+    }
+
     private func layer(for mode: Mode) -> CALayer? {
         switch mode {
         case .ground: return nil
         case .error: return errorLayer
-        case .indeterminate: return indeterminateContainer
+        case .indeterminate: return installedIndeterminateLayer
         case .pausedIndeterminate: return pausedLayer
         case .determinate: return determinateLayer
         }
+    }
+}
+
+// MARK: - Rotating rainbow
+
+// Only the Tahoe ring (a transparent bar masked to the tab outline) rotates.
+// Flat bars draw the Rotating Rainbow scheme as the scrolling rainbow.
+extension iTermProgressBarView {
+    private static let rotatingRainbowStopCount = 72
+    private static let rotatingRainbowAnimationKey = "rotatingRainbow"
+    private static let rotatingRainbowPeriod: CFTimeInterval = 3.0
+
+    private static let rotatingRainbowHues: [CGColor] = (0..<rotatingRainbowStopCount).map {
+        NSColor(hue: CGFloat($0) / CGFloat(rotatingRainbowStopCount),
+                saturation: 1.0,
+                brightness: 1.0,
+                alpha: 1.0).cgColor
+    }
+
+    private var usesRotatingRainbow: Bool {
+        transparent && colorScheme == iTermProgressBarColorSchemeRotatingRainbow
+    }
+
+    // One more color than stops: the last stop closes the loop at location 1.
+    private static func rotatingRainbowColors(step: Int) -> [CGColor] {
+        let hues = rotatingRainbowHues
+        return (0...hues.count).map { hues[($0 + step) % hues.count] }
+    }
+
+    fileprivate func installIndeterminateLayer() {
+        let rotating = usesRotatingRainbow
+        let desired = rotating ? rotatingRainbowContainer : indeterminateContainer
+        if installedIndeterminateLayer === desired {
+            return
+        }
+        installedIndeterminateLayer?.removeFromSuperlayer()
+        installedIndeterminateLayer = desired
+        layer?.addSublayer(desired)
+        if rotating {
+            layoutRotatingRainbow(width: layer?.bounds.width ?? bounds.width, height: desiredHeight)
+            startRotatingRainbowAnimation()
+        } else {
+            setupIndeterminateLayers()
+            startIndeterminateAnimation()
+        }
+    }
+
+    fileprivate func layoutRotatingRainbow(width: CGFloat, height: CGFloat) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        rotatingRainbowContainer.frame = CGRect(x: 0, y: 0, width: width, height: height)
+        // Square, so the conic angles in unit space match the angles in points.
+        let side = max(width, height)
+        rotatingRainbowLayer.frame = CGRect(x: (width - side) / 2.0,
+                                            y: (height - side) / 2.0,
+                                            width: side,
+                                            height: side)
+        let locations = Self.stadiumConicLocations(width: width,
+                                                   height: height,
+                                                   count: Self.rotatingRainbowStopCount)
+        rotatingRainbowLayer.locations = locations.isEmpty ? nil : (locations + [1.0]).map { NSNumber(value: Double($0)) }
+        CATransaction.commit()
+    }
+
+    // Shifting each stop to its neighbor's hue moves the rainbow around the
+    // ring. The colors animate; the geometry stays put, so a resize only
+    // needs new locations.
+    fileprivate func startRotatingRainbowAnimation() {
+        let key = Self.rotatingRainbowAnimationKey
+        rotatingRainbowLayer.removeAnimation(forKey: key)
+        let animation = CAKeyframeAnimation(keyPath: "colors")
+        animation.values = (0...Self.rotatingRainbowStopCount).map { Self.rotatingRainbowColors(step: $0) }
+        animation.calculationMode = .linear
+        animation.duration = Self.rotatingRainbowPeriod
+        animation.repeatCount = .infinity
+        animation.isRemovedOnCompletion = false
+        rotatingRainbowLayer.add(animation, forKey: key)
+    }
+
+    // Conic-gradient locations in [0, 1) for `count` points evenly spaced by
+    // arc length around the stadium (pill) that fills a width × height rect,
+    // sorted by angle. Even spacing keeps the rainbow moving at one speed
+    // along the long edges and around the caps.
+    static func stadiumConicLocations(width: CGFloat, height: CGFloat, count: Int) -> [CGFloat] {
+        let radius = min(width, height) / 2.0
+        guard count > 0, radius > 0 else {
+            return []
+        }
+        let halfStraight = (max(width, height) - 2.0 * radius) / 2.0
+        let perimeter = 4.0 * halfStraight + 2.0 * .pi * radius
+        let angles: [CGFloat] = (0..<count).map { k in
+            let p = horizontalStadiumPoint(arcLength: perimeter * CGFloat(k) / CGFloat(count),
+                                           radius: radius,
+                                           halfStraight: halfStraight)
+            // A tall stadium is a wide one rotated a quarter turn.
+            let point = width >= height ? p : CGPoint(x: -p.y, y: p.x)
+            let angle = atan2(point.y, point.x)
+            return (angle < 0 ? angle + 2.0 * .pi : angle) / (2.0 * .pi)
+        }
+        guard let start = angles.indices.min(by: { angles[$0] < angles[$1] }) else {
+            return []
+        }
+        return Array(angles[start...] + angles[..<start])
+    }
+
+    // Counterclockwise from the rightmost point of a wide stadium centered on the origin.
+    private static func horizontalStadiumPoint(arcLength: CGFloat,
+                                               radius r: CGFloat,
+                                               halfStraight l: CGFloat) -> CGPoint {
+        var s = arcLength
+        let quarterArc = .pi * r / 2.0
+        if s < quarterArc {
+            let t = s / r
+            return CGPoint(x: l + r * cos(t), y: r * sin(t))
+        }
+        s -= quarterArc
+        if s < 2.0 * l {
+            return CGPoint(x: l - s, y: r)
+        }
+        s -= 2.0 * l
+        if s < .pi * r {
+            let t = .pi / 2.0 + s / r
+            return CGPoint(x: -l + r * cos(t), y: r * sin(t))
+        }
+        s -= .pi * r
+        if s < 2.0 * l {
+            return CGPoint(x: -l + s, y: -r)
+        }
+        s -= 2.0 * l
+        let t = 3.0 * .pi / 2.0 + s / r
+        return CGPoint(x: l + r * cos(t), y: r * sin(t))
     }
 }
 
@@ -609,13 +774,18 @@ extension iTermProgressBarView {
     private func pauseAnimations() {
         indeterminateLayer1.removeAnimation(forKey: "indeterminateScroll")
         indeterminateLayer2.removeAnimation(forKey: "indeterminateScroll")
+        rotatingRainbowLayer.removeAnimation(forKey: Self.rotatingRainbowAnimationKey)
         errorLayer.removeAnimation(forKey: "errorPulse")
     }
 
     private func resumeAnimations() {
         switch mode {
         case .indeterminate:
-            if indeterminateLayer1.animation(forKey: "indeterminateScroll") == nil {
+            if usesRotatingRainbow {
+                if rotatingRainbowLayer.animation(forKey: Self.rotatingRainbowAnimationKey) == nil {
+                    startRotatingRainbowAnimation()
+                }
+            } else if indeterminateLayer1.animation(forKey: "indeterminateScroll") == nil {
                 startIndeterminateAnimation()
             }
         case .error:
@@ -643,6 +813,11 @@ extension iTermProgressBarView: CALayerDelegate {
             errorLayer.frame = CGRect(x: 0, y: 0, width: width, height: height)
             if errorLayer.animation(forKey: "errorPulse") == nil {
                 startErrorPulseAnimation()
+            }
+        case .indeterminate where usesRotatingRainbow:
+            layoutRotatingRainbow(width: width, height: height)
+            if rotatingRainbowLayer.animation(forKey: Self.rotatingRainbowAnimationKey) == nil {
+                startRotatingRainbowAnimation()
             }
         case .indeterminate:
             indeterminateContainer.frame = CGRect(x: 0, y: 0, width: width, height: height)

@@ -491,6 +491,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     NSArray<NSString *> *schemes = @[
         iTermProgressBarColorSchemeDefault,
         iTermProgressBarColorSchemeRainbow,
+        iTermProgressBarColorSchemeRotatingRainbow,
         iTermProgressBarColorSchemeRed,
         iTermProgressBarColorSchemeGreen,
         iTermProgressBarColorSchemeBlue,
@@ -502,6 +503,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     NSDictionary<NSString *, NSString *> *titles = @{
         iTermProgressBarColorSchemeDefault: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeDefault", nil, [NSBundle mainBundle], @"Default", @"Progress bar color scheme name: default"),
         iTermProgressBarColorSchemeRainbow: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeRainbow", nil, [NSBundle mainBundle], @"Rainbow", @"Progress bar color scheme name: rainbow"),
+        iTermProgressBarColorSchemeRotatingRainbow: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeRotatingRainbow", nil, [NSBundle mainBundle], @"Rotating Rainbow", @"Progress bar color scheme name: a rainbow that circles around the tab outline while busy; elsewhere it looks like the plain rainbow"),
         iTermProgressBarColorSchemeRed: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeRed", nil, [NSBundle mainBundle], @"Red", @"Progress bar color scheme name: red"),
         iTermProgressBarColorSchemeGreen: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeGreen", nil, [NSBundle mainBundle], @"Green", @"Progress bar color scheme name: green"),
         iTermProgressBarColorSchemeBlue: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeBlue", nil, [NSBundle mainBundle], @"Blue", @"Progress bar color scheme name: blue"),
