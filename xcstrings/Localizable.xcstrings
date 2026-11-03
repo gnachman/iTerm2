@@ -20332,16 +20332,16 @@
       "comment" : "Advanced setting: engageLayoutEngineInTerminalWindows",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Engage Auto Layout in new terminal windows.\nAdds a hidden glass effect view (before macOS 26, a view with constraints) to each new terminal window, which turns on AppKit’s layout engine for the whole window. Use it to check that windows still lay out and resize correctly with the engine on. Development builds only."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Auto Layout in neuen Terminalfenstern aktivieren.\nFügt jedem neuen Terminalfenster eine verborgene Glaseffekt-Ansicht hinzu (vor macOS 26 eine Ansicht mit Constraints), wodurch die Layout-Engine von AppKit für das gesamte Fenster eingeschaltet wird. Damit lässt sich prüfen, ob Fenster bei eingeschalteter Engine weiterhin korrekt angeordnet und in der Größe geändert werden. Nur in Entwicklungs-Builds."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Engage Auto Layout in new terminal windows.\nAdds a hidden glass effect view (before macOS 26, a view with constraints) to each new terminal window, which turns on AppKit’s layout engine for the whole window. Use it to check that windows still lay out and resize correctly with the engine on. Development builds only."
           }
         },
         "ja" : {
@@ -23014,16 +23014,16 @@
       "comment" : "Advanced setting: limitSessionsProcessingOutput",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Limit how many sessions process output at once, as set by “Sessions processing output at once” in Settings > General > Magic?\nTurn this off if you suspect the limit of causing a problem, such as a session that stops updating. This applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Begrenzen, wie viele Sitzungen gleichzeitig Ausgabe verarbeiten, wie unter „Gleichzeitig Ausgabe verarbeitende Sitzungen“ in Einstellungen > Allgemein > Magie festgelegt?\nSchalten Sie dies aus, wenn Sie vermuten, dass die Begrenzung ein Problem verursacht, etwa eine Sitzung, die nicht mehr aktualisiert wird. Dies gilt nur für die neue Implementierung der Sitzungsein- und -ausgabe. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Limit how many sessions process output at once, as set by “Sessions processing output at once” in Settings > General > Magic?\nTurn this off if you suspect the limit of causing a problem, such as a session that stops updating. This applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect."
           }
         },
         "ja" : {
@@ -31510,16 +31510,16 @@
       "comment" : "Advanced setting: showSSHFlowControlMonitor",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Show a window with SSH Integration’s flow control state.\nFor the current session’s connection and every connection nested in it: the credit outstanding, the measured delays and rates, and charts of the last minute. Closing the window turns this off."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ein Fenster mit dem Flusssteuerungsstatus der SSH-Integration anzeigen.\nFür die Verbindung der aktuellen Sitzung und jede darin verschachtelte Verbindung: das ausstehende Guthaben, die gemessenen Verzögerungen und Raten sowie Diagramme der letzten Minute. Durch Schließen des Fensters wird dies ausgeschaltet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show a window with SSH Integration’s flow control state.\nFor the current session’s connection and every connection nested in it: the credit outstanding, the measured delays and rates, and charts of the last minute. Closing the window turns this off."
           }
         },
         "ja" : {
@@ -31753,43 +31753,43 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fensternamen neben den Tabs in den Themen „Kompakt“ und „Minimal“ anzeigen?\nDiese Themen haben keine Titelleiste, daher ist der Fenstername sonst nur sichtbar, wenn die Tab-Leiste ausgeblendet ist. „Wenn ein benutzerdefinierter Name festgelegt ist“ (Standard) zeigt ihn erst an, nachdem Sie das Fenster über Fenster > Fenstertitel bearbeiten benannt haben; unbenannte Fenster bleiben unverändert. „Immer“ zeigt zusätzlich den automatischen Titel an. Dies hat keine Auswirkung in Themen mit Titelleiste."
+            "value" : "Fensternamen neben den Tabs in den Themen „Kompakt“ und „Minimal“ anzeigen?\nDiese Themen haben keine Titelleiste, daher ist der Fenstername sonst nur sichtbar, wenn die Tab-Leiste ausgeblendet ist. „Wenn ein benutzerdefinierter Name festgelegt ist“ (Standard) zeigt ihn erst an, nachdem Sie das Fenster über Fenster > Fenstertitel bearbeiten benannt haben; unbenannte Fenster bleiben unverändert. „Immer“ zeigt zusätzlich den automatischen Titel an. Im Modus „Wenn ein benutzerdefinierter Name festgelegt ist“ wird der automatische Titel außerdem über einer linken Tab-Leiste angezeigt und über einer rechten, sobald dort die Fensternummer oder das Proxy-Symbol angezeigt wird, da er dort den Tabs keinen Platz wegnimmt. Dies hat keine Auswirkung in Themen mit Titelleiste."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Show the window name beside the tabs in the Compact and Minimal themes?\nThose themes have no title bar, so the window name is otherwise only visible when the tab bar is hidden. “When a custom name is set” (the default) shows it only after you name the window with Window > Edit Window Title, leaving windows you have not named unchanged. “Always” also shows the automatic title. This has no effect in themes that have a title bar."
+            "value" : "Show the window name beside the tabs in the Compact and Minimal themes?\nThose themes have no title bar, so the window name is otherwise only visible when the tab bar is hidden. “When a custom name is set” (the default) shows it only after you name the window with Window > Edit Window Title, leaving windows you have not named unchanged. “Always” also shows the automatic title. In “When a custom name is set” mode, the automatic title is also shown atop a left tab bar, and atop a right one whenever the window number or proxy icon is, since it takes no room from the tabs there. This has no effect in themes that have a title bar."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "CompactテーマおよびMinimalテーマで、タブの横にウィンドウ名を表示するか？\nこれらのテーマにはタイトルバーがないため、通常タブバーが非表示のときにしかウィンドウ名は見えません。「カスタム名が設定されている場合」（デフォルト）は、Window > Edit Window Titleでウィンドウに名前を付けた後にのみ表示され、名前を付けていないウィンドウはそのままです。「常に」は自動タイトルも表示します。タイトルバーがあるテーマには影響しません。"
+            "value" : "CompactテーマおよびMinimalテーマで、タブの横にウィンドウ名を表示するか？\nこれらのテーマにはタイトルバーがないため、通常タブバーが非表示のときにしかウィンドウ名は見えません。「カスタム名が設定されている場合」（デフォルト）は、Window > Edit Window Titleでウィンドウに名前を付けた後にのみ表示され、名前を付けていないウィンドウはそのままです。「常に」は自動タイトルも表示します。「カスタム名が設定されている場合」モードでは、自動タイトルは左側のタブバーの上部にも表示されます。右側のタブバーでも、ウィンドウ番号またはプロキシアイコンが表示されている場合は上部に表示されます。そこではタブの領域を使わないためです。タイトルバーがあるテーマには影響しません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "컴팩트 및 미니멀 테마에서 탭 옆에 윈도우 이름을 표시하겠습니까?\n이 테마들에는 제목 막대가 없으므로, 이 설정이 없으면 윈도우 이름은 탭 막대가 가려져 있을 때만 보입니다. “사용자 지정 이름이 설정된 경우”(기본값)는 윈도우 > 윈도우 제목 편집으로 윈도우 이름을 지정한 후에만 표시하며, 이름을 지정하지 않은 윈도우는 그대로 둡니다. “항상”은 자동 제목도 표시합니다. 제목 막대가 있는 테마에서는 효과가 없습니다."
+            "value" : "컴팩트 및 미니멀 테마에서 탭 옆에 윈도우 이름을 표시하겠습니까?\n이 테마들에는 제목 막대가 없으므로, 이 설정이 없으면 윈도우 이름은 탭 막대가 가려져 있을 때만 보입니다. “사용자 지정 이름이 설정된 경우”(기본값)는 윈도우 > 윈도우 제목 편집으로 윈도우 이름을 지정한 후에만 표시하며, 이름을 지정하지 않은 윈도우는 그대로 둡니다. “항상”은 자동 제목도 표시합니다. “사용자 지정 이름이 설정된 경우” 모드에서는 자동 제목이 왼쪽 탭 막대 위에도 표시되며, 오른쪽 탭 막대에서는 윈도우 번호나 프록시 아이콘이 표시될 때 그 위에 표시됩니다. 그곳에서는 탭의 공간을 차지하지 않기 때문입니다. 제목 막대가 있는 테마에서는 효과가 없습니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mostrar o nome da janela ao lado das abas nos temas Compact e Minimal?\nEsses temas não têm barra de título, então o nome da janela só fica visível quando a barra de abas está oculta. “Quando um nome personalizado é definido” (o padrão) o mostra apenas depois que você nomeia a janela em Janela > Editar título da janela, deixando inalteradas as janelas que você não nomeou. “Sempre” também mostra o título automático. Isto não tem efeito em temas que têm barra de título."
+            "value" : "Mostrar o nome da janela ao lado das abas nos temas Compact e Minimal?\nEsses temas não têm barra de título, então o nome da janela só fica visível quando a barra de abas está oculta. “Quando um nome personalizado é definido” (o padrão) o mostra apenas depois que você nomeia a janela em Janela > Editar título da janela, deixando inalteradas as janelas que você não nomeou. “Sempre” também mostra o título automático. No modo “Quando um nome personalizado é definido”, o título automático também é mostrado acima de uma barra de abas à esquerda, e acima de uma à direita sempre que o número da janela ou o ícone de proxy for mostrado, já que ali ele não ocupa espaço das abas. Isto não tem efeito em temas que têm barra de título."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Показывать имя окна рядом с вкладками в темах Compact и Minimal?\nВ этих темах нет строки заголовка, поэтому иначе имя окна видно только тогда, когда панель вкладок скрыта. Значение «Если задано пользовательское имя» (по умолчанию) показывает его только после того, как вы назовёте окно через Window > Edit Window Title, не затрагивая окна, которым вы не давали имя. Значение «Всегда» также показывает автоматический заголовок. Это не действует в темах со строкой заголовка."
+            "value" : "Показывать имя окна рядом с вкладками в темах Compact и Minimal?\nВ этих темах нет строки заголовка, поэтому иначе имя окна видно только тогда, когда панель вкладок скрыта. Значение «Если задано пользовательское имя» (по умолчанию) показывает его только после того, как вы назовёте окно через Window > Edit Window Title, не затрагивая окна, которым вы не давали имя. Значение «Всегда» также показывает автоматический заголовок. В режиме «Если задано пользовательское имя» автоматический заголовок также показывается над левой панелью вкладок, а над правой, когда там показывается номер окна или значок прокси, поскольку там он не занимает место вкладок. Это не действует в темах со строкой заголовка."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在紧凑和极简主题中显示标签页旁边的窗口名称？\n这些主题没有标题栏，因此仅当隐藏标签页栏时才能看到窗口名称。“自定义名称设置时”（默认）仅在通过 Window > 编辑窗口标题为窗口命名后才会显示，未命名的窗口保持不变。“始终”也会显示自动标题。对于带有标题栏的主题无影响。"
+            "value" : "在紧凑和极简主题中显示标签页旁边的窗口名称？\n这些主题没有标题栏，因此仅当隐藏标签页栏时才能看到窗口名称。“自定义名称设置时”（默认）仅在通过 Window > 编辑窗口标题为窗口命名后才会显示，未命名的窗口保持不变。“始终”也会显示自动标题。在“自定义名称设置时”模式下，自动标题也会显示在左侧标签页栏的顶部；当显示窗口编号或代理图标时，也会显示在右侧标签页栏的顶部，因为在那里它不会占用标签页的空间。对于带有标题栏的主题无影响。"
           }
         }
       }
@@ -32950,16 +32950,16 @@
       "comment" : "Advanced setting: sshFlowControl",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Pace output from remote hosts.\nWith SSH Integration, iTerm2 tells the remote host how much output to send, so a program that prints a lot cannot fill the connection’s buffers, and Control-C takes effect at once instead of after the buffered output. Takes effect for new connections."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ausgabe von Remote-Hosts drosseln.\nMit der SSH-Integration teilt iTerm2 dem Remote-Host mit, wie viel Ausgabe er senden soll, sodass ein Programm, das viel ausgibt, die Puffer der Verbindung nicht füllen kann und Control-C sofort wirkt statt erst nach der gepufferten Ausgabe. Wird für neue Verbindungen wirksam."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pace output from remote hosts.\nWith SSH Integration, iTerm2 tells the remote host how much output to send, so a program that prints a lot cannot fill the connection’s buffers, and Control-C takes effect at once instead of after the buffered output. Takes effect for new connections."
           }
         },
         "ja" : {
@@ -34678,16 +34678,16 @@
       "comment" : "Advanced setting: tokenExecutionTimeSlice",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Seconds a session processes output before letting a waiting session take a turn.\nThis applies only with the new implementation of session input and output, when more sessions have output to process than can run at once. You must restart iTerm2 for this setting to take effect."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekunden, die eine Sitzung Ausgabe verarbeitet, bevor eine wartende Sitzung an die Reihe kommt.\nDies gilt nur für die neue Implementierung der Sitzungsein- und -ausgabe, wenn mehr Sitzungen Ausgabe zu verarbeiten haben, als gleichzeitig laufen können. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Seconds a session processes output before letting a waiting session take a turn.\nThis applies only with the new implementation of session input and output, when more sessions have output to process than can run at once. You must restart iTerm2 for this setting to take effect."
           }
         },
         "ja" : {
@@ -36406,16 +36406,16 @@
       "comment" : "Advanced setting: useTaskIOMonitors",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Use the new implementation of session input and output, which keeps sessions with heavy output from slowing down typing in other sessions?\nTurn this off if you suspect it of causing a problem. You must restart iTerm2 for this setting to take effect."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die neue Implementierung der Sitzungsein- und -ausgabe verwenden, die verhindert, dass Sitzungen mit viel Ausgabe das Tippen in anderen Sitzungen verlangsamen?\nSchalten Sie dies aus, wenn Sie vermuten, dass sie ein Problem verursacht. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use the new implementation of session input and output, which keeps sessions with heavy output from slowing down typing in other sessions?\nTurn this off if you suspect it of causing a problem. You must restart iTerm2 for this setting to take effect."
           }
         },
         "ja" : {
@@ -36790,16 +36790,16 @@
       "comment" : "Advanced setting: visibleSessionExecutionWeight",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "How many times as much processing time a visible session gets as a hidden one when more sessions have output to process than can run at once.\nThis applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wie viel Mal mehr Verarbeitungszeit eine sichtbare Sitzung gegenüber einer verborgenen erhält, wenn mehr Sitzungen Ausgabe zu verarbeiten haben, als gleichzeitig laufen können.\nDies gilt nur für die neue Implementierung der Sitzungsein- und -ausgabe. Sie müssen iTerm2 neu starten, damit diese Einstellung wirksam wird."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "How many times as much processing time a visible session gets as a hidden one when more sessions have output to process than can run at once.\nThis applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect."
           }
         },
         "ja" : {
@@ -51722,16 +51722,16 @@
       "comment" : "Notice shown in AI chat when a tool the AI asked to run could not be run. The argument is the reason.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The function call failed: %@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Funktionsaufruf ist fehlgeschlagen: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The function call failed: %@"
           }
         },
         "ja" : {
@@ -52903,16 +52903,16 @@
       "comment" : "Prompt shown over each session while the user types an @-mention in the AI chat, letting them pick the session to mention by clicking it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Mention this session in AI chat?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diese Sitzung im KI-Chat erwähnen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mention this session in AI chat?"
           }
         },
         "ja" : {
@@ -53239,16 +53239,16 @@
       "comment" : "Error shown when trying to link a web browser session to an AI chat in the terminal slot",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "A web browser session cannot be linked as a terminal."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Webbrowser-Sitzung kann nicht als Terminal verknüpft werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A web browser session cannot be linked as a terminal."
           }
         },
         "ja" : {
@@ -53287,16 +53287,16 @@
       "comment" : "Error shown when trying to link a terminal session to an AI chat in the web browser slot",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "A terminal session cannot be linked as a web browser."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eine Terminalsitzung kann nicht als Webbrowser verknüpft werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A terminal session cannot be linked as a web browser."
           }
         },
         "ja" : {
@@ -61342,16 +61342,16 @@
       "comment" : "Button that keeps a remote host’s always-allow grant during uninstall",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Keep Allowing"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Weiterhin erlauben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep Allowing"
           }
         },
         "ja" : {
@@ -61438,16 +61438,16 @@
       "comment" : "Detail shown during uninstall when iTerm2 could not determine whether a remote host is this Mac, so it made no changes there; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it left Claude Code’s settings there unchanged."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 konnte nicht feststellen, ob %@ dieser Mac ist, daher hat es die Einstellungen von Claude Code dort nicht verändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it left Claude Code’s settings there unchanged."
           }
         },
         "ja" : {
@@ -61486,16 +61486,16 @@
       "comment" : "Detail shown when the Claude Code settings on a remote host are not valid JSON during uninstall; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Claude Code’s settings on %@ couldn’t be parsed as JSON."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Einstellungen von Claude Code auf %@ konnten nicht als JSON geparst werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code’s settings on %@ couldn’t be parsed as JSON."
           }
         },
         "ja" : {
@@ -61582,16 +61582,16 @@
       "comment" : "Detail shown when the Claude Code settings on a remote host could not be read, or the host disconnected, during uninstall; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Couldn’t read Claude Code’s settings on %@."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Einstellungen von Claude Code auf %@ konnten nicht gelesen werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t read Claude Code’s settings on %@."
           }
         },
         "ja" : {
@@ -61630,16 +61630,16 @@
       "comment" : "Detail shown when the Claude Code settings on a remote host could not be written during uninstall; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Couldn’t write Claude Code’s settings on %@."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Einstellungen von Claude Code auf %@ konnten nicht geschrieben werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t write Claude Code’s settings on %@."
           }
         },
         "ja" : {
@@ -61678,16 +61678,16 @@
       "comment" : "Button that revokes a remote host’s always-allow grant during uninstall",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Stop Allowing"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht mehr erlauben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Allowing"
           }
         },
         "ja" : {
@@ -61726,16 +61726,16 @@
       "comment" : "Body of the question asked when uninstalling the Claude Code integration from an always-allowed host; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Other uses of it2 on %@ may rely on it. You can also change this later in Settings > General > Magic > API access over ssh."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Andere Verwendungen von it2 auf %@ sind möglicherweise darauf angewiesen. Sie können dies auch später unter Einstellungen > Allgemein > Magie > API-Zugriff über SSH ändern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Other uses of it2 on %@ may rely on it. You can also change this later in Settings > General > Magic > API access over ssh."
           }
         },
         "ja" : {
@@ -61774,16 +61774,16 @@
       "comment" : "Title of the question asked when uninstalling the Claude Code integration from a host that is always allowed to use the API; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Also Stop Always Allowing %@ to Use the iTerm2 API?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ auch nicht mehr dauerhaft die Verwendung der iTerm2-API erlauben?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Also Stop Always Allowing %@ to Use the iTerm2 API?"
           }
         },
         "ja" : {
@@ -61918,16 +61918,16 @@
       "comment" : "Line of the uninstall confirmation for a host connected through SSH Integration, whose settings will be checked and cleaned up; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "It also removes the hook from Claude Code’s settings on %@, if it’s there."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Außerdem wird der Hook aus den Einstellungen von Claude Code auf %@ entfernt, sofern er dort vorhanden ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It also removes the hook from Claude Code’s settings on %@, if it’s there."
           }
         },
         "ja" : {
@@ -61966,16 +61966,16 @@
       "comment" : "Line of the uninstall confirmation explaining that hosts not currently connected through SSH Integration are not changed",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Hosts that aren’t connected keep their hook. Connect to one with SSH Integration and uninstall again to remove it there."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hosts, die nicht verbunden sind, behalten ihren Hook. Verbinden Sie sich mit der SSH-Integration mit einem solchen Host und deinstallieren Sie erneut, um ihn dort zu entfernen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hosts that aren’t connected keep their hook. Connect to one with SSH Integration and uninstall again to remove it there."
           }
         },
         "ja" : {
@@ -62206,16 +62206,16 @@
       "comment" : "Button that installs the remote Claude Code hook and always allows the host to use the iTerm2 API",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Always Allow"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Immer erlauben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always Allow"
           }
         },
         "ja" : {
@@ -62254,16 +62254,16 @@
       "comment" : "Body of the question asked before installing the Claude Code hook on a remote host; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Claude Code on %1$@ reports its status to iTerm2 through the iTerm2 API.\n\nIf you always allow %2$@, any program running as you on that host can see and control your terminal sessions, reading their contents and typing into them, without asking, on this and every future connection.\n\nIf you choose Ask Each Connection, iTerm2 asks the first time Claude Code reports on each new connection.\n\nYou can stop always allowing a host in Settings > General > Magic > API access over ssh."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code auf %1$@ meldet seinen Status über die iTerm2-API an iTerm2.\n\nWenn Sie %2$@ immer erlauben, kann jedes Programm, das auf diesem Host unter Ihrem Benutzer läuft, Ihre Terminalsitzungen sehen und steuern, ihren Inhalt lesen und darin tippen, ohne nachzufragen, bei dieser und jeder künftigen Verbindung.\n\nWenn Sie „Bei jeder Verbindung fragen“ wählen, fragt iTerm2 bei jeder neuen Verbindung nach, wenn Claude Code zum ersten Mal einen Status meldet.\n\nSie können einem Host die dauerhafte Erlaubnis unter Einstellungen > Allgemein > Magie > API-Zugriff über SSH wieder entziehen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code on %1$@ reports its status to iTerm2 through the iTerm2 API.\n\nIf you always allow %2$@, any program running as you on that host can see and control your terminal sessions, reading their contents and typing into them, without asking, on this and every future connection.\n\nIf you choose Ask Each Connection, iTerm2 asks the first time Claude Code reports on each new connection.\n\nYou can stop always allowing a host in Settings > General > Magic > API access over ssh."
           }
         },
         "ja" : {
@@ -62302,16 +62302,16 @@
       "comment" : "Title of the question asked before installing the Claude Code hook on a remote host; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Always Allow %@ to Use the iTerm2 API?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ immer die Verwendung der iTerm2-API erlauben?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always Allow %@ to Use the iTerm2 API?"
           }
         },
         "ja" : {
@@ -62350,16 +62350,16 @@
       "comment" : "Button that installs the remote Claude Code hook without always allowing the host; iTerm2 asks on each connection",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Ask Each Connection"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bei jeder Verbindung fragen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ask Each Connection"
           }
         },
         "ja" : {
@@ -62542,16 +62542,16 @@
       "comment" : "One line of the settings-location question; the first value is a directory, the second the path of the login shell that reported it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ is what your login shell, %2$@, reports."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ ist der Wert, den Ihre Login-Shell %2$@ meldet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is what your login shell, %2$@, reports."
           }
         },
         "ja" : {
@@ -62590,16 +62590,16 @@
       "comment" : "One line of the settings-location question; the first value is a directory, the second the path of the shell the session’s profile runs",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ is what this session’s shell, %2$@, reports."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ ist der Wert, den die Shell dieser Sitzung, %2$@, meldet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is what this session’s shell, %2$@, reports."
           }
         },
         "ja" : {
@@ -62638,16 +62638,16 @@
       "comment" : "One line of the settings-location question; the first value is a directory, the second the name of the program running in the session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ is what %2$@, running in this session now, was started with."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ ist der Wert, mit dem %2$@, das gerade in dieser Sitzung läuft, gestartet wurde."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ is what %2$@, running in this session now, was started with."
           }
         },
         "ja" : {
@@ -63310,16 +63310,16 @@
       "comment" : "Description of the onboarding step that installs the Claude Code hook on a remote host; the value is the host, such as user@example.com",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Install the Claude Code hook on %1$@, so Claude Code running there shows its state (working, waiting, idle) in the Session Status tool too.\n\nThis adds a hook to Claude Code’s settings on %2$@. It runs the it2 command that SSH Integration keeps up to date on that host."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installiert den Claude-Code-Hook auf %1$@, damit auch das dort laufende Claude Code seinen Status (Arbeitet, Wartet, Inaktiv) im Werkzeug „Sitzungsstatus“ anzeigt.\n\nDadurch wird den Einstellungen von Claude Code auf %2$@ ein Hook hinzugefügt. Er führt den it2-Befehl aus, den die SSH-Integration auf diesem Host aktuell hält."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install the Claude Code hook on %1$@, so Claude Code running there shows its state (working, waiting, idle) in the Session Status tool too.\n\nThis adds a hook to Claude Code’s settings on %2$@. It runs the it2 command that SSH Integration keeps up to date on that host."
           }
         },
         "ja" : {
@@ -63358,16 +63358,16 @@
       "comment" : "Title of the onboarding step that installs the Claude Code hook on the host the session is connected to through SSH Integration",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Install on Remote Host"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Auf Remote-Host installieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install on Remote Host"
           }
         },
         "ja" : {
@@ -63934,16 +63934,16 @@
       "comment" : "Body of the alert shown when iTerm2 could not read CLAUDE_CONFIG_DIR on a remote host; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 couldn’t read CLAUDE_CONFIG_DIR from your login shell on %@, so it doesn’t know where Claude Code keeps its settings there. Try again?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 konnte CLAUDE_CONFIG_DIR nicht aus Ihrer Login-Shell auf %@ lesen und weiß daher nicht, wo Claude Code dort seine Einstellungen speichert. Erneut versuchen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read CLAUDE_CONFIG_DIR from your login shell on %@, so it doesn’t know where Claude Code keeps its settings there. Try again?"
           }
         },
         "ja" : {
@@ -63982,16 +63982,16 @@
       "comment" : "Shown when the remote host disconnected before the Claude Code hook could be installed; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The connection to %@ has ended. Reconnect and try again."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Verbindung zu %@ wurde beendet. Stellen Sie die Verbindung wieder her und versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The connection to %@ has ended. Reconnect and try again."
           }
         },
         "ja" : {
@@ -64030,16 +64030,16 @@
       "comment" : "Shown in the remote install step when the host already has an always-allow grant; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%@ is already always allowed to use the iTerm2 API. You can change that in Settings > General > Magic > API access over ssh."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ darf die iTerm2-API bereits dauerhaft verwenden. Sie können dies unter Einstellungen > Allgemein > Magie > API-Zugriff über SSH ändern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ is already always allowed to use the iTerm2 API. You can change that in Settings > General > Magic > API access over ssh."
           }
         },
         "ja" : {
@@ -64078,16 +64078,16 @@
       "comment" : "Shown when the remote install could not determine whether the ssh host is this Mac, so it made no changes; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it didn’t change Claude Code’s settings there. Reconnect and try again."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 konnte nicht feststellen, ob %@ dieser Mac ist, daher hat es die Einstellungen von Claude Code dort nicht verändert. Stellen Sie die Verbindung wieder her und versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t tell whether %@ is this Mac, so it didn’t change Claude Code’s settings there. Reconnect and try again."
           }
         },
         "ja" : {
@@ -64126,16 +64126,16 @@
       "comment" : "Shown when the remote install was attempted on an ssh connection back to this Mac; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%@ is this Mac. Claude Code here is set up by the Install Hook step instead."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ ist dieser Mac. Claude Code wird hier stattdessen im Schritt „Hook installieren“ eingerichtet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ is this Mac. Claude Code here is set up by the Install Hook step instead."
           }
         },
         "ja" : {
@@ -64174,16 +64174,16 @@
       "comment" : "Shown when the remote host lacks the uploaded it2 wrapper; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "SSH Integration couldn’t set up the it2 command on %@, so the hook would have nothing to run. This happens when the login shell there is not one SSH Integration supports: zsh, bash, fish, or xonsh."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die SSH-Integration konnte den it2-Befehl auf %@ nicht einrichten, daher hätte der Hook nichts auszuführen. Das passiert, wenn die Login-Shell dort keine von der SSH-Integration unterstützte Shell ist: zsh, bash, fish oder xonsh."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "SSH Integration couldn’t set up the it2 command on %@, so the hook would have nothing to run. This happens when the login shell there is not one SSH Integration supports: zsh, bash, fish, or xonsh."
           }
         },
         "ja" : {
@@ -64222,16 +64222,16 @@
       "comment" : "Shown when Claude Code settings on a remote host could not be parsed; the values are a file path and the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ on %2$@ isn’t valid JSON. iTerm2 left it unchanged. Fix or remove it and try again."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ auf %2$@ ist kein gültiges JSON. iTerm2 hat die Datei nicht verändert. Korrigieren oder entfernen Sie sie und versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ on %2$@ isn’t valid JSON. iTerm2 left it unchanged. Fix or remove it and try again."
           }
         },
         "ja" : {
@@ -64270,16 +64270,16 @@
       "comment" : "Shown when Claude Code settings on a remote host could not be read; the values are a file path and the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 couldn’t read %1$@ on %2$@."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 konnte %1$@ auf %2$@ nicht lesen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t read %1$@ on %2$@."
           }
         },
         "ja" : {
@@ -64318,16 +64318,16 @@
       "comment" : "Shown when Claude Code settings on a remote host could not be written; the values are a file path and the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 couldn’t write %1$@ on %2$@."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 konnte %1$@ auf %2$@ nicht schreiben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 couldn’t write %1$@ on %2$@."
           }
         },
         "ja" : {
@@ -64846,16 +64846,16 @@
       "comment" : "Title of the question asked when the shells that could start claude in this session report different CLAUDE_CONFIG_DIR values",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Which Settings Location Should the Claude Code Hook Be Installed In?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "In welchem Einstellungsort soll der Claude-Code-Hook installiert werden?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Which Settings Location Should the Claude Code Hook Be Installed In?"
           }
         },
         "ja" : {
@@ -65032,16 +65032,16 @@
       "comment" : "Button to install the Claude Code status hook on a remote host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Install"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install"
           }
         },
         "ja" : {
@@ -65176,16 +65176,16 @@
       "comment" : "Heading of the warning shown when the Claude Code hook on a remote host is incomplete; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Claude Code Integration on %@ Looks Broken"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude-Code-Integration auf %@ scheint defekt zu sein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code Integration on %@ Looks Broken"
           }
         },
         "ja" : {
@@ -65224,16 +65224,16 @@
       "comment" : "Body of the warning shown when the Claude Code hook on a remote host is incomplete; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2’s hook is no longer complete in Claude Code’s settings on %@. This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Hook von iTerm2 ist in den Einstellungen von Claude Code auf %@ nicht mehr vollständig. Das bedeutet meist, dass Claude Code diese Datei überschrieben hat. Soll der Hook neu installiert werden, damit die Statusanzeigen pro Tab („Arbeitet…“, „Wartet…“) wieder funktionieren?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2’s hook is no longer complete in Claude Code’s settings on %@. This usually means Claude Code rewrote that file. Reinstall the hook so per-tab status indicators (“Working…,” “Waiting…”) work again?"
           }
         },
         "ja" : {
@@ -65272,16 +65272,16 @@
       "comment" : "Heading of the prompt offering to install the Claude Code hook on a remote host where claude is running; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Install Claude Code Integration on %@?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude-Code-Integration auf %@ installieren?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Install Claude Code Integration on %@?"
           }
         },
         "ja" : {
@@ -65320,16 +65320,16 @@
       "comment" : "Body of the prompt offering to install the Claude Code hook on a remote host where claude is running; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Claude Code is running on %@, but iTerm2’s hook isn’t installed there, so its status won’t appear in the Session Status tool. Install it?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code läuft auf %@, aber der Hook von iTerm2 ist dort nicht installiert, daher erscheint sein Status nicht im Werkzeug „Sitzungsstatus“. Jetzt installieren?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code is running on %@, but iTerm2’s hook isn’t installed there, so its status won’t appear in the Session Status tool. Install it?"
           }
         },
         "ja" : {
@@ -65368,16 +65368,16 @@
       "comment" : "Heading of the warning shown when shell integration on a remote host is too old for Claude Code to run it2; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Update Shell Integration on %@?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell-Integration auf %@ aktualisieren?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Shell Integration on %@?"
           }
         },
         "ja" : {
@@ -65416,16 +65416,16 @@
       "comment" : "Body of the warning shown when shell integration on a remote host is too old for Claude Code to run it2; the value is the host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Claude Code on %1$@ can’t find the it2 command, which features such as Code Review ask it to run. The shell integration installed on %2$@ is too old to make it available. To update it, exit Claude Code and choose iTerm2 > Install Shell Integration in that session."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code auf %1$@ findet den it2-Befehl nicht, den Funktionen wie Code-Review ausführen lassen. Die auf %2$@ installierte Shell-Integration ist zu alt, um ihn bereitzustellen. Beenden Sie zum Aktualisieren Claude Code und wählen Sie in dieser Sitzung „iTerm2 > Shell-Integration installieren“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code on %1$@ can’t find the it2 command, which features such as Code Review ask it to run. The shell integration installed on %2$@ is too old to make it available. To update it, exit Claude Code and choose iTerm2 > Install Shell Integration in that session."
           }
         },
         "ja" : {
@@ -68543,16 +68543,16 @@
       "comment" : "Explains the two changes to the default code review system prompt that an update brings",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The default prompt has changed since then: it runs iTerm2’s own it2 command, so reviews work on remote hosts without a current shell integration install, and it tells it2 which tmux pane the review runs in, so reviews work in tmux."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Standard-Prompt hat sich seitdem geändert: Er führt den eigenen it2-Befehl von iTerm2 aus, sodass Reviews auf Remote-Hosts auch ohne aktuelle Shell-Integration funktionieren, und er teilt it2 mit, in welchem tmux-Bereich das Review läuft, sodass Reviews in tmux funktionieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The default prompt has changed since then: it runs iTerm2’s own it2 command, so reviews work on remote hosts without a current shell integration install, and it tells it2 which tmux pane the review runs in, so reviews work in tmux."
           }
         },
         "ja" : {
@@ -68591,16 +68591,16 @@
       "comment" : "Heading of the offer to update a customized code review system prompt",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Update Your Code Review Prompt?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ihren Code-Review-Prompt aktualisieren?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Your Code Review Prompt?"
           }
         },
         "ja" : {
@@ -68639,16 +68639,16 @@
       "comment" : "Button that keeps a customized code review system prompt as it is",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Keep My Prompt"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Meinen Prompt behalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep My Prompt"
           }
         },
         "ja" : {
@@ -68687,16 +68687,16 @@
       "comment" : "What updating a customized code review system prompt does",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Update Prompt makes only the changes shown below. The rest of your prompt stays as you wrote it."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "„Prompt aktualisieren“ nimmt nur die unten gezeigten Änderungen vor. Der Rest Ihres Prompts bleibt so, wie Sie ihn geschrieben haben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Prompt makes only the changes shown below. The rest of your prompt stays as you wrote it."
           }
         },
         "ja" : {
@@ -68735,16 +68735,16 @@
       "comment" : "Body of the offer to update a customized code review system prompt",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "You customized your Code Review system prompt in Settings > General > AI > Prompts."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sie haben Ihren Code-Review-System-Prompt unter Einstellungen > Allgemein > KI > Prompts angepasst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You customized your Code Review system prompt in Settings > General > AI > Prompts."
           }
         },
         "ja" : {
@@ -68783,16 +68783,16 @@
       "comment" : "What updating a code review system prompt that is a copy of an older default does",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Update Prompt replaces it with the current default, which then stays up to date."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "„Prompt aktualisieren“ ersetzt ihn durch den aktuellen Standard, der dann auf dem neuesten Stand bleibt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Prompt replaces it with the current default, which then stays up to date."
           }
         },
         "ja" : {
@@ -68831,16 +68831,16 @@
       "comment" : "Body of the offer to update a code review system prompt that is a copy of an older default",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Your Code Review system prompt in Settings > General > AI > Prompts is a saved copy of an older default."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ihr Code-Review-System-Prompt unter Einstellungen > Allgemein > KI > Prompts ist eine gespeicherte Kopie eines älteren Standards."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your Code Review system prompt in Settings > General > AI > Prompts is a saved copy of an older default."
           }
         },
         "ja" : {
@@ -68879,16 +68879,16 @@
       "comment" : "Button that updates a customized code review system prompt",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Update Prompt"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prompt aktualisieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update Prompt"
           }
         },
         "ja" : {
@@ -99764,16 +99764,16 @@
       "comment" : "Button that opens each program left running on the remote host in a new tab",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Open in Tabs"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "In Tabs öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open in Tabs"
           }
         },
         "ja" : {
@@ -99812,16 +99812,16 @@
       "comment" : "Button that stops the programs left running on the remote host",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Stop Them"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Them"
           }
         },
         "ja" : {
@@ -99859,24 +99859,6 @@
     "FramerPane.Stranded.Title" : {
       "comment" : "Announcement shown when programs that iTerm2 ran on a remote host for a workgroup are still running there after a restart, but their sessions were not restored. The count is the number of programs.",
       "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "A program started as a workgroup peer is still running on this host but has no session."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "%lld programs started as workgroup peers are still running on this host but have no session."
-                }
-              }
-            }
-          }
-        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -99890,6 +99872,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld als Peers einer Arbeitsgruppe gestartete Programme laufen auf diesem Host noch, haben aber keine Sitzung."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "A program started as a workgroup peer is still running on this host but has no session."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld programs started as workgroup peers are still running on this host but have no session."
                 }
               }
             }
@@ -99940,12 +99940,6 @@
         "ru" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld программа, запущенная как участник рабочей группы, всё ещё работает на этом хосте, но не имеет сессии."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -99956,6 +99950,12 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld программ, запущенных как участники рабочей группы, всё ещё работают на этом хосте, но не имеют сессии."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программа, запущенная как участник рабочей группы, всё ещё работает на этом хосте, но не имеет сессии."
                 }
               },
               "other" : {
@@ -103579,16 +103579,16 @@
       "comment" : "Search index name for the setting that limits how many sessions process terminal output at the same time",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sessions processing output at once"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gleichzeitig Ausgabe verarbeitende Sitzungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sessions processing output at once"
           }
         },
         "ja" : {
@@ -106680,16 +106680,16 @@
       "comment" : "Error when a remote it2 client speaks a newer protocol than this iTerm2 understands",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "it2: this it2 is newer than the iTerm2 it is connected to. Upgrade iTerm2."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "it2: Dieses it2 ist neuer als das iTerm2, mit dem es verbunden ist. Aktualisieren Sie iTerm2."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "it2: this it2 is newer than the iTerm2 it is connected to. Upgrade iTerm2."
           }
         },
         "ja" : {
@@ -107448,16 +107448,16 @@
       "comment" : "Name of the saved passwords item in the import/export list",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Saved Passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gespeicherte Passwörter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved Passwords"
           }
         },
         "ja" : {
@@ -127142,16 +127142,16 @@
       "comment" : "Placeholder for a field where the user types a password a second time to confirm it",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Confirm"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bestätigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Confirm"
           }
         },
         "ja" : {
@@ -152867,16 +152867,16 @@
       "comment" : "Button that replaces this and every later conflicting password during an import",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Always Replace"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Immer ersetzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Always Replace"
           }
         },
         "ja" : {
@@ -152915,16 +152915,16 @@
       "comment" : "Heading of the alert shown when the user can't be authenticated before a password import or export",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Authentication Failed"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Authentifizierung fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Authentication Failed"
           }
         },
         "ja" : {
@@ -152963,16 +152963,16 @@
       "comment" : "Shown when macOS can't authenticate the user before a password import or export. The placeholder is the system's reason.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 can’t export or import passwords because macOS couldn’t confirm your identity. %@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 kann keine Passwörter exportieren oder importieren, weil macOS Ihre Identität nicht bestätigen konnte. %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 can’t export or import passwords because macOS couldn’t confirm your identity. %@"
           }
         },
         "ja" : {
@@ -153011,16 +153011,16 @@
       "comment" : "Asked when an imported password matches a saved one; the placeholders are the account name and the user name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "A saved password for “%1$@” with user name “%2$@” already exists. Replace it with the imported one?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ein gespeichertes Passwort für „%1$@“ mit dem Benutzernamen „%2$@“ ist bereits vorhanden. Durch das importierte ersetzen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A saved password for “%1$@” with user name “%2$@” already exists. Replace it with the imported one?"
           }
         },
         "ja" : {
@@ -153059,16 +153059,16 @@
       "comment" : "Heading of the dialog asked when an imported password matches a saved one",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Password Already Saved"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passwort bereits gespeichert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Password Already Saved"
           }
         },
         "ja" : {
@@ -153107,16 +153107,16 @@
       "comment" : "Asked when an imported password matches a saved one that has no user name; the placeholder is the account name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "A saved password for “%@” already exists. Replace it with the imported one?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ein gespeichertes Passwort für „%@“ ist bereits vorhanden. Durch das importierte ersetzen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A saved password for “%@” already exists. Replace it with the imported one?"
           }
         },
         "ja" : {
@@ -153155,16 +153155,16 @@
       "comment" : "Default file name when exporting passwords. Keep the .iterm2passwords extension.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 Passwords.iterm2passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2-Passwörter.iterm2passwords"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 Passwords.iterm2passwords"
           }
         },
         "ja" : {
@@ -153203,16 +153203,16 @@
       "comment" : "Button that keeps a saved password instead of the imported one",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Don’t Replace"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht ersetzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Don’t Replace"
           }
         },
         "ja" : {
@@ -153251,16 +153251,16 @@
       "comment" : "Shown when the user enters an empty passphrase for exported passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The passphrase can’t be empty."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Passphrase darf nicht leer sein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passphrase can’t be empty."
           }
         },
         "ja" : {
@@ -153299,16 +153299,16 @@
       "comment" : "Completes the system prompt “iTerm2 is trying to …” shown before exporting passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "export saved passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "gespeicherte Passwörter zu exportieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "export saved passwords"
           }
         },
         "ja" : {
@@ -153347,16 +153347,16 @@
       "comment" : "Heading of dialogs about exporting passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export Passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passwörter exportieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Passwords"
           }
         },
         "ja" : {
@@ -153395,16 +153395,16 @@
       "comment" : "Title of the save panel for exporting passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export Passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passwörter exportieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Passwords"
           }
         },
         "ja" : {
@@ -153443,16 +153443,16 @@
       "comment" : "Heading of the alert shown when exporting passwords fails",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Problem Exporting Passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Problem beim Exportieren der Passwörter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Problem Exporting Passwords"
           }
         },
         "ja" : {
@@ -153491,16 +153491,16 @@
       "comment" : "Completes the system prompt “iTerm2 is trying to …” shown before importing passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "import saved passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "gespeicherte Passwörter zu importieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "import saved passwords"
           }
         },
         "ja" : {
@@ -153539,16 +153539,16 @@
       "comment" : "Heading of the alert shown after importing passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Passwords Imported"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passwörter importiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Passwords Imported"
           }
         },
         "ja" : {
@@ -153587,16 +153587,16 @@
       "comment" : "Heading of the alert shown when importing passwords fails",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Problem Importing Passwords"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Problem beim Importieren der Passwörter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Problem Importing Passwords"
           }
         },
         "ja" : {
@@ -153635,16 +153635,16 @@
       "comment" : "Checkbox in the Export All Settings and Data save panel",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Include saved passwords (encrypted with a passphrase)"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gespeicherte Passwörter einschließen (mit einer Passphrase verschlüsselt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Include saved passwords (encrypted with a passphrase)"
           }
         },
         "ja" : {
@@ -153683,16 +153683,16 @@
       "comment" : "Error accessing the keychain during password import or export; the placeholder is the system's reason",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The keychain reported an error: %@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Schlüsselbund hat einen Fehler gemeldet: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The keychain reported an error: %@"
           }
         },
         "ja" : {
@@ -153731,16 +153731,16 @@
       "comment" : "Error shown when a decrypted password export can't be parsed",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The passwords file is damaged."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Passwortdatei ist beschädigt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passwords file is damaged."
           }
         },
         "ja" : {
@@ -153779,16 +153779,16 @@
       "comment" : "Button that keeps this and every later conflicting saved password during an import",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Never Replace"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nie ersetzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Never Replace"
           }
         },
         "ja" : {
@@ -153827,16 +153827,16 @@
       "comment" : "Explanation under the prompt for a passphrase when exporting passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The exported passwords will be encrypted. You will need this passphrase to import them."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die exportierten Passwörter werden verschlüsselt. Sie benötigen diese Passphrase, um sie zu importieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The exported passwords will be encrypted. You will need this passphrase to import them."
           }
         },
         "ja" : {
@@ -153875,16 +153875,16 @@
       "comment" : "Prompt for the passphrase that will encrypt exported passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose a passphrase"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wählen Sie eine Passphrase"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a passphrase"
           }
         },
         "ja" : {
@@ -153923,16 +153923,16 @@
       "comment" : "Shown when the user opens a passwords file while neither the terminal nor the browser password manager uses the Keychain",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Passwords can be imported only into the macOS Keychain password manager. To import them, open the password manager, choose macOS Keychain from its gear menu, and then open this file again."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passwörter können nur in den Passwort-Manager „macOS-Schlüsselbund“ importiert werden. Öffnen Sie dazu den Passwort-Manager, wählen Sie im Zahnradmenü „macOS-Schlüsselbund“ und öffnen Sie diese Datei dann erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Passwords can be imported only into the macOS Keychain password manager. To import them, open the password manager, choose macOS Keychain from its gear menu, and then open this file again."
           }
         },
         "ja" : {
@@ -153971,16 +153971,16 @@
       "comment" : "Error shown when importing a file that is not a password export",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "This is not an iTerm2 passwords file."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dies ist keine iTerm2-Passwortdatei."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This is not an iTerm2 passwords file."
           }
         },
         "ja" : {
@@ -154019,16 +154019,16 @@
       "comment" : "Shown when the user exports passwords but none are saved",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "There are no saved passwords to export."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Es sind keine gespeicherten Passwörter zum Exportieren vorhanden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "There are no saved passwords to export."
           }
         },
         "ja" : {
@@ -154067,16 +154067,16 @@
       "comment" : "Shown when the two passphrases typed for exported passwords differ",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The passphrases don’t match. Try again."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Passphrasen stimmen nicht überein. Versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passphrases don’t match. Try again."
           }
         },
         "ja" : {
@@ -154115,16 +154115,16 @@
       "comment" : "Prompt for the passphrase when importing exported passwords",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Enter the passphrase for the passwords file"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geben Sie die Passphrase für die Passwortdatei ein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter the passphrase for the passwords file"
           }
         },
         "ja" : {
@@ -154163,16 +154163,16 @@
       "comment" : "Error reading a password export; the placeholder is the system's reason",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The passwords file could not be read: %@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Passwortdatei konnte nicht gelesen werden: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passwords file could not be read: %@"
           }
         },
         "ja" : {
@@ -154211,16 +154211,16 @@
       "comment" : "Error exporting passwords. The placeholders are the account name, the user name, and a sentence giving the reason.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The saved password for “%1$@” with user name “%2$@” could not be read. %3$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Das gespeicherte Passwort für „%1$@“ mit dem Benutzernamen „%2$@“ konnte nicht gelesen werden. %3$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The saved password for “%1$@” with user name “%2$@” could not be read. %3$@"
           }
         },
         "ja" : {
@@ -154259,16 +154259,16 @@
       "comment" : "Error exporting passwords. The first placeholder is the account name; the second is a sentence giving the reason.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The saved password for “%1$@” could not be read. %2$@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Das gespeicherte Passwort für „%1$@“ konnte nicht gelesen werden. %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The saved password for “%1$@” could not be read. %2$@"
           }
         },
         "ja" : {
@@ -154307,16 +154307,16 @@
       "comment" : "Button that replaces a saved password with an imported one",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Replace"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersetzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Replace"
           }
         },
         "ja" : {
@@ -154355,16 +154355,16 @@
       "comment" : "Shown when importing settings that contain an encrypted password export",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "This export includes saved passwords. Enter the passphrase that was used to export them, or cancel to import everything else without them."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dieser Export enthält gespeicherte Passwörter. Geben Sie die Passphrase ein, mit der sie exportiert wurden, oder brechen Sie ab, um alles andere ohne sie zu importieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This export includes saved passwords. Enter the passphrase that was used to export them, or cancel to import everything else without them."
           }
         },
         "ja" : {
@@ -154403,16 +154403,16 @@
       "comment" : "Summary after importing passwords. Each line is a label and a count.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Added: %1$lld\nReplaced: %2$lld\nKept existing: %3$lld"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hinzugefügt: %1$lld\nErsetzt: %2$lld\nVorhandene beibehalten: %3$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Added: %1$lld\nReplaced: %2$lld\nKept existing: %3$lld"
           }
         },
         "ja" : {
@@ -154451,16 +154451,16 @@
       "comment" : "Shown above the import summary when the user canceled partway through",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The import was canceled. Passwords imported before canceling were kept."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Import wurde abgebrochen. Vor dem Abbruch importierte Passwörter wurden beibehalten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The import was canceled. Passwords imported before canceling were kept."
           }
         },
         "ja" : {
@@ -154499,16 +154499,16 @@
       "comment" : "Shown above the import summary when importing passwords failed partway through. The placeholder is the error message.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The import stopped because of an error. Passwords imported before the error were kept.\n\n%@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Import wurde wegen eines Fehlers angehalten. Vor dem Fehler importierte Passwörter wurden beibehalten.\n\n%@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The import stopped because of an error. Passwords imported before the error were kept.\n\n%@"
           }
         },
         "ja" : {
@@ -154547,16 +154547,16 @@
       "comment" : "Line in the password import summary: a label and the number of entries skipped because the terminal or browser password manager is set to something other than the Keychain",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Not imported because that password manager doesn’t use the Keychain: %lld"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht importiert, weil dieser Passwort-Manager den Schlüsselbund nicht verwendet: %lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not imported because that password manager doesn’t use the Keychain: %lld"
           }
         },
         "ja" : {
@@ -154595,16 +154595,16 @@
       "comment" : "Line in the password import summary: a label and the number of imported entries whose password was already saved unchanged",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Already saved: %lld"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bereits gespeichert: %lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Already saved: %lld"
           }
         },
         "ja" : {
@@ -154643,16 +154643,16 @@
       "comment" : "Error shown when importing a password export from a newer version",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "This passwords file was made by a newer version of iTerm2. Upgrade iTerm2 and try again."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diese Passwortdatei wurde mit einer neueren Version von iTerm2 erstellt. Aktualisieren Sie iTerm2 und versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This passwords file was made by a newer version of iTerm2. Upgrade iTerm2 and try again."
           }
         },
         "ja" : {
@@ -154691,16 +154691,16 @@
       "comment" : "Error writing a password export; the placeholder is the system's reason",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The passwords file could not be saved: %@"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Passwortdatei konnte nicht gespeichert werden: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passwords file could not be saved: %@"
           }
         },
         "ja" : {
@@ -154739,16 +154739,16 @@
       "comment" : "Error shown when an encrypted password export can't be decrypted",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The passphrase is incorrect, or the file is damaged."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Passphrase ist falsch, oder die Datei ist beschädigt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The passphrase is incorrect, or the file is damaged."
           }
         },
         "ja" : {
@@ -168402,9 +168402,105 @@
         }
       }
     },
+    "ProfilesColors.ThemeForcesDarkMode" : {
+      "comment" : "Warning shown in profile color settings when the app theme is set to a dark theme, which overrides the system appearance",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your theme always uses dark mode, so the light mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr Thema verwendet immer den dunklen Modus, daher werden die Farben für den hellen Modus nicht verwendet, solange Sie das Thema nicht ändern. Sie können es unter Einstellungen > Erscheinungsbild > Allgemein > Thema ändern."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のテーマは常にダークモードを使用するため、テーマを変更しない限りライトモードの色は使用されません。「設定 > 外観 > 一般 > テーマ」で変更できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 테마는 항상 다크 모드를 사용하므로, 테마를 변경하지 않는 한 라이트 모드 색상은 사용되지 않습니다. 설정 > 모양 > 일반 > 테마에서 변경할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu tema sempre usa o modo escuro, portanto as cores do modo claro não serão usadas a menos que você altere o tema. Você pode alterá-lo em Ajustes > Aparência > Geral > Tema."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текущая тема всегда использует тёмный режим, поэтому цвета светлого режима не будут использоваться, пока вы не смените тему. Это можно изменить в разделе Настройки > Внешний вид > Общие > Тема."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前主题始终使用深色模式，因此除非更改主题，否则不会使用浅色模式的颜色。可在“设置”>“外观”>“通用”>“主题”中更改。"
+          }
+        }
+      }
+    },
+    "ProfilesColors.ThemeForcesLightMode" : {
+      "comment" : "Warning shown in profile color settings when the app theme is set to a light theme, which overrides the system appearance",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your theme always uses light mode, so the dark mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr Thema verwendet immer den hellen Modus, daher werden die Farben für den dunklen Modus nicht verwendet, solange Sie das Thema nicht ändern. Sie können es unter Einstellungen > Erscheinungsbild > Allgemein > Thema ändern."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のテーマは常にライトモードを使用するため、テーマを変更しない限りダークモードの色は使用されません。「設定 > 外観 > 一般 > テーマ」で変更できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 테마는 항상 라이트 모드를 사용하므로, 테마를 변경하지 않는 한 다크 모드 색상은 사용되지 않습니다. 설정 > 모양 > 일반 > 테마에서 변경할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu tema sempre usa o modo claro, portanto as cores do modo escuro não serão usadas a menos que você altere o tema. Você pode alterá-lo em Ajustes > Aparência > Geral > Tema."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Текущая тема всегда использует светлый режим, поэтому цвета тёмного режима не будут использоваться, пока вы не смените тему. Это можно изменить в разделе Настройки > Внешний вид > Общие > Тема."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前主题始终使用浅色模式，因此除非更改主题，否则不会使用深色模式的颜色。可在“设置”>“外观”>“通用”>“主题”中更改。"
+          }
+        }
+      }
+    },
     "ProfilesColors.ThemeOverridesMode" : {
       "comment" : "Warning shown when the theme overrides the system light/dark mode setting",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -203154,16 +203250,16 @@
       "comment" : "Button that shows the AI chat where the user is typing an @-mention of a session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Reveal Chat"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chat anzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reveal Chat"
           }
         },
         "ja" : {
@@ -204162,16 +204258,16 @@
       "comment" : "Warning message shown when an x-man-page URL has no page name or apropos search term.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The man page URL did not name a man page or search term."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Man-Page-URL hat weder eine Man-Page noch einen Suchbegriff angegeben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The man page URL did not name a man page or search term."
           }
         },
         "ja" : {
@@ -204258,16 +204354,16 @@
       "comment" : "Heading of a warning that an x-man-page URL is not allowed.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Illegal Man Page URL"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unzulässige Man-Page-URL"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Illegal Man Page URL"
           }
         },
         "ja" : {
@@ -204306,16 +204402,16 @@
       "comment" : "Warning message shown when an x-man-page URL contains disallowed characters.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The man page URL contained a disallowed character. The set of allowed characters is limited for security reasons."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Man-Page-URL enthielt ein unzulässiges Zeichen. Die zulässigen Zeichen sind aus Sicherheitsgründen eingeschränkt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The man page URL contained a disallowed character. The set of allowed characters is limited for security reasons."
           }
         },
         "ja" : {
@@ -205314,16 +205410,16 @@
       "comment" : "Error when the progress argument is not one of the two supported states. The placeholder is the value the caller passed.",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Unknown progress “%@”. The supported values are running and stopped."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unbekannter Fortschritt „%@“. Unterstützte Werte sind running und stopped."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unknown progress “%@”. The supported values are running and stopped."
           }
         },
         "ja" : {
@@ -233974,24 +234070,6 @@
     "TmuxWorkgroup.HiddenPanes.Ended" : {
       "comment" : "Announcement shown when a tmux session has programs left in hidden windows by a workgroup that no longer exists. The count is the number of programs.",
       "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "A program from a workgroup that has ended is still running in a hidden tmux window."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "%lld programs from a workgroup that has ended are still running in hidden tmux windows."
-                }
-              }
-            }
-          }
-        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -234005,6 +234083,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld Programme aus einer beendeten Arbeitsgruppe laufen noch in verborgenen tmux-Fenstern."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "A program from a workgroup that has ended is still running in a hidden tmux window."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld programs from a workgroup that has ended are still running in hidden tmux windows."
                 }
               }
             }
@@ -234055,12 +234151,6 @@
         "ru" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld программа из завершившейся рабочей группы всё ещё работает в скрытом окне tmux."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -234071,6 +234161,12 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld программ из завершившейся рабочей группы всё ещё работают в скрытых окнах tmux."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программа из завершившейся рабочей группы всё ещё работает в скрытом окне tmux."
                 }
               },
               "other" : {
@@ -234099,24 +234195,6 @@
     "TmuxWorkgroup.HiddenPanes.InUse" : {
       "comment" : "Announcement shown when a tmux session has programs in hidden windows that belong to a workgroup none of this Mac’s workgroups match. Another Mac may be using them. The count is the number of programs.",
       "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "A program from a workgroup this Mac doesn’t use is in a hidden tmux window. Macs using that workgroup will lose it if you open or stop it here."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "%lld programs from a workgroup this Mac doesn’t use are in hidden tmux windows. Macs using that workgroup will lose them if you open or stop them here."
-                }
-              }
-            }
-          }
-        },
         "de" : {
           "variations" : {
             "plural" : {
@@ -234130,6 +234208,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld Programme aus einer Arbeitsgruppe, die dieser Mac nicht verwendet, befinden sich in verborgenen tmux-Fenstern. Macs, die diese Arbeitsgruppe verwenden, verlieren sie, wenn Sie sie hier öffnen oder beenden."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "A program from a workgroup this Mac doesn’t use is in a hidden tmux window. Macs using that workgroup will lose it if you open or stop it here."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "%lld programs from a workgroup this Mac doesn’t use are in hidden tmux windows. Macs using that workgroup will lose them if you open or stop them here."
                 }
               }
             }
@@ -234180,12 +234276,6 @@
         "ru" : {
           "variations" : {
             "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld программа из рабочей группы, которую этот Mac не использует, находится в скрытом окне tmux. Компьютеры Mac, использующие эту рабочую группу, потеряют её, если вы откроете или остановите её здесь."
-                }
-              },
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
@@ -234196,6 +234286,12 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld программ из рабочей группы, которую этот Mac не использует, находятся в скрытых окнах tmux. Компьютеры Mac, использующие эту рабочую группу, потеряют их, если вы откроете или остановите их здесь."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld программа из рабочей группы, которую этот Mac не использует, находится в скрытом окне tmux. Компьютеры Mac, использующие эту рабочую группу, потеряют её, если вы откроете или остановите её здесь."
                 }
               },
               "other" : {
@@ -234225,16 +234321,16 @@
       "comment" : "Button that shows each program found in a hidden tmux window in a tab of its own",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Open in Tabs"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "In Tabs öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open in Tabs"
           }
         },
         "ja" : {
@@ -234273,16 +234369,16 @@
       "comment" : "Button that stops the programs found in hidden tmux windows",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Stop Them"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Them"
           }
         },
         "ja" : {
@@ -234321,16 +234417,16 @@
       "comment" : "Button that stops waiting; the workgroup's sessions are created later, when needed",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Stop Waiting"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht mehr warten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Waiting"
           }
         },
         "ja" : {
@@ -234369,16 +234465,16 @@
       "comment" : "Button that stops waiting for the other iTerm2 and proceeds anyway",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Take Over"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Übernehmen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Take Over"
           }
         },
         "ja" : {
@@ -234417,16 +234513,16 @@
       "comment" : "Announcement shown while creating a workgroup's sessions in tmux waits for another iTerm2 attached to the same tmux session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Another iTerm2 attached to this tmux session is setting up a workgroup. This one is waiting for it to finish."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ein anderes iTerm2, das mit dieser tmux-Sitzung verbunden ist, richtet gerade eine Arbeitsgruppe ein. Dieses wartet, bis es fertig ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Another iTerm2 attached to this tmux session is setting up a workgroup. This one is waiting for it to finish."
           }
         },
         "ja" : {
@@ -234465,16 +234561,16 @@
       "comment" : "Asks which local workgroup to use for a workgroup found in a tmux session; %@ is the tmux session's name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "tmux session “%@” has a workgroup that more than one of your workgroups match. Which one should it use?"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die tmux-Sitzung „%@“ hat eine Arbeitsgruppe, auf die mehr als eine Ihrer Arbeitsgruppen passt. Welche soll verwendet werden?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "tmux session “%@” has a workgroup that more than one of your workgroups match. Which one should it use?"
           }
         },
         "ja" : {
@@ -234513,16 +234609,16 @@
       "comment" : "Button that declines to attach a workgroup to panes found in a tmux session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Leave as Ordinary Panes"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Als normale Bereiche belassen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Leave as Ordinary Panes"
           }
         },
         "ja" : {
@@ -234561,16 +234657,16 @@
       "comment" : "Heading of the dialog asking which local workgroup to use for one found in a tmux session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Choose a Workgroup"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arbeitsgruppe auswählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a Workgroup"
           }
         },
         "ja" : {
@@ -234609,16 +234705,16 @@
       "comment" : "Notification body when a workgroup found in a tmux session matches no local workgroup; %@ is the tmux session's name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "tmux session “%@” has a workgroup that none of your workgroups match, so its panes are shown as ordinary panes."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die tmux-Sitzung „%@“ hat eine Arbeitsgruppe, auf die keine Ihrer Arbeitsgruppen passt, daher werden ihre Bereiche als normale Bereiche angezeigt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "tmux session “%@” has a workgroup that none of your workgroups match, so its panes are shown as ordinary panes."
           }
         },
         "ja" : {
@@ -234657,16 +234753,16 @@
       "comment" : "Notification title when a workgroup found in a tmux session matches no local workgroup",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Workgroup Not Recognized"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arbeitsgruppe nicht erkannt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Workgroup Not Recognized"
           }
         },
         "ja" : {
@@ -256892,16 +256988,16 @@
       "comment" : "Placeholder shown in the AI usage toolbar item while waiting for Claude Code to report usage for the first time",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Checking Claude usage…"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude-Nutzung wird geprüft…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Checking Claude usage…"
           }
         },
         "ja" : {
@@ -256927,6 +257023,12 @@
             "state" : "translated",
             "value" : "正在检查 Claude 用量…"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude 사용량 확인 중…"
+          }
         }
       }
     },
@@ -256934,16 +257036,16 @@
       "comment" : "Tooltip on the AI usage toolbar item while waiting for Claude Code to report usage for the first time",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "iTerm2 is asking Claude Code for your usage. This can take several seconds."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 fragt Claude Code nach Ihrer Nutzung. Das kann einige Sekunden dauern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 is asking Claude Code for your usage. This can take several seconds."
           }
         },
         "ja" : {
@@ -256969,6 +257071,12 @@
             "state" : "translated",
             "value" : "iTerm2 正在向 Claude Code 查询用量。这可能需要几秒钟。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2가 Claude Code에 사용량을 요청하고 있습니다. 몇 초 정도 걸릴 수 있습니다."
+          }
         }
       }
     },
@@ -256976,16 +257084,16 @@
       "comment" : "AI usage toolbar item message when `claude -p /usage` ran past the time limit and was stopped",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Claude Code took too long to report usage"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code hat zu lange gebraucht, um die Nutzung zu melden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude Code took too long to report usage"
           }
         },
         "ja" : {
@@ -257010,6 +257118,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 报告用量耗时过长"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code가 사용량을 보고하는 데 너무 오래 걸렸습니다"
           }
         }
       }
@@ -257066,16 +257180,16 @@
       "comment" : "AI usage toolbar item message when the user’s custom usage command printed nothing; the placeholder is its exit status",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The AI usage command exited with status %d without printing anything"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Befehl für die KI-Nutzung wurde mit Status %d beendet, ohne etwas auszugeben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage command exited with status %d without printing anything"
           }
         },
         "ja" : {
@@ -257101,6 +257215,12 @@
             "state" : "translated",
             "value" : "AI 用量命令以状态 %d 退出，未输出任何内容"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 사용량 명령이 아무것도 출력하지 않고 상태 %d(으)로 종료되었습니다"
+          }
         }
       }
     },
@@ -257108,16 +257228,16 @@
       "comment" : "AI usage toolbar item message when the user’s custom usage command ran past the time limit and was stopped",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The AI usage command took too long"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Befehl für die KI-Nutzung hat zu lange gedauert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage command took too long"
           }
         },
         "ja" : {
@@ -257143,6 +257263,12 @@
             "state" : "translated",
             "value" : "AI 用量命令耗时过长"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 사용량 명령이 너무 오래 걸렸습니다"
+          }
         }
       }
     },
@@ -257150,16 +257276,16 @@
       "comment" : "AI usage toolbar item message when iTerm2’s bundled usage script exited without printing anything",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "The AI usage helper stopped without reporting usage"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Das Hilfsprogramm für die KI-Nutzung wurde beendet, ohne die Nutzung zu melden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The AI usage helper stopped without reporting usage"
           }
         },
         "ja" : {
@@ -257184,6 +257310,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 用量辅助程序未报告用量便已停止"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 사용량 도우미가 사용량을 보고하지 않고 중지되었습니다"
           }
         }
       }
@@ -257432,16 +257564,16 @@
       "comment" : "Placeholder shown in the AI usage toolbar item while waiting for the user’s custom usage command to finish for the first time",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Running usage command…"
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nutzungsbefehl wird ausgeführt…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Running usage command…"
           }
         },
         "ja" : {
@@ -257466,6 +257598,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在运行用量命令…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용량 명령 실행 중…"
           }
         }
       }
