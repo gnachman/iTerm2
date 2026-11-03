@@ -1050,7 +1050,21 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 }
 
 - (IBAction)showModeWarning:(id)sender {
-    [_modeWarning it_showWarning:NSLocalizedStringWithDefaultValue(@"ProfilesColors.ThemeOverridesMode", nil, [NSBundle mainBundle], @"Your current theme overrides the system light and dark mode setting, so color switching will not occur. You can change it in Settings > Appearance > General > Theme.", @"Warning shown when the theme overrides the system light/dark mode setting")];
+    NSString *message;
+    switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_LIGHT:
+        case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            message = NSLocalizedStringWithDefaultValue(@"ProfilesColors.ThemeForcesLightMode", nil, [NSBundle mainBundle], @"Your theme always uses light mode, so the dark mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme.", @"Warning shown in profile color settings when the app theme is set to a light theme, which overrides the system appearance");
+            break;
+        case TAB_STYLE_DARK:
+        case TAB_STYLE_DARK_HIGH_CONTRAST:
+        case TAB_STYLE_AUTOMATIC:
+        case TAB_STYLE_MINIMAL:
+        case TAB_STYLE_COMPACT:
+            message = NSLocalizedStringWithDefaultValue(@"ProfilesColors.ThemeForcesDarkMode", nil, [NSBundle mainBundle], @"Your theme always uses dark mode, so the light mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme.", @"Warning shown in profile color settings when the app theme is set to a dark theme, which overrides the system appearance");
+            break;
+    }
+    [_modeWarning it_showWarning:message];
 }
 
 #pragma mark - Overrides

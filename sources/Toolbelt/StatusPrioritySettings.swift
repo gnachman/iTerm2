@@ -367,13 +367,13 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
     /// The popover's user-visible titles. Tests pass translations in.
     struct Titles {
         var instructions: String
-        var showStatusInTabSubtitle: String
+        var showStatusOnTabs: String
         var mergeWorkgroups: String
         var notify: String
 
         static var localized: Titles {
             Titles(instructions: String(localized: "StatusPriority.InstructionsLabel", defaultValue: "Statuses are sorted by priority. Items near the top have higher priority. Drag to reorder. Click to edit.", comment: "Instructional label at the top of the status priority settings"),
-                   showStatusInTabSubtitle: String(localized: "StatusPriority.ShowStatusInTabSubtitle", defaultValue: "Show status in tab subtitle", comment: "Checkbox to show status in the tab subtitle"),
+                   showStatusOnTabs: String(localized: "StatusPriority.ShowStatusOnTabs", defaultValue: "Show status on tabs", comment: "Checkbox in the Session Status settings popover. When on, a session’s status appears on its tab, both as a colored dot and as text in the tab subtitle."),
                    mergeWorkgroups: String(localized: "StatusPriority.MergeWorkgroups", defaultValue: "Merge workgroup statuses", comment: "Checkbox to merge workgroup statuses"),
                    notify: String(localized: "StatusPriority.NotifyColumn", defaultValue: "Notify", comment: "Title of the Notify table column"))
         }
@@ -405,7 +405,7 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
 
     override func loadView() {
         let instructions = titles.instructions
-        let subtitleTitle = titles.showStatusInTabSubtitle
+        let subtitleTitle = titles.showStatusOnTabs
         let mergeTitle = titles.mergeWorkgroups
         let notifyTitle = titles.notify
         let layout = StatusPriorityPopoverLayout(notifyTitle: notifyTitle,
@@ -433,8 +433,9 @@ final class StatusPriorityViewController: NSViewController, CRUDTableViewControl
         label.autoresizingMask = [.width, .minYMargin]
         container.addSubview(label)
 
-        // Global toggle: gate the status-text subtitle on tabs without
-        // affecting the colored dot or this priority list’s meaning.
+        // Global toggle: gate everything status draws on tabs (the subtitle
+        // text, its tint, and the colored dot) without affecting this
+        // priority list’s meaning.
         // Pinned to the bottom with the other per-popover switch.
         let toggleY = margin
         let toggle = NSButton(checkboxWithTitle: subtitleTitle,

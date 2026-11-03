@@ -46,6 +46,16 @@ struct WorkgroupUsageReport: Decodable {
     let reportable: Bool?
 }
 
+// What running the usage command produced.
+struct WorkgroupUsageRunResult {
+    // Everything the command wrote to stdout, or nil if it wrote nothing.
+    var output: Data?
+    // The command's exit status. Meaningless when it timed out.
+    var exitStatus: Int32
+    // True when the command was killed for running past the timeout.
+    var timedOut: Bool
+}
+
 // A thin determinate progress bar drawn with CALayers. No VT100
 // coupling; just a track with a fractional fill.
 private final class WorkgroupUsageBarView: NSView {
@@ -191,13 +201,17 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
     /// Supplies the environment for the usage command. Calls its completion exactly once, on
     /// the main thread.
     typealias EnvironmentProvider = (_ completion: @escaping ([String: String]) -> Void) -> Void
-    /// Runs the usage command synchronously off the main thread and returns its stdout.
+    /// Runs the usage command synchronously off the main thread and reports what it did.
     typealias CommandRunner = (_ launchPath: String,
                                _ arguments: [String],
                                _ environment: [String: String],
-                               _ timeout: TimeInterval) -> Data?
+                               _ timeout: TimeInterval) -> WorkgroupUsageRunResult
     private let environmentProvider: EnvironmentProvider
     private let commandRunner: CommandRunner
+
+    // How long the usage command may run before it's killed. `claude -p /usage` takes
+    // around ten seconds and much longer on a busy machine.
+    private static let commandTimeout: TimeInterval = 40
 
     // iTerm2's convention for flagging an error in the UI.
     private static let errorPrefix = "🐞 "
@@ -248,9 +262,18 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         messageLabel.isBordered = false
         messageLabel.isEditable = false
         messageLabel.isSelectable = false
-        messageLabel.stringValue = String(localized: "WorkgroupUsage.Loading",
-                                           defaultValue: "AI usage…",
-                                           comment: "Placeholder shown in the AI usage toolbar item before the first result arrives")
+        if bundledScriptNameIfUsed != nil {
+            messageLabel.stringValue = String(localized: "WorkgroupUsage.CheckingClaude",
+                                              defaultValue: "Checking Claude usage…",
+                                              comment: "Placeholder shown in the AI usage toolbar item while waiting for Claude Code to report usage for the first time")
+            container.toolTip = String(localized: "WorkgroupUsage.CheckingClaudeTooltip",
+                                       defaultValue: "iTerm2 is asking Claude Code for your usage. This can take several seconds.",
+                                       comment: "Tooltip on the AI usage toolbar item while waiting for Claude Code to report usage for the first time")
+        } else {
+            messageLabel.stringValue = String(localized: "WorkgroupUsage.RunningCommand",
+                                              defaultValue: "Running usage command…",
+                                              comment: "Placeholder shown in the AI usage toolbar item while waiting for the user’s custom usage command to finish for the first time")
+        }
         container.addSubview(messageLabel)
 
         container.onWindowChange = { [weak self] window in
@@ -289,9 +312,16 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
 
         let n = CGFloat(rows.count)
         let totalGap = Self.rowGap * max(0, n - 1)
-        let rowHeight = max(0, (height - totalGap) / n)
+        // Rows get their natural height when they fit and share the space
+        // evenly when they don't. The stack is centered so a short list
+        // doesn't leave a hole between rows.
+        let naturalRowHeight = rows.map {
+            max($0.label.fittingSize.height, $0.percent.fittingSize.height, Self.barHeight)
+        }.max() ?? 0
+        let rowHeight = max(0, min(naturalRowHeight, (height - totalGap) / n))
+        let stackHeight = rowHeight * n + totalGap
         // Lay rows top-down.
-        var y = height - rowHeight
+        var y = (height + stackHeight) / 2.0 - rowHeight
         let barX = Self.hInset + Self.labelWidth + Self.hGap
         let barW = max(0, width - barX - Self.hGap - Self.percentWidth - Self.hInset)
         for row in rows {
@@ -352,14 +382,24 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
             return
         }
         runInFlight = true
+        let bundledScriptName = bundledScriptNameIfUsed
+        let identifier = self.identifier
         // The environment may take a while the first time (it reads PATH from the user's
         // shell), but it arrives asynchronously so the main thread never waits.
         environmentProvider { [weak self] environment in
             guard let self else { return }
             let runner = self.commandRunner
             self.queue.async { [weak self] in
-                let data = runner(invocation.launchPath, invocation.arguments, environment, 20)
-                let report = WorkgroupUsageToolbarItem.decode(data: data)
+                DLog("WorkgroupUsage[\(identifier)]: running \(invocation.launchPath) \(invocation.arguments)")
+                let start = ProcessInfo.processInfo.systemUptime
+                let result = runner(invocation.launchPath, invocation.arguments, environment, Self.commandTimeout)
+                let elapsed = ProcessInfo.processInfo.systemUptime - start
+                let report = WorkgroupUsageToolbarItem.decode(result: result,
+                                                              bundledScriptName: bundledScriptName)
+                Self.logOutcome(identifier: identifier,
+                                result: result,
+                                elapsed: elapsed,
+                                report: report)
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.runInFlight = false
@@ -436,6 +476,14 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
 
     // MARK: - Command
 
+    // The bundled script's file name when it's what runs, or nil for a custom command.
+    private var bundledScriptNameIfUsed: String? {
+        guard command.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return provider.bundledScriptResourceName + ".sh"
+    }
+
     // Returns the command to run, or nil when the provider's bundled
     // script is missing from the app bundle (a packaging regression the
     // caller surfaces as a reportable error). A user-supplied custom
@@ -454,8 +502,8 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
         return ("/bin/sh", ["-c", trimmed])
     }
 
-    // Runs the command with a hard timeout and returns its stdout, or nil
-    // on failure. Uses the shared iTermBufferedCommandRunner so timeout,
+    // Runs the command with a hard timeout and reports its stdout, exit
+    // status, and whether it timed out. Uses the shared iTermBufferedCommandRunner so timeout,
     // stderr draining, and SIGKILL escalation live in one place. stderr is
     // discarded (routed to /dev/null), which both avoids an unread pipe
     // filling and deadlocking the read, and keeps a stray warning from
@@ -464,14 +512,16 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
     static func runCommand(launchPath: String,
                            arguments: [String],
                            environment: [String: String],
-                           timeout: TimeInterval) -> Data? {
+                           timeout: TimeInterval) -> WorkgroupUsageRunResult {
         let runner = makeRunner(launchPath: launchPath,
                                 arguments: arguments,
                                 environment: environment)
         registerActiveRunner(runner)
         defer { unregisterActiveRunner(runner) }
-        _ = runner.blockingRun(withTimeout: timeout)
-        return runner.output
+        let status = runner.blockingRun(withTimeout: timeout)
+        return WorkgroupUsageRunResult(output: runner.output,
+                                       exitStatus: status,
+                                       timedOut: runner.timedOut)
     }
 
     private static func makeRunner(launchPath: String,
@@ -577,14 +627,67 @@ class WorkgroupUsageToolbarItem: SessionToolbarGenericView {
                      comment: "Appended to the AI usage problem report shown in an alert when it was shortened to fit; “Report a Bug” is the title of a button in the same alert")
     }
 
-    static func decode(data: Data?) -> WorkgroupUsageReport {
-        guard let data, !data.isEmpty else {
-            // No output at all. Could be transient (command still warming
-            // up, a slow claude launch), so don't nag the user to report.
+    // Failures go to RLog so a debug log taken after the fact shows why the item
+    // showed an error. Once a minute per item is cheap enough to always log.
+    private static func logOutcome(identifier: String,
+                                   result: WorkgroupUsageRunResult,
+                                   elapsed: TimeInterval,
+                                   report: WorkgroupUsageReport) {
+        let timing = String(format: "%.1fs", elapsed)
+        let bytes = result.output?.count ?? 0
+        if !report.bars.isEmpty {
+            DLog("WorkgroupUsage[\(identifier)]: \(report.bars.count) bars after \(timing), status=\(result.exitStatus)")
+            return
+        }
+        RLog("WorkgroupUsage[\(identifier)]: no bars after \(timing). timedOut=\(result.timedOut) status=\(result.exitStatus) bytes=\(bytes) error=\(report.error ?? "(none)") reportable=\(report.reportable ?? false)")
+    }
+
+    // `bundledScriptName` is nil when a custom command ran.
+    static func decode(result: WorkgroupUsageRunResult,
+                       bundledScriptName: String?) -> WorkgroupUsageReport {
+        // The timeout can elapse after the command exited but before the
+        // runner finished reading its output, so a timed-out run may still
+        // carry a complete report. Use it when it decodes.
+        if result.timedOut,
+           let data = result.output,
+           let report = try? JSONDecoder().decode(WorkgroupUsageReport.self, from: data) {
+            return report
+        }
+        if result.timedOut {
+            // Usually a slow claude on a busy machine. Expected and
+            // transient, so don't ask the user to report it.
+            let error = bundledScriptName != nil
+                ? String(localized: "WorkgroupUsage.ClaudeTimedOut",
+                         defaultValue: "Claude Code took too long to report usage",
+                         comment: "AI usage toolbar item message when `claude -p /usage` ran past the time limit and was stopped")
+                : String(localized: "WorkgroupUsage.CommandTimedOut",
+                         defaultValue: "The AI usage command took too long",
+                         comment: "AI usage toolbar item message when the user’s custom usage command ran past the time limit and was stopped")
             return WorkgroupUsageReport(bars: [],
-                                        error: String(localized: "WorkgroupUsage.NoOutput",
-                                                      defaultValue: "No usage data",
-                                                      comment: "AI usage toolbar item message when the command produced no output"),
+                                        error: error,
+                                        diagnostic: nil,
+                                        reportable: false)
+        }
+        guard let data = result.output, !data.isEmpty else {
+            if let bundledScriptName {
+                // The bundled script prints JSON on every path, so
+                // finishing without any output means it crashed or was
+                // killed by something other than our timeout.
+                return WorkgroupUsageReport(
+                    bars: [],
+                    error: String(localized: "WorkgroupUsage.HelperNoOutput",
+                                  defaultValue: "The AI usage helper stopped without reporting usage",
+                                  comment: "AI usage toolbar item message when iTerm2’s bundled usage script exited without printing anything"),
+                    diagnostic: "\(bundledScriptName) exited with status \(result.exitStatus) and wrote nothing to stdout",
+                    reportable: true)
+            }
+            // A custom command's empty output is the user's to fix, so
+            // tell them how it exited rather than offering a bug report.
+            let error = String(localized: "WorkgroupUsage.CommandNoOutput",
+                               defaultValue: "The AI usage command exited with status \(result.exitStatus) without printing anything",
+                               comment: "AI usage toolbar item message when the user’s custom usage command printed nothing; the placeholder is its exit status")
+            return WorkgroupUsageReport(bars: [],
+                                        error: error,
                                         diagnostic: nil,
                                         reportable: false)
         }

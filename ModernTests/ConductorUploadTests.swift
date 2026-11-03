@@ -2,6 +2,64 @@ import XCTest
 @testable import iTerm2SharedARC
 
 @MainActor
+final class ConductorUploadPreparationFailureTests: XCTestCase {
+    private final class Delegate: ConductorFileTransferDelegate {
+        func beginDownload(fileTransfer: ConductorFileTransfer) { XCTFail("Unexpected download") }
+        func beginUpload(fileTransfer: ConductorFileTransfer) { XCTFail("Unexpected upload") }
+    }
+
+    private func makeTransfer(localPath: String, delegate: Delegate) -> ConductorFileTransfer {
+        let path = SCPPath()
+        path.hostname = "example.com"
+        path.path = "/tmp/destination"
+        let transfer = ConductorFileTransfer(path: path, localPath: localPath, data: nil, delegate: delegate)
+        transfer.suppressesAutomaticMenu = true
+        return transfer
+    }
+
+    func testPreparationFailureRegistersNowAndFailsAsynchronously() {
+        let manager = FileTransferManager.sharedInstance()!
+        let delegate = Delegate()
+        let transfer = makeTransfer(localPath: "/tmp/folder", delegate: delegate)
+        let completed = expectation(description: "Completion called")
+        transfer.completionBlock = { success, error in
+            XCTAssertFalse(success)
+            XCTAssertEqual(error, "archive failed")
+            XCTAssertTrue(manager.files.contains(transfer))
+            completed.fulfill()
+        }
+        transfer.failBeforeUpload(reason: "archive failed")
+        // Registered right away, but failing (which can open the menu) waits for the caller to
+        // return.
+        XCTAssertTrue(manager.files.contains(transfer))
+        XCTAssertFalse(transfer.isStopped)
+        wait(for: [completed], timeout: 10)
+        XCTAssertEqual(transfer.error(), "archive failed")
+        XCTAssertTrue(transfer.isStopped)
+        manager.removeAllUploads()
+    }
+
+    func testUploadOfMissingFileRegistersFailedTransfer() {
+        let manager = FileTransferManager.sharedInstance()!
+        let delegate = Delegate()
+        let missing = NSTemporaryDirectory() + "/iTerm2-missing-\(UUID().uuidString)"
+        let transfer = makeTransfer(localPath: missing, delegate: delegate)
+        let completed = expectation(description: "Completion called")
+        transfer.completionBlock = { success, _ in
+            XCTAssertFalse(success)
+            XCTAssertTrue(manager.files.contains(transfer))
+            completed.fulfill()
+        }
+        transfer.upload()
+        XCTAssertTrue(manager.files.contains(transfer))
+        wait(for: [completed], timeout: 10)
+        XCTAssertNotNil(transfer.error())
+        XCTAssertTrue(transfer.isStopped)
+        manager.removeAllUploads()
+    }
+}
+
+@MainActor
 final class ConductorUploadTests: XCTestCase {
     func testScreenshotUsesThirtyOneRequestsAndPreservesBytes() async throws {
         let data = Data((0..<(490 * 1024)).map { UInt8(truncatingIfNeeded: $0) })

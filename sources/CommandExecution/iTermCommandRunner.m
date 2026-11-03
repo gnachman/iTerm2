@@ -17,6 +17,7 @@
 @interface iTermCommandRunner()
 @property (atomic) BOOL running;
 @property (atomic) BOOL terminateAfterLaunch;
+@property (atomic, readwrite) BOOL timedOut;
 @end
 
 static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runner";
@@ -170,6 +171,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         // The process is still running past the deadline. Kill it; its completion then fires
         // and leaves the group. Wait for that so rc reflects the (nonzero) terminated exit.
         RLog(@"command timed out after %@s; terminating", @(timeout));
+        self.timedOut = YES;
         [self terminate];
         dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
     }

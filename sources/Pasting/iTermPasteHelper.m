@@ -116,10 +116,13 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 @end
 
 @interface iTermPasteHelper () <iTermPasteViewManagerDelegate>
+- (void)runPasteDrainCallbacksIfIdle;
 @end
 
 @implementation iTermPasteHelper {
     NSMutableArray *_eventQueue;
+    NSMutableArray<void (^)(void)> *_pasteDrainCallbacks;
+    BOOL _pasteDrainCallbacksScheduled;
     PasteContext *_pasteContext;
 
     // Paste from the head of this string from a timer until it's empty.
@@ -275,15 +278,17 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
     if (_timer) {
         [_timer invalidate];
         _timer = nil;
-        if (cancel) {
-            [_eventQueue removeAllObjects];
-        }
+    }
+    if (cancel) {
+        [_eventQueue removeAllObjects];
     }
     _buffer = [[iTermCharacterQueue alloc] initWithString:@""];
     [self hidePasteIndicator];
     _pasteContext = nil;
     if (!cancel) {
         [self dequeueEvents];
+    } else {
+        [self runPasteDrainCallbacksIfIdle];
     }
 }
 
@@ -629,14 +634,62 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
             DLog(@"Found a queued paste event");
             PasteEvent *pasteEvent = (PasteEvent *)event;
             [self pasteEventImmediately:pasteEvent];
-            // Can't empty while pasting.
-            break;
+            if (self.isPasting) {
+                // Can't empty while pasting.
+                break;
+            }
+            // The paste didn't start (e.g., nothing was left after sanitizing), so keep going.
         } else {
             DLog(@"Found a queued keydown event");
             [_delegate pasteHelperKeyDown:event];
         }
     }
     DLog(@"Done dequeueing paste events.");
+    [self runPasteDrainCallbacksIfIdle];
+}
+
+- (void)performAfterPasting:(void (^)(void))block {
+    if (!_pasteDrainCallbacks) {
+        _pasteDrainCallbacks = [NSMutableArray array];
+    }
+    [_pasteDrainCallbacks addObject:[block copy]];
+    [self runPasteDrainCallbacksIfIdle];
+}
+
+// Idle means no timer will fire to continue a paste. A paste waiting for a prompt counts as idle
+// because it may wait indefinitely and has no timer for a nested event loop to stall.
+- (BOOL)isIdleForPasteDrainCallbacks {
+    if (_timer) {
+        return NO;
+    }
+    return _pasteContext.isBlocked || _eventQueue.count == 0;
+}
+
+// Callbacks run asynchronously so they never run on the paste helper's stack, which may be
+// beneath a key event or session termination.
+- (void)runPasteDrainCallbacksIfIdle {
+    if (_pasteDrainCallbacksScheduled || !_pasteDrainCallbacks.count || ![self isIdleForPasteDrainCallbacks]) {
+        return;
+    }
+    _pasteDrainCallbacksScheduled = YES;
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf runPasteDrainCallbacksNow];
+    });
+}
+
+- (void)runPasteDrainCallbacksNow {
+    _pasteDrainCallbacksScheduled = NO;
+    if (![self isIdleForPasteDrainCallbacks]) {
+        // A paste started after this was scheduled. Wait for it to drain.
+        DLog(@"No longer idle, deferring paste drain callbacks");
+        return;
+    }
+    NSArray<void (^)(void)> *callbacks = [_pasteDrainCallbacks copy];
+    [_pasteDrainCallbacks removeAllObjects];
+    for (void (^callback)(void) in callbacks) {
+        callback();
+    }
 }
 
 - (void)enqueueEvent:(NSEvent *)event {
@@ -702,6 +755,7 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
             _pasteContext.isBlocked = YES;
             _timer = nil;
             [_pasteViewManager setWaitingForPrompt:YES];
+            [self runPasteDrainCallbacksIfIdle];
         }
     } else {
         RLog(@"Done pasting");
@@ -793,6 +847,7 @@ static BOOL iTermPasteHelperIsEmojiExtender(UTF32Char c) {
         RLog(@"Not at shell prompt at start of paste.");
         _pasteContext.isBlocked = YES;
         [_pasteViewManager setWaitingForPrompt:YES];
+        [self runPasteDrainCallbacksIfIdle];
         return;
     }
 

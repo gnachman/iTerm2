@@ -20,7 +20,9 @@
 //    1. A new session starts at the floor.
 //    2. A holder is charged ran / weight at each checkpoint, when it releases its permit, and when
 //       its idle permit is taken. Before being charged, it is raised to the floor, which matters
-//       for a holder that was idle while others ran.
+//       for a holder that was idle while others ran. A full slice that ends while nobody waits and
+//       the cap isn't exceeded is dropped instead: it took nothing from anyone. Only the time
+//       since the last slice ended is charged when the holder releases or parks.
 //    3. A session that had stopped wanting a permit is raised to the floor when it wants one
 //       again, so it can't bank credit by being idle (and keeps any debt it ran up).
 //
@@ -40,7 +42,13 @@ final class ExecutionPermits: NSObject {
             case removed
         }
         // These are guarded by the ExecutionPermits' mutex.
-        fileprivate var state = State.idle
+        fileprivate var state = State.idle {
+            didSet {
+                iTermAtomicInt64Set(isWaiting, state == .waiting ? 1 : 0)
+            }
+        }
+        // Whether state is .waiting, readable without the mutex.
+        fileprivate let isWaiting = iTermAtomicInt64Create()
         fileprivate var virtualTime: Double
         // Atomic rather than guarded by the mutex, so main can set it inside a join without taking
         // the permits' lock.
@@ -108,6 +116,7 @@ final class ExecutionPermits: NSObject {
         }
 
         deinit {
+            iTermAtomicInt64Free(isWaiting)
             iTermAtomicInt64Free(visible)
             iTermAtomicInt64Free(parking)
             iTermAtomicInt64Free(unchargedNanoseconds)
@@ -122,13 +131,26 @@ final class ExecutionPermits: NSObject {
     }
 
     private let mutex = Mutex()
-    private var _capacity: Int
+    private var _capacity: Int {
+        didSet {
+            updateOverCapacity()
+        }
+    }
     private let visibleWeight: Double
     // Clients holding a permit. Its count is the number of permits in use.
-    private var holders = [Client]()
+    private var holders = [Client]() {
+        didSet {
+            updateOverCapacity()
+        }
+    }
+    // 1 while more permits are held than there are (the cap was lowered), readable without the
+    // lock. Updated with the mutex held.
+    private let overCapacity = iTermAtomicInt64Create()
     private var inUse: Int {
         return holders.count
     }
+    // In order of virtual time, then of arrival, so the next in line is the first one that isn't
+    // paused. A waiter's virtual time doesn't change while it is in line: only holders are charged.
     private var waiters = [Client]() {
         didSet {
             // Parking reads this without the lock. It's stored before handOff() looks for idle
@@ -137,6 +159,18 @@ final class ExecutionPermits: NSObject {
         }
     }
     private let waiterCount = iTermAtomicInt64Create()
+    // 1 when a waiter might be able to take a permit by asking: one is free or idle beside waiters
+    // that were all paused when it was given up or parked, since paused waiters are passed over.
+    // Whoever is about to leave a permit so sets this and then checks again whether the waiters are
+    // paused, and it is cleared only when no permit is free or idle. A waiter's pause ends before it
+    // asks again, so either the second check saw it unpaused and handed it the permit, or the
+    // waiter sees this set and asks under the lock. It is set only then, not on every handoff:
+    // waiters that see it set take the lock, which is what this exists to avoid.
+    private let waiterMayTakePermit = iTermAtomicInt64Create()
+#if ITERM_DEBUG
+    // How many times acquire() took the lock. For tests; release builds don't count.
+    private let lockedAcquires = iTermAtomicInt64Create()
+#endif
     private var floor = 0.0
     private var nextWaitingSequence = 0
     private let now: () -> UInt64
@@ -231,7 +265,7 @@ final class ExecutionPermits: NSObject {
     private let onUnexpectedState: (String) -> Void
 
     static func crashInDebugBuilds(_ message: String) {
-#if DEBUG
+#if ITERM_DEBUG
         it_fatalError(message)
 #endif
     }
@@ -264,6 +298,11 @@ final class ExecutionPermits: NSObject {
             healthTimer.cancel()
         }
         iTermAtomicInt64Free(waiterCount)
+        iTermAtomicInt64Free(waiterMayTakePermit)
+        iTermAtomicInt64Free(overCapacity)
+#if ITERM_DEBUG
+        iTermAtomicInt64Free(lockedAcquires)
+#endif
     }
 
     // Any thread. Raising it hands permits to waiters right away. Lowering it lets holders run
@@ -299,6 +338,15 @@ final class ExecutionPermits: NSObject {
     // handed one) or because one was free and no waiter that can run is ahead of it. Otherwise the
     // client waits in line and is woken once a permit is handed to it.
     func acquire(_ client: Client) -> Bool {
+        // A client in line is woken when a permit is handed to it, so asking again (as it does each
+        // time output arrives) matters only if a waiter could take one now. See
+        // waiterMayTakePermit.
+        if iTermAtomicInt64Get(client.isWaiting) != 0 && iTermAtomicInt64Get(waiterMayTakePermit) == 0 {
+            return false
+        }
+#if ITERM_DEBUG
+        iTermAtomicInt64Add(lockedAcquires, 1)
+#endif
         let (acquired, woken) = mutex.sync { () -> (Bool, [Client]) in
             switch client.state {
             case .holding:
@@ -322,6 +370,17 @@ final class ExecutionPermits: NSObject {
         return acquired
     }
 
+    // The session's queue, holding a running permit, when its slice is over. Whether checkpoint()
+    // has anything to decide: someone is in line, or more permits are held than there are. If not,
+    // the holder keeps running and starts a new slice, and the slice it ran is never charged, so
+    // its virtual time (and the floor) stays where it was and a newcomer joins level with it.
+    // Counts as hearing from the holder for the health check. Doesn't take the lock. A waiter that
+    // gets in line just after this is seen at the holder's next check.
+    func checkpointIsNeeded(_ client: Client) -> Bool {
+        iTermAtomicInt64Set(client.lastHeardFrom, Int64(now()))
+        return iTermAtomicInt64Get(waiterCount) != 0 || iTermAtomicInt64Get(overCapacity) != 0
+    }
+
     // The session's queue, while holding a permit. Charges the time run since the last checkpoint
     // or acquire, and returns whether the holder should give up its permit: there are more holders
     // than permits, or a waiter that isn't paused has run no more than it.
@@ -340,7 +399,11 @@ final class ExecutionPermits: NSObject {
             if inUse > _capacity {
                 return true
             }
-            return waiters.contains { !$0.isPaused() && $0.virtualTime <= client.virtualTime }
+            // The line is in order, so the first waiter that can run has run the least.
+            guard let next = waiters.first(where: { !$0.isPaused() }) else {
+                return false
+            }
+            return next.virtualTime <= client.virtualTime
         }
     }
 
@@ -441,7 +504,10 @@ final class ExecutionPermits: NSObject {
         it_assert(inUse < _capacity, "Holding more permits than there are")
         it_assert(client.state == .idle || client.state == .waiting, "Holding a permit in state \(client.state)")
         it_assert(!holders.contains { $0 === client }, "Client already holds a permit")
+#if ITERM_DEBUG
+        // The line can be long, so release builds rely on the state check above.
         it_assert(!waiters.contains { $0 === client }, "A client must leave the line before holding a permit")
+#endif
         it_assert(!client.isParked, "Holding a permit while parked")
         if client.state == .waiting {
             let waited = now() &- client.waitingSince
@@ -457,6 +523,10 @@ final class ExecutionPermits: NSObject {
         startHealthTimerIfNeeded()
     }
 
+    private func updateOverCapacity() {
+        iTermAtomicInt64Set(overCapacity, holders.count > _capacity ? 1 : 0)
+    }
+
     private func unhold(_ client: Client) {
         mutex.assertOwned()
         it_assert(client.state == .holding, "Releasing a permit in state \(client.state)")
@@ -468,12 +538,17 @@ final class ExecutionPermits: NSObject {
     private func enqueue(_ client: Client) {
         mutex.assertOwned()
         it_assert(client.state == .idle || client.state == .holding, "Waiting in line in state \(client.state)")
+#if ITERM_DEBUG
+        // The line can be long, so release builds rely on the state check above.
         it_assert(!waiters.contains { $0 === client }, "Client is already in line")
+#endif
         client.state = .waiting
         client.waitingSince = now()
         client.waitingSequence = nextWaitingSequence
         nextWaitingSequence += 1
-        waiters.append(client)
+        // Insert in order; see waiters.
+        let key = (client.virtualTime, client.waitingSequence)
+        waiters.insert(client, at: waiters.binarySearch { ($0.virtualTime, $0.waitingSequence) < key })
         startHealthTimerIfNeeded()
     }
 
@@ -487,7 +562,7 @@ final class ExecutionPermits: NSObject {
     private func raiseFloor() {
         mutex.assertOwned()
         let lowest = min(holders.lazy.filter { !$0.isParked }.map(\.virtualTime).min() ?? .infinity,
-                         waiters.lazy.map(\.virtualTime).min() ?? .infinity)
+                         waiters.first?.virtualTime ?? .infinity)
         if lowest.isFinite {
             floor = max(floor, lowest)
         }
@@ -499,26 +574,21 @@ final class ExecutionPermits: NSObject {
     // to wake if it gets a permit; instead, callerHolds is true.
     private func handOff(caller: Client? = nil) -> (callerHolds: Bool, woken: [Client]) {
         mutex.assertOwned()
+        let permitAvailable = { self.inUse < self._capacity || self.holders.contains { $0.isParked } }
+        defer {
+            if !permitAvailable() {
+                iTermAtomicInt64Set(waiterMayTakePermit, 0)
+            }
+        }
         var callerHolds = false
         var woken = [Client]()
-        while true {
-            var best: Client?
-            for waiter in waiters where waiter === caller || !waiter.isPaused() {
-                if let current = best,
-                   (current.virtualTime, current.waitingSequence) <= (waiter.virtualTime, waiter.waitingSequence) {
-                    continue
-                }
-                best = waiter
-            }
-            guard let best else {
-                break
-            }
+        while let index = indexOfRunnableWaiter(caller: caller, leavingPermit: permitAvailable) {
             // Over the cap (it was lowered), it may take more than one idle permit to make room.
             while inUse >= _capacity && takeIdlePermit() {}
             guard inUse < _capacity else {
                 break
             }
-            waiters.removeAll { $0 === best }
+            let best = waiters.remove(at: index)
             hold(best)
             if best === caller {
                 callerHolds = true
@@ -527,6 +597,23 @@ final class ExecutionPermits: NSObject {
             }
         }
         return (callerHolds, woken)
+    }
+
+    // The index of the first waiter in line that can run (`caller` always counts as able to). The
+    // line is in order, so that is the one owed a permit. If there is none but a permit is about to
+    // be left free or idle beside paused waiters, publishes that and looks once more, for a waiter
+    // whose pause ended in between; see waiterMayTakePermit.
+    private func indexOfRunnableWaiter(caller: Client?, leavingPermit: () -> Bool) -> Int? {
+        mutex.assertOwned()
+        let find = { self.waiters.firstIndex { $0 === caller || !$0.isPaused() } }
+        if let index = find() {
+            return index
+        }
+        guard !waiters.isEmpty, leavingPermit() else {
+            return nil
+        }
+        iTermAtomicInt64Set(waiterMayTakePermit, 1)
+        return find()
     }
 
     // The session's queue, while holding a running permit, when it has nothing to execute.
@@ -547,7 +634,7 @@ final class ExecutionPermits: NSObject {
         }
         let (parked, woken) = mutex.sync { () -> (Bool, [Client]) in
             it_assert(client.state == .holding, "Parking a permit in state \(client.state)")
-            guard waiters.contains(where: { !$0.isPaused() }) else {
+            guard indexOfRunnableWaiter(caller: nil, leavingPermit: { true }) != nil else {
                 // Only paused waiters, which can't use it. Park after all: one takes the idle
                 // permit when it asks again after its pause.
                 iTermAtomicInt64Set(client.parking, Parking.idle.rawValue)
@@ -698,6 +785,12 @@ final class ExecutionPermits: NSObject {
     var runningCountForTesting: Int {
         return mutex.sync { holders.filter { !$0.isParked }.count }
     }
+
+#if ITERM_DEBUG
+    var lockedAcquireCountForTesting: Int64 {
+        return iTermAtomicInt64Get(lockedAcquires)
+    }
+#endif
 
     var inUseForTesting: Int {
         return mutex.sync { inUse }

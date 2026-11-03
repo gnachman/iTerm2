@@ -36,6 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 // stdout open after the command dies and would otherwise keep the runner reading until
 // it exits. A descendant that moved to another process group escapes it.
 @property (nonatomic) BOOL terminatesProcessGroup;
+// Set when blockingRunWithTimeout: killed the command because it ran past the timeout.
+@property (atomic, readonly) BOOL timedOut;
 
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments

@@ -69,7 +69,30 @@ func glide(to p: CGPoint, steps: Int, type: CGEventType) {
     }
 }
 
+// Presses the modifier keys in flags, posts the key, then releases them. Posting a key that only
+// carries modifier flags leaves the system's modifier state set afterwards, so every later event
+// created without explicit flags (e.g. by CGEventCreateKeyboardEvent elsewhere) gets them too.
 func postKey(_ code: CGKeyCode, flags: CGEventFlags) {
+    let modifiers: [(CGEventFlags, CGKeyCode)] = [
+        (.maskCommand, 55), (.maskShift, 56), (.maskAlternate, 58), (.maskControl, 59)]
+    let held = modifiers.filter { flags.contains($0.0) }
+    var current: CGEventFlags = []
+    for (flag, key) in held {
+        current.insert(flag)
+        let e = CGEvent(keyboardEventSource: src, virtualKey: key, keyDown: true)!
+        e.flags = current
+        e.post(tap: .cghidEventTap)
+    }
+    postKeyEvents(code, flags: flags)
+    for (flag, key) in held.reversed() {
+        current.remove(flag)
+        let e = CGEvent(keyboardEventSource: src, virtualKey: key, keyDown: false)!
+        e.flags = current
+        e.post(tap: .cghidEventTap)
+    }
+}
+
+func postKeyEvents(_ code: CGKeyCode, flags: CGEventFlags) {
     let down = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true)!
     down.flags = flags
     down.post(tap: .cghidEventTap)
@@ -170,7 +193,7 @@ case "chord":
     controlDown.post(tap: .cghidEventTap)
     usleep(30000)
     // Arrow keys carry the function and numeric pad flags on real keyboards.
-    postKey(code, flags: [.maskControl, .maskSecondaryFn, .maskNumericPad])
+    postKeyEvents(code, flags: [.maskControl, .maskSecondaryFn, .maskNumericPad])
     usleep(30000)
     let controlUp = CGEvent(keyboardEventSource: src, virtualKey: control, keyDown: false)!
     controlUp.flags = []
