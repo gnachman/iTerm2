@@ -141,7 +141,9 @@ function SyncWebsiteShellIntegration {
   git -C $WEB_SHELL_INTEGRATION checkout --detach $SHELL_INTEGRATION_SHA || die "Could not check out $SHELL_INTEGRATION_SHA in $WEB_SHELL_INTEGRATION"
   pushd $SVNDIR
   ./copy-shell-integration.sh || die "copy-shell-integration.sh failed"
-  git add -A submodules/iTerm2-shell-integration source/shell_integration source/utilities || die "Could not stage shell integration in website"
+  # source/shell_integration and source/utilities are gitignored; the server
+  # regenerates them from the submodule in process_site.sh.
+  git add submodules/iTerm2-shell-integration || die "Could not stage shell integration in website"
   popd
 }
 
