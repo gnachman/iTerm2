@@ -3649,6 +3649,11 @@ static void DumpBuf(screen_char_t* p, int n) {
         [theCopy->lineInfos_ addObject:[line copy]];
     }
     theCopy->screenTop_ = screenTop_;
+    // setAllDirty: doesn't touch the per-line dirty bits copied above, so carry the flag and its
+    // generation block too. Otherwise a copy taken while all-dirty would repaint nothing.
+    theCopy->allDirty_ = allDirty_;
+    theCopy->_allDirtyGenerationBase = _allDirtyGenerationBase;
+    theCopy->_allDirtyTimestamp = _allDirtyTimestamp;
     [self copyMiscellaneousStateTo:theCopy];
     // Preserve content identity across the copy (copyMiscellaneousStateTo: may
     // have bumped it via the scalar setters). A copy has the same encoded content
