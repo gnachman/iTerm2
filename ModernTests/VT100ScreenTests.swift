@@ -2533,6 +2533,9 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenAskAboutClearingScrollback() {
 
     }
+
+    func screenDidClearScrollbackWithPermission() {
+    }
     
     func screenRangeOfVisibleLines() -> VT100GridRange {
         return VT100GridRangeMake(0, 25)
@@ -2646,6 +2649,9 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
+    func screenDidUseDECRQCRA() {
+    }
+
     func screenDidTryToUseDECRQCRA() {
 
     }

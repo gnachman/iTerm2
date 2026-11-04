@@ -2028,6 +2028,10 @@ typedef struct {
         return;
     }
     [self clearScrollbackBuffer];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"begin side-effect");
+        [delegate screenDidClearScrollbackWithPermission];
+    } name:@"cleared scrollback buffer"];
 }
 
 - (void)terminalClearBuffer {
@@ -2122,6 +2126,10 @@ typedef struct {
     DLog(@"begin");
     if (![iTermAdvancedSettingsModel disableDECRQCRA]) {
         DLog(@"not disabled");
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            DLog(@"begin side-effect");
+            [delegate screenDidUseDECRQCRA];
+        } name:@"used decrqcra"];
         return YES;
     }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {

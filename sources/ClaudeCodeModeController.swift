@@ -68,6 +68,10 @@ class ClaudeCodeModeController: NSObject {
     // user default — even without persistence we don't want to
     // re-queue the announcement on every reconcile tick.
     private var shownThisRun = Set<String>()
+    // Sessions for which this run already listed the upsell in the Suppressed Alerts panel
+    // instead of showing it, so a reconcile tick doesn't count it again. Kept apart from
+    // shownThisRun so un-suppressing it lets the next reconcile show it.
+    private var suppressedThisRun = Set<String>()
 
     // Sessions whose CC workgroup was entered via the upsell's "Try
     // It Now" button. We hold these so we can auto-exit the
@@ -126,6 +130,7 @@ class ClaudeCodeModeController: NSObject {
                 // once (took the trial or dismissed it) would never
                 // see it again until they closed the terminal.
                 shownThisRun.remove(guid)
+                suppressedThisRun.remove(guid)
                 // If the upsell is currently visible (or queued)
                 // for this session, drop it: the offer to "try
                 // Claude Code" while claude isn't running is
@@ -152,6 +157,7 @@ class ClaudeCodeModeController: NSObject {
         let guid = session.guid
         claudeSessionGUIDs.remove(guid)
         shownThisRun.remove(guid)
+        suppressedThisRun.remove(guid)
         trialSessionGUIDs.remove(guid)
         pendingChecks.removeValue(forKey: guid)?.cancel()
     }
@@ -177,7 +183,6 @@ class ClaudeCodeModeController: NSObject {
     // The session to show the upsell on, or nil if it shouldn't be shown
     // there now, whether or not claude turns out to be interactive.
     private func sessionEligibleForUpsell(guid: String) -> PTYSession? {
-        guard !iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed else { return nil }
         // The upsell is an introduction to the feature. Once the user
         // has the workgroup in their config (via the installer, or via a
         // prior Try It Now), they've adopted it — don't keep nagging
@@ -194,13 +199,38 @@ class ClaudeCodeModeController: NSObject {
         guard session.workgroupInstance == nil else { return nil }
         guard claudeSessionGUIDs.contains(guid) else { return nil }
         guard !shownThisRun.contains(guid) else { return nil }
+        // Checked last so the Suppressed Alerts panel lists it only when it would otherwise
+        // be offered, and before the interactivity checks so a hidden upsell doesn't run them.
+        guard !upsellIsSuppressed(guid: guid) else { return nil }
         return session
+    }
+
+    private func upsellIsSuppressed(guid: String) -> Bool {
+        guard iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed else { return false }
+        // While remembered alerts are being shown, ask again so it can be shown.
+        if suppressedThisRun.contains(guid) && !iTermWarning.showRememberedAlerts {
+            return true
+        }
+        let suppress = MainActor.assumeIsolated {
+            iTermSuppressedAlerts.sharedInstance.shouldSuppressAnnouncement(
+                userDefaultsKey: iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressedUserDefaultsKey,
+                title: Self.offerTitle,
+                response: nil)
+        }
+        if suppress {
+            suppressedThisRun.insert(guid)
+        }
+        return suppress
     }
 
     private func reconcile(guid: String) {
         guard let session = sessionEligibleForUpsell(guid: guid) else { return }
         shownThisRun.insert(guid)
         showAnnouncement(on: session)
+    }
+
+    private static var offerTitle: String {
+        String(localized: "ClaudeCodeMode.OfferTitle", defaultValue: "Claude Code is running. Want to try the Claude Code integration?", comment: "Announcement offering to enable the Claude Code integration")
     }
 
     private func reconcileAll() {
@@ -267,7 +297,7 @@ class ClaudeCodeModeController: NSObject {
     }
 
     private func showAnnouncement(on session: PTYSession) {
-        let title = String(localized: "ClaudeCodeMode.OfferTitle", defaultValue: "Claude Code is running. Want to try the Claude Code integration?", comment: "Announcement offering to enable the Claude Code integration")
+        let title = Self.offerTitle
         let actions = [String(localized: "ClaudeCodeMode.TryItNow", defaultValue: "Try It Now", comment: "Button to enable the Claude Code integration now"), String(localized: "ClaudeCodeMode.DontShowAgain", defaultValue: "Don't Show Again", comment: "Button to dismiss the offer permanently")]
         let announcement = iTermAnnouncementViewController.announcement(
             withTitle: title,
@@ -314,6 +344,13 @@ class ClaudeCodeModeController: NSObject {
                     }
                 case 1:
                     iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressed = true
+                    // List it in the Suppressed Alerts panel right away.
+                    MainActor.assumeIsolated {
+                        iTermSuppressedAlerts.sharedInstance.recordAnnouncementChoice(
+                            userDefaultsKey: iTermUserDefaults.claudeCodeWorkgroupUpsellSuppressedUserDefaultsKey,
+                            title: Self.offerTitle,
+                            response: nil)
+                    }
                 default:
                     break
                 }

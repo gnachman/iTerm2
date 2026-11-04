@@ -131,6 +131,7 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
     // silently revert it. performMigrations runs after that copy, so the migration
     // sees the real value. Keep it first so the early return below never skips it.
     [iTermAdvancedSettingsModel migrateAlternateScreenBidiSettingInUserDefaults:userDefaults];
+    [iTermAdvancedSettingsModel migrateDECRQCRASettingInUserDefaults:userDefaults];
 
     id obj = [userDefaults objectForKey:iTermUserDefaultsKeySearchHistory];
     if (!obj) {
@@ -254,6 +255,10 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setOpenTmuxDashboardIfHiddenWindows:(BOOL)openTmuxDashboardIfHiddenWindows {
     [self.userDefaults setBool:openTmuxDashboardIfHiddenWindows
                         forKey:iTermUserDefaultsKeyOpenTmuxDashboardIfHiddenWindows];
+}
+
++ (NSString *)claudeCodeWorkgroupUpsellSuppressedUserDefaultsKey {
+    return iTermUserDefaultsKeyClaudeCodeWorkgroupUpsellSuppressed;
 }
 
 + (BOOL)claudeCodeWorkgroupUpsellSuppressed {

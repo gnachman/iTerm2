@@ -11,6 +11,7 @@ final class iTermSuppressedAlertsTests: XCTestCase {
     private let identifierA = "NoSyncTestSuppressedAlertA"
     private let identifierB = "NoSyncTestSuppressedAlertB"
     private let catalogKey = "NoSyncSuppressedAlertsCatalog"
+    private let announcementKey = "NoSyncTestSuppressedAnnouncement"
 
     override func setUp() {
         cleanUp()
@@ -22,15 +23,22 @@ final class iTermSuppressedAlertsTests: XCTestCase {
 
     private func cleanUp() {
         // Reset the singleton's in-memory catalog (it is authoritative and persists
-        // across tests) and clear any silence keys we set.
-        iTermSuppressedAlerts.sharedInstance.unsuppressAll()
+        // across tests) and clear any silence keys we set. Don't use unsuppressAll here:
+        // the catalog starts out with the host's real entries, and it would delete them.
+        iTermSuppressedAlerts.sharedInstance.resetForTesting()
+        iTermWarning.showRememberedAlerts = false
         let ud = iTermUserDefaults.userDefaults()
         for identifier in [identifierA, identifierB] {
             ud.removeObject(forKey: identifier)
             ud.removeObject(forKey: identifier + "_selection")
             ud.removeObject(forKey: identifier + "_SilenceUntil")
         }
+        ud.removeObject(forKey: announcementKey)
         ud.removeObject(forKey: catalogKey)
+    }
+
+    private func announcement(in array: [iTermSuppressedAlert]) -> iTermSuppressedAlert? {
+        return array.first { $0.identifier.hasPrefix("Announcement:") }
     }
 
     // Mark an identifier as permanently silenced with the given selection, as
@@ -166,5 +174,193 @@ final class iTermSuppressedAlertsTests: XCTestCase {
         XCTAssertEqual(registry.count(), 0)
         XCTAssertFalse(iTermWarning.identifierIsSilenced(identifierA))
         XCTAssertFalse(iTermWarning.identifierIsSilenced(identifierB))
+    }
+
+    // MARK: - Announcements
+
+    func testAnnouncementWithSavedChoiceAppears() throws {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        iTermUserDefaults.userDefaults().set(false, forKey: announcementKey)
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "Turn it off?",
+                                               response: "_Never")
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "Turn it off?",
+                                               response: "_Never")
+
+        XCTAssertEqual(registry.count(), 1)
+        let entry = try XCTUnwrap(announcement(in: registry.currentlySuppressedAlerts()))
+        XCTAssertEqual(entry.title, "Turn it off?")
+        XCTAssertNil(entry.heading)
+        XCTAssertEqual(entry.selectionLabel, "Never", "keyboard-shortcut underscores are removed")
+        XCTAssertEqual(entry.count, 2)
+    }
+
+    func testAnnouncementWithoutSavedChoiceIsNotRecorded() {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "t",
+                                               response: nil)
+        XCTAssertEqual(registry.count(), 0)
+    }
+
+    func testHiddenAnnouncementHasAResponse() throws {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        iTermUserDefaults.userDefaults().set(true, forKey: announcementKey)
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "t",
+                                               response: nil)
+        let entry = try XCTUnwrap(announcement(in: registry.currentlySuppressedAlerts()))
+        XCTAssertFalse(entry.selectionLabel.isEmpty)
+    }
+
+    func testAnnouncementLapsesWhenSavedChoiceChanges() throws {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        let ud = iTermUserDefaults.userDefaults()
+        ud.set(true, forKey: announcementKey)
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "t",
+                                               response: nil)
+        XCTAssertEqual(registry.count(), 1)
+
+        // Changed some other way, e.g. in Advanced Settings.
+        ud.set(false, forKey: announcementKey)
+        XCTAssertEqual(registry.count(), 0)
+
+        // A new choice starts a new count.
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "t",
+                                               response: "Never")
+        let entry = try XCTUnwrap(announcement(in: registry.currentlySuppressedAlerts()))
+        XCTAssertEqual(entry.count, 1)
+    }
+
+    func testUnsuppressAnnouncementRemovesSavedChoice() throws {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        iTermUserDefaults.userDefaults().set(true, forKey: announcementKey)
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "t",
+                                               response: nil)
+        let entry = try XCTUnwrap(announcement(in: registry.currentlySuppressedAlerts()))
+
+        registry.unsuppressIdentifier(entry.identifier)
+
+        XCTAssertEqual(registry.count(), 0)
+        XCTAssertNil(iTermUserDefaults.userDefaults().object(forKey: announcementKey))
+    }
+
+    func testUnsuppressAllIncludesAnnouncements() {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        silence(identifierA, selection: 1)
+        registry.recordSuppression(withIdentifier: identifierA, title: "a", heading: nil, selectionLabel: "No")
+        iTermUserDefaults.userDefaults().set(true, forKey: announcementKey)
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "t",
+                                               response: nil)
+        XCTAssertEqual(registry.count(), 2)
+
+        registry.unsuppressAll()
+
+        XCTAssertEqual(registry.count(), 0)
+        XCTAssertFalse(iTermWarning.identifierIsSilenced(identifierA))
+        XCTAssertNil(iTermUserDefaults.userDefaults().object(forKey: announcementKey))
+    }
+
+    func testUnsuppressAllKeepsNewerChoiceForLapsedAnnouncement() {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        let ud = iTermUserDefaults.userDefaults()
+        ud.set(true, forKey: announcementKey)
+        registry.recordAnnouncementSuppression(userDefaultsKey: announcementKey,
+                                               title: "t",
+                                               response: "Always")
+        // Changed elsewhere (e.g., in Advanced Settings) before the entry is pruned.
+        ud.set(false, forKey: announcementKey)
+
+        registry.unsuppressAll()
+
+        XCTAssertEqual(ud.object(forKey: announcementKey) as? Bool, false)
+    }
+
+    func testShouldSuppressAnnouncementRecordsIt() throws {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        iTermUserDefaults.userDefaults().set(true, forKey: announcementKey)
+
+        XCTAssertTrue(registry.shouldSuppressAnnouncement(userDefaultsKey: announcementKey,
+                                                          title: "t",
+                                                          response: nil))
+
+        XCTAssertNotNil(announcement(in: registry.currentlySuppressedAlerts()))
+    }
+
+    func testShouldSuppressAnnouncementIsFalseWhenShowingRememberedAlerts() {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        iTermUserDefaults.userDefaults().set(true, forKey: announcementKey)
+        iTermWarning.showRememberedAlerts = true
+
+        XCTAssertFalse(registry.shouldSuppressAnnouncement(userDefaultsKey: announcementKey,
+                                                           title: "t",
+                                                           response: nil))
+
+        XCTAssertNil(announcement(in: registry.currentlySuppressedAlerts()))
+        XCTAssertEqual(iTermUserDefaults.userDefaults().object(forKey: announcementKey) as? Bool, true)
+    }
+
+    func testShouldSuppressAnnouncementIsFalseWithoutSavedChoice() {
+        let registry = iTermSuppressedAlerts.sharedInstance
+
+        XCTAssertFalse(registry.shouldSuppressAnnouncement(userDefaultsKey: announcementKey,
+                                                           title: "t",
+                                                           response: nil),
+                       "an announcement that can't be listed must not be hidden")
+        XCTAssertEqual(registry.count(), 0)
+    }
+
+    func testSavedAlwaysOrNeverChoice() throws {
+        let suppression = AnnouncementSuppression(userDefaultsKey: announcementKey, title: "Turn it off?")
+        let ud = iTermUserDefaults.userDefaults()
+        XCTAssertEqual(suppression.savedAlwaysOrNeverChoice(), .ask)
+        XCTAssertEqual(iTermSuppressedAlerts.sharedInstance.count(), 0)
+
+        ud.set(true, forKey: announcementKey)
+        XCTAssertEqual(suppression.savedAlwaysOrNeverChoice(), .always)
+        let always = try XCTUnwrap(announcement(in: iTermSuppressedAlerts.sharedInstance.currentlySuppressedAlerts()))
+        XCTAssertEqual(always.title, "Turn it off?")
+        XCTAssertEqual(always.selectionLabel, AnnouncementSuppression.alwaysLabel)
+
+        ud.set(false, forKey: announcementKey)
+        XCTAssertEqual(suppression.savedAlwaysOrNeverChoice(), .never)
+        let never = try XCTUnwrap(announcement(in: iTermSuppressedAlerts.sharedInstance.currentlySuppressedAlerts()))
+        XCTAssertEqual(never.selectionLabel, AnnouncementSuppression.neverLabel)
+    }
+
+    func testSavedAlwaysOrNeverChoiceAsksWhenShowingRememberedAlerts() {
+        let suppression = AnnouncementSuppression(userDefaultsKey: announcementKey, title: "t")
+        iTermUserDefaults.userDefaults().set(true, forKey: announcementKey)
+        iTermWarning.showRememberedAlerts = true
+
+        XCTAssertEqual(suppression.savedAlwaysOrNeverChoice(), .ask)
+        XCTAssertEqual(iTermSuppressedAlerts.sharedInstance.count(), 0)
+    }
+
+    func testRecordChoiceListsItRightAway() throws {
+        let suppression = AnnouncementSuppression(userDefaultsKey: announcementKey, title: "t")
+        iTermWarning.showRememberedAlerts = true
+
+        suppression.saveAlwaysOrNeverChoice(false)
+
+        let entry = try XCTUnwrap(announcement(in: iTermSuppressedAlerts.sharedInstance.currentlySuppressedAlerts()))
+        XCTAssertEqual(entry.selectionLabel, AnnouncementSuppression.neverLabel)
+        XCTAssertEqual(entry.count, 0, "answering isn't an automatic suppression")
+        XCTAssertEqual(iTermUserDefaults.userDefaults().object(forKey: announcementKey) as? Bool, false)
+    }
+
+    func testRememberedSelectionDoesNotCountAsAutoAnswer() throws {
+        let registry = iTermSuppressedAlerts.sharedInstance
+        silence(identifierA, selection: 1)
+        registry.recordRememberedSelection(withIdentifier: identifierA, title: "a", heading: nil, selectionLabel: "No")
+        XCTAssertEqual(try XCTUnwrap(alert(identifierA, in: registry.currentlySuppressedAlerts())).count, 0)
+
+        registry.recordSuppression(withIdentifier: identifierA, title: "a", heading: nil, selectionLabel: "No")
+        XCTAssertEqual(try XCTUnwrap(alert(identifierA, in: registry.currentlySuppressedAlerts())).count, 1)
     }
 }

@@ -229,15 +229,19 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 }
 
 - (void)maybeTurnOffPasteBracketing {
-    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
-    if (number.boolValue) {
-        [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                                     VT100ScreenMutableState *mutableState,
-                                                     id<VT100ScreenDelegate> delegate) {
-            terminal.bracketedPasteMode = NO;
-        }];
-    } else if (!number) {
-        [self offerToTurnOffBracketedPasteOnHostChange];
+    switch ([[self.naggingController bracketedPasteOfferSuppression] savedAlwaysOrNeverChoice]) {
+        case iTermSavedAlwaysOrNeverChoiceAsk:
+            [self offerToTurnOffBracketedPasteOnHostChange];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceAlways:
+            [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
+                terminal.bracketedPasteMode = NO;
+            }];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceNever:
+            break;
     }
  }
 
@@ -245,11 +249,15 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     if (![iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_SETTING inProfile:self.profile]) {
         return;
     }
-    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
-    if (number.boolValue) {
-        [self naggingControllerRestoreIconNameTo:iconName windowName:windowName];
-    } else if (!number) {
-        [self offerToRestoreIconName:iconName windowName:windowName];
+    switch ([[self.naggingController restoreIconNameOfferSuppression] savedAlwaysOrNeverChoice]) {
+        case iTermSavedAlwaysOrNeverChoiceAsk:
+            [self offerToRestoreIconName:iconName windowName:windowName];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceAlways:
+            [self naggingControllerRestoreIconNameTo:iconName windowName:windowName];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceNever:
+            break;
     }
 }
 

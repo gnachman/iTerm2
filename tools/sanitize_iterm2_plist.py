@@ -60,6 +60,10 @@ TOP-LEVEL keys
                                            the private part is in the KEY)
   NoSyncRecordedVariables ................ recorded variable names (deep)
   NoSyncSearchHistory[2] ................. find-bar search terms
+  NoSyncSuppressedAlertsCatalog .......... suppressed alert/announcement
+                                           messages (may name URLs, paths,
+                                           hosts) keyed by identifiers that
+                                           can hold a host; removed
   NoSyncOpenAIAPIKey ..................... legacy plaintext API key
   NoSyncCompanion* ....................... push token / paired id / relay
                                            origin (string values only)
@@ -345,6 +349,8 @@ CONTENT_KEYS = {
     # find-bar search history
     "NoSyncSearchHistory2": REDACT_V,
     "NoSyncSearchHistory": REDACT_V,  # legacy; no-op if it holds a bool
+    # Suppressed Alerts panel state; its keys can name hosts, so drop it all.
+    "NoSyncSuppressedAlertsCatalog": REMOVE,
     # user-authored session messages
     "SessionEndMessageText": REDACT_V,
     "SessionRestartedMessageText": REDACT_V,

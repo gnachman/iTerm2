@@ -45,6 +45,12 @@ Major New Features:
   3.8).
 
 New Features:
+- iTerm2 > Suppressed Alerts lists most alerts
+  and announcements at the top of a session that
+  are no longer shown because you chose “Never,”
+  “Always,” “Don’t Ask Again,” or a similar
+  option. Select one and click Un-suppress to see
+  it again.
 - `it2` can now target a session by the tmux pane
   it is showing. From inside a tmux Integration
   pane, pass --tmux "$TMUX" --tmux-pane
@@ -738,6 +744,9 @@ Bug Fixes:
 - In an AI chat with an empty message field, the
   “↩ to submit” hint no longer overlaps a long
   placeholder.
+- Choosing “Yes” when an app asks to read the
+  screen with DECRQCRA is now remembered after
+  you restart iTerm2.
 - With KeePassXC as the browser password
   manager, “Remember this password” for a
   website’s sign-in dialog now saves the

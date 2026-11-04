@@ -284,6 +284,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 // Bounce the dock. Set request to false to cancel.
 - (void)screenRequestAttention:(VT100AttentionRequestType)request;
 - (void)screenDidTryToUseDECRQCRA;
+// Called after an app read screen contents with DECRQCRA, which it may only do if the user allowed it.
+- (void)screenDidUseDECRQCRA;
 
 - (void)screenDisinterSession;
 
@@ -451,6 +453,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                        displayInline:(BOOL)displayInline
                          promptIfBig:(BOOL * _Nonnull)promptIfBig;
 - (void)screenAskAboutClearingScrollback;
+// Called after a control sequence cleared scrollback, which it may only do if the user allowed it.
+- (void)screenDidClearScrollbackWithPermission;
 - (VT100GridRange)screenRangeOfVisibleLines;
 - (void)screenDidResize;
 - (NSString * _Nullable)screenStringForKeypressWithCode:(unsigned short)keycode

@@ -2,8 +2,9 @@
 //  iTermSuppressedAlertsWindowController.swift
 //  iTerm2
 //
-//  A panel that lists alerts currently being auto-answered (suppressed) and lets
-//  the user un-suppress them so they will be shown again.
+//  A panel that lists alerts currently being auto-answered (suppressed), and
+//  announcements hidden by a saved choice, and lets the user un-suppress them so
+//  they will be shown again.
 //
 
 import AppKit
@@ -72,7 +73,7 @@ class iTermSuppressedAlertsWindowController: NSWindowController {
         let bounds = content.bounds
 
         // Explanatory text at the top.
-        let explanation = label(withText: String(localized: "SuppressedAlerts.Explanation", defaultValue: "These alerts are being answered automatically because you chose to remember your response. Select one and click Un-suppress to be asked again.", comment: "Explanatory text at the top of the suppressed-alerts panel"))
+        let explanation = label(withText: String(localized: "SuppressedAlerts.ExplanationWithAnnouncements", defaultValue: "These alerts and announcements are being answered automatically or hidden because you chose to remember your response. Select one and click Un-suppress to see it again.", comment: "Explanatory text at the top of the suppressed-alerts panel"))
         explanation.frame = NSRect(x: margin,
                                    y: bounds.maxY - margin - 40,
                                    width: bounds.width - margin * 2,
@@ -202,7 +203,7 @@ class iTermSuppressedAlertsWindowController: NSWindowController {
         checkFrame.origin.y = margin + buttonHeight + checkboxGap
         checkbox.frame = checkFrame
         checkbox.autoresizingMask = [.maxXMargin, .maxYMargin]
-        checkbox.toolTip = String(localized: "SuppressedAlerts.ShowRememberedTooltip", defaultValue: "When you check “Remember my choice” or “Suppress this message permanently” in an alert, iTerm2 stops showing it and reuses your saved response. Turn this on to show those alerts again so you can see them or choose differently. It stays on until you turn it off.", comment: "Tooltip explaining the always-show-remembered-alerts checkbox")
+        checkbox.toolTip = String(localized: "SuppressedAlerts.ShowRememberedTooltipWithAnnouncements", defaultValue: "When you check “Remember my choice” or “Suppress this message permanently” in an alert, or choose an option like “Always” or “Don’t Ask Again” in an announcement, iTerm2 stops showing it and reuses your saved response. Turn this on to show those alerts and announcements again so you can see them or choose differently. It stays on until you turn it off.", comment: "Tooltip explaining the always-show-remembered-alerts checkbox")
         content.addSubview(checkbox)
         showRememberedCheckbox = checkbox
     }

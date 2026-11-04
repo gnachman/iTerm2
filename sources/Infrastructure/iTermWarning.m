@@ -1088,6 +1088,12 @@ static BOOL iTermWarningViewHasSelectableText(NSView *view) {
         }
         [[iTermUserDefaults userDefaults] setObject:@(selection)
                                                   forKey:[self.class selectionKeyForIdentifier:_identifier]];
+        // List it in the Suppressed Alerts panel right away instead of the next time it is
+        // auto-answered.
+        [[iTermSuppressedAlerts sharedInstance] recordRememberedSelectionWithIdentifier:_identifier
+                                                                                  title:_title
+                                                                                heading:_heading
+                                                                         selectionLabel:[self actionForSelection:selection].label];
     }
     DLog(@"Return selection %@ for %@", @(selection), self);
     return selection;

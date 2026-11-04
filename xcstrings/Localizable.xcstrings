@@ -130114,6 +130114,54 @@
         }
       }
     },
+    "NaggingController.ArrangementBadPWDSuppressedTitle" : {
+      "comment" : "Shown in the Suppressed Alerts panel for the hidden warning that a saved arrangement has an invalid initial directory",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine gespeicherte Anordnung hat für eine Sitzung ein ungültiges Startverzeichnis."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A saved arrangement has a bad initial directory for a session."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されたアレンジメントに、セッション用の不正な初期ディレクトリが設定されています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장된 윈도우 배치에서 세션의 초기 디렉토리가 잘못되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma disposição salva tem um diretório inicial inválido para uma sessão."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранённая раскладка имеет неверный начальный каталог для одной из сессий."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存的窗口排列中某个会话的初始目录无效。"
+          }
+        }
+      }
+    },
     "NaggingController.ArrangementProfileCorrupted" : {
       "comment" : "Announcement that a saved arrangement’s profile is missing due to a known bug",
       "extractionState" : "extracted_with_value",
@@ -131266,6 +131314,54 @@
         }
       }
     },
+    "NaggingController.OpenURLsSuppressedTitle" : {
+      "comment" : "Shown in the Suppressed Alerts panel for the hidden prompt asking whether to open a URL that an app in the terminal requested",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps im Terminal erlauben, URLs zu öffnen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Allow apps in the terminal to open URLs?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ターミナル内のアプリに URL を開くことを許可しますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "터미널의 앱이 URL을 열도록 허용합니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir que apps no terminal abram URLs?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить приложениям в терминале открывать URL-адреса?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许终端中的应用打开 URL？"
+          }
+        }
+      }
+    },
     "NaggingController.OrphanRestored" : {
       "comment" : "Announcement that an already-running session was restored without saved contents",
       "extractionState" : "extracted_with_value",
@@ -131502,6 +131598,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此会话的配置文件“%@”已不存在。恰好存在同名配置文件。"
+          }
+        }
+      }
+    },
+    "NaggingController.ProfileMissingSuppressedTitle" : {
+      "comment" : "Shown in the Suppressed Alerts panel for the hidden warning that a restored session’s profile no longer exists",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Profil einer Sitzung existiert nicht mehr."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A session’s profile no longer exists."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションのプロファイルが既に存在しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "세션의 프로파일이 더 이상 존재하지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O perfil de uma sessão não existe mais."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Профиль одной из сессий больше не существует."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "某个会话的配置文件已不存在。"
           }
         }
       }
@@ -146603,6 +146747,54 @@
         }
       }
     },
+    "PTYSession.OptionKeyFrustrationSuppressedTitle" : {
+      "comment" : "Shown in the Suppressed Alerts panel for the hidden offer to change an option key’s behavior",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie scheinen frustriert zu sein. Möchten Sie, dass die Wahltaste esc+Tastenanschlag sendet?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You seem frustrated. Would you like the option key to send esc+keystroke?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お困りのようですね。optionキーをesc+キーストロークとして送信するようにしますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "답답하신 것 같습니다. Option 키가 Esc+키 입력을 보내도록 하겠습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você parece frustrado. Deseja que a tecla option envie esc+tecla?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Похоже, вы расстроены. Хотите, чтобы клавиша Option отправляла esc+клавишу?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您似乎很沮丧。希望选项键能发送 esc+按键输入？"
+          }
+        }
+      }
+    },
     "PTYSession.PasswordPromptCheck" : {
       "comment" : "Warning asking the user to confirm they are at a password prompt because input appears echoed",
       "extractionState" : "extracted_with_value",
@@ -148404,6 +148596,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此账户的 Shell 集成脚本已过时。"
+          }
+        }
+      }
+    },
+    "PTYSession.ShellIntegrationOutOfDateForAccount" : {
+      "comment" : "Shown in the Suppressed Alerts panel for a hidden announcement that shell integration needs upgrading; placeholder is user@host",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Shell-Integration-Skripte für %@ sind veraltet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The Shell Integration scripts for %@ are out of date."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ のシェル統合スクリプトは古くなっています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@의 셸 통합 스크립트가 오래되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os scripts de Shell Integration de %@ estão desatualizados."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрипты интеграции с оболочкой для %@ устарели."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的 Shell 集成脚本已过时。"
           }
         }
       }
@@ -217628,6 +217868,54 @@
         }
       }
     },
+    "SuppressedAlerts.AnnouncementHidden" : {
+      "comment" : "Automatic response shown for an announcement that is hidden because the user chose not to see it again",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht angezeigt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not Shown"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表示しない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "표시 안 함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não exibido"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не показывается"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不显示"
+          }
+        }
+      }
+    },
     "SuppressedAlerts.EmptyState" : {
       "comment" : "Empty-state message when no alerts are suppressed",
       "extractionState" : "extracted_with_value",
@@ -217678,7 +217966,7 @@
     },
     "SuppressedAlerts.Explanation" : {
       "comment" : "Explanatory text at the top of the suppressed-alerts panel",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -217720,6 +218008,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这些提醒会被自动应答，因为你选择了记住你的答复。请选择其中一个，然后点按“取消屏蔽”以再次询问。"
+          }
+        }
+      }
+    },
+    "SuppressedAlerts.ExplanationWithAnnouncements" : {
+      "comment" : "Explanatory text at the top of the suppressed-alerts panel",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Warnungen und Hinweise werden automatisch beantwortet oder ausgeblendet, da Sie sich entschieden haben, Ihre Antwort zu speichern. Wählen Sie einen Eintrag aus und klicken Sie auf „Nicht mehr unterdrücken“, um ihn wieder zu sehen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "These alerts and announcements are being answered automatically or hidden because you chose to remember your response. Select one and click Un-suppress to see it again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これらのアラートと通知は、応答を記憶させる設定にしたため、自動的に応答されているか非表示になっています。項目を選択して「抑制を解除」をクリックすると、再び表示されるようになります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "응답을 기억하도록 선택했기 때문에 이 경고와 공지에는 자동으로 응답하거나 표시하지 않고 있습니다. 다시 보려면 항목을 선택하고 ‘숨김 해제’를 클릭하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estes alertas e avisos estão sendo respondidos automaticamente ou ocultados porque você escolheu memorizar sua resposta. Selecione um e clique em Cancelar supressão para vê-lo novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На эти оповещения и уведомления даются автоматические ответы, или они скрыты, потому что вы решили запомнить свой выбор. Выберите одно из них и нажмите «Отменить подавление», чтобы снова его увидеть."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些提醒和提示会被自动应答或隐藏，因为你选择了记住你的答复。请选择其中一个，然后点按“取消屏蔽”以再次查看。"
           }
         }
       }
@@ -217822,7 +218158,7 @@
     },
     "SuppressedAlerts.ShowRememberedTooltip" : {
       "comment" : "Tooltip explaining the always-show-remembered-alerts checkbox",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -217864,6 +218200,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "当你在提醒中勾选“记住我的选择”或“永久抑制此消息”时，iTerm2 将不再显示它，并复用你保存的答复。开启此选项可再次显示这些提醒，以便你查看或做出不同选择。此选项会一直保持开启，直到你将其关闭。"
+          }
+        }
+      }
+    },
+    "SuppressedAlerts.ShowRememberedTooltipWithAnnouncements" : {
+      "comment" : "Tooltip explaining the always-show-remembered-alerts checkbox",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn Sie in einer Warnung „Meine Auswahl merken“ oder „Diese Meldung dauerhaft unterdrücken“ aktivieren oder in einem Hinweis eine Option wie „Immer“ oder „Nicht erneut fragen“ wählen, zeigt iTerm2 sie nicht mehr an und verwendet stattdessen Ihre gespeicherte Antwort. Aktivieren Sie diese Option, um solche Warnungen und Hinweise wieder anzuzeigen, damit Sie sie sehen oder anders entscheiden können. Die Option bleibt aktiviert, bis Sie sie wieder deaktivieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When you check “Remember my choice” or “Suppress this message permanently” in an alert, or choose an option like “Always” or “Don’t Ask Again” in an announcement, iTerm2 stops showing it and reuses your saved response. Turn this on to show those alerts and announcements again so you can see them or choose differently. It stays on until you turn it off."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アラートで「この選択を記憶する」または「このメッセージを今後表示しない」にチェックを入れるか、通知で「常に」や「今後確認しない」などのオプションを選択すると、iTerm2 はそれを表示しなくなり、保存された応答を再利用します。これをオンにすると、それらのアラートと通知を再び表示できるようになり、確認したり選択し直したりできます。オフにするまでオンのままになります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "경고에서 “내 선택 기억하기” 또는 “이 메시지를 영구적으로 표시 안 함”을 선택하거나 공지에서 “항상”이나 “다시 묻지 않음” 같은 옵션을 선택하면 iTerm2는 해당 항목을 더 이상 표시하지 않고 저장된 응답을 재사용합니다. 이 경고와 공지를 다시 보거나 다르게 선택하려면 이 옵션을 켜십시오. 끌 때까지 계속 켜져 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quando você marca “Memorizar minha escolha” ou “Suprimir esta mensagem permanentemente” em um alerta, ou escolhe uma opção como “Sempre” ou “Não perguntar novamente” em um aviso, o iTerm2 para de mostrá-lo e reutiliza sua resposta salva. Ative isto para mostrar esses alertas e avisos novamente, de modo que você possa vê-los ou escolher de forma diferente. Permanece ativado até que você o desative."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Когда вы отмечаете «Запомнить мой выбор» или «Больше не показывать это сообщение» в оповещении или выбираете вариант вроде «Всегда» или «Больше не спрашивать» в уведомлении, iTerm2 перестаёт его показывать и использует сохранённый ответ. Включите этот параметр, чтобы снова видеть такие оповещения и уведомления и при желании выбирать другой ответ. Он остаётся включённым, пока вы его не отключите."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当你在提醒中勾选“记住我的选择”或“永久抑制此消息”，或在提示中选择“始终”或“不再询问”等选项时，iTerm2 将不再显示它，并复用你保存的答复。开启此选项可再次显示这些提醒和提示，以便你查看或做出不同选择。此选项会一直保持开启，直到你将其关闭。"
           }
         }
       }

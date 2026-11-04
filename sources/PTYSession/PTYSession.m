@@ -216,9 +216,18 @@ static const NSInteger kMaximumUnicodeVersion = 9;
 
 static NSString *const PTYSessionDidRepairSavedArrangement = @"PTYSessionDidRepairSavedArrangement";
 
-static NSString *NaggingYes(void) { return NSLocalizedStringWithDefaultValue(@"NaggingController.YesShortcut", nil, [NSBundle mainBundle], @"_Yes", @"Yes button label; underscore marks the keyboard shortcut key"); }
-static NSString *NaggingAlways(void) { return NSLocalizedStringWithDefaultValue(@"NaggingController.Always", nil, [NSBundle mainBundle], @"Always", @"Always button label"); }
-static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@"NaggingController.Never", nil, [NSBundle mainBundle], @"Never", @"Never button label"); }
+
+static NSString *PTYSessionAnnoyingBellAudibleTitle(void) {
+    return NSLocalizedStringWithDefaultValue(@"PTYSession.BellRingingAudible", nil, [NSBundle mainBundle], @"The bell is ringing a lot. Silence it?", @"Announcement offering to silence the bell because it is ringing frequently");
+}
+
+static NSString *PTYSessionAnnoyingBellVisibleTitle(void) {
+    return NSLocalizedStringWithDefaultValue(@"PTYSession.BellRingingVisible", nil, [NSBundle mainBundle], @"The bell is ringing a lot. Want to suppress all output until things calm down?", @"Announcement offering to suppress output because the bell is ringing frequently");
+}
+
+static NSString *PTYSessionSilenceBellAutomaticallyLabel(void) {
+    return NSLocalizedStringWithDefaultValue(@"PTYSession.SilenceAutomatically", nil, [NSBundle mainBundle], @"Silence Automatically", @"Button that silences the bell automatically in the future");
+}
 
 NSString *const PTYSessionCreatedNotification = @"PTYSessionCreatedNotification";
 NSString *const PTYSessionTerminatedNotification = @"PTYSessionTerminatedNotification";
@@ -623,6 +632,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     NSTimeInterval _lastBell;
     NSTimeInterval _ignoreBellUntil;
     NSTimeInterval _annoyingBellOfferDeclinedAt;
+    // When screenDidUseDECRQCRA last recorded or asked, for rate limiting.
+    NSTimeInterval _lastDECRQCRAUseReport;
     BOOL _suppressAllOutput;
 
     // Session should auto-restart after the pipe breaks.
@@ -5241,9 +5252,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)queueRestartSessionAnnouncement {
-    if ([iTermAdvancedSettingsModel suppressRestartAnnouncement]) {
-        return;
-    }
+    // The nagging controller checks whether the user turned this announcement off.
     if (_shortLivedSingleUse) {
         return;
     }
@@ -13300,7 +13309,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)showError:(NSString *)message suppressionKey:(NSString *)key identifier:(NSString *)identifier {
-    if ([[iTermUserDefaults userDefaults] boolForKey:key]) {
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:key title:message];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
         return;
     }
     void (^completion)(int) = ^(int selection) { };
@@ -17077,7 +17087,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)askToEnableTerminalInitiatedResizing:(void (^)(void))allowOnce {
     NSString *key = @"NoSyncSuppressPromptToEnableResizing";
-    if ([[iTermUserDefaults userDefaults] boolForKey:key]) {
+    NSString *title = NSLocalizedStringWithDefaultValue(@"PTYSession.ResizePrompt", nil, [NSBundle mainBundle], @"A program has tried to resize the window. Allow it?", @"Prompt asking whether to allow a program to resize the window");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:key title:title];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
         return;
     }
     NSString *identifier = @"Resize Window Announcement";
@@ -17092,7 +17104,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2:
-                [[iTermUserDefaults userDefaults] setBool:YES forKey:key];
+                [suppression saveChoice:@(YES) response:nil];
                 break;
 
             default:
@@ -17101,7 +17113,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
     };
     iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.ResizePrompt", nil, [NSBundle mainBundle], @"A program has tried to resize the window. Allow it?", @"Prompt asking whether to allow a program to resize the window")
+    [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleWarning
                                                withActions:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.AllowOnce", nil, [NSBundle mainBundle], @"_Allow Once", @"Button that allows an action one time; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"PTYSession.OpenSettings", nil, [NSBundle mainBundle], @"_Open Settings", @"Button that opens settings; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"PTYSession.DontShowThisAgainCurly", nil, [NSBundle mainBundle], @"Don’t Show This Again", @"Button that suppresses future announcements") ]
                                                 completion:completion];
@@ -17115,7 +17127,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)askToEnableTerminalInitiatedResizingWhenUnfocused:(void (^)(void))allowOnce {
     NSString *key = @"NoSyncSuppressPromptToEnableUnfocusedResizing";
-    if ([[iTermUserDefaults userDefaults] boolForKey:key]) {
+    NSString *title = NSLocalizedStringWithDefaultValue(@"PTYSession.ResizeUnfocusedPrompt", nil, [NSBundle mainBundle], @"A program has tried to resize the window while this session was not active. Allow it?", @"Prompt asking whether to allow a program to resize the window while the session is inactive");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:key title:title];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
         return;
     }
     NSString *identifier = @"Resize Unfocused Window Announcement";
@@ -17130,7 +17144,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2:
-                [[iTermUserDefaults userDefaults] setBool:YES forKey:key];
+                [suppression saveChoice:@(YES) response:nil];
                 break;
 
             default:
@@ -17139,7 +17153,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         }
     };
     iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.ResizeUnfocusedPrompt", nil, [NSBundle mainBundle], @"A program has tried to resize the window while this session was not active. Allow it?", @"Prompt asking whether to allow a program to resize the window while the session is inactive")
+    [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleWarning
                                                withActions:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.AllowOnce", nil, [NSBundle mainBundle], @"_Allow Once", @"Button that allows an action one time; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"PTYSession.OpenSettings", nil, [NSBundle mainBundle], @"_Open Settings", @"Button that opens settings; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"PTYSession.DontShowThisAgainCurly", nil, [NSBundle mainBundle], @"Don’t Show This Again", @"Button that suppresses future announcements") ]
                                                 completion:completion];
@@ -18460,18 +18474,58 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (iTermAnnouncementSuppression *)decrqcraSuppression {
+    return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel disableDECRQCRAUserDefaultsKey]
+                                                                  title:NSLocalizedStringWithDefaultValue(@"PTYSession.DECRQCRAPrompt", nil, [NSBundle mainBundle], @"An app tried to read screen contents with DECRQCRA. Enable this feature?", @"Prompt asking whether to enable the DECRQCRA screen-reading feature")];
+}
+
+static NSString *PTYSessionDECRQCRAYesLabel(void) {
+    return NSLocalizedStringWithDefaultValue(@"PTYSession.Yes", nil, [NSBundle mainBundle], @"Yes", @"Yes button label");
+}
+
+static NSString *PTYSessionDECRQCRANoLabel(void) {
+    return NSLocalizedStringWithDefaultValue(@"PTYSession.No", nil, [NSBundle mainBundle], @"No", @"No button label");
+}
+
 - (void)screenDidTryToUseDECRQCRA {
-    NSString *const userDefaultsKey = @"NoSyncDisableDECRQCRA";
-    NSUserDefaults *ud = [iTermUserDefaults userDefaults];
-    NSNumber *obj = [NSNumber castFrom:[ud objectForKey:userDefaultsKey]];
-    if (obj) {
+    // This is only called while DECRQCRA is disabled, so a saved choice is No.
+    iTermAnnouncementSuppression *suppression = [self decrqcraSuppression];
+    if ([suppression shouldSuppressWithResponse:PTYSessionDECRQCRANoLabel()]) {
         return;
     }
+    [self askAboutDECRQCRAWithSuppression:suppression];
+}
 
+- (void)screenDidUseDECRQCRA {
+    // Apps may send many requests, so record or ask at most once a second.
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now - _lastDECRQCRAUseReport < 1) {
+        return;
+    }
+    if ([iTermAdvancedSettingsModel disableDECRQCRA]) {
+        // Disabled since the request was allowed, so there is no Yes to report.
+        DLog(@"DECRQCRA was disabled since it was used");
+        return;
+    }
+    _lastDECRQCRAUseReport = now;
+    iTermAnnouncementSuppression *suppression = [self decrqcraSuppression];
+    if ([suppression shouldSuppressWithResponse:PTYSessionDECRQCRAYesLabel()]) {
+        return;
+    }
+    if (![[iTermUserDefaults userDefaults] objectForKey:suppression.userDefaultsKey]) {
+        // Enabled without a saved choice to show again.
+        return;
+    }
+    [self askAboutDECRQCRAWithSuppression:suppression];
+}
+
+- (void)askAboutDECRQCRAWithSuppression:(iTermAnnouncementSuppression *)suppression {
+    NSString *yes = PTYSessionDECRQCRAYesLabel();
+    NSString *no = PTYSessionDECRQCRANoLabel();
     iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.DECRQCRAPrompt", nil, [NSBundle mainBundle], @"An app tried to read screen contents with DECRQCRA. Enable this feature?", @"Prompt asking whether to enable the DECRQCRA screen-reading feature")
+    [iTermAnnouncementViewController announcementWithTitle:suppression.title
                                                      style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.Yes", nil, [NSBundle mainBundle], @"Yes", @"Yes button label"), NSLocalizedStringWithDefaultValue(@"PTYSession.No", nil, [NSBundle mainBundle], @"No", @"No button label") ]
+                                               withActions:@[ yes, no ]
                                                 completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -18481,15 +18535,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 0: // Enable
-                [iTermAdvancedSettingsModel setNoSyncDisableDECRQCRA:NO];
+                [iTermAdvancedSettingsModel setDisableDECRQCRA:NO];
+                [suppression recordChoiceWithResponse:yes];
                 break;
 
             case 1: // Disable
-                [iTermAdvancedSettingsModel setNoSyncDisableDECRQCRA:YES];
+                [iTermAdvancedSettingsModel setDisableDECRQCRA:YES];
+                [suppression recordChoiceWithResponse:no];
                 break;
         }
     }];
-    [self queueAnnouncement:announcement identifier:userDefaultsKey];
+    [self queueAnnouncement:announcement identifier:suppression.userDefaultsKey];
 }
 
 - (void)screenDisinterSession {
@@ -19217,23 +19273,31 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)turnOffMouseReportingOrOffer:(VT100Terminal *)terminal {
     DLog(@"begin");
-    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
-    if ([number boolValue]) {
-        DLog(@"Turn off mouse reporting automatically");
-        terminal.mouseMode = MOUSE_REPORTING_NONE;
-    } else if (!number) {
-        [self offerToTurnOffMouseReportingAutomatically];
+    switch ([[self suppressionForTurdType:PTYSessionTurdTypeMouseReporting] savedAlwaysOrNeverChoice]) {
+        case iTermSavedAlwaysOrNeverChoiceAsk:
+            [self offerToTurnOffMouseReportingAutomatically];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceAlways:
+            DLog(@"Turn off mouse reporting automatically");
+            terminal.mouseMode = MOUSE_REPORTING_NONE;
+            break;
+        case iTermSavedAlwaysOrNeverChoiceNever:
+            break;
     }
 }
 
 - (void)turnOffDEC2048OrOffer:(VT100Terminal *)terminal {
     DLog(@"begin");
-    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffDEC2048OnHostChangeUserDefaultsKey];
-    if ([number boolValue]) {
-        DLog(@"Turn off DEC 2048 automatically");
-        terminal.sendResizeNotifications = NO;
-    } else if (!number) {
-        [self offerToTurnOffDEC2048Automatically];
+    switch ([[self suppressionForTurdType:PTYSessionTurdTypeDEC2048] savedAlwaysOrNeverChoice]) {
+        case iTermSavedAlwaysOrNeverChoiceAsk:
+            [self offerToTurnOffDEC2048Automatically];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceAlways:
+            DLog(@"Turn off DEC 2048 automatically");
+            terminal.sendResizeNotifications = NO;
+            break;
+        case iTermSavedAlwaysOrNeverChoiceNever:
+            break;
     }
 }
 
@@ -19323,20 +19387,27 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self offerToStopMakingTurds:PTYSessionTurdTypeDEC2048];
 }
 
+- (iTermAnnouncementSuppression *)suppressionForTurdType:(PTYSessionTurdType)turdType {
+    switch (turdType) {
+        case PTYSessionTurdTypeDEC2048:
+            return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffDEC2048OnHostChangeUserDefaultsKey
+                                                                          title:NSLocalizedStringWithDefaultValue(@"PTYSession.ResizeReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like resize reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off resize reporting that was left enabled")];
+        case PTYSessionTurdTypeMouseReporting:
+            return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey
+                                                                          title:NSLocalizedStringWithDefaultValue(@"PTYSession.MouseReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off mouse reporting that was left enabled")];
+    }
+}
+
 - (void)offerToStopMakingTurds:(PTYSessionTurdType)turdType {
     NSString *identifier;
-    NSString *title;
-    NSString *userDefaultsKey;
+    iTermAnnouncementSuppression *suppression = [self suppressionForTurdType:turdType];
+    NSString *title = suppression.title;
     switch (turdType) {
         case PTYSessionTurdTypeDEC2048:
             identifier = kTurnOffDEC2048OnAutodetectAnnouncementIdentifier;
-            title = NSLocalizedStringWithDefaultValue(@"PTYSession.ResizeReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like resize reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off resize reporting that was left enabled");
-            userDefaultsKey = kTurnOffDEC2048OnHostChangeUserDefaultsKey;
             break;
         case PTYSessionTurdTypeMouseReporting:
             identifier = kTurnOffMouseReportingOnAutodetectAnnouncementIdentifier;
-            title = NSLocalizedStringWithDefaultValue(@"PTYSession.MouseReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off mouse reporting that was left enabled");
-            userDefaultsKey = kTurnOffMouseReportingOnHostChangeUserDefaultsKey;
             break;
     }
     DLog(@"begin");
@@ -19346,7 +19417,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ NaggingYes(), NaggingAlways(), NaggingNever() ]
+                                               withActions:@[ [iTermAnnouncementSuppression yesLabel], [iTermAnnouncementSuppression alwaysLabel], [iTermAnnouncementSuppression neverLabel] ]
                                                 completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -19356,8 +19427,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 1: // Always
-                [[iTermUserDefaults userDefaults] setBool:YES
-                                                        forKey:userDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:YES];
                 // FALL THROUGH
             case 0: // Yes
                 [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
@@ -19375,37 +19445,45 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2: // Never
-                [[iTermUserDefaults userDefaults] setBool:NO
-                                                        forKey:userDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:NO];
         }
     }];
     [self queueAnnouncement:announcement identifier:identifier];
 }
 
+- (iTermAnnouncementSuppression *)focusReportingLeftOnSuppression {
+    return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey
+                                                                  title:NSLocalizedStringWithDefaultValue(@"PTYSession.FocusReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like focus reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off focus reporting that was left enabled")];
+}
+
 - (void)offerToTurnOffFocusReportingRespectingSavedPreference:(VT100Terminal *)terminal {
-    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
-    if ([number boolValue]) {
-        if (terminal) {
-            terminal.reportFocus = NO;
-        } else {
-            [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                                     VT100ScreenMutableState *mutableState,
-                                                     id<VT100ScreenDelegate> delegate) {
+    switch ([[self focusReportingLeftOnSuppression] savedAlwaysOrNeverChoice]) {
+        case iTermSavedAlwaysOrNeverChoiceAsk:
+            [self offerToTurnOffFocusReporting];
+            break;
+        case iTermSavedAlwaysOrNeverChoiceAlways:
+            if (terminal) {
                 terminal.reportFocus = NO;
-            }];
-        }
-    } else if (!number) {
-        [self offerToTurnOffFocusReporting];
+            } else {
+                [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
+                    terminal.reportFocus = NO;
+                }];
+            }
+            break;
+        case iTermSavedAlwaysOrNeverChoiceNever:
+            break;
     }
 }
 
 - (void)offerToTurnOffFocusReporting {
-    NSString *title =
-    NSLocalizedStringWithDefaultValue(@"PTYSession.FocusReportingLeftOn", nil, [NSBundle mainBundle], @"Looks like focus reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Announcement offering to turn off focus reporting that was left enabled");
+    iTermAnnouncementSuppression *suppression = [self focusReportingLeftOnSuppression];
+    NSString *title = suppression.title;
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:title
                                                      style:kiTermAnnouncementViewStyleQuestion
-                                               withActions:@[ NaggingYes(), NaggingAlways(), NaggingNever() ]
+                                               withActions:@[ [iTermAnnouncementSuppression yesLabel], [iTermAnnouncementSuppression alwaysLabel], [iTermAnnouncementSuppression neverLabel] ]
                                                 completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -19423,8 +19501,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 1: // Always
-                [[iTermUserDefaults userDefaults] setBool:YES
-                                                        forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:YES];
                 [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                          VT100ScreenMutableState *mutableState,
                                                          id<VT100ScreenDelegate> delegate) {
@@ -19433,8 +19510,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 break;
 
             case 2: // Never
-                [[iTermUserDefaults userDefaults] setBool:NO
-                                                        forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:NO];
         }
     }];
     [self queueAnnouncement:announcement identifier:kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier];
@@ -20409,27 +20485,46 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         // Reset the auto-dismiss time each time the bell rings.
         existingAnnouncement.timeout = 10;
     }
-    if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
-        [[iTermUserDefaults userDefaults] boolForKey:kSilenceAnnoyingBellAutomatically]) {
-        // Silence automatically
-        _ignoreBellUntil = now + 60;
-        return YES;
+    const BOOL annoying = [_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance;
+    // Strings are built only once the bell is known to be annoying because a bell that rings
+    // constantly gets this far on every sample.
+    iTermAnnouncementSuppression *silenceSuppression = nil;
+    if (annoying) {
+        // The “Silence Automatically” button is only on the offer for an audible bell.
+        silenceSuppression =
+        [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kSilenceAnnoyingBellAutomatically
+                                                               title:PTYSessionAnnoyingBellAudibleTitle()];
+        if ([silenceSuppression shouldSuppressIfSavedBoolWithResponse:PTYSessionSilenceBellAutomaticallyLabel()]) {
+            // Silence automatically
+            _ignoreBellUntil = now + 60;
+            return YES;
+        }
     }
 
-    if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
+    if (annoying &&
         !existingAnnouncement &&
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
-        ![[iTermUserDefaults userDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
+        (audible || visible)) {
+        NSString *title = audible ? PTYSessionAnnoyingBellAudibleTitle() : PTYSessionAnnoyingBellVisibleTitle();
+        iTermAnnouncementSuppression *offerSuppression =
+        [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kSuppressAnnoyingBellOffer
+                                                               title:PTYSessionAnnoyingBellAudibleTitle()];
         iTermAnnouncementViewController *announcement = nil;
-        if (audible) {
+        if ([offerSuppression shouldSuppressIfSavedBoolWithResponse:nil]) {
+            DLog(@"Not offering to silence the bell because the user chose not to see the offer again");
+            // Treat it like a decline so it is recorded at most once per kTimeToWaitAfterDecline
+            // rather than on every bell.
+            _annoyingBellOfferDeclinedAt = now;
+        } else if (audible) {
+            NSString *silenceAutomatically = PTYSessionSilenceBellAutomaticallyLabel();
             DLog(@"Want to show a bell announcement. The bell is audible.");
             announcement =
-            [iTermAnnouncementViewController announcementWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.BellRingingAudible", nil, [NSBundle mainBundle], @"The bell is ringing a lot. Silence it?", @"Announcement offering to silence the bell because it is ringing frequently")
+            [iTermAnnouncementViewController announcementWithTitle:title
                                                              style:kiTermAnnouncementViewStyleQuestion
                                                        withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.SilenceBellTemporarily", nil, [NSBundle mainBundle], @"_Silence Bell Temporarily", @"Button that silences the bell for a while; underscore marks the keyboard shortcut key"),
                                                                       NSLocalizedStringWithDefaultValue(@"PTYSession.SuppressAllOutput", nil, [NSBundle mainBundle], @"Suppress _All Output", @"Button that suppresses all terminal output; underscore marks the keyboard shortcut key"),
                                                                       NSLocalizedStringWithDefaultValue(@"PTYSession.DontOfferAgain", nil, [NSBundle mainBundle], @"Don't Offer Again", @"Button that suppresses future offers"),
-                                                                      NSLocalizedStringWithDefaultValue(@"PTYSession.SilenceAutomatically", nil, [NSBundle mainBundle], @"Silence Automatically", @"Button that silences the bell automatically in the future") ]
+                                                                      silenceAutomatically ]
                                                         completion:^(int selection) {
                 // Release the moving average so the count will restart after the announcement goes away.
                 [_bellRate release];
@@ -20446,7 +20541,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
                     case 0: // Suppress bell temporarily
                         DLog(@"Suppress bell temporarily");
-                        _ignoreBellUntil = now + 60;
+                        // Count from when the user answered, not from when the offer appeared.
+                        _ignoreBellUntil = [NSDate timeIntervalSinceReferenceDate] + 60;
                         break;
 
                     case 1: // Suppress all output
@@ -20456,14 +20552,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
                     case 2: // Never offer again
                         DLog(@"Never offer again");
-                        [[iTermUserDefaults userDefaults] setBool:YES
-                                                                forKey:kSuppressAnnoyingBellOffer];
+                        [iTermAdvancedSettingsModel setNoSyncSuppressAnnyoingBellOffer:YES];
+                        [offerSuppression recordChoiceWithResponse:nil];
                         break;
 
                     case 3:  // Silence automatically
                         DLog(@"Silence automatically");
-                        [[iTermUserDefaults userDefaults] setBool:YES
-                                                                forKey:kSilenceAnnoyingBellAutomatically];
+                        [iTermAdvancedSettingsModel setNoSyncSilenceAnnoyingBellAutomatically:YES];
+                        // Also silence it now, which matters if the user chose this again after
+                        // the offer was shown despite the saved choice.
+                        _ignoreBellUntil = [NSDate timeIntervalSinceReferenceDate] + 60;
+                        [silenceSuppression recordChoiceWithResponse:silenceAutomatically];
                         break;
                 }
             }];
@@ -20471,7 +20570,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             DLog(@"Want to show a bell announcement. The bell is visible but inaudible.");
             // Neither audible nor visible.
             announcement =
-            [iTermAnnouncementViewController announcementWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.BellRingingVisible", nil, [NSBundle mainBundle], @"The bell is ringing a lot. Want to suppress all output until things calm down?", @"Announcement offering to suppress output because the bell is ringing frequently")
+            [iTermAnnouncementViewController announcementWithTitle:title
                                                              style:kiTermAnnouncementViewStyleQuestion
                                                        withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.SuppressAllOutput", nil, [NSBundle mainBundle], @"Suppress _All Output", @"Button that suppresses all terminal output; underscore marks the keyboard shortcut key"),
                                                                       NSLocalizedStringWithDefaultValue(@"PTYSession.DontOfferAgain", nil, [NSBundle mainBundle], @"Don't Offer Again", @"Button that suppresses future offers") ]
@@ -20496,8 +20595,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
                     case 1: // Never offer again
                         DLog(@"Don't offer again");
-                        [[iTermUserDefaults userDefaults] setBool:YES
-                                                                forKey:kSuppressAnnoyingBellOffer];
+                        [iTermAdvancedSettingsModel setNoSyncSuppressAnnyoingBellOffer:YES];
+                        [offerSuppression recordChoiceWithResponse:nil];
                         break;
                 }
             }];
@@ -20695,8 +20794,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     id<VT100RemoteHostReading> currentRemoteHost = [self currentHost];
 
     NSString *theKey = [self shellIntegrationUpgradeUserDefaultsKeyForHost:currentRemoteHost];
-    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
-    if ([userDefaults boolForKey:theKey]) {
+    // The announcement doesn't name the account but the Suppressed Alerts panel lists one row per
+    // account, so say which one it is there.
+    NSString *panelTitle = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.ShellIntegrationOutOfDateForAccount", nil, [NSBundle mainBundle], @"The Shell Integration scripts for %@ are out of date.", @"Shown in the Suppressed Alerts panel for a hidden announcement that shell integration needs upgrading; placeholder is user@host"), currentRemoteHost.usernameAndHostname ?: @""];
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:theKey title:panelTitle];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
         return;
     }
     iTermAnnouncementViewController *announcement =
@@ -20716,7 +20818,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                 break;
 
             case 1: // Never for this account
-                [userDefaults setBool:YES forKey:theKey];
+                [suppression saveChoice:@(YES) response:nil];
                 break;
         }
     }];
@@ -20873,14 +20975,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
         return;
     }
-    if ([iTermAdvancedSettingsModel noSyncSuppressClipboardAccessDeniedWarning]) {
+    NSString *notice = NSLocalizedStringWithDefaultValue(@"PTYSession.ClipboardAccessDenied", nil, [NSBundle mainBundle], @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Settings > General > Selection > Applications in terminal may access clipboard”.", @"Announcement that clipboard access was denied and how to enable it");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel noSyncSuppressClipboardAccessDeniedWarningUserDefaultsKey] title:notice];
+    if ([iTermAdvancedSettingsModel noSyncSuppressClipboardAccessDeniedWarning] &&
+        [suppression shouldSuppressWithResponse:nil]) {
         return;
     }
     NSString *identifier = @"ClipboardAccessDenied";
     if ([self hasAnnouncementWithIdentifier:identifier]) {
         return;
     }
-    NSString *notice = NSLocalizedStringWithDefaultValue(@"PTYSession.ClipboardAccessDenied", nil, [NSBundle mainBundle], @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Settings > General > Selection > Applications in terminal may access clipboard”.", @"Announcement that clipboard access was denied and how to enable it");
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:notice
                                                      style:kiTermAnnouncementViewStyleWarning
@@ -20890,6 +20994,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
         } else if (selection == 1) {
             [iTermAdvancedSettingsModel setNoSyncSuppressClipboardAccessDeniedWarning:YES];
+            [suppression recordChoiceWithResponse:nil];
         }
     }];
     [self queueAnnouncement:announcement identifier:identifier];
@@ -21103,9 +21208,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenAskAboutClearingScrollback {
-    if (self.naggingController.shouldAskAboutClearingScrollbackHistory) {
-        [self.naggingController askAboutClearingScrollbackHistory];
-    }
+    [self.naggingController didHandleRequestToClearScrollbackHistoryAllowed:NO];
+}
+
+- (void)screenDidClearScrollbackWithPermission {
+    [self.naggingController didHandleRequestToClearScrollbackHistoryAllowed:YES];
 }
 
 - (void)screenDidResize {
@@ -24891,10 +24998,6 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
         return;
     }
     NSString *neverPromptUserDefaultsKey = @"NoSyncNeverPromptToChangeOption";
-    if ([[iTermUserDefaults userDefaults] boolForKey:neverPromptUserDefaultsKey]) {
-        // User said never to ask.
-        return;
-    }
 
     // Use a complete localized sentence per side rather than injecting the translated word
     // “left”/“right” into a frame, which would break grammar and word order in other languages.
@@ -24907,9 +25010,16 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
         frustrationTitle = NSLocalizedStringWithDefaultValue(@"PTYSession.OptionKeyFrustrationRight", nil, [NSBundle mainBundle], @"You seem frustrated. Would you like the right option key to send esc+keystroke?", @"Prompt offering to change the right option key behavior");
         profileKey = KEY_RIGHT_OPTION_KEY_SENDS;
     }
-
     if ([iTermProfilePreferences integerForKey:profileKey inProfile:self.profile] != OPT_NORMAL) {
         // There's already a non-default setting.
+        return;
+    }
+
+    // One choice covers both option keys, so the panel uses a fixed title.
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:neverPromptUserDefaultsKey
+                                                                                                         title:NSLocalizedStringWithDefaultValue(@"PTYSession.OptionKeyFrustrationSuppressedTitle", nil, [NSBundle mainBundle], @"You seem frustrated. Would you like the option key to send esc+keystroke?", @"Shown in the Suppressed Alerts panel for the hidden offer to change an option key’s behavior")];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
+        // User said never to ask.
         return;
     }
 
@@ -24944,7 +25054,7 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
                                                             [iTermProfilePreferences setInt:OPT_ESC forKey:profileKey inProfile:profile model:[ProfileModel sharedInstance]];
                                                         }
                                                     } else {
-                                                        [[iTermUserDefaults userDefaults] setBool:YES forKey:neverPromptUserDefaultsKey];
+                                                        [suppression saveChoice:@(YES) response:nil];
                                                     }
                                                 }];
     static NSString *const identifier = @"OfferToChangeOptionKeyToSendESC";
@@ -27013,14 +27123,15 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         return;
     }
 
-    if ([[iTermUserDefaults userDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
+    NSString *theTitle = NSLocalizedStringWithDefaultValue(@"PTYSession.CaptureOutputToolNotVisible", nil, [NSBundle mainBundle], @"A Capture Output trigger fired, but the Captured Output tool is not visible.", @"Warning that a Capture Output trigger fired while the Captured Output tool is hidden");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kSuppressCaptureOutputToolNotVisibleWarning title:theTitle];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
         return;
     }
 
     if ([self hasAnnouncementWithIdentifier:kSuppressCaptureOutputToolNotVisibleWarning]) {
         return;
     }
-    NSString *theTitle = NSLocalizedStringWithDefaultValue(@"PTYSession.CaptureOutputToolNotVisible", nil, [NSBundle mainBundle], @"A Capture Output trigger fired, but the Captured Output tool is not visible.", @"Warning that a Capture Output trigger fired while the Captured Output tool is hidden");
     void (^completion)(int selection) = ^(int selection) {
         switch (selection) {
             case -2:
@@ -27031,8 +27142,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                 break;
 
             case 1:
-                [[iTermUserDefaults userDefaults] setBool:YES
-                                                        forKey:kSuppressCaptureOutputToolNotVisibleWarning];
+                [iTermAdvancedSettingsModel setNoSyncSuppressCaptureOutputToolNotVisibleWarning:YES];
+                [suppression recordChoiceWithResponse:nil];
                 break;
         }
     };
@@ -27048,10 +27159,11 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement {
     [iTermGCD assertMainQueueSafe];
-    if ([[iTermUserDefaults userDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
+    NSString *theTitle = NSLocalizedStringWithDefaultValue(@"PTYSession.CaptureOutputNoShellIntegration", nil, [NSBundle mainBundle], @"A Capture Output trigger fired, but Shell Integration is not installed.", @"Warning that a Capture Output trigger fired without Shell Integration installed");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kSuppressCaptureOutputRequiresShellIntegrationWarning title:theTitle];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
         return;
     }
-    NSString *theTitle = NSLocalizedStringWithDefaultValue(@"PTYSession.CaptureOutputNoShellIntegration", nil, [NSBundle mainBundle], @"A Capture Output trigger fired, but Shell Integration is not installed.", @"Warning that a Capture Output trigger fired without Shell Integration installed");
     void (^completion)(int selection) = ^(int selection) {
         switch (selection) {
             case -2:
@@ -27062,8 +27174,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                 break;
 
             case 1:
-                [[iTermUserDefaults userDefaults] setBool:YES
-                                                        forKey:kSuppressCaptureOutputRequiresShellIntegrationWarning];
+                [iTermAdvancedSettingsModel setNoSyncSuppressCaptureOutputRequiresShellIntegrationWarning:YES];
+                [suppression recordChoiceWithResponse:nil];
                 break;
         }
     };
@@ -27096,10 +27208,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                             silent:(BOOL)silent
                       triggerTitle:(NSString * _Nonnull)triggerName {
     if (self.hasCoprocess) {
-        if (identifier && [[iTermUserDefaults userDefaults] boolForKey:identifier]) {
+        NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.TwoCoprocesses", nil, [NSBundle mainBundle], @"%@: Can't run two coprocesses at once.", @"Warning that two coprocesses cannot run at once; placeholder is the trigger name"), triggerName];
+        // Without an identifier the warning can't be silenced.
+        iTermAnnouncementSuppression *suppression = identifier ? [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:identifier title:message] : nil;
+        if (suppression && [suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
             return;
         }
-        NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYSession.TwoCoprocesses", nil, [NSBundle mainBundle], @"%@: Can't run two coprocesses at once.", @"Warning that two coprocesses cannot run at once; placeholder is the trigger name"), triggerName];
         NSArray<NSString *> *actions = identifier ? @[ NSLocalizedStringWithDefaultValue(@"PTYSession.SilenceWarning", nil, [NSBundle mainBundle], @"Silence Warning", @"Button that silences a warning") ] : @[];
         iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcementWithTitle:message
@@ -27111,8 +27225,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             }
             switch (selection) {
                 case 0:
-                    [[iTermUserDefaults userDefaults] setBool:YES
-                                                            forKey:identifier];
+                    [suppression saveChoice:@(YES) response:nil];
                     break;
             }
         }];
@@ -27332,7 +27445,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:NSLocalizedStringWithDefaultValue(@"PTYSession.ShareClipboardPrompt", nil, [NSBundle mainBundle], @"Share clipboard contents with app in terminal?", @"Prompt asking whether to share clipboard contents with the app running in the terminal")
                                                      style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.JustOnce", nil, [NSBundle mainBundle], @"Just Once", @"Button that allows an action a single time"), NaggingAlways(), NaggingNever() ]
+                                               withActions:@[ NSLocalizedStringWithDefaultValue(@"PTYSession.JustOnce", nil, [NSBundle mainBundle], @"Just Once", @"Button that allows an action a single time"), [iTermAnnouncementSuppression alwaysLabel], [iTermAnnouncementSuppression neverLabel] ]
                                                 completion:^(int selection) {
         switch (selection) {
             case 0:

@@ -51,10 +51,6 @@ static NSString *const iTermNaggingControllerClaudeCodeStatusToolDismissedNotifi
 static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceNotification = @"iTermNaggingControllerRestoreIconAndWindowNameChoice";
 static NSString *const iTermNaggingControllerRestoreIconAndWindowNameChoiceAlwaysKey = @"always";
 
-static NSString *NaggingYes(void) { return NSLocalizedStringWithDefaultValue(@"NaggingController.YesShortcut", nil, [NSBundle mainBundle], @"_Yes", @"Yes button label; underscore marks the keyboard shortcut key"); }
-static NSString *NaggingAlways(void) { return NSLocalizedStringWithDefaultValue(@"NaggingController.Always", nil, [NSBundle mainBundle], @"Always", @"Always button label"); }
-static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@"NaggingController.Never", nil, [NSBundle mainBundle], @"Never", @"Never button label"); }
-
 @implementation iTermNaggingController {
     BOOL _haveOutstandingTextReplacementOffer;
     NSString *_pendingRestoreIconName;
@@ -68,6 +64,9 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
     // detaching. Only a detached tmux window asks, so this tells it apart from
     // the gateway and unrelated sessions when the answer is broadcast to all.
     BOOL _askedWhetherTmuxWindowsShouldCloseAfterDetach;
+    // When didHandleRequestToClearScrollbackHistoryAllowed: last recorded or asked, for rate
+    // limiting.
+    NSTimeInterval _lastClearScrollbackHistoryReport;
 }
 
 - (instancetype)init {
@@ -142,21 +141,32 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         return [[iTermUserDefaults userDefaults] objectForKey:[self userDefaultsKeyForProfileProperty:key]];
     }];
     DLog(@"permissions: %@", permissions);
+    NSString *allowAlways = NSLocalizedStringWithDefaultValue(@"NaggingController.AllowAlways", nil, [NSBundle mainBundle], @"Allow Always", @"Button that always allows an action");
+    NSString *denyAlways = NSLocalizedStringWithDefaultValue(@"NaggingController.DenyAlways", nil, [NSBundle mainBundle], @"Deny Always", @"Button that always denies an action");
     // true = deny, false = always allow
-    if ([permissions.allValues containsObject:@(iTermTriStateTrue)]) {
+    if ([permissions.allValues containsObject:@(iTermTriStateTrue)] &&
+        [self shouldSuppressOfferForProfileProperties:permissions
+                                            withValue:@(iTermTriStateTrue)
+                                             response:denyAlways]) {
         DLog(@"Disallowed by setting");
         return;
     }
     if (permissions.count == dict.count && [permissions.allValues allWithBlock:^BOOL(id anObject) {
         return [anObject isEqual:@(iTermTriStateFalse)];
     }]) {
+        // Apply the saved Allow Always even if the offer is shown again below, since the change
+        // can't be made later from its completion unless the user answers again.
         [self.delegate naggingControllerSetProfileProperties:dict];
-        return;
+        if ([self shouldSuppressOfferForProfileProperties:permissions
+                                                withValue:@(iTermTriStateFalse)
+                                                 response:allowAlways]) {
+            return;
+        }
     }
     NSString *notice;
     if (dict.count == 1) {
         NSString *key = dict.allKeys.firstObject;
-        notice = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"NaggingController.AppChangedProfileProperty", nil, [NSBundle mainBundle], @"An app tried to change the profile property **%@**", @"Announcement that an app tried to change a single profile property; placeholder is the property description"), [iTermProfilePreferences descriptionForKey:key]];
+        notice = [self markdownNoticeForChangingProfileProperty:key];
     } else {
         NSMutableArray<NSString *> *descriptions = [NSMutableArray array];
         for (NSString *key in dict.allKeys) {
@@ -174,7 +184,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                                              isQuestion:YES
                                               important:NO
                                              identifier:iTermNaggingControllerArrangementSetProfileProperty
-                                                options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.AllowOnce", nil, [NSBundle mainBundle], @"_Allow Once", @"Button that allows an action one time; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"NaggingController.AllowAlways", nil, [NSBundle mainBundle], @"Allow Always", @"Button that always allows an action"), NSLocalizedStringWithDefaultValue(@"NaggingController.DenyAlways", nil, [NSBundle mainBundle], @"Deny Always", @"Button that always denies an action") ]
+                                                options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.AllowOnce", nil, [NSBundle mainBundle], @"_Allow Once", @"Button that allows an action one time; underscore marks the keyboard shortcut key"), allowAlways, denyAlways ]
                                              completion:^(int selection) {
         if (selection == 0 || selection == 1) {
             [weakSelf.delegate naggingControllerSetProfileProperties:dict];
@@ -187,39 +197,79 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
             for (NSString *key in dict) {
                 [[iTermUserDefaults userDefaults] setObject:@(iTermTriStateFalse)
                                                           forKey:[strongSelf userDefaultsKeyForProfileProperty:key]];
+                [[strongSelf suppressionForProfileProperty:key] recordChoiceWithResponse:allowAlways];
             }
         } else if (selection == 2) {
             for (NSString *key in dict) {
                 [[iTermUserDefaults userDefaults] setObject:@(iTermTriStateTrue)
                                                           forKey:[strongSelf userDefaultsKeyForProfileProperty:key]];
+                [[strongSelf suppressionForProfileProperty:key] recordChoiceWithResponse:denyAlways];
             }
         }
     }];
 }
 
+- (NSString *)markdownNoticeForChangingProfileProperty:(NSString *)key {
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"NaggingController.AppChangedProfileProperty", nil, [NSBundle mainBundle], @"An app tried to change the profile property **%@**", @"Announcement that an app tried to change a single profile property; placeholder is the property description"), [iTermProfilePreferences descriptionForKey:key]];
+}
+
+// permissions maps profile keys to their saved choices. Returns NO if the offer should be shown
+// anyway (see -[iTermAnnouncementSuppression shouldSuppressWithResponse:]). Otherwise records each
+// one whose choice is value.
+- (BOOL)shouldSuppressOfferForProfileProperties:(NSDictionary<NSString *, id> *)permissions
+                                      withValue:(NSNumber *)value
+                                       response:(NSString *)response {
+    __block BOOL matched = NO;
+    __block BOOL suppress = YES;
+    [permissions enumerateKeysAndObjectsUsingBlock:^(NSString *key, id choice, BOOL *stop) {
+        if (![choice isEqual:value]) {
+            return;
+        }
+        matched = YES;
+        // Don't stop early: each matching property gets its own row in the panel.
+        if (![[self suppressionForProfileProperty:key] shouldSuppressWithResponse:response]) {
+            suppress = NO;
+        }
+    }];
+    return matched && suppress;
+}
+
+- (iTermAnnouncementSuppression *)suppressionForProfileProperty:(NSString *)key {
+    // The panel shows plain text, so drop the markdown emphasis.
+    NSString *title = [[self markdownNoticeForChangingProfileProperty:key] stringByReplacingOccurrencesOfString:@"**"
+                                                                                                    withString:@""];
+    return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[self userDefaultsKeyForProfileProperty:key]
+                                                                  title:title];
+}
+
 - (void)offerTextReplacement:(void (^NS_NOESCAPE)(void))perform {
     NSString *userDefaultsKey = @"NoSyncTextReplacements";
+    NSString *notice = NSLocalizedStringWithDefaultValue(@"NaggingController.TextReplacements", nil, [NSBundle mainBundle], @"Would you like macOS Text Replacements to be applied automatically?", @"Prompt asking whether to apply macOS Text Replacements automatically");
+    NSString *no = NSLocalizedStringWithDefaultValue(@"NaggingController.NoShortcut", nil, [NSBundle mainBundle], @"_No", @"No button label; underscore marks the keyboard shortcut key");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:userDefaultsKey
+                                                                                                         title:notice];
     NSNumber *n = [NSNumber castFrom:[[iTermUserDefaults userDefaults] objectForKey:userDefaultsKey]];
-    if (n) {
-        if (n.boolValue) {
-            perform();
-        }
+    // Apply a saved Yes even if the offer is shown again below: perform can't be called later from
+    // the offer's completion, so answering Yes again would otherwise not replace this text.
+    if (n.boolValue) {
+        perform();
+    }
+    if (n && [suppression shouldSuppressWithResponse:n.boolValue ? [iTermAnnouncementSuppression yesLabel] : no]) {
         return;
     }
     if (_haveOutstandingTextReplacementOffer) {
         return;
     }
-    NSString *notice = NSLocalizedStringWithDefaultValue(@"NaggingController.TextReplacements", nil, [NSBundle mainBundle], @"Would you like macOS Text Replacements to be applied automatically?", @"Prompt asking whether to apply macOS Text Replacements automatically");
     _haveOutstandingTextReplacementOffer = YES;
     __weak __typeof(self) weakSelf = self;
     [self.delegate naggingControllerShowMessage:notice
                                      isQuestion:YES
                                       important:NO
                                      identifier:iTermNaggingControllerArrangementTextReplacements
-                                        options:@[ NaggingYes(), NSLocalizedStringWithDefaultValue(@"NaggingController.NoShortcut", nil, [NSBundle mainBundle], @"_No", @"No button label; underscore marks the keyboard shortcut key") ]
+                                        options:@[ [iTermAnnouncementSuppression yesLabel], no ]
                                      completion:^(int selection) {
         if (selection == 0 || selection == 1) {
-            [[iTermUserDefaults userDefaults] setBool:selection == 0 forKey:userDefaultsKey];
+            [suppression saveChoice:@(selection == 0) response:selection == 0 ? [iTermAnnouncementSuppression yesLabel] : no];
         }
         [weakSelf resetHaveTextReplacementOffer];
     }];
@@ -240,9 +290,6 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         missingProfileNamed:(NSString *)missingProfileName
                        guid:(NSString *)guid {
     RLog(@"Can’t find profile %@ guid %@", missingProfileName, guid);
-    if ([iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning]) {
-        return;
-    }
     NSString *notice;
     NSArray<NSString *> *actions = @[ NSLocalizedStringWithDefaultValue(@"NaggingController.DontWarnAgain", nil, [NSBundle mainBundle], @"Don’t Warn Again", @"Button that suppresses future warnings") ];
     if ([[ProfileModel sharedInstance] bookmarkWithName:missingProfileName]) {
@@ -252,6 +299,13 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         }
     } else {
         notice = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"NaggingController.ProfileMissing", nil, [NSBundle mainBundle], @"This session’s profile, “%@”, no longer exists.", @"Announcement that a session’s profile no longer exists; placeholder is the profile name"), missingProfileName];
+    }
+    // One choice covers every profile, so the panel uses a fixed title rather than this one.
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarningUserDefaultsKey]
+                                                                                                         title:NSLocalizedStringWithDefaultValue(@"NaggingController.ProfileMissingSuppressedTitle", nil, [NSBundle mainBundle], @"A session’s profile no longer exists.", @"Shown in the Suppressed Alerts panel for the hidden warning that a restored session’s profile no longer exists")];
+    if ([iTermAdvancedSettingsModel noSyncSuppressMissingProfileInArrangementWarning] &&
+        [suppression shouldSuppressWithResponse:nil]) {
+        return;
     }
     _missingSavedArrangementProfileGUID = [guid copy];
     [self.delegate naggingControllerShowMessage:notice
@@ -264,6 +318,9 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                                                  missingProfileNamed:missingProfileName
                                                                 guid:guid
                                                            selection:selection];
+        if (selection == 0) {
+            [suppression recordChoiceWithResponse:nil];
+        }
     }];
 }
 
@@ -271,10 +328,14 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
               hasInvalidPWD:(NSString *)badPWD
          forSessionWithGuid:(NSString *)sessionGUID {
     RLog(@"Arrangement %@ has bad pwd of %@ for session guid %@", arrangementName, badPWD, sessionGUID);
-    if ([iTermAdvancedSettingsModel noSyncSuppressBadPWDInArrangementWarning]) {
+    NSString *notice = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"NaggingController.ArrangementBadPWD", nil, [NSBundle mainBundle], @"The saved arrangement “%1$@” has a bad initial directory of “%2$@” for this session.", @"Announcement that a saved arrangement has an invalid initial directory; first placeholder is the arrangement name, second is the directory"), arrangementName, badPWD];
+    // One choice covers every arrangement, so the panel uses a fixed title rather than this one.
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel noSyncSuppressBadPWDInArrangementWarningUserDefaultsKey]
+                                                                                                         title:NSLocalizedStringWithDefaultValue(@"NaggingController.ArrangementBadPWDSuppressedTitle", nil, [NSBundle mainBundle], @"A saved arrangement has a bad initial directory for a session.", @"Shown in the Suppressed Alerts panel for the hidden warning that a saved arrangement has an invalid initial directory")];
+    if ([iTermAdvancedSettingsModel noSyncSuppressBadPWDInArrangementWarning] &&
+        [suppression shouldSuppressWithResponse:nil]) {
         return;
     }
-    NSString *notice = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"NaggingController.ArrangementBadPWD", nil, [NSBundle mainBundle], @"The saved arrangement “%1$@” has a bad initial directory of “%2$@” for this session.", @"Announcement that a saved arrangement has an invalid initial directory; first placeholder is the arrangement name, second is the directory"), arrangementName, badPWD];
 
     [self.delegate naggingControllerShowMessage:notice
                                      isQuestion:NO
@@ -285,6 +346,9 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         [self handleCompletionForInvalidPWDInArrangementWithName:arrangementName
                                                             guid:sessionGUID
                                                        selection:selection];
+        if (selection == 0) {
+            [suppression recordChoiceWithResponse:nil];
+        }
     }];
 }
 
@@ -320,13 +384,24 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 }
 
 - (void)sessionEndedWithExecFailure:(BOOL)execDidFail {
-    [self.delegate naggingControllerShowMessage:execDidFail ? NSLocalizedStringWithDefaultValue(@"NaggingController.SessionFailedToStart", nil, [NSBundle mainBundle], @"Session failed to start.", @"Announcement that a session failed to start") : NSLocalizedStringWithDefaultValue(@"NaggingController.SessionEndedRestart", nil, [NSBundle mainBundle], @"Session ended (command exited). Restart it?", @"Prompt asking whether to restart a session whose command exited")
+    NSString *message = execDidFail ? NSLocalizedStringWithDefaultValue(@"NaggingController.SessionFailedToStart", nil, [NSBundle mainBundle], @"Session failed to start.", @"Announcement that a session failed to start") : NSLocalizedStringWithDefaultValue(@"NaggingController.SessionEndedRestart", nil, [NSBundle mainBundle], @"Session ended (command exited). Restart it?", @"Prompt asking whether to restart a session whose command exited");
+    // One choice covers both messages, so the panel always shows the restart prompt.
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel suppressRestartAnnouncementUserDefaultsKey]
+                                                                                                         title:NSLocalizedStringWithDefaultValue(@"NaggingController.SessionEndedRestart", nil, [NSBundle mainBundle], @"Session ended (command exited). Restart it?", @"Prompt asking whether to restart a session whose command exited")];
+    if ([iTermAdvancedSettingsModel suppressRestartAnnouncement] &&
+        [suppression shouldSuppressWithResponse:nil]) {
+        return;
+    }
+    [self.delegate naggingControllerShowMessage:message
                                      isQuestion:!execDidFail
                                       important:YES
                                      identifier:iTermNaggingControllerReopenSessionAfterBrokenPipeIdentifier
                                         options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.Restart", nil, [NSBundle mainBundle], @"_Restart", @"Restart button label; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"NaggingController.DontAskAgain", nil, [NSBundle mainBundle], @"Don’t Ask Again", @"Button that suppresses future prompts") ]
                                      completion:^(int selection) {
         [self handleCompletionForBrokenPipe:selection];
+        if (selection == 1) {
+            [suppression recordChoiceWithResponse:nil];
+        }
     }];
 }
 
@@ -403,16 +478,21 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         [self.delegate naggingControllerRemoveMessageWithIdentifier:iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier];
         return;
     }
-    if ([[iTermUserDefaults userDefaults] boolForKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll]) {
+    NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.ScrollWheelMovesCursor", nil, [NSBundle mainBundle], @"Do you want the scroll wheel to move the cursor in interactive programs like this?", @"Prompt asking whether the scroll wheel should move the cursor in interactive programs");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll title:message];
+    if ([suppression shouldSuppressIfSavedBoolWithResponse:nil]) {
         return;
     }
-    [self.delegate naggingControllerShowMessage:NSLocalizedStringWithDefaultValue(@"NaggingController.ScrollWheelMovesCursor", nil, [NSBundle mainBundle], @"Do you want the scroll wheel to move the cursor in interactive programs like this?", @"Prompt asking whether the scroll wheel should move the cursor in interactive programs")
+    [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:YES
                                      identifier:iTermNaggingControllerAskAboutAlternateMouseScrollIdentifier
                                         options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.Yes", nil, [NSBundle mainBundle], @"Yes", @"Yes button label"), NSLocalizedStringWithDefaultValue(@"NaggingController.DontAskAgain", nil, [NSBundle mainBundle], @"Don’t Ask Again", @"Button that suppresses future prompts") ]
                                      completion:^(int selection) {
         [self handleTryingToSendArrowKeysWithScrollWheel:selection];
+        if (selection == 1) {
+            [suppression recordChoiceWithResponse:nil];
+        }
     }];
 }
 
@@ -454,7 +534,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                                      isQuestion:YES
                                       important:NO
                                      identifier:iTermNaggingControllerSetBackgroundImageFileIdentifier
-                                        options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.Yes", nil, [NSBundle mainBundle], @"Yes", @"Yes button label"), NaggingAlways(), NaggingNever() ]
+                                        options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.Yes", nil, [NSBundle mainBundle], @"Yes", @"Yes button label"), [iTermAnnouncementSuppression alwaysLabel], [iTermAnnouncementSuppression neverLabel] ]
                                      completion:^(int selection) {
         [self handleSetBackgroundImageToFileWithName:filename selection:selection];
     }];
@@ -500,16 +580,22 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 }
 
 - (void)didDetectMouseReportingFrustration {
-    if ([iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration]) {
+    NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.MouseReportingFrustration", nil, [NSBundle mainBundle], @"Looks like you’re trying to copy to the pasteboard, but mouse reporting has prevented making a selection. Disable mouse reporting?", @"Prompt asking whether to disable mouse reporting when it blocks selection");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustrationUserDefaultsKey] title:message];
+    if ([iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration] &&
+        [suppression shouldSuppressWithResponse:nil]) {
         return;
     }
-    [self.delegate naggingControllerShowMessage:NSLocalizedStringWithDefaultValue(@"NaggingController.MouseReportingFrustration", nil, [NSBundle mainBundle], @"Looks like you’re trying to copy to the pasteboard, but mouse reporting has prevented making a selection. Disable mouse reporting?", @"Prompt asking whether to disable mouse reporting when it blocks selection")
+    [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:YES
                                      identifier:iTermNaggingControllerAskAboutMouseReportingFrustrationIdentifier
                                         options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.Temporarily", nil, [NSBundle mainBundle], @"_Temporarily", @"Button that performs an action temporarily; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"NaggingController.Permanently", nil, [NSBundle mainBundle], @"Permanently", @"Button that performs an action permanently"), NSLocalizedStringWithDefaultValue(@"NaggingController.StopAsking", nil, [NSBundle mainBundle], @"Stop Asking", @"Button that suppresses future prompts") ]
                                      completion:^(int selection) {
         [self handleMouseReportingFrustration:selection];
+        if (selection == 2) {
+            [suppression recordChoiceWithResponse:nil];
+        }
     }];
 }
 
@@ -530,15 +616,20 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
     }
 }
 
+- (iTermAnnouncementSuppression *)bracketedPasteOfferSuppression {
+    return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey
+                                                                  title:NSLocalizedStringWithDefaultValue(@"NaggingController.PasteBracketingLeftOn", nil, [NSBundle mainBundle], @"Looks like paste bracketing was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Prompt asking whether to turn off paste bracketing")];
+}
+
 - (void)offerToTurnOffBracketedPasteOnHostChange {
-    NSString *title;
-    title = NSLocalizedStringWithDefaultValue(@"NaggingController.PasteBracketingLeftOn", nil, [NSBundle mainBundle], @"Looks like paste bracketing was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?", @"Prompt asking whether to turn off paste bracketing");
+    iTermAnnouncementSuppression *suppression = [self bracketedPasteOfferSuppression];
+    NSString *title = suppression.title;
 
     [self.delegate naggingControllerShowMessage:title
                                      isQuestion:YES
                                       important:YES
                                      identifier:kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier
-                                        options:@[ NaggingYes(), NaggingAlways(), NaggingNever(), NSLocalizedStringWithDefaultValue(@"NaggingController.Help", nil, [NSBundle mainBundle], @"Help", @"Help button") ]
+                                        options:@[ [iTermAnnouncementSuppression yesLabel], [iTermAnnouncementSuppression alwaysLabel], [iTermAnnouncementSuppression neverLabel], NSLocalizedStringWithDefaultValue(@"NaggingController.Help", nil, [NSBundle mainBundle], @"Help", @"Help button") ]
                                      completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -552,14 +643,12 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                 break;
 
             case 1: // Always
-                [[iTermUserDefaults userDefaults] setBool:YES
-                                                        forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:YES];
                 [self.delegate naggingControllerDisableBracketedPasteMode];
                 break;
 
             case 2: // Never
-                [[iTermUserDefaults userDefaults] setBool:NO
-                                                        forKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:NO];
                 break;
 
             case 3: // Help
@@ -573,23 +662,26 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 }
 
 - (BOOL)shouldResetKeyReportingMode {
-    NSNumber *number = [[iTermUserDefaults userDefaults] objectForKey:kResetKeyReportingModeUserDefaultsKey];
-    if (number.boolValue) {
-        // User chose "Always" - caller should reset
-        return YES;
-    }
-    if (number != nil) {
-        // User chose "Never" - do nothing
-        return NO;
-    }
-    // User hasn't chosen yet - show nag
     NSString *title = NSLocalizedStringWithDefaultValue(@"NaggingController.ResetKeyReportingMode", nil, [NSBundle mainBundle], @"The key reporting mode may have been left in an unusual setting when an ssh session died or an app crashed. Restore?", @"Prompt asking whether to reset the key reporting mode");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kResetKeyReportingModeUserDefaultsKey
+                                                                                                         title:title];
+    switch ([suppression savedAlwaysOrNeverChoice]) {
+        case iTermSavedAlwaysOrNeverChoiceAlways:
+            // Caller should reset
+            return YES;
+        case iTermSavedAlwaysOrNeverChoiceNever:
+            // Do nothing
+            return NO;
+        case iTermSavedAlwaysOrNeverChoiceAsk:
+            // User hasn't chosen yet, or wants to see remembered choices - show nag
+            break;
+    }
 
     [self.delegate naggingControllerShowMessage:title
                                      isQuestion:YES
                                       important:YES
                                      identifier:kResetKeyReportingModeAnnouncementIdentifier
-                                        options:@[ NaggingYes(), NaggingAlways(), NaggingNever() ]
+                                        options:@[ [iTermAnnouncementSuppression yesLabel], [iTermAnnouncementSuppression alwaysLabel], [iTermAnnouncementSuppression neverLabel] ]
                                      completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -603,14 +695,12 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                 break;
 
             case 1: // Always
-                [[iTermUserDefaults userDefaults] setBool:YES
-                                                        forKey:kResetKeyReportingModeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:YES];
                 [self.delegate naggingControllerResetKeyReportingMode];
                 break;
 
             case 2: // Never
-                [[iTermUserDefaults userDefaults] setBool:NO
-                                                        forKey:kResetKeyReportingModeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:NO];
                 break;
         }
     }];
@@ -621,9 +711,14 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
     [self.delegate naggingControllerRemoveMessageWithIdentifier:kResetKeyReportingModeAnnouncementIdentifier];
 }
 
+- (iTermAnnouncementSuppression *)restoreIconNameOfferSuppression {
+    return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey
+                                                                  title:NSLocalizedStringWithDefaultValue(@"NaggingController.RestoreTitlesAfterSSH", nil, [NSBundle mainBundle], @"Automatically restore the tab and window title when an ssh session ends?", @"Prompt asking whether to restore tab and window titles when an ssh session ends")];
+}
+
 - (void)offerToRestoreIconName:(NSString *)iconName windowName:(NSString *)windowName {
-    NSString *title;
-    title = NSLocalizedStringWithDefaultValue(@"NaggingController.RestoreTitlesAfterSSH", nil, [NSBundle mainBundle], @"Automatically restore the tab and window title when an ssh session ends?", @"Prompt asking whether to restore tab and window titles when an ssh session ends");
+    iTermAnnouncementSuppression *suppression = [self restoreIconNameOfferSuppression];
+    NSString *title = suppression.title;
 
     _pendingRestoreIconName = [iconName copy];
     _pendingRestoreWindowName = [windowName copy];
@@ -633,7 +728,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                                      isQuestion:YES
                                       important:YES
                                      identifier:kRestoreIconAndWindowNameOnHostChangeAnnouncementIdentifier
-                                        options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.OnlyThisTime", nil, [NSBundle mainBundle], @"_Only This Time", @"Button that performs an action only once; underscore marks the keyboard shortcut key"), NaggingAlways(), NaggingNever() ]
+                                        options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.OnlyThisTime", nil, [NSBundle mainBundle], @"_Only This Time", @"Button that performs an action only once; underscore marks the keyboard shortcut key"), [iTermAnnouncementSuppression alwaysLabel], [iTermAnnouncementSuppression neverLabel] ]
                                      completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -651,8 +746,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 
             case 1: // Always
                 [self clearPendingRestoreOffer];
-                [[iTermUserDefaults userDefaults] setBool:YES
-                                                        forKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:YES];
                 [self.delegate naggingControllerRestoreIconNameTo:iconName windowName:windowName];
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermNaggingControllerRestoreIconAndWindowNameChoiceNotification
                                                                     object:nil
@@ -661,8 +755,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 
             case 2: // Never
                 [self clearPendingRestoreOffer];
-                [[iTermUserDefaults userDefaults] setBool:NO
-                                                        forKey:kRestoreIconAndWindowNameOnHostChangeUserDefaultsKey];
+                [suppression saveAlwaysOrNeverChoice:NO];
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermNaggingControllerRestoreIconAndWindowNameChoiceNotification
                                                                     object:nil
                                                                   userInfo:@{ iTermNaggingControllerRestoreIconAndWindowNameChoiceAlwaysKey: @NO }];
@@ -696,17 +789,19 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         DLog(@"Don't show warning");
         return;
     }
-    if ([[[iTermUserDefaults userDefaults] objectForKey:kTurnOffSlowTriggersOfferUserDefaultsKey] isEqual:@NO]) {
-        return;
-    }
     NSString *title;
     title = NSLocalizedStringWithDefaultValue(@"NaggingController.SlowTriggers", nil, [NSBundle mainBundle], @"This session’s triggers are pretty slow. Disable them in interactive apps?", @"Prompt asking whether to disable slow triggers in interactive apps");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:kTurnOffSlowTriggersOfferUserDefaultsKey title:title];
+    if ([[[iTermUserDefaults userDefaults] objectForKey:kTurnOffSlowTriggersOfferUserDefaultsKey] isEqual:@NO] &&
+        [suppression shouldSuppressWithResponse:nil]) {
+        return;
+    }
 
     [self.delegate naggingControllerShowMessage:title
                                      isQuestion:YES
                                       important:YES
                                      identifier:kTurnOffSlowTriggersOfferUserDefaultsKey
-                                        options:@[ NaggingYes(), NSLocalizedStringWithDefaultValue(@"NaggingController.StopAsking", nil, [NSBundle mainBundle], @"Stop Asking", @"Button that suppresses future prompts"), NSLocalizedStringWithDefaultValue(@"NaggingController.ViewStats", nil, [NSBundle mainBundle], @"View Stats", @"Button that shows statistics"), NSLocalizedStringWithDefaultValue(@"NaggingController.Help", nil, [NSBundle mainBundle], @"Help", @"Help button") ]
+                                        options:@[ [iTermAnnouncementSuppression yesLabel], NSLocalizedStringWithDefaultValue(@"NaggingController.StopAsking", nil, [NSBundle mainBundle], @"Stop Asking", @"Button that suppresses future prompts"), NSLocalizedStringWithDefaultValue(@"NaggingController.ViewStats", nil, [NSBundle mainBundle], @"View Stats", @"Button that shows statistics"), NSLocalizedStringWithDefaultValue(@"NaggingController.Help", nil, [NSBundle mainBundle], @"Help", @"Help button") ]
                                      completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -720,8 +815,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
                 break;
 
             case 1: // Stop Asking
-                [[iTermUserDefaults userDefaults] setBool:NO
-                                                        forKey:kTurnOffSlowTriggersOfferUserDefaultsKey];
+                [suppression saveChoice:@(NO) response:nil];
                 break;
 
             case 2:  { // View stats
@@ -793,27 +887,67 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
     }];
 }
 
+
 - (BOOL)shouldAskAboutClearingScrollbackHistory {
     return iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory == nil;
 }
 
+- (void)didHandleRequestToClearScrollbackHistoryAllowed:(BOOL)allowed {
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now - _lastClearScrollbackHistoryReport < 1) {
+        return;
+    }
+
+    const BOOL *preventPtr = iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory;
+    if (!preventPtr) {
+        if (allowed) {
+            // The choice that allowed it was removed since (e.g., by un-suppressing it). Don't ask
+            // about a clear that already happened.
+            DLog(@"Scrollback was cleared but there is no longer a saved choice");
+            return;
+        }
+        _lastClearScrollbackHistoryReport = now;
+        [self askAboutClearingScrollbackHistory];
+        return;
+    }
+    if (*preventPtr == allowed) {
+        // The saved choice changed since the request was decided, so it doesn't describe it.
+        DLog(@"Saved choice for clearing scrollback changed since the request was decided");
+        return;
+    }
+    _lastClearScrollbackHistoryReport = now;
+    iTermAnnouncementSuppression *suppression = [self clearingScrollbackHistorySuppression];
+    if ([suppression shouldSuppressWithResponse:allowed ? [iTermAnnouncementSuppression alwaysAllowLabel] : [iTermAnnouncementSuppression alwaysDenyLabel]]) {
+        return;
+    }
+    [self askAboutClearingScrollbackHistory];
+}
+
+- (iTermAnnouncementSuppression *)clearingScrollbackHistorySuppression {
+    return [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel preventEscapeSequenceFromClearingHistoryUserDefaultsKey]
+                                                                  title:NSLocalizedStringWithDefaultValue(@"NaggingController.ControlSequenceClearScrollback", nil, [NSBundle mainBundle], @"A control sequence attempted to clear scrollback history. Allow this in the future?", @"Prompt asking whether to allow a control sequence to clear scrollback history")];
+}
+
 - (void)askAboutClearingScrollbackHistory {
-    NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.ControlSequenceClearScrollback", nil, [NSBundle mainBundle], @"A control sequence attempted to clear scrollback history. Allow this in the future?", @"Prompt asking whether to allow a control sequence to clear scrollback history");
+    iTermAnnouncementSuppression *suppression = [self clearingScrollbackHistorySuppression];
+    NSString *message = suppression.title;
     [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:NO
                                      identifier:iTermNaggingControllerAskAboutClearingScrollbackHistoryIdentifier
-                                        options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysAllowShortcut", nil, [NSBundle mainBundle], @"Always _Allow", @"Always Allow button label; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysDenyShortcut", nil, [NSBundle mainBundle], @"Always _Deny", @"Always Deny button label; underscore marks the keyboard shortcut key") ]
+                                        options:@[ [iTermAnnouncementSuppression alwaysAllowLabel], [iTermAnnouncementSuppression alwaysDenyLabel] ]
                                      completion:^(int selection) {
         switch (selection) {
             case 0: {
                 const BOOL value = NO;
                 iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory = &value;
+                [suppression recordChoiceWithResponse:[iTermAnnouncementSuppression alwaysAllowLabel]];
                 break;
             }
             case 1: {
                 const BOOL value = YES;
                 iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory = &value;
+                [suppression recordChoiceWithResponse:[iTermAnnouncementSuppression alwaysDenyLabel]];
                 break;
             }
         }
@@ -821,10 +955,12 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 }
 
 - (void)openCommandDidFailWithSecureInputEnabled {
-    if (!iTermAdvancedSettingsModel.warnAboutSecureKeyboardInputWithOpenCommand) {
+    NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.OpenCommandSecureInput", nil, [NSBundle mainBundle], @"The open command doesn't activate other apps when Secure Keyboard Input is enabled.", @"Announcement explaining that the open command does not activate apps while Secure Keyboard Input is on");
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel warnAboutSecureKeyboardInputWithOpenCommandUserDefaultsKey] title:message];
+    if (!iTermAdvancedSettingsModel.warnAboutSecureKeyboardInputWithOpenCommand &&
+        [suppression shouldSuppressWithResponse:nil]) {
         return;
     }
-    NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.OpenCommandSecureInput", nil, [NSBundle mainBundle], @"The open command doesn't activate other apps when Secure Keyboard Input is enabled.", @"Announcement explaining that the open command does not activate apps while Secure Keyboard Input is on");
     [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:NO
@@ -834,6 +970,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         switch (selection) {
             case 0: {
                 iTermAdvancedSettingsModel.warnAboutSecureKeyboardInputWithOpenCommand = NO;
+                [suppression recordChoiceWithResponse:nil];
                 break;
             }
         }
@@ -841,49 +978,69 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 }
 
 - (BOOL)terminalCanChangeProfile {
-    const BOOL *boolPtr = iTermAdvancedSettingsModel.preventEscapeSequenceFromChangingProfile;
-    if (boolPtr) {
-        return !*boolPtr;
-    }
     NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.ControlSequenceChangeProfile", nil, [NSBundle mainBundle], @"A control sequence attempted to change the current profile. Allow this in the future?", @"Prompt asking whether to allow a control sequence to change the current profile");
+    const BOOL *boolPtr = iTermAdvancedSettingsModel.preventEscapeSequenceFromChangingProfile;
+    // A saved choice applies even if the announcement is shown again below, because the profile
+    // can't be changed later from its completion.
+    const BOOL allowed = boolPtr ? !*boolPtr : NO;
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel preventEscapeSequenceFromChangingProfileUserDefaultsKey] title:message];
+    if (boolPtr &&
+        [suppression shouldSuppressWithResponse:allowed ? [iTermAnnouncementSuppression alwaysAllowLabel] : [iTermAnnouncementSuppression alwaysDenyLabel]]) {
+        return allowed;
+    }
     [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:NO
                                      identifier:iTermNaggingControllerAskAboutChangingProfileIdentifier
-                                        options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysAllowShortcut", nil, [NSBundle mainBundle], @"Always _Allow", @"Always Allow button label; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysDenyShortcut", nil, [NSBundle mainBundle], @"Always _Deny", @"Always Deny button label; underscore marks the keyboard shortcut key") ]
+                                        options:@[ [iTermAnnouncementSuppression alwaysAllowLabel], [iTermAnnouncementSuppression alwaysDenyLabel] ]
                                      completion:^(int selection) {
         switch (selection) {
             case 0: {
                 const BOOL value = NO;
                 iTermAdvancedSettingsModel.preventEscapeSequenceFromChangingProfile = &value;
+                [suppression recordChoiceWithResponse:[iTermAnnouncementSuppression alwaysAllowLabel]];
                 break;
             }
             case 1: {
                 const BOOL value = YES;
                 iTermAdvancedSettingsModel.preventEscapeSequenceFromChangingProfile = &value;
+                [suppression recordChoiceWithResponse:[iTermAnnouncementSuppression alwaysDenyLabel]];
                 break;
             }
         }
     }];
-    return NO;
+    return allowed;
 }
 
 - (BOOL)tmuxWindowsShouldCloseAfterDetach {
-    const BOOL *boolPtr = iTermAdvancedSettingsModel.tmuxWindowsShouldCloseAfterDetach;
-    if (boolPtr) {
-        return *boolPtr;
-    }
     NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.CloseTmuxWindowsAfterDetach", nil, [NSBundle mainBundle], @"Close tmux windows after detaching?", @"Prompt asking whether to close tmux windows after detaching");
+    NSString *always = NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysShortcut", nil, [NSBundle mainBundle], @"_Always", @"Always button label; underscore marks the keyboard shortcut key");
+    NSString *never = NSLocalizedStringWithDefaultValue(@"NaggingController.NeverShortcut", nil, [NSBundle mainBundle], @"_Never", @"Never button label; underscore marks the keyboard shortcut key");
+    const BOOL *boolPtr = iTermAdvancedSettingsModel.tmuxWindowsShouldCloseAfterDetach;
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel tmuxWindowsShouldCloseAfterDetachUserDefaultsKey] title:message];
+    if (boolPtr) {
+        if ([suppression shouldSuppressWithResponse:*boolPtr ? always : never]) {
+            return *boolPtr;
+        }
+        if (*boolPtr) {
+            // Apply the saved Always even though remembered alerts are being shown. The windows
+            // close right away, so there would be nowhere to ask.
+            DLog(@"Closing tmux windows per the saved choice instead of asking again");
+            return YES;
+        }
+        // Showing the prompt and returning NO applies the saved Never.
+    }
     _askedWhetherTmuxWindowsShouldCloseAfterDetach = YES;
     [self.delegate naggingControllerShowMessage:message
                                      isQuestion:YES
                                       important:YES
                                      identifier:iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach
-                                        options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysShortcut", nil, [NSBundle mainBundle], @"_Always", @"Always button label; underscore marks the keyboard shortcut key"), NSLocalizedStringWithDefaultValue(@"NaggingController.NeverShortcut", nil, [NSBundle mainBundle], @"_Never", @"Never button label; underscore marks the keyboard shortcut key") ]
+                                        options:@[ always, never ]
                                      completion:^(int selection) {
         if (selection == 0 || selection == 1) {
             BOOL value = (selection == 0);
             iTermAdvancedSettingsModel.tmuxWindowsShouldCloseAfterDetach = &value;
+            [suppression recordChoiceWithResponse:value ? always : never];
             [[NSNotificationCenter defaultCenter] postNotificationName:iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfterDetach
                                                                 object:@(value)];
         }
@@ -935,7 +1092,13 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 - (void)openURL:(NSURL *)url {
     NSString *allowHostKey = [NSString stringWithFormat:@"NoSyncAllowOpenURL_host:%@", url.host];
 
-    if ([iTermAdvancedSettingsModel noSyncDisableOpenURL]) {
+    NSString *neverAllow = NSLocalizedStringWithDefaultValue(@"NaggingController.NeverAllow", nil, [NSBundle mainBundle], @"Never allow", @"Button that never allows an action");
+    // The setting applies to every URL, so the panel uses a fixed title rather than this URL, which
+    // could also hold private query parameters.
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:[iTermAdvancedSettingsModel noSyncDisableOpenURLUserDefaultsKey]
+                                                                                                         title:NSLocalizedStringWithDefaultValue(@"NaggingController.OpenURLsSuppressedTitle", nil, [NSBundle mainBundle], @"Allow apps in the terminal to open URLs?", @"Shown in the Suppressed Alerts panel for the hidden prompt asking whether to open a URL that an app in the terminal requested")];
+    if ([iTermAdvancedSettingsModel noSyncDisableOpenURL] &&
+        [suppression shouldSuppressWithResponse:neverAllow]) {
         RLog(@"OpenUrl disabled");
         return;
     }
@@ -948,11 +1111,12 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
         return;
     }
 
-    [_delegate naggingControllerShowMessage:[NSString stringWithFormat: NSLocalizedStringWithDefaultValue(@"NaggingController.OpenThisURL", nil, [NSBundle mainBundle], @"Open this URL? %@", @"Prompt asking whether to open a URL; placeholder is the URL"), url.sanitizedForPrinting.absoluteString]
+    NSString *message = [NSString stringWithFormat: NSLocalizedStringWithDefaultValue(@"NaggingController.OpenThisURL", nil, [NSBundle mainBundle], @"Open this URL? %@", @"Prompt asking whether to open a URL; placeholder is the URL"), url.sanitizedForPrinting.absoluteString];
+    [_delegate naggingControllerShowMessage:message
                                  isQuestion:YES
                                   important:YES
                                  identifier:allowHostKey
-                                    options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.Allow", nil, [NSBundle mainBundle], @"Allow", @"Button that allows an action once"), NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysAllowForThisHost", nil, [NSBundle mainBundle], @"Always allow for this host", @"Button that always allows an action for a given host"), NSLocalizedStringWithDefaultValue(@"NaggingController.NeverAllow", nil, [NSBundle mainBundle], @"Never allow", @"Button that never allows an action") ]
+                                    options:@[ NSLocalizedStringWithDefaultValue(@"NaggingController.Allow", nil, [NSBundle mainBundle], @"Allow", @"Button that allows an action once"), NSLocalizedStringWithDefaultValue(@"NaggingController.AlwaysAllowForThisHost", nil, [NSBundle mainBundle], @"Always allow for this host", @"Button that always allows an action for a given host"), neverAllow ]
                                  completion:^(int selection) {
         switch (selection) {
             case -2:  // Dismiss programmatically
@@ -978,6 +1142,7 @@ static NSString *NaggingNever(void) { return NSLocalizedStringWithDefaultValue(@
 
             case 2:  // Never allow
                 [iTermAdvancedSettingsModel setNoSyncDisableOpenURL:YES];
+                [suppression recordChoiceWithResponse:neverAllow];
                 break;
         }
     }];
@@ -997,18 +1162,21 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
         DLog(@"Can't show Touch ID for sudo offer");
         return;
     }
-    NSNumber *setting = [[iTermUserDefaults userDefaults] objectForKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey];
-    if (setting != nil) {
-        RLog(@"Touch ID for sudo offer disabled by user default: %@", setting);
-        return;
-    }
+    NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.EnableTouchIDForSudo", nil, [NSBundle mainBundle], @"Would you like to enable Touch ID for sudo?", @"Announcement offering to enable Touch ID for sudo");
     if ([iTermTouchIDHelper isTouchIDEnabledForSudo]) {
         DLog(@"Touch ID for sudo already enabled");
         return;
     }
-    NSString *message = NSLocalizedStringWithDefaultValue(@"NaggingController.EnableTouchIDForSudo", nil, [NSBundle mainBundle], @"Would you like to enable Touch ID for sudo?", @"Announcement offering to enable Touch ID for sudo");
     if ([self.delegate naggingControllerAnnouncementWouldObscureCursorForText:message]) {
         DLog(@"Announcement would obscure cursor");
+        return;
+    }
+    // Checked last so the Suppressed Alerts panel lists it only when it would have been shown.
+    NSNumber *setting = [[iTermUserDefaults userDefaults] objectForKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey];
+    iTermAnnouncementSuppression *suppression = [iTermAnnouncementSuppression suppressionWithUserDefaultsKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey title:message];
+    if (setting != nil &&
+        [suppression shouldSuppressWithResponse:nil]) {
+        RLog(@"Touch ID for sudo offer disabled by user default: %@", setting);
         return;
     }
     [self.delegate naggingControllerShowMessage:message
@@ -1036,8 +1204,7 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
                 break;
             }
             case 2:  // Don't ask again
-                [[iTermUserDefaults userDefaults] setBool:NO
-                                                   forKey:iTermNaggingControllerTouchIDForSudoUserDefaultsKey];
+                [suppression saveChoice:@(NO) response:nil];
                 break;
         }
     }];
@@ -1124,7 +1291,7 @@ static NSString *const iTermNaggingControllerTouchIDForSudoUserDefaultsKey = @"N
                                      isQuestion:YES
                                       important:NO
                                      identifier:iTermNaggingControllerClaudeCodeStatusToolIdentifier
-                                        options:@[ NaggingYes(), NaggingNever(), NSLocalizedStringWithDefaultValue(@"NaggingController.AskLater", nil, [NSBundle mainBundle], @"Ask Later", @"Button that dismisses an offer but allows it to reappear later") ]
+                                        options:@[ [iTermAnnouncementSuppression yesLabel], [iTermAnnouncementSuppression neverLabel], NSLocalizedStringWithDefaultValue(@"NaggingController.AskLater", nil, [NSBundle mainBundle], @"Ask Later", @"Button that dismisses an offer but allows it to reappear later") ]
                                      completion:^(int selection) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermNaggingControllerClaudeCodeStatusToolDismissedNotification
                                                             object:nil];
