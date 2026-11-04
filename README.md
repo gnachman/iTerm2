@@ -2,6 +2,10 @@
 
 [![macos-x64](https://github.com/trufae/Therm/actions/workflows/ci.yml/badge.svg)](https://github.com/trufae/Therm/actions/workflows/ci.yml)
 
+> [!WARNING]
+> **This project is abandoned.** No further development, fixes or releases are planned here.
+> Please use [trufae/therm2](https://github.com/trufae/therm2) instead.
+
 Therm is a fork of iTerm2 made by [pancake](https://infosec.exchange/@pancake) with minimalism in mind:
 
 * Toggleable Notch guard on fullscreen windows (CMD+Shift+G)
