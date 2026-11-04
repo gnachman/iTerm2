@@ -17796,6 +17796,48 @@
         }
       }
     },
+    "AdvancedSetting.engageLayoutEngineInTerminalWindows" : {
+      "comment" : "Advanced setting: engageLayoutEngineInTerminalWindows",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Layout in neuen Terminalfenstern aktivieren.\nFügt jedem neuen Terminalfenster eine verborgene Glaseffekt-Ansicht hinzu (vor macOS 26 eine Ansicht mit Constraints), wodurch die Layout-Engine von AppKit für das gesamte Fenster eingeschaltet wird. Damit lässt sich prüfen, ob Fenster bei eingeschalteter Engine weiterhin korrekt angeordnet und in der Größe geändert werden. Nur in Entwicklungs-Builds."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Engage Auto Layout in new terminal windows.\nAdds a hidden glass effect view (before macOS 26, a view with constraints) to each new terminal window, which turns on AppKit’s layout engine for the whole window. Use it to check that windows still lay out and resize correctly with the engine on. Development builds only."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいターミナルウインドウで Auto Layout を有効にします。\n新しい各ターミナルウインドウに非表示のガラス効果ビュー (macOS 26 より前では制約付きのビュー) を追加し、ウインドウ全体で AppKit のレイアウトエンジンをオンにします。エンジンがオンの状態でもウインドウのレイアウトとサイズ変更が正しく行われるかを確認するのに使用します。開発ビルドのみ。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativar o Auto Layout em novas janelas de terminal.\nAdiciona uma visualização oculta de efeito de vidro (antes do macOS 26, uma visualização com restrições) a cada nova janela de terminal, o que ativa o mecanismo de layout do AppKit para a janela inteira. Use isto para verificar se as janelas continuam sendo dispostas e redimensionadas corretamente com o mecanismo ativado. Apenas em builds de desenvolvimento."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включать Auto Layout в новых окнах терминала.\nДобавляет в каждое новое окно терминала скрытое представление с эффектом стекла (до macOS 26 это представление с ограничениями), что включает механизм компоновки AppKit для всего окна. Используйте, чтобы проверить, что окна по-прежнему правильно компонуются и меняют размер при включённом механизме. Только для сборок разработки."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在新终端窗口中启用 Auto Layout。\n向每个新终端窗口添加一个隐藏的玻璃效果视图（macOS 26 之前为一个带约束的视图），从而为整个窗口开启 AppKit 的布局引擎。可用来检查在启用该引擎时窗口是否仍能正确布局和调整大小。仅限开发版本。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.errorSound" : {
       "comment" : "Advanced setting: errorSound",
       "extractionState" : "extracted_with_value",
@@ -27494,6 +27536,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示固定热键窗口的指示器。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.showSSHFlowControlMonitor" : {
+      "comment" : "Advanced setting: showSSHFlowControlMonitor",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Fenster mit dem Flusssteuerungsstatus der SSH-Integration anzeigen.\nFür die Verbindung der aktuellen Sitzung und jede darin verschachtelte Verbindung: das ausstehende Guthaben, die gemessenen Verzögerungen und Raten sowie Diagramme der letzten Minute. Durch Schließen des Fensters wird dies ausgeschaltet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show a window with SSH Integration’s flow control state.\nFor the current session’s connection and every connection nested in it: the credit outstanding, the measured delays and rates, and charts of the last minute. Closing the window turns this off."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH統合のフロー制御の状態を表示するウインドウを表示します。\n現在のセッションの接続と、その中にネストされたすべての接続について、未消化のクレジット、計測された遅延とレート、直近 1 分間のグラフを表示します。ウインドウを閉じるとこの設定はオフになります。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar uma janela com o estado do controle de fluxo da Integração SSH.\nPara a conexão da sessão atual e cada conexão aninhada nela: o crédito pendente, os atrasos e taxas medidos e gráficos do último minuto. Fechar a janela desativa este ajuste."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать окно с состоянием управления потоком интеграции с SSH.\nДля подключения текущего сеанса и каждого вложенного в него подключения: неизрасходованный кредит, измеренные задержки и скорости, а также графики за последнюю минуту. Закрытие окна отключает этот параметр."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示一个窗口，展示 SSH 集成的流量控制状态。\n针对当前会话的连接以及嵌套在其中的每个连接：显示未用完的额度、测得的延迟和速率，以及最近一分钟的图表。关闭该窗口会关闭此项。"
           }
         }
       }
@@ -45006,6 +45090,48 @@
         }
       }
     },
+    "ChatClient.RemoteCommandFailed" : {
+      "comment" : "Notice shown in AI chat when a tool the AI asked to run could not be run. The argument is the reason.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Funktionsaufruf ist fehlgeschlagen: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The function call failed: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "関数呼び出しに失敗しました: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A chamada de função falhou: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось выполнить вызов функции: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "函数调用失败：%@"
+          }
+        }
+      }
+    },
     "ChatClient.RevealAnnotationHint" : {
       "comment" : "Hint appended to a chat message explaining how to reveal terminal annotations",
       "extractionState" : "extracted_with_value",
@@ -46001,6 +46127,48 @@
         }
       }
     },
+    "ChatInputView.MentionSessionReason" : {
+      "comment" : "Prompt shown over each session while the user types an @-mention in the AI chat, letting them pick the session to mention by clicking it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Sitzung im KI-Chat erwähnen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mention this session in AI chat?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIチャットでこのセッションをメンションしますか?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mencionar esta sessão no chat de IA?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Упомянуть эту сессию в чате ИИ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 AI 聊天中提及此会话？"
+          }
+        }
+      }
+    },
     "ChatInputView.Placeholder" : {
       "comment" : "Placeholder in the chat input field",
       "extractionState" : "extracted_with_value",
@@ -46249,6 +46417,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ 不接受此文件类型作为聊天附件：%2$@。"
+          }
+        }
+      }
+    },
+    "ChatListModel.BrowserCannotBeTerminal" : {
+      "comment" : "Error shown when trying to link a web browser session to an AI chat in the terminal slot",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Webbrowser-Sitzung kann nicht als Terminal verknüpft werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A web browser session cannot be linked as a terminal."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webブラウザのセッションはターミナルとしてリンクできません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma sessão de navegador web não pode ser vinculada como terminal."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сессию веб-браузера нельзя связать как терминал."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网页浏览器会话不能作为终端关联。"
+          }
+        }
+      }
+    },
+    "ChatListModel.TerminalCannotBeBrowser" : {
+      "comment" : "Error shown when trying to link a terminal session to an AI chat in the web browser slot",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Terminalsitzung kann nicht als Webbrowser verknüpft werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "A terminal session cannot be linked as a web browser."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ターミナルのセッションはWebブラウザとしてリンクできません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma sessão de terminal não pode ser vinculada como navegador web."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сессию терминала нельзя связать как веб-браузер."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "终端会话不能作为网页浏览器关联。"
           }
         }
       }
@@ -174568,6 +174820,48 @@
         }
       }
     },
+    "SelectSessionButton.RevealChat" : {
+      "comment" : "Button that shows the AI chat where the user is typing an @-mention of a session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chat anzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reveal Chat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チャットを表示"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar chat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать чат"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示聊天"
+          }
+        }
+      }
+    },
     "SelectSessionButton.SelectThisSession" : {
       "comment" : "Button to select the current session",
       "extractionState" : "extracted_with_value",
@@ -175408,6 +175702,48 @@
         }
       }
     },
+    "SessionLauncher.EmptyManPageMessage" : {
+      "comment" : "Warning message shown when an x-man-page URL has no page name or apropos search term.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Man-Page-URL hat weder eine Man-Page noch einen Suchbegriff angegeben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The man page URL did not name a man page or search term."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "man ページの URL に man ページ名または検索語が指定されていませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A URL de man page não indicou uma man page nem um termo de busca."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В URL man-страницы не указана man-страница или поисковый запрос."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该 man page URL 未指定 man page 或搜索词。"
+          }
+        }
+      }
+    },
     "SessionLauncher.FontNotFoundMessage" : {
       "comment" : "Warning shown when the profile’s font and the fallback font cannot be loaded. %@ is the font name.",
       "extractionState" : "extracted_with_value",
@@ -175446,6 +175782,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "找不到指定的字体“%@”或回退的标准等宽字体 Menlo。请确保至少安装了其中一种。"
+          }
+        }
+      }
+    },
+    "SessionLauncher.IllegalManPageHeading" : {
+      "comment" : "Heading of a warning that an x-man-page URL is not allowed.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unzulässige Man-Page-URL"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Illegal Man Page URL"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不正な man ページ URL"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL de man page não permitida"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недопустимый URL man-страницы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非法的 Man Page URL"
+          }
+        }
+      }
+    },
+    "SessionLauncher.IllegalManPageMessage" : {
+      "comment" : "Warning message shown when an x-man-page URL contains disallowed characters.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Man-Page-URL enthielt ein unzulässiges Zeichen. Die zulässigen Zeichen sind aus Sicherheitsgründen eingeschränkt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The man page URL contained a disallowed character. The set of allowed characters is limited for security reasons."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "man ページの URL に使用できない文字が含まれていました。セキュリティ上の理由から、使用できる文字は制限されています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A URL de man page continha um caractere não permitido. O conjunto de caracteres permitidos é limitado por motivos de segurança."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL man-страницы содержит недопустимый символ. Набор разрешённых символов ограничен из соображений безопасности."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该 man page URL 包含不允许的字符。出于安全考虑，允许使用的字符范围有限。"
           }
         }
       }
