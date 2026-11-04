@@ -707,6 +707,11 @@ Improvements:
   even if you haven’t named the window.
 
 Bug Fixes:
+- In tmux integration, full-screen programs such
+  as htop or vim could show garbled output in a
+  zoomed pane after zooming it or resizing the
+  window. Thanks to Yifan Gao (@gaoyifan) for
+  the fix.
 - Dragging a tab or pane no longer stutters
   with many windows open when the tab bar is
   always shown.
