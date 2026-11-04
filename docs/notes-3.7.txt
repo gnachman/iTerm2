@@ -705,8 +705,9 @@ Bug Fixes:
   names are now checked against an allowlist of
   characters, and a URL with disallowed
   characters is rejected with a warning instead
-  of opening. Thanks to Gurpreet Shergill
-  (@giki-shergill) for reporting this.
+  of opening. Thanks to vin01 for finding this
+  vulnerability and to Gurpreet Shergill
+  (@giki-shergill) for reporting it.
 - Dragging a split divider in a tmux window
   now leaves the panes the way the drag showed
   them. Before, a different divider could move,
