@@ -28,7 +28,7 @@ final class AIModelCatalogTest: XCTestCase {
         let models = try bundledModels()
         XCTAssertFalse(models.isEmpty,
                        "AI model catalog decoded to zero models")
-        XCTAssertEqual(models.count, 51,
+        XCTAssertEqual(models.count, 54,
                        "Unexpected catalog size; update this test if you intentionally changed ai-models.json")
     }
 
@@ -40,7 +40,7 @@ final class AIModelCatalogTest: XCTestCase {
     func testRecommendedModelPerVendor() throws {
         let models = try bundledModels()
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .openAI, in: models)?.name, "gpt-6-astra")
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-3.8-flash")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-4-argon")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .deepSeek, in: models)?.name, "deepseek-flash")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .anthropic, in: models)?.name, "claude-opus-5-5")
         // Ollama models are discovered from the local server, not the catalog.
@@ -51,7 +51,7 @@ final class AIModelCatalogTest: XCTestCase {
     func testAlternateModelsFilterByVendor() throws {
         let models = try bundledModels()
         let anthropic = models.filter { $0.vendor == .anthropic }
-        XCTAssertEqual(anthropic.count, 12)
+        XCTAssertEqual(anthropic.count, 13)
         XCTAssertTrue(anthropic.allSatisfy { $0.vendor == .anthropic })
         XCTAssertTrue(models.filter { $0.vendor == .gemini }.allSatisfy { $0.vendor == .gemini })
         XCTAssertTrue(models.filter { $0.vendor == .openAI }.allSatisfy { $0.vendor == .openAI })
@@ -72,6 +72,11 @@ final class AIModelCatalogTest: XCTestCase {
         XCTAssertTrue(opus.features.contains(.functionCalling))
         XCTAssertTrue(opus.features.contains(.streaming))
         XCTAssertTrue(opus.recommended)
+
+        // Haiku 5.5, the economy model, rejects temperature too.
+        if let haiku = models.first(where: { $0.name == "claude-haiku-5-5" }) {
+            XCTAssertFalse(haiku.supportsTemperature)
+        }
 
         // A model that still accepts temperature defaults to true.
         if let sonnet = models.first(where: { $0.name == "claude-sonnet-4-6" }) {
@@ -126,9 +131,9 @@ final class AIModelCatalogTest: XCTestCase {
             XCTFail("claude-opus-4-8 missing from catalog")
             return
         }
-        XCTAssertEqual(opus.economyModelName, "claude-haiku-4-5")
+        XCTAssertEqual(opus.economyModelName, "claude-haiku-5-5")
         let economy = AIMetadata.economyModel(for: opus, in: models)
-        XCTAssertEqual(economy?.name, "claude-haiku-4-5")
+        XCTAssertEqual(economy?.name, "claude-haiku-5-5")
         // Transport (and auth) is preserved from the caller's model.
         XCTAssertEqual(economy?.url, opus.url)
         XCTAssertEqual(economy?.api, opus.api)

@@ -73,7 +73,7 @@ so older apps skip that entry and fall back to the highest one they can consume.
 ## Economy models
 
 A model entry may carry an optional `economyModel` naming a cheaper same-vendor
-model (e.g. `claude-opus-4-8` -> `claude-haiku-4-5`). It is for high-frequency,
+model (e.g. `claude-opus-4-8` -> `claude-haiku-5-5`). It is for high-frequency,
 low-stakes work where the primary model is overkill and too expensive to run
 repeatedly - specifically the orchestration screen-watch poller
 (`ScreenWatchPoller`), which asks a model every few seconds whether a session has

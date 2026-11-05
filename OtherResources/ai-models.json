@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "models": [
     {
       "name": "gpt-6-astra",
@@ -52,6 +52,37 @@
       "economyModel": "gpt-6-luna",
       "thinkingOffEffort": "low",
       "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-6.1-terra",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-6-luna",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
         "low",
         "medium",
         "high",
@@ -662,7 +693,7 @@
       ]
     },
     {
-      "name": "gemini-3.8-flash",
+      "name": "gemini-4-argon",
       "vendor": "gemini",
       "api": "gemini",
       "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
@@ -673,6 +704,19 @@
         "streaming"
       ],
       "recommended": true,
+      "economyModel": "gemini-3.5-flash-lite"
+    },
+    {
+      "name": "gemini-3.8-flash",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
       "economyModel": "gemini-3.5-flash-lite"
     },
     {
@@ -843,7 +887,7 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5",
+      "economyModel": "claude-haiku-5-5",
       "recommended": true
     },
     {
@@ -858,7 +902,7 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-sonnet-5-5",
@@ -872,7 +916,20 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
+    },
+    {
+      "name": "claude-haiku-5-5",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false
     },
     {
       "name": "claude-fable-5",
@@ -886,7 +943,7 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-opus-5",
@@ -900,7 +957,7 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-opus-4-8",
@@ -914,7 +971,7 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-opus-4-7",
@@ -928,7 +985,7 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-opus-4-6",
@@ -941,7 +998,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-sonnet-5",
@@ -955,7 +1012,7 @@
         "streaming"
       ],
       "supportsTemperature": false,
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-sonnet-4-6",
@@ -968,7 +1025,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-sonnet-4-5",
@@ -981,7 +1038,7 @@
         "functionCalling",
         "streaming"
       ],
-      "economyModel": "claude-haiku-4-5"
+      "economyModel": "claude-haiku-5-5"
     },
     {
       "name": "claude-haiku-4-5",
