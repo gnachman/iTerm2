@@ -311,6 +311,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewFloatingPaneMoveMouseUp:(NSEvent *)event;
 - (BOOL)textViewCanDockFloatingPane;
 - (void)textViewDockFloatingPane;
+- (BOOL)textViewCanFloatPane;
+- (void)textViewFloatPane;
 - (void)textViewRaiseFloatingPaneToFront:(BOOL)toFront;
 - (void)textViewFindOnPageLocationsDidChange;
 - (void)textViewFindOnPageSelectedResultDidChange;

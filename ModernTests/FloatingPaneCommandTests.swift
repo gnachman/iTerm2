@@ -294,7 +294,59 @@ final class FloatingPaneCommandTests: XCTestCase {
         XCTAssertEqual(tab.tiledSessions(), [tiled, float], "docked to the right of the tiled pane")
         XCTAssertTrue(tab.floatingPanes.isEmpty)
         XCTAssertTrue(tab.activeSession === float)
+        XCTAssertTrue(terminal.window?.firstResponder === float.mainResponder, "the docked pane has keyboard focus")
         XCTAssertTrue(float.view?.superview === tab.rootView)
+    }
+
+    /// Docking the active float must not activate another pane on the way: the others keep their
+    /// activity counters, so cmd-[ and cmd-] and the next dock target are what the user expects.
+    func testDockKeepsTheOtherPanesActivityCounters() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let back = fixture.addFloat(frame: floatFrame)
+        let front = fixture.addFloat(frame: floatFrame.offsetBy(dx: 40, dy: 40))
+        tab.setActiveSession(back)
+        tab.setActiveSession(front)
+        let counters = [tiled.activityCounter, back.activityCounter]
+
+        perform("dockFloatingPane:")
+
+        XCTAssertEqual(tab.tiledSessions(), [tiled, front])
+        XCTAssertEqual(tab.floatingSessions(), [back])
+        XCTAssertEqual([tiled.activityCounter, back.activityCounter], counters, "no other pane was activated in passing")
+        XCTAssertTrue(tab.activeSession === front)
+        XCTAssertTrue(terminal.window?.firstResponder === front.mainResponder)
+    }
+
+    /// A float can be docked while a tiled pane is maximized. The tab unmaximizes and both panes
+    /// share it, the reverse of floating a maximized pane.
+    func testDockUnmaximizesTheTab() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(tiled)
+        terminal.toggleMaximizeActivePane()
+        XCTAssertTrue(tab.hasMaximizedPane(), "test setup")
+        tab.setActiveSession(float)
+        XCTAssertTrue(isEnabled(NSSelectorFromString("dockFloatingPane:")))
+
+        perform("dockFloatingPane:")
+
+        XCTAssertFalse(tab.hasMaximizedPane())
+        XCTAssertEqual(tab.tiledSessions(), [tiled, float])
+        XCTAssertTrue(tab.floatingPanes.isEmpty)
+        XCTAssertTrue(tab.activeSession === float)
+        guard let container = tab.realRootView, let left = tiled.view, let right = float.view else {
+            XCTFail("No views")
+            return
+        }
+        container.layoutSubtreeIfNeeded()
+        XCTAssertLessThan(left.frame.width, container.bounds.width, "the maximized pane gave up room")
+        XCTAssertGreaterThan(right.frame.width, 0)
     }
 
     func testTheIsFloatingVariableFollowsTheSession() {
@@ -405,6 +457,249 @@ final class FloatingPaneCommandTests: XCTestCase {
         terminal.setSplitSelectionMode(true, excludingSession: tiled, move: false)
         XCTAssertFalse(pane(float).isHidden, "a float is a fair swap target")
         terminal.setSplitSelectionMode(false, excludingSession: tiled, move: false)
+    }
+
+    // MARK: - Move Session to Floating Pane
+
+    func testMoveSessionToFloatingPaneLiftsTheActiveTiledPaneIntoAFloat() {
+        guard let first = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(first, vertically: true)
+        tab.setActiveSession(second)
+        XCTAssertTrue(isEnabled(#selector(PseudoTerminal.moveSessionToFloatingPane(_:))))
+
+        terminal.moveSessionToFloatingPane(nil)
+
+        XCTAssertEqual(tab.tiledSessions(), [first])
+        XCTAssertEqual(tab.floatingSessions(), [second])
+        XCTAssertTrue(tab.activeSession === second)
+        XCTAssertTrue(pane(second).isDescendant(of: tab.realRootView), "the float is in the tab's container")
+        XCTAssertFalse(pane(second).isHidden)
+
+        // Sized and placed like a new float: the grid fits 80% of the tab and the frame matches it.
+        guard let metrics = FloatingPaneLayout.metrics(for: second), let container = tab.realRootView else {
+            XCTFail("No metrics")
+            return
+        }
+        let grid = FloatingPaneGrid(columns: Int(second.columns), rows: Int(second.rows))
+        let frame = pane(second).outlineFrame
+        XCTAssertEqual(frame.size, metrics.frameSize(for: grid))
+        XCTAssertLessThanOrEqual(frame.width, container.bounds.width * 0.8)
+        XCTAssertGreaterThan(frame.width, container.bounds.width * 0.8 - metrics.cellSize.width)
+        XCTAssertEqual(frame.midX, container.bounds.midX, accuracy: 1)
+
+        // The split view fills the gap on its next layout pass, as when a pane is closed.
+        container.layoutSubtreeIfNeeded()
+        XCTAssertEqual(first.view?.frame.width ?? 0, container.bounds.width, accuracy: 1, "the remaining pane fills the tab")
+    }
+
+    /// A maximized pane can be floated. The tab unmaximizes, the other pane fills it, and the float
+    /// sits over that.
+    func testMoveSessionToFloatingPaneUnmaximizesTheTab() {
+        guard let first = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(first, vertically: true)
+        tab.setActiveSession(second)
+        terminal.toggleMaximizeActivePane()
+        XCTAssertTrue(tab.hasMaximizedPane(), "test setup")
+        XCTAssertTrue(isEnabled(#selector(PseudoTerminal.moveSessionToFloatingPane(_:))))
+
+        terminal.moveSessionToFloatingPane(nil)
+
+        XCTAssertFalse(tab.hasMaximizedPane())
+        XCTAssertEqual(tab.tiledSessions(), [first])
+        XCTAssertEqual(tab.floatingSessions(), [second])
+        XCTAssertTrue(tab.activeSession === second)
+        guard let container = tab.realRootView, let view = first.view else {
+            XCTFail("No container")
+            return
+        }
+        // The split view fills the gap on its next layout pass, as when a pane is closed.
+        container.layoutSubtreeIfNeeded()
+        XCTAssertEqual(view.frame.width, container.bounds.width, accuracy: 1, "the remaining pane fills the tab")
+    }
+
+    func testMoveSessionToFloatingPaneIsDisabledForTheOnlyTiledPaneAndForAFloat() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        tab.setActiveSession(tiled)
+        XCTAssertFalse(isEnabled(#selector(PseudoTerminal.moveSessionToFloatingPane(_:))), "a native tab keeps a tiled pane")
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(float)
+        XCTAssertFalse(isEnabled(#selector(PseudoTerminal.moveSessionToFloatingPane(_:))), "already floating")
+        tab.setActiveSession(tiled)
+        XCTAssertFalse(isEnabled(#selector(PseudoTerminal.moveSessionToFloatingPane(_:))), "floats don't count as tiled panes left behind")
+    }
+
+    func testMoveSessionToFloatingPaneIsDisabledWhenLayoutIsLocked() {
+        guard let first = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(first, vertically: true)
+        tab.setActiveSession(second)
+        perform("toggleLayoutLocked:")
+        XCTAssertFalse(isEnabled(#selector(PseudoTerminal.moveSessionToFloatingPane(_:))))
+        perform("toggleLayoutLocked:")
+        XCTAssertTrue(isEnabled(#selector(PseudoTerminal.moveSessionToFloatingPane(_:))))
+    }
+
+    // MARK: - Select Next Floating Pane
+
+    /// From a tiled pane it goes to the front float. From a float it goes to the back float and
+    /// raises it, so repeating it visits every float.
+    func testSelectNextFloatingPaneCyclesThroughTheFloats() {
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let back = fixture.addFloat(frame: floatFrame)
+        let front = fixture.addFloat(frame: NSRect(x: 300, y: 250, width: 200, height: 150))
+        XCTAssertEqual(tab.floatingSessions(), [back, front], "test setup: back to front")
+        tab.setActiveSession(tiled)
+        XCTAssertTrue(isEnabled(NSSelectorFromString("selectNextFloatingPane:")))
+
+        perform("selectNextFloatingPane:")
+        XCTAssertTrue(tab.activeSession === front, "the front float comes first")
+
+        perform("selectNextFloatingPane:")
+        XCTAssertTrue(tab.activeSession === back)
+        XCTAssertEqual(tab.floatingSessions(), [front, back], "the visited float is raised")
+
+        perform("selectNextFloatingPane:")
+        XCTAssertTrue(tab.activeSession === front)
+    }
+
+    func testSelectNextFloatingPaneIsDisabledWithNothingElseToSelect() {
+        XCTAssertFalse(isEnabled(NSSelectorFromString("selectNextFloatingPane:")), "no floats")
+        let float = fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(float)
+        XCTAssertFalse(isEnabled(NSSelectorFromString("selectNextFloatingPane:")), "the only float is active")
+    }
+
+    /// The context menu's item floats its own pane right away and is off when a tab would be left
+    /// with no split pane.
+    func testTheContextMenuOffersMoveSessionToFloatingPane() {
+        guard let first = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        XCTAssertNil(item(first.textview?.titleBarMenu(), "moveSessionToFloatingPaneFromContextMenu:"),
+                     "the only split pane stays, so its menu doesn't offer it")
+        let second = fixture.split(first, vertically: true)
+        tab.setActiveSession(first)
+        let menu = second.textview?.titleBarMenu()
+        XCTAssertTrue(isEnabled(item(menu, "moveSessionToFloatingPaneFromContextMenu:")))
+
+        // The menu acts on its own pane, not the active one, and the float takes focus as a new pane
+        // would.
+        choose(item(menu, "moveSessionToFloatingPaneFromContextMenu:"))
+        XCTAssertEqual(tab.tiledSessions(), [first])
+        XCTAssertEqual(tab.floatingSessions(), [second])
+        XCTAssertTrue(tab.activeSession === second)
+        XCTAssertTrue(terminal.window?.firstResponder === second.mainResponder)
+        XCTAssertNil(item(second.textview?.titleBarMenu(), "moveSessionToFloatingPaneFromContextMenu:"),
+                     "a float's menu doesn't offer to float it again")
+    }
+
+    /// Removing the pane from the tiled layout must not activate a neighbor on the way, since that
+    /// would make it the pane used most recently, which is where a later dock goes.
+    func testMoveSessionToFloatingPaneKeepsTheMostRecentlyUsedTiledPane() {
+        guard let first = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(first, vertically: true)
+        let third = fixture.split(second, vertically: true)
+        XCTAssertEqual(tab.tiledSessions(), [first, second, third], "test setup")
+        tab.setActiveSession(first)
+        tab.setActiveSession(third)
+        tab.setActiveSession(second)
+        let counters = [first.activityCounter, third.activityCounter]
+
+        terminal.moveSessionToFloatingPane(nil)
+
+        XCTAssertTrue(tab.activeSession === second)
+        XCTAssertEqual([first.activityCounter, third.activityCounter], counters, "no other pane was activated in passing")
+        XCTAssertTrue(tab.mostRecentlyActiveTiledSession() === third)
+        XCTAssertTrue(terminal.window?.firstResponder === second.mainResponder, "the float has keyboard focus")
+
+        perform("dockFloatingPane:")
+        XCTAssertEqual(tab.tiledSessions(), [first, third, second], "docked next to the pane used most recently")
+    }
+
+    /// With focus follows mouse a floated pane that was not active does not take focus, since the
+    /// pointer decides, as for a new split. The user asked to see it as a float all the same, so it
+    /// is not hidden along with the other floats.
+    func testMoveSessionToFloatingPaneShowsTheFloatEvenWhenItDoesNotTakeFocus() {
+        let savedFocusFollowsMouse = iTermPreferences.bool(forKey: kPreferenceKeyFocusFollowsMouse)
+        let savedFocusNewPane = iTermAdvancedSettingsModel.focusNewSplitPaneWithFocusFollowsMouse()
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyFocusFollowsMouse)
+        iTermAdvancedSettingsModel.setFocusNewSplitPaneWithFocusFollowsMouse(false)
+        defer {
+            iTermPreferences.setBool(savedFocusFollowsMouse, forKey: kPreferenceKeyFocusFollowsMouse)
+            iTermAdvancedSettingsModel.setFocusNewSplitPaneWithFocusFollowsMouse(savedFocusNewPane)
+        }
+        guard let first = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        let second = fixture.split(first, vertically: true)
+        fixture.addFloat(frame: floatFrame)
+        tab.setActiveSession(first)
+        tab.floatingPanesHidden = true
+
+        choose(item(second.textview?.titleBarMenu(), "moveSessionToFloatingPaneFromContextMenu:"))
+
+        XCTAssertTrue(tab.floatingSessions()?.last === second, "a float, in front")
+        XCTAssertTrue(tab.activeSession === first, "the pointer decides where focus goes")
+        XCTAssertFalse(tab.floatingPanesHidden)
+        XCTAssertFalse(pane(second).isHidden)
+    }
+
+    /// A float tmux hides (while its window is zoomed) would not show when activated, so it is
+    /// skipped, and the command is off when every float is hidden that way.
+    func testSelectNextFloatingPaneSkipsFloatsHiddenByTmux() {
+        let back = fixture.addFloat(frame: floatFrame)
+        let front = fixture.addFloat(frame: floatFrame.offsetBy(dx: 40, dy: 40))
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        tab.setActiveSession(tiled)
+        pane(front).isHiddenByTmux = true
+
+        terminal.selectNextFloatingPane(nil)
+        XCTAssertTrue(tab.activeSession === back, "the frontmost visible float")
+        XCTAssertFalse(isEnabled(#selector(PseudoTerminal.selectNextFloatingPane(_:))), "no other visible float")
+
+        pane(back).isHiddenByTmux = true
+        tab.setActiveSession(tiled)
+        XCTAssertFalse(isEnabled(#selector(PseudoTerminal.selectNextFloatingPane(_:))))
+    }
+
+    /// Like Next Pane, it can land on a hidden float, and focus entering a float shows the floats.
+    func testSelectNextFloatingPaneShowsHiddenFloats() {
+        let float = fixture.addFloat(frame: floatFrame)
+        guard let tiled = tab.tiledSessions()?.first else {
+            XCTFail("No tiled session")
+            return
+        }
+        tab.setActiveSession(tiled)
+        tab.floatingPanesHidden = true
+        XCTAssertTrue(isEnabled(#selector(PseudoTerminal.selectNextFloatingPane(_:))))
+
+        terminal.selectNextFloatingPane(nil)
+
+        XCTAssertTrue(tab.activeSession === float)
+        XCTAssertFalse(tab.floatingPanesHidden)
+        XCTAssertFalse(pane(float).isHidden)
     }
 
     // MARK: - Swap

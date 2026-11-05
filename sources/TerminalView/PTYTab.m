@@ -1065,6 +1065,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self setActiveSession:session updateActivityCounter:YES];
 }
 
+- (void)setActiveSessionRestoringFocus:(PTYSession *)session {
+    const BOOL reinstalled = (session == activeSession_);
+    [self setActiveSession:session];
+    if (reinstalled && [realParentWindow_ currentTab] == self) {
+        [[realParentWindow_ window] makeFirstResponder:[session mainResponder]];
+    }
+}
+
 - (void)setActiveSession:(PTYSession *)session updateActivityCounter:(BOOL)updateActivityCounter {
     PtyLog(@"PTYTab setActiveSession:%p", session);
     if (activeSession_ &&  activeSession_ != session && [activeSession_ dvr]) {
@@ -1881,12 +1889,34 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return view != nil && (view == root_ || [self floatingPaneWithRoot:view] != nil);
 }
 
-- (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame {
-    iTermFloatingPaneView *pane = [self installFloatingSession:session outlineFrame:frame];
-    // The grid is canonical; derive it from the requested frame now that the session has its title
-    // bar, then the frame from the grid.
-    [iTermFloatingPaneLayout fitFloatingPane:pane session:session toOutlineFrame:frame];
+- (void)didInstallFloatingPane:(iTermFloatingPaneView *)pane
+                       session:(PTYSession *)session
+                      activate:(BOOL)activate {
     [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
+    PTYSession *previous = activeSession_;
+    if (activate) {
+        // Rechecks blur, and dims the others if the active session changed.
+        [self setActiveSessionRestoringFocus:session];
+    } else {
+        [self recheckBlur];
+    }
+    if (previous == activeSession_) {
+        [realParentWindow_ setDimmingForSessions];
+    }
+    [session.view updateDim];
+}
+
+- (iTermFloatingPaneView *)installNewlyPlacedFloatingSession:(PTYSession *)session {
+    iTermFloatingPaneView *pane = [self installFloatingSessionAwaitingPlacement:session];
+    [iTermFloatingPaneLayout placeNewFloatingPane:pane session:session];
+    return pane;
+}
+
+- (iTermFloatingPaneView *)installFloatingSessionAwaitingPlacement:(PTYSession *)session {
+    // Any size: the placement sets the frame from the float's grid once the session's view is in
+    // the tab and has its title bar.
+    static const CGFloat provisionalSize = 200;
+    return [self installFloatingSession:session outlineFrame:NSMakeRect(0, 0, provisionalSize, provisionalSize)];
 }
 
 - (iTermFloatingPaneView *)installFloatingSession:(PTYSession *)session outlineFrame:(NSRect)frame {
@@ -2237,6 +2267,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (BOOL)tmuxAllowsChangingFloatingPanes {
     return !self.isTmuxTab || self.tmuxController.supportsFloatingPanes;
+}
+
+- (BOOL)tmuxAllowsChangingWhichPanesFloat {
+    return !self.isTmuxTab || ![self hasMaximizedPane];
 }
 
 - (BOOL)floatingPaneCanResize:(iTermFloatingPaneView *)pane {
@@ -2993,6 +3027,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)removeSession:(PTYSession*)aSession {
+    [self removeSession:aSession activatingSuccessor:YES];
+}
+
+- (void)removeSessionForReinstallation:(PTYSession *)aSession {
+    [self removeSession:aSession activatingSuccessor:NO];
+}
+
+- (void)removeSession:(PTYSession *)aSession activatingSuccessor:(BOOL)activatingSuccessor {
     SessionView *theView = aSession.view;
 
     // Unmaximize if the session's view is in idMap_ (the normal maximized case,
@@ -3009,19 +3051,33 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self unmaximize];
     }
     PtyLog(@"PTYTab removeSession:%p", aSession);
-    // Grab the nearest neighbor (arbitrarily, the subview before if there is on or after if not)
-    // to make its earliest descendent that is a session active.
-    SessionView *nearestNeighbor = [self nearestNeighborOfSession:aSession];
+    const BOOL wasActive = (aSession == activeSession_);
+    // The successor is chosen before the removal, which changes the layout it is read from: the
+    // nearest neighbor (arbitrarily, the subview before if there is one or after if not), whose
+    // earliest descendant that is a session becomes active.
+    SessionView *nearestNeighbor = nil;
     PTYSession *floatingSuccessor = nil;
-    if (aSession == activeSession_ && [self sessionIsFloating:aSession]) {
-        floatingSuccessor = [self successorOfRemovedFloatingSession:aSession];
+    if (wasActive && activatingSuccessor) {
+        nearestNeighbor = [self nearestNeighborOfSession:aSession];
+        if ([self sessionIsFloating:aSession]) {
+            floatingSuccessor = [self successorOfRemovedFloatingSession:aSession];
+        }
     }
 
     // Remove the session.
     [self _recursiveRemoveView:[aSession view]];
     PTYSession *promoted = [self promoteFrontFloatingPaneIfNeeded];
 
-    if (aSession == activeSession_) {
+    [self.viewToSessionMap removeObjectForKey:theView];
+    if (!activatingSuccessor) {
+        // The session is about to be put back, so the active session stays as it is, this one
+        // included, and nothing is told about a tab that is between two states: the install that
+        // follows renumbers the panes, updates their titles and blur, and tells the window. Only
+        // the window's cursor rects are reset now, as below, since a divider may just have gone.
+        [[realParentWindow_ window] resetCursorRects];
+        return;
+    }
+    if (wasActive) {
         [self setActiveSession:(floatingSuccessor ?:
                                 [self sessionForSessionView:nearestNeighbor] ?:
                                 promoted ?:
@@ -3034,8 +3090,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self fitSubviewsToRoot];
     }
     [self numberOfSessionsDidChange];
-
-    [self.viewToSessionMap removeObjectForKey:theView];
 }
 
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize {
@@ -4999,8 +5053,7 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                                                     desiredGrid:[NSDictionary castFrom:record[FLOATING_PANE_DESIRED_GRID_SIZE]]
                                     visualFrameBeforeMaximizing:[PTYTab floatingPaneFrameBeforeMaximizingInRecord:record]];
     [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
-    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
-    [self setActiveSession:session];
+    [self didInstallFloatingPane:pane session:session activate:YES];
 }
 
 // Restores the floats recorded in a tab arrangement. Returns the active session if it is one of
@@ -5078,6 +5131,8 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                                     visualFrameBeforeMaximizing:[PTYTab floatingPaneFrameBeforeMaximizingInRecord:record]];
     // Applies the restored placement now if the tab has a size, else when it gets one.
     [iTermFloatingPaneLayout refitFloatingPane:pane session:session];
+    // Only the underlay: the tab is still being built, and blur and dimming are settled once the
+    // caller activates the restored active session.
     [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:session];
     if (activeOut) {
         *activeOut = maybeActive;
@@ -7119,7 +7174,8 @@ typedef struct {
         if (!session) {
             session = [adopted objectPassingTest:isPane];
             if (session) {
-                [self installFloatingSession:session outlineFrame:NSMakeRect(0, 0, 200, 200)];
+                // placeTmuxFloatingPanes below sets its frame.
+                [self installFloatingSessionAwaitingPlacement:session];
             }
         }
         if (!session) {

@@ -11884,11 +11884,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     [self fitTabsToWindow];
 
-    if (targetSession == [[self currentTab] activeSession]) {
-        if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
-            [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]) {
-            [[self currentTab] setActiveSession:newSession];
-        }
+    if (targetSession == [[self currentTab] activeSession] && [self newPaneTakesFocus]) {
+        [[self currentTab] setActiveSession:newSession];
     }
     [tab recheckBlur];
     [tab numberOfSessionsDidChange];
@@ -12214,15 +12211,21 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 // A synthetic session (instant replay, filter, zoom) is swapped in for the float's own, so the
 // float cannot leave its wrapper until it ends.
-- (BOOL)canDockFloatingSession:(PTYSession *)session {
-    PTYTab *tab = [self tabForSession:session];
+- (BOOL)sessionMayChangeForm:(PTYSession *)session inTab:(PTYTab *)tab {
     return (session != nil &&
-            [tab floatingPaneForSession:session] != nil &&
-            [tab tmuxAllowsChangingFloatingPanes] &&
+            tab != nil &&
             !_layoutLocked &&
             !session.locked &&
             session.liveSession == nil &&
-            ![self inInstantReplay]);
+            ![self inInstantReplay] &&
+            [tab tmuxAllowsChangingFloatingPanes] &&
+            [tab tmuxAllowsChangingWhichPanesFloat]);
+}
+
+- (BOOL)canDockFloatingSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    return ([self sessionMayChangeForm:session inTab:tab] &&
+            [tab floatingPaneForSession:session] != nil);
 }
 
 // Moves the active float into the tiled layout.
@@ -12236,6 +12239,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return;
     }
     PTYTab *tab = [self tabForSession:session];
+    DLog(@"Dock %@ (tmux pane %d) in %@", session, session.tmuxPane, tab);
     if (tab.isTmuxTab) {
         // tmux decides where it goes.
         [tab.tmuxController tileFloatingPane:session.tmuxPane];
@@ -12245,17 +12249,112 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (!target) {
         return;
     }
-    DLog(@"Dock %@ next to %@", session, target);
+    DLog(@"Dock next to %@", target);
+    const BOOL wasActive = (tab.activeSession == session);
     [[session retain] autorelease];
     [[session.view retain] autorelease];
-    [tab removeSession:session];
+    [tab removeSessionForReinstallation:session];
     [self splitVertically:YES
                    before:NO
             addingSession:session
             targetSession:target
              performSetup:NO];
     [tab fitSessionToCurrentViewSize:session];
-    [tab updateSessionOrdinals];
+    if ([self reinstalledSessionTakesFocus:wasActive]) {
+        [tab setActiveSessionRestoringFocus:session];
+    }
+}
+
+// A tiled pane must be left behind, natively and in tmux, although tmux itself allows a window with
+// only floats. A workgroup member must not become a float, the rule a drop or a swap that would
+// float one also follows; floats cannot enter a workgroup, so docking needs no such check.
+- (BOOL)canFloatTiledSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    return ([self sessionMayChangeForm:session inTab:tab] &&
+            ![tab sessionIsFloating:session] &&
+            session.workgroupInstance == nil &&
+            tab.tiledSessions.count >= 2 &&
+            (!tab.isTmuxTab || session.isTmuxClient));
+}
+
+// Whether a pane the user just made takes focus. Not with focus follows mouse, where the pointer
+// decides, unless the advanced setting says so.
+- (BOOL)newPaneTakesFocus {
+    return (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
+            [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]);
+}
+
+// Whether a pane that changed form, from tiled to float or back, has focus afterward. It keeps focus
+// if it had it, and otherwise takes it by the rule for a new pane. The same rule for both directions.
+- (BOOL)reinstalledSessionTakesFocus:(BOOL)wasActive {
+    return wasActive || [self newPaneTakesFocus];
+}
+
+// Makes the active tiled pane a float in its own tab.
+- (IBAction)moveSessionToFloatingPane:(id)sender {
+    [self floatTiledSession:self.currentSession];
+}
+
+// Lifts a tiled session out of the layout into a new float, sized and placed like a new one.
+- (void)floatTiledSession:(PTYSession *)session {
+    if (![self canFloatTiledSession:session]) {
+        return;
+    }
+    PTYTab *tab = [self tabForSession:session];
+    DLog(@"Float %@ (tmux pane %d) in %@", session, session.tmuxPane, tab);
+    // The user asked to see this pane as a float, whether or not it takes focus.
+    tab.floatingPanesHidden = NO;
+    if (tab.isTmuxTab) {
+        // tmux decides where it goes.
+        [tab.tmuxController floatTiledPane:session.tmuxPane];
+        return;
+    }
+    // The relayout must not let the pane under a still pointer take focus. Docking needs no such
+    // call, since the split it goes through makes it.
+    [[iTermPaneFocusFollowsMouse shared] freeze];
+    const BOOL wasActive = (tab.activeSession == session);
+    [[session retain] autorelease];
+    [[session.view retain] autorelease];
+    // This unmaximizes the tab if it was maximized.
+    [tab removeSessionForReinstallation:session];
+    iTermFloatingPaneView *pane = [tab installNewlyPlacedFloatingSession:session];
+    [tab didInstallFloatingPane:pane session:session activate:[self reinstalledSessionTakesFocus:wasActive]];
+}
+
+// The float to activate next: the frontmost when a tiled pane is active, otherwise the one after the
+// active float in back-to-front order, wrapping around. The chosen float is raised where z-order can
+// change, which keeps the active float at the front; where it can't (tmux 3.7) the order is fixed and
+// the index still visits every float. Nil if there is no other. Floats hidden with the toggle count:
+// like Next Pane and cmd-opt-N, this can land on one, and focus entering a float shows the floats.
+// Floats tmux hides (while its window is zoomed) don't, since activating one would not show it.
+- (PTYSession *)nextFloatingSessionToSelect {
+    PTYTab *tab = self.currentTab;
+    if (tab == nil) {
+        return nil;
+    }
+    NSArray<PTYSession *> *floats = [tab.floatingSessions filteredArrayUsingBlock:^BOOL(PTYSession *session) {
+        return ![tab floatingPaneForSession:session].isHiddenByTmux;
+    }];
+    if (floats.count == 0) {
+        return nil;
+    }
+    PTYSession *current = self.currentSession;
+    const NSUInteger index = [floats indexOfObject:current];
+    PTYSession *session = (index == NSNotFound) ? floats.lastObject : floats[(index + 1) % floats.count];
+    return session == current ? nil : session;
+}
+
+- (IBAction)selectNextFloatingPane:(id)sender {
+    PTYSession *session = [self nextFloatingSessionToSelect];
+    if (!session) {
+        return;
+    }
+    // Raise it, where z-order can change, so the active float is on top. Plain activation: a float
+    // that shows while a pane is maximized stays visible, natively and in tmux (a float tmux shows
+    // over its zoom), and setActiveSessionPreservingMaximization: would unzoom and then zoom the
+    // float itself.
+    PTYTab *tab = self.currentTab;
+    [tab bringFloatingPaneToFront:[tab floatingPaneForSession:session]];
     [tab setActiveSession:session];
 }
 
@@ -12349,20 +12448,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                             inTab:(PTYTab *)tab
                     parentSession:(PTYSession *)parentSession {
     [self setupSession:newSession withSize:nil];
-    // The real frame comes from the float's grid, which is computed once the session has a view.
-    [tab addFloatingSession:newSession frame:NSMakeRect(0, 0, 200, 200)];
-    iTermFloatingPaneView *pane = [tab floatingPaneForSession:newSession];
-    [iTermFloatingPaneLayout placeNewFloatingPane:pane session:newSession];
-    // The same rule as for a new split.
-    if (![iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] ||
-        [iTermAdvancedSettingsModel focusNewSplitPaneWithFocusFollowsMouse]) {
-        [tab setActiveSession:newSession];
-    }
-    [tab recheckBlur];
-    [self setDimmingForSessions];
-    for (PTYSession *session in tab.sessions) {
-        [session.view updateDim];
-    }
+    iTermFloatingPaneView *pane = [tab installNewlyPlacedFloatingSession:newSession];
+    [tab didInstallFloatingPane:pane session:newSession activate:[self newPaneTakesFocus]];
     if ([[ProfileModel sessionsInstance] bookmarkWithGuid:newSession.profile[KEY_GUID]] &&
         parentSession.isDivorced) {
         [newSession inheritDivorceFrom:parentSession
@@ -14868,6 +14955,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
         if (action == @selector(dockFloatingPane:)) {
             return [self canDockFloatingSession:self.currentSession];
+        }
+        if (action == @selector(moveSessionToFloatingPane:)) {
+            return [self canFloatTiledSession:self.currentSession];
+        }
+        if (action == @selector(selectNextFloatingPane:)) {
+            return [self nextFloatingSessionToSelect] != nil;
         }
         if (action == @selector(moveFloatingPaneUp:) ||
             action == @selector(moveFloatingPaneDown:) ||

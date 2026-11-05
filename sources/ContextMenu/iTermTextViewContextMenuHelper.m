@@ -311,6 +311,9 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     if ([item action] == @selector(dockFloatingPaneFromContextMenu:)) {
         return [self.delegate contextMenuCanDockFloatingPane:self];
     }
+    if ([item action] == @selector(moveSessionToFloatingPaneFromContextMenu:)) {
+        return [self.delegate contextMenuCanFloatPane:self];
+    }
     if ([item action] == @selector(bringFloatingPaneToFrontFromContextMenu:) ||
         [item action] == @selector(sendFloatingPaneToBackFromContextMenu:)) {
         return YES;
@@ -615,6 +618,11 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     add(NSLocalizedStringWithDefaultValue(@"ContextMenu.MoveSessionToSplitPane", nil, [NSBundle mainBundle], @"Move Session to Split Pane", @"Context menu item to move the session to a split pane"), @selector(movePane:));
+    // Like Move Session to Tab, this appears only where it applies: not for a float, not for the
+    // only tiled pane, and not where the tab cannot take a float.
+    if ([self.delegate contextMenuCanFloatPane:self]) {
+        add(NSLocalizedStringWithDefaultValue(@"ContextMenu.MoveSessionToFloatingPane", nil, [NSBundle mainBundle], @"Move Session to Floating Pane", @"Context menu item that lifts the session out of the tab’s split pane layout and makes it a floating pane, which floats over the split panes"), @selector(moveSessionToFloatingPaneFromContextMenu:));
+    }
     if ([self.delegate contextMenuCurrentTabHasMultipleSessions:self]) {
         NSMenuItem *item = [theMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ContextMenu.MoveSessionToTab", nil, [NSBundle mainBundle], @"Move Session to Tab", @"Context menu item to move the session to a tab")
                                               action:@selector(moveSessionToTab:)
@@ -1378,6 +1386,10 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
 
 - (void)dockFloatingPaneFromContextMenu:(id)sender {
     [self.delegate contextMenuDockFloatingPane:self];
+}
+
+- (void)moveSessionToFloatingPaneFromContextMenu:(id)sender {
+    [self.delegate contextMenuFloatPane:self];
 }
 
 - (void)bringFloatingPaneToFrontFromContextMenu:(id)sender {

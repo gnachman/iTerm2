@@ -306,12 +306,21 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 - (BOOL)sessionIsFloating:(PTYSession *)session;
 - (iTermFloatingPaneView *)floatingPaneForSession:(PTYSession *)session;
 
-// Adds an already set up session as a floating pane in front of the others. frame is the float's
-// frame in the tab's container, outline included. The float gets the largest grid that fits in it,
-// keeping its top left, and its frame then follows from that grid.
-- (void)addFloatingSession:(PTYSession *)session frame:(NSRect)frame;
-// Adds an existing session's view as a float with the given outline frame, keeping its grid.
+// Adds an existing session's view as a float sized and placed like a new one: the largest grid
+// that fits 80% of the tab, centered. The frame follows from the grid.
+- (iTermFloatingPaneView *)installNewlyPlacedFloatingSession:(PTYSession *)session;
+// Adds an existing session's view as a float with the given outline frame, keeping its grid. A
+// route that adds a float to a live tab finishes with didInstallFloatingPane:session:activate: once
+// the float is placed. Restoring an arrangement and adopting tmux's floats do not: their tab is
+// still being built, and the underlays, blur and dimming are settled once the layout is complete.
 - (iTermFloatingPaneView *)installFloatingSession:(PTYSession *)session outlineFrame:(NSRect)frame;
+// The same, for a caller that places the float right after, which sets its frame from its grid.
+- (iTermFloatingPaneView *)installFloatingSessionAwaitingPlacement:(PTYSession *)session;
+// The common tail of every route that adds a float to a live tab, once its pane is installed and
+// placed: the underlay, focus, blur and dimming.
+- (void)didInstallFloatingPane:(iTermFloatingPaneView *)pane
+                       session:(PTYSession *)session
+                      activate:(BOOL)activate;
 
 // Hides or shows every floating pane in the tab. Their sessions keep running. Activating a float
 // shows them again.
@@ -372,6 +381,16 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 - (PTYSession *)splitTargetForSession:(PTYSession *)session;
 
 - (void)removeSession:(PTYSession *)aSession;
+// Removes a session the caller puts back in this tab at once, as a float or as a tiled pane. The
+// active session is unchanged, even if it is this one, so no successor is activated, no other
+// pane's activity counter changes, and the pane used most recently stays the one the user last
+// worked in. Nothing is notified of the removal: the install that follows renumbers the panes and
+// tells the window, once the tab is consistent again. Once the session is back, the caller makes it
+// active with setActiveSessionRestoringFocus: if it should be.
+- (void)removeSessionForReinstallation:(PTYSession *)aSession;
+// Makes a session active. If it already was, as after removeSessionForReinstallation:, its view
+// leaving the window took keyboard focus from it, which this gives back.
+- (void)setActiveSessionRestoringFocus:(PTYSession *)session;
 
 // Anyone changing the number of sessions must call this after the sessions
 // are "well formed".
@@ -397,6 +416,12 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
 // tmux changed which panes have no border (pane-border-lines none). Borderless floats hide their
 // title bars.
 - (void)tmuxPaneBordersDidChange;
+
+// Whether a tiled pane can become a float or a float a tiled pane, as far as tmux is concerned. It
+// refuses both while the window is zoomed (cmd-break-pane.c, cmd-join-pane.c). Raising, moving and
+// resizing a float are allowed then (resizing unzooms), so this is separate from
+// tmuxAllowsChangingFloatingPanes. Always YES natively.
+- (BOOL)tmuxAllowsChangingWhichPanesFloat;
 
 // Whether the floats can be moved, resized, raised or docked. tmux 3.7 has floating panes but no
 // commands to change them, so they only show.

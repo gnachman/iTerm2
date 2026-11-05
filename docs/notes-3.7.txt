@@ -36,13 +36,17 @@ Major New Features:
   bar to move it and its edges to resize it. Hold
   Control while dragging to dock it into the
   split panes or move it to another tab or
-  window. Window > Floating Panes can raise,
-  dock, move and hide them. They are saved with
-  window arrangements and can be controlled from
-  the Python API. tmux integration shows tmux’s
-  own floating panes (tmux 3.7 and later; moving,
-  resizing, raising and docking them needs tmux
-  3.8).
+  window. Session > Move Session > Move Session
+  to Floating Pane turns a split pane into a
+  floating pane, and a pane’s context menu has
+  it too. Window > Split Pane > Floating Panes
+  can cycle among them, raise, dock, move and
+  hide them. They are saved with window
+  arrangements and can be controlled from the
+  Python API. tmux integration shows tmux’s own
+  floating panes (tmux 3.7 and later; moving,
+  resizing, raising, floating and docking them
+  needs tmux 3.8).
 
 New Features:
 - iTerm2 > Suppressed Alerts lists most alerts

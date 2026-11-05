@@ -3961,11 +3961,34 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
 }
 
 - (void)tileFloatingPane:(int)wp {
-    // join-pane with the float as its own destination tiles it. tmux refuses while zoomed.
+    // join-pane with the float as its own destination tiles it. The menu item is disabled while the
+    // window is zoomed, so what can still go wrong is a refusal, such as a modal pane.
     [gateway_ sendCommand:[NSString stringWithFormat:@"join-pane -s \"%%%d\" -t \"%%%d\"", wp, wp]
-           responseTarget:nil
-         responseSelector:nil
-           responseObject:nil
+           responseTarget:self
+         responseSelector:@selector(didChangeWhetherPaneFloats:request:)
+           responseObject:[NSString stringWithFormat:@"tile float %%%d", wp]
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+// The response to tiling a float or floating a tiled pane. Either is sent on its own, so the gateway
+// never fails it because an earlier command in its list failed, and a dropped connection drops the
+// queue without calling back. A nil response is tmux's error, so the user hears a beep, since
+// nothing else would change, and the always-on log says what was asked.
+- (void)didChangeWhetherPaneFloats:(NSString *)response request:(NSString *)request {
+    if (!response) {
+        RLog(@"tmux refused to %@", request);
+        NSBeep();
+    }
+}
+
+- (void)floatTiledPane:(int)wp {
+    // tmux places and sizes the float. A layout change follows. The menu item is only enabled for a
+    // server with floating panes and disabled while the window is zoomed, so what can still go wrong
+    // is a refusal: the pane is modal, or there is no room.
+    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -W -s \"%%%d\"", wp]
+           responseTarget:self
+         responseSelector:@selector(didChangeWhetherPaneFloats:request:)
+           responseObject:[NSString stringWithFormat:@"float pane %%%d", wp]
                     flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 

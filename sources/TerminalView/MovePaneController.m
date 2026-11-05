@@ -456,8 +456,8 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
         DLog(@"tmux floats are not supported");
         return NO;
     }
-    if (destinationTab.realParentWindow.layoutLocked || movingSession.liveSession) {
-        DLog(@"Layout locked or showing a synthetic session");
+    if (![destinationTab.realParentWindow sessionMayChangeForm:movingSession inTab:destinationTab]) {
+        DLog(@"Layout locked, pane locked, showing a synthetic session, or in instant replay");
         return NO;
     }
     if (movingSession.workgroupInstance) {
@@ -495,21 +495,15 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     if ([sourceTab hasMaximizedPane]) {
         [sourceTab unmaximize];
     }
+    // Removal activates a successor in the source tab and renumbers its panes.
     [sourceTab removeSession:movingSession];
     if (sourceTab.sessions.count == 0) {
         [[sourceTab realParentWindow] closeTab:sourceTab];
-    } else {
-        [sourceTab numberOfSessionsDidChange];
-        [sourceTab updateSessionOrdinals];
     }
 
-    iTermFloatingPaneView *pane = [destinationTab installFloatingSession:movingSession
-                                                            outlineFrame:NSMakeRect(0, 0, 100, 100)];
+    iTermFloatingPaneView *pane = [destinationTab installFloatingSessionAwaitingPlacement:movingSession];
     [iTermFloatingPaneLayout placeFloatingPane:pane session:movingSession visualTopLeft:visualTopLeft columns:columns rows:rows];
-    [iTermFloatingPaneLayout updateUnderlayOfFloatingPane:pane session:movingSession];
-    [destinationTab setActiveSession:movingSession];
-    [destinationTab updateSessionOrdinals];
-    [destinationTab recheckBlur];
+    [destinationTab didInstallFloatingPane:pane session:movingSession activate:YES];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
     [movingSession didMoveSession];
     return YES;

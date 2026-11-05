@@ -15981,6 +15981,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [[_delegate realParentWindow] dockFloatingSession:self];
 }
 
+- (BOOL)textViewCanFloatPane {
+    return [[_delegate realParentWindow] canFloatTiledSession:self];
+}
+
+- (void)textViewFloatPane {
+    [[_delegate realParentWindow] floatTiledSession:self];
+}
+
 - (void)textViewRaiseFloatingPaneToFront:(BOOL)toFront {
     if ([_delegate respondsToSelector:@selector(sessionRaiseFloatingPane:toFront:)]) {
         [_delegate sessionRaiseFloatingPane:self toFront:toFront];

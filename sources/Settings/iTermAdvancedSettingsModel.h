@@ -272,6 +272,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fixMouseWheel;
 + (NSString *)fontsForGenerousRounding;
 + (BOOL)focusNewSplitPaneWithFocusFollowsMouse;
++ (void)setFocusNewSplitPaneWithFocusFollowsMouse:(BOOL)value;
 + (BOOL)focusReportingEnabled;
 + (BOOL)forceAntialiasingOnRetina;
 + (BOOL)fontChangeAffectsBroadcastingSessions;

@@ -107,6 +107,16 @@
 - (BOOL)canDockFloatingSession:(PTYSession *)session;
 - (void)dockFloatingSession:(PTYSession *)session;
 
+// Whether a tiled pane can become a floating pane in its tab now, and doing it.
+- (BOOL)canFloatTiledSession:(PTYSession *)session;
+- (void)floatTiledSession:(PTYSession *)session;
+
+// What every change of a pane's form, tiled to float or back, requires of the session, the tab and
+// this window: the layout is not locked, the pane is not locked, it shows its own session and not a
+// synthetic one, instant replay is off, and tmux allows the change. Direction-specific checks are
+// the caller's.
+- (BOOL)sessionMayChangeForm:(PTYSession *)session inTab:(PTYTab *)tab;
+
 // Is the toolbelt visible for this window?
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;
 @property(nonatomic, readonly) NSArray *tabs;

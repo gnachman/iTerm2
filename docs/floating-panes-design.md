@@ -65,7 +65,7 @@ The main conclusions:
 | Older builds | Saved arrangements need not stay readable by older builds. Downgrading is not supported. |
 | Splits inside a float | Not supported natively. Split commands are disabled when a native float is active. The container and schema leave room to add them later. |
 | Split aimed at a float | A split that reaches a native float from a caller that cannot be disabled goes to the tab's most recently active tiled pane instead. |
-| Tiled to float conversion | No direct command. “New float” and “dock to tiled” cover it, and swapping a tiled pane with a float exchanges their roles. |
+| Tiled to float conversion | Originally no direct command. Later added: “Move Session to Floating Pane” (Session > Move Session, and the pane's context menu) lifts the active tiled pane into a float in its own tab, placed like a new float, as the reverse of “Dock Floating Pane”. Another tiled pane must stay behind, natively and in tmux (tmux itself allows a floats-only window). A layout node whose every pane was floated is fine (section 12.1). The context menu shows the item only where it applies. Hidden floats are shown, since the user asked to see this one. Focus follows one rule in both directions: the pane keeps focus if it had it, and otherwise takes it by the rule for a new pane (not with focus follows mouse unless the advanced setting says so). No other pane's activity counter changes, so the pane used most recently is still the one the user last worked in. Swapping a tiled pane with a float still exchanges their roles. |
 | Swap | A tiled pane can be swapped with a float, and two floats can be swapped. Each takes the other's place, frame and z-order. |
 | Session order | Tiled sessions come first and floats after, wherever sessions are numbered or indexed. |
 | Last tiled pane leaves | Native tabs only. If the last tiled pane leaves the tab by any route (its session ends, it is docked into another tab, dragged to the tab bar or to empty space, moved with a Move Session item, or buried), the front float is promoted to be the tab's tiled pane. In a tmux tab nothing is promoted and the tab becomes floats-only, as tmux does. Other floats stay floating. Closing the float implicitly is not an option, since it may be doing something important. Promotion resizes the float's grid to fill the tab. |
@@ -107,7 +107,7 @@ The main conclusions:
 | --- | --- |
 | Hide and show | There is a toggle that hides all floats in a tab while their sessions keep running. |
 | Focus when floats are hidden | If the active session is a float when floats are hidden, focus goes to the next most recently used session in the tab that is still visible. |
-| Navigation to hidden floats | Next Pane, Previous Pane and cmd-opt-N can land on a hidden float. Focus entering a float unhides the floats. |
+| Navigation to hidden floats | Next Pane, Previous Pane, cmd-opt-N and Select Next Floating Pane can land on a hidden float. Focus entering a float unhides the floats. Select Next Floating Pane skips a float tmux hides (while its window is zoomed), since activating it would not show it. |
 | Broadcast input to hidden floats | Same policy as a maximized tab, whose hidden panes still receive broadcast input today. Hidden floats receive it. |
 | Hidden floats indicator | Hidden floats are shown with the existing indicators feature (`iTermIndicatorsHelper`), like the maximized-pane indicator. |
 | Hidden float activity | The hidden-floats indicator is decorated the way a tab's icon is, with the dead, bell, new-output and idle states of the hidden floats. Nothing unhides. |
@@ -612,8 +612,8 @@ Places that encode where a new session goes, for step 9 of the plan:
   index and Next Pane silently does nothing. The list must add floats.
 - Pane ordinals (cmd-opt-N, title bars, the Toolbelt status tool) follow that
   order.
-- Next Pane, Previous Pane and cmd-opt-N include hidden floats. Landing on one
-  unhides the floats.
+- Next Pane, Previous Pane, cmd-opt-N and Select Next Floating Pane include
+  hidden floats. Landing on one unhides the floats.
 - Directional select and swap (PTYTab.m:1489-1604) use a strict non-overlap
   test. Floats are excluded as candidates. From a float they do nothing.
 - Menu validation for these items must count consistently (section 3.3).
@@ -1216,9 +1216,14 @@ Further items from the audit of every endpoint:
 - While a modal pane exists, tmux adds `O` to the window flags sent with
   `%layout-change` (window.c:1395, undocumented). `#{window_modal_pane}` gives
   the pane ID.
-- After `break-pane -W` on every tiled child of a node, tmux appears to leave
-  that node at 0x0, so the JSON would contain `"w":0`, which tmux's own parser
-  rejects (unverified by running).
+- After `break-pane -W` on the last tiled child of a node, tmux gives the
+  node's space to its neighbour and leaves the node in the tree at 0x0
+  (`layout_remove_tile`, layout.c:1965), so the JSON contains a node with
+  `"w":0` holding only floats. Later layout passes skip nodes with no tiled
+  child, and tiling a float back into such a node re-tiles the node first
+  (`layout_insert_tile`). iTerm2's parser drops a node with no tiled child
+  and reads sizes only from the root, so the layout loads. tmux's own parser
+  rejects `"w":0`, but iTerm2 never sends a JSON layout back.
 - These changes send no `%layout-change`: raising a float by focusing it (only
   `%window-pane-changed`), mouse move and resize by another client, and
   `rotate-window`. A `refresh-client -B` subscription on `#{window_layout}`,

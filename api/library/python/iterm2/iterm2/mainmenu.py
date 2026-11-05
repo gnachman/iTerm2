@@ -586,6 +586,9 @@ class MainMenu:
             MOVE_SESSION_TO_SPLIT_PANE = MenuItemIdentifier(
                 "Move Session to Split Pane", "Move Session to Split Pane"
             )
+            MOVE_SESSION_TO_FLOATING_PANE = MenuItemIdentifier(
+                "Move Session to Floating Pane", "Move Session to Floating Pane"
+            )
 
         @_nonmember
         class Log(enum.Enum):
@@ -834,6 +837,10 @@ class MainMenu:
                 )
                 SEND_TO_BACK = MenuItemIdentifier(
                     "Send to Back", "Floating Panes.Send to Back"
+                )
+                SELECT_NEXT_FLOATING_PANE = MenuItemIdentifier(
+                    "Select Next Floating Pane",
+                    "Floating Panes.Select Next Floating Pane",
                 )
                 DOCK_FLOATING_PANE = MenuItemIdentifier(
                     "Dock Floating Pane", "Floating Panes.Dock Floating Pane"

@@ -323,6 +323,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 // Calls completion with the new float's session once it exists, or nil if tmux refused.
 - (void)newFloatingPaneNearPane:(int)wp completion:(void (^)(PTYSession *))completion;
 - (void)tileFloatingPane:(int)wp;
+// Lifts a tiled pane out of the layout and makes it a float. tmux refuses while zoomed.
+- (void)floatTiledPane:(int)wp;
 - (void)raiseFloatingPane:(int)wp toFront:(BOOL)toFront;
 - (void)toggleZoomForPane:(int)pane;
 - (void)setPartialWindowIdOrder:(NSArray *)partialOrder;

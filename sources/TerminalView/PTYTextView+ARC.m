@@ -1930,6 +1930,14 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
     [self.delegate textViewDockFloatingPane];
 }
 
+- (BOOL)contextMenuCanFloatPane:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewCanFloatPane];
+}
+
+- (void)contextMenuFloatPane:(iTermTextViewContextMenuHelper *)contextMenu {
+    [self.delegate textViewFloatPane];
+}
+
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu raiseFloatingPaneToFront:(BOOL)toFront {
     [self.delegate textViewRaiseFloatingPaneToFront:toFront];
 }

@@ -121,7 +121,9 @@ final class TerminalWindowTestFixture {
         return session
     }
 
-    /// Adds a floating session to the current tab with the given frame in the tab's container.
+    /// Adds a floating session to the current tab with the given frame in the tab's container,
+    /// outline included. The float gets the largest grid that fits in it, keeping its top left.
+    /// The active session is unchanged.
     @discardableResult
     func addFloat(frame: NSRect) -> PTYSession {
         guard let tab = terminal.currentTab() else {
@@ -129,7 +131,11 @@ final class TerminalWindowTestFixture {
         }
         let session = makeSession()
         terminal.setupSession(session, with: nil)
-        tab.addFloatingSession(session, frame: frame)
+        guard let pane = tab.installFloatingSession(session, outlineFrame: frame) else {
+            it_fatalError("No pane")
+        }
+        FloatingPaneLayout.fit(pane, session: session, toOutlineFrame: frame)
+        tab.didInstallFloatingPane(pane, session: session, activate: false)
         return session
     }
 

@@ -1493,6 +1493,13 @@ DQ
                                                 <action selector="movePane:" target="-1" id="dpH-EE-K3B"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Move Session to Floating Pane" identifier="Move Session to Floating Pane" id="fpn-ms-itm">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <accessibility identifier="Move Session to Floating Pane"/>
+                                            <connections>
+                                                <action selector="moveSessionToFloatingPane:" target="-1" id="fpn-ms-act"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>
@@ -2118,6 +2125,12 @@ DQ
                                                         <accessibility identifier="Send to Back"/>
                                                         <connections>
                                                             <action selector="sendFloatingPaneToBack:" target="-1" id="fpn-sn-act"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Select Next Floating Pane" identifier="Floating Panes.Select Next Floating Pane" id="fpn-nx-itm">
+                                                        <accessibility identifier="Select Next Floating Pane"/>
+                                                        <connections>
+                                                            <action selector="selectNextFloatingPane:" target="-1" id="fpn-nx-act"/>
                                                         </connections>
                                                     </menuItem>
                                                     <menuItem title="Dock Floating Pane" identifier="Floating Panes.Dock Floating Pane" id="fpn-dk-itm">
