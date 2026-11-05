@@ -21028,7 +21028,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)updateStatusChangedLine {
-    _statusChangedAbsLine = _screen.cursorY - 1 + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+    [self updateStatusChangedLineWithAbsLineOfCursor:_screen.absoluteLineNumberOfCursor];
+}
+
+- (void)updateStatusChangedLineWithAbsLineOfCursor:(long long)absLineOfCursor {
+    _statusChangedAbsLine = absLineOfCursor;
 }
 
 - (void)restoreKeyLabels:(NSDictionary *)labels updateStatusChangedLine:(BOOL)updateStatusChangedLine {
@@ -21049,7 +21053,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }];
 }
 
-- (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName {
+- (void)screenSetLabel:(NSString *)label
+                forKey:(NSString *)keyName
+       absLineOfCursor:(long long)absLineOfCursor {
     if (!_keyLabels) {
         _keyLabels = [[NSMutableDictionary alloc] init];
     }
@@ -21060,7 +21066,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         _keyLabels[keyName] = [[label copy] autorelease];
     }
     if ([keyName isEqualToString:@"status"] && changed) {
-        [self updateStatusChangedLine];
+        [self updateStatusChangedLineWithAbsLineOfCursor:absLineOfCursor];
     }
     [_delegate sessionKeyLabelsDidChange:self];
 }

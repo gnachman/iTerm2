@@ -3302,9 +3302,10 @@ typedef struct {
 
 - (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName {
     DLog(@"begin label=%@ keyName=%@", label, keyName);
+    const long long absLineOfCursor = [self absLineOfCursor];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
-        [delegate screenSetLabel:label forKey:keyName];
+        [delegate screenSetLabel:label forKey:keyName absLineOfCursor:absLineOfCursor];
     } name:@"set label for key"];
 }
 

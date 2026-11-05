@@ -2577,7 +2577,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenSetLabel(_ label: String, forKey keyName: String) {
+    func screenSetLabel(_ label: String, forKey keyName: String, absLineOfCursor: Int64) {
 
     }
     

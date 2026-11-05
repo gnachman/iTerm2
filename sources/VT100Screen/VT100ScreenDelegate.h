@@ -434,7 +434,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (BOOL)screenShouldReduceFlicker;
 - (NSInteger)screenUnicodeVersion;
 - (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion;
-- (void)screenSetLabel:(NSString * _Nonnull)label forKey:(NSString * _Nonnull)keyName;
+// `absLineOfCursor` is the cursor's absolute line when the label was set, which the main thread's
+// copy of the screen may not know yet.
+- (void)screenSetLabel:(NSString * _Nonnull)label
+                forKey:(NSString * _Nonnull)keyName
+       absLineOfCursor:(long long)absLineOfCursor;
 - (void)screenPushKeyLabels:(NSString * _Nonnull)value;
 - (void)screenPopKeyLabels:(NSString * _Nonnull)value;
 - (void)screenSendModifiersDidChange;
