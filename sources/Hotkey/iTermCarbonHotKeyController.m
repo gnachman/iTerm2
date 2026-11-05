@@ -162,7 +162,6 @@
                                               &eventHotKey);
         if (status != noErr) {
             ELog(@"Failed to register event hotkey when session resumed active: %@", @(status));
-        } else {
             eventHotKey = NULL;
         }
         for (iTermHotKey *hotkey in siblings) {

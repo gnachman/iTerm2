@@ -2053,6 +2053,11 @@ Bug Fixes:
 - In Settings > Keys > Hotkey, the “App
   Hotkey:” and “Open Quickly Hotkey:” labels no
   longer run under the controls beside them.
+- After switching to another user account and
+  back with fast user switching, changing or
+  removing a hotkey now fully releases the old
+  one. Previously the old hotkey kept working
+  alongside the new one.
 - The AI chat’s find bar no longer squeezes its
   search field to nothing in the inline chat or
   a narrow chat window. When space is short it
