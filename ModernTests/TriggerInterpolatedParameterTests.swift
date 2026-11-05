@@ -60,14 +60,31 @@ final class TriggerInterpolatedParameterTests: XCTestCase, iTermObject {
         XCTAssertEqual(TriggerInterpolatedParameter.parameter(#"\(matches)"#).kind, .requiresScope)
     }
 
-    // Disabled because it is flaky: the cache is an NSCache, which may evict an entry at any
-    // time (for example, under memory pressure during a parallel test run), so two lookups are
-    // not guaranteed to return the same object.
-    func testResultIsCached() throws {
-        try XCTSkipIf(true, "Flaky: NSCache may evict between lookups")
+    // The cache holds every entry until it fills, so a repeated lookup must give the same object.
+    func testResultIsCached() {
         let string = #"https://example.com/\(matches[2])"#
         XCTAssertTrue(TriggerInterpolatedParameter.parameter(string) ===
                       TriggerInterpolatedParameter.parameter(string))
+    }
+
+    // A miss is classified outside the cache's lock so one session's regex work does not stall the
+    // others, which means two threads can classify the same new string at once. Only one result
+    // may be kept: every caller must get the same object.
+    func testConcurrentLookupsOfANewStringShareOneObject() {
+        let string = #"https://example.com/\(matches[1])/\#(UUID().uuidString)"#
+        let threads = 16
+        var results = [TriggerInterpolatedParameter?](repeating: nil, count: threads)
+        let resultsLock = NSLock()
+        DispatchQueue.concurrentPerform(iterations: threads) { i in
+            let parameter = TriggerInterpolatedParameter.parameter(string)
+            resultsLock.lock()
+            results[i] = parameter
+            resultsLock.unlock()
+        }
+        let first = results[0]
+        XCTAssertNotNil(first)
+        XCTAssertTrue(results.allSatisfy { $0 === first })
+        XCTAssertTrue(TriggerInterpolatedParameter.parameter(string) === first, "The winner is what the cache keeps")
     }
 
     // MARK: - Evaluation

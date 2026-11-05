@@ -24,7 +24,10 @@ import Foundation
 // Only the simplest forms are recognized: \(matches[N]) and \(line). Anything else, including
 // operators, function calls, and optional chaining, is evaluated the general way. Results are
 // cached by parameter string because classifying requires scanning the string, and triggers
-// are checked on every line of output.
+// are checked on every line of output. There are only as many distinct strings as trigger
+// parameters, so the cache holds them all in practice, evicting the least recently used only once
+// full. Unlike an NSCache, it never drops an entry early, so looking a string up twice gives the
+// same object.
 @objc(iTermTriggerInterpolatedParameter)
 class TriggerInterpolatedParameter: NSObject {
     @objc(iTermTriggerInterpolatedParameterKind)
@@ -47,20 +50,31 @@ class TriggerInterpolatedParameter: NSObject {
     // Only nonempty when kind is triggerLocal.
     private let parts: [Part]
 
-    private static let cache = NSCache<NSString, TriggerInterpolatedParameter>()
+    private static let cacheMutex = Mutex()
+    // Bounded, evicting the least recently used entry once full, so an entry is never dropped
+    // early (NSCache may drop entries at any time) and a hot entry stays. Guarded by cacheMutex.
+    private static var cache = LRUDictionary<String, TriggerInterpolatedParameter>(maximumSize: 1000)
     private static let matchRegex = try! NSRegularExpression(pattern: #"^\s*matches\s*\[\s*([0-9]+)\s*\]\s*$"#)
     private static let lineRegex = try! NSRegularExpression(pattern: #"^\s*line\s*$"#)
 
     // Safe to call on any queue.
     @objc(parameterWithString:)
     static func parameter(_ string: String) -> TriggerInterpolatedParameter {
-        let key = string as NSString
-        if let cached = cache.object(forKey: key) {
+        if let cached = cacheMutex.sync({ cache[string] }) {
             return cached
         }
+        // Every session's mutation thread comes through here once per line it checks, so classify
+        // outside the lock: a miss's regex work must not stall the other sessions. Two threads may
+        // classify the same new string; whichever inserts first wins so that repeated lookups keep
+        // giving one object.
         let parameter = TriggerInterpolatedParameter(string)
-        cache.setObject(parameter, forKey: key)
-        return parameter
+        return cacheMutex.sync {
+            if let winner = cache[string] {
+                return winner
+            }
+            _ = cache.insert(key: string, value: parameter, cost: 1)
+            return parameter
+        }
     }
 
     private init(_ string: String) {
