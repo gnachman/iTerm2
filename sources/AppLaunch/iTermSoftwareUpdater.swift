@@ -32,10 +32,12 @@ class SoftwareUpdater: NSObject {
     @objc weak var delegate: SoftwareUpdaterDelegate?
 
     // True when Sparkle has an update staged that it will install after the app next quits, and
-    // it will not tell us again at quit time. That happens when the user chooses “Install on
-    // Quit” (or closes the alert) for an update that is already downloaded, and when automatic
-    // installation is on. applicationShouldTerminate: checks this so the quit saves restorable
-    // state as if Sparkle were relaunching us. Cleared when the user skips the update instead.
+    // it will not tell us again at quit time. Once an update has been extracted, Sparkle's
+    // installer is running and installs after the app quits for any reason, whether the user
+    // chose “Install on Quit”, left the Ready to Install window up and quit, or opted in to
+    // automatic installation. applicationShouldTerminate: checks this so the quit saves
+    // restorable state as if Sparkle were relaunching us. Cleared when the user skips the
+    // update or Sparkle abandons it.
     @objc private(set) var installPendingOnQuit = false
 
     // The controller holds its delegates weakly; this singleton outlives it.
@@ -150,6 +152,14 @@ extension SoftwareUpdater: SPUUpdaterDelegate {
         willInstallAndRelaunch(reason: "updaterWillRelaunchApplication")
     }
 
+    // From here on Sparkle's installer is staged and will install after the next quit even
+    // if the user never presses Install and Relaunch. If launching the installer fails (for
+    // example, authorization is declined) didAbortWithError clears this again.
+    func updater(_ updater: SPUUpdater, didExtractUpdate item: SUAppcastItem) {
+        RLog("Update \(item.displayVersionString) extracted; it will install after the next quit")
+        installPendingOnQuit = true
+    }
+
     func updater(_ updater: SPUUpdater,
                  userDidMake choice: SPUUserUpdateChoice,
                  forUpdate updateItem: SUAppcastItem,
@@ -171,13 +181,13 @@ extension SoftwareUpdater: SPUUpdaterDelegate {
         }
     }
 
-    // Only reached when the user has opted in to automatic installation. Returning false leaves
-    // Sparkle in charge of when to install (after quit, or by prompting later), but it will
-    // install after the next quit with no further callback, so remember that.
+    // Only reached when the user has opted in to automatic downloads. Returning false leaves
+    // Sparkle in charge: it installs after the next quit with no further callback, so remember
+    // that, and it shows the ready-to-install alert at its next scheduled check.
     func updater(_ updater: SPUUpdater,
                  willInstallUpdateOnQuit item: SUAppcastItem,
                  immediateInstallationBlock immediateInstallHandler: @escaping () -> Void) -> Bool {
-        RLog("Update \(item.displayVersionString) will install on quit")
+        RLog("Update \(item.displayVersionString) was downloaded automatically and will install on quit")
         installPendingOnQuit = true
         return false
     }
