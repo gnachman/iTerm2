@@ -239,6 +239,23 @@ final class KittyStalePlacementTests: XCTestCase {
                        "reusing an evicted id must not resurrect the old placement")
     }
 
+    // The cache is least recently used, and displaying an image uses it: when the budget fills,
+    // an image displayed since another was transmitted outlives that other image, even though
+    // it was transmitted first.
+    func testDisplayingAnImageKeepsItOverAnUnusedOne() {
+        let controller = makeController(imageCacheBudget: 40000)  // holds two 64x64 images, not three
+        controller.execute(command: KittyImageCommand("a=T,f=100,t=d,i=5,p=1,q=2;\(redPNGBase64)")!)
+        controller.execute(command: KittyImageCommand("a=t,f=100,t=d,i=6,q=2;\(greenPNGBase64)")!)
+        // Display image 5 again, which makes it the more recently used of the two.
+        controller.execute(command: KittyImageCommand("a=p,i=5,p=2,q=2")!)
+        XCTAssertTrue(controller.hasPlacement(imageID: 5, placementID: 2))
+        // A third image evicts one: image 6, not the displayed image 5.
+        controller.execute(command: KittyImageCommand("a=t,f=100,t=d,i=7,q=2;\(greenPNGBase64)")!)
+        XCTAssertTrue(controller.hasPlacement(imageID: 5, placementID: 1),
+                      "image 5 was displayed after image 6 arrived, so image 6 is the one to go")
+        XCTAssertTrue(controller.hasPlacement(imageID: 5, placementID: 2))
+    }
+
     // Evicting an image must not delete a relative child of a different, still-resident image.
     // Eviction is internal memory pressure, not a user delete, so its removal must not cascade.
     func testEvictionDoesNotDeleteRelativeChildOfResidentImage() {

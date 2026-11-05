@@ -1237,6 +1237,9 @@ NS_INLINE int iTermGlyphKeyEmitDecomposedFromNSAttributedString(iTermCachedGlyph
     NSFont *attributedFont = attributes[NSFontAttributeName];
     const int attributedFontID = iTermMetalFontIDFromAttributes(attributes);
 
+    // Shared by every session's per-frame state. A lookup reorders the cache by recency, so this
+    // relies on all per-frame state being built on the one Metal queue (see ENABLE_PRIVATE_QUEUE in
+    // iTermMetalDriver), which also keeps an eviction from freeing a line another session is using.
     static iTermLRUDictionary<iTermAttributedStringProxy *, id> *cache;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

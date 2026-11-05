@@ -36,6 +36,28 @@ final class DoublyLinkedListTests: XCTestCase {
         XCTAssertNil(w2, "middle value leaked — list retained it via prev/next cycle")
         XCTAssertNil(w3, "tail value leaked — list retained it via prev/next cycle")
     }
+
+    // Bumping an LRU entry moves its node rather than replacing it, so the node a caller holds
+    // stays valid and nothing is allocated.
+    func testMoveToEndKeepsTheNodeAndReorders() {
+        let list = DoublyLinkedList<String>()
+        let a = list.append("a")
+        let b = list.append("b")
+        let c = list.append("c")
+        list.moveToEnd(a)
+        XCTAssertTrue(list.first === b)
+        XCTAssertTrue(b.next === c)
+        XCTAssertTrue(c.next === a)
+        XCTAssertNil(a.next)
+        list.moveToEnd(a)
+        XCTAssertTrue(c.next === a, "Moving the tail changes nothing")
+        list.moveToEnd(b)
+        XCTAssertTrue(list.first === c)
+        XCTAssertTrue(a.next === b)
+        XCTAssertNil(b.next)
+        list.remove(a)
+        XCTAssertTrue(c.next === b, "Moved nodes are still linked correctly")
+    }
 }
 
 final class LRUEvictionPolicyTests: XCTestCase {

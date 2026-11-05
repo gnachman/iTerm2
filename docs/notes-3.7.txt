@@ -2588,3 +2588,7 @@ Bug Fixes:
   Before, the old results were cleared and Find
   Next had nothing to go to until you retyped
   the search.
+- When the cache of images drawn with the Kitty
+  graphics protocol filled up, it dropped the
+  oldest image rather than the one displayed
+  least recently.

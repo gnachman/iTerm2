@@ -264,7 +264,9 @@ class KittyImageController: NSObject {
 
     static let defaultImageCacheBudget = 320 * 1024 * 1024
 
-    // Identifier -> Image
+    // Identifier -> Image. Looking an image up to display it counts as a use, so when the budget
+    // fills the images evicted are those not displayed for longest. Scans over the whole cache
+    // (allocating an identifier, finding an image by number) use peek so they don't count.
     private var _images: LRUDictionary<UInt64, Image>
     // Key under which an image transmitted without an id (i=0, addressed only by its image number I)
     // is stored. Its metadata.identifier is 0, so it cannot be its own key. Static so Placement can
@@ -368,7 +370,7 @@ class KittyImageController: NSObject {
 
     private func allocateIdentifier() -> UInt32 {
         for i in 1..<UInt32.max {
-            if _images[UInt64(i)] == nil {
+            if _images.peek(UInt64(i)) == nil {
                 return i
             }
         }
@@ -1319,10 +1321,10 @@ class KittyImageController: NSObject {
             // specify a p key for the placement id as well, then only the placement with the 
             // specified number and placement id will be deleted.
             let candidates = _images.keys.filter {
-                _images[$0]?.metadata.imageNumber == command.I
+                _images.peek($0)?.metadata.imageNumber == command.I
             }
             let identifier = candidates.max { lhs, rhs in
-                _images[lhs]!.sequence < _images[rhs]!.sequence
+                _images.peek(lhs)!.sequence < _images.peek(rhs)!.sequence
             }
             if let identifier {
                 if command.placementId == 0 {
@@ -1454,7 +1456,7 @@ class KittyImageController: NSObject {
     // deleting the image from the cache, since it reads the current occupant.
     private func matchesImage(underKey key: UInt64) -> (Placement) -> Bool {
         if key == Self.lastImageKey {
-            let uniqueId = _images[key]?.uniqueId
+            let uniqueId = _images.peek(key)?.uniqueId
             return { $0.image.uniqueId == uniqueId }
         }
         return { $0.imageKey == key }

@@ -26,6 +26,7 @@ class UntypedLRUDictionary: NSObject {
         impl.delete(forKey: key)
     }
 
+    // Counts as a use of the entry.
     @objc(objectForKey:)
     func object(forKey key: AnyHashable) -> Any? {
         impl[key]
@@ -38,7 +39,9 @@ class UntypedLRUDictionary: NSObject {
 }
 
 // A dictionary that automatically evicts least-recently used value to keep the
-// size under a cap.
+// size under a cap. Reading an entry with the subscript counts as using it;
+// `peek` reads without, for bookkeeping that scans the whole cache and
+// shouldn't count as use of everything in it.
 struct LRUDictionary<Key: Hashable, Value> {
     private let evictionPolicy: LRUEvictionPolicy<Key>
     private var dict = [Key: Value]()
@@ -65,7 +68,19 @@ struct LRUDictionary<Key: Hashable, Value> {
         dict.removeValue(forKey: key)
     }
 
+    // Reads and counts as a use, so the entry is evicted after ones used less recently. The
+    // eviction policy is a reference, so this needn't be mutating. A hit relinks one list node
+    // and allocates nothing.
     subscript(_ key: Key) -> Value? {
+        guard let value = dict[key] else {
+            return nil
+        }
+        evictionPolicy.bump(key)
+        return value
+    }
+
+    // Reads without affecting eviction order.
+    func peek(_ key: Key) -> Value? {
         dict[key]
     }
 
@@ -130,8 +145,7 @@ class LRUEvictionPolicy<Element: Hashable> {
         guard let node = nodesByKey[element] else {
             return
         }
-        itemsByUse.remove(node)
-        nodesByKey[element] = itemsByUse.append(node.value)
+        itemsByUse.moveToEnd(node)
     }
 
     private func evictIfNeeded() -> Set<Element> {

@@ -9,6 +9,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// A dictionary that evicts the least recently used entries once the total cost exceeds the
+// maximum size. Looking an entry up counts as using it. Not thread safe.
 @interface iTermLRUDictionary<__covariant KeyType, __covariant ValueType>: NSObject
 
 - (instancetype)initWithMaximumSize:(NSInteger)maximumSize NS_DESIGNATED_INITIALIZER;

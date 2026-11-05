@@ -10,7 +10,7 @@ import Foundation
 class DLLNode<T> {
     var value: T
     fileprivate weak var prev: DLLNode?
-    fileprivate var next: DLLNode?
+    fileprivate(set) var next: DLLNode?
 
     init(value: T) {
         self.value = value
@@ -25,14 +25,29 @@ class DoublyLinkedList<T> {
 
     func append(_ value: T) -> DLLNode<T> {
         let newNode = DLLNode(value: value)
-        if let tailNode = tail {
-            newNode.prev = tailNode
-            tailNode.next = newNode
-        } else {
-            head = newNode
-        }
-        tail = newNode
+        append(node: newNode)
         return newNode
+    }
+
+    // Moves a node of this list to the end without allocating, so a cache hit that bumps an
+    // entry's recency costs no allocation.
+    func moveToEnd(_ node: DLLNode<T>) {
+        if tail === node {
+            return
+        }
+        remove(node)
+        append(node: node)
+    }
+
+    // `node` must not be in a list.
+    private func append(node: DLLNode<T>) {
+        if let tailNode = tail {
+            node.prev = tailNode
+            tailNode.next = node
+        } else {
+            head = node
+        }
+        tail = node
     }
 
     func remove(_ node: DLLNode<T>) {
