@@ -6,6 +6,14 @@
 //
 
 
+// Whether an API key is known to be stored, known to be absent, or not yet
+// known because nothing has read the keychain for it in this session.
+@objc enum iTermAIKeyPresence: Int {
+    case unknown
+    case absent
+    case present
+}
+
 @objc
 class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     private struct CachedKey {
@@ -105,33 +113,35 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         apiKey(for: vendor)
     }
 
-    // Presence check for Settings' status row. Unlike apiKey(for:) it never performs the
-    // legacy->vendor ACCOUNT migration (adopting the shared legacy key for a vendor), so a
-    // status check can't durably adopt the wrong secret. It is NOT fully side-effect-free,
-    // though: reading through iTermUpgradeSafeKeychain transparently copies a pre-migration
-    // login-keychain value into the data-protection keychain (a safe, idempotent storage
-    // migration) and reaps the login copy, so merely viewing Settings can trigger that
-    // migration. A transient read error is not cached as "no key". Safe off the main thread.
-    @objc(apiKeyIsConfiguredForVendor:)
-    static func objcApiKeyIsConfigured(for vendor: iTermAIVendor) -> Bool {
+    // Cache-only presence check for Settings' status row. It NEVER touches the
+    // keychain: merely opening Settings must not prompt for keychain access (a
+    // login-keychain item written by a differently signed build prompts on every
+    // read, and a denied read is deliberately not cached, so the hint used to
+    // re-prompt on every refresh). The keychain is consulted only when the user
+    // forces it, e.g. by opening the Manage AI API Keys sheet or starting a chat,
+    // which warm the cache; until then the answer is .unknown and the hint stays
+    // neutral rather than claiming a key is missing.
+    @objc(cachedAPIKeyPresenceForVendor:)
+    static func objcCachedAPIKeyPresence(for vendor: iTermAIVendor) -> iTermAIKeyPresence {
         return apiKeyQueue.sync {
-            if let cached = cachedKeys[cacheKey(for: vendor)], cached.valid {
-                return !keyIsEmpty(cached.value)
-            }
-            let account = keychainAccount(for: vendor)
-            let stored = readKeychainPassword(account: account)
-            if !keyIsEmpty(stored.value) {
-                return true
-            }
-            // The legacy shared key belongs to the effective vendor only, matching
-            // resolveAPIKey. Read it to report status but never migrate/write here.
-            if account != legacyKeychainAccount,
-               vendor == LLMMetadata.effectiveVendor {
-                let legacy = readKeychainPassword(account: legacyKeychainAccount)
-                return !keyIsEmpty(legacy.value)
-            }
-            return false
+            presence(of: cachedKeys[cacheKey(for: vendor)])
         }
+    }
+
+    // Cache-only counterpart of modelAPIKey(forConfigurationID:); see
+    // cachedAPIKeyPresenceForVendor: for why it must not read the keychain.
+    @objc(cachedModelAPIKeyPresenceForConfigurationID:)
+    static func objcCachedModelAPIKeyPresence(forConfigurationID id: String) -> iTermAIKeyPresence {
+        return apiKeyQueue.sync {
+            presence(of: cachedModelKeys[id])
+        }
+    }
+
+    private static func presence(of cached: CachedKey?) -> iTermAIKeyPresence {
+        guard let cached, cached.valid else {
+            return .unknown
+        }
+        return keyIsEmpty(cached.value) ? .absent : .present
     }
 
     static func setAPIKey(_ key: String?, for vendor: iTermAIVendor) {
@@ -200,10 +210,10 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
         let account = keychainAccount(for: vendor)
         let stored = readKeychainPassword(account: account)
         // Only the EFFECTIVE vendor can adopt the shared legacy key (see resolveAPIKey),
-        // so read the legacy account ONLY then - mirroring objcApiKeyIsConfigured. Reading
-        // it for other vendors is wasted work AND a correctness hazard: a hard error on
-        // that throwaway read would (via the guard below) report a vendor whose OWN key is
-        // present and readable as keyless, and leave it uncached.
+        // so read the legacy account ONLY then. Reading it for other vendors is wasted
+        // work AND a correctness hazard: a hard error on that throwaway read would (via
+        // the guard below) report a vendor whose OWN key is present and readable as
+        // keyless, and leave it uncached.
         let legacy: KeychainReadResult
         if account != legacyKeychainAccount, vendor == LLMMetadata.effectiveVendor {
             legacy = readKeychainPassword(account: legacyKeychainAccount)

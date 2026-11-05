@@ -3787,27 +3787,38 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     id storedCredential = configuration ? [iTermLLMMetadata effectiveCredentialStoredValueForConfiguration:configuration] : nil;
     const iTermAICredentialKind kind = [iTermAIModelCredential kindForStoredValue:storedCredential];
-    BOOL keyIsSet;
+    // Whether the key is set comes from the in-memory cache ONLY. This runs every
+    // time the pane renders or the model list refreshes, so reading the keychain
+    // here made opening Settings prompt for keychain access, repeatedly. Until
+    // the user forces a read (the Manage AI API Keys sheet, a chat) the presence
+    // is unknown and the hint names the key without claiming it is missing.
+    iTermAIKeyPresence presence = iTermAIKeyPresencePresent;
     iTermAIVendor vendor = inferredVendor;
     switch (kind) {
         case iTermAICredentialKindModelKey: {
             NSString *configurationID = configuration[kAIManualModelIDKey];
-            keyIsSet = [configurationID isKindOfClass:NSString.class] &&
-                [AITermControllerObjC modelAPIKeyForConfigurationID:configurationID].length > 0;
+            if ([configurationID isKindOfClass:NSString.class]) {
+                presence = [AITermControllerObjC cachedModelAPIKeyPresenceForConfigurationID:configurationID];
+            } else {
+                presence = iTermAIKeyPresenceAbsent;
+            }
             break;
         }
         case iTermAICredentialKindVendorKey:
             vendor = [iTermAIModelCredential vendorForStoredValue:storedCredential];
-            keyIsSet = [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
+            presence = [AITermControllerObjC cachedAPIKeyPresenceForVendor:vendor];
             break;
         case iTermAICredentialKindAutomatic:
-            keyIsSet = withheld || withheldFromHost || [AITermControllerObjC apiKeyIsConfiguredForVendor:vendor];
+            if (!withheld && !withheldFromHost) {
+                presence = [AITermControllerObjC cachedAPIKeyPresenceForVendor:vendor];
+            }
             break;
         case iTermAICredentialKindNone:
-            keyIsSet = YES;
             break;
     }
-    _mainAIAPIKeyHint.stringValue = iTermAIKeyHint(kind, vendor, withheld, withheldFromHost, YES, keyIsSet);
+    const BOOL reportMissingKey = (presence != iTermAIKeyPresenceUnknown);
+    const BOOL keyIsSet = (presence == iTermAIKeyPresencePresent);
+    _mainAIAPIKeyHint.stringValue = iTermAIKeyHint(kind, vendor, withheld, withheldFromHost, reportMissingKey, keyIsSet);
     // This label has room for two wrapped lines in the xib, which every
     // shipped translation fits (QA finding F-140). Should a future one need
     // more, truncate the second line visibly rather than clipping mid-glyph,
@@ -4156,6 +4167,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             }
         }
         self->_aiAPIKeySheetFields = nil;
+        // Prefilling the fields read the keys, so the cache the hint relies on
+        // is now warm (and OK may have changed a key). Cancel included.
+        [self updateAIAPIKeyHint];
     }];
 }
 
