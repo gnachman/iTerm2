@@ -640,6 +640,23 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return [self coordRangeForInterval:mark.entry.interval];
 }
 
+- (NSDictionary<NSString *, iTermRange *> *)blockMarkDictionaryOnLine:(long long)y {
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    if (y < overflow) {
+        return nil;
+    }
+    const int start = y - overflow;
+
+    NSMutableDictionary<NSString *, iTermRange *> *blockMarks = nil;
+    for (iTermBlockMark *blockMark in [self objectsOnLine:start ofClass:[iTermBlockMark class]]) {
+        if (!blockMarks) {
+            blockMarks = [NSMutableDictionary dictionary];
+        }
+        blockMarks[blockMark.blockID] = [iTermRange rangeWithLocation:0 length:1];
+    }
+    return blockMarks;
+}
+
 - (iTermBlockMark *)blockMarkWithID:(NSString *)blockID {
     NSNumber *n = self.blockStartAbsLine[blockID];
     if (!n) {

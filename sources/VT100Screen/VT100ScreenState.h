@@ -346,6 +346,8 @@ extern NSString *const kScreenStateOpenAidStackKey;
 - (NSArray<iTermTerminalButtonPlace *> *)buttonsInRange:(VT100GridRange)range;
 - (VT100GridCoordRange)rangeOfBlockWithID:(NSString *)blockID;
 - (id<iTermBlockMarkReading> _Nullable)blockMarkWithID:(NSString *)blockID;
+// The block marks on absolute line `y`, by block ID, each covering the one line.
+- (NSDictionary<NSString *, iTermRange *> * _Nullable)blockMarkDictionaryOnLine:(long long)y;
 - (BOOL)haveFoldsInRange:(NSRange)absLineRange;
 - (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange;
 - (NSArray<id<iTermFoldMarkReading>> *)foldMarksInRange:(VT100GridRange)range;

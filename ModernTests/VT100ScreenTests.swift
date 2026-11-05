@@ -2371,10 +2371,6 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenFold(_ range: NSRange) {
-
-    }
-
     func screenDidShiftLines(atAbsLine absLine: Int64, by delta: Int64, mark: (any iTermWidthSavingMark)?, reason: iTermLinesShiftedReason, replacedRange: NSRange, converter: @escaping (VT100GridCoord) -> VT100GridCoord) {
 
     }

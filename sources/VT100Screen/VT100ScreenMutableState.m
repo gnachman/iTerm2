@@ -5445,6 +5445,25 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
     DLog(@"%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects]);
 }
 
+// The Fold trigger folds here. It declines while an app owns the alternate screen: its lines are
+// not scrollback and the fold would tear up what the app drew. Folds made from the text view (a
+// block, a selection, or a command) go through PTYTextView's fold(range:) instead and do not check.
+- (void)foldAbsLineRange:(NSRange)range {
+    if (self.terminalSoftAlternateScreenMode) {
+        DLog(@"Declining to fold in alternate screen mode");
+        return;
+    }
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    if (NSMaxRange(range) < overflow) {
+        return;
+    }
+    const int start = range.location > overflow ? range.location - overflow : 0;
+    [self replaceRange:VT100GridAbsCoordRangeMake(0, range.location, self.width, NSMaxRange(range))
+             withLines:@[ [self screenCharArrayForLine:start] ]
+          promptLength:0
+            blockMarks:[self blockMarkDictionaryOnLine:start + overflow]];
+}
+
 - (BOOL)removeFoldsInRange:(NSRange)foldRange {
     NSArray<iTermFoldMark *> *foldMarks = [self foldMarksInRange:foldRange max:NSUIntegerMax];
     [foldMarks enumerateObjectsUsingBlock:^(iTermFoldMark *mark, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -8515,8 +8534,29 @@ launchCoprocessWithCommand:(NSString *)command
         return;
     }
     const long long startAbsLine = [self absCoordRangeForInterval:mark.entry.interval].start.y;
+    // The range is fixed here, in absolute lines, where the lines are current (they may have arrived
+    // since the last sync). The fold itself waits, for two reasons. This may be running inline during
+    // trigger evaluation for the line, and later triggers on the same line act on absolute line
+    // numbers that a fold would shift. And folding from the main thread leaves copy mode first (see
+    // -[VT100Screen mutateAsynchronously:]): copy mode's cursor and the selection are placed against
+    // line numbers the fold changes. So the side effect that leaves copy mode sends the fold back to
+    // this thread, the same order as from the main thread.
+    //
+    // Token execution pauses until then so that no later token can touch the lines before they
+    // fold. Text in the same token as the match has already been appended, but a token of text and
+    // newlines only adds lines after the matched one; anything that could reach the lines above
+    // the cursor, such as a cursor movement or an erase, is its own token and waits. The fold runs
+    // as a high-priority task, which the executor runs even while paused and before any token, so
+    // the unpause can follow it in the same side effect.
+    const NSRange range = NSMakeRange(startAbsLine, MAX(1, absLine - startAbsLine));
+    __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        [delegate screenFoldRange:NSMakeRange(startAbsLine, MAX(1, absLine - startAbsLine))];
+        [delegate screenEnsureDefaultMode];
+        [weakSelf performBlockAsynchronously:^(VT100Terminal *terminal,
+                                               VT100ScreenMutableState *mutableState,
+                                               id<VT100ScreenDelegate> delegate) {
+            [mutableState foldAbsLineRange:range];
+        }];
         [unpauser unpause];
     } name:@"trigger fold"];
 }

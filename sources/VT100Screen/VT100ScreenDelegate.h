@@ -550,7 +550,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 // payload). Delivered on the main thread.
 - (void)screenDidReceiveKittyDragAndDrop:(NSString * _Nonnull)content;
 
-- (void)screenFoldRange:(NSRange)range;
 // Called when lines are inserted or removed (fold/unfold/porthole resize).
 // delta is positive when lines are inserted, negative when removed.
 // mark is the fold mark or porthole mark associated with the change, or nil.

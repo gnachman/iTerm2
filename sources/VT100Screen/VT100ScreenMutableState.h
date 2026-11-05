@@ -431,6 +431,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (BOOL)removeFoldsInRange:(NSRange)absRange;
 
+// Folds the lines in `range` of absolute lines, leaving the first as the placeholder.
+- (void)foldAbsLineRange:(NSRange)range;
+
 - (void)replaceRange:(VT100GridAbsCoordRange)range
             withLine:(ScreenCharArray *)line
         promptLength:(NSInteger)promptLength;

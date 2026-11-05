@@ -19970,14 +19970,6 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     [_textview updateCursor:[NSApp currentEvent]];
 }
 
-- (void)screenFoldRange:(NSRange)range {
-    if (_screen.terminalSoftAlternateScreenMode) {
-        DLog(@"Declining to fold in alternate screen mode");
-        return;
-    }
-    [_screen foldAbsLineRange:range];
-}
-
 - (void)screenDidShiftLinesAtAbsLine:(long long)absLine
                                   by:(long long)delta
                                 mark:(id<iTermWidthSavingMark>)mark

@@ -381,34 +381,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return [_state foldMarksInRange:range];
 }
 
-- (void)foldAbsLineRange:(NSRange)range {
-    const long long overflow = _state.cumulativeScrollbackOverflow;
-    if (NSMaxRange(range) < overflow) {
-        return;
-    }
-    const int start = range.location > overflow ? range.location - overflow : 0;
-    ScreenCharArray *sca = [self screenCharArrayForLine:start];
-    [self replaceRange:VT100GridAbsCoordRangeMake(0, range.location, self.width, NSMaxRange(range))
-              withLine:sca
-          promptLength:0
-            blockMarks:[self blockMarkDictionaryOnLine:start + overflow]];
-}
-
 - (NSDictionary<NSString *, iTermRange *> *)blockMarkDictionaryOnLine:(long long)y {
-    const long long overflow = _state.cumulativeScrollbackOverflow;
-    if (y < overflow) {
-        return nil;
-    }
-    const int start = y < overflow ? 0 : y - overflow;
-
-    NSMutableDictionary<NSString *, iTermRange *> *blockMarks = nil;
-    for (iTermBlockMark *blockMark in [_state objectsOnLine:start ofClass:[iTermBlockMark class]]) {
-        if (!blockMarks) {
-            blockMarks = [NSMutableDictionary dictionary];
-        }
-        blockMarks[blockMark.blockID] = [iTermRange rangeWithLocation:0 length:1];
-    }
-    return blockMarks;
+    return [_state blockMarkDictionaryOnLine:y];
 }
 
 - (void)replaceRange:(VT100GridAbsCoordRange)range

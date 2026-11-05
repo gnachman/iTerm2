@@ -2597,6 +2597,12 @@ Bug Fixes:
   before the old goal’s reply arrived could add
   that reply to the new goal’s transcript and
   derail it.
+- The Stop Scrolling and Fold trigger actions
+  sometimes did nothing when the matching line
+  had just arrived.
+- When a Fold trigger and another trigger
+  matched the same line, the other trigger
+  could act on the wrong line.
 - When the cache of images drawn with the Kitty
   graphics protocol filled up, it dropped the
   oldest image rather than the one displayed
