@@ -693,6 +693,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Absolute line number where touchbar status changed.
     long long _statusChangedAbsLine;
+    // The absolute line a Stop Scrolling trigger matched, to scroll to once this thread's copy of
+    // the screen has it, or -1.
+    long long _stopScrollingAbsLine;
 
     iTermUpdateCadenceController *_cadenceController;
 
@@ -1088,6 +1091,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _customEscapeSequenceNotifications = [[NSMutableDictionary alloc] init];
         _metalDisabledTokens = [[NSMutableSet alloc] init];
         _statusChangedAbsLine = -1;
+        _stopScrollingAbsLine = -1;
         _nameController = [[iTermSessionNameController alloc] init];
         _nameController.delegate = self;
         _metalGlue = [[iTermMetalGlue alloc] init];
@@ -12361,10 +12365,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (result.namedMarksChanged) {
         [[[[iTermNamedMarksDidChangeNotification alloc] initWithSessionGuid:self.guid] autorelease] post];
     }
+    [self refreshAfterSync:result];
+}
+
+- (void)refreshAfterSync:(VT100SyncResult)result {
     // It's important to refresh after sync so that, for example, PTYTextView
     // can convert click coordinates to model values correctly. I added this
     // late in the game so it might cause problems.
     [_textview refreshAfterSync:result];
+    [self scrollToPendingStopScrollingLine];
 }
 
 - (void)screenSyncExpect:(VT100ScreenMutableState *)mutableState {
@@ -12380,16 +12389,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const VT100SyncResult result = [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                                                 resetOverflow:NO];
     DLog(@"Sync done");
-    // See comment in screenSync:
-    [_textview refreshAfterSync:result];
+    [self refreshAfterSync:result];
 }
 
 - (void)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers {
     DLog(@"syncCheckingTriggers:%@", @(checkTriggers));
     const VT100SyncResult result = [self syncCheckingTriggers:checkTriggers resetOverflow:NO];
     DLog(@"Sync done");
-    // See comment in screenSync:
-    [_textview refreshAfterSync:result];
+    [self refreshAfterSync:result];
 }
 
 // Only main-thread-initiated syncs take this route.
@@ -27448,17 +27455,44 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 // Scroll so that `absLine` is the last visible onscreen.
 - (void)triggerSideEffectStopScrollingAtLine:(long long)absLine {
     [iTermGCD assertMainQueueSafe];
-    const long long line = absLine - _screen.totalScrollbackOverflow;
-    if (line < 0) {
+    if (absLine < _screen.totalScrollbackOverflow) {
+        // The line has scrolled off, so there is nothing to stop at.
         return;
     }
+    // The matched line may not be in this thread's copy of the screen yet. The trigger paused
+    // token execution until this ran, so the next sync brings it (or shows it has scrolled off),
+    // and the scroll, and with it leaving the tail of the output, wait for that.
+    if (![self stopScrollingAtLineIfPresent:absLine]) {
+        _stopScrollingAbsLine = absLine;
+    }
+}
+
+// Scrolls to the line a Stop Scrolling trigger matched if a sync has brought it since the match.
+// Called after every sync. A line still absent after a sync is dropped rather than kept pending,
+// so a later change in the line count (clearing the buffer, say) doesn't scroll to whatever then
+// sits at that line.
+- (void)scrollToPendingStopScrollingLine {
+    if (_stopScrollingAbsLine < 0) {
+        return;
+    }
+    const long long absLine = _stopScrollingAbsLine;
+    _stopScrollingAbsLine = -1;
+    [self stopScrollingAtLineIfPresent:absLine];
+}
+
+// Scrolls so `absLine` is the last visible line and stops following the output. Does nothing and
+// returns NO if this thread's copy of the screen doesn't have the line, whether it hasn't arrived
+// or has scrolled off, so the view keeps following the output unless there is a line to stop at.
+- (BOOL)stopScrollingAtLineIfPresent:(long long)absLine {
+    const long long line = absLine - _screen.totalScrollbackOverflow;
+    if (line < 0 || line >= _screen.numberOfLines) {
+        return NO;
+    }
+    [[self.view.scrollview ptyVerticalScroller] setUserScroll:YES];
     const int height = MAX(1, _screen.height);
     const int top = MAX(0, line - height + 1);
-    if (_screen.numberOfLines < line) {
-        return;
-    }
     [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(top, height)];
-    [[self.view.scrollview ptyVerticalScroller] setUserScroll:YES];
+    return YES;
 }
 
 - (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName {

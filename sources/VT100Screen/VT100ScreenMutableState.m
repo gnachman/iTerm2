@@ -8225,8 +8225,9 @@ launchCoprocessWithCommand:(NSString *)command
     if (!stopScrolling) {
         return;
     }
-    const long long line = self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursorY;
-    // Pause to avoid a visual stutter if more tokens cause scrolling.
+    const long long line = [self absLineOfCursor];
+    // The delegate scrolls to the line once its copy of the screen has it, so there's no need to
+    // join. Pause to avoid a visual stutter if more tokens cause scrolling.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectStopScrollingAtLine:line];
         [unpauser unpause];
