@@ -22006,10 +22006,46 @@
       "comment" : "Advanced setting: holdScreenDuringPromptRepaint",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Bildschirm unverändert anzeigen, während die Shell ihren Prompt neu zeichnet?\nManche Zeileneditoren, etwa der von nushell, zeichnen den Prompt und die Befehlszeile bei jedem Tastendruck neu. Wenn aktiviert, zeigt iTerm2 den Bildschirm im vorherigen Zustand an, bis das Neuzeichnen abgeschlossen ist, damit der Befehl nicht flackert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Keep showing the screen as it was while the shell redraws its prompt?\nSome line editors, such as nushell’s, redraw the prompt and command line on every keystroke. When enabled, iTerm2 keeps drawing the screen as it was until the redraw finishes so the command doesn’t blink."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シェルがプロンプトを再描画している間、画面を以前のまま表示し続けますか？\nnushell のものなど、一部のラインエディタはキーを押すたびにプロンプトとコマンドラインを再描画します。有効にすると、再描画が終わるまで iTerm2 は以前の画面を表示し続けるため、コマンドがちらつきません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "셸이 프롬프트를 다시 그리는 동안 화면을 이전 상태로 계속 표시하겠습니까?\nnushell의 것과 같은 일부 줄 편집기는 키를 누를 때마다 프롬프트와 명령줄을 다시 그립니다. 켜면 다시 그리기가 끝날 때까지 iTerm2가 이전 화면을 계속 표시하므로 명령이 깜박이지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar mostrando a tela como estava enquanto o shell redesenha o prompt?\nAlguns editores de linha, como o do nushell, redesenham o prompt e a linha de comando a cada tecla. Quando ativado, o iTerm2 continua mostrando a tela como estava até o redesenho terminar, para que o comando não pisque."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывать экран в прежнем виде, пока оболочка перерисовывает приглашение?\nНекоторые редакторы строки, например в nushell, перерисовывают приглашение и командную строку при каждом нажатии клавиши. Если параметр включён, iTerm2 показывает прежнее содержимое экрана, пока перерисовка не закончится, чтобы команда не мигала."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 shell 重绘提示符时继续显示原来的屏幕内容？\n某些行编辑器（例如 nushell 的）会在每次按键时重绘提示符和命令行。启用后，iTerm2 会在重绘完成前继续显示原来的屏幕内容，使命令不会闪烁。"
           }
         }
       }
@@ -22730,6 +22766,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择“清除缓冲区”菜单项后重新绘制屏幕。\n启用后，在清空缓冲区后 TTY 大小会短暂改变，使 shell 或当前应用重新绘制。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.keepJobsRunningWhenQuitInstallsUpdate" : {
+      "comment" : "Advanced setting: keepJobsRunningWhenQuitInstallsUpdate",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jobs weiterlaufen lassen, wenn iTerm2 zum Installieren eines Software-Updates beendet wird.\nWenn das Beenden von iTerm2 ein heruntergeladenes Update installieren wird (nach der Wahl von „Installieren beim Beenden“ oder wenn das Update bereit zur Installation ist), bleiben laufende Jobs erhalten und werden beim nächsten Start wiederhergestellt, wie bei „Installieren und App neu starten“. Gilt nur, wenn die Sitzungswiederherstellung aktiviert ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep jobs running when quitting to install a software update.\nWhen quitting iTerm2 will install a downloaded update (after choosing “Install on Quit”, or with the update ready to install), running jobs are left alive so they are restored at the next launch, as happens for “Install and Relaunch”. Applies only when session restoration is on."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ソフトウェアアップデートのインストールのために終了するとき、ジョブを実行したままにします。\niTerm2 の終了によってダウンロード済みのアップデートがインストールされる場合（「終了時にインストール」を選んだ後、またはアップデートのインストール準備ができているとき）、実行中のジョブは終了されず、「インストールして再起動」の場合と同様に次回起動時に復元されます。セッション復元がオンの場合にのみ適用されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "소프트웨어 업데이트를 설치하기 위해 종료할 때 작업을 계속 실행합니다.\niTerm2를 종료하면 다운로드된 업데이트가 설치되는 경우(“종료 시 설치”를 선택한 후 또는 업데이트 설치 준비가 된 상태), 실행 중인 작업이 유지되어 “설치 & 재실행”과 마찬가지로 다음 실행 시 복원됩니다. 세션 복원이 켜져 있을 때만 적용됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter os processos em execução ao encerrar para instalar uma atualização de software.\nQuando encerrar o iTerm2 for instalar uma atualização baixada (depois de escolher “Instalar ao Encerrar” ou com a atualização pronta para instalar), os processos em execução são mantidos para que sejam restaurados na próxima abertura, como acontece com “Instalar e Reabrir”. Aplica-se somente quando a restauração de sessão está ativada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оставлять задания выполняться при выходе для установки обновления.\nЕсли при выходе из iTerm2 будет установлено загруженное обновление (после выбора «Установить при выходе» или когда обновление готово к установке), выполняющиеся задания не завершаются и восстанавливаются при следующем запуске, как и при «Установить и перезапустить». Применяется только при включённом восстановлении сессий."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出以安装软件更新时保持作业运行。\n当退出 iTerm2 会安装已下载的更新时（选择“退出应用时安装”后，或更新已准备好安装时），正在运行的作业会保留下来，并在下次启动时恢复，与“安装并重启应用”时相同。仅当会话恢复开启时适用。"
           }
         }
       }
