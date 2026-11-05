@@ -4,13 +4,20 @@
 # secure timestamp, and the hardened runtime.
 #
 # Why this is needed: `make sparkle` builds Sparkle with empty SIGNING_FLAGS, so
-# Sparkle's own Xcode project signs its nested Autoupdate.app helpers (Autoupdate,
-# fileop) ad-hoc ("Sign to Run Locally"). When iTerm2 embeds the framework it is
-# copied with CodeSignOnCopy, which re-signs the framework wrapper but NOT the
-# nested Autoupdate.app, so those helpers stay ad-hoc and Apple rejects the whole
-# app at notarization ("not signed with a valid Developer ID certificate" / "does
-# not include a secure timestamp"). Running this after building the framework
-# fixes the nested signatures. See the regression in commit d65c5f096.
+# Sparkle's own Xcode project signs its nested helpers ad-hoc ("Sign to Run
+# Locally"). When iTerm2 embeds the framework it is copied with CodeSignOnCopy,
+# which re-signs the framework wrapper but NOT the nested helpers, so those stay
+# ad-hoc and Apple rejects the whole app at notarization ("not signed with a
+# valid Developer ID certificate" / "does not include a secure timestamp").
+# Running this after building the framework fixes the nested signatures. See the
+# regression in commit d65c5f096.
+#
+# Sparkle 2 layout (Versions/B): the installer is the command-line tool
+# `Autoupdate`, the progress agent that quits and relaunches the app is
+# `Updater.app`, and sandboxed hosts would also have XPCServices/*.xpc. iTerm2 is
+# not sandboxed and builds Sparkle without the XPC services, but they are signed
+# here if present. Sparkle's own guidance is to sign each piece inside-out with
+# the hardened runtime and never with --deep.
 #
 # Usage: sign_sparkle_helpers.sh <path-to-Sparkle.framework>
 #   Override the identity with CODESIGN_IDENTITY if needed.
@@ -25,29 +32,35 @@ if [ ! -d "$FRAMEWORK" ]; then
   exit 1
 fi
 
+VERSION_DIR="$FRAMEWORK/Versions/Current"
+if [ ! -d "$VERSION_DIR" ]; then
+  echo "ERROR: $VERSION_DIR does not exist" >&2
+  exit 1
+fi
+
 sign() {
   echo "Signing $1"
   codesign --force --options runtime --timestamp --sign "$IDENTITY" "$1"
 }
 
-AU="$FRAMEWORK/Versions/A/Resources/Autoupdate.app"
-
-# Sign inside-out: nested Mach-O first, then the app bundle, then (last) the
+# Sign inside-out: nested Mach-O first, then bundles, then (last) the
 # framework, so each enclosing seal is computed over already-signed contents.
-if [ -d "$AU" ]; then
-  [ -e "$AU/Contents/MacOS/fileop" ] && sign "$AU/Contents/MacOS/fileop"
-  [ -e "$AU/Contents/MacOS/Autoupdate" ] && sign "$AU/Contents/MacOS/Autoupdate"
-  # XPC services exist in some Sparkle configurations; sign them if present.
-  for xpc in "$FRAMEWORK"/Versions/A/XPCServices/*.xpc; do
-    [ -e "$xpc" ] && sign "$xpc"
-  done
-  sign "$AU"
+for xpc in "$VERSION_DIR"/XPCServices/*.xpc; do
+  if [ -e "$xpc" ]; then
+    # Sparkle 2.6+ gives the Downloader service entitlements; keep them.
+    echo "Signing $xpc"
+    codesign --force --options runtime --timestamp --preserve-metadata=entitlements --sign "$IDENTITY" "$xpc"
+  fi
+done
+[ -e "$VERSION_DIR/Autoupdate" ] && sign "$VERSION_DIR/Autoupdate"
+if [ -d "$VERSION_DIR/Updater.app" ]; then
+  sign "$VERSION_DIR/Updater.app"
 fi
 
 # The framework wrapper. iTerm2's CodeSignOnCopy will re-sign this with the app's
 # identity at embed time, but sign it here too so the on-disk artifact is
 # self-consistently Developer ID and validates on its own.
-sign "$FRAMEWORK/Versions/A"
+sign "$VERSION_DIR"
 
 # Fail loudly if any nested Mach-O is still ad-hoc.
 BAD=$(find "$FRAMEWORK" -type f | while read -r f; do

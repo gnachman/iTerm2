@@ -2487,7 +2487,6 @@ DQ
                 <outlet property="maximizePane" destination="1233" id="1237"/>
                 <outlet property="selectTab" destination="847" id="863"/>
                 <outlet property="showFullScreenTabs" destination="1257" id="1260"/>
-                <outlet property="suUpdater" destination="879" id="FRj-mW-Vma"/>
                 <outlet property="toolbeltMenu" destination="1296" id="1299"/>
                 <outlet property="useTransparency" destination="1228" id="1230"/>
                 <outlet property="windowArrangementsAsTabs_" destination="z6V-EJ-Ntf" id="wse-Wc-WVw"/>
@@ -2497,7 +2496,6 @@ DQ
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
-        <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
         <customObject id="vNk-ru-3oN" userLabel="Snippets Menu Controller" customClass="iTermSnippetsMenuController">
             <connections>
                 <outlet property="_menuItem" destination="s0f-jP-7Pk" id="Yh8-jB-GRV"/>

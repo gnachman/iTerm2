@@ -23,7 +23,7 @@
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 
-@import Sparkle;
+#import "iTerm2SharedARC-Swift.h"
 
 static NSString *const kHaveWarnedAboutPasteConfirmationChange = @"NoSyncHaveWarnedAboutPasteConfirmationChange";
 static NSString *const iTermLaunchExperienceControllerNextAnnoyanceTime = @"NoSyncNextAnnoyanceTime";
@@ -114,7 +114,7 @@ typedef NS_ENUM(NSUInteger, iTermLaunchExperienceChoice) {
             return self;
         }
         const NSInteger runCount = [iTermLaunchExperienceController incrementRunCount];
-        if (runCount == 2 && ![[SUUpdater sharedUpdater] automaticallyChecksForUpdates]) {
+        if (runCount == 2 && ![iTermSoftwareUpdater shared].automaticallyChecksForUpdates) {
             // Sparkle will do its thing this launch.
             _choice = iTermLaunchExperienceChoiceNone;
         } else if ([iTermLaunchExperienceController quelled]) {

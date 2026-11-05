@@ -305,6 +305,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)indicatorFlashInitialAlpha;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;
++ (BOOL)keepJobsRunningWhenQuitInstallsUpdate;
 + (BOOL)killSessionsOnLogout;
 + (NSString *)lastpassGroups;
 + (BOOL)laxNilPolicyInInterpolatedStrings;

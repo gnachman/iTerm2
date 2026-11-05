@@ -109,11 +109,12 @@ final class TestHostIsolationTests: XCTestCase {
         XCTAssertNil(readDomain(suite))
     }
 
-    // Sparkle's update-permission prompt is modal and blocks actions in later tests.
-    func testUpdaterDelegateNeverPromptsOrChecks() {
-        let delegate = TestHostIsolation.updaterDelegate
-        XCTAssertFalse(delegate.updaterShouldPromptForPermissionToCheckForUpdates(NSObject()))
-        XCTAssertFalse(delegate.updaterMayCheckForUpdates(NSObject()))
+    // Sparkle's update-permission prompt is modal and blocks actions in later tests, so the
+    // updater must never start in a test host. start() is what the app calls at launch.
+    func testUpdaterNeverStartsInTestHost() {
+        let updater = SoftwareUpdater.shared
+        updater.start()
+        XCTAssertFalse(updater.canCheckForUpdates)
     }
 
     func testRemovesStateOfDeadTestHostsOnly() throws {

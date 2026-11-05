@@ -68,6 +68,11 @@ void TurnOnDebugLoggingAutomatically(void);
 // Is Sparkle in the process of restarting us?
 @property(nonatomic, readonly) BOOL sparkleRestarting;
 
+// Will Sparkle install a staged update after the quit now in progress? Set
+// when the user chose to install on quit and then quit normally. The app will
+// not relaunch by itself, but the quit is still an upgrade.
+@property(nonatomic, readonly) BOOL quitInstallsUpdate;
+
 @property(nonatomic, readonly) BOOL useBackgroundPatternIndicator;
 @property(nonatomic, readonly) BOOL warnBeforeMultiLinePaste;
 @property(nonatomic, readonly) NSMenu *downloadsMenu;

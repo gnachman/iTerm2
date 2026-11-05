@@ -664,9 +664,10 @@ sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
 	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
-# The Sparkle subbuild signs its nested Autoupdate.app helpers ad-hoc, which
-# fails notarization once embedded (CodeSignOnCopy does not re-sign them). When
-# signing, re-sign them with Developer ID. See tools/sign_sparkle_helpers.sh.
+# The Sparkle subbuild signs its nested helpers (the Autoupdate tool and the
+# Updater.app agent) ad-hoc, which fails notarization once embedded
+# (CodeSignOnCopy does not re-sign them). When signing, re-sign them with
+# Developer ID. See tools/sign_sparkle_helpers.sh.
 ifdef SIGNED
 	tools/sign_sparkle_helpers.sh ThirdParty/Sparkle.framework
 endif

@@ -370,6 +370,10 @@ New Features:
   connected to.
 
 Improvements:
+- The window that shows a software update
+  downloading and installing can be minimized, so
+  it no longer has to sit in front of your
+  terminals until you are ready to relaunch.
 - The “Show status in tab subtitle” checkbox in
   the Session Status tool’s settings is now
   “Show status on tabs”. Turning it off hides

@@ -180,6 +180,7 @@ static BOOL hasBecomeActive = NO;
     iTermOrphanServerAdopterDelegate,
     iTermPasswordManagerDelegate,
     iTermRestorableStateControllerDelegate,
+    iTermSoftwareUpdaterDelegate,
     iTermUntitledWindowStateMachineDelegate,
     NSMenuDelegate,
     NSMenuItemValidation>
@@ -210,7 +211,6 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
-    IBOutlet SUUpdater * suUpdater;
     IBOutlet NSMenuItem *_showTipOfTheDay;  // Here because we must remove it for older OS versions.
     BOOL quittingBecauseLastWindowClosed_;
 
@@ -249,6 +249,7 @@ static BOOL hasBecomeActive = NO;
     id<NSObject> _appNapStoppingActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
+    BOOL _quitInstallsUpdate;  // Will Sparkle install a staged update after this quit?
 
     BOOL _orphansAdopted;  // Have orphan servers been adopted?
     // Launch-time session restoration bookkeeping for AI chat watchers. See
@@ -466,6 +467,9 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
             return NO;
         }
+    }
+    if (action == @selector(checkForUpdatesFromMenu:)) {
+        return [iTermSoftwareUpdater shared].canCheckForUpdates;
     }
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
@@ -1047,6 +1051,31 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     // releasing the key doesn’t change the answer.
     const BOOL optionHeldAtQuit = ([NSEvent modifierFlags] & NSEventModifierFlagOption) != 0;
 
+    // Sparkle normally tells us before it quits us for an update (see
+    // sparkleWillRestartApp:). These are the two cases where it does not, and
+    // we must still save state so nothing is lost across the upgrade. If the
+    // user cancels this quit, both flags are put back the way they were.
+    const BOOL sparkleRestartingBefore = _sparkleRestarting;
+    const BOOL quitInstallsUpdateBefore = _quitInstallsUpdate;
+    const BOOL forceSaveStateBefore = iTermRestorableStateController.forceSaveState;
+    if (!_sparkleRestarting && [self quitWasRequestedBySparkle]) {
+        // Sparkle's agent sent this quit but we never heard the warning. Treat it
+        // exactly like a Sparkle restart.
+        RLog(@"Quit requested by Sparkle without prior notice; forcing state save");
+        [self sparkleWillRestartApp:nil];
+    } else if (!_sparkleRestarting && [iTermSoftwareUpdater shared].installPendingOnQuit) {
+        // The user chose to install on quit, so this ordinary quit becomes an
+        // upgrade. Save state so the next launch restores, but keep the quit
+        // confirmation since the user asked to quit. Jobs are killed as on any
+        // other quit unless the keepJobsRunningWhenQuitInstallsUpdate advanced
+        // setting is on (see shouldLeaveSessionsRunningOnQuit).
+        RLog(@"An update will install after this quit; forcing state save");
+        [NSApp invalidateRestorableState];
+        [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
+        _quitInstallsUpdate = YES;
+        iTermRestorableStateController.forceSaveState = YES;
+    }
+
     terminals = [[iTermController sharedInstance] terminals];
     int numSessions = 0;
 
@@ -1111,6 +1140,13 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         [alert layout];
         if ([alert runModal] != NSAlertFirstButtonReturn) {
             RLog(@"User declined to quit");
+            // Undo anything the Sparkle checks above did, or the next ordinary
+            // quit would skip this confirmation and force a state save.
+            _sparkleRestarting = sparkleRestartingBefore;
+            _quitInstallsUpdate = quitInstallsUpdateBefore;
+            if (iTermRestorableStateController.forceSaveState != forceSaveStateBefore) {
+                iTermRestorableStateController.forceSaveState = forceSaveStateBefore;
+            }
             return NSTerminateCancel;
         }
     }
@@ -1396,9 +1432,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     // about another instance would stall each one after the first.
     if (![NSApp isRunningUnitTests]) {
         [iTermInstanceLock resolveConflictIfNeeded];
-    } else {
-        suUpdater.delegate = (id<SUUpdaterDelegate>)[iTermTestHostIsolation updaterDelegate];
     }
+    [iTermSoftwareUpdater shared].delegate = self;
     [[iTermApplication sharedApplication] updateAppearance];
     [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                      block:^(id _Nonnull newValue) {
@@ -1503,14 +1538,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     DLog(@"complainIfNightlyBuildIsTooOld");
     [self complainIfNightlyBuildIsTooOld];
 
-    // Set the Appcast URL and when it changes update it.
-    DLog(@"refreshSoftwareUpdateUserDefaults");
-    [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
     DLog(@"Add observers");
-    [iTermPreferences addObserverForKey:kPreferenceKeyCheckForTestReleases
-                                  block:^(id before, id after) {
-                                      [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
-                                  }];
     [iTermLoggingHelper observeNotificationsWithHandler:^(NSString * _Nonnull guid) {
         [[PreferencePanel sharedInstance] openToProfileWithGuid:guid
                                                             key:KEY_AUTOLOG];
@@ -1988,11 +2016,56 @@ static iTermKeyEventReplayer *gReplayer;
     _workspaceSessionActive = NO;
 }
 
+// Sparkle posts SUUpdaterWillRestartNotification, and separately calls the updater
+// delegate (softwareUpdaterWillInstallUpdateAndRelaunch below), before it asks us
+// to quit for an update. Either one is enough; both run so that a change in one
+// path cannot silently stop state from being saved.
 - (void)sparkleWillRestartApp:(NSNotification *)notification {
+    RLog(@"Sparkle is about to restart the app");
     [NSApp invalidateRestorableState];
     [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
     _sparkleRestarting = YES;
     iTermRestorableStateController.forceSaveState = YES;
+}
+
+- (void)softwareUpdaterWillInstallUpdateAndRelaunch {
+    [self sparkleWillRestartApp:nil];
+}
+
+// Sparkle 2 quits the app by having its Updater.app agent send a quit Apple
+// event. If we are handling such an event right now, the quit is an update.
+// This is the last line of defense for saving state when neither the
+// notification nor the delegate callback arrived.
+- (BOOL)quitWasRequestedBySparkle {
+    NSAppleEventDescriptor *event = [[NSAppleEventManager sharedAppleEventManager] currentAppleEvent];
+    if (!event || event.eventClass != kCoreEventClass || event.eventID != kAEQuitApplication) {
+        return NO;
+    }
+    // keyAddressAttr is the target (us), not the sender. The sender's pid is
+    // keySenderPIDAttr, which the Apple Event Manager fills in as typeSInt32.
+    // Fall back to keyOriginalAddressAttr for an event that was forwarded.
+    pid_t pid = 0;
+    NSAppleEventDescriptor *senderPID = [event attributeDescriptorForKeyword:keySenderPIDAttr];
+    if (senderPID.data.length == sizeof(SInt32)) {
+        SInt32 value = 0;
+        [senderPID.data getBytes:&value length:sizeof(value)];
+        pid = value;
+    } else {
+        NSAppleEventDescriptor *original = [event attributeDescriptorForKeyword:keyOriginalAddressAttr];
+        NSAppleEventDescriptor *pidDescriptor = [original coerceToDescriptorType:typeKernelProcessID];
+        if (pidDescriptor.data.length != sizeof(pid_t)) {
+            DLog(@"Quit event has no sender pid: spid=%@ from=%@", senderPID, original);
+            return NO;
+        }
+        [pidDescriptor.data getBytes:&pid length:sizeof(pid)];
+    }
+    if (pid <= 0) {
+        DLog(@"Quit event has an invalid sender pid %d", pid);
+        return NO;
+    }
+    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+    DLog(@"Quit event came from pid %d, %@", pid, app.bundleIdentifier);
+    return [app.bundleIdentifier hasPrefix:@"org.sparkle-project.Sparkle"];
 }
 
 - (void)itermDidDecodeWindowRestorableState:(NSNotification *)notification {
@@ -2562,7 +2635,7 @@ static iTermKeyEventReplayer *gReplayer;
                                silenceable:kiTermWarningTypeSilenceableForOneMonth
                                     window:nil];
         if (selection == kiTermWarningSelection1) {
-            [[SUUpdater sharedUpdater] checkForUpdates:nil];
+            [[iTermSoftwareUpdater shared] checkForUpdates:nil];
         }
     }
 }
@@ -2586,6 +2659,7 @@ static iTermKeyEventReplayer *gReplayer;
         DLog(@"Launched in quiet mode. Return early.");
         // iTerm2 was launched with "open file" that turns off startup activities.
         [_untitledWindowStateMachine didFinishInitialization];
+        [[iTermSoftwareUpdater shared] start];
         return;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
@@ -2628,6 +2702,12 @@ static iTermKeyEventReplayer *gReplayer;
     [PTYSession removeAllRegisteredSessions];
 
     [iTermLaunchExperienceController performStartupActivities];
+
+    // Begin scheduled update checks only now that the initial window exists. On
+    // the second launch Sparkle shows its permission prompt, which is an ordinary
+    // window; started any earlier, the first terminal window would open on top
+    // of it and take focus.
+    [[iTermSoftwareUpdater shared] start];
 }
 
 - (BOOL)shouldOpenUntitledFileAfterRunningAutoLaunchScripts:(BOOL)ranAutoLaunchScripts {
@@ -2710,7 +2790,7 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)checkForUpdatesFromMenu:(id)sender {
-    [suUpdater checkForUpdates:(sender)];
+    [[iTermSoftwareUpdater shared] checkForUpdates:sender];
 }
 
 // Depth-first search for the menu item wired to a given action, so a

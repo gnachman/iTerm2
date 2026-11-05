@@ -184,7 +184,9 @@ static iTermController *gSharedInstance;
                                       self.willRestoreWindowsAtNextLaunch);
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     return (sessionsWillRestore &&
-            (itad.sparkleRestarting || ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
+            (itad.sparkleRestarting ||
+             (itad.quitInstallsUpdate && [iTermAdvancedSettingsModel keepJobsRunningWhenQuitInstallsUpdate]) ||
+             ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
 }
 
 - (void)dealloc {
@@ -1370,24 +1372,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         DebugLog([NSString stringWithFormat:@"Terminal %@ at %@", [term window], [NSValue valueWithRect:[[term window] frame]]]);
         DebugLog([[[term window] contentView] iterm_recursiveDescription]);
     }
-}
-
-- (void)refreshSoftwareUpdateUserDefaults {
-    BOOL checkForTestReleases = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
-    NSString *appCast = checkForTestReleases ?
-        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
-        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
-    NSURL *url = [NSURL URLWithString:appCast];
-    NSNumber *shard = @([iTermController shard]);
-    url = [url URLByAppendingQueryParameter:[NSString stringWithFormat:@"shard=%@", shard]];
-    [[iTermUserDefaults userDefaults] setObject:url.absoluteString forKey:@"SUFeedURL"];
-    // Allow Sparkle to update from a zip file containing an "iTerm" directory,
-    // even though our bundle name is now "iTerm2". I had to add this feature
-    // to my fork of Sparkle so I could change the app's name without breaking
-    // auto-update. https://github.com/gnachman/Sparkle, commit
-    // bd6a8df6e63b843f1f8aff79f40bd70907761a99.
-    [[iTermUserDefaults userDefaults] setObject:@"iTerm"
-                                              forKey:@"SUFeedAlternateAppNameKey"];
 }
 
 - (BOOL)selectionRespectsSoftBoundaries {

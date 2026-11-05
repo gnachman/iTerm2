@@ -73,6 +73,9 @@ extern NSString *const iTermSnippetsTagsDidChange;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;
+// A stable number in 0..99 derived from this installation's id, used to stage
+// rollouts of software updates.
++ (NSUInteger)shard;
 
 + (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
 
@@ -172,10 +175,6 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (PseudoTerminal *)terminalWithTab:(PTYTab *)tab;
 - (PseudoTerminal *)terminalWithSession:(PTYSession *)session;
-
-// Set Software Update (Sparkle) user defaults keys to reflect settings in
-// iTerm2's user defaults.
-- (void)refreshSoftwareUpdateUserDefaults;
 
 - (void)addRestorableSession:(iTermRestorableSession *)session;
 // Call when a session can no longer be revived. If archivePath is nonnil the
