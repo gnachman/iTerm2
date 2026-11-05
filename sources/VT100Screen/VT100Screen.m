@@ -1423,14 +1423,7 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (VT100GridRange)lineRangeOfOutputForCoordRange:(VT100GridCoordRange)coordRange {
-    // The coord range is half-open. When it ends at column 0, which is where
-    // the next prompt begins, its last line holds none of the output. Output
-    // with no trailing newline shares that line with the prompt and is not
-    // counted, which matches what Copy Output selects.
-    const int location = MAX(0, coordRange.start.y);
-    const int endY = coordRange.end.x > 0 ? coordRange.end.y + 1 : coordRange.end.y;
-    const int length = MAX(0, endY - location);
-    return VT100GridRangeMake(location, length);
+    return [_state lineRangeOfOutputForCoordRange:coordRange];
 }
 
 - (NSInteger)numberOfCellsUsedInOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {

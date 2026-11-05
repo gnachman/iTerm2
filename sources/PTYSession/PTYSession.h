@@ -64,6 +64,8 @@ extern NSString *const PTYCommandDidExitUserInfoKeyDirectory;
 extern NSString *const PTYCommandDidExitUserInfoKeyDataSource;
 extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
 extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
+// NSNumber: how many of the output's leading lines were left out of the data source. Present with the data source.
+extern NSString *const PTYCommandDidExitUserInfoKeyDroppedLineCount;
 extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 extern NSString *const PTYSessionArrangementOptionsForDuplication;
 // Transient launch option (not serialized): when set, restoration starts the session in its saved

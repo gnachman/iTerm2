@@ -2588,6 +2588,14 @@ Bug Fixes:
   Before, the old results were cleared and Find
   Next had nothing to go to until you retyped
   the search.
+- The output saved for a finished command, which
+  AI Chat and Codecierge use, could leave off
+  its last lines, or start on the wrong line
+  when the command spanned several lines or a
+  lot of output had scrolled away. They now
+  keep at most the last 2,000 lines of a
+  command’s output and say how many earlier
+  lines were left out.
 - The Python API’s GetPrompt could report the
   working directory of a later line instead of
   the prompt’s once output had scrolled off.

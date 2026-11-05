@@ -26,6 +26,8 @@ extern const int64_t VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed;
 @class iTermTitleBatch;
 @class iTermTitleDirectoryFetch;
 
+@class iTermCommandOutput;
+
 @interface VT100ScreenMutableState()<
 PTYAnnotationDelegate,
 PTYTriggerEvaluatorDelegate,
@@ -127,6 +129,8 @@ iTermTriggerScopeProvider> {
 - (long long)absLineOfCursor;
 // The absolute line number of row `row` of the current grid.
 - (long long)absLineOfGridRow:(int)row;
+// The output of the command that `mark` belongs to, captured for the command-exit notification.
+- (iTermCommandOutput *)commandOutputForMark:(id<VT100ScreenMarkReading>)mark;
 
 // Has the running command appended any output since it began executing (FTCS C)? Reset at FTCS C,
 // set whenever text is appended. Used to decide whether a program that moves the cursor above its

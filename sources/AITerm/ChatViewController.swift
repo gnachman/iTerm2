@@ -2513,51 +2513,28 @@ extension ChatViewController {
         guard haveLinkedTerminalSession else {
             return
         }
-        guard let command = userInfo[PTYCommandDidExitUserInfoKeyCommand] as? String else {
-            return
-        }
         guard let chatID else {
             return
         }
-
-        let exitCode = (userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32) ?? 0
-        let directory = userInfo[PTYCommandDidExitUserInfoKeyDirectory] as? String
-        let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
-        // Defensive extraction: this is a notification observer with no
-        // type contract on the userInfo dict. A malformed post (future
-        // shape change, third-party poster, etc.) shouldn't crash the
-        // chat window; just log and skip the stream.
-        guard let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as? Int32,
-              let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as? Int32,
-              let dataSource = userInfo[PTYCommandDidExitUserInfoKeyDataSource] as? iTermTextDataSource,
-              let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as? URL else {
+        // A malformed post (future shape change, third-party poster, etc.)
+        // shouldn't crash the chat window; just log and skip the stream.
+        guard let exit = CommandExitNotification(userInfo: userInfo) else {
             RLog("PTYCommandDidExit notification missing required userInfo keys: \(userInfo)")
             return
         }
-        let extractor = iTermTextExtractor(dataSource: dataSource)
-        let content = extractor.content(
-            in: VT100GridWindowedRange(
-                coordRange: VT100GridCoordRange(
-                    start: VT100GridCoord(x: 0, y: startLine),
-                    end: VT100GridCoord(x: 0, y: startLine + lineCount)),
-                columnWindow: VT100GridRange(location: 0, length: 0)),
-            attributeProvider: nil,
-            nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
-            pad: false,
-            includeLastNewline: false,
-            trimTrailingWhitespace: true,
-            cappedAtSize: -1,
-            truncateTail: false,
-            continuationChars: nil,
-            coords: nil,
-            deduplicateDECDHL: true) as! String
-        let cmd = TerminalCommand(username: remoteHost?.username,
-                                  hostname: remoteHost?.hostname,
-                                  directory: directory,
-                                  command: command,
-                                  output: content,
-                                  exitCode: exitCode,
-                                  url: url)
+        guard let output = exit.output else {
+            // The command ended before streaming began, so its output wasn't kept. Sending it
+            // without output would have the model answer about output it never saw.
+            DLog("Skip command that ended before streaming began")
+            return
+        }
+        let cmd = TerminalCommand(username: exit.remoteHost?.username,
+                                  hostname: exit.remoteHost?.hostname,
+                                  directory: exit.directory,
+                                  command: exit.command,
+                                  output: output,
+                                  exitCode: exit.exitCode,
+                                  url: exit.url)
         try? client.publishMessageFromUser(chatID: chatID,
                                                          content: .terminalCommand(cmd))
     }

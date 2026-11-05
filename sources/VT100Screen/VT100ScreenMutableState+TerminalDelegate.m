@@ -2552,7 +2552,7 @@ typedef struct {
         [self.openAidStack removeObject:otherAid];
     }
     // Mirror commandWasAborted's full cleanup: remove the mark + fire
-    // screenCommandDidAbortOnLine:, then reset commandStartCoord and
+    // screenCommandDidAbortWithOutput:, then reset commandStartCoord and
     // close the command's interval so downstream state (Cmd-K's
     // commandStartCoord.x check, prompt-state-machine, etc.) tracks
     // the post-abort world the same way as the aid-less path.
@@ -2576,9 +2576,7 @@ typedef struct {
 // from this category.
 - (void)abortSpecificAidMark:(VT100ScreenMark *)target {
     DLog(@"abortSpecificAidMark: target=%@ aid=%@", target, target.aid);
-    const VT100GridRange lineRange = [self lineNumberRangeOfInterval:target.entry.interval];
-    const int line = lineRange.location;
-    const VT100GridCoordRange outputRange = [self rangeOfOutputForCommandMark:target];
+    iTermCommandOutput *output = [self commandOutputForMark:target];
     NSString *command = target.fullCommand ?: target.firstLineOfCommand ?: @"";
 
     const int relativeLine = [self coordRangeForInterval:target.entry.interval].start.y;
@@ -2587,17 +2585,15 @@ typedef struct {
         [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(target)
                                              onLine:absLine];
     } name:@"aid abort 1"];
-    DLog(@"abortSpecificAidMark: removing %@ from tree (line=%@ relativeLine=%@)",
-         target, @(line), @(relativeLine));
+    DLog(@"abortSpecificAidMark: removing %@ from tree (relativeLine=%@)", target, @(relativeLine));
     [self.mutableIntervalTree removeObject:target];
     [self.mutableSavedIntervalTree removeObject:target];
     [self.mutableMarkCache removeMark:target onLine:relativeLine];
     id<VT100ScreenMarkReading> doppelganger = target.doppelganger;
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenCommandDidAbortOnLine:line
-                                  outputRange:outputRange
-                                      command:command
-                                         mark:doppelganger];
+        [delegate screenCommandDidAbortWithOutput:output
+                                          command:command
+                                             mark:doppelganger];
     } name:@"aid abort 2"];
 }
 
@@ -2659,6 +2655,7 @@ typedef struct {
     const int notifyCode = code != nil ? code.intValue : 0;
     // Snapshot key reporting flags as of this FTCS D token (see 13015).
     const VT100TerminalKeyReportingFlags keyReportingFlags = self.terminalKeyReportingFlags;
+    iTermCommandOutput *output = [self commandOutputForMark:mark];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidUpdateReturnCodeForMark:doppelganger remoteHost:remoteHost];
         // screenCommandDidExitWithCode always fires for the target so
@@ -2668,7 +2665,8 @@ typedef struct {
         // we keep the explicit "0 when unknown" default as a safety net.
         [delegate screenCommandDidExitWithCode:notifyCode
                              keyReportingFlags:keyReportingFlags
-                                          mark:doppelganger];
+                                          mark:doppelganger
+                                        output:output];
     } name:@"close aid mark notify"];
 }
 

@@ -4499,10 +4499,12 @@ localityVerified:(BOOL)localityVerified
     // FTCS D; reading the live value in the side effect would see that later state and falsely
     // conclude that an app left key reporting stuck on. See 13015.
     const VT100TerminalKeyReportingFlags keyReportingFlags = self.terminalKeyReportingFlags;
+    iTermCommandOutput *output = [self commandOutputForMark:mark];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenCommandDidExitWithCode:returnCode
                              keyReportingFlags:keyReportingFlags
-                                          mark:doppelganger];
+                                          mark:doppelganger
+                                        output:output];
     } name:@"set rc 2"];
 }
 
@@ -4993,14 +4995,11 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
 - (void)commandWasAborted {
     id<VT100ScreenMarkReading> screenMark = [self lastPromptMark];
     BOOL hadMark = NO;
-    int line = 0;
-    VT100GridCoordRange outputRange = { 0 };
+    iTermCommandOutput *output = nil;
     NSString *command = nil;
     if (screenMark) {
         hadMark = YES;
-        const VT100GridRange lineRange = [self lineNumberRangeOfInterval:screenMark.entry.interval];
-        line = lineRange.location;
-        outputRange = [self rangeOfOutputForCommandMark:screenMark];
+        output = [self commandOutputForMark:screenMark];
         command = [[[self contentInRange:screenMark.commandRange] mapWithBlock:^id _Nullable(ScreenCharArray * _Nonnull sca) {
             return sca.stringValue;
         }] componentsJoinedByString:@"\n"];
@@ -5022,10 +5021,9 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
     [self commandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
     if (hadMark) {
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenCommandDidAbortOnLine:line
-                                      outputRange:outputRange
-                                          command:command
-                                             mark:screenMark];
+            [delegate screenCommandDidAbortWithOutput:output
+                                              command:command
+                                                 mark:screenMark];
         } name:@"command was aborted 2"];
     }
     [self pruneAidRegistry];
@@ -5288,6 +5286,58 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
 - (void)setFakePromptDetectedAbsLine:(long long)fakePromptDetectedAbsLine {
     DLog(@"fakePromptDetectedAbsLine <- %@\n%@", @(fakePromptDetectedAbsLine), [NSThread callStackSymbols]);
     [super setFakePromptDetectedAbsLine:fakePromptDetectedAbsLine];
+}
+
+// How many lines of the output of the command at `mark` have scrolled out of the buffer. Once the
+// output's start has scrolled off, the mark no longer records it, so count from the line after the
+// mark, which is where output begins when its start was not recorded.
+- (long long)numberOfOutputLinesLostToScrollbackForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    const VT100GridAbsCoord outputStart = mark.outputStart;
+    Interval *interval = mark.entry.interval;
+    if (outputStart.y < 0 && !interval) {
+        return 0;
+    }
+    const long long absStart = outputStart.y >= 0 ? outputStart.y : interval.limit / (self.width + 1) + 1;
+    return MAX(0, self.cumulativeScrollbackOverflow - absStart);
+}
+
+// Everything the command-exit notification needs about the output of `mark`, captured now. Its
+// observers read the output after the side effect that posts it, by which time the main thread's
+// copy of the screen may be missing the last of the output or have scrolled the start of it off.
+// Only the last iTermCommandOutput.maxLines lines of the output are copied, since this runs for
+// every command that ends.
+- (iTermCommandOutput *)commandOutputForMark:(id<VT100ScreenMarkReading>)mark {
+    if (!mark) {
+        return nil;
+    }
+    const VT100GridRange lineRange = [self lineRangeOfOutputForCoordRange:[self rangeOfOutputForCommandMark:mark]];
+    const int location = lineRange.location;
+    int end = MIN(location + lineRange.length, self.numberOfLines);
+    // There is no next prompt yet, so the range runs through the line the cursor is on, which is
+    // empty when the output ended with a newline. Only lines holding output count toward the cap
+    // and the omitted count, or output of exactly the cap's length would lose its first line. The
+    // scan stops after the cap's worth of lines so that output ending in a long run of blank lines
+    // costs no more than the capture itself; the blank lines left are then kept as output.
+    const int lowestEnd = MAX(location, end - iTermCommandOutput.maxLines);
+    while (end > lowestEnd && [self screenCharArrayForLine:end - 1].lengthExcludingTrailingWhitespaceAndNulls == 0) {
+        end--;
+    }
+    const int firstLine = MAX(location, end - iTermCommandOutput.maxLines);
+    NSMutableArray<ScreenCharArray *> *lines = [NSMutableArray array];
+    for (int y = firstLine; y < end; y++) {
+        [lines addObject:[[self screenCharArrayForLine:y] copy]];
+    }
+    const int line = [self lineNumberRangeOfInterval:mark.entry.interval].location;
+    // The line range starts at the top of the buffer when the output's start has scrolled out of
+    // it, so count the lines lost that way too.
+    const long long droppedLineCount = (firstLine - location) + [self numberOfOutputLinesLostToScrollbackForCommandMark:mark];
+    return [[iTermCommandOutput alloc] initWithLines:lines
+                                           startLine:firstLine
+                                    droppedLineCount:(int)MIN(droppedLineCount, INT_MAX)
+                                               width:self.width
+                                            overflow:self.cumulativeScrollbackOverflow
+                                          remoteHost:[[self remoteHostOnLine:line] doppelganger]
+                                    workingDirectory:[self workingDirectoryOnLine:line]];
 }
 
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)mark {

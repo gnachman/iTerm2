@@ -207,41 +207,18 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                                    queue: nil) { [weak self] notif in
                 guard let self, let delegate, delegate.sessionEnabled(self) else { return }
                 guard let userInfo = notif.userInfo,
-                      let command = userInfo[PTYCommandDidExitUserInfoKeyCommand] as? String else {
+                      let exit = CommandExitNotification(userInfo: userInfo),
+                      // A command that ended before the goal started has no output to explain.
+                      let output = exit.output else {
                     return
                 }
-
-                let exitCode = (userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32) ?? 0
-                let directory = userInfo[PTYCommandDidExitUserInfoKeyDirectory] as? String
-                let remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
-                let startLine = userInfo[PTYCommandDidExitUserInfoKeyStartLine] as! Int32
-                let lineCount = userInfo[PTYCommandDidExitUserInfoKeyLineCount] as! Int32
-                let dataSource = userInfo[PTYCommandDidExitUserInfoKeyDataSource] as! iTermTextDataSource
-                let url = userInfo[PTYCommandDidExitUserInfoKeyURL] as! URL
-                let extractor = iTermTextExtractor(dataSource: dataSource)
-                let content = extractor.content(
-                    in: VT100GridWindowedRange(
-                        coordRange: VT100GridCoordRange(
-                            start: VT100GridCoord(x: 0, y: startLine),
-                            end: VT100GridCoord(x: 0, y: startLine + lineCount)),
-                        columnWindow: VT100GridRange(location: 0, length: 0)),
-                    attributeProvider: nil,
-                    nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
-                    pad: false,
-                    includeLastNewline: false,
-                    trimTrailingWhitespace: true,
-                    cappedAtSize: -1,
-                    truncateTail: false,
-                    continuationChars: nil,
-                    coords: nil,
-                    deduplicateDECDHL: true) as! String
-                updateHistory(command: command,
-                              exitCode: exitCode,
-                              directory: directory,
-                              output: content,
-                              remoteHost: remoteHost,
-                              url: url)
-                delegate.sessionDidReceiveCommand(session: self, command: command)
+                updateHistory(command: exit.command,
+                              exitCode: exit.exitCode,
+                              directory: exit.directory,
+                              output: output,
+                              remoteHost: exit.remoteHost,
+                              url: exit.url)
+                delegate.sessionDidReceiveCommand(session: self, command: exit.command)
             }
         }
 

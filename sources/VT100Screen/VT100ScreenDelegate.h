@@ -17,6 +17,7 @@ typedef NS_ENUM(NSInteger, iTermLinesShiftedReason) {
 };
 
 @class ParsedSSHOutput;
+@class iTermCommandOutput;
 @protocol Porthole;
 @class Trigger;
 @protocol VT100RemoteHostReading;
@@ -417,14 +418,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 // the live value later: by the time this side effect runs, a shell like Fish
 // 4.x may have already re-enabled key reporting for its next prompt, which
 // would otherwise look like an app that left key reporting stuck on. See 13015.
+//
+// `output` is the command's output as of the FTCS D token, captured on the mutation thread because
+// the main thread's copy of the screen may be missing the last of it or, by the time observers read
+// it, have scrolled the start of it off. It is nil when there is no mark or nothing consumes the
+// output (see iTermCommandOutput.hasConsumersForSessionReferences:).
 - (void)screenCommandDidExitWithCode:(int)code
                     keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
-                                 mark:(id<VT100ScreenMarkReading> _Nullable)maybeMark;
-// Failed to run the command (e.g., syntax error)
-- (void)screenCommandDidAbortOnLine:(int)line
-                        outputRange:(VT100GridCoordRange)outputRange
-                            command:(NSString *_Nonnull)command
-                               mark:(id<VT100ScreenMarkReading> _Nonnull)mark;
+                                 mark:(id<VT100ScreenMarkReading> _Nullable)maybeMark
+                               output:(iTermCommandOutput * _Nullable)output;
+// Failed to run the command (e.g., syntax error). `output` is captured as above.
+- (void)screenCommandDidAbortWithOutput:(iTermCommandOutput * _Nullable)output
+                                command:(NSString *_Nonnull)command
+                                   mark:(id<VT100ScreenMarkReading> _Nonnull)mark;
 
 - (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine
                                      remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost

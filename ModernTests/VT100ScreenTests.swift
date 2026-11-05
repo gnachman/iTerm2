@@ -2617,11 +2617,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenCommandDidExit(withCode code: Int32, keyReportingFlags: VT100TerminalKeyReportingFlags, mark maybeMark: (any VT100ScreenMarkReading)?) {
+    func screenCommandDidExit(withCode code: Int32, keyReportingFlags: VT100TerminalKeyReportingFlags, mark maybeMark: (any VT100ScreenMarkReading)?, output: CommandOutput?) {
 
     }
     
-    func screenCommandDidAbort(onLine line: Int32, outputRange: VT100GridCoordRange, command: String, mark: any VT100ScreenMarkReading) {
+    func screenCommandDidAbort(with output: CommandOutput?, command: String, mark: any VT100ScreenMarkReading) {
 
     }
     

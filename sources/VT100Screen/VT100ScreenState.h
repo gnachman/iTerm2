@@ -413,6 +413,8 @@ extern NSString *const kScreenStateOpenAidStackKey;
 - (NSString * _Nullable)workingDirectoryOnLine:(int)line;
 - (NSString * _Nullable)currentWorkingDirectory;
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
+// The lines holding the output in a half-open range from rangeOfOutputForCommandMark:.
+- (VT100GridRange)lineRangeOfOutputForCoordRange:(VT100GridCoordRange)coordRange;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 

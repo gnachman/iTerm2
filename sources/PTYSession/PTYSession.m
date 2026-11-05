@@ -249,6 +249,7 @@ NSString *const PTYCommandDidExitUserInfoKeyDirectory = @"Directory";
 NSString *const PTYCommandDidExitUserInfoKeyDataSource = @"Data Source";
 NSString *const PTYCommandDidExitUserInfoKeyStartLine = @"Line";
 NSString *const PTYCommandDidExitUserInfoKeyLineCount = @"Count";
+NSString *const PTYCommandDidExitUserInfoKeyDroppedLineCount = @"Dropped Count";
 NSString *const PTYCommandDidExitUserInfoKeyURL = @"URL";
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
@@ -20180,31 +20181,47 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     }
 }
 
-- (void)screenCommandDidAbortOnLine:(int)line
-                        outputRange:(VT100GridCoordRange)outputRange
-                            command:(NSString *)command
-                               mark:(id<VT100ScreenMarkReading>)mark {
-    [_appSwitchingPreventionDetector commandDidFinishWithStatus:-1];
-    NSDictionary *userInfo = @{
-        PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
-        PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-        PTYCommandDidExitUserInfoKeyDataSource: self.screen,
-        PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
-        PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
+// Posts PTYCommandDidExitNotification for a command that exited (with `exitCode`) or was aborted
+// (`exitCode` nil). Observers read the output from `output`, which is also the data source; it is
+// nil when nothing registered as a consumer, in which case the output keys are left out.
+- (void)postCommandDidExitNotificationWithOutput:(iTermCommandOutput *)output
+                                            mark:(id<VT100ScreenMarkReading>)mark
+                                         command:(NSString *)command
+                                        exitCode:(NSNumber *)exitCode {
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:@{
         PTYCommandDidExitUserInfoKeyCommand: (id)command ?: (id)[NSNull null],
-        PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:mark]};
-    userInfo = [userInfo dictionaryByRemovingNullValues];
+        PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:mark] }];
+    if (output) {
+        userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] = output.remoteHost;
+        userInfo[PTYCommandDidExitUserInfoKeyDirectory] = output.workingDirectory;
+        userInfo[PTYCommandDidExitUserInfoKeyDataSource] = output;
+        userInfo[PTYCommandDidExitUserInfoKeyStartLine] = @(output.startLine);
+        userInfo[PTYCommandDidExitUserInfoKeyLineCount] = @(output.lineCount);
+        userInfo[PTYCommandDidExitUserInfoKeyDroppedLineCount] = @(output.droppedLineCount);
+    }
+    if (exitCode) {
+        userInfo[PTYCommandDidExitUserInfoKeyExitCode] = exitCode;
+    }
+    NSDictionary *finalUserInfo = [userInfo dictionaryByRemovingNullValues];
     // This runs in a side-effect and notification observers might want a modal runloop.
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYCommandDidExitNotification
                                                             object:_guid
-                                                          userInfo:userInfo];
+                                                          userInfo:finalUserInfo];
     });
+}
+
+- (void)screenCommandDidAbortWithOutput:(iTermCommandOutput *)output
+                                command:(NSString *)command
+                                   mark:(id<VT100ScreenMarkReading>)mark {
+    [_appSwitchingPreventionDetector commandDidFinishWithStatus:-1];
+    [self postCommandDidExitNotificationWithOutput:output mark:mark command:command exitCode:nil];
 }
 
 - (void)screenCommandDidExitWithCode:(int)code
                    keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
-                                mark:(id<VT100ScreenMarkReading>)maybeMark {
+                                mark:(id<VT100ScreenMarkReading>)maybeMark
+                              output:(iTermCommandOutput *)output {
     [self maybeOfferToResetKeyReportingModeWithFlags:keyReportingFlags];
     if (_eventTriggerEvaluator.hasCommandFinishedTrigger) {
         NSTimeInterval duration = 0;
@@ -20232,25 +20249,10 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     }];
 
     if (maybeMark) {
-        const VT100GridRange lineRange = [_screen lineNumberRangeOfInterval:maybeMark.entry.interval];
-        const int line = lineRange.location;
-        const VT100GridCoordRange outputRange = [_screen rangeOfOutputForCommandMark:maybeMark];
-        NSDictionary *userInfo = @{
-            PTYCommandDidExitUserInfoKeyCommand: maybeMark.fullCommand ?: (id)[NSNull null],
-            PTYCommandDidExitUserInfoKeyExitCode: @(maybeMark.code),
-            PTYCommandDidExitUserInfoKeyRemoteHost: (id)[_screen remoteHostOnLine:line] ?: (id)[NSNull null],
-            PTYCommandDidExitUserInfoKeyDirectory: (id)[_screen workingDirectoryOnLine:line] ?: (id)[NSNull null],
-            PTYCommandDidExitUserInfoKeyDataSource: self.screen,
-            PTYCommandDidExitUserInfoKeyStartLine: @(outputRange.start.y),
-            PTYCommandDidExitUserInfoKeyLineCount: @(outputRange.end.y - outputRange.start.y + 1),
-            PTYCommandDidExitUserInfoKeyURL: [self urlForPromptMark:maybeMark] };
-        userInfo = [userInfo dictionaryByRemovingNullValues];
-        // This runs in a side-effect and notification observers might want a modal runloop.
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:PTYCommandDidExitNotification
-                                                                object:_guid
-                                                              userInfo:userInfo];
-        });
+        [self postCommandDidExitNotificationWithOutput:output
+                                                  mark:maybeMark
+                                               command:maybeMark.fullCommand
+                                              exitCode:@(maybeMark.code)];
     }
 }
 

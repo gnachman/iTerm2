@@ -71173,6 +71173,29 @@
         }
       }
     },
+    "CommandExit.OmittedLinesNote" : {
+      "comment" : "Line shown above a command’s output when only its last lines were kept; the placeholder is how many lines were left out",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "[%lld earlier line of output omitted.]"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "[%lld earlier lines of output omitted.]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "CommandExplainer.OpenConfirmationHeading" : {
       "comment" : "Heading of the confirmation shown before opening a command explanation",
       "extractionState" : "extracted_with_value",

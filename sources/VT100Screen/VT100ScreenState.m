@@ -1059,17 +1059,26 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
 }
 
+// Where `mark`'s output begins: the coordinate recorded at FTCS C, or failing that the line after
+// the mark. The mark covers only the prompt's first line, so the fallback can land on a later prompt
+// line or a command continuation line.
+- (VT100GridCoord)startOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    BOOL ok = NO;
+    const VT100GridCoord outputStart = VT100GridCoordFromAbsCoord(mark.outputStart, self.cumulativeScrollbackOverflow, &ok);
+    if (ok) {
+        return outputStart;
+    }
+    VT100GridCoord start = [self coordRangeForInterval:mark.entry.interval].end;
+    start.x = 0;
+    start.y++;
+    return start;
+}
+
 - (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     id<VT100ScreenMarkReading> nextScreenMark = [self nextNonDescendantPromptMarkAfter:mark];
     if (nextScreenMark) {
         VT100GridCoordRange range;
-        BOOL ok = NO;
-        range.start = VT100GridCoordFromAbsCoord(mark.outputStart, self.cumulativeScrollbackOverflow, &ok);
-        if (!ok) {
-            range.start = [self coordRangeForInterval:mark.entry.interval].end;
-            range.start.x = 0;
-            range.start.y++;
-        }
+        range.start = [self startOfOutputForCommandMark:mark];
         range.end = [self coordRangeForInterval:nextScreenMark.entry.interval].start;
         if (nextScreenMark.lineStyle) {
             DLog(@"Move end up one line for line-style mark at next prompt");
@@ -1085,12 +1094,21 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 
     // Command must still be running with no subsequent prompt.
     VT100GridCoordRange range;
-    range.start = [self coordRangeForInterval:mark.entry.interval].end;
-    range.start.x = 0;
-    range.start.y++;
+    range.start = [self startOfOutputForCommandMark:mark];
     range.end.x = 0;
     range.end.y = self.numberOfLines - self.height + [self.currentGrid numberOfLinesUsed];
     return range;
+}
+
+- (VT100GridRange)lineRangeOfOutputForCoordRange:(VT100GridCoordRange)coordRange {
+    // The coord range is half-open. When it ends at column 0, which is where
+    // the next prompt begins, its last line holds none of the output. Output
+    // with no trailing newline shares that line with the prompt and is not
+    // counted, which matches what Copy Output selects.
+    const int location = MAX(0, coordRange.start.y);
+    const int endY = coordRange.end.x > 0 ? coordRange.end.y + 1 : coordRange.end.y;
+    const int length = MAX(0, endY - location);
+    return VT100GridRangeMake(location, length);
 }
 
 - (NSIndexSet *)foldsInRange:(VT100GridRange)gridRange {
