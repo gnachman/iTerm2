@@ -64,7 +64,8 @@ struct MessageToPromptStateMachine {
         }
     }
 
-    private func prompt(terminalCommand: TerminalCommand) -> String {
+    // Internal for tests.
+    func prompt(terminalCommand: TerminalCommand) -> String {
         var lines = [String]()
         lines.append("iTerm2 is sending you this message automatically because the user enabled sending terminal commands to AI for assistance. If you can provide useful non-obvious insights, respond with those. Do not restate information that is obvious from the output. If there is nothing important to say, just respond with \"Got it.\"")
         lines.append("I executed the following command line:")
@@ -80,7 +81,11 @@ struct MessageToPromptStateMachine {
                 lines.append("The current hostname is \(hostname)")
             }
         }
-        lines.append("The exit status of the command was \(terminalCommand.exitCode)")
+        if let exitCode = terminalCommand.exitCode {
+            lines.append("The exit status of the command was \(exitCode)")
+        } else {
+            lines.append("The command was aborted before it exited (for example, interrupted at the prompt or rejected by the shell), so it has no exit status.")
+        }
         lines.append("It produced this output:")
         lines.append(terminalCommand.output)
         return lines.joined(separator: "\n")

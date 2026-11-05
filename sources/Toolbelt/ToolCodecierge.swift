@@ -234,7 +234,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
         }
 
         private func updateHistory(command: String,
-                                   exitCode: Int32,
+                                   exitCode: Int32?,
                                    directory: String?,
                                    output: String,
                                    remoteHost: VT100RemoteHostReading?,
@@ -383,13 +383,18 @@ class ToolCodecierge: NSView, ToolbeltTool {
             return result + "%"
         }
 
-        private func message(forCommand command: Command) -> String {
+        // Internal for tests.
+        func message(forCommand command: Command) -> String {
             var lines = [String]()
             lines.append("\(prompt(command: command)) \(command.command)")
             lines.append(command.output)
             lines.append("-- end output --")
-            if command.exitCode != 0 {
-                lines.append("The command failed with exit code \(command.exitCode).")
+            if let exitCode = command.exitCode {
+                if exitCode != 0 {
+                    lines.append("The command failed with exit code \(exitCode).")
+                }
+            } else {
+                lines.append("The command was aborted before it exited (for example, interrupted at the prompt or rejected by the shell), so it has no exit status.")
             }
             if ghostRiding {
                 lines.append("Briefly explain the output, especially if anything went wrong, and perform the next step.")

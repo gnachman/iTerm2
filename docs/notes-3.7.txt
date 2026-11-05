@@ -2621,6 +2621,10 @@ Bug Fixes:
   was cleared away, features that work with
   the most recent command could still refer
   to it.
+- AI Chat and Codecierge described a command
+  that was aborted, such as by Control-C at
+  the prompt, as having succeeded with exit
+  status 0. They now say it was aborted.
 - When the cache of images drawn with the Kitty
   graphics protocol filled up, it dropped the
   oldest image rather than the one displayed

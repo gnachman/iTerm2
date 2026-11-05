@@ -13,8 +13,9 @@ import Foundation
 // observer.
 struct CommandExitNotification {
     let command: String
-    // 0 when the command was aborted rather than exiting.
-    let exitCode: Int32
+    // nil when the command was aborted rather than exiting: the shell ended it without a status, as
+    // for a syntax error or Control-C at the prompt. Not 0, which would call it a success.
+    let exitCode: Int32?
     let directory: String?
     let remoteHost: VT100RemoteHostReading?
     let url: URL
@@ -31,7 +32,7 @@ struct CommandExitNotification {
         }
         self.command = command
         self.url = url
-        exitCode = (userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32) ?? 0
+        exitCode = userInfo[PTYCommandDidExitUserInfoKeyExitCode] as? Int32
         directory = userInfo[PTYCommandDidExitUserInfoKeyDirectory] as? String
         remoteHost = userInfo[PTYCommandDidExitUserInfoKeyRemoteHost] as? VT100RemoteHostReading
         output = Self.outputText(userInfo)
