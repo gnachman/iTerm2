@@ -315,7 +315,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                    alert:(BOOL)alert
               completion:(void (^ _Nonnull)(void))completion;
 - (void)screenPromptDidStartAtLine:(int)line;
-- (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading> _Nonnull)mark;
+// `command` is the text in the command range when the prompt ended, `cursor` where the cursor was,
+// `workingDirectory` the directory on the prompt's last line and `encoding` the terminal's encoding,
+// all captured on the mutation thread because the main thread's copy of that state may be from
+// before this prompt.
+- (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading> _Nonnull)mark
+                           command:(NSString * _Nullable)command
+                            cursor:(VT100GridAbsCoord)cursor
+                  workingDirectory:(NSString * _Nullable)workingDirectory
+                          encoding:(NSStringEncoding)encoding;
 
 // Called for OSC 133;A / 133;P with a non-initial `k=` attribute
 // (secondary/continuation/right/unknown). The receiver should NOT treat this

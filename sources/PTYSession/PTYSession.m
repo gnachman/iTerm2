@@ -18183,7 +18183,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_pasteHelper unblock];
 }
 
-- (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark {
+- (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark
+                           command:(NSString *)command
+                            cursor:(VT100GridAbsCoord)cursor
+                  workingDirectory:(NSString *)workingDirectory
+                          encoding:(NSStringEncoding)encoding {
     if (_eventTriggerEvaluator.hasPromptDetectedTrigger) {
         [_eventTriggerEvaluator promptDetected];
     }
@@ -18195,7 +18199,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             notification.promptNotification = [[[ITMPromptNotification alloc] init] autorelease];
             notification.promptNotification.session = self.guid;
             notification.promptNotification.prompt.placeholder = @"";
-            notification.promptNotification.prompt.prompt = [self getPromptResponseForMark:mark];
+            notification.promptNotification.prompt.prompt = [self getPromptResponseForMark:mark
+                                                                            currentCommand:[self currentCommandFallingBackTo:command]
+                                                                                    cursor:cursor
+                                                                          workingDirectory:workingDirectory];
             if (mark) {
                 notification.promptNotification.uniquePromptId = mark.guid;
             }
@@ -18209,7 +18216,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             for (ScreenCharArray *line in lines) {
                 NSString *string = (line == lines.lastObject) ? line.stringValue : line.stringValueIncludingNewline;
                 string = [string stringByAppendingString:@" "];
-                [self logCooked:[string dataUsingEncoding:_screen.terminalEncoding]
+                [self logCooked:[string dataUsingEncoding:encoding]
                      foreground:(screen_char_t){0}
                      background:(screen_char_t){0}
                        atPrompt:NO];
@@ -20012,14 +20019,15 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
 #pragma mark - FinalTerm
 
 - (NSString *)currentCommand {
+    return [self currentCommandFallingBackTo:[_screen currentCommandText]];
+}
+
+// The composer's text when the auto composer is up, else `command`, the text in the command range.
+- (NSString *)currentCommandFallingBackTo:(NSString *)command {
     if (self.haveAutoComposer) {
         return _composerManager.contents;
     }
-    if (_screen.commandRange.start.x < 0) {
-        return nil;
-    } else {
-        return [_screen commandInRange:_screen.commandRange];
-    }
+    return command;
 }
 
 - (NSString *)currentCommandUpToCursor {
@@ -24490,6 +24498,23 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
 }
 
 - (ITMGetPromptResponse *)getPromptResponseForMark:(id<VT100ScreenMarkReading>)mark {
+    const VT100GridAbsCoord cursor = VT100GridAbsCoordMake(_screen.currentGrid.cursor.x,
+                                                           _screen.absoluteLineNumberOfCursor);
+    // promptRange is absolute while workingDirectoryOnLine: takes a line of the current contents.
+    NSString *workingDirectory = mark ? [_screen workingDirectoryOnLine:mark.promptRange.end.y - _screen.totalScrollbackOverflow] : nil;
+    return [self getPromptResponseForMark:mark
+                           currentCommand:self.currentCommand
+                                   cursor:cursor
+                         workingDirectory:workingDirectory];
+}
+
+// `currentCommand` is reported when the mark doesn't have a command yet. `cursor` ends the output
+// range and `workingDirectory` is the directory on the prompt's last line; a prompt notification
+// passes values captured when the prompt ended, since the main thread's copy may be older.
+- (ITMGetPromptResponse *)getPromptResponseForMark:(id<VT100ScreenMarkReading>)mark
+                                    currentCommand:(NSString *)currentCommand
+                                            cursor:(VT100GridAbsCoord)cursor
+                                  workingDirectory:(NSString *)workingDirectory {
     ITMGetPromptResponse *response = [[[ITMGetPromptResponse alloc] init] autorelease];
     if (!mark) {
         response.status = ITMGetPromptResponse_Status_PromptUnavailable;
@@ -24514,13 +24539,13 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
         response.outputRange = [[[ITMCoordRange alloc] init] autorelease];
         response.outputRange.start.x = mark.outputStart.x;
         response.outputRange.start.y = mark.outputStart.y;
-        response.outputRange.end.x = _screen.currentGrid.cursor.x;
-        response.outputRange.end.y = _screen.currentGrid.cursor.y + _screen.numberOfScrollbackLines + _screen.totalScrollbackOverflow;
+        response.outputRange.end.x = cursor.x;
+        response.outputRange.end.y = cursor.y;
     }
 
-    response.command = mark.fullCommand ?: self.currentCommand;
+    response.command = mark.fullCommand ?: currentCommand;
     response.status = ITMGetPromptResponse_Status_Ok;
-    response.workingDirectory = [_screen workingDirectoryOnLine:mark.promptRange.end.y] ?: self.lastDirectory;
+    response.workingDirectory = workingDirectory ?: self.lastDirectory;
     if (mark.hasCode) {
         response.promptState = ITMGetPromptResponse_State_Finished;
         response.exitStatus = mark.code;

@@ -5073,10 +5073,12 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
                                                                     commandStartLocation.x,
                                                                     commandStartLocation.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
     DLog(@"Prompt range is %@", VT100GridAbsCoordRangeDescription(promptRange));
+    // The range's end is inclusive, so this many rows end at end.y.
     const int maxPromptLines = 4;
-    if (promptRange.end.y - promptRange.start.y > maxPromptLines) {
+    if (promptRange.end.y - promptRange.start.y + 1 > maxPromptLines) {
         DLog(@"Reduce to last %d lines", maxPromptLines);
-        promptRange.start.y = promptRange.end.y = maxPromptLines;
+        promptRange.start.y = promptRange.end.y - maxPromptLines + 1;
+        promptRange.start.x = 0;
     }
     if (shortCircuitDups &&
         VT100GridAbsCoordRangeEquals(self.currentPromptRange, promptRange)) {
@@ -5094,8 +5096,18 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
                                                                               promptText:promptText] doppelganger];
     [_promptStateMachine didCapturePrompt:promptText];
     [self addMarksForPathsInRange:promptRange];
+    // Capture what the delegate reports about the prompt now: the main thread's copy of the command
+    // range, cursor and directory marks may be from before this prompt.
+    NSString *command = [self currentCommandText];
+    const VT100GridAbsCoord cursor = VT100GridAbsCoordMake(self.currentGrid.cursor.x, [self absLineOfCursor]);
+    NSString *workingDirectory = [self workingDirectoryOnLine:promptRange.end.y - self.cumulativeScrollbackOverflow];
+    const NSStringEncoding encoding = self.terminal.encoding;
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenPromptDidEndWithMark:mark];
+        [delegate screenPromptDidEndWithMark:mark
+                                     command:command
+                                      cursor:cursor
+                            workingDirectory:workingDirectory
+                                    encoding:encoding];
     } name:@"prompt ended and command started"];
 }
 

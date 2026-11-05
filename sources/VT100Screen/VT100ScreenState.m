@@ -1322,6 +1322,14 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     return [self commandInRange:range maxLines:50];
 }
 
+- (NSString *)currentCommandText {
+    const VT100GridCoordRange commandRange = self.commandRange;
+    if (commandRange.start.x < 0) {
+        return nil;
+    }
+    return [self commandInRange:commandRange];
+}
+
 - (NSString *)commandInRange:(VT100GridCoordRange)range maxLines:(int)maxLines {
     if (range.start.x == -1) {
         return nil;

@@ -2701,7 +2701,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
-    func screenPromptDidEnd(withMark mark: any VT100ScreenMarkReading) {
+    func screenPromptDidEnd(withMark mark: any VT100ScreenMarkReading, command: String?, cursor: VT100GridAbsCoord, workingDirectory: String?, encoding: UInt) {
 
     }
     

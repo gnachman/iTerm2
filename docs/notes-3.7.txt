@@ -2588,6 +2588,12 @@ Bug Fixes:
   Before, the old results were cleared and Find
   Next had nothing to go to until you retyped
   the search.
+- The Python API’s GetPrompt could report the
+  working directory of a later line instead of
+  the prompt’s once output had scrolled off.
+- When a shell integration prompt was taller
+  than four lines, its text and working
+  directory were taken from the wrong line.
 - Choosing “Stop Codecierge” in its usage
   warning could stop the pane the toolbelt was
   showing instead of the one that had asked,

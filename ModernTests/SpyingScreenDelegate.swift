@@ -25,6 +25,7 @@ class SpyingScreenDelegate: FakeSession {
     }
     struct PromptDidEndCall {
         let mark: any VT100ScreenMarkReading
+        let command: String?
     }
     struct CommandDidChangeCall {
         let command: String
@@ -227,8 +228,12 @@ class SpyingScreenDelegate: FakeSession {
         promptDidStartCalls.append(PromptDidStartCall(line: line))
     }
 
-    override func screenPromptDidEnd(withMark mark: any VT100ScreenMarkReading) {
-        promptDidEndCalls.append(PromptDidEndCall(mark: mark))
+    override func screenPromptDidEnd(withMark mark: any VT100ScreenMarkReading,
+                                     command: String?,
+                                     cursor: VT100GridAbsCoord,
+                                     workingDirectory: String?,
+                                     encoding: UInt) {
+        promptDidEndCalls.append(PromptDidEndCall(mark: mark, command: command))
     }
 
     override func screenCommandDidChange(to command: String,

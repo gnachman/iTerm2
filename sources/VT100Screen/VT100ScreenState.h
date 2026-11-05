@@ -403,6 +403,8 @@ extern NSString *const kScreenStateOpenAidStackKey;
 
 - (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range;
 - (NSString * _Nullable)commandInRange:(VT100GridCoordRange)range maxLines:(int)maxLines;
+// The text of the command being entered, or nil when there is no command range.
+- (NSString * _Nullable)currentCommandText;
 
 - (id<IntervalTreeImmutableObject> _Nullable)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 

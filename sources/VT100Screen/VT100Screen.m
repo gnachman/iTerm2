@@ -468,6 +468,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return [_state commandInRange:range];
 }
 
+- (NSString *)currentCommandText {
+    return [_state currentCommandText];
+}
+
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
     return [_state haveCommandInRange:range];
 }

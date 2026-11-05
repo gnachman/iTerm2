@@ -253,6 +253,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (BOOL)shouldExpectWorkingDirectoryUpdates;
 
 - (nullable NSString *)commandInRange:(VT100GridCoordRange)range;
+// The text of the command being entered, or nil when there is no command range.
+- (nullable NSString *)currentCommandText;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 - (VT100GridCoordRange)commandRange;
 - (VT100GridCoordRange)extendedCommandRange;
