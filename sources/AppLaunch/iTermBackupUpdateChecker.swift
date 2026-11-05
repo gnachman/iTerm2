@@ -61,7 +61,10 @@ class BackupUpdateChecker: NSObject {
         let url = Self.feedURL(wantsBetas: iTermPreferences.bool(forKey: kPreferenceKeyCheckForTestReleases))
         defaults.set(Date(), forKey: Self.lastCheckKey)
         DLog("Backup update check fetching \(url)")
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        // Bypass the URL cache: the usual answer is a 404, which the cache may keep for a long
+        // time, and the whole point is to notice the file the day it appears.
+        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60)
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             // The file does not exist most of the time; that is the normal, quiet case.
             guard let data, let text = String(data: data, encoding: .utf8),
                   (response as? HTTPURLResponse)?.statusCode == 200 else {
