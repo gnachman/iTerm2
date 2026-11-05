@@ -40862,6 +40862,198 @@
         }
       }
     },
+    "BackupUpdate.Download" : {
+      "comment" : "Button that opens the iTerm2 downloads page in a browser",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Download"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다운로드"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baixar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载"
+          }
+        }
+      }
+    },
+    "BackupUpdate.Heading" : {
+      "comment" : "Heading of the alert shown when automatic updates seem to have failed",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problem mit der Softwareaktualisierung?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Software Update Problem?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ソフトウェアアップデートに問題がありますか？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "소프트웨어 업데이트에 문제가 있습니까?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problema na atualização de software?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проблема с обновлением ПО?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "软件更新出现问题？"
+          }
+        }
+      }
+    },
+    "BackupUpdate.Message" : {
+      "comment" : "Alert shown when the developer has flagged this version's automatic updates as broken; the placeholders are the available version and the installed version",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 %1$@ ist verfügbar, aber automatische Updates funktionieren in dieser Version (%2$@) möglicherweise nicht. Sie können die neue Version von iterm2.com laden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iTerm2 %1$@ is available, but automatic updates may not be working in this version (%2$@). You can download the new version from iterm2.com."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 %1$@ が利用可能ですが、このバージョン (%2$@) では自動アップデートが機能していない可能性があります。新しいバージョンは iterm2.com からダウンロードできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 %1$@을(를) 사용할 수 있지만, 이 버전(%2$@)에서는 자동 업데이트가 작동하지 않을 수 있습니다. iterm2.com에서 새 버전을 다운로드할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O iTerm2 %1$@ está disponível, mas as atualizações automáticas podem não estar funcionando nesta versão (%2$@). Você pode baixar a nova versão em iterm2.com."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доступна версия iTerm2 %1$@, но автоматическое обновление в этой версии (%2$@) может не работать. Новую версию можно загрузить с iterm2.com."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 %1$@ 已可用，但此版本 (%2$@) 的自动更新可能无法正常工作。您可以从 iterm2.com 下载新版本。"
+          }
+        }
+      }
+    },
+    "BackupUpdate.NotNow" : {
+      "comment" : "Button that dismisses the failed-update alert",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht jetzt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not Now"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "後で"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나중에"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agora não"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не сейчас"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂不"
+          }
+        }
+      }
+    },
     "BookmarkDialog.EnterName" : {
       "comment" : "Prompt asking the user to enter a name for a mark",
       "extractionState" : "extracted_with_value",

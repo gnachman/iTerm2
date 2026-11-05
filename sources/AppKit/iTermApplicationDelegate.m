@@ -2660,6 +2660,7 @@ static iTermKeyEventReplayer *gReplayer;
         // iTerm2 was launched with "open file" that turns off startup activities.
         [_untitledWindowStateMachine didFinishInitialization];
         [[iTermSoftwareUpdater shared] start];
+        [[iTermBackupUpdateChecker shared] start];
         return;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
@@ -2708,6 +2709,9 @@ static iTermKeyEventReplayer *gReplayer;
     // window; started any earlier, the first terminal window would open on top
     // of it and take focus.
     [[iTermSoftwareUpdater shared] start];
+    // Independent of Sparkle: a second appcast that is published only when Sparkle
+    // itself is known to be broken in a shipped version.
+    [[iTermBackupUpdateChecker shared] start];
 }
 
 - (BOOL)shouldOpenUntitledFileAfterRunningAutoLaunchScripts:(BOOL)ranAutoLaunchScripts {
