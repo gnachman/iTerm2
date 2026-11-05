@@ -124,6 +124,7 @@
 #import "iTermPreferences.h"
 #import "iTermPreferencesBaseViewController.h"
 #import "iTermProfilePreferences.h"
+#import "iTermProfileReadRecorder.h"
 #import "iTermProfileSearchToken.h"
 #import "iTermPromise.h"
 #import "iTermPublisher.h"

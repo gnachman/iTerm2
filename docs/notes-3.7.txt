@@ -2564,8 +2564,8 @@ Bug Fixes:
   redrew it.
 - Typing at a nushell prompt no longer makes the
   command line blink.
-- Programs that change the cursor color with an
-  escape sequence, such as tmux when switching
-  to a pane whose program set its own cursor
-  color, no longer make iTerm2 lag and burn CPU.
-  Each change used to cost several milliseconds.
+- Programs that change colors with an escape
+  sequence, such as tmux when switching to a pane
+  whose program set its own cursor color, no
+  longer make iTerm2 lag and burn CPU, and no
+  longer kick the session out of Copy Mode.

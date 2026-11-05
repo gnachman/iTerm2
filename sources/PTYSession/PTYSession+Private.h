@@ -111,6 +111,14 @@ TriggerDelegate> {
 @property(nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, strong) iTermSessionDirectoryTracker *directoryTracker;
 @property(nonatomic, retain) NSColor *cursorGuideColor;
+// Cached from the profile by loadColorsFromProfile: so the badge does not read the live profile
+// at draw time, which the colors-only reload could leave stale.
+@property(nonatomic, retain) NSColor *badgeColor;
+// The tab color from the profile, or nil when the profile has none, cached by
+// loadColorsFromProfile: for the same reason as badgeColor. tabColorResolved is NO until the
+// first colors load, since nil is a legitimate cached value.
+@property(nonatomic, retain) NSColor *resolvedTabColor;
+@property(nonatomic) BOOL tabColorResolved;
 @property(nonatomic, assign) BOOL useActivePaneBorder;
 @property(nonatomic, retain) NSColor *activePaneBorderColor;
 @property(nonatomic, copy) NSString *badgeFormat;

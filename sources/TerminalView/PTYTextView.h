@@ -844,6 +844,10 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 // A text badge shown in the top right of the window
 - (void)setBadgeLabel:(NSString *)badgeLabel;
 
+// Re-renders the badge if its text, colors, or available size changed. Call after the delegate's
+// badge color changes, since the badge image caches it.
+- (void)recomputeBadgeLabel;
+
 // Menu for session title bar hamburger button
 - (NSMenu *)titleBarMenu;
 

@@ -150,6 +150,7 @@
 #import "iTermPrintGuard.h"
 #import "iTermProcessCache.h"
 #import "iTermProfilePreferences.h"
+#import "iTermProfileReadRecorder.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermRawKeyMapper.h"
@@ -1410,6 +1411,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [_cursorGuideColor release];
+    [_badgeColor release];
+    [_resolvedTabColor release];
     [_browserBackgroundColor release];
     [_browserBackgroundColorRateLimit invalidate];
     [_browserBackgroundColorRateLimit release];
@@ -6035,7 +6038,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSColor *)tabColorInProfile:(NSDictionary *)profile {
-    const BOOL dark = _screen.colorMap.darkMode;
+    return [self tabColorInProfile:profile dark:_screen.colorMap.darkMode];
+}
+
+- (NSColor *)tabColorInProfile:(NSDictionary *)profile dark:(BOOL)dark {
     if ([iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:dark profile:profile]) {
         return [iTermProfilePreferences colorForTabColorKey:KEY_TAB_COLOR dark:dark profile:profile];
     }
@@ -6081,8 +6087,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     if (!self.isDivorced) {
-        [self setPreferencesFromAddressBookEntry:updatedProfile];
-        [self setProfile:updatedProfile];
+        [self applyUpdatedProfile:updatedProfile];
         return;
     }
 
@@ -6152,8 +6157,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     // Update saved state.
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
-    [self setPreferencesFromAddressBookEntry:temp];
-    [self setProfile:temp];
+    [self applyUpdatedProfile:temp];
 }
 
 - (void)sessionProfileDidChange {
@@ -6183,10 +6187,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }
     }
     DLog(@"After session profile change overridden keys are: %@", _overriddenFields);
-    [self setPreferencesFromAddressBookEntry:updatedProfile];
-    [self setProfile:updatedProfile];
+    [self applyUpdatedProfile:updatedProfile];
     [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
                                                         object:_profile[KEY_GUID]];
+}
+
+// Reloads this session from a changed version of its profile, doing only as much work as the
+// difference between the current profile and the new one calls for. See ProfileReloadScope.swift.
+- (void)applyUpdatedProfile:(Profile *)updatedProfile {
+    iTermProfileReloadPlan *plan = [iTermProfileReloadPlan planFromProfile:_profile
+                                                                 toProfile:updatedProfile];
+    [self setPreferencesFromAddressBookEntry:updatedProfile plan:plan];
+    [self setProfile:updatedProfile plan:plan];
 }
 
 - (BOOL)reloadProfile {
@@ -6272,6 +6284,15 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }
     }] mutableCopy] autorelease];
     [self load16ANSIColorsFromProfile:aDict darkMode:dark into:colorTable];
+
+    // Seed the badge and tab color caches before touching the color map: a change to the
+    // background or foreground synchronously re-renders the badge and, in the Minimal tab style,
+    // recomputes the tab colors, both from these caches. These are the only places the badge and
+    // tab colors are read from a profile.
+    self.badgeColor = [iTermProfilePreferences colorForKey:KEY_BADGE_COLOR dark:dark profile:aDict];
+    self.resolvedTabColor = [self tabColorInProfile:aDict dark:dark];
+    self.tabColorResolved = YES;
+
     const BOOL didUseSelectedTextColor = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_SELECTED_TEXT_COLOR, self.profile, dark) inProfile:self.profile];
     const BOOL willUseSelectedTextColor = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_SELECTED_TEXT_COLOR, aDict, dark) inProfile:aDict];
 
@@ -6288,6 +6309,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_CURSOR_GUIDE, aDict, dark)
                                                                   inProfile:aDict];
     }
+    // The badge image caches its fill color. If the background or foreground changed above, the
+    // color map callback already re-rendered it; this covers a badge color change on its own.
+    [_textview recomputeBadgeLabel];
 
     self.useActivePaneBorder = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_ACTIVE_PANE_BORDER, aDict, dark)
                                                          inProfile:aDict];
@@ -6574,9 +6598,109 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
     _modeHandler.mode = iTermSessionModeDefault;
+    NSDictionary *profile = aePrefs;
+#if DEBUG
+    // Lint the colors reload scope: nothing outside reloadColorsFromProfile: may read a
+    // colors-scope key, or else the colors-only reload would leave that reader stale. See
+    // ProfileReloadScope.swift.
+    //
+    // Two recorders: one wraps the profile being applied, and one stands in for _profile while
+    // the reload runs. The second catches readers that consult the live profile (self.profile)
+    // instead of the one being applied. Any colors-scope read through it is a leak, even inside
+    // the colors section, because during a reload the live profile holds the old colors.
+    iTermProfileReadRecorder *recorder = nil;
+    if (aePrefs) {
+        recorder = [[[iTermProfileReadRecorder alloc] initWithProfile:aePrefs] autorelease];
+        profile = recorder;
+    }
+    iTermProfileReadRecorder *liveRecorder = nil;
+    Profile *liveProfile = nil;
+    if (_profile) {
+        liveRecorder = [[iTermProfileReadRecorder alloc] initWithProfile:_profile];
+        // Take over the ivar's reference to the real profile and give the ivar its own
+        // reference to the recorder, so a setProfile: during the reload balances correctly.
+        liveProfile = _profile;
+        _profile = [liveRecorder retain];
+    }
+#endif
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [self reallySetPreferencesFromAddressBookEntry:aePrefs terminal:terminal];
+        [self reallySetPreferencesFromAddressBookEntry:profile terminal:terminal];
     }];
+#if DEBUG
+    if (liveRecorder) {
+        if (_profile == liveRecorder) {
+            [_profile release];
+            _profile = liveProfile;
+        } else {
+            // Something replaced _profile during the reload, so the real profile we were holding
+            // for it is no longer wanted.
+            [liveProfile release];
+        }
+    }
+    NSMutableSet<NSString *> *leaked = [NSMutableSet set];
+    if (recorder) {
+        [leaked unionSet:recorder.colorsScopeKeysReadOutsideColorsSection];
+    }
+    if (liveRecorder) {
+        [leaked unionSet:liveRecorder.colorsScopeKeysReadOutsideColorsSection];
+    }
+    NSArray<NSString *> *backtrace = recorder.firstLeakBacktrace ?: liveRecorder.firstLeakBacktrace;
+    ITAssertWithMessage(leaked.count == 0,
+                        @"Colors-scope profile keys %@ were read outside reloadColorsFromProfile: (or read from the live profile during the reload). Either move the reader into reloadColorsFromProfile: and have it read the profile being applied, or move the key out of the colors scope in ProfileReloadScope.swift. First offending read:\n%@",
+                        leaked,
+                        [backtrace componentsJoinedByString:@"\n"]);
+    [liveRecorder release];
+#endif
+}
+
+// Reloads only as much of the profile as the plan says changed. When the plan calls for
+// everything this is the full reload; see ProfileReloadScope.swift for how plans are made.
+- (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
+                                      plan:(iTermProfileReloadPlan *)plan {
+    DLog(@"%@: reload with plan %@", self, plan);
+    if (!aePrefs || plan.reloadsEverything) {
+        [self setPreferencesFromAddressBookEntry:aePrefs];
+        return;
+    }
+    // Every changed key is in the colors scope.
+    [self reloadColorsFromProfile:aePrefs];
+}
+
+// The colors scope of a profile reload. Everything that reads a colors-scope key (see
+// iTermProfileReloadScopes.colorsScopeKeys) during a reload must live here, because when only
+// colors change this is all that runs. It may also read other keys freely. The full reload calls
+// this too, so the two paths cannot drift apart. In debug builds the full reload asserts that no
+// colors-scope key is read outside this method.
+- (void)reloadColorsFromProfile:(Profile *)aDict {
+    iTermProfileReadRecorder *recorder = [iTermProfileReadRecorder castFrom:aDict];
+    recorder.inColorsSection = YES;
+
+    [self loadColorsFromProfile:aDict];
+
+    // ansiColorsMatchingForeground:andBackground:inBookmark does an equality comparison, so
+    // iTermProfilePreferences is not used here.
+    [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[[self amendedColorKey:KEY_FOREGROUND_COLOR]]
+                                                    andBackground:aDict[[self amendedColorKey:KEY_BACKGROUND_COLOR]]
+                                                       inBookmark:aDict]];
+
+    if (self.isTmuxClient) {
+        // loadColorsFromProfile: just resolved the tab color from aDict.
+        NSColor *tabColor = self.tabColor;
+        [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
+                                 forWindowPane:self.tmuxPane];
+    }
+
+    // Publish the live palette as colors.* variables so bindings on them update.
+    [_colorScopeVariables reloadFromColorMap:_screen.colorMap];
+
+    // Mark colors and the auto composer separator derive from the color map rather than from the
+    // profile, so repaint and refresh them whenever the colors are reloaded. The full reload does
+    // this again at its end for settings that are not colors; doing it here too is cheap and keeps
+    // every colors-only caller (escape sequences, appearance changes) correct.
+    [_textview requestDelegateRedraw];
+    [self updateAutoComposerSeparatorVisibility];
+
+    recorder.inColorsSection = NO;
 }
 
 - (void)reallySetPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
@@ -6597,7 +6721,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         _tmuxTitleOutOfSync = YES;
     }
 
-    [self loadColorsFromProfile:aDict];
+    [self reloadColorsFromProfile:aDict];
 
     // background image
     const iTermBackgroundImageSourceMode sourceMode =
@@ -6624,13 +6748,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     [self setBackgroundImageMode:[iTermProfilePreferences unsignedIntegerForKey:KEY_BACKGROUND_IMAGE_MODE
                                                                       inProfile:aDict]];
-
-    // Color scheme
-    // ansiColorsMatchingForeground:andBackground:inBookmark does an equality comparison, so
-    // iTermProfilePreferences is not used here.
-    [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[[self amendedColorKey:KEY_FOREGROUND_COLOR]]
-                                                    andBackground:aDict[[self amendedColorKey:KEY_BACKGROUND_COLOR]]
-                                                       inBookmark:aDict]];
 
     // transparency
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
@@ -6792,24 +6909,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         }
     }
 
-    if (self.isTmuxClient) {
-        NSDictionary *tabColorDict = [iTermProfilePreferences objectForTabColorKey:KEY_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict];
-        if (![iTermProfilePreferences boolForTabColorKey:KEY_USE_TAB_COLOR dark:_screen.colorMap.darkMode profile:aDict]) {
-            tabColorDict = nil;
-        }
-        NSColor *tabColor = [ITAddressBookMgr decodeColor:tabColorDict];
-        [self.tmuxController setTabColorString:tabColor ? [tabColor hexString] : iTermTmuxTabColorNone
-                                 forWindowPane:self.tmuxPane];
-    }
-
     NSDictionary *bindings = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_BINDINGS inProfile:aDict]];
 
-    // Seed the colors.* scope from the live palette before (re)creating bindings so
-    // any colors.* binding, whether palette-owned (i:N) or a user-authored
-    // colors.ansi.yellow, resolves to a real color on its first evaluation rather
-    // than an empty string. didChange keeps it live afterward.
-    [_colorScopeVariables reloadFromColorMap:_screen.colorMap];
-
+    // reloadColorsFromProfile: seeded the colors.* scope from the live palette above, so any
+    // colors.* binding created here, whether palette-owned (i:N) or a user-authored
+    // colors.ansi.yellow, resolves to a real color on its first evaluation rather than an
+    // empty string. didChange keeps it live afterward.
     DLog(@"bindings=%@", bindings);
     if (bindings) {
         [self removeBindings];
@@ -7628,9 +7733,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return _profile ?: @{};
 }
 
-- (void)setProfile:(Profile *)newProfile {
-    assert(newProfile);
-
+// Leaves a trail in the ProfileModel log for every profile swap so that a divorced session
+// ending up with a profile that lives only in the shared model can be diagnosed from a debug log.
+// Every path that replaces _profile must call this.
+- (void)logProfileSwapTo:(Profile *)newProfile {
     NSString *oldGUID = _profile[KEY_GUID];
     NSString *newGUID = newProfile[KEY_GUID];
 
@@ -7650,14 +7756,30 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                self, newGUID, [NSThread callStackSymbols]]];
         }
     }
+}
 
-    DLog(@"Set profile to one with guid %@\n%@", newProfile[KEY_GUID], [NSThread callStackSymbols]);
-
-    NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
-    // This is the most practical way to migrate the bopy of a
+// Replaces _profile with a migrated copy of newProfile. Both setProfile: and setProfile:plan: must
+// store the profile the same way: the colors-only plan diffs _profile against the model's copy,
+// and a key present in one but not the other would make every diff fall back to the full reload.
+- (void)storeProfile:(Profile *)newProfile {
+    NSMutableDictionary *mutableProfile = [newProfile mutableCopy];
+    // This is the most practical way to migrate the copy of a
     // profile that's stored in a saved window arrangement. It doesn't get
     // saved back into the arrangement, unfortunately.
     [ProfileModel migratePromptOnCloseInMutableBookmark:mutableProfile];
+    [_profile release];
+    _profile = mutableProfile;
+}
+
+- (void)setProfile:(Profile *)newProfile {
+    assert(newProfile);
+
+    [self logProfileSwapTo:newProfile];
+
+    DLog(@"Set profile to one with guid %@\n%@", newProfile[KEY_GUID], [NSThread callStackSymbols]);
+
+    const CGFloat previousRightExtra = [self desiredRightExtra];
+    [self storeProfile:newProfile];
 
     NSString *originalGuid = newProfile[KEY_ORIGINAL_GUID];
     if (originalGuid) {
@@ -7672,13 +7794,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     if (!_originalProfile) {
         // This is normally taken when a new session is being created.
-        _originalProfile = [NSDictionary dictionaryWithDictionary:mutableProfile];
+        _originalProfile = [NSDictionary dictionaryWithDictionary:_profile];
         [_originalProfile retain];
     }
 
-    const CGFloat previousRightExtra = [self desiredRightExtra];
-    [_profile release];
-    _profile = [mutableProfile retain];
     if (previousRightExtra != self.desiredRightExtra) {
         [self.delegate.realParentWindow rightExtraDidChange];
     }
@@ -7690,6 +7809,24 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_nameController setNeedsUpdate];
     _profileDidChange = YES;
     [self sync];
+}
+
+// Like setProfile: but skips the work that the plan says is unaffected by what changed.
+- (void)setProfile:(Profile *)newProfile plan:(iTermProfileReloadPlan *)plan {
+    if (plan.reloadsEverything) {
+        [self setProfile:newProfile];
+        return;
+    }
+    // Only colors changed. Swap in the new profile and refresh the things that derive from colors
+    // but are not driven by the color map: the window blend, the tab color, per-pane title bars,
+    // and the saved arrangement. The session name, right-gutter size, and screen config do not
+    // depend on colors, so the heavier parts of setProfile: are skipped.
+    [self logProfileSwapTo:newProfile];
+    [self storeProfile:newProfile];
+    [self invalidateBlend];
+    [[_delegate realParentWindow] invalidateRestorableState];
+    [[_delegate realParentWindow] updateTabColors];
+    [_delegate sessionDidUpdatePreferencesFromProfile:self];
 }
 
 - (NSString *)programType {
@@ -15238,6 +15375,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (NSColor *)textViewBadgeColor {
+    // Cached by loadColorsFromProfile: rather than read from _profile here. Reading the live
+    // profile at draw time would hide this dependency from the colors reload scope and from the
+    // debug linter that checks it. See ProfileReloadScope.swift.
+    //
+    // The cache is empty only before the first colors load, and the badge can be laid out during
+    // session setup before then. Reading the live profile here is fine in that window: no reload
+    // has run yet, so the linter is not watching, and the colors load that seeds the cache is the
+    // first thing a reload does.
+    if (_badgeColor) {
+        return _badgeColor;
+    }
     return [iTermProfilePreferences colorForKey:KEY_BADGE_COLOR dark:_screen.colorMap.darkMode profile:_profile];
 }
 
@@ -19002,6 +19150,12 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
 }
 
 - (NSColor *)tabColor {
+    // Cached by loadColorsFromProfile: rather than read from _profile here, for the same reasons
+    // as textViewBadgeColor. Before the first colors load no reload has run yet, so reading the
+    // live profile is harmless.
+    if (_tabColorResolved) {
+        return _resolvedTabColor;
+    }
     return [self tabColorInProfile:_profile];
 }
 
@@ -23805,7 +23959,9 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
 - (void)sessionViewDidChangeEffectiveAppearance {
     [self sync];
     if ([iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile]) {
-        [self loadColorsFromProfile:self.profile];
+        // The other appearance's colors apply now. Go through the same entry point as a profile
+        // change so the derived state (colorFgBg, the tmux tab color, colors.* variables) follows.
+        [self reloadColorsFromProfile:self.profile];
     }
 }
 
