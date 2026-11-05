@@ -15,8 +15,10 @@ class TerminalTestHarness {
     let screen: VT100Screen
     let delegate: SpyingScreenDelegate
 
-    init(width: Int = 80, height: Int = 24) {
-        delegate = SpyingScreenDelegate()
+    init(width: Int = 80,
+         height: Int = 24,
+         delegate: SpyingScreenDelegate = SpyingScreenDelegate()) {
+        self.delegate = delegate
         screen = VT100Screen()
 
         screen.delegate = delegate
