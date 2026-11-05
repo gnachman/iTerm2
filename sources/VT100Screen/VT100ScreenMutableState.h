@@ -408,6 +408,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // tests.
 + (BOOL)consumeOSC7DisabledWarning;
 + (void)resetOSC7DisabledWarningForTesting;
+// Testing only. The queue this state mutates on.
+- (dispatch_queue_t)queueForTesting;
 
 #pragma mark Remote Host
 

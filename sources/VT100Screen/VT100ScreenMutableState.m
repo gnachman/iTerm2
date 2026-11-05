@@ -7314,6 +7314,10 @@ lengthExcludingInBandSignaling:data.length
     }
 }
 
+- (dispatch_queue_t)queueForTesting {
+    return _queue;
+}
+
 - (long long)absLineOfCursor {
     return [self absLineOfGridRow:self.currentGrid.cursor.y];
 }
