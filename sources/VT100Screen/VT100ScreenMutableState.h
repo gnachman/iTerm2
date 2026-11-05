@@ -554,10 +554,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 //      through -removeObjectFromIntervalTree: / -removeObjectsFromIntervalTree:
 //      (scrollback clear, prompt-marks-below, removeInaccessibleIntervalTreeObjects,
 //      etc.).
-//   3. Two paths use -[mutableIntervalTree removeObject:] directly and
-//      thereby bypass the will/did hooks: -commandWasAborted (legacy abort)
-//      and -abortSpecificAidMark: (close-by-aid abort). Both call
-//      -pruneAidRegistry explicitly because their removals are permanent.
+//   3. Two paths use -[mutableIntervalTree removeObject:] directly:
+//      -commandWasAborted (legacy abort) and -abortSpecificAidMark:
+//      (close-by-aid abort). Both call -willRemoveScreenMarksFromIntervalTree:
+//      first, since their removals are permanent, and -pruneAidRegistry after.
 //
 // Patterns that temporarily remove + re-add a mark (replaceMark:,
 // changeHeightOfMark:, reallyReplaceRange:, intervalTree's internal

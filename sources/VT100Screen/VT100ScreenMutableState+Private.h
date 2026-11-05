@@ -224,4 +224,8 @@ iTermTriggerScopeProvider> {
 // prompt closed: the shell erased or typed over them.
 - (void)dropStaleExcludedSubrangesOfMark:(id<VT100ScreenMarkReading>)mark;
 
+// Call before removing screen marks from the interval tree for good. Drops them from the mark
+// cache, the last command mark caches, the named marks, and the aid registry.
+- (void)willRemoveScreenMarksFromIntervalTree:(NSArray<VT100ScreenMark *> *)objects;
+
 @end

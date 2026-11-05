@@ -2617,10 +2617,18 @@ Bug Fixes:
 - When a Fold trigger and another trigger
   matched the same line, the other trigger
   could act on the wrong line.
+- After a command was aborted or its prompt
+  was cleared away, features that work with
+  the most recent command could still refer
+  to it.
 - When the cache of images drawn with the Kitty
   graphics protocol filled up, it dropped the
   oldest image rather than the one displayed
   least recently.
+- The Captured Output tool sometimes didn’t show
+  a line a Capture Output trigger had just
+  matched, or didn’t clear when a program asked
+  it to.
 - Session logs could garble text that arrived
   just after a program changed the terminal’s
   character encoding.

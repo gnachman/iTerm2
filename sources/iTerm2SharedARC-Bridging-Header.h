@@ -270,6 +270,7 @@
 #import "ToastWindowController.h"
 #import "TokenExecutorHelpers.h"
 #import "Trigger.h"
+#import "CapturedOutput.h"
 #import "TriggerController.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermFocusablePanel.h"

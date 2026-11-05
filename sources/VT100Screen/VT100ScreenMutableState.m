@@ -3355,21 +3355,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return @(theKey);
     }];
     [self.mutableMarkCache removeMarks:objects onLines:keys];
+    [self lastCommandMarkCacheWillRemoveMarks:objects];
     [objects enumerateObjectsUsingBlock:^(VT100ScreenMark * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        // Only invalidate the cache when the mark being removed IS the cached
-        // last-command mark. Removing any other mark can't change which command
-        // mark is last, so nilling it unconditionally just forces the next
-        // -lastCommandMark (assignCurrentCommandEndDate calls it on every OSC
-        // 133 prompt) to re-walk the whole interval tree via
-        // reverseLimitEnumerator. Under a redraw firehose that churns marks
-        // every frame, that made every prompt pay for a full walk. Compare
-        // against the raw cache, not -lastCommandMark, so the test itself
-        // doesn't trigger the walk. This is one of several per-prompt tree
-        // walks (see also -lastRemoteHost); the runaway memory it fed is bounded
-        // separately by the per-token autoreleasepool. See issue #12992.
-        if (obj == self.cachedLastCommandMark) {
-            self.lastCommandMark = nil;
-        }
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
         if (screenMark.name) {
             [self.namedMarks removeObjectsPassingTest:^BOOL(id  _Nullable obj) {
@@ -3387,8 +3374,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // -[mutableIntervalTree removeObject:] / bulkRemoveObjects: directly
         // and BYPASS this hook, so the registry stays correct for those
         // (mark survives the operation, entry is re-set by the matching
-        // addObject:). commandWasAborted: / abortSpecificAidMark: also use
-        // the direct path; they do their own explicit registry cleanup.
+        // addObject:). commandWasAborted / abortSpecificAidMark: call this hook
+        // themselves before their direct removal, and also prune the registry.
         if (screenMark.aid != nil &&
             self.marksByAid[screenMark.aid] == screenMark) {
             DLog(@"willRemoveScreenMarks: dropping aid=%@ for removed mark %@",
@@ -5012,9 +4999,11 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
                                                  onLine:line];
         } name:@"command was aborted 1"];
         DLog(@"Command was aborted. Remove %@", screenMark);
+        // The hook drops the mark from the mark cache, the last command mark caches, and the aid
+        // registry, as for every other permanent removal.
+        [self willRemoveScreenMarksFromIntervalTree:@[ (VT100ScreenMark *)screenMark ]];
         [self.mutableIntervalTree removeObject:(VT100ScreenMark *)screenMark];
         [self.mutableSavedIntervalTree removeObject:(VT100ScreenMark *)screenMark];
-        [self.mutableMarkCache removeMark:screenMark onLine:relativeLine];
     }
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
@@ -5338,6 +5327,75 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
                                             overflow:self.cumulativeScrollbackOverflow
                                           remoteHost:[[self remoteHostOnLine:line] doppelganger]
                                     workingDirectory:[self workingDirectoryOnLine:line]];
+}
+
+// The main thread's copy of this cache is otherwise refreshed only by a sync, so side effects drained
+// before the next sync would see the previous command's mark (for example, the Captured Output tool
+// reloading after a Capture Output trigger or ClearCapturedOutput). Update it in order with the
+// interval tree changes that precede it in the side effect queue: a mark's doppelganger is added to
+// the main thread's tree by a side effect queued when the mark was added, so by the time this one
+// runs the main thread's tree has it and rangeOfOutputForCommandMark: and the like work on it.
+//
+// A sync before the side effect runs may already have copied a newer value, so the update is
+// skipped unless the main thread's generation is older. Clearing queues an update too (a nil
+// doppelganger): when a command is aborted its mark is removed and the cache cleared, and without
+// the clearing update the one queued when the mark was set would run after the removal and
+// install a mark that is no longer in the tree. The lazy search in the getter fills the cache
+// without coming through here, so it queues nothing; the next sync copies what it found.
+- (void)setLastCommandMark:(id<VT100ScreenMarkReading>)lastCommandMark {
+    const BOOL changed = (lastCommandMark != self.cachedLastCommandMark);
+    [super setLastCommandMark:lastCommandMark];
+    if (!changed) {
+        return;
+    }
+    const NSUInteger generation = self.lastCommandMarkGeneration + 1;
+    self.lastCommandMarkGeneration = generation;
+    id<VT100ScreenMarkReading> doppelganger = [lastCommandMark doppelganger];
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        VT100ScreenState *mainThreadCopy = weakSelf.mainThreadCopy;
+        if (mainThreadCopy.lastCommandMarkGeneration >= generation) {
+            return;
+        }
+        mainThreadCopy.lastCommandMarkGeneration = generation;
+        mainThreadCopy.lastCommandMark = doppelganger;
+    } name:@"update main thread last command mark"];
+}
+
+// `marks` are about to leave the interval tree. Only a removal of the cached mark changes which
+// command mark is last, so the caches are cleared only then: clearing on every removal would make
+// the next -lastCommandMark (called on every OSC 133 prompt) walk the whole tree again, which under
+// a redraw firehose that churns marks every frame made every prompt pay for a full walk (issue
+// 12992). Compare against the raw caches, not -lastCommandMark, so the test itself doesn't walk.
+//
+// Each thread's cache is filled lazily and on its own by the getter, so the main thread's may hold
+// a mark this thread's never did: for instance after this thread's cache was cleared and before
+// anything here read it, while a main-thread feature looked the mark up. So compare on each
+// thread: against this thread's cache here, and against the main thread's in a side effect. Either
+// way the main thread forgets the mark before the next sync, so side effects drained before then
+// don't see a mark that is no longer in the tree. The side effect is queued only for marks the
+// getter would cache, those with a command, so removals of other marks cost nothing extra.
+- (void)lastCommandMarkCacheWillRemoveMarks:(NSArray<VT100ScreenMark *> *)marks {
+    id<VT100ScreenMarkReading> cachedHere = self.cachedLastCommandMark;
+    if (cachedHere && [marks containsObject:(VT100ScreenMark *)cachedHere]) {
+        // Clears here and, through the generation-guarded update this queues, on the main thread.
+        self.lastCommandMark = nil;
+        return;
+    }
+    NSArray<id<VT100ScreenMarkReading>> *doppelgangers = [marks mapWithBlock:^id _Nullable(VT100ScreenMark * _Nonnull mark) {
+        return mark.firstLineOfCommand ? mark.doppelganger : nil;
+    }];
+    if (doppelgangers.count == 0) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        VT100ScreenState *mainThreadCopy = weakSelf.mainThreadCopy;
+        id<VT100ScreenMarkReading> cached = mainThreadCopy.cachedLastCommandMark;
+        if (cached && [doppelgangers containsObject:cached]) {
+            mainThreadCopy.lastCommandMark = nil;
+        }
+    } name:@"forget removed last command mark"];
 }
 
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)mark {

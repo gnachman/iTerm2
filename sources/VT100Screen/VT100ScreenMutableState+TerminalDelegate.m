@@ -2586,9 +2586,11 @@ typedef struct {
                                              onLine:absLine];
     } name:@"aid abort 1"];
     DLog(@"abortSpecificAidMark: removing %@ from tree (relativeLine=%@)", target, @(relativeLine));
+    // The hook drops the mark from the mark cache, the last command mark caches, and the aid
+    // registry, as for every other permanent removal.
+    [self willRemoveScreenMarksFromIntervalTree:@[ target ]];
     [self.mutableIntervalTree removeObject:target];
     [self.mutableSavedIntervalTree removeObject:target];
-    [self.mutableMarkCache removeMark:target onLine:relativeLine];
     id<VT100ScreenMarkReading> doppelganger = target.doppelganger;
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenCommandDidAbortWithOutput:output

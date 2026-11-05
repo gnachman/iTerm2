@@ -39,4 +39,9 @@ extern NSString *VT100ScreenTerminalStateKeyPath;
 // current cached value.
 - (id<VT100ScreenMarkReading> _Nullable)cachedLastCommandMark;
 
+// Incremented on the mutation thread each time the last-command mark changes and copied to the main
+// thread by a sync. Side effects that update the main thread's cache carry the generation they were
+// made in so one queued before a sync doesn't replace the newer value the sync copied.
+@property (nonatomic) NSUInteger lastCommandMarkGeneration;
+
 @end

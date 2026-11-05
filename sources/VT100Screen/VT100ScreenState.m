@@ -232,6 +232,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     _lastPromptLine = source.lastPromptLine;
     _intervalTreeObserver = source.intervalTreeObserver;
     _lastCommandMark = [source.cachedLastCommandMark doppelganger];
+    _lastCommandMarkGeneration = source.lastCommandMarkGeneration;
     // Let the read-only snapshot recompute -lastRemoteHost lazily rather than
     // copy the mutation thread's cached mark across the doppelganger boundary
     // (which would require reaching into another instance's protected ivars).
@@ -994,6 +995,9 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
                 if (mark.firstLineOfCommand) {
                     DLog(@"Found mark %@ in line number range %@", mark,
                          VT100GridRangeDescription([self lineNumberRangeOfInterval:obj.entry.interval]));
+                    // Fill the cache directly: the mutable state's setter would queue an update for
+                    // the main thread, which does this same search itself and gets the cached value
+                    // at the next sync anyway.
                     _lastCommandMark = mark;
                     return mark;
                 }
