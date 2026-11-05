@@ -86,6 +86,19 @@ class TokenArray: IteratorProtocol, CustomDebugStringConvertible {
         }
     }
 
+    // Calls body with each token that hasn't been consumed, in order, until it returns false.
+    // Returns false if body stopped the enumeration.
+    func enumerateRemaining(_ body: (VT100Token) -> Bool) -> Bool {
+        var i = nextIndex
+        while i < count {
+            if !body(CVectorGetVT100Token(&cvector, i)) {
+                return false
+            }
+            i += 1
+        }
+        return true
+    }
+
     // Returns the next token in the queue or nil if it is empty.
     var peek: VT100Token? {
         guard hasNext else {

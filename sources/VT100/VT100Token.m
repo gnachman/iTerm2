@@ -445,6 +445,18 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
     return &_screenChars;
 }
 
+- (BOOL)csiParametersContain:(int)value {
+    if (!_csi) {
+        return NO;
+    }
+    for (int i = 0; i < _csi->count; i++) {
+        if (_csi->p[i] == value) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)translateFromScreenTerminal {
     switch (type) {
         case VT100CSI_SGR:

@@ -2532,3 +2532,5 @@ Bug Fixes:
   use synchronized updates, part of the screen
   could stop updating until something else
   redrew it.
+- Typing at a nushell prompt no longer makes the
+  command line blink.

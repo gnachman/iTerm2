@@ -7,6 +7,7 @@
 //
 
 #import "iTermTemporaryDoubleBufferedGridController.h"
+#import "iTermTemporaryDoubleBufferedGridController+Testing.h"
 #import "iTermGCDTimer.h"
 #import "DebugLogging.h"
 #import "VT100Grid.h"
@@ -17,6 +18,9 @@
 
 @implementation iTermTemporaryDoubleBufferedGridController {
     iTermGCDTimer *_timer;
+    BOOL _manualExpiration;
+    // Stands in for _timer when expiration is manual.
+    BOOL _manualExpirationPending;
 }
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue {
@@ -48,16 +52,27 @@
     }
 }
 
+- (void)startForPromptRepaint {
+    if (_savedState) {
+        return;
+    }
+    DLog(@"%@ startForPromptRepaint", self.delegate);
+    _promptRepaint = YES;
+    [self snapshot];
+}
+
 - (void)reset {
     if (_explicit) {
         return;
     }
     DLog(@"Reset saved grid (delegate=%@)", _delegate);
     self.dirty = YES;
+    _promptRepaint = NO;
     BOOL hadSavedGrid = _savedState != nil;
     self.savedState = nil;
     [_timer invalidate];
     _timer = nil;
+    _manualExpirationPending = NO;
     if (hadSavedGrid && _drewSavedGrid) {
         [_delegate temporaryDoubleBufferedGridDidExpire];
     }
@@ -67,6 +82,10 @@
     self.dirty = YES;
     _explicit = NO;
     [self reset];
+}
+
+- (BOOL)appliesWithoutReduceFlicker {
+    return _explicit || _promptRepaint;
 }
 
 #pragma mark - Private
@@ -85,6 +104,11 @@
     static const NSTimeInterval kExplicitSaveTime = 1.0;
     DLog(@"%@ schedule timer", self.delegate);
     [_timer invalidate];
+    if (_manualExpiration) {
+        _timer = nil;
+        _manualExpirationPending = YES;
+        return;
+    }
     _timer = [[iTermGCDTimer alloc] initWithInterval:_explicit ? kExplicitSaveTime : kTimeToKeepSavedGrid
                                                queue:_queue
                                               target:self
@@ -102,10 +126,33 @@
 - (id)copyWithZone:(NSZone *)zone {
     iTermTemporaryDoubleBufferedGridController *copy = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:_queue];
     copy->_explicit = _explicit;
+    copy->_promptRepaint = _promptRepaint;
     copy.drewSavedGrid = _drewSavedGrid;
     copy.savedState = [self.savedState copy];
     self.dirty = NO;
     return copy;
+}
+
+@end
+
+@implementation iTermTemporaryDoubleBufferedGridController (Testing)
+
+- (BOOL)manualExpirationForTesting {
+    return _manualExpiration;
+}
+
+- (void)setManualExpirationForTesting:(BOOL)manualExpiration {
+    _manualExpiration = manualExpiration;
+}
+
+- (BOOL)expirationPendingForTesting {
+    return _timer != nil || _manualExpirationPending;
+}
+
+- (void)fireExpirationTimerForTesting {
+    ITAssertWithMessage(_manualExpirationPending, @"No expiration is pending");
+    _manualExpirationPending = NO;
+    [self savedGridExpirationTimer:nil];
 }
 
 @end

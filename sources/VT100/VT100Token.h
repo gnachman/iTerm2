@@ -518,6 +518,10 @@ NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
 
 - (void)translateFromScreenTerminal;
 
+// Whether any of the CSI parameters equals |value|. For DECSET/DECRST that means the mode is among
+// those being changed, as in CSI ? 2004 ; 25 h.
+- (BOOL)csiParametersContain:(int)value;
+
 - (void)realizeCRLFsWithCapacity:(int)capacity;
 
 // This is meant for swift code in tests. Everyone else should modify the vector directly.

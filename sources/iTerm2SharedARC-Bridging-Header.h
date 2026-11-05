@@ -174,6 +174,7 @@
 #import "iTermTTYState.h"
 #import "iTermTaskQueue.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
+#import "iTermTemporaryDoubleBufferedGridController+Testing.h"
 #import "iTermTextDataSource.h"
 #import "iTermTextExtractor.h"
 #import "iTermTextViewContextMenuHelper.h"

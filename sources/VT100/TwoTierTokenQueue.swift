@@ -142,6 +142,26 @@ class TwoTierTokenQueue {
         queues[1].removeAll()
     }
 
+    // Calls body with each token that came from the pty and hasn't been executed, in the order it
+    // will execute, until body returns false or `limit` tokens have been seen. High-priority tokens
+    // are injected rather than read, so they're left out. Call it only where the executor can't
+    // run concurrently: on its queue, or while joined.
+    func enumerateQueuedTokens(limit: Int, _ body: (VT100Token) -> Bool) {
+        var remaining = limit
+        for tokenArray in queues[1].allArrays {
+            let finished = tokenArray.enumerateRemaining { token in
+                guard remaining > 0 else {
+                    return false
+                }
+                remaining -= 1
+                return body(token)
+            }
+            if !finished {
+                return
+            }
+        }
+    }
+
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
         if gDebugLogging.boolValue {
             DLog("add \(tokenArray.count) tokens, highpri=\(highPriority)")
@@ -162,6 +182,12 @@ fileprivate class Queue: CustomDebugStringConvertible {
     var first: TokenArray? {
         mutex.sync {
             return arrays.first
+        }
+    }
+
+    var allArrays: [TokenArray] {
+        mutex.sync {
+            return arrays
         }
     }
 

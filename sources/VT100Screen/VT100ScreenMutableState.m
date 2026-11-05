@@ -2564,8 +2564,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [super setCursorVisible:visible];
         if (visible) {
             [self.temporaryDoubleBuffer reset];
-        } else {
+        } else if (self.temporaryDoubleBuffer) {
             [self.temporaryDoubleBuffer start];
+        } else if ([self cursorHideBeginsPromptRepaint]) {
+            DLog(@"Cursor hidden for a prompt repaint. Draw the saved grid until it's shown.");
+            [self.unconditionalTemporaryDoubleBuffer startForPromptRepaint];
         }
     }
     if (visible) {
@@ -2579,6 +2582,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [delegate screenSetCursorVisible:NO];
         } name:@"set cursor visible 2"];
     }
+}
+
+// Line editors like reedline erase and redraw the whole prompt line, command included, on every
+// keystroke, hiding the cursor while they do. A sync partway through draws the line with the
+// command missing. This is called when the cursor is hidden while Reduce Flicker is off. It allows
+// the flicker fixer only while editing a command at a prompt, and only if the tokens already queued
+// behind the hide redraw the prompt (OSC 133;A) and then show the cursor, which ends the saved grid.
+- (BOOL)cursorHideBeginsPromptRepaint {
+    if (![iTermAdvancedSettingsModel holdScreenDuringPromptRepaint]) {
+        return NO;
+    }
+    if (!self.enteringCommand) {
+        return NO;
+    }
+    return self.tokenExecutor.queuedTokensRepaintPromptAndShowCursor;
 }
 
 - (void)activateBell {

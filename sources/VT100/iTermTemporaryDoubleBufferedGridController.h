@@ -39,6 +39,14 @@
 // -resetExplicitly sets it to false. When true, -reset and -start are no-ops.
 @property(nonatomic, readonly) BOOL explicit;
 
+// True while the saved grid covers a prompt repaint that was proven to end by showing the cursor.
+// See -startForPromptRepaint. Unlike the implicit mode, this applies even when Reduce Flicker is
+// off.
+@property(nonatomic, readonly) BOOL promptRepaint;
+
+// True if the saved grid should be drawn even when Reduce Flicker is off.
+@property(nonatomic, readonly) BOOL appliesWithoutReduceFlicker;
+
 // Set this to use if you're drawing the view from the saved grid in order to get a notification
 // when it expires.
 @property(nonatomic, readonly) BOOL drewSavedGrid;
@@ -53,6 +61,7 @@
 // Implicit cannot override explicit. Timing out resets explicit. -startExplicitly sets it to true.
 // -resetExplicitly sets it to false. When true, -reset and -start are no-ops.
 @property(nonatomic, readonly) BOOL explicit;
+@property(nonatomic, readonly) BOOL promptRepaint;
 
 // Set this to use if you're drawing the view from the saved grid in order to get a notification
 // when it expires.
@@ -66,6 +75,11 @@
 // Save the grid if there isn't already a saved grid.
 - (void)start;
 - (void)startExplicitly;
+
+// Save the grid when the cursor is hidden at the start of a shell's prompt repaint whose end (the
+// cursor shown again) is already known to be on its way. -reset ends it like the implicit mode.
+// Does nothing if there's already a saved grid.
+- (void)startForPromptRepaint;
 
 // Remove the saved grid.
 - (void)reset;

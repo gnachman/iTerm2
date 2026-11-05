@@ -1725,7 +1725,8 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
 }
 
 - (id<iTermTemporaryDoubleBufferedGridControllerReading>)temporaryDoubleBuffer {
-    if ([delegate_ screenShouldReduceFlicker] || _state.temporaryDoubleBuffer.explicit) {
+    if ([delegate_ screenShouldReduceFlicker] ||
+        _state.temporaryDoubleBuffer.appliesWithoutReduceFlicker) {
         return _state.temporaryDoubleBuffer;
     } else {
         return nil;

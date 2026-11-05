@@ -22002,6 +22002,18 @@
         }
       }
     },
+    "AdvancedSetting.holdScreenDuringPromptRepaint" : {
+      "comment" : "Advanced setting: holdScreenDuringPromptRepaint",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep showing the screen as it was while the shell redraws its prompt?\nSome line editors, such as nushell’s, redraw the prompt and command line on every keystroke. When enabled, iTerm2 keeps drawing the screen as it was until the redraw finishes so the command doesn’t blink."
+          }
+        }
+      }
+    },
     "AdvancedSetting.honorBidiSupportModeEscapeSequence" : {
       "comment" : "Advanced setting: honorBidiSupportModeEscapeSequence",
       "extractionState" : "extracted_with_value",
@@ -168646,16 +168658,16 @@
       "comment" : "Warning shown in profile color settings when the app theme is set to a dark theme, which overrides the system appearance",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Your theme always uses dark mode, so the light mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ihr Thema verwendet immer den dunklen Modus, daher werden die Farben für den hellen Modus nicht verwendet, solange Sie das Thema nicht ändern. Sie können es unter Einstellungen > Erscheinungsbild > Allgemein > Thema ändern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your theme always uses dark mode, so the light mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme."
           }
         },
         "ja" : {
@@ -168694,16 +168706,16 @@
       "comment" : "Warning shown in profile color settings when the app theme is set to a light theme, which overrides the system appearance",
       "extractionState" : "extracted_with_value",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Your theme always uses light mode, so the dark mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme."
-          }
-        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ihr Thema verwendet immer den hellen Modus, daher werden die Farben für den dunklen Modus nicht verwendet, solange Sie das Thema nicht ändern. Sie können es unter Einstellungen > Erscheinungsbild > Allgemein > Thema ändern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your theme always uses light mode, so the dark mode colors won’t be used unless you change the theme. You can change it in Settings > Appearance > General > Theme."
           }
         },
         "ja" : {
@@ -257390,6 +257402,12 @@
             "value" : "Claudeの使用状況を確認中…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude 사용량 확인 중…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257406,12 +257424,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在检查 Claude 用量…"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Claude 사용량 확인 중…"
           }
         }
       }
@@ -257438,6 +257450,12 @@
             "value" : "iTerm2がClaude Codeに使用状況を問い合わせています。数秒かかることがあります。"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2가 Claude Code에 사용량을 요청하고 있습니다. 몇 초 정도 걸릴 수 있습니다."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257454,12 +257472,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 正在向 Claude Code 查询用量。这可能需要几秒钟。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iTerm2가 Claude Code에 사용량을 요청하고 있습니다. 몇 초 정도 걸릴 수 있습니다."
           }
         }
       }
@@ -257486,6 +257498,12 @@
             "value" : "Claude Codeからの使用状況の取得に時間がかかりすぎました"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code가 사용량을 보고하는 데 너무 오래 걸렸습니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257502,12 +257520,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 报告用量耗时过长"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Claude Code가 사용량을 보고하는 데 너무 오래 걸렸습니다"
           }
         }
       }
@@ -257582,6 +257594,12 @@
             "value" : "AI使用状況コマンドは何も出力せずにステータス %d で終了しました"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 사용량 명령이 아무것도 출력하지 않고 상태 %d(으)로 종료되었습니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257598,12 +257616,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 用量命令以状态 %d 退出，未输出任何内容"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI 사용량 명령이 아무것도 출력하지 않고 상태 %d(으)로 종료되었습니다"
           }
         }
       }
@@ -257630,6 +257642,12 @@
             "value" : "AI使用状況コマンドの実行に時間がかかりすぎました"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 사용량 명령이 너무 오래 걸렸습니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257646,12 +257664,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 用量命令耗时过长"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI 사용량 명령이 너무 오래 걸렸습니다"
           }
         }
       }
@@ -257678,6 +257690,12 @@
             "value" : "AI使用状況のヘルパーが使用状況を報告せずに終了しました"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 사용량 도우미가 사용량을 보고하지 않고 중지되었습니다"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257694,12 +257712,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 用量辅助程序未报告用量便已停止"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI 사용량 도우미가 사용량을 보고하지 않고 중지되었습니다"
           }
         }
       }
@@ -257966,6 +257978,12 @@
             "value" : "使用状況コマンドを実行中…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용량 명령 실행 중…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257982,12 +258000,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在运行用量命令…"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "사용량 명령 실행 중…"
           }
         }
       }

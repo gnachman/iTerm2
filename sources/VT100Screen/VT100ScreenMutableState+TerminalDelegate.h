@@ -17,6 +17,10 @@ NS_ASSUME_NONNULL_BEGIN
 // API on behalf of a program that reports through hooks but never emits the protocol itself.
 - (void)setProgressFromProtocol:(VT100ScreenProgress)progress;
 
+// Is the user editing a command at a prompt? True after terminalCommandDidStart and before
+// terminalCommandDidEnd.
+- (BOOL)enteringCommand;
+
 @end
 
 NS_ASSUME_NONNULL_END

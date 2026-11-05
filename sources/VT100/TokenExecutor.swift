@@ -425,6 +425,16 @@ class TokenExecutor: NSObject {
         return impl.hasPendingWork
     }
 
+    // Mutation queue, or the main queue in a joined block. Whether the tokens read from the pty
+    // that haven't executed yet redraw the prompt and then show the cursor. See
+    // PromptRepaintLookahead.
+    @objc var queuedTokensRepaintPromptAndShowCursor: Bool {
+#if DEBUG
+        iTermGCD.assertSafe(forMutationQueue: queue)
+#endif
+        return impl.queuedTokensRepaintPromptAndShowCursor
+    }
+
     // Any queue
     var isPausedForTesting: Bool {
         return impl.isPausedForTesting
@@ -590,6 +600,13 @@ private class TokenExecutorImpl {
     // Mutation queue, or the main queue in a joined block.
     var hasPendingWork: Bool {
         return !tokenQueue.isEmpty || taskQueue.count > 0
+    }
+
+    // Mutation queue, or the main queue in a joined block.
+    var queuedTokensRepaintPromptAndShowCursor: Bool {
+        return PromptRepaintLookahead.repaintShowsCursor { body in
+            tokenQueue.enumerateQueuedTokens(limit: PromptRepaintLookahead.tokenLimit, body)
+        }
     }
 
     var pendingWorkDescriptionForTesting: String {

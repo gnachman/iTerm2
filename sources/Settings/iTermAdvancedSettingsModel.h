@@ -200,6 +200,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableAppNap;
 + (BOOL)preventSleepOnBatteryToo;
 + (BOOL)disableCustomBoxDrawing;
++ (BOOL)holdScreenDuringPromptRepaint;
 + (BOOL)disableDECRQCRA;
 + (BOOL)disableDocumentedEditedIndicator;
 + (void)setDisableDECRQCRA:(BOOL)newValue;
