@@ -6550,12 +6550,14 @@ lengthExcludingInBandSignaling:data.length
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         const BOOL atPrompt = _promptStateMachine.isAtPrompt;
+        const NSStringEncoding encoding = self.terminal.encoding;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenDidAppendStringToCurrentLine:string
                                              isPlainText:YES
                                               foreground:foregroundColorCode
                                               background:backgroundColorCode
-                                                atPrompt:atPrompt];
+                                                atPrompt:atPrompt
+                                                encoding:encoding];
         } name:@"really append ascii data to trigger line"];
     }
     return YES;

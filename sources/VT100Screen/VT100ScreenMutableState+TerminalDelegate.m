@@ -60,13 +60,15 @@ static const int kMinimumVisibleProgressPercentage = 10;
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         const BOOL atPrompt = _promptStateMachine.isAtPrompt;
+        const NSStringEncoding encoding = self.terminal.encoding;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenDidAppendStringToCurrentLine:string
                                               isPlainText:YES
                                               foreground:foregroundColorCode
                                               background:backgroundColorCode
-                                                atPrompt:atPrompt];
+                                                atPrompt:atPrompt
+                                                encoding:encoding];
         } name:@"append string"];
     }
 }
@@ -404,13 +406,15 @@ typedef struct {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         const BOOL atPrompt = _promptStateMachine.isAtPrompt;
+        const NSStringEncoding encoding = self.terminal.encoding;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenDidAppendStringToCurrentLine:@"\a"
                                              isPlainText:NO
                                               foreground:foregroundColorCode
                                               background:backgroundColorCode
-                                                atPrompt:atPrompt];
+                                                atPrompt:atPrompt
+                                                encoding:encoding];
         } name:@"ring bell"];
     }
 }
@@ -3637,6 +3641,9 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         NSString *string = ScreenCharToStr(chars);
+        // Read on the mutation thread. The side effect runs on the main thread.
+        const BOOL isPlainText = (self.lastCharacter.complexChar || self.lastCharacter.code >= ' ');
+        const NSStringEncoding encoding = self.terminal.encoding;
         for (int i = 0; i < times; i++) {
             [self appendScreenCharArrayAtCursor:chars
                                          length:length
@@ -3649,11 +3656,11 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
                 [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                     DLog(@"begin side-effect");
                     [delegate screenDidAppendStringToCurrentLine:string
-                                                     isPlainText:(self.lastCharacter.complexChar ||
-                                                                  self.lastCharacter.code >= ' ')
+                                                     isPlainText:isPlainText
                                                       foreground:foregroundColorCode
                                                       background:backgroundColorCode
-                                                        atPrompt:atPrompt];
+                                                        atPrompt:atPrompt
+                                                        encoding:encoding];
                 } name:@"repeat previous char"];
             }
         }

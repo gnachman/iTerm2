@@ -2607,5 +2607,8 @@ Bug Fixes:
   graphics protocol filled up, it dropped the
   oldest image rather than the one displayed
   least recently.
+- Session logs could garble text that arrived
+  just after a program changed the terminal’s
+  character encoding.
 - A selection could move to the wrong place when
   a program scrolled part of the screen.

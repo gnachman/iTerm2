@@ -118,12 +118,15 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 // Terminal can change title
 - (BOOL)screenAllowTitleSetting;
 
-// Called after text was added to the current line. Can be used to check triggers.
+// Called after text was added to the current line. Can be used to check triggers. `encoding` is the
+// terminal's encoding when the text arrived, which may differ from the main thread's copy if it
+// changed since the last sync.
 - (void)screenDidAppendStringToCurrentLine:(NSString * _Nonnull)string
                                isPlainText:(BOOL)plainText
                                 foreground:(screen_char_t)fg
                                 background:(screen_char_t)bg
-                                  atPrompt:(BOOL)atPrompt;
+                                  atPrompt:(BOOL)atPrompt
+                                  encoding:(NSStringEncoding)encoding;
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(NSData * _Nonnull)asciiData
                                    foreground:(screen_char_t)fg

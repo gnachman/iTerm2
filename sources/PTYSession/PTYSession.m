@@ -16976,9 +16976,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                                isPlainText:(BOOL)plainText
                                 foreground:(screen_char_t)fg
                                 background:(screen_char_t)bg
-                                  atPrompt:(BOOL)atPrompt {
+                                  atPrompt:(BOOL)atPrompt
+                                  encoding:(NSStringEncoding)encoding {
     if (plainText) {
-        [self logCooked:[string dataUsingEncoding:_screen.terminalEncoding]
+        [self logCooked:[string dataUsingEncoding:encoding]
              foreground:fg
              background:bg
                atPrompt:atPrompt];

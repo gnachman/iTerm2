@@ -2951,7 +2951,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
         false
     }
     
-    func screenDidAppendString(toCurrentLine string: String, isPlainText plainText: Bool, foreground fg: screen_char_t, background bg: screen_char_t, atPrompt: Bool) {
+    func screenDidAppendString(toCurrentLine string: String, isPlainText plainText: Bool, foreground fg: screen_char_t, background bg: screen_char_t, atPrompt: Bool, encoding: UInt) {
 
     }
     
