@@ -2547,6 +2547,12 @@ static iTermKeyEventReplayer *gReplayer;
     if (![NSBundle it_isNightlyBuild]) {
         return;
     }
+    // A unit test host runs unattended; the modal warning would sit unanswered
+    // and stall the run until the runner gives up.
+    if ([NSApp isRunningUnitTests]) {
+        DLog(@"Skip old-nightly warning in unit tests");
+        return;
+    }
     NSTimeInterval age = -[[NSBundle it_buildDate] timeIntervalSinceNow];
     if (age > 30 * 24 * 60 * 60) {
         iTermWarningSelection selection =
