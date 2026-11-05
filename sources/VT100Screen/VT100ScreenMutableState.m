@@ -839,9 +839,10 @@ static BOOL sOSC7DisabledWarningShown;
 
     if (!sent && shouldMoveSelectionIfUnsent) {
         const VT100GridRect rect = [grid scrollRegionRect];
+        const long long regionAbsTop = [self absLineOfGridRow:rect.origin.y];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
-            [delegate screenMoveSelectionUpBy:1 inRegion:rect];
+            [delegate screenMoveSelectionUpBy:1 inRegion:rect regionAbsTop:regionAbsTop];
         } name:@"appendLineFeed"];
     }
 
@@ -7176,7 +7177,11 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (long long)absLineOfCursor {
-    return self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursor.y;
+    return [self absLineOfGridRow:self.currentGrid.cursor.y];
+}
+
+- (long long)absLineOfGridRow:(int)row {
+    return self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + row;
 }
 
 - (void)appendArchiveRestoredBanner {

@@ -1596,9 +1596,10 @@ typedef struct {
         }
     }
     if (n > 0 && !anySent && self.currentGrid.haveScrollRegion) {
+        const long long regionAbsTop = [self absLineOfGridRow:rect.origin.y];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
-            [delegate screenMoveSelectionUpBy:n inRegion:rect];
+            [delegate screenMoveSelectionUpBy:n inRegion:rect regionAbsTop:regionAbsTop];
         } name:@"scroll up"];
     }
     [self clearTriggerLine];

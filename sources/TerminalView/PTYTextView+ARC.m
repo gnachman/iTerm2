@@ -1155,7 +1155,8 @@ iTermCommandInfoViewControllerDelegate>
 // When a scrolling region moves vertically we make a good-faith effort to move the selection with it.
 // This is complicated because some, all, or none of a selection could be in the scrolling region.
 - (void)moveSelectionUpBy:(int)n
-                 inRegion:(VT100GridRect)region {
+                 inRegion:(VT100GridRect)region
+             regionAbsTop:(long long)regionAbsTop {
     if (self.selection.live) {
         // This might be nice to do some day.
         return;
@@ -1166,10 +1167,8 @@ iTermCommandInfoViewControllerDelegate>
     const int width = self.dataSource.width;
     NSArray<iTermSubSelection *> *subs = [self.selection.allSubSelections copy];
     [self.selection clearSelection];
-    const long long overflow = self.dataSource.totalScrollbackOverflow;
     // Scrolling region rows in absolute line numbers.
-    const NSRange regionAbsRowRange = NSMakeRange(region.origin.y + self.dataSource.numberOfScrollbackLines + overflow,
-                                                  region.size.height);
+    const NSRange regionAbsRowRange = NSMakeRange(regionAbsTop, region.size.height);
     const NSRange regionColumnRange = NSMakeRange(region.origin.x, region.size.width);
 
     // Re-add subselections that can stay, possibly with modifications.

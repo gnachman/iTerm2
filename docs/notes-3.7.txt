@@ -2607,3 +2607,5 @@ Bug Fixes:
   graphics protocol filled up, it dropped the
   oldest image rather than the one displayed
   least recently.
+- A selection could move to the wrong place when
+  a program scrolled part of the screen.

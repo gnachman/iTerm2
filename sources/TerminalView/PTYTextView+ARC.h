@@ -124,7 +124,8 @@ iTermURLActionHelperDelegate>
 #pragma mark - Selected Text
 
 - (void)moveSelectionUpBy:(int)n
-                 inRegion:(VT100GridRect)region;
+                 inRegion:(VT100GridRect)region
+             regionAbsTop:(long long)regionAbsTop;
 
 // A rough heuristic for whether it will be noticeably slow to extract the selection to a string.
 - (BOOL)selectionIsBig;

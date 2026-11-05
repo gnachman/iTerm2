@@ -125,6 +125,8 @@ iTermTriggerScopeProvider> {
 // Usually 0; the restoration banner can leave it nonzero.
 @property (nonatomic) int restoredCursorOffsetFromPreferred;
 - (long long)absLineOfCursor;
+// The absolute line number of row `row` of the current grid.
+- (long long)absLineOfGridRow:(int)row;
 
 // Has the running command appended any output since it began executing (FTCS C)? Reset at FTCS C,
 // set whenever text is appended. Used to decide whether a program that moves the cursor above its

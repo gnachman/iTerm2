@@ -258,8 +258,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 // PTYTextView deselect
 - (void)screenRemoveSelection;
 - (void)screenDidClearFromAbsoluteLineToEnd:(long long)absY;
+// `regionAbsTop` is the absolute line number of the region's top row, computed on the mutation
+// thread because lines may have scrolled into history since the main thread's last sync.
 - (void)screenMoveSelectionUpBy:(int)n
-                       inRegion:(VT100GridRect)region;
+                       inRegion:(VT100GridRect)region
+                   regionAbsTop:(long long)regionAbsTop;
 
 - (void)screenResetTailFind;
 

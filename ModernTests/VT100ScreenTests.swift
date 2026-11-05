@@ -2898,7 +2898,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenMoveSelectionUp(by n: Int32, inRegion region: VT100GridRect) {
+    func screenMoveSelectionUp(by n: Int32, inRegion region: VT100GridRect, regionAbsTop: Int64) {
 
     }
     
