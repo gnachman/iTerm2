@@ -4353,9 +4353,10 @@ willExecuteToken:(VT100Token *)token
 }
 
 - (void)terminalUpdateBlock:(NSString *)blockID action:(iTermUpdateBlockAction)action {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // Joined because folding finds the block and reads its lines, which may have arrived since the
+    // last sync.
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenUpdateBlock:blockID action:action];
-        [unpauser unpause];
     } name:@"Update block"];
 }
 - (void)terminalBlock:(NSString *)blockID

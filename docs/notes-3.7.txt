@@ -2612,3 +2612,6 @@ Bug Fixes:
   character encoding.
 - A selection could move to the wrong place when
   a program scrolled part of the screen.
+- The auto composer could appear in the wrong
+  place when a prompt arrived along with a lot
+  of output.

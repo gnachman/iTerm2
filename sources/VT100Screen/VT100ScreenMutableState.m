@@ -8943,9 +8943,10 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)promptStateMachineRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
     if (self.config.autoComposerEnabled) {
-        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        // Joined because the delegate places the composer using the last prompt mark and the
+        // scrollback size, which must include the prompt that was just detected.
+        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenRevealComposerWithPrompt:prompt];
-            [unpauser unpause];
         } name:@"prompt state machine reveal composer 1"];
     } else {
         [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
