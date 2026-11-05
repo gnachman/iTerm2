@@ -18,8 +18,10 @@ struct CommandExitNotification {
     let directory: String?
     let remoteHost: VT100RemoteHostReading?
     let url: URL
-    // The command's output as text, or nil when it wasn't captured because the command had no mark.
-    // When only the last lines were kept, the text begins with a line saying how many were left out.
+    // The command's output as text, or nil when it wasn't captured: nothing consumed the session's
+    // output when the command ended (see CommandOutput.addConsumer), so a consumer that registered
+    // between then and the notification has nothing to show for it. When only the last lines were
+    // kept, the text begins with a line saying how many were left out.
     let output: String?
 
     init?(userInfo: [AnyHashable: Any]) {

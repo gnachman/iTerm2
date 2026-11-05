@@ -20266,6 +20266,10 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
         _config.sessionGuid = _guid;
         dirty = YES;
     }
+    if (![NSObject object:_config.stableID isEqualToObject:_stableID]) {
+        _config.stableID = _stableID;
+        dirty = YES;
+    }
 
     const BOOL treatAmbiguousCharsAsDoubleWidth = [self treatAmbiguousWidthAsDoubleWidth];
     if (_config.treatAmbiguousCharsAsDoubleWidth != treatAmbiguousCharsAsDoubleWidth) {

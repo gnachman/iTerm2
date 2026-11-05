@@ -34,28 +34,7 @@ class ObjCChatDatabase: NSObject {
     @objc(unlinkSessionGuid:)
     static func unlink(sessionGuid: String) {
         MainActor.assumeIsolated {
-            guard let instance = ChatDatabase.instance,
-            let chats = instance.chats else {
-                return
-            }
-            let keys = iTermSessionReferenceKeys(forGuid: sessionGuid)
-            for i in 0..<chats.count {
-                let chat = chats[i]
-                if chat.isLinked(toReferenceIn: keys) {
-                    var temp = chats[i]
-                    let wasTerminal = temp.terminalSessionGuid != nil
-                    temp.terminalSessionGuid = nil
-                    temp.browserSessionGuid = nil
-                    do {
-                        try chats.set(at: i, temp)
-                        try? ChatBroker.instance?.publishNotice(
-                            chatID: temp.id,
-                            notice: "This chat is no longer linked to a \(wasTerminal ? "terminal" : "web browser") session.")
-                    } catch {
-                        DLog("\(error)")
-                    }
-                }
-            }
+            ChatDatabase.instance?.unlink(sessionGuid: sessionGuid)
         }
     }
 
@@ -691,6 +670,35 @@ class ChatDatabase {
             } catch {
                 DLog("\(error)")
                 return QueryIterator<ChatSearchResult>(resultSet: nil)
+            }
+        }
+    }
+}
+
+extension ChatDatabase {
+    // Clears the links of every chat linked to the session.
+    @MainActor
+    func unlink(sessionGuid: String) {
+        guard let chats else {
+            return
+        }
+        let keys = iTermSessionReferenceKeys(forGuid: sessionGuid)
+        for i in 0..<chats.count {
+            let chat = chats[i]
+            if chat.isLinked(toReferenceIn: keys) {
+                var temp = chats[i]
+                let wasTerminal = temp.terminalSessionGuid != nil
+                temp.terminalSessionGuid = nil
+                temp.browserSessionGuid = nil
+                do {
+                    try chats.set(at: i, temp)
+                    ChatListModel.postSessionLinkChange(chatID: temp.id)
+                    try? ChatBroker.instance?.publishNotice(
+                        chatID: temp.id,
+                        notice: "This chat is no longer linked to a \(wasTerminal ? "terminal" : "web browser") session.")
+                } catch {
+                    DLog("\(error)")
+                }
             }
         }
     }

@@ -9,6 +9,8 @@ protocol ChatViewControllerModelDelegate: AnyObject {
     func chatViewControllerModel(didInsertItemAtIndex: Int)
     func chatViewControllerModel(didRemoveItemsInRange range: Range<Int>)
     func chatViewControllerModel(didModifyItemsAtIndexes indexSet: IndexSet)
+    // The chat's terminal or browser session link changed, by whatever wrote it.
+    func chatViewControllerModelSessionLinkDidChange()
 }
 
 // Per-chat model that drives the chat view's table. Owns the
@@ -81,6 +83,7 @@ class ChatViewControllerModel {
 
     private(set) var items = NotifyingArray<Item>()
     private let chatID: String
+    private var sessionLinkObserver: (any NSObjectProtocol)?
 
     var showTypingIndicator = false {
         didSet {
@@ -136,6 +139,16 @@ class ChatViewControllerModel {
     init(chatID: String, listModel: ChatListModel) {
         self.listModel = listModel
         self.chatID = chatID
+        sessionLinkObserver = NotificationCenter.default.addObserver(
+            forName: ChatListModel.sessionLinkDidChange,
+            object: nil,
+            queue: nil) { [weak self] notification in
+                guard let self,
+                      notification.userInfo?[ChatListModel.chatIDUserInfoKey] as? String == chatID else {
+                    return
+                }
+                delegate?.chatViewControllerModelSessionLinkDidChange()
+            }
         var lastDate: DateComponents?
         if let messages = listModel.messages(forChat: chatID, createIfNeeded: false) {
             // An auto-approved/denied tool call now persists its
@@ -182,6 +195,12 @@ class ChatViewControllerModel {
             }
             return nil
         })
+    }
+
+    deinit {
+        if let sessionLinkObserver {
+            NotificationCenter.default.removeObserver(sessionLinkObserver)
+        }
     }
 
     private func initializeItemsDelegate() {

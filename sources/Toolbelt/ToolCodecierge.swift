@@ -178,7 +178,10 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     return
                 }
                 goalGeneration += 1
-                if !running {
+                if running {
+                    commandOutputConsumer = CommandOutput.addConsumer(forSessionReference: guid)
+                } else {
+                    commandOutputConsumer = nil
                     conversation = nil
                     pendingCompletion = nil
                     queue = []
@@ -197,6 +200,8 @@ class ToolCodecierge: NSView, ToolbeltTool {
         private(set) var conversation: AIConversation?
         var busy: Bool { conversation?.busy ?? false }
         private var observer: (any NSObjectProtocol)?
+        // Has the terminal session capture its commands' output while a goal is in progress.
+        private var commandOutputConsumer: CommandOutputConsumer?
         // Commands since the goal started or the user last chose to keep going.
         private(set) var commandCount = 0
 

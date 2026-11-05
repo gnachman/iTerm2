@@ -12,6 +12,7 @@
 @interface VT100ScreenConfiguration()
 @property (nonatomic, readwrite) BOOL shouldPlacePromptAtFirstColumn;
 @property (nonatomic, copy, readwrite) NSString *sessionGuid;
+@property (nonatomic, copy, readwrite) NSString *stableID;
 @property (nonatomic, readwrite) BOOL treatAmbiguousCharsAsDoubleWidth;
 @property (nonatomic, readwrite) NSInteger unicodeVersion;
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
@@ -71,6 +72,7 @@
 
 @synthesize shouldPlacePromptAtFirstColumn = _shouldPlacePromptAtFirstColumn;
 @synthesize sessionGuid = _sessionGuid;
+@synthesize stableID = _stableID;
 @synthesize treatAmbiguousCharsAsDoubleWidth = _treatAmbiguousCharsAsDoubleWidth;
 @synthesize unicodeVersion = _unicodeVersion;
 @synthesize enableTriggersInInteractiveApps = _enableTriggersInInteractiveApps;
@@ -131,6 +133,7 @@
     if (self) {
         _shouldPlacePromptAtFirstColumn = other.shouldPlacePromptAtFirstColumn;
         _sessionGuid = other.sessionGuid;
+        _stableID = other.stableID;
         _treatAmbiguousCharsAsDoubleWidth = other.treatAmbiguousCharsAsDoubleWidth;
         _unicodeVersion = other.unicodeVersion;
         _enableTriggersInInteractiveApps = other.enableTriggersInInteractiveApps;
@@ -200,6 +203,7 @@
 - (NSString *)description {
     NSDictionary *dict = @{ @"shouldPlacePromptAtFirstColumn": @(_shouldPlacePromptAtFirstColumn),
                             @"sessionGuid": _sessionGuid ?: @"(nil)",
+                            @"stableID": _stableID ?: @"(nil)",
                             @"treatAmbiguousCharsAsDoubleWidth": @(_treatAmbiguousCharsAsDoubleWidth),
                             @"unicodeVersion": @(_unicodeVersion),
                             @"enableTriggersInInteractiveApps": @(_enableTriggersInInteractiveApps),
@@ -272,6 +276,7 @@
 
 @dynamic shouldPlacePromptAtFirstColumn;
 @dynamic sessionGuid;
+@dynamic stableID;
 @dynamic treatAmbiguousCharsAsDoubleWidth;
 @dynamic unicodeVersion;
 @dynamic enableTriggersInInteractiveApps;

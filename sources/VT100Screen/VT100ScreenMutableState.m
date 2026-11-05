@@ -5294,9 +5294,10 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
 // observers read the output after the side effect that posts it, by which time the main thread's
 // copy of the screen may be missing the last of the output or have scrolled the start of it off.
 // Only the last iTermCommandOutput.maxLines lines of the output are copied, since this runs for
-// every command that ends.
+// every command that ends. Returns nil unless something consumes the session's output, asked of
+// iTermCommandOutput now so a consumer that came or went since the last sync counts.
 - (iTermCommandOutput *)commandOutputForMark:(id<VT100ScreenMarkReading>)mark {
-    if (!mark) {
+    if (!mark || ![iTermCommandOutput hasConsumersForSessionReferences:[self commandOutputConsumerReferences]]) {
         return nil;
     }
     const VT100GridRange lineRange = [self lineRangeOfOutputForCoordRange:[self rangeOfOutputForCommandMark:mark]];
@@ -5327,6 +5328,21 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
                                             overflow:self.cumulativeScrollbackOverflow
                                           remoteHost:[[self remoteHostOnLine:line] doppelganger]
                                     workingDirectory:[self workingDirectoryOnLine:line]];
+}
+
+// The references a consumer of this session's command output may register under (see
+// iTermSessionReferenceKeys): the guid and the stable ID, when the configuration has them.
+- (NSArray<NSString *> *)commandOutputConsumerReferences {
+    // Before the first sync loads the configuration there is no guid and nothing to match. An empty
+    // string would match a consumer registered under an empty guid and capture for every such session.
+    NSMutableArray<NSString *> *references = [NSMutableArray array];
+    if (self.config.sessionGuid) {
+        [references addObject:self.config.sessionGuid];
+    }
+    if (self.config.stableID) {
+        [references addObject:self.config.stableID];
+    }
+    return references;
 }
 
 // The main thread's copy of this cache is otherwise refreshed only by a sync, so side effects drained

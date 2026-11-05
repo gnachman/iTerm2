@@ -196,9 +196,9 @@ class ChatClient {
         }
         RLog("Repairing session links of chat \(chatID): terminal \(chat.terminalSessionGuid ?? "nil") -> \(terminal ?? "nil"), browser \(chat.browserSessionGuid ?? "nil") -> \(browser ?? "nil")")
         do {
-            // Clear first so neither setter sees a guid of the wrong kind.
-            try model.setTerminalGuid(for: chatID, to: nil)
-            try model.setBrowserGuid(for: chatID, to: nil)
+            // The setters check only the value being written, so the new values go in directly.
+            // Clearing first would drop and re-add anything keyed to the link, such as the
+            // streaming chat's command-output registration, for a change that may be a no-op.
             try model.setTerminalGuid(for: chatID, to: terminal)
             try model.setBrowserGuid(for: chatID, to: browser)
         } catch {

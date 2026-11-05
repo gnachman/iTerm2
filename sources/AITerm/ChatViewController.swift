@@ -137,7 +137,11 @@ class ChatViewController: NSViewController {
     private var eligibleForAutoPaste = true
     private var brokerSubscription: ChatBroker.Subscription?
     private var pickSessionPromise: iTermPromise<PTYSession>?
-    private var model: ChatViewControllerModel?
+    private var model: ChatViewControllerModel? {
+        didSet {
+            updateCommandOutputConsumer()
+        }
+    }
     private let listModel: ChatListModel
     private let client: ChatClient
     // The provider popup item the user explicitly chose, so the selection stays
@@ -147,13 +151,21 @@ class ChatViewController: NSViewController {
     var providerSelectionIdentifier: String?
     private var estimatedCount = 0
     private var _commandDidExitObserver: (any NSObjectProtocol)?
+    // Has the linked session capture its commands' output while streaming.
+    private var commandOutputConsumer: CommandOutputConsumer?
     private(set) var streaming = false {
         didSet {
+            // didSet runs for an assignment of the same value, which must not drop and re-add the
+            // registration: each change has the session join its threads.
+            guard oldValue != streaming else {
+                return
+            }
             if let _commandDidExitObserver {
                 NotificationCenter.default.removeObserver(_commandDidExitObserver)
                 self._commandDidExitObserver = nil
             }
-            if streaming, let model, model.terminalSessionGuid != nil {
+            updateCommandOutputConsumer()
+            if streaming {
                 _commandDidExitObserver = NotificationCenter.default.addObserver(
                     forName: Notification.Name.PTYCommandDidExit,
                     object: nil,
@@ -172,6 +184,18 @@ class ChatViewController: NSViewController {
     }
     var terminalSessionGuid: String? { model?.terminalSessionGuid }
     var browserSessionGuid: String? { model?.browserSessionGuid }
+
+    // Registers as a consumer of the linked session's command output while streaming, so that
+    // session captures it. Called when streaming starts or stops and when the link changes (from
+    // the list model, so a link written by the companion app or link repair counts too), and
+    // changes the registration only when the session it names would differ.
+    private func updateCommandOutputConsumer() {
+        let reference = streaming ? model?.terminalSessionGuid : nil
+        if commandOutputConsumer?.sessionReference == reference {
+            return
+        }
+        commandOutputConsumer = reference.map { CommandOutput.addConsumer(forSessionReference: $0) }
+    }
     private let userDefaultsObserver = iTermUserDefaultsObserver()
     private(set) var chatToolbar: ChatToolbar!
 
@@ -227,6 +251,9 @@ class ChatViewController: NSViewController {
 
     deinit {
         brokerSubscription?.unsubscribe()
+        if let _commandDidExitObserver {
+            NotificationCenter.default.removeObserver(_commandDidExitObserver)
+        }
     }
 
     // Trim leading whitespace at the rendering boundary only. The
@@ -2541,6 +2568,10 @@ extension ChatViewController {
 }
 
 extension ChatViewController: ChatViewControllerModelDelegate {
+    func chatViewControllerModelSessionLinkDidChange() {
+        updateCommandOutputConsumer()
+    }
+
     private func assertMessageTypeAllowed(_ message: Message?) {
         ChatViewControllerModel.assertMessageTypeAllowed(message)
     }

@@ -21,6 +21,45 @@ import Foundation
 class CommandOutput: NSObject, iTermTextDataSource {
     @objc static let maxLines: Int32 = 2000
 
+    // MARK: - Consumers
+
+    // Consumers of PTYCommandDidExitNotification that read the output register here while they
+    // observe it, so a session captures output only when something will read its output. A consumer
+    // registers the reference it observes the session by: its guid, or its stable ID, which
+    // outlives the guid (see iTermSessionReferenceKeys). The mutation thread asks when a command
+    // ends, so the registry is accessed atomically rather than confined to the main thread, and a
+    // change is seen by the next command to end without any hand-off between threads. The counts
+    // are how many consumers each reference has.
+    private static let consumerCounts = MutableAtomicObject([String: Int]())
+
+    // Whether any of `references` (a session's guid and stable ID) has a consumer. Any thread.
+    @objc static func hasConsumers(forSessionReferences references: [String]) -> Bool {
+        consumerCounts.access { counts in
+            references.contains { counts[$0, default: 0] > 0 }
+        }
+    }
+
+    // Registers a consumer of the output of the session reached by `reference`. The registration
+    // lasts as long as the returned object. Any thread.
+    static func addConsumer(forSessionReference reference: String) -> CommandOutputConsumer {
+        consumerCounts.mutableAccess { counts in
+            counts[reference, default: 0] += 1
+        }
+        return CommandOutputConsumer(sessionReference: reference)
+    }
+
+    fileprivate static func removeConsumer(forSessionReference reference: String) {
+        consumerCounts.mutableAccess { counts in
+            let count = counts[reference, default: 0]
+            it_assert(count > 0, "Unbalanced removeConsumer")
+            if count > 1 {
+                counts[reference] = count - 1
+            } else {
+                counts.removeValue(forKey: reference)
+            }
+        }
+    }
+
     // MARK: - Output
 
     @objc let startLine: Int32
@@ -125,5 +164,19 @@ class CommandOutput: NSObject, iTermTextDataSource {
 
     func isFirstLine(ofBlock lineNumber: Int32) -> Bool {
         false
+    }
+}
+
+// A consumer's registration with CommandOutput. It ends when this is released, which may happen on
+// any thread, since a consumer's last reference can be dropped by a background completion.
+final class CommandOutputConsumer {
+    let sessionReference: String
+
+    fileprivate init(sessionReference: String) {
+        self.sessionReference = sessionReference
+    }
+
+    deinit {
+        CommandOutput.removeConsumer(forSessionReference: sessionReference)
     }
 }

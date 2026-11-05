@@ -16,6 +16,11 @@ class ChatListModel: ChatListDataSource {
     // its NotificationCenter observers) so deleting a chat doesn't
     // leak the agent for the lifetime of the process.
     static let chatWasDeleted = Notification.Name("ChatListModelChatWasDeleted")
+    // Posted when a chat's terminal or browser session link changes, with the chat's ID under
+    // chatIDUserInfoKey. Links are written from several places (the chat window, the companion
+    // app, link repair), so anything keyed to the linked session follows this rather than its own
+    // writes.
+    static let sessionLinkDidChange = Notification.Name("ChatListModelSessionLinkDidChange")
     static let chatIDUserInfoKey = "chatID"
     private static var _instance: ChatListModel?
     static var instance: ChatListModel? {
@@ -487,9 +492,13 @@ class ChatListModel: ChatListDataSource {
                 it_assert(chatStorage[i].orchestrationEnabled == false,
                           "Refusing to link a terminal session to an orchestration-mode chat \(chatID). Orchestration and session binding are mutually exclusive; toggle orchestration off first via setOrchestrationEnabled(false, forChatID:).")
             }
+            if chatStorage[i].terminalSessionGuid == guid {
+                return
+            }
             try chatStorage.modify(at: i) { chat in
                 chat.terminalSessionGuid = guid
             }
+            Self.postSessionLinkChange(chatID: chatID)
         }
     }
 
@@ -503,10 +512,21 @@ class ChatListModel: ChatListDataSource {
                 it_assert(chatStorage[i].orchestrationEnabled == false,
                           "Refusing to link a browser session to an orchestration-mode chat \(chatID). Orchestration and session binding are mutually exclusive; toggle orchestration off first via setOrchestrationEnabled(false, forChatID:).")
             }
+            if chatStorage[i].browserSessionGuid == guid {
+                return
+            }
             try chatStorage.modify(at: i) { chat in
                 chat.browserSessionGuid = guid
             }
+            Self.postSessionLinkChange(chatID: chatID)
         }
+    }
+
+    // Every writer of a chat's session links calls this when it changes one.
+    static func postSessionLinkChange(chatID: String) {
+        NotificationCenter.default.post(name: Self.sessionLinkDidChange,
+                                        object: nil,
+                                        userInfo: [Self.chatIDUserInfoKey: chatID])
     }
 
     func lastChat(guid: String) -> Chat? {
@@ -702,6 +722,7 @@ class ChatListModel: ChatListDataSource {
     // ChatService doesn't observe metadataDidChange directly.
     func setOrchestrationEnabled(_ enabled: Bool, forChatID chatID: String) throws {
         guard let i = index(of: chatID) else { return }
+        let wasLinked = chatStorage[i].terminalSessionGuid != nil || chatStorage[i].browserSessionGuid != nil
         try chatStorage.modify(at: i) { chat in
             chat.orchestrationEnabled = enabled
             if enabled {
@@ -718,6 +739,9 @@ class ChatListModel: ChatListDataSource {
                 chat.claimedScopes = []
                 chat.watchers = []
             }
+        }
+        if enabled && wasLinked {
+            Self.postSessionLinkChange(chatID: chatID)
         }
         postMetadataChange()
     }
