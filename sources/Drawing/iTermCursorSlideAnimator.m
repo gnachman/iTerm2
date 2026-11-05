@@ -159,6 +159,14 @@
         DLog(@"cursorPixelOffset: animation complete, returning zero");
         dispatch_async(dispatch_get_main_queue(), ^{
             [self endMetalAnimation];
+            // This frame already has pixelOffset == 0, so a box cursor's glyph
+            // color is already fully resolved to the resting color (see
+            // applyBoxCursorTextColorTweakForRow: in iTermMetalPerFrameState.m,
+            // which crossfades by coverage derived from pixelOffset, not from
+            // animationInProgress). This extra redraw is a safety net to settle
+            // the frame onto the plain resting render path (animationInProgress
+            // now NO) rather than relying on some unrelated event to do it.
+            [self->_delegate cursorSlideAnimatorRequestDelegateRedraw];
         });
         return CGPointZero;
     }
