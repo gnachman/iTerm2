@@ -2588,6 +2588,15 @@ Bug Fixes:
   Before, the old results were cleared and Find
   Next had nothing to go to until you retyped
   the search.
+- Choosing “Stop Codecierge” in its usage
+  warning could stop the pane the toolbelt was
+  showing instead of the one that had asked,
+  and if the choice was remembered, later
+  Codecierge sessions ended silently.
+- Ending a Codecierge goal and starting a new one
+  before the old goal’s reply arrived could add
+  that reply to the new goal’s transcript and
+  derail it.
 - When the cache of images drawn with the Kitty
   graphics protocol filled up, it dropped the
   oldest image rather than the one displayed

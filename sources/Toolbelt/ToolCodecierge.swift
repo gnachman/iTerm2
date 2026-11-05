@@ -48,27 +48,23 @@ class ToolCodecierge: NSView, ToolbeltTool {
 
     static var supportedProfileTypes: ProfileType { .terminal }
 
-    fileprivate enum State {
+    enum State {
         case uninitialized
         case onboarding
         case goalSetting
         case running
     }
 
-    fileprivate struct History {
-        var commands: [Command] = []
-    }
-
-    fileprivate class Session {
+    // Codecierge's state for one terminal session. A goal is in progress while `running`, which is
+    // when the terminal session captures its commands' output and this holds a conversation.
+    class Session {
         var guid: String
         var state: State = .uninitialized
-        var history = History()
         var ghostRiding = false
         var pendingCompletion: ((Result<String, Error>) throws -> ())?
 
         var goal: String? {
             didSet {
-                history = History()
                 if let window = iTermController.sharedInstance().windowForSession(withGUID: guid)?.window(), let goal {
                     var initialMessages = [AITermController.Message]()
                     let format =
@@ -173,11 +169,36 @@ class ToolCodecierge: NSView, ToolbeltTool {
         }
         var suggestion: String?
         fileprivate weak var delegate: ToolCodeciergeSessionDelegate?
-        var running = false
-        private var conversation: AIConversation?
+        // Whether a goal is in progress. Keyed off this rather than `goal`, which changes with every
+        // edit of the goal field. Stopping releases what the goal accumulated; hiding the toolbelt
+        // is not a stop, so a goal survives it.
+        var running = false {
+            didSet {
+                guard running != oldValue else {
+                    return
+                }
+                goalGeneration += 1
+                if !running {
+                    conversation = nil
+                    pendingCompletion = nil
+                    queue = []
+                    commandCount = 0
+                    // A reply still in flight is dropped (see didComplete), so it won't be what
+                    // clears the busy indicator.
+                    delegate?.sessionBusyDidChange(session: self, busy: false)
+                }
+            }
+        }
+        // Counts starts and stops. A completion in flight when the goal stops belongs to the
+        // generation it was sent under, so its late reply can be told from the next goal's and
+        // dropped instead of being appended to the next goal's transcript (and its conversation
+        // installed over the next goal's) if a new goal starts before it arrives.
+        private(set) var goalGeneration = 0
+        private(set) var conversation: AIConversation?
         var busy: Bool { conversation?.busy ?? false }
         private var observer: (any NSObjectProtocol)?
-        private var commandCount = 0
+        // Commands since the goal started or the user last chose to keep going.
+        private(set) var commandCount = 0
 
         init(_ guid: String) {
             self.guid = guid
@@ -247,19 +268,25 @@ class ToolCodecierge: NSView, ToolbeltTool {
             if running {
                 commandCount += 1
                 if commandCount >= iTermAdvancedSettingsModel.codeciergeCommandWarningCount() {
-                    let selection =
-                    iTermWarning.show(withTitle: String(localized: "Codecierge.LongSessionBody", defaultValue: "Your codecierge session has been going on for a long time. Are you still using it? If not, stop it to save money and privacy.", comment: "Body of the warning shown when a Codecierge session runs a long time"),
-                                      actions: [String(localized: "Codecierge.KeepGoing", defaultValue: "Keep Going", comment: "Button to keep the Codecierge session going"), String(localized: "Codecierge.StopCodecierge", defaultValue: "Stop Codecierge", comment: "Button to stop the Codecierge session")],
-                                      accessory: nil,
-                                      identifier: "CodeciergeCommandWarning",
-                                      silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                      heading: String(localized: "Codecierge.LongSessionHeading", defaultValue: "Codecierge Usage Warning", comment: "Heading of the warning shown when a Codecierge session runs a long time"),
-                                      window: delegate?.sessionWindow)
+                    let keepGoing = String(localized: "Codecierge.KeepGoing", defaultValue: "Keep Going", comment: "Button to keep the Codecierge session going")
+                    let stop = String(localized: "Codecierge.StopCodecierge", defaultValue: "Stop Codecierge", comment: "Button to stop the Codecierge session")
+                    let warning = iTermWarning()
+                    warning.title = String(localized: "Codecierge.LongSessionBody", defaultValue: "Your codecierge session has been going on for a long time. Are you still using it? If not, stop it to save money and privacy.", comment: "Body of the warning shown when a Codecierge session runs a long time")
+                    warning.heading = String(localized: "Codecierge.LongSessionHeading", defaultValue: "Codecierge Usage Warning", comment: "Heading of the warning shown when a Codecierge session runs a long time")
+                    warning.actionLabels = [keepGoing, stop]
+                    warning.identifier = "CodeciergeCommandWarning"
+                    warning.warningType = .kiTermWarningTypePermanentlySilenceable
+                    // Only Keep Going can be remembered. A remembered Stop would end every goal
+                    // silently once it reached this many commands. (Not the cancel label, which
+                    // would make Stop what Escape and closing the sheet choose.)
+                    warning.doNotRememberLabels = [stop]
+                    warning.window = delegate?.sessionWindow
+                    let selection = warning.runModal()
                     switch selection {
                     case .kiTermWarningSelection0:
                         commandCount = 0
                     case .kiTermWarningSelection1:
-                        delegate?.sessionAbort(self)
+                        abort()
                     default:
                         break
                     }
@@ -267,9 +294,16 @@ class ToolCodecierge: NSView, ToolbeltTool {
             }
         }
 
+        // Ends the goal in progress, as the usage warning's Stop does. The tool updates its view
+        // if this is the session it shows.
+        func abort() {
+            running = false
+            state = .goalSetting
+            delegate?.sessionAbort(self)
+        }
+
         func updateHistory(command newCommand: Command?) {
             if let newCommand {
-                history.commands.append(newCommand)
                 if let pendingCompletion {
                     self.pendingCompletion = nil
                     try? pendingCompletion(.success(message(forCommand: newCommand)))
@@ -300,7 +334,6 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 guard let self else { return }
                 switch result {
                 case .success(let updated):
-                    self.conversation = updated
                     delegate?.session(session: self, didProduceAdditionalText: updated.messages.last!.content ?? "")
                 case .failure(let error):
                     RLog("\(error)")
@@ -324,18 +357,31 @@ class ToolCodecierge: NSView, ToolbeltTool {
             let (text, closure) = queue.removeFirst()
             conversation?.add(text: text)
             delegate?.sessionBusyDidChange(session: self, busy: true)
+            let generation = goalGeneration
             conversation?.complete { [weak self] result in
-                guard let self else { return }
-                delegate?.sessionBusyDidChange(session: self, busy: false)
-                switch result {
-                case .success(let updated):
-                    self.conversation = updated
-                case .failure(let error):
-                    RLog("\(error)")
-                }
-                closure(result)
-                dequeueIfPossible()
+                self?.didComplete(result, sentUnderGeneration: generation, closure: closure)
             }
+        }
+
+        // The reply to a request sent while the goal was `generation`. The goal has stopped since
+        // if the generation moved on, and the reply is dropped: the conversation it updates was
+        // released, and the stop reported the busy state already. Internal for tests.
+        func didComplete(_ result: Result<AIConversation, Error>,
+                         sentUnderGeneration generation: Int,
+                         closure: (Result<AIConversation, Error>) -> ()) {
+            guard generation == goalGeneration else {
+                DLog("Dropping a reply to a goal that has stopped")
+                return
+            }
+            delegate?.sessionBusyDidChange(session: self, busy: false)
+            switch result {
+            case .success(let updated):
+                conversation = updated
+            case .failure(let error):
+                RLog("\(error)")
+            }
+            closure(result)
+            dequeueIfPossible()
         }
 
         private func prompt(command: Command) -> String {
@@ -633,7 +679,10 @@ extension ToolCodecierge: ToolCodeciergeSessionDelegate {
     }
 
     fileprivate func sessionAbort(_ session: Session) {
-        state = .goalSetting
+        // The session has already stopped itself. Only the view may need to follow.
+        if session.guid == currentSession()?.guid {
+            state = .goalSetting
+        }
     }
 }
 
