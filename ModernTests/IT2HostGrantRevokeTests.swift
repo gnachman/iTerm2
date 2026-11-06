@@ -174,7 +174,7 @@ final class IT2HostGrantRevokeTests: XCTestCase {
         store.add(grant(for: "u@alpha"))
         store.add(grant(for: "u@host10"))
         store.add(grant(for: "u@host9"))
-        let sheet = IT2HostGrantsWindowController(store: store)
+        let sheet = IT2HostGrantsViewController(store: store)
         XCTAssertEqual(sheet.displayedHosts, ["u@alpha", "u@host9", "u@host10", "u@zeta"])
         XCTAssertFalse(sheet.isShowingEmptyState)
     }
@@ -183,7 +183,7 @@ final class IT2HostGrantRevokeTests: XCTestCase {
     // alone: a German UI showed “Oct 25, 2026”.
     func testDateFollowsTheUILanguage() {
         let date = Date(timeIntervalSince1970: 1_793_000_000)
-        let german = IT2HostGrantsWindowController.makeDateFormatter(nonEnglishUILanguage: "de")
+        let german = IT2HostGrantsViewController.makeDateFormatter(nonEnglishUILanguage: "de")
         XCTAssertEqual(german.locale.identifier, "de")
         XCTAssertEqual(german.dateStyle, .medium)
         XCTAssertEqual(german.timeStyle, .short)
@@ -193,12 +193,12 @@ final class IT2HostGrantRevokeTests: XCTestCase {
         expected.timeStyle = .short
         XCTAssertEqual(german.string(from: date), expected.string(from: date))
 
-        let english = IT2HostGrantsWindowController.makeDateFormatter(nonEnglishUILanguage: nil)
+        let english = IT2HostGrantsViewController.makeDateFormatter(nonEnglishUILanguage: nil)
         XCTAssertEqual(english.locale, Locale.current, "an English UI keeps the user’s region")
     }
 
     func testSheetShowsTheEmptyState() {
-        let sheet = IT2HostGrantsWindowController(store: IT2HostGrantStore(backing: RevokeMemoryBacking()))
+        let sheet = IT2HostGrantsViewController(store: IT2HostGrantStore(backing: RevokeMemoryBacking()))
         XCTAssertEqual(sheet.displayedHosts, [])
         XCTAssertTrue(sheet.isShowingEmptyState)
         XCTAssertFalse(sheet.canRemove, "nothing to remove")
@@ -212,7 +212,7 @@ final class IT2HostGrantRevokeTests: XCTestCase {
         store.add(grant(for: host))
         store.add(grant(for: "zzz-kept"))
         conductor.it2Authorized = true
-        let sheet = IT2HostGrantsWindowController(store: store)
+        let sheet = IT2HostGrantsViewController(store: store)
         XCTAssertEqual(sheet.displayedHosts.first, host)
         XCTAssertFalse(sheet.canRemove, "nothing selected yet")
 
@@ -228,7 +228,7 @@ final class IT2HostGrantRevokeTests: XCTestCase {
         let store = IT2HostGrantStore(backing: RevokeMemoryBacking())
         store.add(grant(for: "u@a"))
         store.add(grant(for: "u@b"))
-        let sheet = IT2HostGrantsWindowController(store: store)
+        let sheet = IT2HostGrantsViewController(store: store)
         sheet.removeRows(IndexSet([0, 1]))
         XCTAssertEqual(store.all, [])
         XCTAssertTrue(sheet.isShowingEmptyState)

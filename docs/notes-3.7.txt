@@ -361,8 +361,8 @@ New Features:
   asks to use it2, you can now choose “Always
   Allow This Host” so it is not asked again on
   later connections. Review or remove these hosts
-  in Settings > General > Magic > API access
-  over ssh.
+  in Settings > General > Magic > Manage
+  Permissions.
 - The Claude Code integration can now be
   installed on a host reached through SSH
   Integration, so Claude Code running there

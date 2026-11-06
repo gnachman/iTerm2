@@ -1,9 +1,10 @@
 //
-//  iTermBrowserScriptingPermissionsWindowController.swift
+//  BrowserScriptingPermissionsViewController.swift
 //  iTerm2SharedARC
 //
-//  Settings > General > Magic sheet listing the websites on which Python API scripts
-//  may (or may not) load URLs or run JavaScript in a browser session. Built
+//  Lists the websites on which Python API scripts may (or may not) load URLs or run
+//  JavaScript in a browser session. Shown as a tab of the permissions sheet in
+//  Settings > General > Magic (see ScriptingPermissionsWindowController). Built
 //  programmatically on CRUD.swift.
 //
 
@@ -27,7 +28,7 @@ private struct BrowserScriptingPermissionRow: CRUDRow {
 }
 
 private final class BrowserScriptingPermissionsDataProvider: CRUDDataProvider {
-    weak var owner: iTermBrowserScriptingPermissionsWindowController?
+    weak var owner: BrowserScriptingPermissionsViewController?
     // A snapshot of user defaults, kept in the order shown.
     var entries = iTermBrowserScriptingPermissions.entries()
 
@@ -67,8 +68,7 @@ private final class BrowserScriptingPermissionsDataProvider: CRUDDataProvider {
     }
 }
 
-@objc(iTermBrowserScriptingPermissionsWindowController)
-final class iTermBrowserScriptingPermissionsWindowController: NSWindowController, CRUDTableViewControllerDelegate {
+final class BrowserScriptingPermissionsViewController: NSViewController, CRUDTableViewControllerDelegate {
     typealias CRUDState = [iTermBrowserScriptingPermissions.Entry]
 
     private static let permissionColumnWidth: CGFloat = 130
@@ -87,7 +87,7 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
     }
 
     private let dataProvider = BrowserScriptingPermissionsDataProvider()
-    private var crudController: CRUDTableViewController<iTermBrowserScriptingPermissionsWindowController>?
+    private var crudController: CRUDTableViewController<BrowserScriptingPermissionsViewController>?
 
     var crudState: CRUDState {
         get {
@@ -99,121 +99,61 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
     }
 
     init() {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 380),
-                              styleMask: [.titled, .resizable],
-                              backing: .buffered,
-                              defer: false)
-        window.minSize = NSSize(width: 440, height: 260)
-        super.init(window: window)
+        super.init(nibName: nil, bundle: nil)
         dataProvider.owner = self
-        buildContentView()
-        // A script may be approved while this is open.
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(windowDidBecomeKey(_:)),
-                                               name: NSWindow.didBecomeKeyNotification,
-                                               object: window)
     }
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) is not supported")
     }
 
-    // Shows the panel as a sheet on `parent`.
-    @objc(beginSheetModalForWindow:)
-    func beginSheet(for parent: NSWindow) {
-        guard let window else {
-            return
-        }
-        refresh()
-        parent.beginSheet(window) { [weak self] _ in
-            // This controller is reused, and the next showing may follow changes made
-            // elsewhere.
-            self?.window?.undoManager?.removeAllActions()
-        }
+    override func loadView() {
+        buildContentView()
     }
 
     // Picks up answers remembered elsewhere, such as at a script's prompt. Undo works by
     // restoring snapshots of the list, so an undo from before such a change would revert it
     // too. Forget the undo history when that happens.
-    private func refresh() {
+    func refresh() {
         let saved = iTermBrowserScriptingPermissions.entries()
         guard Set(saved) != Set(dataProvider.entries) else {
             return
         }
         DLog("Permissions changed outside the panel")
-        window?.undoManager?.removeAllActions()
+        view.window?.undoManager?.removeAllActions()
         dataProvider.entries = saved
         crudController?.reload()
-    }
-
-    @objc private func windowDidBecomeKey(_ notification: Notification) {
-        refresh()
-    }
-
-    @objc private func done(_ sender: Any?) {
-        guard let window else {
-            return
-        }
-        window.sheetParent?.endSheet(window)
     }
 
     // MARK: - Layout
 
     private func buildContentView() {
-        guard let window else {
-            return
-        }
-        let bounds = NSRect(origin: .zero, size: window.contentRect(forFrameRect: window.frame).size)
+        let bounds = NSRect(x: 0, y: 0, width: 560, height: 340)
         let container = NSView(frame: bounds)
         let margin: CGFloat = 20
         let gap: CGFloat = 8
-        let buttonHeight: CGFloat = 32
-        let segmentHeight: CGFloat = 24
-        let labelHeight: CGFloat = 48
-
-        let doneButton = NSButton(title: String(localized: "General.Done", defaultValue: "Done", comment: "Done button"),
-                                  target: self,
-                                  action: #selector(done(_:)))
-        doneButton.bezelStyle = .rounded
-        doneButton.keyEquivalent = "\r"
-        doneButton.sizeToFit()
-        doneButton.frame = NSRect(x: bounds.width - margin - max(doneButton.frame.width, 80),
-                                  y: margin,
-                                  width: max(doneButton.frame.width, 80),
-                                  height: buttonHeight)
-        doneButton.autoresizingMask = [.minXMargin, .maxYMargin]
-        container.addSubview(doneButton)
 
         let addRemove = NSSegmentedControl(images: [
             NSImage(systemSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: iTermLocalizedAdd())!,
             NSImage(systemSymbolName: SFSymbol.minus.rawValue, accessibilityDescription: iTermLocalizedRemove())!
         ], trackingMode: .momentary, target: nil, action: nil)
-        addRemove.frame = NSRect(x: margin,
-                                 y: margin + (buttonHeight - segmentHeight) / 2,
-                                 width: 60,
-                                 height: segmentHeight)
-        addRemove.autoresizingMask = [.maxXMargin, .maxYMargin]
+        addRemove.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(addRemove)
 
         let label = NSTextField(wrappingLabelWithString: String(
             localized: "BrowserScriptingPermissions.Explanation",
             defaultValue: "Before a script loads URLs or runs JavaScript on a website in a browser session, iTerm2 asks you. Remembered answers are listed here and apply to all scripts.",
             comment: "Explanation at the top of the panel listing websites that scripts may control in a browser session"))
-        label.frame = NSRect(x: margin,
-                             y: bounds.height - margin - labelHeight,
-                             width: bounds.width - 2 * margin,
-                             height: labelHeight)
-        label.autoresizingMask = [.width, .minYMargin]
+        label.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(label)
 
-        let scrollY = margin + buttonHeight + gap
-        let scrollView = NSScrollView(frame: NSRect(x: margin,
-                                                    y: scrollY,
+        // The initial frame only sizes the columns; constraints position it.
+        let scrollView = NSScrollView(frame: NSRect(x: 0,
+                                                    y: 0,
                                                     width: bounds.width - 2 * margin,
-                                                    height: label.frame.minY - gap - scrollY))
+                                                    height: 200))
         scrollView.hasVerticalScroller = true
         scrollView.borderType = .bezelBorder
-        scrollView.autoresizingMask = [.width, .height]
 
         let tableView = CompetentTableView(frame: scrollView.bounds)
         tableView.allowsMultipleSelection = true
@@ -254,7 +194,24 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
         siteColumn.width = scrollView.contentSize.width - permissionWidth - allowedWidth - 3 * tableView.intercellSpacing.width
 
         scrollView.documentView = tableView
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(scrollView)
+
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: container.topAnchor, constant: margin),
+            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: margin),
+            label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -margin),
+
+            scrollView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 12),
+            scrollView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: margin),
+            scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -margin),
+            scrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: 120),
+
+            addRemove.topAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: gap),
+            addRemove.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: margin),
+            addRemove.widthAnchor.constraint(equalToConstant: 60),
+            addRemove.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -margin),
+        ])
 
         let schema = CRUDSchema(columns: [CRUDColumn(type: .string),
                                           CRUDColumn(type: .string),
@@ -265,14 +222,13 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
                                                  schema: schema)
         crudController?.delegate = self
 
-        window.contentView = container
-        window.initialFirstResponder = tableView
+        view = container
     }
 
     // MARK: - Adding
 
     fileprivate func promptForNewEntry(completion: @escaping (Int) -> ()) {
-        guard let window else {
+        guard let window = view.window else {
             return
         }
         let allowJavaScript = String(localized: "BrowserScriptingPermissions.AllowJavaScriptButton",
@@ -326,7 +282,7 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
                               actions: [iTermLocalizedOK()],
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              window: window)
+                              window: view.window)
             return
         }
         let entry = iTermBrowserScriptingPermissions.Entry(kind: kind, site: site, allowed: true)
@@ -350,22 +306,22 @@ final class iTermBrowserScriptingPermissionsWindowController: NSWindowController
 
     // MARK: - CRUDTableViewControllerDelegate
 
-    func crudTableSelectionDidChange(_ sender: CRUDTableViewController<iTermBrowserScriptingPermissionsWindowController>,
+    func crudTableSelectionDidChange(_ sender: CRUDTableViewController<BrowserScriptingPermissionsViewController>,
                                      selectedRows: IndexSet) {
     }
 
-    func crudTextFieldDidChange(_ sender: CRUDTableViewController<iTermBrowserScriptingPermissionsWindowController>,
+    func crudTextFieldDidChange(_ sender: CRUDTableViewController<BrowserScriptingPermissionsViewController>,
                                 row: Int,
                                 column: Int,
                                 newValue: String) {
     }
 
-    func crudDoubleClick(_ sender: CRUDTableViewController<iTermBrowserScriptingPermissionsWindowController>,
+    func crudDoubleClick(_ sender: CRUDTableViewController<BrowserScriptingPermissionsViewController>,
                          row: Int,
                          column: Int) {
     }
 
-    func crudCheckboxDidChange(_ sender: CRUDTableViewController<iTermBrowserScriptingPermissionsWindowController>,
+    func crudCheckboxDidChange(_ sender: CRUDTableViewController<BrowserScriptingPermissionsViewController>,
                                row: Int,
                                column: Int,
                                newValue: Bool) {

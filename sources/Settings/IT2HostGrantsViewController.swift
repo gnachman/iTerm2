@@ -1,23 +1,19 @@
 //
-//  iTermIT2HostGrantsWindowController.swift
+//  IT2HostGrantsViewController.swift
 //  iTerm2SharedARC
 //
 //  The list of remote hosts the user chose to always allow to use the iTerm2 API over SSH
-//  integration (see IT2HostGrants). Presented as a sheet from General > Magic. Read-only apart
-//  from removing a host, since a grant can only be minted from the authorization prompt, where
-//  the host proves it can receive the secret.
+//  integration (see IT2HostGrants). Shown as a tab of the permissions sheet in General > Magic
+//  (see ScriptingPermissionsWindowController). Read-only apart from removing a host, since a
+//  grant can only be minted from the authorization prompt, where the host proves it can
+//  receive the secret.
 //
-//  Built in code rather than a xib, and laid out with auto layout, because it is its own window.
+//  Built in code rather than a xib, and laid out with auto layout.
 //
 
 import AppKit
 
-@objc(iTermIT2HostGrantsWindowController)
-final class IT2HostGrantsWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate {
-    /// Held while the sheet is up. A sheet does not retain its window controller, so without
-    /// this the controller would be released as soon as presentSheet returned.
-    private static var presented: IT2HostGrantsWindowController?
-
+final class IT2HostGrantsViewController: NSViewController, NSTableViewDataSource, NSTableViewDelegate {
     private static let hostColumn = NSUserInterfaceItemIdentifier("host")
     private static let grantedColumn = NSUserInterfaceItemIdentifier("granted")
 
@@ -42,44 +38,25 @@ final class IT2HostGrantsWindowController: NSWindowController, NSTableViewDataSo
         return formatter
     }
 
-    @objc(presentSheetFor:)
-    static func presentSheet(for parent: NSWindow?) {
-        guard let parent else {
-            return
-        }
-        let controller = IT2HostGrantsWindowController(store: .shared)
-        presented = controller
-        guard let sheet = controller.window else {
-            return
-        }
-        parent.beginSheet(sheet) { _ in
-            presented = nil
-        }
-    }
-
     init(store: IT2HostGrantStore) {
         self.store = store
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 320),
-                              styleMask: [.titled],
-                              backing: .buffered,
-                              defer: true)
-        window.title = String(localized: "IT2HostGrants.WindowTitle",
-                              defaultValue: "Remote Hosts Allowed to Control iTerm2",
-                              comment: "Title of the sheet listing remote hosts always allowed to use the iTerm2 API over SSH integration")
-        super.init(window: window)
-        buildContent(in: window)
-        reload()
+        super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) is not supported")
     }
 
+    override func loadView() {
+        let content = NSView(frame: NSRect(x: 0, y: 0, width: 520, height: 320))
+        view = content
+        buildContent(in: content)
+        reload()
+    }
+
     // MARK: - Layout
 
-    private func buildContent(in window: NSWindow) {
-        let content = NSView()
-        window.contentView = content
+    private func buildContent(in content: NSView) {
 
         let explanation = NSTextField(wrappingLabelWithString: String(
             localized: "IT2HostGrants.Explanation",
@@ -127,16 +104,7 @@ final class IT2HostGrantsWindowController: NSWindowController, NSTableViewDataSo
         removeButton.action = #selector(removeSelected(_:))
         removeButton.translatesAutoresizingMaskIntoConstraints = false
 
-        let done = NSButton(title: String(localized: "IT2HostGrants.Done",
-                                          defaultValue: "Done",
-                                          comment: "Button that closes the list of remote hosts always allowed to use the iTerm2 API"),
-                            target: self,
-                            action: #selector(done(_:)))
-        done.bezelStyle = .rounded
-        done.keyEquivalent = "\r"
-        done.translatesAutoresizingMaskIntoConstraints = false
-
-        for view in [explanation, scrollView, emptyLabel, removeButton, done] {
+        for view in [explanation, scrollView, emptyLabel, removeButton] {
             content.addSubview(view)
         }
         let margin: CGFloat = 20
@@ -157,10 +125,6 @@ final class IT2HostGrantsWindowController: NSWindowController, NSTableViewDataSo
             removeButton.topAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: 12),
             removeButton.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: margin),
             removeButton.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -margin),
-
-            done.centerYAnchor.constraint(equalTo: removeButton.centerYAnchor),
-            done.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -margin),
-            done.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
         ])
     }
 
@@ -227,32 +191,28 @@ final class IT2HostGrantsWindowController: NSWindowController, NSTableViewDataSo
         reload()
     }
 
-    @objc private func done(_ sender: Any?) {
-        guard let window, let parent = window.sheetParent else {
-            window?.orderOut(nil)
-            return
-        }
-        parent.endSheet(window)
-    }
-
     // MARK: - Testing
 
     /// The hosts in the order shown. For tests.
     var displayedHosts: [String] {
+        _ = view  // Loads it
         return grants.map(\.host)
     }
 
     /// Select rows by index and remove them, as the Remove button does. For tests.
     func removeRows(_ rows: IndexSet) {
+        _ = view  // Loads it
         tableView.selectRowIndexes(rows, byExtendingSelection: false)
         removeSelected(nil)
     }
 
     var isShowingEmptyState: Bool {
+        _ = view  // Loads it
         return !emptyLabel.isHidden
     }
 
     var canRemove: Bool {
+        _ = view  // Loads it
         return removeButton.isEnabled
     }
 }
