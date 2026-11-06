@@ -2680,3 +2680,8 @@ Bug Fixes:
   no longer seems to float. Messages scrolling
   under the input area are now blurred all the
   way up to the line.
+- In AI Chat, a code block whose language name
+  has punctuation or capitals, such as ```c++
+  or ```Swift, now shows as code. It used to
+  show as plain text, and the rest of the reply
+  turned into code.

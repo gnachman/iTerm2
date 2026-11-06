@@ -7,20 +7,36 @@
 
 import SwiftyMarkdown
 
-private let fenceLineRegex = try! NSRegularExpression(pattern: "^ *(```[a-z]*)[ \\t]*$")
+private let fenceLineRegex = try! NSRegularExpression(pattern: "^ *```[ \\t]*([^`]*?)[ \\t]*$")
+private let swiftyInfoStringRegex = try! NSRegularExpression(pattern: "^[a-z]*$")
 
-// Returns the bare fence (``` plus any info string) if the line is a code
-// fence, or nil otherwise. SwiftyMarkdown only accepts an opening fence
-// matching ^```[a-z]*$ and a closing fence equal to ```, while CommonMark
-// also allows leading spaces and trailing whitespace. Streamed replies often
-// end in “``` ” because the server sends a space after the last word.
-private func normalizedFence(_ line: String) -> String? {
+private struct Fence {
+    var infoString: String
+
+    // The opener in the only form SwiftyMarkdown accepts, ^```[a-z]*$. Other
+    // info strings, such as “c++”, “Swift”, or “js title”, are dropped because
+    // SwiftyMarkdown would not recognize the line as a fence at all.
+    var normalizedOpener: String {
+        let range = NSRange(infoString.startIndex..<infoString.endIndex, in: infoString)
+        if swiftyInfoStringRegex.firstMatch(in: infoString, options: [], range: range) != nil {
+            return "```" + infoString
+        }
+        return "```"
+    }
+}
+
+// Returns the fence if the line is one, or nil otherwise. SwiftyMarkdown only
+// accepts an opening fence matching ^```[a-z]*$ and a closing fence equal to
+// ```, while CommonMark also allows leading spaces, trailing whitespace, and
+// any info string without a backtick. Streamed replies often end in “``` ”
+// because the server sends a space after the last word.
+private func fence(_ line: String) -> Fence? {
     let range = NSRange(line.startIndex..<line.endIndex, in: line)
     guard let match = fenceLineRegex.firstMatch(in: line, options: [], range: range),
-          let fenceRange = Range(match.range(at: 1), in: line) else {
+          let infoRange = Range(match.range(at: 1), in: line) else {
         return nil
     }
-    return String(line[fenceRange])
+    return Fence(infoString: String(line[infoRange]))
 }
 
 // Prepares message markdown for SwiftyMarkdown, one line at a time. It
@@ -32,16 +48,16 @@ private func normalizedFence(_ line: String) -> String? {
 func sanitizeMarkdownLines(_ input: String) -> String {
     var inCodeBlock = false
     return input.components(separatedBy: "\n").map { line in
-        if let fence = normalizedFence(line) {
+        if let fence = fence(line) {
             // Mirrors SwiftyMarkdown: any fence opens a block; only a bare
             // ``` closes one.
             if !inCodeBlock {
                 inCodeBlock = true
-                return fence
+                return fence.normalizedOpener
             }
-            if fence == "```" {
+            if fence.infoString.isEmpty {
                 inCodeBlock = false
-                return fence
+                return "```"
             }
             // An opening fence inside a block is code, not markup.
             return line

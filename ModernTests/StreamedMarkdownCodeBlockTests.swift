@@ -142,9 +142,13 @@ final class StreamedMarkdownCodeBlockTests: XCTestCase {
     func test_sanitizeMarkdownLines() {
         XCTAssertEqual(sanitizeMarkdownLines("  ```bash  \nx\n``` "), "```bash\nx\n```")
         XCTAssertEqual(sanitizeMarkdownLines("```\t\nx\n```\t"), "```\nx\n```")
-        // Not fences.
+        // Info strings SwiftyMarkdown can't parse are dropped from the opener.
+        XCTAssertEqual(sanitizeMarkdownLines("```c++\nx\n```"), "```\nx\n```")
+        XCTAssertEqual(sanitizeMarkdownLines("```Swift\nx\n```"), "```\nx\n```")
+        XCTAssertEqual(sanitizeMarkdownLines("```foo bar\nx\n```"), "```\nx\n```")
+        // Not fences: text before the backticks, or a backtick in the info string.
         XCTAssertEqual(sanitizeMarkdownLines("echo ```  "), "echo ```  ")
-        XCTAssertEqual(sanitizeMarkdownLines("```foo bar"), "```foo bar")
+        XCTAssertEqual(sanitizeMarkdownLines("```a`b"), "```a`b")
         // Whitespace-only lines are blank outside code blocks only.
         XCTAssertEqual(sanitizeMarkdownLines("a\n  \nb"), "a\n\nb")
         XCTAssertEqual(sanitizeMarkdownLines("```\n  \n```\n\t"), "```\n  \n```\n")
