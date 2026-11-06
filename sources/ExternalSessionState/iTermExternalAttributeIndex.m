@@ -378,7 +378,7 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
     [keys addObjectsFromArray:other.attributes.allKeys];
     for (NSNumber *key in keys) {
         iTermExternalAttribute *lhs = self.attributes[key];
-        iTermExternalAttribute *rhs = self.attributes[key];
+        iTermExternalAttribute *rhs = other.attributes[key];
         if (lhs) {
             if (![lhs isEqualToExternalAttribute:rhs]) {
                 return NO;
