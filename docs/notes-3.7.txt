@@ -2690,3 +2690,6 @@ Bug Fixes:
   or ```Swift, now shows as code. It used to
   show as plain text, and the rest of the reply
   turned into code.
+- With GPU rendering and a transparent window,
+  underlined text on screen no longer makes all
+  the other text look soft or washed out.

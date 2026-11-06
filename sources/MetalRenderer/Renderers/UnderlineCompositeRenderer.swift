@@ -35,7 +35,7 @@ class UnderlineCompositeRenderer: NSObject, iTermMetalRendererProtocol {
             device: device,
             vertexFunctionName: "iTermUnderlineCompositeVertexShader",
             fragmentFunctionName: "iTermUnderlineCompositeFragmentShader",
-            blending: iTermMetalBlending.compositeSourceOver(),
+            blending: iTermMetalBlending.premultipliedCompositing(),
             transientStateClass: UnderlineCompositeRendererTransientState.self)!
         scalePool = iTermMetalBufferPool(device: device, bufferSize: MemoryLayout<Float>.size)
         solidModePool = iTermMetalBufferPool(device: device, bufferSize: MemoryLayout<Int32>.size)
