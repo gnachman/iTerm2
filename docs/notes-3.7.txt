@@ -2648,3 +2648,7 @@ Bug Fixes:
 - The auto composer could appear in the wrong
   place when a prompt arrived along with a lot
   of output.
+- Double-clicking in a split pane that uses
+  mouse reporting while a different pane has
+  keyboard focus now reports both clicks to the
+  program, so it can recognize the double click.

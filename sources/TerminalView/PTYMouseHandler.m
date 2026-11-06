@@ -47,6 +47,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // At the time of the most recent mouse-down, were we or the composer first responder?
     BOOL _mouseDownWasFirstResponder;
 
+    // A single-click mouse-down that went unreported because it focused this pane. If the next
+    // mouse-down continues the same multi-click sequence, this click is reported before it so
+    // the program sees every click (e.g., a double click in an unfocused pane).
+    NSEvent *_unreportedFocusClick;
+
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
     NSInteger _firstMouseEventNumber;
@@ -162,6 +167,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self.mouseDelegate mouseHandlerMouseDownAt:event.locationInWindow]) {
         return NO;  // Don't call super because we handled it.
     }
+    NSEvent *const unreportedFocusClick = _unreportedFocusClick;
+    _unreportedFocusClick = nil;
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
     _mouseDownWasFirstResponder = [self.mouseDelegate mouseHandlerViewIsFirstResponder:self];
     _lastMouseDownOnSelectedText = NO;  // This may get updated to YES later.
@@ -325,6 +332,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [_mouseReportingFrustrationDetector mouseDown:event
                                          reported:[self mouseEventIsReportable:event]];
+    if (unreportedFocusClick && event.clickCount > 1 && [self mouseEventIsReportable:event]) {
+        [self reportUnreportedFocusClick:unreportedFocusClick];
+    }
+    if (!_mouseDownWasFirstResponder && event.clickCount == 1) {
+        _unreportedFocusClick = event;
+    }
     if ([self reportMouseEvent:event]) {
         DLog(@"Returning because mouse event reported.");
         [self.selection clearSelection];
@@ -1359,6 +1372,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _mouseDownEvent = nil;
     dragOk_ = NO;
     [self.selection endLiveSelection];
+}
+
+// Report a press and release for a click that went unreported because it focused this pane.
+- (void)reportUnreportedFocusClick:(NSEvent *)click {
+    DLog(@"Reporting click that focused the pane: %@", click);
+    NSEvent *release = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp
+                                          location:click.locationInWindow
+                                     modifierFlags:click.modifierFlags
+                                         timestamp:click.timestamp
+                                      windowNumber:click.windowNumber
+                                           context:nil
+                                       eventNumber:0
+                                        clickCount:click.clickCount
+                                          pressure:0];
+    if (!release) {
+        return;
+    }
+    [self reportMouseEvent:click];
+    [self reportMouseEvent:release];
 }
 
 // When in doubt this can return YES at the cost of a little CPU when moving the mouse around.
