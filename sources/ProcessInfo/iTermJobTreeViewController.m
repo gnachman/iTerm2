@@ -361,19 +361,49 @@ static int gSignalsToList[] = {
 
 - (void)viewDidLayout {
     [super viewDidLayout];
-    NSView *superview = _signalContainer.superview;
+    // The signal picker and send button are centered at the bottom with the
+    // inspect button in the bottom-right corner. When narrow, the signal
+    // controls slide left and then the picker shrinks to a minimum width.
+    // If that still overlaps the inspect button, hide the inspect button.
+    const CGFloat width = NSWidth(self.view.bounds);
+    const CGFloat margin = 8;
+    const CGFloat inspectSide = 22;
+    const CGFloat inspectSpacing = 4;
+    const CGFloat preferredPickerWidth = 129;
+    const CGFloat minimumPickerWidth = 72;
+    const CGFloat killSpacing = NSMinX(kill_.frame) - NSMaxX(signal_.frame);
+    const CGFloat killWidth = NSWidth(kill_.frame);
+    const CGFloat fixedWidth = killSpacing + killWidth;
+
+    CGFloat rightLimit = width - margin - inspectSide - inspectSpacing;
+    const BOOL showInspect = (rightLimit - margin - fixedWidth >= minimumPickerWidth);
+    if (!showInspect) {
+        rightLimit = width - margin;
+    }
+    const CGFloat pickerWidth = MAX(minimumPickerWidth,
+                                    MIN(preferredPickerWidth, rightLimit - margin - fixedWidth));
+    const CGFloat containerWidth = pickerWidth + fixedWidth;
+
     NSRect frame = _signalContainer.frame;
-    frame.origin.x = round((NSWidth(superview.bounds) - NSWidth(frame)) / 2.0);
+    frame.size.width = containerWidth;
+    frame.origin.x = round((width - containerWidth) / 2.0);
+    frame.origin.x = MAX(margin, MIN(frame.origin.x, rightLimit - containerWidth));
     frame.origin.y = self.controlsBottomMargin;
     _signalContainer.frame = frame;
 
+    NSRect pickerFrame = signal_.frame;
+    pickerFrame.size.width = pickerWidth;
+    signal_.frame = pickerFrame;
+    NSRect killFrame = kill_.frame;
+    killFrame.origin.x = NSMaxX(pickerFrame) + killSpacing;
+    kill_.frame = killFrame;
+
     // Inspect button in the bottom-right corner, vertically centered on the
     // signal controls.
-    const CGFloat side = 22;
-    const CGFloat rightMargin = 8;
-    _inspectButton.frame = NSMakeRect(NSWidth(self.view.bounds) - rightMargin - side,
-                                      round(NSMidY(frame) - side / 2.0),
-                                      side, side);
+    _inspectButton.hidden = !showInspect;
+    _inspectButton.frame = NSMakeRect(width - margin - inspectSide,
+                                      round(NSMidY(frame) - inspectSide / 2.0),
+                                      inspectSide, inspectSide);
 }
 
 - (void)viewDidAppear {
