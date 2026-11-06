@@ -730,6 +730,11 @@ Improvements:
   rainbow that circles the tab outline instead
   of a band sliding across it.
 
+- On macOS 26, the AI Chat window’s button for
+  showing and hiding the chat list is now in the
+  toolbar with the model picker instead of
+  floating over the conversation.
+
 Bug Fixes:
 - The tooltip for “Enable support for
   right-to-left scripts” in Settings > General >

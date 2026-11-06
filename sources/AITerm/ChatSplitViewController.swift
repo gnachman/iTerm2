@@ -14,17 +14,18 @@ class ChatSplitViewController: NSSplitViewController {
     private var sidebarItem: NSSplitViewItem?
     private var contentItem: NSSplitViewItem?
     private var hasSetInitialWidth = false
-    private var sidebarToggleRelayoutGeneration = 0
-    private let sidebarToggleButton: NSButton = {
+    // On macOS 26 the window has no NSToolbar, so ChatWindowController puts
+    // this button in the chat's floating toolbar. Earlier versions use the
+    // toggleChatList NSToolbarItem instead and leave this button unused.
+    let sidebarToggleButton: NSButton = {
         let image = NSImage(systemSymbolName: SFSymbol.sidebarLeft.rawValue,
-                            accessibilityDescription: "Toggle Chat List")!
+                            accessibilityDescription: String(localized: "ChatWindowController.ToggleChatList", defaultValue: "Toggle Chat List", comment: "Toolbar item to show or hide the chat list"))!
         let button = NSButton(image: image, target: nil, action: nil)
-        button.isBordered = false
         button.bezelStyle = .badge
+        // Setting bezelStyle resets isBordered to true, so clear it after.
+        button.isBordered = false
         button.imageScaling = .scaleProportionallyUpOrDown
         button.refusesFirstResponder = true
-        button.wantsLayer = true
-        button.layer?.cornerRadius = 8
         return button
     }()
 
@@ -48,10 +49,6 @@ class ChatSplitViewController: NSSplitViewController {
 
     required init?(coder: NSCoder) {
         it_fatalError("init(coder:) has not been implemented")
-    }
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
     }
 
     override func viewDidLoad() {
@@ -95,18 +92,6 @@ class ChatSplitViewController: NSSplitViewController {
 
         sidebarToggleButton.target = self
         sidebarToggleButton.action = #selector(toggleChatList)
-        sidebarToggleButton.autoresizingMask = [.minYMargin, .maxXMargin]
-        chatViewController.view.postsFrameChangedNotifications = true
-        chatViewController.view.postsBoundsChangedNotifications = true
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(chatContentViewFrameDidChange(_:)),
-                                               name: NSView.frameDidChangeNotification,
-                                               object: chatViewController.view)
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(chatContentViewFrameDidChange(_:)),
-                                               name: NSView.boundsDidChangeNotification,
-                                               object: chatViewController.view)
-        chatViewController.view.addSubview(sidebarToggleButton)
         updateSidebarToggleButton()
     }
 
@@ -119,17 +104,6 @@ class ChatSplitViewController: NSSplitViewController {
             splitView.setPosition(200, ofDividerAt: 0)
             hasSetInitialWidth = true
         }
-        scheduleSidebarToggleButtonRelayouts()
-    }
-
-    override func viewDidAppear() {
-        super.viewDidAppear()
-        scheduleSidebarToggleButtonRelayouts()
-    }
-
-    override func viewDidLayout() {
-        super.viewDidLayout()
-        layoutSidebarToggleButton()
     }
 
     @objc func toggleChatList() {
@@ -141,44 +115,7 @@ class ChatSplitViewController: NSSplitViewController {
             sidebarItem.animator().isCollapsed = !sidebarItem.isCollapsed
         }, completionHandler: { [weak self] in
             self?.updateSidebarToggleButton()
-            self?.scheduleSidebarToggleButtonRelayouts()
         })
-    }
-
-    @objc private func chatContentViewFrameDidChange(_ notification: Notification) {
-        layoutSidebarToggleButton()
-    }
-
-    private func scheduleSidebarToggleButtonRelayouts() {
-        sidebarToggleRelayoutGeneration += 1
-        let generation = sidebarToggleRelayoutGeneration
-        let delays: [TimeInterval] = [0, 0.05, 0.15, 0.35]
-        for delay in delays {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self,
-                      self.sidebarToggleRelayoutGeneration == generation else {
-                    return
-                }
-                self.layoutSidebarToggleButtonAfterWindowSettles()
-            }
-        }
-    }
-
-    private func layoutSidebarToggleButtonAfterWindowSettles() {
-        view.layoutSubtreeIfNeeded()
-        splitView.layoutSubtreeIfNeeded()
-        chatViewController.view.layoutSubtreeIfNeeded()
-        layoutSidebarToggleButton()
-    }
-
-    private func layoutSidebarToggleButton() {
-        let buttonSize = NSSize(width: 30, height: 30)
-        let contentBounds = chatViewController.view.bounds
-        let topInset = chatViewController.view.safeAreaInsets.top
-        sidebarToggleButton.frame = NSRect(x: 12,
-                                           y: contentBounds.height - topInset - buttonSize.height - 10,
-                                           width: buttonSize.width,
-                                           height: buttonSize.height)
     }
 
     // The sidebar also collapses when the window gets too narrow for it and
@@ -190,9 +127,8 @@ class ChatSplitViewController: NSSplitViewController {
 
     private func updateSidebarToggleButton() {
         let collapsed = sidebarItem?.isCollapsed ?? false
-        sidebarToggleButton.toolTip = collapsed ? "Show chat list" : "Hide chat list"
-        sidebarToggleButton.layer?.backgroundColor = (collapsed
-                                                      ? NSColor.controlAccentColor.withAlphaComponent(0.28)
-                                                      : NSColor.clear).cgColor
+        sidebarToggleButton.toolTip = collapsed
+            ? String(localized: "ChatSplitViewController.ShowChatList", defaultValue: "Show chat list", comment: "Tooltip for the button that shows the hidden chat list in the AI chat window")
+            : String(localized: "ChatSplitViewController.HideChatList", defaultValue: "Hide chat list", comment: "Tooltip for the button that hides the chat list in the AI chat window")
     }
 }

@@ -54218,6 +54218,30 @@
         }
       }
     },
+    "ChatSplitViewController.HideChatList" : {
+      "comment" : "Tooltip for the button that hides the chat list in the AI chat window",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide chat list"
+          }
+        }
+      }
+    },
+    "ChatSplitViewController.ShowChatList" : {
+      "comment" : "Tooltip for the button that shows the hidden chat list in the AI chat window",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show chat list"
+          }
+        }
+      }
+    },
     "ChatTitleStyling.OrchestratorChatAccessibility" : {
       "comment" : "Accessibility description for the orchestrator chat icon",
       "extractionState" : "extracted_with_value",
@@ -80949,6 +80973,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "鼠标报告"
+          }
+        }
+      }
+    },
+    "ContextMenu.MoveSessionToFloatingPane" : {
+      "comment" : "Context menu item that lifts the session out of the tab’s split pane layout and makes it a floating pane, which floats over the split panes",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Session to Floating Pane"
           }
         }
       }

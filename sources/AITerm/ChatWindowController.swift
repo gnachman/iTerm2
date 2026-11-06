@@ -400,7 +400,8 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
         // Add floating controls on macOS 26
         if #available(macOS 26, *) {
-            chatViewController.setupFloatingControls()
+            chatViewController.setupFloatingControls(
+                sidebarToggleButton: splitViewController.sidebarToggleButton)
         }
 
         return window

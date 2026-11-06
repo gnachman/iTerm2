@@ -235,6 +235,7 @@ final class FloatingChatToolbarView: NSView {
 
     private let backdrop: NSVisualEffectView
     private let row: ChatManualStackView
+    private let sidebarToggleButton: NSButton?
     private let providerSelectorButton: NSPopUpButton?
     private let modelSelectorButton: NSPopUpButton?
     private let reasoningEffortButton: NSPopUpButton?
@@ -251,13 +252,15 @@ final class FloatingChatToolbarView: NSView {
         }
     }
 
-    init(providerSelectorButton: NSPopUpButton?,
+    init(sidebarToggleButton: NSButton?,
+         providerSelectorButton: NSPopUpButton?,
          modelSelectorButton: NSPopUpButton?,
          reasoningEffortButton: NSPopUpButton?,
          serviceTierButton: NSPopUpButton?,
          thinkingButton: NSButton?,
          webSearchButton: NSButton?,
          sessionButton: NSButton?) {
+        self.sidebarToggleButton = sidebarToggleButton
         self.providerSelectorButton = providerSelectorButton
         self.modelSelectorButton = modelSelectorButton
         self.reasoningEffortButton = reasoningEffortButton
@@ -285,6 +288,10 @@ final class FloatingChatToolbarView: NSView {
         addSubview(backdrop)
         addSubview(row)
 
+        if let sidebarToggleButton {
+            sidebarToggleButton.controlSize = .large
+            row.addArrangedSubview(sidebarToggleButton)
+        }
         if let providerSelectorButton {
             providerSelectorButton.controlSize = .large
             row.addArrangedSubview(providerSelectorButton)
@@ -334,7 +341,8 @@ final class FloatingChatToolbarView: NSView {
                 return NSSize(width: max(94, intrinsic.width),
                               height: Self.controlHeight)
             }
-            if view === self.thinkingButton ||
+            if view === self.sidebarToggleButton ||
+               view === self.thinkingButton ||
                view === self.webSearchButton ||
                view === self.sessionButton {
                 let intrinsic = view.intrinsicContentSize
@@ -404,8 +412,9 @@ extension ChatToolbar {
     }
 
     @available(macOS 26, *)
-    func createFloatingView() -> NSView {
-        return FloatingChatToolbarView(providerSelectorButton: providerSelectorButton,
+    func createFloatingView(sidebarToggleButton: NSButton?) -> NSView {
+        return FloatingChatToolbarView(sidebarToggleButton: sidebarToggleButton,
+                                       providerSelectorButton: providerSelectorButton,
                                        modelSelectorButton: modelSelectorButton,
                                        reasoningEffortButton: reasoningEffortButton,
                                        serviceTierButton: serviceTierButton,

@@ -1607,8 +1607,8 @@ extension ChatViewController {
     }
 
     @available(macOS 26, *)
-    func setupFloatingControls() {
-        let floatingView = chatToolbar.createFloatingView()
+    func setupFloatingControls(sidebarToggleButton: NSButton?) {
+        let floatingView = chatToolbar.createFloatingView(sidebarToggleButton: sidebarToggleButton)
         floatingView.autoresizingMask = []
         view.addSubview(floatingView)
         floatingControlsView = floatingView
