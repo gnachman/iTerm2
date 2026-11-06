@@ -92,7 +92,7 @@ public class iTermMTKView: iTermMetalView {
 
     override public var needsDisplay: Bool {
         set {
-            DLog("setNeedsDisplay:\(needsDisplay)")
+            DLog("setNeedsDisplay:\(newValue)")
             if newValue {
                 _lastSetNeedsDisplay = NSDate.it_timeSinceBoot()
             }
