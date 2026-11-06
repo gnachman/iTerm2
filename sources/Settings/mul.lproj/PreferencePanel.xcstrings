@@ -27650,49 +27650,49 @@
       }
     },
     "Dt4-v9-hNo.ibShadowedToolTip" : {
-      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Buried sessions appear under Session > Buried Sessions. When this setting is enabled, window sizes are restored when attaching to an existing tmux session.\"; ObjectID = \"Dt4-v9-hNo\";",
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"Displays Arabic, Hebrew, and other right-to-left scripts in their correct visual order.\"; ObjectID = \"Dt4-v9-hNo\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vergrabene Sitzungen erscheinen unter Sitzung > Vergrabene Sitzungen. Wenn diese Einstellung aktiviert ist, werden Fenstergrößen beim Verbinden mit einer bestehenden tmux-Sitzung wiederhergestellt."
+            "value" : "Zeigt Arabisch, Hebräisch und andere rechtsläufige Schriften in der richtigen visuellen Reihenfolge an."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Buried sessions appear under Session > Buried Sessions. When this setting is enabled, window sizes are restored when attaching to an existing tmux session."
+            "value" : "Displays Arabic, Hebrew, and other right-to-left scripts in their correct visual order."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "非表示セッションは「セッション」>「非表示セッション」に表示されます。この設定を有効にすると、既存のtmuxセッションへアタッチする際にウィンドウサイズが復元されます。"
+            "value" : "アラビア語、ヘブライ語など、右から左に書く文字を正しい表示順で表示します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "숨겨둔 세션은 세션 > 숨겨둔 세션 아래에 나타납니다. 이 설정을 켜면 기존 tmux 세션에 연결할 때 윈도우 크기가 복원됩니다."
+            "value" : "아랍어, 히브리어 등 오른쪽에서 왼쪽으로 쓰는 문자를 올바른 시각적 순서로 표시합니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sessões ocultas aparecem em Sessão > Sessões ocultas. Quando este ajuste está ativado, os tamanhos das janelas são restaurados ao anexar a uma sessão tmux existente."
+            "value" : "Exibe árabe, hebraico e outras escritas da direita para a esquerda na ordem visual correta."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Похороненные сессии отображаются в меню «Сессия» > «Похороненные сессии». Когда эта настройка включена, размеры окон восстанавливаются при подключении к существующей сессии tmux."
+            "value" : "Отображает арабский, иврит и другие письменности с направлением справа налево в правильном визуальном порядке."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隐藏的会话显示在“会话 > 隐藏的会话”下。启用此设置后，附加到现有 tmux 会话时会恢复窗口大小。"
+            "value" : "以正确的视觉顺序显示阿拉伯文、希伯来文及其他从右到左书写的文字。"
           }
         }
       }

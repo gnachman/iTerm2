@@ -727,6 +727,9 @@ Improvements:
   of a band sliding across it.
 
 Bug Fixes:
+- The tooltip for “Enable support for
+  right-to-left scripts” in Settings > General >
+  Experimental described a tmux setting instead.
 - In tmux integration, full-screen programs such
   as htop or vim could show garbled output in a
   zoomed pane after zooming it or resizing the

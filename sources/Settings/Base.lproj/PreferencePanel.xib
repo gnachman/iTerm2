@@ -8826,7 +8826,7 @@ You can choose to define the characters considered part of a word with a regular
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dt4-v9-hNo">
                                                 <rect key="frame" x="153" y="59" width="419" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">Buried sessions appear under Session &gt; Buried Sessions. When this setting is enabled, window sizes are restored when attaching to an existing tmux session.</string>
+                                                <string key="toolTip">Displays Arabic, Hebrew, and other right-to-left scripts in their correct visual order.</string>
                                                 <buttonCell key="cell" type="check" title="Enable support for right-to-left scripts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ax2-RO-lUC">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
