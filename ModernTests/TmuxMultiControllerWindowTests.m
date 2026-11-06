@@ -9,6 +9,8 @@
 //    working in another session's tab, so keystrokes went to the wrong session.
 //  - Closing the last tab of one session asked about every session's windows and detached the
 //    selected tab's session instead of the closing one. Closing the window detached only one.
+//  - Saving one session's per-tab settings included other sessions' tabs, whose window ids
+//    collide with its own.
 //
 
 #import <XCTest/XCTest.h>
@@ -64,10 +66,11 @@
 
 @end
 
-// A tmux tab whose controller, window id, and native window are fixed by the test.
+// A tmux tab whose controller, window id, native window, and per-tab setting are fixed by the test.
 @interface TmuxMultiSpyTab : PTYTab
 @property (nonatomic, strong) TmuxController *spyController;
 @property (nonatomic) int spyWindow;
+@property (nonatomic, copy) NSString *spyPerTabSetting;
 @property (nonatomic, weak) NSWindowController<iTermWindowController> *spyParentWindow;
 @property (nonatomic) NSInteger makeActiveCount;
 @end
@@ -84,6 +87,10 @@
 
 - (int)tmuxWindow {
     return self.spyWindow;
+}
+
+- (NSString *)tmuxPerTabSetting {
+    return self.spyPerTabSetting;
 }
 
 - (NSWindowController<iTermWindowController> *)realParentWindow {
@@ -307,6 +314,25 @@
 
     XCTAssertEqualObjects(_a.killedWindows, @[ @1 ]);
     XCTAssertEqualObjects(_b.killedWindows, (@[ @1, @2 ]));
+}
+
+#pragma mark Per-tab settings
+
+// Control: a session's own tabs are saved.
+- (void)testPerTabSettingsIncludeOwnTabs {
+    [self addTabForController:_a window:1].spyPerTabSetting = @"t=YQ==";
+    [self addTabForController:_a window:2].spyPerTabSetting = @"t=Yg==";
+
+    XCTAssertEqualObjects([_a perTabSettingsForTabs:_tabs], @"1:t=YQ==;2:t=Yg==");
+}
+
+// Both servers have an @1. B's title override must not be saved as A's.
+- (void)testPerTabSettingsOmitOtherSessionsTabs {
+    [self addTabForController:_a window:1].spyPerTabSetting = @"t=YQ==";
+    [self addTabForController:_b window:1].spyPerTabSetting = @"t=Yg==";
+    [self addTabForController:nil window:0].spyPerTabSetting = @"t=Yw==";
+
+    XCTAssertEqualObjects([_a perTabSettingsForTabs:_tabs], @"1:t=YQ==");
 }
 
 @end

@@ -306,6 +306,8 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)saveHiddenWindows;
 - (void)savePerWindowSettings;
 - (void)savePerTabSettings;
+// The @per_tab_settings value for the tabs among `tabs` that belong to this controller.
+- (NSString *)perTabSettingsForTabs:(NSArray<PTYTab *> *)tabs;
 - (void)saveTabGroups;
 // Forget the tab group membership of a tmux window that closed.
 - (void)tmuxWindowDidCloseForTabGroups:(int)windowID;

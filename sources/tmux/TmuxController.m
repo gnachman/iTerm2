@@ -3710,22 +3710,28 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
 }
 
-- (void)savePerTabSettings {
+- (NSString *)perTabSettingsForTabs:(NSArray<PTYTab *> *)tabs {
     NSMutableArray<NSString *> *settings = [NSMutableArray array];
-    iTermController *cont = [iTermController sharedInstance];
-    NSArray *terminals = [cont terminals];
-    for (PseudoTerminal *term in terminals) {
-        for (PTYTab *tab in term.tabs) {
-            if (!tab.isTmuxTab) {
-                continue;
-            }
-            NSString *setting = [tab tmuxPerTabSetting];
-            if (setting) {
-                [settings addObject:[NSString stringWithFormat:@"%d:%@", tab.tmuxWindow, setting]];
-            }
+    for (PTYTab *tab in tabs) {
+        // Another session's tabs can share a window with this one's, and their window ids
+        // collide with this session's.
+        if (!tab.isTmuxTab || tab.tmuxController != self) {
+            continue;
+        }
+        NSString *setting = [tab tmuxPerTabSetting];
+        if (setting) {
+            [settings addObject:[NSString stringWithFormat:@"%d:%@", tab.tmuxWindow, setting]];
         }
     }
-    NSString *arg = [settings componentsJoinedByString:@";"];
+    return [settings componentsJoinedByString:@";"];
+}
+
+- (void)savePerTabSettings {
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        [tabs addObjectsFromArray:term.tabs];
+    }
+    NSString *arg = [self perTabSettingsForTabs:tabs];
     DLog(@"Save per-tab settings: %@", arg);
     NSString *command = [NSString stringWithFormat:@"set -t $%d @per_tab_settings \"%@\"",
                          sessionId_,

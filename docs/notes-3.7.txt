@@ -2731,3 +2731,6 @@ Bug Fixes:
   another session’s tab was selected. Closing
   the last tab of one session asks only about
   that session’s windows.
+- A custom tab title in one tmux session no
+  longer appears on another tmux session’s tab
+  after reattaching.
