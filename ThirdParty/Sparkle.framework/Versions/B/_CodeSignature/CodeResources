@@ -10,7 +10,7 @@
 		</data>
 		<key>Resources/Info.plist</key>
 		<data>
-		GpaoK0NvfeCRIxogerA5LDL7PbM=
+		49i6oyeaLwBAIOF8RPk2NDIqwrQ=
 		</data>
 		<key>Resources/ReleaseNotesColorStyle.css</key>
 		<data>
@@ -586,7 +586,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			IF+Xr5VBdOR24B3SOh63DYVcwhWu3puUYDoiKNJ3Et4=
+			//or9AfPcysmuGFTL/KRWOC15nUIWWFhF4plKqh4HvE=
 			</data>
 		</dict>
 		<key>Resources/ReleaseNotesColorStyle.css</key>
@@ -929,7 +929,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			VLcF7jo7T++itwihPThvZcRr6a8=
+			ILREbzUIbCTdDeAjADF3PO9K/3w=
 			</data>
 			<key>requirement</key>
 			<string>identifier "org.sparkle-project.Sparkle.Updater" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D</string>
