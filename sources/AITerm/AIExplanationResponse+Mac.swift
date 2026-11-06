@@ -104,10 +104,10 @@ extension ExplanationResponse {
         }
         let start = startRange.upperBound
         let end = endRange.lowerBound
+        let escaped = String(unparsed[start..<end])
         unparsed = unparsed
             .replacingCharacters(in: startRange.lowerBound..<endRange.upperBound,
                                  with: "")
-        let escaped = String(unparsed[start..<end])
         return unescapeHTML(escaped)
     }
 }
