@@ -136,7 +136,7 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       endif
 
       # Define aliases for printing the shell integration version this script is written against
-      alias _iterm2_shell_integration_version 'printf "\033]1337;ShellIntegrationVersion=12;shell=tcsh\007"'
+      alias _iterm2_shell_integration_version 'printf "\033]1337;ShellIntegrationVersion=13;shell=tcsh\007"'
 
       # Define aliases for defining the boundary between a command prompt and the
       # output of a command started from that prompt. $_iterm2_current_aid is
@@ -183,10 +183,19 @@ if ( ! ($?iterm2_shell_integration_installed)) then
       _iterm2_update_current_state
       _iterm2_shell_integration_version
 
+      # Install Shell Integration & Utilities used to alias it2ssh to a copy in .iterm2, which
+      # hides the newer it2ssh iTerm2 puts on PATH. Remove that alias, and only that alias, when
+      # the it2ssh PATH finds first is the one inside iTerm2's app bundle. Done at the first
+      # prompt because the installer appended the alias after this script, and then the alias
+      # empties itself. sh makes the whole decision because tcsh substitutes variables in an
+      # alias before any of its commands run, and because tcsh's own which reports the alias
+      # rather than searching PATH.
+      alias _iterm2_drop_stale_it2ssh_alias 'if ({ sh -c '\''case "$1" in */.iterm2/it2ssh) p=$(command -v it2ssh) || exit 1; case "$p" in */Contents/Resources/utilities/it2ssh) exit 0;; esac;; esac; exit 1'\'' sh "`alias it2ssh`" }) unalias it2ssh; alias _iterm2_drop_stale_it2ssh_alias '\'\'''
+
       # Define precmd, which runs just before the prompt is printed. This could go
       # in $prompt but this keeps things a little simpler in here.
       # No parens or iterm2_start call is allowed prior to evaluating the last status.
-      alias precmd '_iterm2_last_status; _iterm2_update_current_state'
+      alias precmd '_iterm2_last_status; _iterm2_update_current_state; _iterm2_drop_stale_it2ssh_alias'
 
       # Define postcmd, which runs just before a command is executed.
       alias postcmd '(_iterm2_between_prompt_and_exec)'

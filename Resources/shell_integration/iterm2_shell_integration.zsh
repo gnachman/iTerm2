@@ -256,8 +256,24 @@ if [[ -o interactive ]]; then
       ITERM2_DECORATED_RPS2="${RPS2-}"
     }
 
+    # Install Shell Integration & Utilities used to alias it2ssh to a copy in .iterm2, which
+    # hides the newer it2ssh iTerm2 puts on PATH. Remove that alias, and only that alias, when
+    # the it2ssh PATH finds first is the one inside iTerm2's app bundle. Done at the first
+    # prompt because the installer appended the alias after this script.
+    iterm2_drop_stale_it2ssh_alias() {
+      [[ "${aliases[it2ssh]-}" == */.iterm2/it2ssh ]] || return 0
+      local found
+      found="$(whence -p it2ssh)" || return 0
+      [[ "$found" == */Contents/Resources/utilities/it2ssh ]] && unalias it2ssh
+      return 0
+    }
+
     iterm2_precmd() {
       local STATUS="$?"
+      if [[ -z "${ITERM2_CHECKED_IT2SSH_ALIAS-}" ]]; then
+        ITERM2_CHECKED_IT2SSH_ALIAS=1
+        iterm2_drop_stale_it2ssh_alias
+      fi
       if [ -z "${ITERM2_SHOULD_DECORATE_PROMPT-}" ]; then
         # You pressed ^C while entering a command (iterm2_preexec did not run)
         iterm2_before_cmd_executes
@@ -346,7 +362,7 @@ if [[ -o interactive ]]; then
     preexec_functions=($preexec_functions iterm2_preexec)
 
     iterm2_print_state_data
-    printf "\033]1337;ShellIntegrationVersion=22;shell=zsh\007"
+    printf "\033]1337;ShellIntegrationVersion=23;shell=zsh\007"
   fi
 fi
 

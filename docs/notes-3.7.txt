@@ -2693,3 +2693,8 @@ Bug Fixes:
 - With GPU rendering and a transparent window,
   underlined text on screen no longer makes all
   the other text look soft or washed out.
+- If you installed shell integration with the
+  utilities, typing it2ssh could run an old
+  copy of it2ssh in ~/.iterm2 instead of the
+  one that comes with iTerm2. Shell integration
+  now uses iTerm2’s copy when it is available.

@@ -121,6 +121,20 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and be
     set -g ITERM2_AID_COUNTER 0
     set -g ITERM2_CURRENT_AID "$ITERM2_AID_SALT-0"
 
+    # Install Shell Integration & Utilities used to alias it2ssh to a copy in .iterm2, which
+    # hides the newer it2ssh iTerm2 puts on PATH. Remove that alias, and only that alias, when
+    # the it2ssh PATH finds first is the one inside iTerm2's app bundle. Done at the first
+    # prompt because the installer appended the alias after this script.
+    function __iterm2_drop_stale_it2ssh_alias --on-event fish_prompt
+      functions --erase __iterm2_drop_stale_it2ssh_alias
+      if functions -q it2ssh; and functions it2ssh | string match -qr -- "--description 'alias it2ssh=\S*/\.iterm2/it2ssh'"
+        set -l found (command -s it2ssh)
+        if string match -q -- "*/Contents/Resources/utilities/it2ssh" $found
+          functions --erase it2ssh
+        end
+      end
+    end
+
     function iterm2_status
         if test -z "$ITERM2_FISH_MARKS_PROMPT"
           printf "\033]133;D;%s;aid=%s\007" $argv $ITERM2_CURRENT_AID
@@ -326,7 +340,7 @@ if begin; status --is-interactive; and not functions -q -- iterm2_status; and be
 
     iterm2_write_remotehost_currentdir_uservars
   end
-  printf "\033]1337;ShellIntegrationVersion=28;shell=fish\007"
+  printf "\033]1337;ShellIntegrationVersion=29;shell=fish\007"
 end
 
 # Put iTerm2's uploaded it2 on PATH, ahead of the shell function below. Exported, so a program

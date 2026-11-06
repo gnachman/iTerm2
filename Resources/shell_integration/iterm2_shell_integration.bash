@@ -785,7 +785,7 @@ function iterm2_prompt_suffix() {
 
 function iterm2_print_version_number() {
   iterm2_begin_osc
-  printf "1337;ShellIntegrationVersion=24;shell=bash"
+  printf "1337;ShellIntegrationVersion=25;shell=bash"
   iterm2_end_osc
 }
 
@@ -866,10 +866,30 @@ __iterm2_preexec() {
     return 0
 }
 
+# Install Shell Integration & Utilities used to alias it2ssh to a copy in .iterm2, which hides
+# the newer it2ssh iTerm2 puts on PATH. Remove that alias, and only that alias, when the it2ssh
+# PATH finds first is the one inside iTerm2's app bundle. Done at the first prompt because the
+# installer appended the alias after this script. Reads `alias` rather than BASH_ALIASES, which
+# bash 3.2 lacks.
+function __iterm2_drop_stale_it2ssh_alias () {
+    local definition found
+    definition="$(alias it2ssh 2>/dev/null)" || return 0
+    [[ "$definition" == "alias it2ssh='"*"/.iterm2/it2ssh'" ]] || return 0
+    found="$(type -P it2ssh)" || return 0
+    [[ "$found" == */Contents/Resources/utilities/it2ssh ]] && unalias it2ssh
+    return 0
+}
+
 # Prints the current directory and hostname control sequences. Modifies PS1 to
 # add the FinalTerm A and B codes to locate the prompt.
 function __iterm2_prompt_command () {
     __iterm2_last_ret_value="$?"
+
+    if [[ -z "${__iterm2_checked_it2ssh_alias:-}" ]]
+    then
+        __iterm2_checked_it2ssh_alias=1
+        __iterm2_drop_stale_it2ssh_alias
+    fi
 
     if [[ -z "${iterm2_ran_preexec:-}" ]]
     then
