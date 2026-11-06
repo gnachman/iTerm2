@@ -1312,7 +1312,7 @@ typedef enum {
     } else {
         // Compare gestures
         NSArray *selfParts = [PointerPrefsController gestureKeyComponents:self];
-        NSArray *otherParts = [PointerPrefsController gestureKeyComponents:self];
+        NSArray *otherParts = [PointerPrefsController gestureKeyComponents:other];
         NSComparisonResult result;
         NSString *selfIdent = [PointerPrefsController localizedGestureNameForGestureIdentifier:[selfParts objectAtIndex:1]];
         NSString *otherIdent = [PointerPrefsController localizedGestureNameForGestureIdentifier:[otherParts objectAtIndex:1]];
