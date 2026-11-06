@@ -4234,11 +4234,25 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
     [self suppressActivityChanges:^{
         const BOOL shouldMakeKeyAndOrderFront = [self shouldMakeWindowKeyOnActiveWindowChange];
         PTYTab *tab = [self window:windowID];
+        if (![self activeWindowChangeShouldSelectTab:tab
+                                          currentTab:tab.realParentWindow.currentTab]) {
+            DLog(@"Not selecting %@ for %@: its window's current tab is %@", tab, self, tab.realParentWindow.currentTab);
+            return;
+        }
         [tab makeActive];
         if (shouldMakeKeyAndOrderFront) {
             [tab.realParentWindow.window makeKeyAndOrderFront:nil];
         }
     }];
+}
+
+- (BOOL)activeWindowChangeShouldSelectTab:(PTYTab *)tab currentTab:(PTYTab *)currentTab {
+    if (currentTab == nil || currentTab == tab || !currentTab.isTmuxTab) {
+        return YES;
+    }
+    // The user is working in another tmux session's tab in this window. Selecting this tab would
+    // send their keystrokes to a different session, possibly on another host.
+    return currentTab.tmuxController == self;
 }
 
 - (void)suppressActivityChanges:(void (^ NS_NOESCAPE)(void))block {

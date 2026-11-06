@@ -395,6 +395,9 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (BOOL)paneIsInKnownLayout:(int)wp;
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)activeWindowDidChangeTo:(int)windowID;
+// Whether tmux making `tab` its current window should select it in its native window, whose
+// current tab is `currentTab`.
+- (BOOL)activeWindowChangeShouldSelectTab:(PTYTab *)tab currentTab:(PTYTab *)currentTab;
 // Whether tmux last reported this window as the attached session's current window.
 - (BOOL)windowIsCurrentInTmux:(int)windowId;
 - (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp;

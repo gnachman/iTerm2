@@ -2721,3 +2721,7 @@ Bug Fixes:
 - An animated title, such as a spinner, in a tab
   that isn’t selected now keeps moving instead
   of changing only about once a second.
+- When one window holds tmux integration tabs
+  from more than one tmux session, activity in
+  one session no longer switches away from the
+  tab you are typing in from another session.
