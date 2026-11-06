@@ -66,6 +66,9 @@ struct ChatProviderOption: Equatable {
             return String(localized: "ChatToolbar.LlamaLocal", defaultValue: "Llama (Local)", comment: "Name of the local Llama AI provider")
         case .apple:
             return "Apple"
+        case .xAI:
+            // Localization unneeded: brand name.
+            return "Grok"
         @unknown default:
             return String(localized: "ChatToolbar.ProviderFallback", defaultValue: "Provider", comment: "Fallback name for an unknown AI provider")
         }

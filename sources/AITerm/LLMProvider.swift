@@ -70,25 +70,24 @@ struct LLMProvider {
     }
 
     var displayName: String {
-        if LLMMetadata.hostIsOpenAIAPI(url: url(apiKey: "placeholder",
-                                                streaming: false)) {
+        let placeholderURL = url(apiKey: "placeholder", streaming: false)
+        if LLMMetadata.hostIsOpenAIAPI(url: placeholderURL) {
             return "OpenAI"
         }
-        if LLMMetadata.hostIsGoogleAIAPI(url: url(apiKey: "placeholder",
-                                                  streaming: false)) {
+        if LLMMetadata.hostIsGoogleAIAPI(url: placeholderURL) {
             return "Google"
         }
-        if LLMMetadata.hostIsAzureAIAPI(url: url(apiKey: "placeholder",
-                                                 streaming: false)) {
+        if LLMMetadata.hostIsAzureAIAPI(url: placeholderURL) {
             return "Azure"
         }
-        if LLMMetadata.hostIsDeepSeekAIAPI(url: url(apiKey: "placeholder",
-                                                    streaming: false)) {
+        if LLMMetadata.hostIsDeepSeekAIAPI(url: placeholderURL) {
             return "Deep Seek"
         }
-        if LLMMetadata.hostIsAnthropicAIAPI(url: url(apiKey: "placeholder",
-                                                     streaming: false)) {
+        if LLMMetadata.hostIsAnthropicAIAPI(url: placeholderURL) {
             return "Anthropic"
+        }
+        if LLMMetadata.hostIsXAIAIAPI(url: placeholderURL) {
+            return "Grok"
         }
         // The .llama API type is Ollama's native /api/chat dialect regardless of
         // which model (llama, qwen, ...) is served, so name it for the runner, not
@@ -228,6 +227,9 @@ struct LLMProvider {
         if LLMMetadata.hostIsGoogleAIAPI(url: url) {
             return true
         }
+        // api.x.ai chat completions rejects an inline file part with
+        // HTTP 400 and points at /v1/responses. Images stay on
+        // supportsInlineImageBlock.
         return false
     }
 
@@ -251,6 +253,7 @@ struct LLMProvider {
         return LLMMetadata.hostIsAnthropicAIAPI(url: url)
             || LLMMetadata.hostIsGoogleAIAPI(url: url)
             || LLMMetadata.hostIsOpenAIAPI(url: url)
+            || LLMMetadata.hostIsXAIAIAPI(url: url)
     }
 
     // Gemini accepts video via inlineData; no other wired vendor takes video.

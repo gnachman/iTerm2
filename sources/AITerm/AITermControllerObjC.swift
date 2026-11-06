@@ -44,7 +44,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     // can require a token; Apple Intelligence is omitted because it runs
     // on-device and needs no key.
     private static let prewarmableVendors: [iTermAIVendor] = [
-        .openAI, .anthropic, .gemini, .deepSeek, .llama
+        .openAI, .anthropic, .gemini, .deepSeek, .xAI, .llama
     ]
 
     // Read every provider's key from the keychain into the in-memory cache.
@@ -376,6 +376,9 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             return "Llama API Key for iTerm2"
         case .apple:
             return "Apple Intelligence API Key for iTerm2"
+        case .xAI:
+            // Localization unneeded: a keychain account name.
+            return "xAI API Key for iTerm2"
         @unknown default:
             return "AI API Key for iTerm2"
         }
@@ -387,15 +390,22 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
 
     private static func key(_ key: String, matches vendor: iTermAIVendor) -> Bool {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        let anthropicPrefix = "sk-ant-"
+        let geminiPrefix = "AIza"
+        let xAIPrefix = "xai-"
+        // The vendors whose keys carry a recognizable prefix.
+        let brandedPrefixes = [anthropicPrefix, geminiPrefix, xAIPrefix]
         switch vendor {
         case .anthropic:
-            return trimmed.hasPrefix("sk-ant-")
+            return trimmed.hasPrefix(anthropicPrefix)
         case .gemini:
-            return trimmed.hasPrefix("AIza")
-        case .openAI:
-            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza")
-        case .deepSeek:
-            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza")
+            return trimmed.hasPrefix(geminiPrefix)
+        case .xAI:
+            return trimmed.hasPrefix(xAIPrefix)
+        case .openAI, .deepSeek:
+            // Neither has a prefix of its own, so any key that is not
+            // visibly another vendor's passes.
+            return !brandedPrefixes.contains { trimmed.hasPrefix($0) }
         case .llama, .apple:
             return true
         @unknown default:

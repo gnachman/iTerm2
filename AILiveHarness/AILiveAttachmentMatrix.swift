@@ -2,7 +2,7 @@
 //  AILiveAttachmentMatrix.swift
 //  iTerm2 AI live harness
 //
-//  96-cell attachment compatibility matrix (16 MIMEs x 6 vendor lanes).
+//  112-cell attachment compatibility matrix (16 MIMEs x 7 vendor lanes).
 //  Each cell is a live API call that bypasses LLMProvider.accepts(_:) and
 //  feeds the per-vendor request builder a known fixture, then asserts the
 //  outcome matches what we expect that vendor to do with that wire shape.
@@ -14,7 +14,7 @@
 //  shape), some cell flips outcome and lights up a loud failure, telling
 //  us to update either the table here or the gate in LLMProvider.swift.
 //
-//  Six lanes:
+//  Seven lanes:
 //
 //    openaiChat       Synthesized gpt-4o-mini model overridden to
 //                     api=.chatCompletions, vectorStoreConfig=.disabled.
@@ -42,6 +42,9 @@
 //    llama            Local Ollama (llama4:latest, /api/chat). Runs only
 //                     when LLAMA_API_KEY is set: a record run needs Ollama
 //                     up; replay serves committed cassettes with no Ollama.
+//    xai              grok-4.7. Chat completions at api.x.ai. Same content
+//                     parts as openaiChat (image_url, input_audio, file).
+//                     The endpoint 400s file parts, so PDF is rejected.
 //
 //  Skip semantics: a missing vendor API key skips the lane via
 //  keyOrSkip. A failure within a cell fails the corresponding XCTest
@@ -80,6 +83,7 @@ enum AttachmentLane: String, CaseIterable {
     case gemini
     case deepseek
     case llama
+    case xai
 
     var displayName: String {
         switch self {
@@ -89,6 +93,7 @@ enum AttachmentLane: String, CaseIterable {
         case .gemini:          return "gemini"
         case .deepseek:        return "deepseek"
         case .llama:           return "llama"
+        case .xai:             return "xai"
         }
     }
 
@@ -99,6 +104,7 @@ enum AttachmentLane: String, CaseIterable {
         case .gemini:    return "gemini"
         case .deepseek:  return "deepseek"
         case .llama:     return "llama"
+        case .xai:       return "xai"
         }
     }
 
@@ -146,6 +152,8 @@ enum AttachmentLane: String, CaseIterable {
                 features: [.streaming, .functionCalling, .vision],
                 vectorStoreConfig: .disabled,
                 vendor: .llama)
+        case .xai:
+            return try lookup("grok-4.7")
         }
     }
 
@@ -185,7 +193,7 @@ enum AttachmentMatrixError: Error, CustomStringConvertible {
 }
 
 enum AttachmentMatrix {
-    /// The 96 cells. Encoded with `expectations[lane]?[kind]`. If a cell
+    /// The 112 cells. Encoded with `expectations[lane]?[kind]`. If a cell
     /// is missing it defaults to `.acceptsButGarbled` (the catch-all for
     /// non-fatal lossyString fallback) — but every cell is enumerated
     /// explicitly below so a missing entry would be a coding error, not
@@ -369,6 +377,38 @@ enum AttachmentMatrix {
             .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),
             .applicationDOCX:  .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
             .applicationZIP:   .skipped(reason: "llama lane pinned to text-only llama3.3; binary cells not covered"),
+            .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
+        ],
+
+        // MARK: xai (grok-4.7 chat completions)
+        //
+        // Same CompletionsMessage content parts as openaiChat: image_url for
+        // image/*, input_audio for wav/mp3, file for PDF, and a lossy text
+        // wrapper for every other binary. Measured against grok-4.7: PNG and
+        // WebP extract the visual probe; HEIC and TIFF 400 (not a JPG, PNG,
+        // WebP, or ICO). Inline PDF file parts 400 ("File content is not
+        // supported on /v1/chat/completions"), so that cell rejects and
+        // supportsPDFAttachments does not include this host. text/plain
+        // uses the same inline text path as markdown, JSON, YAML, SVG,
+        // and XML, which echoed their probes. The plain-text prompt is
+        // not a stable probe for grok-4.7 (refused twice, then quoted),
+        // so that cell is skipped.
+        .xai: [
+            .textPlain:        .skipped(reason: "grok-4.7 accepts inline text but does not stably echo the verbatim probe"),
+            .textMarkdown:     .acceptsAndExtractsProbe,
+            .applicationJSON:  .acceptsAndExtractsProbe,
+            .applicationXML:   .acceptsAndExtractsProbe,
+            .imageSVG:         .acceptsAndExtractsProbe,
+            .yamlAsUnknown:    .acceptsAndExtractsProbe,
+            .imagePNG:         .acceptsAndExtractsProbe,
+            .imageWEBP:        .acceptsAndExtractsProbe,
+            .imageHEIC:        .rejectsAtHTTPLayer,
+            .imageTIFF:        .rejectsAtHTTPLayer,
+            .applicationPDF:   .rejectsAtHTTPLayer,
+            .audioMPEG:        .rejectsAtHTTPLayer,
+            .videoMP4:         .skipped(reason: "scroll-browser mp4 fixture has no deterministic content probe; garbled vs. seen is indistinguishable"),
+            .applicationDOCX:  .acceptsButGarbled,
+            .applicationZIP:   .acceptsButGarbled,
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
     ]

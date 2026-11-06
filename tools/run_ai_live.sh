@@ -9,7 +9,7 @@
 #   tools/run_ai_live.sh test_openai_smoke_streaming  # exact method
 #
 # Reads API keys from the environment:
-#   OPENAI_API_KEY ANTHROPIC_API_KEY GEMINI_API_KEY DEEPSEEK_API_KEY
+#   OPENAI_API_KEY ANTHROPIC_API_KEY GEMINI_API_KEY DEEPSEEK_API_KEY XAI_API_KEY
 #
 # Vendors with no key set are skipped automatically by the harness.
 #
@@ -86,6 +86,7 @@ json_quote() {
     emit ANTHROPIC_API_KEY "${ANTHROPIC_API_KEY:-}"
     emit GEMINI_API_KEY    "${GEMINI_API_KEY:-}"
     emit DEEPSEEK_API_KEY  "${DEEPSEEK_API_KEY:-}"
+    emit XAI_API_KEY       "${XAI_API_KEY:-}"
     # Ollama needs no real key; any non-empty value enables the llama lane.
     # Set LLAMA_API_KEY=ollama (with Ollama running) to record the llama
     # attachment cassettes; leave it unset to skip the lane.
@@ -94,6 +95,7 @@ json_quote() {
     emit ANTHROPIC_MODELS   "${ITERM2_AI_LIVE_ANTHROPIC_MODELS:-}"
     emit GEMINI_MODELS      "${ITERM2_AI_LIVE_GEMINI_MODELS:-}"
     emit DEEPSEEK_MODELS    "${ITERM2_AI_LIVE_DEEPSEEK_MODELS:-}"
+    emit XAI_MODELS         "${ITERM2_AI_LIVE_XAI_MODELS:-}"
     # Local Ollama model to drive for the llama tool-call tests (comma-separated;
     # first non-empty entry wins). Defaults to the catalog's llama3.3:latest,
     # which is 42GB, so set this to a small model, e.g. LLAMA_MODELS=qwen3.5:4b.
@@ -102,6 +104,7 @@ json_quote() {
     emit ANTHROPIC_INTERVAL "${ITERM2_AI_LIVE_ANTHROPIC_INTERVAL:-}"
     emit GEMINI_INTERVAL    "${ITERM2_AI_LIVE_GEMINI_INTERVAL:-}"
     emit DEEPSEEK_INTERVAL  "${ITERM2_AI_LIVE_DEEPSEEK_INTERVAL:-}"
+    emit XAI_INTERVAL       "${ITERM2_AI_LIVE_XAI_INTERVAL:-}"
     emit PROJECT_ROOT       "$PROJECT_DIR"
     emit REFUSAL            "${ITERM2_AI_LIVE_REFUSAL:-}"
     # Cassette record/playback. Unset means pure-live (the historical
@@ -152,7 +155,7 @@ else
     done
     if [[ ${#matched[@]} -eq 0 ]]; then
         echo "No method names matched '$filter'." >&2
-        echo "Pass 'openai', 'anthropic', 'gemini', 'deepseek', a scenario like 'smoke', or an exact test name." >&2
+        echo "Pass 'openai', 'anthropic', 'gemini', 'deepseek', 'xai', a scenario like 'smoke', or an exact test name." >&2
         exit 2
     fi
     only_testing_args=( "${matched[@]}" )

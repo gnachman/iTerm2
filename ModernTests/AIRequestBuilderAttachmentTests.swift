@@ -777,4 +777,74 @@ final class AIRequestBuilderAttachmentTests: XCTestCase {
         XCTAssertTrue(content.contains("Hello, world!"),
                       "text-file content was dropped; got \(content)")
     }
+
+    // MARK: - Chat completions reasoning effort
+
+    /// reasoning_effort is sent only when the caller selected one. An empty
+    /// effort list leaves the field nil, and the key stays out of the body.
+    func testChatCompletions_reasoningEffort_presentOnlyWhenSelected() throws {
+        let model = xaiModel(url: "https://api.x.ai/v1/chat/completions")
+        let message = LLM.Message(role: .user, content: "Hi")
+        let omitted = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false).body()
+        XCTAssertNil(try decode(omitted)["reasoning_effort"])
+
+        let selected = try ModernBodyRequestBuilder(
+            messages: [message],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false,
+            reasoningEffort: .high).body()
+        XCTAssertEqual(try decode(selected)["reasoning_effort"] as? String, "high")
+    }
+
+    /// reasoning_effort is an xAI extension of chat completions. A non-xAI
+    /// chat-completions model (a gpt-5.x clone on a gateway, say) that carries
+    /// an effort list keeps the body it had before: no reasoning_effort key.
+    func testChatCompletions_reasoningEffort_omittedForNonXAIVendor() throws {
+        var model = xaiModel(url: "https://gateway.example/v1/chat/completions")
+        model.name = "gpt-5.5"
+        model.vendor = .openAI
+        let body = try ModernBodyRequestBuilder(
+            messages: [LLM.Message(role: .user, content: "Hi")],
+            provider: LLMProvider(model: model),
+            functions: [],
+            stream: false,
+            reasoningEffort: .high).body()
+        XCTAssertNil(try decode(body)["reasoning_effort"])
+    }
+
+    // MARK: - xAI (chat completions on api.x.ai)
+
+    /// api.x.ai accepts chat-completions image parts. Inline PDF file
+    /// parts are rejected by that endpoint, so the PDF gate stays off.
+    /// A regional endpoint (us.api.x.ai) is the same service, but a
+    /// look-alike host must not inherit the image gate.
+    func testXAI_acceptsImage_rejectsPDF_lookAlikeHostDoesNot() {
+        let provider = LLMProvider(model: xaiModel(url: "https://api.x.ai/v1/chat/completions"))
+        XCTAssertTrue(provider.accepts(mimeType: "image/png"))
+        XCTAssertFalse(provider.accepts(mimeType: "application/pdf"))
+
+        let regional = LLMProvider(model: xaiModel(url: "https://us.api.x.ai/v1/chat/completions"))
+        XCTAssertTrue(regional.accepts(mimeType: "image/png"))
+        XCTAssertFalse(regional.accepts(mimeType: "application/pdf"))
+        XCTAssertEqual(regional.displayName, "Grok")
+
+        let lookalike = LLMProvider(model: xaiModel(url: "https://api.x.ai.evil.example/v1/chat/completions"))
+        XCTAssertFalse(lookalike.accepts(mimeType: "image/png"))
+        XCTAssertFalse(lookalike.accepts(mimeType: "application/pdf"))
+    }
+
+    private func xaiModel(url: String) -> AIMetadata.Model {
+        return AIMetadata.Model(name: "grok-4.7",
+                                contextWindowTokens: 500_000,
+                                maxResponseTokens: 128_000,
+                                url: url,
+                                api: .chatCompletions,
+                                features: [.functionCalling, .streaming],
+                                vendor: .xAI)
+    }
 }

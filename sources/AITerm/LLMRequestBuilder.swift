@@ -71,7 +71,8 @@ struct LLMRequestBuilder {
                                          provider: provider,
                                          functions: functions,
                                          stream: stream,
-                                         frozenHistoryElements: frozenHistoryElements).body()
+                                         frozenHistoryElements: frozenHistoryElements,
+                                         reasoningEffort: reasoningEffort).body()
         case .responses:
             // Pass the real messages and the volatile context SEPARATELY (not
             // pre-folded via messagesWithVolatile): the Responses builder applies

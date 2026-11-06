@@ -15,6 +15,10 @@ struct ModernBodyRequestBuilder {
     // messages array after the system message(s). nil for the normal path, where
     // `messages` already holds the whole conversation.
     var frozenHistoryElements: Data? = nil
+    // Chat-completions reasoning control. Only xAI's chat completions take
+    // reasoning_effort; nil omits the key, so other models keep the body they
+    // had before. See body().
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? = nil
 
     private struct Tool: Codable {
         var type = "function"
@@ -29,6 +33,7 @@ struct ModernBodyRequestBuilder {
         var tools: [Tool]? = nil
         var tool_choice: String? = nil  // "none" and "auto" also allowed
         var stream: Bool
+        var reasoning_effort: ResponsesRequestBody.ReasoningOptions.Effort? = nil
     }
 
     func body() throws -> Data {
@@ -42,6 +47,11 @@ struct ModernBodyRequestBuilder {
         // re-emits on echo); legacy-only servers would reject this, but
         // every current chat-completions provider supports the modern form.
         let maybeTools = functions.isEmpty ? nil : functions.map { Tool(function: $0.decl) }
+        // A manual model that clones a catalog reasoning model's name inherits
+        // its effort list (LLMMetadata), so an effort can arrive for a
+        // gpt-5.x clone pointed at a gateway or an older Azure api-version.
+        // Those servers may reject the unknown field, so send it to xAI only.
+        let wireReasoningEffort = provider.model.vendor == .xAI ? reasoningEffort : nil
         let body = Body(
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
             messages: messages.compactMap { CompletionsMessage($0) },
@@ -51,7 +61,8 @@ struct ModernBodyRequestBuilder {
             temperature: provider.model.supportsTemperature ? 0 : nil,
             tools: maybeTools,
             tool_choice: functions.isEmpty ? nil : "auto",
-            stream: stream)
+            stream: stream,
+            reasoning_effort: wireReasoningEffort)
         DLog("REQUEST:\n\(body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge

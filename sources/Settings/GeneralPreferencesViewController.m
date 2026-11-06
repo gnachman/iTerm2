@@ -189,6 +189,8 @@ static NSString *iTermAIVendorProviderName(iTermAIVendor vendor) {
             return NSLocalizedStringWithDefaultValue(@"AIProvider.Ollama", nil, [NSBundle mainBundle], @"Ollama", @"Ollama provider name");
         case iTermAIVendorApple:
             return NSLocalizedStringWithDefaultValue(@"AIProvider.AppleIntelligence", nil, [NSBundle mainBundle], @"Apple Intelligence", @"Apple Intelligence provider name");
+        case iTermAIVendorXAI:
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Grok", nil, [NSBundle mainBundle], @"Grok", @"Grok (xAI) provider name");
     }
     return NSLocalizedStringWithDefaultValue(@"AIProvider.OpenAI", nil, [NSBundle mainBundle], @"OpenAI", @"OpenAI provider name");
 }
@@ -203,6 +205,7 @@ static BOOL iTermAIVendorHasEnterableKey(iTermAIVendor vendor) {
         case iTermAIVendorAnthropic:
         case iTermAIVendorGemini:
         case iTermAIVendorDeepSeek:
+        case iTermAIVendorXAI:
             return YES;
         case iTermAIVendorLlama:
         case iTermAIVendorApple:
@@ -273,7 +276,8 @@ static NSArray<NSString *> *iTermAIKeyHintEditorVariants(void) {
         iTermAIVendorOpenAI,
         iTermAIVendorLlama,
         iTermAIVendorAnthropic,
-        iTermAIVendorApple
+        iTermAIVendorApple,
+        iTermAIVendorXAI
     };
     for (size_t k = 0; k < sizeof(kinds) / sizeof(*kinds); k++) {
         for (size_t v = 0; v < sizeof(vendors) / sizeof(*vendors); v++) {
@@ -3103,6 +3107,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         @(iTermAIVendorAnthropic),
         @(iTermAIVendorGemini),
         @(iTermAIVendorDeepSeek),
+        @(iTermAIVendorXAI),
         @(iTermAIVendorLlama)
     ];
 }
@@ -3719,7 +3724,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         @(iTermAIVendorOpenAI),
         @(iTermAIVendorAnthropic),
         @(iTermAIVendorGemini),
-        @(iTermAIVendorDeepSeek)
+        @(iTermAIVendorDeepSeek),
+        @(iTermAIVendorXAI)
     ];
 }
 
