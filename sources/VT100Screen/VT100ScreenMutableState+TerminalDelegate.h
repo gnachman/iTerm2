@@ -17,6 +17,10 @@ NS_ASSUME_NONNULL_BEGIN
 // API on behalf of a program that reports through hooks but never emits the protocol itself.
 - (void)setProgressFromProtocol:(VT100ScreenProgress)progress;
 
+// Hides a progress bar that OSC 9;4 put up if nothing has changed it since: generation is the
+// progressGeneration that report made and progress is what it set. Does nothing otherwise.
+- (void)expireProgressFromProtocol:(VT100ScreenProgress)progress generation:(NSInteger)generation;
+
 // Is the user editing a command at a prompt? True after terminalCommandDidStart and before
 // terminalCommandDidEnd.
 - (BOOL)enteringCommand;

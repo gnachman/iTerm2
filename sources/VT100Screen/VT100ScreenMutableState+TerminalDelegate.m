@@ -1713,6 +1713,20 @@ typedef struct {
     } name:@"progress protocol"];
 }
 
+// OSC 9;4 has no way to say a program died without clearing its bar, so a bar
+// left alone for too long is taken down, as Ghostty and kitty do. A newer
+// report or a reset moves the generation on. A bar the OSC 7501 records took
+// over keeps the generation but changes the value, and is theirs to manage.
+- (void)expireProgressFromProtocol:(VT100ScreenProgress)progress generation:(NSInteger)generation {
+    if (self.progressGeneration != generation || self.progress != progress) {
+        DLog(@"Not expiring progress %@ from generation %@: now %@ in generation %@",
+             @(progress), @(generation), @(self.progress), @(self.progressGeneration));
+        return;
+    }
+    DLog(@"Expiring stale progress %@ from generation %@", @(progress), @(generation));
+    [self setProgressFromProtocol:VT100ScreenProgressStopped];
+}
+
 - (void)terminalPostUserNotification:(NSString *)message {
     NSArray<NSString *> *params = [message componentsSeparatedByString:@";"];
     if (params.count >= 1 && [params[0] isNumeric]) {

@@ -140,6 +140,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)badgeRightMargin;
 + (int)badgeTopMargin;
 + (double)bellRateLimit;
++ (double)progressReportTimeout;
 + (BOOL)bordersOnlyInLightMode;
 + (BOOL)bounceOnInactiveBell;
 + (BOOL)bootstrapDaemon;

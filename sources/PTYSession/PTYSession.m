@@ -727,6 +727,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // side effect that never arrived cannot leave the two out of step for good.
     NSInteger _progressGenerationSeen;
 
+    // Takes down an OSC 9;4 progress bar that has gone without an update for
+    // too long. Not retained: the run loop holds it until it fires. Each
+    // report moves its fire date instead of scheduling another timer.
+    NSTimer *_progressExpirationTimer;
+    // The newest OSC 9;4 report, which the timer takes down only if nothing
+    // has changed the bar since.
+    VT100ScreenProgress _expiringProgress;
+    NSInteger _expiringProgressGeneration;
+
     // Set while the OSC 7501 records are changing the tab status.
     BOOL _applyingProgramStatus;
 
@@ -1334,6 +1343,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nonTextPasteHelper release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
+    [_progressExpirationTimer invalidate];
     [_cadenceController release];
     [_originalProfile release];
     [_liveSession release];
@@ -28240,6 +28250,50 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
     _progressGenerationSeen = MAX(_progressGenerationSeen, generation);
     [_programStatusController progressProtocolDidReport];
     [self.tabStatusController progressProtocolDidReport:progress];
+    [self scheduleProgressExpirationForProgress:progress generation:generation];
+}
+
+- (void)screenProgressWasRestored:(VT100ScreenProgress)progress
+                       generation:(NSInteger)generation {
+    _progressGenerationSeen = MAX(_progressGenerationSeen, generation);
+    [self scheduleProgressExpirationForProgress:progress generation:generation];
+}
+
+- (void)scheduleProgressExpirationForProgress:(VT100ScreenProgress)progress
+                                   generation:(NSInteger)generation {
+    const NSTimeInterval timeout = [iTermAdvancedSettingsModel progressReportTimeout];
+    if (!VT100ScreenProgressIsVisible(progress) || timeout <= 0) {
+        [_progressExpirationTimer invalidate];
+        _progressExpirationTimer = nil;
+        return;
+    }
+    _expiringProgress = progress;
+    _expiringProgressGeneration = generation;
+    NSDate *const fireDate = [NSDate dateWithTimeIntervalSinceNow:timeout];
+    if (_progressExpirationTimer) {
+        _progressExpirationTimer.fireDate = fireDate;
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _progressExpirationTimer = [NSTimer scheduledTimerWithTimeInterval:timeout
+                                                               repeats:NO
+                                                                 block:^(NSTimer *timer) {
+        [weakSelf progressExpirationTimerDidFire];
+    }];
+}
+
+- (void)progressExpirationTimerDidFire {
+    _progressExpirationTimer = nil;
+    const VT100ScreenProgress progress = _expiringProgress;
+    const NSInteger generation = _expiringProgressGeneration;
+    DLog(@"Progress %@ from generation %@ went without an update for too long", @(progress), @(generation));
+    // Like the program's own 9;4;0, this is not something the user did, so it
+    // must not end copy mode.
+    [_screen mutateAsynchronouslyKeepingMode:^(VT100Terminal *terminal,
+                                               VT100ScreenMutableState *mutableState,
+                                               id<VT100ScreenDelegate> delegate) {
+        [mutableState expireProgressFromProtocol:progress generation:generation];
+    }];
 }
 
 @end

@@ -29052,6 +29052,54 @@
         }
       }
     },
+    "AdvancedSetting.progressReportTimeout" : {
+      "comment" : "Advanced setting: progressReportTimeout",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen per OSC 9;4 gemeldeten Fortschrittsbalken ausblenden, wenn er so viele Sekunden lang nicht aktualisiert wurde.\nEin Programm, das sich beendet, ohne seinen Fortschrittsbalken zu entfernen, würde ihn sonst stehen lassen. Auf 0 setzen, um ihn anzuzeigen, bis das Programm ihn entfernt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide a progress bar reported with OSC 9;4 after this many seconds without an update.\nA program that exits without clearing its progress bar would otherwise leave it showing. Set to 0 to keep it until the program clears it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 9;4 で報告されたプログレスバーを、この秒数のあいだ更新がなければ非表示にします。\nこれを設定しないと、プログレスバーを消さずに終了したプログラムのバーが表示されたままになります。プログラムが消すまで表示し続けるには 0 を指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSC 9;4로 보고된 진행 막대가 이 시간(초) 동안 업데이트되지 않으면 숨깁니다.\n그렇지 않으면 진행 막대를 지우지 않고 종료한 프로그램의 막대가 계속 표시됩니다. 프로그램이 지울 때까지 표시하려면 0으로 설정하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar uma barra de progresso informada com OSC 9;4 após este número de segundos sem atualização.\nCaso contrário, um programa que termina sem limpar sua barra de progresso a deixaria visível. Defina como 0 para mantê-la até que o programa a limpe."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрывать индикатор выполнения, переданный через OSC 9;4, если он не обновлялся указанное число секунд.\nИначе индикатор программы, завершившейся без его сброса, останется на экране. Установите 0, чтобы показывать его, пока программа сама его не сбросит."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 OSC 9;4 报告的进度条在这么多秒内没有更新时将其隐藏。\n否则，程序退出时若未清除进度条，进度条会一直显示。设置为 0 则保留进度条，直到程序将其清除。"
+          }
+        }
+      }
+    },
     "AdvancedSetting.promptForPasteWhenNotAtPrompt" : {
       "comment" : "Advanced setting: promptForPasteWhenNotAtPrompt",
       "extractionState" : "extracted_with_value",

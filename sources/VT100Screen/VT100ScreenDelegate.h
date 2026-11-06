@@ -635,4 +635,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenProgressProtocolDidReportProgress:(VT100ScreenProgress)progress
                                      generation:(NSInteger)generation;
 
+// A restored session brought back the progress bar it was showing when it was
+// saved. Nothing has reported it since, so it may be stale. The generation is
+// VT100ScreenMutableState.progressGeneration as of the restore.
+- (void)screenProgressWasRestored:(VT100ScreenProgress)progress
+                       generation:(NSInteger)generation;
+
 @end

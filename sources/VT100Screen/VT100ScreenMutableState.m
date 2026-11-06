@@ -7210,6 +7210,15 @@ lengthExcludingInBandSignaling:data.length
 
     if (screenState) {
         self.progress = [screenState[kScreenStateProgressKey] integerValue];
+        // The program that put the bar up may be gone, and even if it is still
+        // running it may never report again, so the bar expires like one it
+        // just reported.
+        self.progressGeneration += 1;
+        const NSInteger progressGeneration = self.progressGeneration;
+        const VT100ScreenProgress restoredProgress = self.progress;
+        [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenProgressWasRestored:restoredProgress generation:progressGeneration];
+        } name:@"progress restored"];
         // OSC 133 aid: restore the open-aid stack. marksByAid rebuilds from
         // this in fixUpDeserializedIntervalTree:'s aid pass.
         [self.openAidStack removeAllObjects];
