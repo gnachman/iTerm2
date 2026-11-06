@@ -101,6 +101,7 @@ private class VT100ScreenEditingSession: FakeSession {
                                             remoteHost: (any VT100RemoteHostReading)?,
                                             withDirectory directory: String?,
                                             pushType: VT100ScreenWorkingDirectoryPushType,
+                                            verifiedLocalhost: Bool,
                                             accepted: Bool) {
         workingDirectoryLog.append((absLine: absLine, directory: directory))
     }

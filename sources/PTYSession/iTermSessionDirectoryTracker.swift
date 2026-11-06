@@ -104,10 +104,11 @@ class iTermSessionDirectoryTracker: NSObject {
     /// Whether lastLocalDirectory came from shell integration (pushed) or polling (not pushed).
     @objc private(set) var lastLocalDirectoryWasPushed: Bool = false
 
-    /// The true local directory from the pwd poller, always updated regardless of pushed state.
-    /// Used when creating new local sessions to avoid using a remote path that was pushed
-    /// via OSC 7 without a hostname (which looks local but isn't).
-    @objc private(set) var polledLocalDirectory: String?
+    /// The local shell's directory, taken only from sources proven to be local: the pwd poller,
+    /// or a push whose OSC 7 machineID token matched ours. Used when creating new local sessions
+    /// to avoid using a remote path that was pushed via OSC 7 without a hostname (which looks
+    /// local but isn't). Unlike lastLocalDirectory, an unverified push never sets it.
+    @objc private(set) var verifiedLocalDirectory: String?
 
     /// The last remote host at the time of setting the current directory.
     @objc private(set) var lastRemoteHost: (any VT100RemoteHostReading)?
@@ -324,20 +325,20 @@ class iTermSessionDirectoryTracker: NSObject {
     }
 
     /// Get the current local working directory asynchronously.
-    /// Returns the polled local directory (the true local pwd) for use when creating new local sessions.
+    /// Returns the verified local directory (the true local pwd) for use when creating new local sessions.
     @objc
     func asyncCurrentLocalWorkingDirectory(completion: @escaping (String?) -> Void) {
         DLog("\(d(delegate)): asyncCurrentLocalWorkingDirectory requested")
-        if let localDir = polledLocalDirectory {
-            DLog("\(d(delegate)): Using polled local directory \(localDir)")
+        if let localDir = verifiedLocalDirectory {
+            DLog("\(d(delegate)): Using verified local directory \(localDir)")
             completion(localDir)
             return
         }
-        DLog("\(d(delegate)): No polled value yet, polling")
+        DLog("\(d(delegate)): No verified local directory yet, polling")
 
         updateLocalDirectoryWithCompletion { [weak self] pwd in
             DLog("\(d(self?.delegate)): updateLocalDirectory finished with \(pwd ?? "nil")")
-            completion(self?.polledLocalDirectory)
+            completion(self?.verifiedLocalDirectory)
         }
     }
 
@@ -433,13 +434,16 @@ class iTermSessionDirectoryTracker: NSObject {
     // MARK: - Screen Delegate Methods
 
     /// Called when shell integration logs a working directory on a line.
+    /// - Parameter verifiedLocalhost: The report proved it came from this machine (an OSC 7
+    ///   machineID token matching ours), so `directory` is as good as a poll of the local shell.
     @objc
     func screenLogWorkingDirectory(onAbsoluteLine absLine: Int64,
                                    remoteHost: (any VT100RemoteHostReading)?,
                                    withDirectory directory: String?,
                                    pushType: VT100ScreenWorkingDirectoryPushType,
+                                   verifiedLocalhost: Bool = false,
                                    accepted: Bool) {
-        DLog("\(d(delegate)): screenLogWorkingDirectory: \(directory ?? "nil") pushType:\(pushType.rawValue) accepted:\(accepted)")
+        DLog("\(d(delegate)): screenLogWorkingDirectory: \(directory ?? "nil") pushType:\(pushType.rawValue) verifiedLocalhost:\(verifiedLocalhost) accepted:\(accepted)")
 
         let pushed = (pushType != .pull)
 
@@ -476,7 +480,27 @@ class iTermSessionDirectoryTracker: NSObject {
             if pushed {
                 recordLastRemoteHost(remoteHost)
             }
+            if pushType == .strongPush {
+                updateVerifiedLocalDirectoryAfterPush(directory, verifiedLocalhost: verifiedLocalhost)
+            }
         }
+    }
+
+    /// A strong push means the shell just reported its directory, typically from its prompt hook
+    /// right after a `cd`, so verifiedLocalDirectory is now stale. New local sessions read it, so
+    /// refresh it here rather than waiting for the poller.
+    ///
+    /// The pushed directory itself is used only when the report proved it came from this
+    /// machine. Otherwise it may be a remote path that looks local (e.g., fish over plain ssh
+    /// sends OSC 7 without a hostname; issue 12616), so poll the local shell instead.
+    private func updateVerifiedLocalDirectoryAfterPush(_ directory: String?, verifiedLocalhost: Bool) {
+        if verifiedLocalhost, let directory, !directory.isEmpty {
+            DLog("\(d(delegate)): Verified-local push; verified local directory is now \(directory)")
+            verifiedLocalDirectory = directory
+            return
+        }
+        DLog("\(d(delegate)): Unverified push; polling local directory")
+        pollLocalDirectoryOnly()
     }
 
     /// Called before the current directory changes via shell integration.
@@ -518,9 +542,9 @@ class iTermSessionDirectoryTracker: NSObject {
         // path variable if the session is ssh'ed somewhere.
         DLog("\(d(delegate)): didGetWorkingDirectory finished with \(pwd ?? "nil")")
 
-        // Always track the polled local directory for new session creation.
+        // Always track the verified local directory for new session creation.
         if let pwd {
-            polledLocalDirectory = pwd
+            verifiedLocalDirectory = pwd
         }
 
         if lastLocalDirectoryWasPushed, lastLocalDirectory != nil {
@@ -586,11 +610,11 @@ extension iTermSessionDirectoryTracker: iTermWorkingDirectoryPollerDelegate {
     private func handlePollerResult(_ pwd: String?, invalidated: Bool) {
         DLog("\(d(delegate)): workingDirectoryPollerDidFindWorkingDirectory:\(pwd ?? "nil") invalidated:\(invalidated)")
 
-        // Always track the polled local directory, regardless of pushed state or invalidation.
+        // Always track the verified local directory, regardless of pushed state or invalidation.
         // This is used when creating new local sessions to ensure we use the true local directory,
         // not a remote path that was pushed via OSC 7 without a hostname.
         if let pwd {
-            polledLocalDirectory = pwd
+            verifiedLocalDirectory = pwd
         }
 
         if invalidated && lastLocalDirectoryWasPushed && lastLocalDirectory != nil {

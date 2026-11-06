@@ -666,10 +666,90 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         XCTAssertEqual(mockDelegate.didUpdateCurrentDirectoryPath, "/Users/test")
     }
 
+    // MARK: - 6b. Pushes refresh the directory new local sessions start in
+
+    // `cd foo; claude` pasted: the poller last ran before the cd, so its cached result is
+    // stale. The push from the prompt after the cd must refresh it.
+    func testUnverifiedStrongPush_PollsLocalDirectory() {
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/before", invalidated: false)
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Users/after"
+        mockDelegate.workingDirectoryProvider = provider
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/Users/after",
+                                          pushType: .strongPush,
+                                          verifiedLocalhost: false,
+                                          accepted: true)
+
+        XCTAssertTrue(provider.getWorkingDirectoryAsyncCalled)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/after")
+    }
+
+    // A push proven local by a machineID token is as good as a poll, and keeps the
+    // user's unresolved symlinks.
+    func testVerifiedStrongPush_UsesPushedDirectoryWithoutPolling() {
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/before", invalidated: false)
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/private/resolved/after"
+        mockDelegate.workingDirectoryProvider = provider
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/Users/after",
+                                          pushType: .strongPush,
+                                          verifiedLocalhost: true,
+                                          accepted: true)
+
+        XCTAssertFalse(provider.getWorkingDirectoryAsyncCalled)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/after")
+    }
+
+    // Issue 12616: fish over plain ssh pushes a remote path with no hostname. It is not
+    // verified, so the local directory comes from polling the local shell, not the push.
+    func testUnverifiedRemotePathPush_DoesNotBecomeLocalDirectory() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Users/local"
+        mockDelegate.workingDirectoryProvider = provider
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/home/remote",
+                                          pushType: .strongPush,
+                                          verifiedLocalhost: false,
+                                          accepted: true)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/local")
+        let expectation = self.expectation(description: "completion called")
+        tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
+            XCTAssertEqual(pwd, "/Users/local")
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1.0)
+    }
+
+    func testRejectedPush_DoesNotTouchLocalDirectory() {
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/before", invalidated: false)
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Users/after"
+        mockDelegate.workingDirectoryProvider = provider
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/Users/after",
+                                          pushType: .strongPush,
+                                          verifiedLocalhost: true,
+                                          accepted: false)
+
+        XCTAssertFalse(provider.getWorkingDirectoryAsyncCalled)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/before")
+    }
+
     // MARK: - 7. Async Directory Fetching Tests
 
     func testAsyncCurrentLocalWorkingDirectory_CachedValue() {
-        // Given: Simulate a poller result to set polledLocalDirectory
+        // Given: Simulate a poller result to set verifiedLocalDirectory
         tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/cached", invalidated: false)
         let provider = MockWorkingDirectoryProvider()
         mockDelegate.workingDirectoryProvider = provider
@@ -678,7 +758,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
         // When
         tracker.asyncCurrentLocalWorkingDirectory { pwd in
-            // Then: Should use polledLocalDirectory, not fetch again
+            // Then: Should use verifiedLocalDirectory, not fetch again
             XCTAssertEqual(pwd, "/Users/cached")
             XCTAssertFalse(provider.getWorkingDirectoryAsyncCalled)
             expectation.fulfill()
@@ -739,7 +819,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     }
 
     func testAsyncInitialDirectory_NoConductor_UsesLocalDirectory() {
-        // Given: Simulate a poller result to set polledLocalDirectory
+        // Given: Simulate a poller result to set verifiedLocalDirectory
         mockDelegate.sshIdentityProvider = nil
         tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
 
@@ -747,7 +827,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
         // When
         tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
-            // Then: Should use polledLocalDirectory for new local sessions
+            // Then: Should use verifiedLocalDirectory for new local sessions
             XCTAssertEqual(pwd, "/Users/local")
             expectation.fulfill()
         }
@@ -839,7 +919,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     }
 
     func testAsyncInitialDirectory_LocalSessionToLocalSession_ReturnsDirectory() {
-        // Given: Simulate a poller result to set polledLocalDirectory
+        // Given: Simulate a poller result to set verifiedLocalDirectory
         mockDelegate.sshIdentityProvider = nil
         tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
 
@@ -847,7 +927,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
         // When: Creating a local session (nil SSH identity)
         tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
-            // Then: Should return the polled local directory
+            // Then: Should return the verified local directory
             XCTAssertEqual(pwd, "/Users/local")
             expectation.fulfill()
         }
@@ -858,7 +938,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     func testAsyncInitialDirectory_OSC7WithoutHostname_UsesPolledNotPushed() {
         // This tests the bug fix for issue 12616: When SSHed to a remote server
         // and the remote shell sends OSC 7 without a hostname (e.g., fish),
-        // new local sessions should use the polled local directory, not the
+        // new local sessions should use the verified local directory, not the
         // pushed (remote) directory that was incorrectly treated as local.
 
         // Given: Remote shell pushed a directory via OSC 7 (treated as local because no hostname)
@@ -870,7 +950,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
         // When: Creating a new local session
         tracker.asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity: nil) { pwd in
-            // Then: Should use the polled local directory, not the pushed remote one
+            // Then: Should use the verified local directory, not the pushed remote one
             XCTAssertEqual(pwd, "/Users/local/path")
             expectation.fulfill()
         }

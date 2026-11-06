@@ -436,6 +436,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                      remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost
                                   withDirectory:(NSString * _Nullable)directory
                                        pushType:(VT100ScreenWorkingDirectoryPushType)pushType
+                              verifiedLocalhost:(BOOL)verifiedLocalhost
                                        accepted:(BOOL)accepted;
 
 - (void)screenSuggestShellIntegrationUpgrade;

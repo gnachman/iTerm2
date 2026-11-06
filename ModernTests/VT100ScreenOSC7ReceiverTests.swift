@@ -116,6 +116,66 @@ final class VT100ScreenOSC7ReceiverTests: XCTestCase {
         XCTAssertEqual(host?.localityState, .localhost)
     }
 
+    // MARK: - verifiedLocalhost reaches the delegate
+
+    // A report naming a new host defers its directory behind setHost's paused side
+    // effect, which this harness doesn't fire. Once the host is recorded, the same
+    // report again completes synchronously, so log the directory from the second send.
+    private func sendOSC7Twice(_ url: String, to screen: VT100Screen) {
+        _ = sendOSC7(url, to: screen)
+        _ = sendOSC7(url, to: screen)
+    }
+
+    // A matching machineID proves this report came from this machine, so the
+    // delegate may use its directory as the local shell's directory.
+    func testMatchingMachineIDLogsVerifiedLocalhost() {
+        let (screen, session) = makeScreen()
+        sendOSC7Twice("file://gnachman@vpn-name.example/tmp/verified?machineID=\(localMachineIDToken)", to: screen)
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.directory, "/tmp/verified")
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.verifiedLocalhost, true)
+    }
+
+    // A hostname match is not proof (stale $HOST, issue 13117).
+    func testHostnameMatchWithoutMachineIDIsNotVerified() throws {
+        guard let localName = Host.it_localHostNames().first else {
+            throw XCTSkip("No local host names available")
+        }
+        let (screen, session) = makeScreen()
+        sendOSC7Twice("file://gnachman@\(localName)/tmp/unverified", to: screen)
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.directory, "/tmp/unverified")
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.verifiedLocalhost, false)
+    }
+
+    // A path-only report (fish over plain ssh, issue 12616) inherits the previous
+    // host, which may be a verified localhost. That must not make the report
+    // itself verified, or a remote path would become the local directory.
+    func testPathOnlyReportAfterVerifiedReportIsNotVerified() {
+        let (screen, session) = makeScreen()
+        sendOSC7Twice("file://gnachman@vpn-name.example/tmp/verified?machineID=\(localMachineIDToken)", to: screen)
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.verifiedLocalhost, true)
+        // Typing a command (e.g., ssh) closes the verified-report window.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.inputWasWrittenToTask()
+        })
+        _ = sendOSC7("file:///home/remote", to: screen)
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.directory, "/home/remote")
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.verifiedLocalhost, false)
+    }
+
+    // A directory change with no directory (e.g., an empty CurrentDir) is filled in
+    // by polling, and a poll is verified by definition.
+    func testPolledDirectoryIsVerifiedLocalhost() {
+        let (screen, session) = makeScreen()
+        session.workingDirectoryFromPoll = "/tmp/polled"
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.currentDirectoryDidChange(to: "", completion: {})
+        })
+        drain(screen)
+        XCTAssertEqual(session.getWorkingDirectoryCallCount, 1)
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.directory, "/tmp/polled")
+        XCTAssertEqual(session.loggedWorkingDirectories.last?.verifiedLocalhost, true)
+    }
+
     // MARK: - username carry-forward is scoped to the same host
 
     // A third-party OSC 7 that omits the user (VTE-style file://host/path) for a

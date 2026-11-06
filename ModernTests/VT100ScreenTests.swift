@@ -2324,10 +2324,17 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     /// in order. Used by KittyDnDParsingTests.
     var kittyDragAndDropContents = [String]()
 
+    /// Every screenLogWorkingDirectory call, in order: the directory and whether the
+    /// report proved it came from this machine.
+    var loggedWorkingDirectories = [(directory: String?, verifiedLocalhost: Bool)]()
+
     /// Number of times screenGetWorkingDirectory(completion:) was invoked. Used by
     /// the OSC 7 receiver tests to assert a pathless report doesn't poll the local
     /// child process for its cwd.
     var getWorkingDirectoryCallCount = 0
+
+    /// What screenGetWorkingDirectory(completion:) reports, as if polled.
+    var workingDirectoryFromPoll: String?
 
     /// Set true when screenDidReceiveOSC7WhileDisabled fires, so the acceptOSC7
     /// gate test can assert the warning path was taken.
@@ -2722,7 +2729,8 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenLogWorkingDirectory(onAbsoluteLine absLine: Int64, remoteHost: (any VT100RemoteHostReading)?, withDirectory directory: String?, pushType: VT100ScreenWorkingDirectoryPushType, accepted: Bool) {
+    func screenLogWorkingDirectory(onAbsoluteLine absLine: Int64, remoteHost: (any VT100RemoteHostReading)?, withDirectory directory: String?, pushType: VT100ScreenWorkingDirectoryPushType, verifiedLocalhost: Bool, accepted: Bool) {
+        loggedWorkingDirectories.append((directory: directory, verifiedLocalhost: verifiedLocalhost))
 
     }
     
@@ -2755,7 +2763,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     
     func screenGetWorkingDirectory(completion: @escaping (String?) -> Void) {
         getWorkingDirectoryCallCount += 1
-        completion(nil)
+        completion(workingDirectoryFromPoll)
     }
     
     func screenSetCursorVisible(_ visible: Bool) {

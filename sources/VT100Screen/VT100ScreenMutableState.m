@@ -4100,7 +4100,24 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                   onAbsLine:(long long)absLine
                      pushed:(BOOL)pushed
                       token:(id<iTermOrderedToken>)token {
-    DLog(@"%p: setWorkingDirectory:%@ onLine:%lld token:%@", self, workingDirectory, absLine, token);
+    [self setWorkingDirectory:workingDirectory
+                    onAbsLine:absLine
+                       pushed:pushed
+            verifiedLocalhost:NO
+                        token:token];
+}
+
+// verifiedLocalhost means the report itself proved it came from this machine (an OSC 7
+// machineID token that matched ours), so the directory is as good as polling the local shell.
+// The remote host on `line` can't tell you that: a report that names no host inherits the
+// previous one.
+- (void)setWorkingDirectory:(NSString *)workingDirectory
+                  onAbsLine:(long long)absLine
+                     pushed:(BOOL)pushed
+          verifiedLocalhost:(BOOL)verifiedLocalhost
+                      token:(id<iTermOrderedToken>)token {
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%lld verifiedLocalhost:%@ token:%@",
+         self, workingDirectory, absLine, @(verifiedLocalhost), token);
     const int line = [self workingDirectoryLineForAbsLine:absLine];
     if (line < 0) {
         return;
@@ -4171,19 +4188,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                remoteHost:remoteHost
                                             withDirectory:workingDirectory
                                                  pushType:pushType
+                                        verifiedLocalhost:verifiedLocalhost
                                                  accepted:accepted];
     } name:@"set pwd 2"];
 }
 
 - (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
                                 onAbsLine:(long long)cursorAbsLine
+                        verifiedLocalhost:(BOOL)verifiedLocalhost
                                completion:(void (^)(void))completion {
-    DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@", dir, @(cursorAbsLine));
+    DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@ verifiedLocalhost:%@",
+         dir, @(cursorAbsLine), @(verifiedLocalhost));
     self.shouldExpectWorkingDirectoryUpdates = YES;
     BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow]];
     [self setWorkingDirectory:dir
                     onAbsLine:cursorAbsLine
                        pushed:YES
+            verifiedLocalhost:verifiedLocalhost
                         token:nil];
     if (willChange) {
         int line = [self numberOfScrollbackLines] + self.cursorY;
@@ -4210,7 +4231,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)currentDirectoryDidChangeTo:(NSString *)dir
                          completion:(void (^)(void))completion {
-    DLog(@"%p: currentDirectoryDidChangeTo:%@", self, dir);
+    [self currentDirectoryDidChangeTo:dir verifiedLocalhost:NO completion:completion];
+}
+
+// verifiedLocalhost is as in setWorkingDirectory:onAbsLine:pushed:verifiedLocalhost:token:. It
+// describes `dir`. If `dir` is empty the directory is fetched by polling, which is always verified.
+- (void)currentDirectoryDidChangeTo:(NSString *)dir
+                  verifiedLocalhost:(BOOL)verifiedLocalhost
+                         completion:(void (^)(void))completion {
+    DLog(@"%p: currentDirectoryDidChangeTo:%@ verifiedLocalhost:%@", self, dir, @(verifiedLocalhost));
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
     } name:@"pwd did change 1"];
@@ -4218,7 +4247,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
     const long long cursorAbsLine = self.cumulativeScrollbackOverflow + cursorLine;
     if (dir.length) {
-        [self currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine completion:completion];
+        [self currentDirectoryReallyDidChangeTo:dir
+                                      onAbsLine:cursorAbsLine
+                              verifiedLocalhost:verifiedLocalhost
+                                     completion:completion];
         return;
     }
 
@@ -4235,8 +4267,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [weakSelf performBlockAsynchronously:^(VT100Terminal * _Nonnull terminal,
                                                    VT100ScreenMutableState * _Nonnull mutableState,
                                                    id<VT100ScreenDelegate>  _Nonnull delegate) {
+                // The directory came from polling, which is as good as it gets: the
+                // tracker already recorded it as the local directory when the poll
+                // finished, so don't make it poll again.
                 [mutableState currentDirectoryReallyDidChangeTo:workingDirectory
                                                       onAbsLine:cursorAbsLine
+                                              verifiedLocalhost:YES
                                                      completion:completion];
             }];
         }];
@@ -4874,7 +4910,9 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
 
     __weak __typeof(self) weakSelf = self;
     void (^completion)(void) = ^{
-        [weakSelf setPathFromURL:path fromShellIntegration:fromShellIntegration];
+        [weakSelf setPathFromURL:path
+            fromShellIntegration:fromShellIntegration
+               verifiedLocalhost:machineLocality == VT100RemoteHostLocalityLocalhost];
     };
     if (host.length > 0 || user != nil || machineLocality != VT100RemoteHostLocalityUnknown) {
         [self setHost:host
@@ -4950,7 +4988,9 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
     } name:@"warn OSC 7 disabled"];
 }
 
-- (void)setPathFromURL:(NSString *)path fromShellIntegration:(BOOL)fromShellIntegration {
+- (void)setPathFromURL:(NSString *)path
+  fromShellIntegration:(BOOL)fromShellIntegration
+     verifiedLocalhost:(BOOL)verifiedLocalhost {
     if (path.length == 0) {
         // A pathless OSC 7 (file://user@host, or a peer that dropped the path)
         // carries no directory. Don't fall into currentDirectoryDidChangeTo:'s
@@ -4960,7 +5000,7 @@ static NSString *iTermOSC7MachineIDFromComponents(NSURLComponents *components) {
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    [self currentDirectoryDidChangeTo:path completion:^{
+    [self currentDirectoryDidChangeTo:path verifiedLocalhost:verifiedLocalhost completion:^{
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
@@ -7764,7 +7804,7 @@ lengthExcludingInBandSignaling:data.length
     if (path) {
         // A restore (conductor unhook), not a live shell-integration OSC 7: no
         // 133;A follows, so establish the prompt as before.
-        [self setPathFromURL:path fromShellIntegration:NO];
+        [self setPathFromURL:path fromShellIntegration:NO verifiedLocalhost:NO];
     }
 }
 

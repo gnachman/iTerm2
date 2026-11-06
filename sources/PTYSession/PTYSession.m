@@ -20931,13 +20931,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                      remoteHost:(id<VT100RemoteHostReading>)remoteHost
                                   withDirectory:(NSString *)directory
                                        pushType:(VT100ScreenWorkingDirectoryPushType)pushType
+                              verifiedLocalhost:(BOOL)verifiedLocalhost
                                        accepted:(BOOL)accepted {
-    DLog(@"screenLogWorkingDirectoryOnAbsoluteLine:%@ remoteHost:%@ withDirectory:%@ pushType:%@ accepted:%@",
-         @(absLine), remoteHost, directory, @(pushType), @(accepted));
+    DLog(@"screenLogWorkingDirectoryOnAbsoluteLine:%@ remoteHost:%@ withDirectory:%@ pushType:%@ verifiedLocalhost:%@ accepted:%@",
+         @(absLine), remoteHost, directory, @(pushType), @(verifiedLocalhost), @(accepted));
     [_directoryTracker screenLogWorkingDirectoryOnAbsoluteLine:absLine
                                                     remoteHost:remoteHost
                                                  withDirectory:directory
                                                       pushType:pushType
+                                             verifiedLocalhost:verifiedLocalhost
                                                       accepted:accepted];
 }
 

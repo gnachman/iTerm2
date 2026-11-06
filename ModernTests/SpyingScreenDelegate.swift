@@ -214,6 +214,7 @@ class SpyingScreenDelegate: FakeSession {
                                             remoteHost: (any VT100RemoteHostReading)?,
                                             withDirectory directory: String?,
                                             pushType: VT100ScreenWorkingDirectoryPushType,
+                                            verifiedLocalhost: Bool,
                                             accepted: Bool) {
         logWorkingDirectoryCalls.append(LogWorkingDirectoryCall(path: directory, line: line))
     }
