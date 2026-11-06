@@ -167,7 +167,9 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(m?.textPayload, "text/uri-list")
     }
 
-    func testDragMovedOmitsMimes() {
+    // The spec allows omitting the MIME list after the first move, but kitty
+    // repeats it and Yazi 26.9.1 rejects any move that lacks it.
+    func testDragMovedRepeatsMimes() {
         let recorder = Recorder()
         let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/uri-list")
@@ -177,7 +179,37 @@ final class KittyDnDAcceptTests: XCTestCase {
         let m = recorder.last
         XCTAssertEqual(m?.type, "m")
         XCTAssertEqual(m?.intValue("x"), 2)
-        XCTAssertNil(m?.rawPayload)
+        XCTAssertEqual(m?.textPayload, "text/uri-list")
+    }
+
+    // A drag that entered before the program registered must report its own
+    // MIME list once the program registers, not one left over from an earlier
+    // drag that ended in a drop (which never goes through dragExited).
+    func testDragMovedUsesCurrentDragsMimesAfterLateRegistration() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/uri-list text/plain")
+        c.dragEntered(cellX: 1, cellY: 1, pixelX: 0, pixelY: 0,
+                      operations: 1, mimeTypes: ["text/uri-list"])
+        c.performDrop(cellX: 1, cellY: 1, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"]))
+        c.handleInboundSequence("t=A")
+        c.dragEntered(cellX: 2, cellY: 2, pixelX: 0, pixelY: 0,
+                      operations: 1, mimeTypes: ["text/plain"])
+        c.handleInboundSequence("t=a;text/uri-list text/plain")
+        c.dragMoved(cellX: 3, cellY: 3, pixelX: 1, pixelY: 1, operations: 1)
+        XCTAssertEqual(recorder.last?.type, "m")
+        XCTAssertEqual(recorder.last?.textPayload, "text/plain")
+    }
+
+    // With no known MIME list, a move carries no payload rather than an empty one.
+    func testDragMovedOmitsEmptyMimeList() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/uri-list")
+        c.dragMoved(cellX: 3, cellY: 3, pixelX: 1, pixelY: 1, operations: 1)
+        XCTAssertEqual(recorder.last?.type, "m")
+        XCTAssertNil(recorder.last?.rawPayload)
     }
 
     func testInertWhenNotAccepting() {
@@ -1024,5 +1056,34 @@ final class KittyDnDAcceptTests: XCTestCase {
                              encoding: .utf8)
         XCTAssertEqual(uriList?.hasSuffix("/"), true,
                        "a directory entry in the uri-list must end with a slash")
+    }
+
+    // A program still running when iTerm2 relaunches registered once at startup,
+    // so its registrations must survive the save/restore round trip.
+    func testRegistrationStateRoundTrip() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        XCTAssertNil(c.registrationState)
+        c.handleInboundSequence("t=o:x=1")
+        c.handleInboundSequence("t=a:i=7;text/uri-list image/png")
+        guard let state = c.registrationState else {
+            XCTFail("expected registration state")
+            return
+        }
+
+        let restoredRecorder = Recorder()
+        let restored = makeController(endpoint: FakeEndpoint(isRemoteHost: false),
+                                      recorder: restoredRecorder)
+        restored.restoreRegistrationState(state)
+        XCTAssertTrue(restored.isAcceptingDrops)
+        XCTAssertTrue(restored.isOfferingDrags)
+        XCTAssertEqual(restored.acceptedMimeTypes, ["text/uri-list", "image/png"])
+
+        // The restored session routes a drag to the program, carrying the
+        // multiplexer id it registered with.
+        restored.dragEntered(cellX: 1, cellY: 1, pixelX: 0, pixelY: 0,
+                             operations: 1, mimeTypes: ["text/uri-list"])
+        XCTAssertEqual(restoredRecorder.last?.type, "m")
+        XCTAssertEqual(restoredRecorder.last?.metadata["i"], "7")
     }
 }

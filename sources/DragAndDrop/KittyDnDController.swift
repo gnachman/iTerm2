@@ -85,6 +85,11 @@ final class KittyDnDController {
         var cellX, cellY, pixelX, pixelY, operations: Int
     }
     private var lastReportedMove: MoveReport?
+    // The MIME list announced at dragEntered, repeated on every hover move. The
+    // spec lets a terminal send it only on the first move, but kitty sends it on
+    // every one and some programs (e.g. Yazi 26.9.1) re-read it from each move,
+    // rejecting the drop when it is absent.
+    private var hoverMimeTypes: [String] = []
     private var peerMachineID: String?
     private var currentDrop: KittyDnDDropData?
     // Whether the current drop originated from our own drag-out in this same
@@ -237,6 +242,8 @@ final class KittyDnDController {
         isAcceptingDrops = false
         acceptedMimeTypes = []
         acceptedDropOperation = nil
+        // hoverMimeTypes is deliberately kept: it describes the native drag, which
+        // a reset does not end, and dragEntered always replaces it.
         peerMachineID = nil
         currentDrop = nil
         currentDropIsSelfDrag = false
@@ -274,6 +281,51 @@ final class KittyDnDController {
         reassembler = KittyDnDChunkReassembler()
     }
 
+    // MARK: - Registration persistence
+
+    private enum RegistrationKey {
+        static let acceptingDrops = "accepting drops"
+        static let acceptedMimeTypes = "accepted MIME types"
+        static let offeringDrags = "offering drags"
+        static let peerMachineID = "peer machine ID"
+        static let multiplexerID = "multiplexer ID"
+    }
+
+    /// The program's long-lived registrations (t=a / t=o:x=1 and what they
+    /// carried), or nil if it has registered for nothing. Saved with the session
+    /// so a program still running when iTerm2 relaunches and reattaches to it
+    /// keeps working: it registers once at startup and will not do so again.
+    var registrationState: [String: Any]? {
+        guard isAcceptingDrops || isOfferingDrags else {
+            return nil
+        }
+        var result: [String: Any] = [
+            RegistrationKey.acceptingDrops: isAcceptingDrops,
+            RegistrationKey.acceptedMimeTypes: acceptedMimeTypes,
+            RegistrationKey.offeringDrags: isOfferingDrags,
+        ]
+        if let peerMachineID {
+            result[RegistrationKey.peerMachineID] = peerMachineID
+        }
+        if let multiplexerID {
+            result[RegistrationKey.multiplexerID] = multiplexerID
+        }
+        return result
+    }
+
+    /// Restore registrations saved by `registrationState`. Only per-drag state is
+    /// absent afterward, which is correct since no drag survives a relaunch.
+    func restoreRegistrationState(_ state: [String: Any]) {
+        DLog("Restore registration state \(state)")
+        isAcceptingDrops = state[RegistrationKey.acceptingDrops] as? Bool ?? false
+        acceptedMimeTypes = state[RegistrationKey.acceptedMimeTypes] as? [String] ?? []
+        isOfferingDrags = state[RegistrationKey.offeringDrags] as? Bool ?? false
+        peerMachineID = (state[RegistrationKey.peerMachineID] as? String).flatMap {
+            Self.isMachineIDToken($0) ? $0 : nil
+        }
+        multiplexerID = state[RegistrationKey.multiplexerID] as? String
+    }
+
     // MARK: - Inbound OSC 72
 
     /// Feed one OSC 72 sequence's raw content (everything after "72;"). Chunked
@@ -287,6 +339,7 @@ final class KittyDnDController {
         guard let message = reassembler.accept(content) else {
             return
         }
+        DLog("Inbound t=\(message.type ?? "nil") metadata=\(message.metadata) payloadLength=\(message.rawPayload?.utf8.count ?? -1)")
         // A t=a or t=o registration carrying an i key sets the multiplexer routing
         // id for all our subsequent sends. (t=q is a one-off whose response echoes
         // its own i, handled in handleQuery, so it does not update this.)
@@ -314,6 +367,7 @@ final class KittyDnDController {
             if let operation = message.intValue("o") {
                 acceptedDropOperation = operation
             }
+            DLog("Program replied to move: o=\(message.metadata["o"] ?? "nil") mimes=\(message.textPayload ?? "nil") isAcceptingDrops=\(isAcceptingDrops) osDragOperation=\(osDragOperation)")
         case "o":
             handleOffer(message)
         case "p":
@@ -396,6 +450,11 @@ final class KittyDnDController {
 
     func dragEntered(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
                      operations: Int, mimeTypes: [String]) {
+        DLog("dragEntered cell=(\(cellX),\(cellY)) pixel=(\(pixelX),\(pixelY)) operations=\(operations) mimeTypes=\(mimeTypes) isAcceptingDrops=\(isAcceptingDrops)")
+        // Record the list even when not accepting: the program may register
+        // while this drag is still hovering, and its moves must then carry this
+        // drag's list, not one left over from an earlier drag.
+        hoverMimeTypes = mimeTypes
         guard isAcceptingDrops else { return }
         // Close any file still streaming from the previous cycle before the t=m
         // below, so it is not truncated into a half-open (hanging) chunk sequence.
@@ -427,26 +486,33 @@ final class KittyDnDController {
         let move = MoveReport(cellX: cellX, cellY: cellY, pixelX: pixelX,
                               pixelY: pixelY, operations: operations)
         guard move != lastReportedMove else { return }
+        DLog("dragMoved cell=(\(cellX),\(cellY)) pixel=(\(pixelX),\(pixelY)) operations=\(operations) acceptedDropOperation=\(String(describing: acceptedDropOperation))")
         lastReportedMove = move
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
-                       pixelY: pixelY, operations: operations, mimeTypes: nil)
+                       pixelY: pixelY, operations: operations,
+                       mimeTypes: hoverMimeTypes.isEmpty ? nil : hoverMimeTypes)
     }
 
     func dragExited() {
+        DLog("dragExited isAcceptingDrops=\(isAcceptingDrops)")
         guard isAcceptingDrops else { return }
         // The drag left; a re-enter starts a fresh acceptance negotiation.
         acceptedDropOperation = nil
         lastReportedMove = nil
+        hoverMimeTypes = []
         sendMoveOrDrop(type: "m", cellX: -1, cellY: -1, pixelX: 0, pixelY: 0,
                        operations: 0, mimeTypes: nil)
     }
 
     func performDrop(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
                      operations: Int, drop: KittyDnDDropData) {
+        DLog("performDrop cell=(\(cellX),\(cellY)) pixel=(\(pixelX),\(pixelY)) operations=\(operations) mimeTypes=\(drop.mimeTypes) fileCount=\(drop.fileURLs.count) isAcceptingDrops=\(isAcceptingDrops) selfDragInProgress=\(selfDragInProgress)")
         guard isAcceptingDrops else { return }
         // Close any file still streaming from a prior context before the t=M below.
         terminateInFlightStream()
         currentDrop = drop
+        // The drag is over; no more moves belong to it.
+        hoverMimeTypes = []
         // A fresh drop: the previous drop's completed-operation no longer applies,
         // and any read still in flight from before must not stream into this drop.
         lastCompletedDropOperation = nil
@@ -467,6 +533,7 @@ final class KittyDnDController {
     /// Record the final operation and discard all per-drop state so a later stray
     /// request cannot read stale data or use a now-invalid directory handle.
     private func finishDrop(operation: Int) {
+        DLog("finishDrop operation=\(operation)")
         // Close any file still streaming so the completed drop does not leave a
         // half-open chunk sequence behind.
         terminateInFlightStream()
@@ -1481,6 +1548,7 @@ final class KittyDnDController {
         if let multiplexerID, message.metadata["i"] == nil {
             message.metadata["i"] = multiplexerID
         }
+        DLog("Outbound \(KittyDnDMetadata.serialize(message.metadata)) payloadLength=\(message.rawPayload?.utf8.count ?? -1)")
         report(message.serialized())
     }
 

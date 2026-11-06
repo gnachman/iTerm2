@@ -830,6 +830,11 @@ Bug Fixes:
   them. Before, a different divider could move,
   or panes beside the divider could jump to
   other sizes when the drag ended.
+- Dragging files from Finder into programs that
+  use the Kitty drag-and-drop protocol, such as
+  Yazi, no longer bounces back to Finder. Such
+  programs also keep accepting drags after
+  iTerm2 restarts and restores their session.
 - On macOS 26, hiding a hotkey window when no
   other iTerm2 windows are open once again
   returns focus to the previous app right away,

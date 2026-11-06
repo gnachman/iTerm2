@@ -75,6 +75,18 @@ class KittyDnDBridge: NSObject {
         controller.reset()
     }
 
+    /// The program's drag-and-drop registrations, for saving with the session,
+    /// or nil if there are none.
+    @objc var registrationState: [String: Any]? {
+        return controller.registrationState
+    }
+
+    /// Restore registrations saved from `registrationState` after reattaching to
+    /// a program that is still running.
+    @objc func restoreRegistrationState(_ state: [String: Any]) {
+        controller.restoreRegistrationState(state)
+    }
+
     /// Forget a pending drag gesture that ended without a native drag starting
     /// (the mouse was released), so a later t=P cannot start a phantom drag.
     @objc func clearPendingDragGesture() {

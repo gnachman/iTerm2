@@ -361,6 +361,7 @@ static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDicti
 static NSString *const SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT = @"Code Review Last Prompt";  // NSString. The prompt text the user last submitted in a code-review session, so a reload after restore defaults to their edited prompt.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
 static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE = @"Inline Chat Visible";  // BOOL. Whether that panel was showing.
+static NSString *const SESSION_ARRANGEMENT_KITTY_DND = @"Kitty DnD";  // NSDictionary. The program's Kitty drag-and-drop registrations, restored only when reattaching to it.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -432,6 +433,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 // this, and the gateway stops reading while it is full. Made when the session first becomes a
 // gateway and kept, so a monitor waiting on it is never left with a stale one.
 @property (atomic, retain) iTermByteBudget *tmuxOutputBudget;
+// Creates the Kitty drag-and-drop bridge on first use.
+@property (nonatomic, readonly) iTermKittyDnDBridge *lazyKittyDnDBridge;
 @end
 
 // Background-drawing delegate used when rendering a screenshot. It forwards to the
@@ -2094,6 +2097,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
+        }
+        // The program registered for drag-and-drop once, at startup, and is still
+        // running, so it will not register again.
+        NSDictionary *kittyDnDState = [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_KITTY_DND]];
+        if (kittyDnDState) {
+            [aSession.lazyKittyDnDBridge restoreRegistrationState:kittyDnDState];
         }
         [aSession.directoryTracker recordLastRemoteHost:aSession.screen.lastRemoteHost];
     }
@@ -8141,6 +8150,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
 
     if (includeContents) {
+        NSDictionary *kittyDnDState = _kittyDnDBridge.registrationState;
+        if (kittyDnDState) {
+            result[SESSION_ARRANGEMENT_KITTY_DND] = kittyDnDState;
+        }
         NSDictionary *tabStatusDict = [_tabStatusController.statusIfPresent arrangementDictionary];
         if (tabStatusDict) {
             result[SESSION_ARRANGEMENT_TAB_STATUS] = tabStatusDict;
@@ -19918,7 +19931,7 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
     return [_textview rangeOfVisibleLines];
 }
 
-- (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
+- (iTermKittyDnDBridge *)lazyKittyDnDBridge {
     if (!_kittyDnDBridge) {
         __weak __typeof(self) weakSelf = self;
         _kittyDnDBridge = [[iTermKittyDnDBridge alloc] initWithDataSource:self
@@ -19926,7 +19939,11 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
             [weakSelf screenSendReportData:data];
         }];
     }
-    [_kittyDnDBridge handleInboundSequence:content];
+    return _kittyDnDBridge;
+}
+
+- (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
+    [self.lazyKittyDnDBridge handleInboundSequence:content];
 }
 
 - (iTermConductor *)kittyDnDConductor {

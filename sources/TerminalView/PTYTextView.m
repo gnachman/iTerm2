@@ -4941,6 +4941,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         // Report the operation the bridge advertises: the program's accepted op
         // once it replies (t=m:o), or an optimistic offered op before then (so a
         // fast drop is not sprung back). See KittyDnDController.osDragOperation.
+        DLog(@"draggingEntered: routed to Kitty DnD; forwardedDragOperation=%@ liveRect=%@ location=%@",
+             @(bridge.forwardedDragOperation), NSStringFromRect([self liveRect]),
+             NSStringFromPoint([self convertPoint:sender.draggingLocation fromView:nil]));
         return bridge.forwardedDragOperation;
     }
     return [self legacyDraggingOperationForSender:sender];
@@ -5023,6 +5026,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             [self.delegate textViewDidUpdateDropTargetVisibility];
             [self requestDelegateRedraw];
         }
+        DLog(@"draggingUpdated: forwardedDragOperation=%@", @(bridge.forwardedDragOperation));
         return bridge.forwardedDragOperation;
     }
     NSPoint windowDropPoint = [sender draggingLocation];
@@ -5327,6 +5331,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // Option press or a program toggling accept cannot divert it to legacy paste.
     iTermKittyDnDBridge *kittyBridge = [self latchedKittyDragBridge];
     _kittyDragRoutedForCurrentDrag = NO;  // the drag is over; clear the latch
+    DLog(@"performDragOperation: kittyBridge=%@ forwardedDragOperation=%@ sourceMask=%@ modifierFlags=%@",
+         kittyBridge, @(kittyBridge.forwardedDragOperation), @(sender.draggingSourceOperationMask),
+         @([NSEvent modifierFlags]));
     // Honor the Option escape hatch at drop time (macOS resolves drag modifiers
     // continuously, and the release note promises "hold Option while dropping"):
     // tell the program the drag left, then fall through to the legacy path.
