@@ -268,6 +268,13 @@ extension PTYSession {
         let shellEscaped =
             "'" + normalized.replacingOccurrences(of: "'", with: "'\\''") + "'"
         genericScope.setValue(shellEscaped, forVariableNamed: "codeReviewPrompt")
+        // Read at launch so a model picked in the toolbar applies to the
+        // next review. Empty for the default model, so templates can put
+        // `\(codeReviewModelFlag)` unconditionally.
+        let model = workgroupInstance?.currentCodeReviewModel
+            ?? WorkgroupCodeReviewModelSelectorItem.defaultModelForNewWorkgroups
+        genericScope.setValue(WorkgroupCodeReviewModelSelectorItem.codeReviewModelFlag(for: model),
+                              forVariableNamed: "codeReviewModelFlag")
 
         // The system prompt is user-editable in Settings > General > AI >
         // Prompts. Materialize the current value to a per-session temp

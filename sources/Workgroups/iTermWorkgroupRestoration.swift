@@ -28,6 +28,7 @@ final class iTermWorkgroupRestoration: NSObject {
         static let workgroupID = "workgroupID"
         static let instanceID = "instanceID"
         static let gitBase = "gitBase"
+        static let codeReviewModel = "codeReviewModel"
         static let leaderID = "leaderID"
         static let anchorID = "anchorID"
         static let members = "members"
@@ -143,6 +144,7 @@ final class iTermWorkgroupRestoration: NSObject {
             Key.workgroupID: instance.workgroupUniqueIdentifier,
             Key.instanceID: instance.instanceUniqueIdentifier,
             Key.gitBase: instance.currentGitBase,
+            Key.codeReviewModel: instance.currentCodeReviewModel,
             Key.leaderID: port.leaderIdentifier,
             Key.anchorID: anchorID,
             Key.members: members,

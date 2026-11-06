@@ -230,6 +230,14 @@ final class iTermWorkgroupInstance: NSObject {
     // gitBaseChanged whenever any gitBaseSelector commits.
     @objc fileprivate(set) var currentGitBase: String = CCGitBaseSelectorItem.defaultBase
 
+    // Workgroup-wide model for code-review sessions, read when a review's
+    // command is resolved (PTYSession.resolvedCodeReviewCommand), so a
+    // change applies to the next review rather than restarting one in
+    // progress. Set through applyCodeReviewModel so every model selector
+    // stays in sync. Starts at the user's default; restoration replaces it
+    // with the saved pick.
+    private(set) var currentCodeReviewModel = WorkgroupCodeReviewModelSelectorItem.defaultModelForNewWorkgroups
+
     init(workgroup: iTermWorkgroup,
          instanceUniqueIdentifier: String,
          mainSession: PTYSession,
@@ -397,6 +405,8 @@ final class iTermWorkgroupInstance: NSObject {
         // side gitBaseSelector inside the nested group can fan out
         // to non-peer entries.
         port.workgroupInstance = self
+        // Its toolbars were built showing the default model.
+        port.applyCodeReviewModel(currentCodeReviewModel)
         nonPeerOrderedConfigIDs.append(hostConfig.uniqueIdentifier)
         nonPeerEntriesByConfigID[hostConfig.uniqueIdentifier] =
             NonPeerEntry(session: hostSession, items: [])
@@ -572,7 +582,9 @@ final class iTermWorkgroupInstance: NSObject {
             navigationDelegate: self,
             diffSelectorDelegate: self,
             gitBaseSelectorDelegate: self,
-            displayName: config.displayName)
+            displayName: config.displayName,
+            codeReviewModelSelectorDelegate: self,
+            codeReviewModel: currentCodeReviewModel)
         // modeSwitcher only makes sense in a peer group; strip it
         // before injection so .name lands at index 0 on non-peers.
         let configured = config.toolbarItems.filter {
@@ -1682,6 +1694,32 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
             canBack: sender.canSelectPreviousFile,
             canForward: sender.canSelectNextFile,
             progress: progress)
+    }
+}
+
+// Model selector picks from every toolbar (peer toolbars via their port's
+// pass-through) land here.
+extension iTermWorkgroupInstance: WorkgroupCodeReviewModelSelectorItemDelegate {
+    func codeReviewModelDidChange(model: String,
+                                  sender: WorkgroupCodeReviewModelSelectorItem) {
+        RLog("iTermWorkgroupInstance.codeReviewModelDidChange \(model) owner=\(sender.ownerPeerID ?? "nil")")
+        applyCodeReviewModel(model)
+    }
+
+    // Single source of truth for currentCodeReviewModel. Mirrors the value
+    // into every model selector in the workgroup so siblings don't keep
+    // showing a stale pick. Nothing restarts: running reviews keep their
+    // model and the next one picks up the new value.
+    func applyCodeReviewModel(_ model: String) {
+        currentCodeReviewModel = model
+        for port in allPeerPorts {
+            port.applyCodeReviewModel(model)
+        }
+        for entry in nonPeerEntriesByConfigID.values {
+            for view in entry.items {
+                (view as? WorkgroupCodeReviewModelSelectorItem)?.display(model)
+            }
+        }
     }
 }
 

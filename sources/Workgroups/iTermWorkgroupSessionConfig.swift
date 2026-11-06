@@ -237,7 +237,7 @@ extension iTermWorkgroupSessionConfig {
     // generally don't carry shell metas, the gitBase value comes
     // from a free-form combo box and a paste of `;rm -rf ~` would
     // otherwise execute when interpolated raw.
-    private static func shellSingleQuoted(_ s: String) -> String {
+    static func shellSingleQuoted(_ s: String) -> String {
         return "'"
             + s.replacingOccurrences(of: "'", with: "'\\''")
             + "'"

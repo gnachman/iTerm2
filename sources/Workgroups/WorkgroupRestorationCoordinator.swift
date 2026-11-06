@@ -334,7 +334,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
             }
         }
 
-        iTermWorkgroupController.instance.adopt(
+        let instance = iTermWorkgroupController.instance.adopt(
             workgroup: workgroup,
             leader: leaderSession,
             instanceUniqueIdentifier: instanceID,
@@ -342,6 +342,9 @@ final class WorkgroupRestorationCoordinator: NSObject {
             gitBase: gitBase,
             peerSessionsByConfigID: peerSessions,
             nonPeerSessionsByConfigID: nonPeerSessions)
+        if let model = descriptor[K.codeReviewModel] as? String {
+            instance?.applyCodeReviewModel(model)
+        }
 
         // The anchor is the one peer that window restoration already
         // brought back as a live session, so it can't be "spawned fresh"

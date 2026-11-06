@@ -35,6 +35,7 @@
 		084F626684E68821BAEC7D9B /* iTermNonTextPasteHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED49EE365D629DAE80503BFD /* iTermNonTextPasteHelper.swift */; };
 		085811A24FA45202DB18846B /* iTermStatusBarProxyIconImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5192F2D65DCCD7256632E6C0 /* iTermStatusBarProxyIconImageView.swift */; };
 		08AF9D7B30CEB8C39C52880B /* iTermSuppressedAlertsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBB83E64BDE6C3824D5CEF6 /* iTermSuppressedAlertsWindowController.swift */; };
+		0945FFDCA6294F6128D05ACC /* WorkgroupCodeReviewModelSelectorItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77BC307D285E491B575D1E1 /* WorkgroupCodeReviewModelSelectorItem.swift */; };
 		096EE94A89ADAAA4B4A2ACF9 /* ChatIconGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95E27DEB0B9DD8AE0960FAE5 /* ChatIconGenerator.swift */; };
 		097F9F1FF36AF5BDBA750845 /* iTermSuiteDockTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8B537066646E118AD6D9D0 /* iTermSuiteDockTileView.swift */; };
 		0A74EE0B96D6CE49AD2FF743 /* IT2Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C03B517BF192DE503AF37D1 /* IT2Runner.swift */; };
@@ -1125,6 +1126,7 @@
 		7A5DF19D723494E524C0D6A5 /* iTermProfileReadRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = F87F998134B918DB629CE574 /* iTermProfileReadRecorder.m */; };
 		7AA2B3375FB3024E4A954222 /* CompanionStreamBudget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F62823957A3CEEC1DB72C718 /* CompanionStreamBudget.swift */; };
 		7AB19E84C377B949FBA97C84 /* iTermAccessibilitySelectionReplacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9017D92D04ABF4EF3FC05999 /* iTermAccessibilitySelectionReplacement.swift */; };
+		7AC12727E7D4A12351EFC123 /* WorkgroupRecentsComboBoxItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D28205D894E2762F0075F3B /* WorkgroupRecentsComboBoxItem.swift */; };
 		7AE451291E4D92046CB1C5E8 /* TerminalCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3227E6C120C7EDABDA77D963 /* TerminalCommand.swift */; };
 		7BBAFFE1ADCFD95F75F66F9E /* iTermMachineIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AB400068B4F33B1B469F7F /* iTermMachineIdentity.swift */; };
 		7C0B66786B591F5FF2768833 /* IT2Embedded.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8414509943BEC14005C3E043 /* IT2Embedded.swift */; };
@@ -6145,6 +6147,7 @@
 		8C03B517BF192DE503AF37D1 /* IT2Runner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IT2Runner.swift; path = it2cli/Sources/it2core/IT2Runner.swift; sourceTree = "<group>"; };
 		8C62271A692704C38AB76426 /* iTermValueAnimation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermValueAnimation.swift; sourceTree = "<group>"; };
 		8CF5407AF82C45539CD8EFD9 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/FindView.xcstrings; sourceTree = "<group>"; };
+		8D28205D894E2762F0075F3B /* WorkgroupRecentsComboBoxItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupRecentsComboBoxItem.swift; sourceTree = "<group>"; };
 		8DFBEB0BA2384A3E8FF256E3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermTextPopoverViewController.xib; sourceTree = "<group>"; };
 		8F06ECF8A1AE910A311E3128 /* AIExplanationResponse+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AIExplanationResponse+Mac.swift"; sourceTree = "<group>"; };
 		8F0A007B1F75B0F4A644FCE8 /* WebSocketClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WebSocketClient.swift; path = it2cli/Sources/it2core/Transport/WebSocketClient.swift; sourceTree = "<group>"; };
@@ -8943,6 +8946,7 @@
 		C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelectorSwizzler.m; sourceTree = "<group>"; };
 		C7533ED506C01C692384CE02 /* CompanionBrowserInput.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionBrowserInput.swift; sourceTree = "<group>"; };
 		C777A561F57E34891729495A /* SSHRemoteZipReply.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SSHRemoteZipReply.swift; sourceTree = "<group>"; };
+		C77BC307D285E491B575D1E1 /* WorkgroupCodeReviewModelSelectorItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupCodeReviewModelSelectorItem.swift; sourceTree = "<group>"; };
 		C78C2666BDAB4973BE1F00B6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermStatusBarKnobFontViewController.xib; sourceTree = "<group>"; };
 		C7F8E4B139D63B87BBCC27AC /* SessionCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionCommand.swift; path = it2cli/Sources/it2core/Commands/SessionCommand.swift; sourceTree = "<group>"; };
 		C832F1FDBC038F9C98F04DE7 /* RemoteCommand+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "RemoteCommand+Mac.swift"; sourceTree = "<group>"; };
@@ -10430,6 +10434,8 @@
 				83BACEE4D273E0A3FD916D1D /* TmuxWorkgroupHiddenPaneOffer.swift */,
 				7C5A9B6A6426935855BB0ABB /* CodeReviewPromptMigration.swift */,
 				A910F0C87249E36FDB26F5A4 /* PTYSession+CodeReviewPromptMigration.swift */,
+				8D28205D894E2762F0075F3B /* WorkgroupRecentsComboBoxItem.swift */,
+				C77BC307D285E491B575D1E1 /* WorkgroupCodeReviewModelSelectorItem.swift */,
 			);
 			path = Workgroups;
 			sourceTree = "<group>";
@@ -20522,6 +20528,8 @@
 				8112315F5E419EE14A534B4F /* MarkdownImageLoader.swift in Sources */,
 				586DBC5D7C17F46AAC72D4E3 /* MarkdownImagePopover.swift in Sources */,
 				332866F0E622ED6FCCB2FD82 /* ScriptingPermissionsWindowController.swift in Sources */,
+				7AC12727E7D4A12351EFC123 /* WorkgroupRecentsComboBoxItem.swift in Sources */,
+				0945FFDCA6294F6128D05ACC /* WorkgroupCodeReviewModelSelectorItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -81,6 +81,10 @@ enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
     // unless the workgroup has exactly one code-review session. The
     // settings UI only offers this item on root sessions.
     case autoRequestReviewWhenIdle
+    // Combo box that picks the model a .codeReview peer's command runs
+    // with, exposed to the command template as `\(codeReviewModelFlag)`.
+    // The settings UI only offers this item on .codeReview sessions.
+    case codeReviewModelSelector
     // Periodically runs a command that reports AI usage as JSON and
     // renders it as determinate progress bars. Available in every
     // session mode. See WorkgroupUsageToolbarItem.
@@ -106,6 +110,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case gitBaseSelector
     case autoSendClippingsWhenIdle
     case autoRequestReviewWhenIdle
+    case codeReviewModelSelector
     // AI usage gauge. `command` is the shell command that emits the
     // usage JSON; an empty string means "use the provider's bundled
     // default script", resolved at runtime so no absolute path is baked
@@ -124,6 +129,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .gitBaseSelector: return .gitBaseSelector
         case .autoSendClippingsWhenIdle: return .autoSendClippingsWhenIdle
         case .autoRequestReviewWhenIdle: return .autoRequestReviewWhenIdle
+        case .codeReviewModelSelector: return .codeReviewModelSelector
         case .usage: return .usage
         case .name: return .name
         }
@@ -161,7 +167,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
             try c.encode(intervalSeconds, forKey: .intervalSeconds)
         case .gitStatus, .changedFileSelector, .modeSwitcher,
              .gitBaseSelector, .autoSendClippingsWhenIdle,
-             .autoRequestReviewWhenIdle, .name:
+             .autoRequestReviewWhenIdle, .codeReviewModelSelector, .name:
             break
         }
     }
@@ -198,6 +204,7 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .gitBaseSelector: self = .gitBaseSelector
         case .autoSendClippingsWhenIdle: self = .autoSendClippingsWhenIdle
         case .autoRequestReviewWhenIdle: self = .autoRequestReviewWhenIdle
+        case .codeReviewModelSelector: self = .codeReviewModelSelector
         case .usage:
             // Tolerate missing fields from a future/partial config:
             // default to the Anthropic provider, the bundled script

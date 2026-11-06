@@ -283,6 +283,15 @@ New Features:
   numbers by running the Claude Code command-line
   tool. You can point it at your own command
   instead.
+- The Code Review session’s toolbar in the
+  Claude Code workgroup has a model picker.
+  Choose Fable, Opus, Sonnet, Haiku, or type any
+  model name; the next review uses it. Click the
+  star beside it to make that model the default
+  for new workgroups.
+  To use it in a custom review command, add the
+  Code Review Model toolbar item and put
+  \(codeReviewModelFlag) in the command.
 - There is a new “Centered, No Title Bar”
   window style, in Settings > Profiles > Window >
   Style and in the Window > Window Style menu. It

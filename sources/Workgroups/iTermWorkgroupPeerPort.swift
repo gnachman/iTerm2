@@ -131,7 +131,8 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 autoRequestReviewDelegate: self,
                 autoRequestReviewInitiallyOn:
                     peers[cfg.uniqueIdentifier]?.maybeValue?.autoRequestReviewWhenIdle ?? false,
-                autoRequestReviewEnabled: codeReviewSessionCount == 1)
+                autoRequestReviewEnabled: codeReviewSessionCount == 1,
+                codeReviewModelSelectorDelegate: self)
             var views: [SessionToolbarGenericView] = []
             let augmented = WorkgroupToolbarBuilder
                 .injectAutoItems(into: cfg.toolbarItems)
@@ -608,6 +609,17 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
         }
     }
 
+    // Mirror the workgroup-wide code-review model pushed by the instance
+    // into this port's model selectors. The instance reads the value itself
+    // when a review launches, so there's nothing else to sync here.
+    func applyCodeReviewModel(_ model: String) {
+        for views in itemsByPeerID.values {
+            for view in views {
+                (view as? WorkgroupCodeReviewModelSelectorItem)?.display(model)
+            }
+        }
+    }
+
     // The peer's CFS, if it has one. Internal so back/forward can
     // route their click here for the per-file restart path.
     func diffSelector(forPeerID id: String?) -> CCDiffSelectorItem? {
@@ -911,6 +923,16 @@ extension iTermWorkgroupPeerPort: WorkgroupAutoRequestReviewToolbarItemDelegate 
         }
         RLog("iTermWorkgroupPeerPort.workgroupAutoRequestReview owner=\(ownerPeerID) isOn=\(isOn)")
         session.autoRequestReviewWhenIdle = isOn
+    }
+}
+
+extension iTermWorkgroupPeerPort: WorkgroupCodeReviewModelSelectorItemDelegate {
+    // Thin pass-through: the toolbars are built before the instance
+    // exists, and the instance owns the workgroup-wide model. See
+    // iTermWorkgroupInstance.applyCodeReviewModel.
+    func codeReviewModelDidChange(model: String,
+                                  sender: WorkgroupCodeReviewModelSelectorItem) {
+        workgroupInstance?.codeReviewModelDidChange(model: model, sender: sender)
     }
 }
 

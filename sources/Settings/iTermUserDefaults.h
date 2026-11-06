@@ -137,6 +137,12 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // session has run. NoSync for the same reason as workgroupShortcutsBackfilled.
 @property (class, nonatomic) BOOL claudeCodeAutoRequestReviewBackfilled;
 
+// Latched once the one-time migration that adds the Code Review Model
+// toolbar item (and the matching command variable) to the Claude Code
+// workgroup's Code Review peer has run. NoSync for the same reason as
+// workgroupShortcutsBackfilled.
+@property (class, nonatomic) BOOL claudeCodeReviewModelSelectorBackfilled;
+
 // Set when the user chooses “Don’t Ask Again” on the offer to interpret key
 // bindings by physical key (shown when a keystroke fails to match a binding but
 // would match on the same physical key, e.g. after an input-method change).

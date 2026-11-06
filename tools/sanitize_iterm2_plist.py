@@ -54,6 +54,8 @@ TOP-LEVEL keys
     FileDropCoprocess, UrlHandlerCommand   user shell commands
   NoSyncKnownHosts ....................... user@host:port list
   NoSyncWorkgroupGitBaseRecents .......... git base/ref recents
+  NoSyncWorkgroupCodeReviewModelRecents .. code review model name recents
+  WorkgroupCodeReviewDefaultModel ........ default code review model name
   NoSyncRecentArchives ................... archive file paths
   NoSyncOllamaDiscoveredModels ........... discovered Ollama models, keyed by
                                            endpoint URL (removed, not redacted:
@@ -298,6 +300,8 @@ CONTENT_KEYS = {
     "FakeFullyQualifiedDomainName": REDACT_V,
     "FakeBootSessionUUID": REDACT_V,
     "NoSyncWorkgroupGitBaseRecents": REDACT_V,
+    "NoSyncWorkgroupCodeReviewModelRecents": REDACT_V,
+    "WorkgroupCodeReviewDefaultModel": REDACT_V,
     # environment / variables / remote state (deep: every string within)
     "Environment": REDACT_V,
     "Variables": REDACT_V,

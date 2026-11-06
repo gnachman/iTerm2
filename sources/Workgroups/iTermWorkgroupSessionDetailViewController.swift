@@ -1138,7 +1138,8 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             // code-review peer (its whole point is to forward the
             // review's clippings to the main session when the review
             // finishes). Hide it from every other mode.
-            if metadata.kind == .autoSendClippingsWhenIdle
+            if (metadata.kind == .autoSendClippingsWhenIdle
+                    || metadata.kind == .codeReviewModelSelector)
                 && session?.mode != .codeReview {
                 continue
             }

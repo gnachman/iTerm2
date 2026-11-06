@@ -254061,6 +254061,66 @@
         }
       }
     },
+    "WorkgroupCodeReviewModelSelector.DefaultButton.AccessibilityDescription" : {
+      "comment" : "Accessibility description for the star button that sets the default code review model",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Default model for new workgroups"
+          }
+        }
+      }
+    },
+    "WorkgroupCodeReviewModelSelector.DefaultButton.Clear" : {
+      "comment" : "Tooltip for the filled star button: the shown model is the default for new workgroups, and clicking clears it; the value is a model name such as opus",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New workgroups use “%@”. Click to use Claude’s default model instead."
+          }
+        }
+      }
+    },
+    "WorkgroupCodeReviewModelSelector.DefaultButton.IsClaudeDefault" : {
+      "comment" : "Tooltip for the disabled star button: no default model is set, so claude picks its own",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New workgroups use Claude’s default model"
+          }
+        }
+      }
+    },
+    "WorkgroupCodeReviewModelSelector.DefaultButton.Make" : {
+      "comment" : "Tooltip for the star button when clicking it makes the shown model the default for new workgroups; the value is a model name such as opus",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use “%@” for code reviews in new workgroups"
+          }
+        }
+      }
+    },
+    "WorkgroupCodeReviewModelSelector.ToolTip" : {
+      "comment" : "Tooltip for the toolbar combo box that picks which AI model a code review uses",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Model for the next code review"
+          }
+        }
+      }
+    },
     "WorkgroupDetail.AddPeer" : {
       "comment" : "Menu item to add a peer session",
       "extractionState" : "extracted_with_value",
@@ -257369,6 +257429,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改文件选择器"
+          }
+        }
+      }
+    },
+    "WorkgroupToolbarItemRegistry.CodeReviewModelSelector" : {
+      "comment" : "Toolbar item name: picker for the AI model a code review uses",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Code Review Model"
           }
         }
       }

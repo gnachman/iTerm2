@@ -83,6 +83,15 @@ struct WorkgroupToolbarContext {
     // the toggle renders disabled. Defaults false so a context that never
     // sets it (non-peer toolbars) yields a disabled toggle.
     var autoRequestReviewEnabled = false
+
+    // Delegate for the .codeReview model selector. Peer and non-peer
+    // toolbars both route to the workgroup instance, which owns the
+    // workgroup-wide model.
+    weak var codeReviewModelSelectorDelegate: WorkgroupCodeReviewModelSelectorItemDelegate? = nil
+
+    // Model a freshly-built model selector shows, so a toolbar rebuilt
+    // mid-session (or after restoration) reflects the current pick.
+    var codeReviewModel = WorkgroupCodeReviewModelSelectorItem.defaultModelForNewWorkgroups
 }
 
 // Does an item in a given peer-group need the shared git poller to be
@@ -235,6 +244,13 @@ enum WorkgroupToolbarBuilder {
                 isOn: context.autoRequestReviewInitiallyOn,
                 enabled: context.autoRequestReviewEnabled)
             view.autoRequestDelegate = context.autoRequestReviewDelegate
+            view.ownerPeerID = ownerPeerID
+            return view
+        case .codeReviewModelSelector:
+            let view = WorkgroupCodeReviewModelSelectorItem(identifier: id,
+                                                            priority: 2)
+            view.display(context.codeReviewModel)
+            view.modelSelectorDelegate = context.codeReviewModelSelectorDelegate
             view.ownerPeerID = ownerPeerID
             return view
         case .usage(let provider, let command, let interval):

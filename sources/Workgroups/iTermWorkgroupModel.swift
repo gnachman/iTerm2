@@ -42,6 +42,7 @@ final class iTermWorkgroupModel: NSObject {
         backfillCodeReviewSettingsCommandIfNeeded()
         backfillClaudeCodeAutoSendClippingsIfNeeded()
         backfillClaudeCodeAutoRequestReviewIfNeeded()
+        backfillClaudeCodeReviewModelSelectorIfNeeded()
     }
 
     // MARK: - Top-level mutations
@@ -323,6 +324,69 @@ final class iTermWorkgroupModel: NSObject {
                 guard !alreadyHasItem else { continue }
                 copy[wgIdx].sessions[sIdx].toolbarItems
                     = items + [.autoRequestReviewWhenIdle]
+                changed = true
+            }
+        }
+        return changed ? copy : nil
+    }
+
+    // One-time migration mirroring backfillClaudeCodeAutoSendClippingsIfNeeded,
+    // for the Code Review Model toolbar item. The item only does something
+    // if the command references `\(codeReviewModelFlag)`, so the variable is
+    // inserted too. Latched in NoSync user defaults.
+    private func backfillClaudeCodeReviewModelSelectorIfNeeded() {
+        guard !iTermUserDefaults.claudeCodeReviewModelSelectorBackfilled else { return }
+        defer { iTermUserDefaults.claudeCodeReviewModelSelectorBackfilled = true }
+
+        if let migrated = Self.addingModelSelectorToClaudeCodeReviewPeer(workgroups) {
+            workgroups = migrated
+            persist()
+        }
+    }
+
+    // Pure transform behind backfillClaudeCodeReviewModelSelectorIfNeeded:
+    // returns a copy of `workgroups` with the Claude Code review peer's
+    // command given `\(codeReviewModelFlag)` and its toolbar given the model
+    // selector, or nil when nothing needed changing. Scoped to that peer by
+    // ID. The command is only touched when it still starts with the stock
+    // `claude \(codeReviewPrompt)`, since a hand-edited command may not be
+    // claude at all, and `--model` is left alone if the user already added
+    // one. The toolbar item is added regardless; it's harmless if unused and
+    // the user can wire the variable in themselves.
+    static func addingModelSelectorToClaudeCodeReviewPeer(
+        _ workgroups: [iTermWorkgroup]) -> [iTermWorkgroup]? {
+        let stockPrefix = "claude \\(codeReviewPrompt)"
+        let migratedPrefix = "claude \\(codeReviewModelFlag) \\(codeReviewPrompt)"
+        var copy = workgroups
+        var changed = false
+        for wgIdx in copy.indices
+        where copy[wgIdx].uniqueIdentifier
+                == ClaudeCodeWorkgroupTemplate.ID.workgroup {
+            for sIdx in copy[wgIdx].sessions.indices
+            where copy[wgIdx].sessions[sIdx].uniqueIdentifier
+                    == ClaudeCodeWorkgroupTemplate.ID.review {
+                let command = copy[wgIdx].sessions[sIdx].command
+                if command.hasPrefix(stockPrefix),
+                   !command.contains("codeReviewModelFlag"),
+                   !command.contains("--model") {
+                    copy[wgIdx].sessions[sIdx].command =
+                        migratedPrefix + command.dropFirst(stockPrefix.count)
+                    changed = true
+                }
+                let items = copy[wgIdx].sessions[sIdx].toolbarItems
+                let alreadyHasItem = items.contains {
+                    if case .codeReviewModelSelector = $0 { return true }
+                    return false
+                }
+                guard !alreadyHasItem else { continue }
+                // Next to Reload, matching the preset, when there is one.
+                var newItems = items
+                let index = items.firstIndex {
+                    if case .reload = $0 { return true }
+                    return false
+                }.map { $0 + 1 } ?? items.count
+                newItems.insert(.codeReviewModelSelector, at: index)
+                copy[wgIdx].sessions[sIdx].toolbarItems = newItems
                 changed = true
             }
         }

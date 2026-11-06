@@ -119,10 +119,13 @@ enum WorkgroupPresets {
             // code-review-system-prompt.txt. `codeReviewSettingsFile` is
             // the bundled code-review-settings.txt, or for a peer on a
             // remote host, a copy written there.
-            command: "claude \\(codeReviewPrompt) --append-system-prompt-file '\\(codeReviewSystemPromptFile)' --settings '\\(codeReviewSettingsFile)'",
+            // `codeReviewModelFlag` is `--model '…'` for the model picked
+            // in the toolbar, or empty for the default.
+            command: "claude \\(codeReviewModelFlag) \\(codeReviewPrompt) --append-system-prompt-file '\\(codeReviewSystemPromptFile)' --settings '\\(codeReviewSettingsFile)'",
             urlString: "",
             toolbarItems: [.modeSwitcher,
                            .reload(WorkgroupToolbarShortcut.reloadDefault),
+                           .codeReviewModelSelector,
                            .autoSendClippingsWhenIdle],
             displayName: String(localized: "WorkgroupPresets.CodeReview", defaultValue: "Code Review", comment: "Display name for the code review session in a preset"),
             mode: .codeReview)
