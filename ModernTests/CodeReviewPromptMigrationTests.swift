@@ -25,6 +25,11 @@ final class CodeReviewPromptMigrationTests: XCTestCase {
         return try! String(contentsOf: Self.fixtures.appendingPathComponent("shipped-3.7.0-3.7.4.txt"), encoding: .utf8)
     }
 
+    /// The default 3.7.7 shipped, which predates delete-clipping.
+    private var shipped377: String {
+        return try! String(contentsOf: Self.fixtures.appendingPathComponent("shipped-3.7.7.txt"), encoding: .utf8)
+    }
+
     /// The default now.
     private var current: String {
         let url = URL(fileURLWithPath: #filePath)
@@ -130,11 +135,14 @@ final class CodeReviewPromptMigrationTests: XCTestCase {
         XCTAssertEqual(zip(before, after).filter { $0 != $1 }.count, 3)
     }
 
-    // The command lines of a migrated old default read exactly as the current default's do.
+    // The command lines of a migrated old default read exactly as the current default's do. Only
+    // the commands the old default ran are compared; later defaults may run more.
     func testAMigratedShippedDefaultMatchesTheCurrentCommandLines() throws {
         let migrated = try XCTUnwrap(M.migrated(shipped))
         let commandLines = { (text: String) in
-            text.components(separatedBy: "\n").filter { $0.hasPrefix("{{it2}} ") }
+            text.components(separatedBy: "\n").filter {
+                $0.hasPrefix("{{it2}} session archive-clippings ") || $0.hasPrefix("{{it2}} session add-clipping ")
+            }
         }
         XCTAssertEqual(commandLines(migrated), commandLines(current))
     }
@@ -145,6 +153,11 @@ final class CodeReviewPromptMigrationTests: XCTestCase {
     // offered the whole current default, and updating stops storing a copy.
     func testAStoredShippedDefaultIsOfferedTheCurrentDefault() {
         XCTAssertEqual(M.proposal(stored: shipped, currentDefault: current),
+                       M.Proposal(text: current, resetsToDefault: true))
+    }
+
+    func testAStored377DefaultIsOfferedTheCurrentDefault() {
+        XCTAssertEqual(M.proposal(stored: shipped377, currentDefault: current),
                        M.Proposal(text: current, resetsToDefault: true))
     }
 

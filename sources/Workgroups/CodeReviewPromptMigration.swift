@@ -22,9 +22,11 @@ import CryptoKit
 import Foundation
 
 enum CodeReviewPromptMigration {
-    /// SHA-256 of the default 3.7.0 through 3.7.4 shipped, which is the same in each.
+    /// SHA-256 of each default that shipped: 3.7.0 through 3.7.6, which is the same in each, and
+    /// 3.7.7.
     static let shippedDefaultHashes: Set<String> = [
         "1998c397b460c9641153456ff15ad46ac4db0381b05cff1024f23bf83111f702",
+        "9ffe867d24c4320f74b330f276d28ba0c14ed9919453638d30318159b65e075d",
     ]
 
     /// The addressing the default passes now.

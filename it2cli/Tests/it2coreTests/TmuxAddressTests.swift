@@ -263,6 +263,7 @@ final class AllSessionsTargetTests: XCTestCase {
             ["session", "get-background-tasks"],
             ["session", "add-clipping", "--", "Type", "Title", "Detail"],
             ["session", "archive-clippings"],
+            ["session", "delete-clipping", "--", "ID"],
             ["set-status", "--status=idle"],
         ]
         for args in addressable {

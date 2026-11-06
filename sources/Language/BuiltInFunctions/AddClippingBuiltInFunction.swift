@@ -60,8 +60,7 @@ extension AddClippingBuiltInFunction: iTermBuiltInFunctionProtocol {
                 } else {
                     target = session
                 }
-                target.addClipping(type: type, title: title, detail: detail)
-                completion(nil, nil)
+                completion(target.addClipping(type: type, title: title, detail: detail), nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
     }

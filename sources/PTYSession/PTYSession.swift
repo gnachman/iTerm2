@@ -12,16 +12,25 @@ class PTYSessionClipping: NSObject {
     @objc let type: String
     @objc let title: String
     @objc let detail: String
+    // Unique and stable across save/restore. it2 session add-clipping prints
+    // it so the caller can later delete the clipping by ID.
+    @objc let identifier: String
 
     @objc(initWithType:title:detail:)
-    init(type: String, title: String, detail: String) {
+    convenience init(type: String, title: String, detail: String) {
+        self.init(type: type, title: title, detail: detail, identifier: UUID().uuidString)
+    }
+
+    @objc(initWithType:title:detail:identifier:)
+    init(type: String, title: String, detail: String, identifier: String) {
         self.type = type
         self.title = title
         self.detail = detail
+        self.identifier = identifier
     }
 
     @objc var dictionaryValue: [String: String] {
-        return ["type": type, "title": title, "detail": detail]
+        return ["type": type, "title": title, "detail": detail, "id": identifier]
     }
 
     @objc(initWithDictionary:)
@@ -31,7 +40,11 @@ class PTYSessionClipping: NSObject {
               let detail = dictionary["detail"] else {
             return nil
         }
-        self.init(type: type, title: title, detail: detail)
+        // Arrangements saved before clippings had IDs get a fresh one.
+        self.init(type: type,
+                  title: title,
+                  detail: detail,
+                  identifier: dictionary["id"] ?? UUID().uuidString)
     }
 }
 
@@ -2858,10 +2871,13 @@ extension PTYSession {
         return index < 0 || index >= clippingsArchive.count
     }
 
+    // Returns the new clipping's identifier.
     @objc(addClippingWithType:title:detail:)
-    func addClipping(type: String, title: String, detail: String) {
+    @discardableResult
+    func addClipping(type: String, title: String, detail: String) -> String {
+        let clipping = PTYSessionClipping(type: type, title: title, detail: detail)
         var current = clippings
-        current.append(PTYSessionClipping(type: type, title: title, detail: detail))
+        current.append(clipping)
         clippings = current
         // Adding a clipping is always an action against the live list, so
         // hop the view back to live so the new item is visible. The
@@ -2872,6 +2888,21 @@ extension PTYSession {
         if !clippingsVisible {
             clippingsVisible = true
         }
+        return clipping.identifier
+    }
+
+    // Removes the live clipping with this identifier. Archived clippings are
+    // history and are left alone. Returns false if no live clipping has it.
+    @objc(deleteClippingWithIdentifier:)
+    func deleteClipping(identifier: String) -> Bool {
+        var current = clippings
+        guard let index = current.firstIndex(where: { $0.identifier == identifier }) else {
+            return false
+        }
+        current.remove(at: index)
+        clippings = current
+        clippingsDidChange()
+        return true
     }
 
     // Hard cap on archived snapshots to keep the arrangement size bounded.

@@ -29,6 +29,7 @@ struct Session: ParsableCommand {
             SetVar.self,
             AddClipping.self,
             ArchiveClippings.self,
+            DeleteClipping.self,
         ])
     )
 }
@@ -901,7 +902,8 @@ extension Session {
     struct AddClipping: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
         static let configuration = CommandConfiguration(
             commandName: "add-clipping",
-            abstract: "Add a clipping to a session (e.g., a code review comment)."
+            abstract: "Add a clipping to a session (e.g., a code review comment).",
+            discussion: "Prints the new clipping’s unique ID. See also: it2 session delete-clipping"
         )
 
         @Argument(help: "Clipping type (e.g., “Code Review Comment”).")
@@ -927,18 +929,14 @@ extension Session {
                                                            ctx: ctx) else {
                 return
             }
-            _ = try client.invoke(
-                try "iterm2.add_clipping(type: \(jsonString(type)), title: \(jsonString(title)), detail: \(jsonString(detail)))",
+            let result = try client.invoke(
+                "iterm2.add_clipping(type: \(jsonString(type)), title: \(jsonString(title)), detail: \(jsonString(detail)))",
                 sessionID: sessionId,
                 failure: "Add clipping failed")
-        }
-
-        private func jsonString(_ s: String) throws -> String {
-            let data = try JSONEncoder().encode(s)
-            guard let str = String(data: data, encoding: .utf8) else {
-                throw IT2Error.apiError("Failed to JSON-encode string")
+            // Older versions of iTerm2 return nothing.
+            if let identifier = decodeJSONString(result) {
+                ctx.out(identifier)
             }
-            return str
         }
     }
 }
@@ -969,6 +967,40 @@ extension Session {
             _ = try client.invoke("iterm2.archive_clippings()",
                                   sessionID: sessionId,
                                   failure: "Archive clippings failed")
+        }
+    }
+}
+
+// MARK: - session delete-clipping
+
+extension Session {
+    struct DeleteClipping: ParsableCommand, IT2Runnable, TmuxAddressableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "delete-clipping",
+            abstract: "Delete a session’s clipping by the ID add-clipping printed.",
+            discussion: "Only live clippings can be deleted, not archived ones. See also: it2 session add-clipping"
+        )
+
+        @Argument(help: "Clipping ID, as printed by add-clipping.")
+        var id: String
+
+        @Option(name: .shortAndLong, help: "Target session ID (default: active, or the pane named by --tmux).")
+        var session: String?
+
+        @OptionGroup var tmuxOptions: TmuxPaneOptions
+
+        func run(_ ctx: IT2Context) throws {
+            let client = try ctx.makeClient()
+            defer { client.disconnect() }
+
+            guard let sessionId = try client.resolveTarget(session,
+                                                           tmuxOptions: tmuxOptions,
+                                                           ctx: ctx) else {
+                return
+            }
+            _ = try client.invoke("iterm2.delete_clipping(id: \(jsonString(id)))",
+                                  sessionID: sessionId,
+                                  failure: "Delete clipping failed")
         }
     }
 }

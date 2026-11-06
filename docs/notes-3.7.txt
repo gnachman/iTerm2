@@ -380,6 +380,11 @@ New Features:
   host, including a tmux Integration pane there.
   Uninstalling removes it from every host you are
   connected to.
+- it2 session add-clipping now prints the new
+  clipping’s ID, and the new it2 session
+  delete-clipping removes a clipping by its ID.
+  Code Review tells Claude Code to use it to
+  withdraw findings it no longer stands by.
 
 Improvements:
 - Tab groups of tmux Integration tabs are now
