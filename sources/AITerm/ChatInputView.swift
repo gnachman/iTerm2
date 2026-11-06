@@ -307,15 +307,12 @@ class ChatInputView: NSView, NSTextFieldDelegate {
 
         let textFrameInOuter = inputTextFieldContainer.convert(inputTextFieldContainer.bounds, to: self)
 
-        // Visual effect view: bottom = self bottom, top = top of the text
-        // field (no extra space above). Mirrors the Messages app, where
-        // the input bar's blur lines up with the entry field's top edge
-        // and content scrolls past beneath without an extra blank strip
-        // above it.
-        let vevFrame = NSRect(x: 0,
-                              y: 0,
-                              width: bounds.width,
-                              height: textFrameInOuter.maxY)
+        // Visual effect view fills our full bounds so its top edge meets
+        // the hairline divider that ChatViewController places at our top.
+        // Stopping at the text field's top would leave a transparent strip
+        // between the divider and the backdrop, making the divider appear
+        // to float over the scrolling content.
+        let vevFrame = bounds
         if vev.frame != vevFrame {
             vev.frame = vevFrame
         }
