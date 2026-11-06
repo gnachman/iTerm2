@@ -362,6 +362,11 @@ run-deployment: ingest-catalogs
 	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" OBJROOT="$(call intermediates,Deployment)" ENABLE_ADDRESS_SANITIZER=NO
 	open -W -n "$(BUILD_DIR)/Deployment/iTerm2.app" --args -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))')
 
+run-deployment-release: ingest-catalogs
+	cp plists/release-iTerm2.plist plists/iTerm2.plist
+	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" OBJROOT="$(call intermediates,Deployment)" ENABLE_ADDRESS_SANITIZER=NO
+	open -W -n "$(BUILD_DIR)/Deployment/iTerm2.app" --args -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))')
+
 run-nobuild: force
 	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))') & \
 	pid=$$!; \
