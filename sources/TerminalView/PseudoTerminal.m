@@ -9279,6 +9279,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     [control setTabGroupIdentifiers:identifiers forTabViewItems:items];
     [control setTabGroupCollapsedFlags:collapsedFlags forTabViewItems:items];
+    // Every membership change passes through here, so this keeps tmux's copy current.
+    for (TmuxController *controller in [self uniqueTmuxControllers]) {
+        [controller saveTabGroups];
+    }
 }
 
 // Re-derive the group chips and lay the tab bar out synchronously. The drag
@@ -9551,6 +9555,57 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     tab.tabGroupColor = [snapshot[@"color"] nilIfNull];
     tab.tabGroupCollapsed = [snapshot[@"collapsed"] boolValue];
     [self finalizeTabGroupMembershipChangeForTab:tab];
+}
+
+- (void)addTab:(PTYTab *)tab
+toTabGroupWithID:(NSString *)groupID
+          name:(NSString *)name
+         color:(NSColor *)color
+     collapsed:(BOOL)collapsed
+deferringExpansion:(BOOL)deferExpansion {
+    if (groupID.length == 0) {
+        return;
+    }
+    // A group lives in one window.
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if (term != self && [term tabsInGroup:groupID].count > 0) {
+            DLog(@"Not adding %@ to group %@, which lives in %@", tab, groupID, term);
+            return;
+        }
+    }
+    NSDictionary *snapshot = @{ @"id": groupID,
+                                @"name": name ?: [NSNull null],
+                                @"color": color ?: [NSNull null],
+                                @"collapsed": @(collapsed) };
+    if (!deferExpansion) {
+        [self restoreTabGroupSnapshot:snapshot forTab:tab];
+        return;
+    }
+    // Like -restoreTabGroupSnapshot:forTab: but leaves a collapsed group collapsed even if it
+    // now holds the active tab. The caller must call -settleTabGroupsAfterDeferredExpansion.
+    tab.tabGroupID = groupID;
+    tab.tabGroupName = name;
+    tab.tabGroupColor = color;
+    tab.tabGroupCollapsed = collapsed;
+    [self performWithTabGroupAutoExpandSuppressed:^{
+        [self reconcileTabGroupDefinitionForTab:tab];
+        [self updateTabColors];
+        [self tabsDidReorder];
+    }];
+}
+
+- (void)settleTabGroupsAfterDeferredExpansion {
+    PTYTab *current = self.currentTab;
+    NSString *groupID = current.tabGroupID;
+    if (groupID.length > 0 && current.tabGroupCollapsed) {
+        // Keep the group collapsed by moving the selection out of it, as collapsing it by hand
+        // would. If there's nowhere to move it, the group stays expanded.
+        for (PTYTab *member in [self tabsInGroup:groupID]) {
+            member.tabGroupCollapsed = NO;
+        }
+        [self collapseTabGroup:groupID animated:NO];
+    }
+    [self settleTabGroupCollapsedStateAfterReorder];
 }
 
 // Cycle a small system palette so consecutive new groups look distinct.

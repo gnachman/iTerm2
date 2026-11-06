@@ -382,6 +382,10 @@ New Features:
   connected to.
 
 Improvements:
+- Tab groups of tmux Integration tabs are now
+  remembered by the tmux session, so they come
+  back with their names and colors when you
+  detach and reattach.
 - The window that shows a software update
   downloading and installing can be minimized, so
   it no longer has to sit in front of your

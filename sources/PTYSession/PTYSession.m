@@ -11753,6 +11753,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     } else if ([_tmuxController isParkedWindow:windowId]) {
         [_tmuxController parkedWindowDidClose:windowId];
     }
+    [_tmuxController tmuxWindowDidCloseForTabGroups:windowId];
     [_tmuxController windowsChanged];
 }
 

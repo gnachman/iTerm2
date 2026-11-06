@@ -166,6 +166,21 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // since capture). Lets callers test "did grouping touch this tab" without
 // depending on the snapshot's internal shape.
 - (BOOL)tabGroupSnapshot:(NSDictionary *)snapshot describesCurrentGroupOfTab:(PTYTab *)tab;
+// Put `tab` in the group `groupID`. The definition is used only if no other tab in this window is
+// in that group yet; otherwise the tab adopts the existing members’ definition. Does nothing if
+// another window hosts the group. Used to restore the groups of tmux tabs on attach.
+// Normally a collapsed group expands if it ends up holding the active tab. While restoring many
+// tabs, the active tab is just whichever opened last, so pass deferExpansion=YES and call
+// -settleTabGroupsAfterDeferredExpansion once they have all been added.
+- (void)addTab:(PTYTab *)tab
+toTabGroupWithID:(NSString *)groupID
+          name:(NSString *)name
+         color:(NSColor *)color
+     collapsed:(BOOL)collapsed
+deferringExpansion:(BOOL)deferExpansion;
+// Restores the invariant that the active tab is not in a collapsed group, preferring to move the
+// selection out of the group over expanding it.
+- (void)settleTabGroupsAfterDeferredExpansion;
 
 // The group a plain "new tab" at `index` (nil for the default position) should
 // inherit: the current tab's group, but only when the new tab will land

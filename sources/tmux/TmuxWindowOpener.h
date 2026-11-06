@@ -21,6 +21,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @class TmuxGateway;
 @class TmuxController;
 @class PTYTab;
+@class iTermTmuxTabGroupMembership;
 
 @interface TmuxHistory: NSObject
 @property (nonatomic) BOOL rtlFound;
@@ -70,6 +71,8 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, copy) NSString *windowGUID;  // the expected window GUID, or nil if unknown.
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *perWindowSettings;
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *perTabSettings;
+// tmux window ID -> the tab group a newly opened tab for it should join.
+@property (nonatomic, copy) NSDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups;
 @property (nonatomic) BOOL shouldWorkAroundTabBug;
 
 + (TmuxWindowOpener *)windowOpener;

@@ -74,6 +74,8 @@ static NSString *const iTermTmuxControllerIT2ClientOptionPrefix = @"@it2_client_
 // Where `settings` is key=value&key=value&…
 static NSString *const iTermTmuxControllerEncodingPrefixPerWindowSettings = @"w_";
 static NSString *const iTermTmuxControllerEncodingPrefixPerTabSettings = @"T_";
+// JSON; see iTermTmuxTabGroups.swift.
+static NSString *const iTermTmuxControllerEncodingPrefixTabGroups = @"g_";
 
 static NSString *const iTermTmuxControllerSplitStateCompletion = @"completion";
 static NSString *const iTermTmuxControllerSplitStateInitialPanes = @"initial panes";
@@ -247,6 +249,13 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
 
     NSString *_lastSavePerTabSettingsCommand;
     NSDictionary<NSString *, NSString *> *_perTabSettings;
+
+    NSString *_lastSaveTabGroupsCommand;
+    // tmux window ID -> its tab group membership, as last loaded or saved.
+    NSDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *_tabGroups;
+    // tmux windows that closed while attached. Their tabs may linger briefly and must not be
+    // saved back into _tabGroups. tmux does not reuse window IDs.
+    NSMutableSet<NSNumber *> *_closedWindowIDsForTabGroups;
 
     // When positive do not send select-pane or select-window commands when the selected pane
     // or window changes. This is to prevent getting into a loop like this:
@@ -483,6 +492,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.windowGUID = [self windowGUIDInAffinities:affinities];
     windowOpener.perWindowSettings = _perWindowSettings;
     windowOpener.perTabSettings = _perTabSettings;
+    windowOpener.tabGroups = _tabGroups;
     windowOpener.shouldWorkAroundTabBug = _shouldWorkAroundTabBug;
     DLog(@"windowGUID=%@ perWindowSettings=%@ perTabSettings=%@",
          windowOpener.windowGUID, windowOpener.perWindowSettings, windowOpener.perTabSettings);
@@ -732,6 +742,24 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
+// Windows that closed while no iTerm2 with tab group support was attached left entries behind.
+// The next save writes the pruned set.
+- (void)forgetTabGroupsOfWindowsNotInInitialListing:(TSVDocument *)doc {
+    NSMutableSet<NSNumber *> *windowIDs = [NSMutableSet set];
+    for (NSArray *record in doc.records) {
+        [windowIDs addObject:@([self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]])];
+    }
+    NSMutableDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups = [NSMutableDictionary dictionary];
+    [_tabGroups enumerateKeysAndObjectsUsingBlock:^(NSNumber *windowID, iTermTmuxTabGroupMembership *membership, BOOL *stop) {
+        if ([windowIDs containsObject:windowID]) {
+            tabGroups[windowID] = membership;
+        } else {
+            DLog(@"Forget tab group of window %@, which no longer exists", windowID);
+        }
+    }];
+    _tabGroups = [tabGroups copy];
+}
+
 - (void)initialListWindowsResponse:(NSString *)response {
     RLog(@"initialListWindowsResponse called");
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields] workAroundTabBug:_shouldWorkAroundTabBug];
@@ -741,6 +769,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
     [self pinWindowSizesThenSetDeferredClientSizeForInitialListing:doc];
+    [self forgetTabGroupsOfWindowsNotInInitialListing:doc];
     NSMutableArray<NSArray *> *windowsToOpen = [NSMutableArray array];
     BOOL haveHidden = NO;
     NSNumber *newWindowAffinity = nil;
@@ -889,6 +918,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
     NSString *getPerWindowSettingsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @per_window_settings", sessionId_];
     NSString *getPerTabSettingsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @per_tab_settings", sessionId_];
+    NSString *getTabGroupsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @tab_groups", sessionId_];
     NSString *getBuriedIndexesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @buried_indexes", sessionId_];
     NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @origins", sessionId_];
     NSString *getHotkeysCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hotkeys", sessionId_];
@@ -928,6 +958,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                            [gateway_ dictionaryForCommand:getPerTabSettingsCommand
                                            responseTarget:self
                                          responseSelector:@selector(getPerTabSettingsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:getTabGroupsCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getTabGroupsResponse:)
                                            responseObject:nil
                                                     flags:kTmuxGatewayCommandShouldTolerateErrors],
                            [gateway_ dictionaryForCommand:getOriginsCommand
@@ -3614,6 +3649,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     }
     [self savePerWindowSettings];
     [self savePerTabSettings];
+    [self saveTabGroups];
     iTermController *cont = [iTermController sharedInstance];
     NSArray *terminals = [cont terminals];
     NSMutableArray *affinities = [NSMutableArray array];
@@ -3703,6 +3739,92 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)getPerTabSettingsResponse:(NSString *)result {
     [self setPerTabSettingsFromString:[self decodedString:result optionalPrefix:iTermTmuxControllerEncodingPrefixPerTabSettings]];
+}
+
+- (void)saveTabGroups {
+    // Until the initial windows have opened and had their groups restored, saving would erase
+    // the groups of windows that don't have tabs yet. Likewise while tabs close on detach.
+    if (detached_ || !_haveOpenedInitialWindows || pendingWindowOpens_.count) {
+        return;
+    }
+    // Windows without a tab (hidden, buried, parked, or on their way to opening) keep their
+    // entries. An entry goes away only when its tab leaves the group or its window closes.
+    NSMutableDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups =
+        [_tabGroups mutableCopy] ?: [NSMutableDictionary dictionary];
+    // group ID -> a live member's membership, which carries the group's current definition.
+    NSMutableDictionary<NSString *, iTermTmuxTabGroupMembership *> *liveDefinitions = [NSMutableDictionary dictionary];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        for (PTYTab *tab in term.tabs) {
+            if (!tab.isTmuxTab ||
+                tab.tmuxController != self ||
+                [_closedWindowIDsForTabGroups containsObject:@(tab.tmuxWindow)]) {
+                continue;
+            }
+            if (tab.tabGroupID.length == 0) {
+                [tabGroups removeObjectForKey:@(tab.tmuxWindow)];
+                continue;
+            }
+            iTermTmuxTabGroupMembership *membership =
+                [[iTermTmuxTabGroupMembership alloc] initWithGroupID:tab.tabGroupID
+                                                                name:tab.tabGroupName
+                                                               color:tab.tabGroupColor
+                                                           collapsed:tab.tabGroupCollapsed];
+            tabGroups[@(tab.tmuxWindow)] = membership;
+            liveDefinitions[tab.tabGroupID] = membership;
+        }
+    }
+    // A tab-less window's entry holds its group's definition as of when it lost its tab. Bring it
+    // up to date so a rename, recolor, or collapse made since then isn't lost.
+    for (NSNumber *windowID in tabGroups.allKeys) {
+        iTermTmuxTabGroupMembership *live = liveDefinitions[tabGroups[windowID].groupID];
+        if (live) {
+            tabGroups[windowID] = live;
+        }
+    }
+    _tabGroups = [tabGroups copy];
+
+    NSString *arg = [iTermTmuxTabGroups encodedStringForMemberships:_tabGroups];
+    DLog(@"Save tab groups: %@", arg);
+    NSString *command = [NSString stringWithFormat:@"set -t $%d @tab_groups \"%@\"",
+                         sessionId_,
+                         [self encodedString:arg prefix:iTermTmuxControllerEncodingPrefixTabGroups]];
+    if ([command isEqualToString:_lastSaveTabGroupsCommand]) {
+        return;
+    }
+    _lastSaveTabGroupsCommand = command;
+    [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
+}
+
+- (void)tmuxWindowDidCloseForTabGroups:(int)windowID {
+    if (!_closedWindowIDsForTabGroups) {
+        _closedWindowIDsForTabGroups = [NSMutableSet set];
+    }
+    [_closedWindowIDsForTabGroups addObject:@(windowID)];
+    if (!_tabGroups[@(windowID)]) {
+        return;
+    }
+    DLog(@"Forget tab group of closed window %d", windowID);
+    NSMutableDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups = [_tabGroups mutableCopy];
+    [tabGroups removeObjectForKey:@(windowID)];
+    _tabGroups = [tabGroups copy];
+    [self saveTabGroups];
+}
+
+- (void)getTabGroupsResponse:(NSString *)result {
+    NSString *decoded = [self decodedString:result optionalPrefix:iTermTmuxControllerEncodingPrefixTabGroups];
+    DLog(@"Load tab groups: %@", decoded);
+    NSDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *saved =
+        [iTermTmuxTabGroups membershipsFromEncodedString:decoded ?: @""];
+    // Affinities were fetched earlier in the same command list. Tmux windows with the same
+    // affinity class open in the same iTerm2 window.
+    _tabGroups = [iTermTmuxTabGroups membershipsConfiningEachGroupToOneWindow:saved
+                                                                    windowKey:^NSString *(NSNumber *windowID) {
+        NSSet *siblings = [self->affinities_ valuesEqualTo:windowID.stringValue];
+        if (siblings.count == 0) {
+            return nil;
+        }
+        return [[siblings.allObjects sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@","];
+    }];
 }
 
 - (void)savePerWindowSettings {
@@ -4695,6 +4817,10 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
         [affinities_ removeValue:[@(windowOpener.windowIndex) stringValue]];
         [[iTermNotificationController sharedInstance] notify:NSLocalizedStringWithDefaultValue(@"TmuxController.ErrorOpeningTabTitle", nil, [NSBundle mainBundle], @"Error opening tmux tab", @"Notification title shown when a tmux tab fails to open")
                                              withDescription:NSLocalizedStringWithDefaultValue(@"TmuxController.ErrorOpeningTabDescription", nil, [NSBundle mainBundle], @"A tmux pane terminated immediately after creation", @"Notification body explaining that a tmux pane terminated immediately after creation")];
+        // A failed open still ends the initial attach if it was the last one outstanding.
+        if (pendingWindowOpens_.count == 0) {
+            [self sendInitialWindowsOpenedNotificationIfNeeded];
+        }
         return;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
@@ -4720,6 +4846,12 @@ static NSString *iTermTmuxRelativeFlags(int columns, int rows, NSString *right, 
     if (!_haveOpenedInitialWindows) {
         [gateway_.delegate tmuxDidOpenInitialWindows];
         _haveOpenedInitialWindows = YES;
+        // Restored tab groups were left collapsed even when they held the active tab.
+        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+            if ([term.uniqueTmuxControllers containsObject:self]) {
+                [term settleTabGroupsAfterDeferredExpansion];
+            }
+        }
         _workgroupAttacher = [[iTermTmuxWorkgroupAttacher alloc] initWithController:self];
         [_workgroupAttacher start];
     }

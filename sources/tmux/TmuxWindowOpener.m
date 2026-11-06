@@ -9,6 +9,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
 #import "PseudoTerminal.h"
@@ -667,7 +668,18 @@ static int OctalValue(const char *bytes) {
         } else {
             RLog(@"Not calling loadTmuxLayout");
         }
-        [[self.controller window:windowIndex_] setPerTabSettings:_perTabSettings[widStr]];
+        PTYTab *tab = [self.controller window:windowIndex_];
+        [tab setPerTabSettings:_perTabSettings[widStr]];
+        iTermTmuxTabGroupMembership *membership = self.tabGroups[@(windowIndex_)];
+        if (membership && tab.tabGroupID == nil) {
+            DLog(@"Restore tab group %@ for window %d", membership.groupID, windowIndex_);
+            [[PseudoTerminal castFrom:tab.realParentWindow] addTab:tab
+                                                  toTabGroupWithID:membership.groupID
+                                                              name:membership.name
+                                                             color:membership.color
+                                                         collapsed:membership.collapsed
+                                                deferringExpansion:self.initial];
+        }
     }
     if (self.target) {
         [self.target it_performNonObjectReturningSelector:self.selector
