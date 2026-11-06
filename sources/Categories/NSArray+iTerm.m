@@ -706,7 +706,7 @@ void iTermFreeeNullTerminatedCStringArray(char **array) {
     NSUInteger start = 0;
 
     while (start + subCount <= count) {
-        const NSRange searchRange = NSMakeRange(start, count - start);
+        const NSRange searchRange = NSMakeRange(start, count - start - subCount + 1);
         const NSUInteger idx = [self indexOfObject:first inRange:searchRange];
         if (idx == NSNotFound) {
             break;
