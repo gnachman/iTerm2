@@ -2919,7 +2919,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             if (range.length > 0) {
                 DLog(@"Line %d is dirty", y);
                 foundDirty = YES;
-                // TODO: It would be more correct to remove all search results from this point down and reset the cursor location to the start of the first dirty line. VT100Screen.savedFindContextAbsPos can be after some of the dirty cells causing them not to be searched.
+                // TODO: It would be more correct to remove all search results from this point down and reset the cursor location to the start of the first dirty line. The tail find's start position can be after some of the dirty cells causing them not to be searched.
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 // No per-line invalidation needed if we already requested a

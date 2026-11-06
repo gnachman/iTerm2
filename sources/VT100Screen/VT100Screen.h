@@ -129,8 +129,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) int terminalCharset;
 @property (nonatomic, readonly, nullable) NSDictionary *terminalState;
 
-// Where the next tail-find needs to begin.
-@property (nonatomic) long long savedFindContextAbsPos;
 @property (nonatomic, readonly) BOOL sendingIsBlocked;
 
 @property (nonatomic, readonly) BOOL isAtCommandPrompt;

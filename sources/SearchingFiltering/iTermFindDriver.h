@@ -131,7 +131,12 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 - (void)filterVisibilityDidChange;
 - (void)setFilterProgress:(double)progress;
 - (void)highlightWithoutSelectingSearchResultsForQuery:(NSString *)string;
+// Re-runs the search from scratch. Pass NO for scrollToFirstResult to keep
+// the view where it is and leave no result selected.
 - (void)refreshSearchResultsForQuery:(NSString *)string mode:(iTermFindMode)mode;
+- (void)refreshSearchResultsForQuery:(NSString *)string
+                                mode:(iTermFindMode)mode
+                 scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)bottomUpPerformFindPanelAction:(id)sender;
 - (BOOL)bottomUpValidateMenuItem:(NSMenuItem *)menuItem;
 

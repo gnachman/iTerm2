@@ -43,7 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)findOnPageLocationsDidChange;
 - (void)findOnPageSelectedResultDidChange;
 
-// Call -addExternalResults:width:
+// Call -addExternalResults:width:. Containers for which
+// -absLineIsInSelectedCommand: is NO need not be searched.
 - (void)findOnPageHelperSearchExternallyFor:(NSString *)query
                                        mode:(iTermFindMode)mode;
 - (void)findOnPageHelperRemoveExternalHighlights;
@@ -78,6 +79,10 @@ typedef NS_ENUM(NSUInteger, FindCursorType) {
 @property(nonatomic, readonly) FindCursor *findCursor;
 // Length of 0 means no range is selected. Otherwise, only this range of lines is searched.
 @property(nonatomic) NSRange absLineRange;
+
+// Is a result starting on this line eligible given absLineRange? NO for a
+// negative line, which is what hidden containers report.
+- (BOOL)absLineIsInSelectedCommand:(long long)absLine NS_SWIFT_NAME(absLineIsInSelectedCommand(_:));
 
 // Begin a new search.
 //
@@ -126,11 +131,18 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 // Remove highlights in a range of lines.
 - (void)removeHighlightsInRange:(NSRange)range;
 - (void)removeSearchResultsInRange:(NSRange)range;
-// Remove search results within a coordinate range. Unlike removeSearchResultsInRange:,
-// this respects the x-coordinates on boundary lines. Results on the start line are only
-// removed if their startX >= range.start.x. Results on the end line are only removed
-// if their startX <= range.end.x. Results on middle lines are always removed.
+// Remove search results within a coordinate range that the tail find has just searched
+// again. Unlike removeSearchResultsInRange:, this respects the x-coordinates on boundary
+// lines. Results on the start line are only removed if their startX >= range.start.x.
+// Results on the end line are only removed if their startX <= range.end.x. Results on
+// middle lines are always removed. External results are kept: the tail find searches
+// terminal text only, so it could not put them back.
 - (void)removeSearchResultsWithAbsCoordRange:(VT100GridAbsCoordRange)range;
+
+// Call when a container that can hold external results (a porthole) appears. If a search
+// is active the delegate is asked to search externally for it again so the new container
+// takes part in the search.
+- (void)externalContainersDidChange;
 - (void)removeAllSearchResults;
 
 // Sets the location to start searching. TODO: Currently this only works for find next/prev.

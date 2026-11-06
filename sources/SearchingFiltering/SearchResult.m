@@ -83,20 +83,21 @@
     if (!other) {
         return NSOrderedDescending;
     }
+    // Mixed internal/external comparisons order by line. On the same line an
+    // external result sorts before an internal one so that this is a total
+    // order: the sorted result set deduplicates on NSOrderedSame, and an
+    // internal result must never be mistaken for a duplicate of an external
+    // one.
     if (self.isExternal && !other.isExternal) {
-        if (self.externalAbsY < other.internalAbsStartY) {
+        if (self.externalAbsY <= other.internalAbsStartY) {
             return NSOrderedAscending;
-        } else if (self.externalAbsY == other.internalAbsStartY) {
-            return NSOrderedSame;
         } else {
             return NSOrderedDescending;
         }
     }
     if (!self.isExternal && other.isExternal) {
-        if (self.externalAbsY < other.internalAbsStartY) {
+        if (self.internalAbsStartY >= other.externalAbsY) {
             return NSOrderedDescending;
-        } else if (self.externalAbsY == other.internalAbsStartY) {
-            return NSOrderedSame;
         } else {
             return NSOrderedAscending;
         }

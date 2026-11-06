@@ -2569,3 +2569,19 @@ Bug Fixes:
   whose program set its own cursor color, no
   longer make iTerm2 lag and burn CPU, and no
   longer kick the session out of Copy Mode.
+- Find could miss matches in the terminal when
+  text shown with Edit > Render Selection
+  Natively also matched. The matches were found
+  but never highlighted or counted, and Find Next
+  and Find Previous stayed stuck on the rendered
+  text. A match in rendered text could also drop
+  out of Find Next after the first press, and
+  text rendered while Find was open was not
+  searched. Also, with a command selected, Find
+  no longer returns matches from rendered text
+  outside that command.
+- Selecting a different command while Find is
+  open now searches the newly selected command.
+  Before, the old results were cleared and Find
+  Next had nothing to go to until you retyped
+  the search.

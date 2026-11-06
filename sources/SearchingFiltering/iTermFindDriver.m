@@ -264,6 +264,12 @@ static NSString *gSearchString;
 }
 
 - (void)refreshSearchResultsForQuery:(NSString *)string mode:(iTermFindMode)mode {
+    [self refreshSearchResultsForQuery:string mode:mode scrollToFirstResult:YES];
+}
+
+- (void)refreshSearchResultsForQuery:(NSString *)string
+                                mode:(iTermFindMode)mode
+                 scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.findString = string;
     if (string.length == 0) {
         DLog(@"refreshSearchResultsForQuery: clear search");
@@ -277,7 +283,7 @@ static NSString *gSearchString;
        forwardDirection:![iTermAdvancedSettingsModel swapFindNextPrevious]
                    mode:mode
              withOffset:-1
-    scrollToFirstResult:YES
+    scrollToFirstResult:scrollToFirstResult
                   force:YES
     extendResultsAcrossSoftBoundaries:NO];
 }

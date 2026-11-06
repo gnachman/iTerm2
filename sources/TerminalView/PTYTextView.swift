@@ -207,6 +207,7 @@ extension PTYTextView: ExternalSearchResultsController {
         requestDelegateRedraw()
         porthole.view.needsDisplay = true
         self.delegate?.textViewDidAddOrRemovePorthole()
+        findOnPageHelper.externalContainersDidChange()
     }
 
     // Continue owning the porthole but remove it from view.
@@ -476,10 +477,15 @@ extension PTYTextView: ExternalSearchResultsController {
         DLog("done")
     }
 
+    // Hidden portholes have no line, and with a command selected only the
+    // portholes inside it are searched.
     @objc
     func searchPortholes(for string: String, mode: iTermFindMode) -> [ExternalSearchResult] {
         var result = [ExternalSearchResult]()
         for porthole in typedPortholes {
+            guard findOnPageHelper.absLineIsInSelectedCommand(portholeAbsLine(porthole)) else {
+                continue
+            }
             result.append(contentsOf: porthole.find(string, mode: mode))
         }
         return result

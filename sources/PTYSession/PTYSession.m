@@ -3120,7 +3120,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // For non-live resizes (zoom, programmatic, etc.), refresh search immediately.
     // For live resizes, windowDidEndLiveResize: will handle it.
     if (!self.textview.window.inLiveResize) {
-        [self refreshSearchAfterResize];
+        [self refreshSearchIfActiveScrollingToFirstResult:YES];
     }
 }
 
@@ -8900,40 +8900,61 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
             [_cadenceController liveResizeDidEnd];
         }
         // Refresh search after resize ends - coordinates are now stable
-        [self refreshSearchAfterResize];
+        [self refreshSearchIfActiveScrollingToFirstResult:YES];
     }
 }
 
-- (void)refreshSearchAfterResize {
-    // Only refresh if a search was actively being displayed.
-    // For permanent status bar, the find component is always visible.
-    // For dropdown/temporary, only refresh if the find driver is currently visible.
-    BOOL searchWasActive = NO;
+// Is a search being displayed? For the permanent status bar the find component
+// is always visible so check for a query; for the dropdown or temporary status
+// bar check whether the find driver is visible.
+- (BOOL)searchIsActive {
     if (_view.findDriverType == iTermSessionViewFindDriverPermanentStatusBar) {
-        // Permanent status bar - search is active if driver has a query
-        searchWasActive = _view.findDriver.findString.length > 0;
-    } else {
-        // Dropdown or temporary status bar - search is active if visible
-        searchWasActive = _view.findDriver.isVisible;
+        return _view.findDriver.findString.length > 0;
     }
+    return _view.findDriver.isVisible;
+}
 
-    if (!searchWasActive) {
-        DLog(@"refreshSearchAfterResize: search was not active, skipping");
+// Re-runs the current search from scratch if one is being displayed. Used when
+// the thing being searched changes under the search: the width changed, or the
+// selected command (which restricts the search) changed. Scrolling to the first
+// result also selects it so the count shows a position; pass NO when the user
+// did not ask for the view to move.
+- (void)refreshSearchIfActiveScrollingToFirstResult:(BOOL)scrollToFirstResult {
+    if (![self searchIsActive]) {
+        DLog(@"refreshSearchIfActive: search was not active, skipping");
         return;
     }
 
     // Use lastQuery/lastMode since query/mode are cleared when cancel() is called during resize
     NSString *query = _screen.searchEngine.lastQuery;
     iTermFindMode mode = _screen.searchEngine.lastMode;
-    DLog(@"refreshSearchAfterResize: query=%@ mode=%d", query, (int)mode);
+    DLog(@"refreshSearchIfActive: query=%@ mode=%d scroll=%@", query, (int)mode, @(scrollToFirstResult));
     if (query.length > 0) {
-        DLog(@"refreshSearchAfterResize: starting search via find driver");
+        DLog(@"refreshSearchIfActive: starting search via find driver");
         // Use the find driver to restart the search - this ensures the timer
         // is scheduled to consume results and update the UI.
-        // We use refreshSearchResultsForQuery which scrolls to the first result,
-        // selecting it so the count displays properly.
         [_view createFindDriverIfNeeded];
-        [_view.findDriver refreshSearchResultsForQuery:query mode:mode];
+        [_view.findDriver refreshSearchResultsForQuery:query
+                                                  mode:mode
+                                   scrollToFirstResult:scrollToFirstResult];
+    }
+}
+
+// Call after _selectedScreenMark changes. The search is restricted to the
+// selected command, so the results found so far are for the wrong range and
+// the search must run again. Only scroll to the first result when a command
+// was selected: deselecting happens on every keystroke and must not move the
+// view.
+- (void)selectedCommandDidChange {
+    const BOOL refresh = [self searchIsActive];
+    if (refresh) {
+        // The search is about to start over, so drop the results now rather
+        // than letting the range update prune them one at a time.
+        [_textview clearHighlights:NO];
+    }
+    [self updateSearchRange];
+    if (refresh) {
+        [self refreshSearchIfActiveScrollingToFirstResult:self.selectedCommandMark != nil];
     }
 }
 
@@ -16845,7 +16866,6 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenResetTailFind {
-    _screen.savedFindContextAbsPos = 0;
     [_screen.searchEngine updateSnapshot];
     [_screen.searchEngine invalidateLastStartPosition];
     [_tailFindController reset];
@@ -23525,10 +23545,11 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
 }
 
 - (void)textViewReloadSelectedCommand {
-    if ([iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand] == NO) {
-        if (self.selectedCommandMark) {
-            _selectedScreenMark = nil;
-        }
+    if ([iTermPreferences boolForKey:kPreferenceKeyClickToSelectCommand] == NO &&
+        self.selectedCommandMark) {
+        _selectedScreenMark = nil;
+        [self selectedCommandDidChange];
+        return;
     }
     [self updateSearchRange];
 }
@@ -23587,11 +23608,12 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     assert(mark == nil || mark.isPrompt);
     id<VT100ScreenMarkReading> previous = _selectedScreenMark;
     _selectedScreenMark = mark;
-    [self updateSearchRange];
-    _screen.savedFindContextAbsPos = 0;
-    if (previous != _selectedScreenMark) {
-        [_textview requestDelegateRedraw];
+    if (previous == _selectedScreenMark) {
+        [self updateSearchRange];
+        return;
     }
+    [self selectedCommandDidChange];
+    [_textview requestDelegateRedraw];
 }
 
 - (VT100GridAbsCoordRange)textViewCoordRangeForCommandAndOutputAtMark:(id<iTermMark>)mark {
@@ -23741,8 +23763,7 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
         return;
     }
     _selectedScreenMark = nil;
-    [self updateSearchRange];
-    _screen.savedFindContextAbsPos = 0;
+    [self selectedCommandDidChange];
     [_textview requestDelegateRedraw];
 }
 

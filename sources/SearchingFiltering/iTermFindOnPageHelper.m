@@ -111,6 +111,44 @@ typedef struct {
     return _findInProgress || _searchingForNextResult;
 }
 
+// A range with length 0 means no command is selected and nothing is
+// restricted, matching how the search engine treats absLineRange. A negative
+// line comes from a hidden container and is never eligible.
+- (BOOL)absLineIsInSelectedCommand:(long long)absLine {
+    if (absLine < 0) {
+        return NO;
+    }
+    if (_absLineRange.length == 0) {
+        return YES;
+    }
+    return NSLocationInRange(absLine, _absLineRange);
+}
+
+// Results can be removed from several places. Rather than fix up the find
+// cursor at each of them, check here whether the external result it points at
+// is still present. If not, the cursor becomes a coordinate at the start of
+// that result's line so find next and find previous continue from there
+// instead of wrapping around.
+- (void)dropFindCursorIfItsResultWasRemoved {
+    if (_findCursor.type != FindCursorTypeExternal) {
+        return;
+    }
+    iTermExternalSearchResult *external = _findCursor.external;
+    __block BOOL present = NO;
+    [_searchResults enumerateObjectsUsingBlock:^(SearchResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (result.externalResult == external) {
+            present = YES;
+            *stop = YES;
+        }
+    }];
+    if (present) {
+        return;
+    }
+    DLog(@"Find cursor's external result %@ is gone", external);
+    _findCursor.type = FindCursorTypeCoord;
+    _findCursor.coord = VT100GridAbsCoordMake(0, external.absLine);
+}
+
 - (void)setAbsLineRange:(NSRange)absLineRange {
     DLog(@"Set absLineRange to %@\n%@", NSStringFromRange(absLineRange), [NSThread callStackSymbols]);
     if (NSEqualRanges(absLineRange, _absLineRange)) {
@@ -118,19 +156,20 @@ typedef struct {
         return;
     }
     _absLineRange = absLineRange;
-    // Remove search results outside this range.
+    // Remove search results outside this range. Deselecting a command (length
+    // 0) keeps the results that were already found.
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     [_searchResults enumerateObjectsUsingBlock:^(SearchResult * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (obj.isExternal) {
-            if (!NSLocationInRange(obj.externalAbsY, absLineRange)) {
+            if (![self absLineIsInSelectedCommand:obj.externalAbsY]) {
                 [indexes addIndex:idx];
                 [_locations removeIndex:obj.externalAbsY];
                 [_highlightMap removeObjectForKey:@(obj.externalAbsY)];
                 [_delegate findOnPageHelperRemoveExternalHighlightsFrom:obj.externalResult];
             }
         } else {
-            if (!NSLocationInRange(obj.internalAbsStartY, absLineRange) &&
-                !NSLocationInRange(obj.internalAbsEndY, absLineRange)) {
+            if (![self absLineIsInSelectedCommand:obj.internalAbsStartY] &&
+                ![self absLineIsInSelectedCommand:obj.internalAbsEndY]) {
                 [indexes addIndex:idx];
                 [_locations removeIndex:obj.internalAbsStartY];
                 [_highlightMap removeObjectForKey:@(obj.internalAbsStartY)];
@@ -324,9 +363,18 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)addExternalResults:(NSArray<iTermExternalSearchResult *> *)externalResults
                      width:(int)width {
+    // Engine results are already restricted to the selected command, if any,
+    // and the delegate skips containers outside it. Hold external results to
+    // the same rule.
     [externalResults enumerateObjectsUsingBlock:^(iTermExternalSearchResult *externalResult,
                                                   NSUInteger i,
                                                   BOOL * _Nonnull stop) {
+        if (![self absLineIsInSelectedCommand:externalResult.absLine]) {
+            DLog(@"Skip external result at line %@ outside %@", @(externalResult.absLine), NSStringFromRange(self.absLineRange));
+            // The owner highlighted this match when it searched itself.
+            [_delegate findOnPageHelperRemoveExternalHighlightsFrom:externalResult];
+            return;
+        }
         SearchResult *searchResult = [SearchResult searchResultFromExternal:externalResult
                                                                       index:i];
         [self addSearchResult:searchResult width:width];
@@ -416,6 +464,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                           width:(int)width
                   numberOfLines:(int)numberOfLines
              overflowAdjustment:(long long)overflowAdjustment {
+    [self dropFindCursorIfItsResultWasRemoved];
     // Range of positions before backwards find cursor or after forwards find cursor. Stays empty if no cursor.
     NSRange range = NSMakeRange(NSNotFound, 0);
     int start;
@@ -486,11 +535,14 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
             pos = r.internalStartX + (long long)r.internalAbsStartY * width;
         }
         assert(!found);
+        // Internal results are always eligible to be selected. External results
+        // must be visible: containers may be truncated, hiding some results.
+        const BOOL eligible = r.isExternal ? r.externalResult.isVisible : YES;
         if (_findCursor.type == FindCursorTypeExternal) {
             // Flip found to true if the previous result was the find cursor.
-            found = haveFoundExternalCursor && r.externalResult != _findCursor.external && r.externalResult.isVisible;
+            found = haveFoundExternalCursor && r.externalResult != _findCursor.external && eligible;
         } else {
-            found = NSLocationInRange(pos, range);
+            found = eligible && NSLocationInRange(pos, range);
         }
         if (found) {
             DLog(@"Result %@ is in the desired range", r);
@@ -513,7 +565,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                                      wrapped:NO];
             }
         } else if (!_haveRevealedSearchResult) {
-            if (!r.isExternal || r.externalResult.isVisible) {  // Don't wrap around to invisible result
+            if (eligible) {  // Don't wrap around to invisible result
                 if (forward) {
                     if (wrapAroundResultPosition == -1 || pos < wrapAroundResultPosition) {
                         self.selectedResult = r;
@@ -606,6 +658,12 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     if (index == _searchResults.count) {
         index--;
     }
+    // The probe is an internal result, which sorts after external results on
+    // the same line, so the insertion index can land before some of them.
+    // Results are stored descending so walk forward past the rest of the line.
+    while (index + 1 < _searchResults.count && _searchResults[index + 1].safeAbsStartY >= query) {
+        index++;
+    }
     while (_searchResults[index].safeAbsStartY < query) {
         if (index == 0) {
             return NSNotFound;
@@ -676,24 +734,18 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     NSMutableIndexSet *indexesToRemove = [NSMutableIndexSet indexSet];
     NSMutableIndexSet *locationsToRemove = [NSMutableIndexSet indexSet];
 
-    const long long minY = MIN(range.start.y, range.end.y);
-    const long long maxY = MAX(range.start.y, range.end.y);
-
     [_searchResults enumerateObjectsUsingBlock:^(SearchResult * _Nonnull result, NSUInteger idx, BOOL * _Nonnull stop) {
-        BOOL shouldRemove = NO;
-
         if (result.isExternal) {
-            // External results are full-line, so just check if the line is within the y-range.
-            const long long resultY = result.externalAbsY;
-            shouldRemove = (resultY >= minY && resultY <= maxY);
-        } else {
-            // Check if the result's start position falls within the searched coordinate range.
-            // VT100GridAbsCoordRangeContainsAbsCoord handles both forward and backward ranges
-            // by normalizing to min/max coordinates.
-            const VT100GridAbsCoord resultCoord = VT100GridAbsCoordMake(result.internalStartX,
-                                                                         result.internalAbsStartY);
-            shouldRemove = VT100GridAbsCoordRangeContainsAbsCoord(range, resultCoord);
+            // The tail find searched terminal text only. It cannot put a porthole's
+            // results back, so leave them alone.
+            return;
         }
+        // Check if the result's start position falls within the searched coordinate range.
+        // VT100GridAbsCoordRangeContainsAbsCoord handles both forward and backward ranges
+        // by normalizing to min/max coordinates.
+        const VT100GridAbsCoord resultCoord = VT100GridAbsCoordMake(result.internalStartX,
+                                                                     result.internalAbsStartY);
+        const BOOL shouldRemove = VT100GridAbsCoordRangeContainsAbsCoord(range, resultCoord);
 
         if (shouldRemove) {
             [indexesToRemove addIndex:idx];
@@ -707,6 +759,16 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         [self locationsDidChange];
         _cachedCounts.valid = NO;
     }
+}
+
+- (void)externalContainersDidChange {
+    if (_lastStringSearchedFor.length == 0) {
+        return;
+    }
+    DLog(@"Search containers again for %@", _lastStringSearchedFor);
+    // Containers that were already searched report the same results, which the
+    // sorted set treats as duplicates, so only the new container adds anything.
+    [_delegate findOnPageHelperSearchExternallyFor:_lastStringSearchedFor mode:_mode];
 }
 
 - (void)setStartPoint:(VT100GridAbsCoord)startPoint {
@@ -786,6 +848,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
     // Rewrite the index to be 1-based for valid results and 0 if none is selected.
     if (_cachedCounts.index == NSNotFound) {
+        // The selected result was removed. Let go of it so it is not kept
+        // alive and so nothing treats it as current.
+        DLog(@"Selected result %@ is gone", self.selectedResult);
+        _selectedResult = nil;
+        [self.delegate findOnPageSelectedResultDidChange];
         _cachedCounts.index = 0;
     } else {
         _cachedCounts.index += 1;
