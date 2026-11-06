@@ -2725,3 +2725,9 @@ Bug Fixes:
   from more than one tmux session, activity in
   one session no longer switches away from the
   tab you are typing in from another session.
+- Closing a window with tmux integration tabs
+  and choosing Detach now detaches every tmux
+  session in it, even if a non-tmux tab or
+  another session’s tab was selected. Closing
+  the last tab of one session asks only about
+  that session’s windows.

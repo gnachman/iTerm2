@@ -5079,9 +5079,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // If controller is nil, then do all of them.
 // Returns YES if the close should proceed, NO if the user canceled.
 - (BOOL)killOrHideTmuxWindowForController:(TmuxController *)controller {
+    // The window can hold tabs from more than one tmux session. Only the ones being closed count.
     int n = 0;
     for (PTYTab *aTab in [self tabs]) {
-        if ([aTab isTmuxTab] && !aTab.tmuxController.detached) {
+        if ([aTab isTmuxTab] &&
+            (controller == nil || aTab.tmuxController == controller) &&
+            !aTab.tmuxController.detached) {
             n++;
         }
     }
@@ -5104,7 +5107,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // performing an action on a tmux object without waiting for the
         // server to tell us to do it.
 
-        BOOL doTmuxDetach = NO;
+        NSMutableArray<TmuxController *> *controllersToDetach = [NSMutableArray array];
 
         for (PTYTab *aTab in [self tabs]) {
             if ([aTab isTmuxTab]) {
@@ -5116,7 +5119,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                         [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
                         break;
                     case kiTermWarningSelection1:
-                        doTmuxDetach = YES;
+                        if (!aTab.tmuxController.detached &&
+                            ![controllersToDetach containsObject:aTab.tmuxController]) {
+                            [controllersToDetach addObject:aTab.tmuxController];
+                        }
                         break;
                     case kiTermWarningSelection2:
                         [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
@@ -5135,10 +5141,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
         }
 
-        if (doTmuxDetach) {
-             PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
-             [[aSession tmuxController] requestDetach];
-         }
+        for (TmuxController *controllerToDetach in controllersToDetach) {
+            [controllerToDetach requestDetach];
+        }
     }
     return YES;
 }
