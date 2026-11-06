@@ -88,6 +88,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Title reporting
 @property (nonatomic, readonly) BOOL allowTitleReporting;
+// Whether the program may set the window, icon, and tab titles.
+@property (nonatomic, readonly) BOOL allowTitleSetting;
 
 // Mouse scroll
 @property (nonatomic, readonly) BOOL allowAlternateMouseScroll;
@@ -164,6 +166,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Title reporting
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
+// Whether the program may set the window, icon, and tab titles.
+@property (nonatomic, readwrite) BOOL allowTitleSetting;
 
 // Mouse scroll
 @property (nonatomic, readwrite) BOOL allowAlternateMouseScroll;

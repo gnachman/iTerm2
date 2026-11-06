@@ -2716,3 +2716,6 @@ Bug Fixes:
   copy of it2ssh in ~/.iterm2 instead of the
   one that comes with iTerm2. Shell integration
   now uses iTerm2’s copy when it is available.
+- An animated title, such as a spinner, in a tab
+  that isn’t selected now keeps moving instead
+  of changing only about once a second.

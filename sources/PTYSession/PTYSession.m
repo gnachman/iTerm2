@@ -20463,6 +20463,7 @@ static NSString *PTYSessionDECRQCRANoLabel(void) {
         _config.postUserNotifications = [iTermProfilePreferences boolForKey:KEY_BOOKMARK_USER_NOTIFICATIONS inProfile:_profile];
         _config.cursorBlinks = [iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:_profile];
         _config.allowTitleReporting = [iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING inProfile:_profile];
+        _config.allowTitleSetting = [iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_SETTING inProfile:_profile];
         _config.allowAlternateMouseScroll = [iTermProfilePreferences boolForKey:KEY_ALLOW_ALTERNATE_MOUSE_SCROLL inProfile:_profile];
 
         dirty = YES;

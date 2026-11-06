@@ -301,6 +301,16 @@ class TokenExecutor: NSObject {
         impl.addDeferredSideEffect(task)
     }
 
+    // Any queue. Call after queueing a side effect that changes a title. A hidden
+    // session batches its side effects for up to a second, but its title stays visible
+    // in the tab bar, so this flushes the queue sooner, at most ten times a second. It
+    // does not reorder anything: the flush drains the whole queue in order. Does nothing
+    // extra for a visible session.
+    @objc
+    func expediteForTitleChange() {
+        impl.expediteForTitleChange()
+    }
+
     // Any queue. Goes up by one each time a side effect is added. Comparing it
     // just before and just after adding a side effect tells whether that side
     // effect was the only one added in between; comparing it later tells
@@ -514,6 +524,13 @@ private class TokenExecutorImpl {
     // Urgent side effects are not batched, so they run at the foreground rate no matter
     // how the session is scheduled. See addUrgentSideEffect(_:).
     private static let urgentSideEffectMaximumDelay = foregroundSideEffectPeriod
+    // A title change in a hidden session is deferred as long as a visible session's side
+    // effects are, so it still coalesces with a prompt being redrawn around it. Expedited
+    // flushes are at most this often, fast enough for a spinner that changes every 100 ms
+    // without letting a title flood drag the rest of a hidden session's side effects up to
+    // the foreground rate.
+    private static let titleChangeDeferral = foregroundSideEffectPeriod / 2.0
+    private static let titleChangeMinimumInterval = 0.1
     @objc var isBackgroundSession = false {
         didSet {
 #if DEBUG
@@ -837,6 +854,12 @@ private class TokenExecutorImpl {
         noteStateSideEffectScheduled()
         appendSideEffect(task)
         sideEffectScheduler.markNeedsUpdateDeferredByHalfPeriod()
+    }
+
+    // See TokenExecutor.expediteForTitleChange().
+    func expediteForTitleChange() {
+        sideEffectScheduler.markNeedsUpdate(deferredBy: Self.titleChangeDeferral,
+                                            notMoreOftenThan: Self.titleChangeMinimumInterval)
     }
 
     // Any queue
@@ -1307,6 +1330,12 @@ class PeriodicScheduler: NSObject {
     // reset in when `period` is longer than a caller can tolerate. Guarded by mutex.
     private var pendingResetDeadline: DispatchTime?
     private var resetGeneration = 0
+    // State for markNeedsUpdate(deferredBy:notMoreOftenThan:). The next request's deadline
+    // must be at least the minimum interval after rateLimitedIntervalStart: the deadline
+    // given to the most recent request, or the time of the flush that served it if that
+    // came sooner. Guarded by mutex.
+    private var rateLimitedIntervalStart: DispatchTime?
+    private var rateLimitedFlushPending = false
 
     @objc(initWithQueue:period:block:)
     init(_ queue: DispatchQueue, period: TimeInterval, action: @escaping () -> ()) {
@@ -1354,14 +1383,64 @@ class PeriodicScheduler: NSObject {
     private func armDeferredFlush(delay explicitDelay: TimeInterval?) {
         let now = DispatchTime.now()
         mutex.sync {
-            let delay = explicitDelay ?? (_period / 2.0)
             _needsUpdate = true
-            if let pendingDeferredDeadline, pendingDeferredDeadline <= now + delay {
-                DLog("A deferred flush is already armed and is at least this soon")
+            armDeferredFlushLocked(delay: explicitDelay ?? (_period / 2.0), from: now)
+        }
+    }
+
+    // Caller must hold the mutex. Arms a deferred flush `delay` from `now` unless the one
+    // already armed is at least that soon.
+    private func armDeferredFlushLocked(delay: TimeInterval, from now: DispatchTime) {
+        if let pendingDeferredDeadline, pendingDeferredDeadline <= now + delay {
+            DLog("A deferred flush is already armed and is at least this soon")
+            return
+        }
+        DLog("Arm deferred flush \(delay) from now")
+        deferAfterDelay(delay, from: now)
+    }
+
+    // Like markNeedsUpdate(deferred:) but escapes `period` when it is longer than
+    // `minimumInterval`, so the flush comes `deferral` from now even while throttled.
+    // A request's deadline is at least `minimumInterval` after the flush that served the
+    // previous request, which bounds how often this can flush. A request made while an
+    // earlier one is still owed a flush does nothing, because that flush drains everything
+    // queued before it.
+    //
+    // When `period` is no longer than `minimumInterval` there is nothing to escape, so
+    // this is an ordinary deferred request. That keeps it from adding flushes on top of a
+    // visible session's own rate.
+    //
+    // The motivating case is a title change in a hidden session: the tab bar shows it
+    // even though the session's contents are hidden, so an animated title would otherwise
+    // advance only once per background period.
+    @objc(markNeedsUpdateDeferredBy:notMoreOftenThan:)
+    func markNeedsUpdate(deferredBy deferral: TimeInterval,
+                         notMoreOftenThan minimumInterval: TimeInterval) {
+        let now = DispatchTime.now()
+        mutex.sync {
+            _needsUpdate = true
+            guard minimumInterval < _period else {
+                armDeferredFlushLocked(delay: deferral, from: now)
                 return
             }
-            DLog("Arm deferred flush \(delay) from now")
-            deferAfterDelay(delay, from: now)
+            if rateLimitedFlushPending {
+                DLog("A rate-limited flush is already owed and will carry this update")
+                return
+            }
+            var deadline = now + deferral
+            if let rateLimitedIntervalStart, rateLimitedIntervalStart + minimumInterval > deadline {
+                deadline = rateLimitedIntervalStart + minimumInterval
+            }
+            rateLimitedIntervalStart = deadline
+            rateLimitedFlushPending = true
+            let delay = TimeInterval(deadline.uptimeNanoseconds - now.uptimeNanoseconds) / TimeInterval(NSEC_PER_SEC)
+            DLog("Arm rate-limited flush \(delay) from now")
+            armDeferredFlushLocked(delay: delay, from: now)
+            if _updatePending {
+                // The deferred flush would find the scheduler throttled, so the reset has to
+                // come at the same deadline for the flush to happen then.
+                pullInArmedResetLocked(within: delay)
+            }
         }
     }
 
@@ -1505,6 +1584,12 @@ class PeriodicScheduler: NSObject {
 
         resetAfterDelay(_period)
         _needsUpdate = false
+        if rateLimitedFlushPending {
+            // Measure the next request's interval from this flush, which may have come
+            // before the deadline the owed request was given.
+            rateLimitedFlushPending = false
+            rateLimitedIntervalStart = DispatchTime.now()
+        }
         DLog("Periodic scheduler performing action")
         action()
     }

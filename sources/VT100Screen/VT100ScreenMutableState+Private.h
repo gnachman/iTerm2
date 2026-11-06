@@ -64,6 +64,12 @@ iTermTriggerScopeProvider> {
     // Whether the title batch's side effect was added with addSideEffect
     // rather than deferred. A working directory request needs that.
     BOOL _titleBatchIsImmediate;
+    // The titles most recently set by the program, to tell whether a new one
+    // changes anything. Cleared when something else may have changed the
+    // displayed title (a title pop or a reset). Mutation thread only.
+    NSString *_lastWindowTitle;
+    NSString *_lastIconTitle;
+    NSString *_lastSubtitle;
     dispatch_queue_t _queue;
     PTYTriggerEvaluator *_triggerEvaluator;
     dispatch_group_t _tmuxGroup;

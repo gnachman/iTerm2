@@ -65,6 +65,7 @@
 @property (nonatomic, readwrite) BOOL postUserNotifications;
 @property (nonatomic, readwrite) BOOL cursorBlinks;
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
+@property (nonatomic, readwrite) BOOL allowTitleSetting;
 @property (nonatomic, readwrite) BOOL allowAlternateMouseScroll;
 @end
 
@@ -123,6 +124,7 @@
 @synthesize postUserNotifications = _postUserNotifications;
 @synthesize cursorBlinks = _cursorBlinks;
 @synthesize allowTitleReporting = _allowTitleReporting;
+@synthesize allowTitleSetting = _allowTitleSetting;
 @synthesize allowAlternateMouseScroll = _allowAlternateMouseScroll;
 
 @synthesize isDirty = _isDirty;
@@ -185,6 +187,7 @@
         _postUserNotifications = other.postUserNotifications;
         _cursorBlinks = other.cursorBlinks;
         _allowTitleReporting = other.allowTitleReporting;
+        _allowTitleSetting = other.allowTitleSetting;
         _allowAlternateMouseScroll = other.allowAlternateMouseScroll;
 
         _isDirty = other.isDirty;
@@ -255,6 +258,7 @@
                             @"postUserNotifications": @(_postUserNotifications),
                             @"cursorBlinks": @(_cursorBlinks),
                             @"allowTitleReporting": @(_allowTitleReporting),
+                            @"allowTitleSetting": @(_allowTitleSetting),
                             @"allowAlternateMouseScroll": @(_allowAlternateMouseScroll),
 
                             @"isDirty": @(_isDirty),
@@ -328,6 +332,7 @@
 @dynamic postUserNotifications;
 @dynamic cursorBlinks;
 @dynamic allowTitleReporting;
+@dynamic allowTitleSetting;
 @dynamic allowAlternateMouseScroll;
 
 @dynamic isDirty;

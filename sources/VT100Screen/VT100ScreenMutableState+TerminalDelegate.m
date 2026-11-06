@@ -920,6 +920,11 @@ typedef struct {
 
 - (void)terminalDidReset {
     [self invalidatePendingPromptState];
+    // Treat the next title of each kind as a change rather than reason about
+    // what a reset does to the displayed titles.
+    _lastWindowTitle = nil;
+    _lastIconTitle = nil;
+    _lastSubtitle = nil;
     self.progress = VT100ScreenProgressStopped;
     self.progressGeneration += 1;
     const NSInteger generation = self.progressGeneration;
@@ -1224,8 +1229,12 @@ typedef struct {
 // `immediate` means the change must not wait for a deferred side-effect pass,
 // as with a working directory request, which used to be its own immediate
 // side effect.
+//
+// `expedite` means the change alters a visible title, so it should not wait
+// out a hidden session's batching. See -[TokenExecutor expediteForTitleChange].
 - (void)updateTitles:(void (^)(iTermTitleUpdate *update))block
-           immediate:(BOOL)immediate {
+           immediate:(BOOL)immediate
+            expedite:(BOOL)expedite {
     if (_titleBatch &&
         (_titleBatchIsImmediate || !immediate) &&
         self.tokenExecutor.sideEffectSerial == _titleBatchSideEffectSerial &&
@@ -1233,6 +1242,7 @@ typedef struct {
         // This changes state the main thread reads, like adding a side
         // effect would.
         [self.tokenExecutor noteStateSideEffectScheduled];
+        [self expediteTitleChangeIfNeeded:expedite];
         return;
     }
     iTermTitleBatch *batch = [[iTermTitleBatch alloc] init];
@@ -1264,6 +1274,16 @@ typedef struct {
     _titleBatch = (serialAfter == serialBefore + 1) ? batch : nil;
     _titleBatchSideEffectSerial = serialAfter;
     _titleBatchIsImmediate = immediate;
+    [self expediteTitleChangeIfNeeded:expedite];
+}
+
+// A change that joined a batch needs this as much as one that started a
+// batch: the batch may have started with a title that changed nothing.
+- (void)expediteTitleChangeIfNeeded:(BOOL)expedite {
+    if (!expedite || !self.config.allowTitleSetting) {
+        return;
+    }
+    [self.tokenExecutor expediteForTitleChange];
 }
 
 // Main thread, in a side effect.
@@ -1294,6 +1314,8 @@ typedef struct {
 
 - (void)terminalSetWindowTitle:(NSString *)title {
     DLog(@"begin %@", title);
+    const BOOL changed = ![NSObject object:title isEqualToObject:_lastWindowTitle];
+    _lastWindowTitle = [title copy];
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
@@ -1301,7 +1323,7 @@ typedef struct {
         DLog(@"Already have a remote host so not updating working directory because of title change");
         [self updateTitles:^(iTermTitleUpdate *update) {
             [update changeWindowTitle:title];
-        } immediate:NO];
+        } immediate:NO expedite:changed];
         return;
     }
     // If OSC 7 or shell integration has provided working directory updates, don't update the
@@ -1314,7 +1336,7 @@ typedef struct {
         [self updateTitles:^(iTermTitleUpdate *update) {
             [update changeWindowTitle:title];
             [update pollLocalDirectoryOnly];
-        } immediate:YES];
+        } immediate:YES expedite:changed];
         return;
     }
     DLog(@"Don't have a remote host, so changing working directory");
@@ -1329,28 +1351,32 @@ typedef struct {
     if ([self workingDirectoryLineForAbsLine:absLine] < 0) {
         [self updateTitles:^(iTermTitleUpdate *update) {
             [update changeWindowTitle:title];
-        } immediate:NO];
+        } immediate:NO expedite:changed];
         return;
     }
     id<iTermOrderedToken> token = [self.setWorkingDirectoryOrderEnforcer newToken];
     [self updateTitles:^(iTermTitleUpdate *update) {
         [update changeWindowTitle:title];
         [update fetchWorkingDirectoryOnAbsLine:absLine token:token];
-    } immediate:YES];
+    } immediate:YES expedite:changed];
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
     DLog(@"begin %@", title);
+    const BOOL changed = ![NSObject object:title isEqualToObject:_lastIconTitle];
+    _lastIconTitle = [title copy];
     [self updateTitles:^(iTermTitleUpdate *update) {
         [update changeIconTitle:title];
-    } immediate:NO];
+    } immediate:NO expedite:changed];
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {
     DLog(@"begin %@", subtitle);
+    const BOOL changed = ![NSObject object:subtitle isEqualToObject:_lastSubtitle];
+    _lastSubtitle = [subtitle copy];
     [self updateTitles:^(iTermTitleUpdate *update) {
         [update changeSubtitle:subtitle];
-    } immediate:NO];
+    } immediate:NO expedite:changed];
 }
 
 - (void)terminalCopyStringToPasteboard:(NSString *)string {
@@ -1688,6 +1714,13 @@ typedef struct {
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
     DLog(@"begin %@", @(isWindow));
+    // The restored title may differ from the last one the program set, so
+    // setting that one again would be a visible change.
+    if (isWindow) {
+        _lastWindowTitle = nil;
+    } else {
+        _lastIconTitle = nil;
+    }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"begin side-effect");
         if ([delegate screenAllowTitleSetting]) {
