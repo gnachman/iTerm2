@@ -2761,3 +2761,8 @@ Bug Fixes:
 - If a terminal session ends while AI chat is
   waiting on a command in it, the chat now
   continues instead of waiting forever.
+- New tabs and split panes that reuse the
+  previous session’s directory, and the panes
+  a Claude Code workgroup opens, could start in
+  the directory you were in before your last cd
+  if you pasted or typed ahead the commands.
