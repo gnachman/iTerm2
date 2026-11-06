@@ -828,12 +828,12 @@ NS_INLINE BOOL VT100GridCoordFromDictionary(NSDictionary * _Nullable dict, VT100
     }
 
     NSNumber *x = [NSNumber castFrom:dict[@"x"]];
-    if (x != nil) {
+    if (x == nil) {
         return NO;
     }
 
     NSNumber *y = [NSNumber castFrom:dict[@"y"]];
-    if (y != nil) {
+    if (y == nil) {
         return NO;
     }
 
