@@ -37,12 +37,9 @@ private class SessionNoteTextView: NSTextView {
         return true
     }
 
-    override func keyDown(with event: NSEvent) {
-        if event.keyCode == 36 /* Return */ && event.modifierFlags.contains(.shift) {
-            collapseHandler?()
-            return
-        }
-        super.keyDown(with: event)
+    // Escape collapses the note. NSTextView would otherwise treat it as complete:.
+    override func cancelOperation(_ sender: Any?) {
+        collapseHandler?()
     }
 
     override func paste(_ sender: Any?) {

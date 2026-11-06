@@ -380,6 +380,10 @@ Improvements:
 - If automatic updates ever stop working, iTerm2
   can still let you know a new version is available
   and offer a link to download it.
+- In a Session Note, Shift-Return now inserts a
+  newline instead of collapsing the note. Press
+  Escape to collapse it and return to the
+  terminal.
 - The “Show status in tab subtitle” checkbox in
   the Session Status tool’s settings is now
   “Show status on tabs”. Turning it off hides
