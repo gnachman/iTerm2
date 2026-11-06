@@ -74,6 +74,8 @@ class TextViewPortholeRenderer {
     let text: String
     let _languages: Set<String>
     private var markdownRenderer: MarkdownPortholeRenderer?
+    // Loads images for Markdown. Nil until the porthole says where files may come from.
+    var markdownImageLoader: MarkdownImageLoader?
     private var jsonRenderer: JSONPortholeRenderer?
     // display names
     var languages: Set<String> {
@@ -101,7 +103,8 @@ class TextViewPortholeRenderer {
             if markdownRenderer == nil {
                 markdownRenderer = MarkdownPortholeRenderer(text)
             }
-            return markdownRenderer!.render(visualAttributes: visualAttributes)
+            return markdownRenderer!.render(visualAttributes: visualAttributes,
+                                            imageLoader: markdownImageLoader)
         case .json:
             if jsonRenderer == nil {
                 jsonRenderer = JSONPortholeRenderer.forced(text)

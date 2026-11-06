@@ -97,9 +97,12 @@ struct PortholeConfig: CustomDebugStringConvertible {
     var filename: String?
     var useSelectedTextColor: Bool
     var forceWide: Bool
+    // False when shell integration says the text came from another machine, so paths
+    // in it (such as Markdown images) don't refer to local files.
+    var isLocal: Bool
 
     var debugDescription: String {
-        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename)) useSelectedTextColor=\(useSelectedTextColor) forceWide=\(forceWide)"
+        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename)) useSelectedTextColor=\(useSelectedTextColor) forceWide=\(forceWide) isLocal=\(isLocal)"
     }
 }
 

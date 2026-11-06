@@ -16,39 +16,49 @@ class MarkdownPortholeRenderer {
         return text.range(of: "^# .", options: .regularExpression) != nil
     }
 
-    func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
+    func render(visualAttributes: TextViewPorthole.VisualAttributes,
+                imageLoader: MarkdownImageLoader?) -> NSAttributedString {
         return Self.attributedString(markdown: markdown,
-                                     visualAttributes: visualAttributes)
+                                     font: visualAttributes.font,
+                                     textColor: visualAttributes.textColor,
+                                     backgroundColor: visualAttributes.backgroundColor,
+                                     imageLoader: imageLoader)
     }
 
-    private static func attributedString(markdown: String,
-                                         visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
-        let md = SwiftyMarkdown(string: markdown)
-        if let fixedPitchFontName = NSFont.userFixedPitchFont(ofSize: 12)?.fontName {
-            md.code.fontName = fixedPitchFontName
-        }
-        let textColor = visualAttributes.textColor
-        md.code.fontName = visualAttributes.font.fontName
+    static func attributedString(markdown: String,
+                                 font: NSFont,
+                                 textColor: NSColor,
+                                 backgroundColor: NSColor,
+                                 imageLoader: MarkdownImageLoader?) -> NSAttributedString {
+        let preprocessed = MarkdownPreprocessor.process(markdown)
+        let md = SwiftyMarkdown(string: preprocessed.text)
+        md.code.fontName = font.fontName
+        md.bullet = "•"
 
-        let points = visualAttributes.font.pointSize
+        let points = font.pointSize
         md.setFontSizeForAllStyles(with: points)
-        // I couldn't find a definitive source to map headings to ems. I used this, which looks fine.
-        // https://stackoverflow.com/questions/5410066/what-are-the-default-font-sizes-in-pixels-for-the-html-heading-tags-h1-h2
-        md.h1.fontSize = max(4, round(points * 2))
-        md.h2.fontSize = max(4, round(points * 1.5))
-        md.h3.fontSize = max(4, round(points * 1.3))
-        md.h4.fontSize = max(4, round(points * 1.0))
-        md.h5.fontSize = max(4, round(points * 0.8))
-        md.h6.fontSize = max(4, round(points * 0.7))
+        for (level, style) in [md.h1, md.h2, md.h3, md.h4, md.h5, md.h6].enumerated() {
+            style.fontSize = max(4, round(points * MarkdownPortholeStyler.headingScale(level + 1)))
+            style.fontStyle = .bold
+        }
 
         md.setFontColorForAllStyles(with: textColor)
+        md.tableStyle.borderColor = textColor.withAlphaComponent(0.3)
+        md.tableStyle.cellPadding = round(points * 0.4)
+        md.tableHeader.color = textColor
+        md.tableCell.color = textColor
 
-        return md.attributedString()
+        let styler = MarkdownPortholeStyler(points: points,
+                                            bodyFont: NSFont.systemFont(ofSize: points),
+                                            codeFont: font,
+                                            textColor: textColor,
+                                            backgroundColor: backgroundColor,
+                                            images: preprocessed.images,
+                                            imageLoader: imageLoader)
+        return styler.style(md.attributedString())
     }
 
     init(_ text: String) {
         markdown = text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
-
-

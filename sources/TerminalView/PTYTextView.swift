@@ -78,13 +78,24 @@ extension PTYTextView: ExternalSearchResultsController {
         }
         let text = self.text(inRange: absRange.relativeRange(overflow: overflow))
         let pwd = dataSource.workingDirectory(onLine: relativeRange.start.y)
-        let baseDirectory = pwd.map { URL(fileURLWithPath: $0) }
+        // Paths in the text name local files unless shell integration says the text came
+        // from another machine. This matches how clicking a path decides it's local.
+        let remoteHost = dataSource.remoteHost(onLine: relativeRange.start.y)
+        let isLocal = remoteHost?.isLocalhost ?? true
+        DLog("Porthole remoteHost=\(String(describing: remoteHost)) isLocal=\(isLocal) pwd=\(String(describing: pwd))")
+        // No directory may have been recorded for this line yet (the shell integration
+        // report can arrive after the output). Like clicking a path, fall back to the
+        // session's local directory, but only one already known: waiting for a poll
+        // could pick up a directory the shell moved to afterward.
+        let directory = pwd ?? (isLocal ? delegate?.textViewKnownLocalWorkingDirectory() : nil)
+        DLog("Porthole base directory \(String(describing: directory))")
         replaceWithPorthole(inRange: absRange,
                             text: text,
-                            baseDirectory: baseDirectory,
+                            baseDirectory: directory.map { URL(fileURLWithPath: $0, isDirectory: true) },
                             type: type,
                             filename: filename,
-                            forceWide: forceWide)
+                            forceWide: forceWide,
+                            isLocal: isLocal)
     }
 
     func text(inRange range: VT100GridCoordRange) -> String {
@@ -106,13 +117,14 @@ extension PTYTextView: ExternalSearchResultsController {
         return text
     }
 
-    @objc(replaceWithPortholeInRange:havingText:baseDirectory:type:filename:forceWide:)
+    @objc(replaceWithPortholeInRange:havingText:baseDirectory:type:filename:forceWide:isLocal:)
     func replaceWithPorthole(inRange absRange: VT100GridAbsCoordRange,
                              text: String,
                              baseDirectory: URL?,
                              type: String?,
                              filename: String?,
-                             forceWide: Bool) {
+                             forceWide: Bool,
+                             isLocal: Bool) {
         DLog("replaceWithPorthole(inRange:\(VT100GridAbsCoordRangeDescription(absRange)), text:\(String(describing: text)), baseDirectory:\(String(describing: baseDirectory)), type:\(String(describing: type)), filename:\(String(describing: filename))")
 
         guard dataSource != nil else {
@@ -126,7 +138,8 @@ extension PTYTextView: ExternalSearchResultsController {
                                     type: type,
                                     filename: filename,
                                     useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true,
-                                    forceWide: iTermAdvancedSettingsModel.defaultWideMode() || forceWide)
+                                    forceWide: iTermAdvancedSettingsModel.defaultWideMode() || forceWide,
+                                    isLocal: isLocal)
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
     }

@@ -46,6 +46,7 @@ class TextViewPorthole: NSObject {
 
         let textColor: NSColor
         let backgroundColor: NSColor
+        let linkColor: NSColor
         let font: NSFont
         let colorMap: iTermColorMapReading
         let colorMapGeneration: Int
@@ -53,6 +54,7 @@ class TextViewPorthole: NSObject {
         init(colorMap: iTermColorMapReading, font: NSFont) {
             textColor = colorMap.color(forKey: kColorMapForeground) ?? NSColor.textColor
             backgroundColor = colorMap.color(forKey: kColorMapBackground) ?? NSColor.textBackgroundColor
+            linkColor = colorMap.color(forKey: kColorMapLink) ?? NSColor.linkColor
             self.font = font
             self.colorMap = colorMap
             colorMapGeneration = colorMap.generation
@@ -133,6 +135,7 @@ class TextViewPorthole: NSObject {
         textView.isEditable = false
         textView.isSelectable = true
         textView.drawsBackground = false
+        textView.linkTextAttributes = Self.linkTextAttributes(for: savedVisualAttributes)
         if let selectedTextAttributes = Self.selectedTextAttributes(config: config) {
             textView.selectedTextAttributes = selectedTextAttributes
         }
@@ -146,6 +149,8 @@ class TextViewPorthole: NSObject {
         containerView.backgroundColor = savedVisualAttributes.backgroundColor
 
         self.renderer = renderer
+        renderer.markdownImageLoader = MarkdownImageLoader(baseDirectory: config.baseDirectory,
+                                                           allowsLocalFiles: config.isLocal)
         textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
 
         if config.forceWide {
@@ -346,6 +351,16 @@ extension TextViewPorthole: Porthole {
     static let languageKey = "language"
     static let languagesKey = "languages"
     static let wideKey = "wide"
+    static let isLocalKey = "isLocal"
+
+    // dictionaryValue saves the base directory as a path. It must come back as a
+    // directory URL, or paths resolved relative to it lose its last component.
+    static func baseDirectory(fromSaved value: Any?) -> URL? {
+        guard let path = value as? String, !path.isEmpty else {
+            return nil
+        }
+        return URL(fileURLWithPath: path, isDirectory: true)
+    }
 
     var dictionaryValue: [String: AnyObject] {
         let dir: NSString?
@@ -365,7 +380,8 @@ extension TextViewPorthole: Porthole {
                                     Self.savedITOsKey: encodedSavedITOs,
                                     Self.languageKey: renderer.language,
                                     Self.languagesKey: renderer.languageCandidateShortNames,
-                                    Self.wideKey: containerView.wideMode]
+                                    Self.wideKey: containerView.wideMode,
+                                    Self.isLocalKey: config.isLocal]
         return wrap(dictionary: dict.compactMapValues { $0 })
     }
 
@@ -384,12 +400,7 @@ extension TextViewPorthole: Porthole {
             return nil
         }
         let savedITOs: [[AnyHashable: Any]] = (dict[self.savedITOsKey] as? [[AnyHashable: Any]]) ?? [[:]]
-        let baseDirectory: URL?
-        if let url = dict[Self.baseDirectoryKey], let urlString = url as? String {
-            baseDirectory = URL(string: urlString)
-        } else {
-            baseDirectory = nil
-        }
+        let baseDirectory = Self.baseDirectory(fromSaved: dict[Self.baseDirectoryKey])
         guard let uuid = uuid as? String,
               let text = text as? String else {
             return nil
@@ -403,7 +414,8 @@ extension TextViewPorthole: Porthole {
                                        type: type,
                                        filename: filename,
                                        useSelectedTextColor: useSelectedTextColor,
-                                       forceWide: dict[Self.wideKey] as? Bool ?? false),
+                                       forceWide: dict[Self.wideKey] as? Bool ?? false,
+                                       isLocal: dict[Self.isLocalKey] as? Bool ?? false),
                 uuid: uuid,
                 savedLines: savedLines.compactMap { ScreenCharArray(dictionary: $0) },
                 savedITOs: savedITOs.compactMap { SavedIntervalTreeObject(dictionaryValue: $0) },
@@ -471,6 +483,10 @@ extension Dictionary {
 
 extension TextViewPorthole: NSTextViewDelegate {
     func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+        if let reference = link as? MarkdownImageReference {
+            showImage(reference, at: charIndex, in: textView)
+            return true
+        }
         guard let url = NSAttributedString.linkToURL(link) else {
             return false
         }
@@ -500,6 +516,31 @@ extension TextViewPorthole: NSTextViewDelegate {
         return true
     }
 
+    // The file is read now, on click, rather than when the Markdown is rendered.
+    private func showImage(_ reference: MarkdownImageReference, at charIndex: Int, in textView: NSTextView) {
+        guard let layoutManager = textView.layoutManager,
+              let textContainer = textView.textContainer,
+              let storage = textView.textStorage,
+              charIndex < storage.length else {
+            return
+        }
+        var range = NSRange(location: charIndex, length: 1)
+        _ = storage.attribute(.link, at: charIndex, longestEffectiveRange: &range, in: NSRange(location: 0, length: storage.length))
+        let glyphRange = layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+        // A placeholder that wraps has several line fragments; anchor to the first.
+        var anchor = NSRect.zero
+        layoutManager.enumerateEnclosingRects(forGlyphRange: glyphRange,
+                                              withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0),
+                                              in: textContainer) { rect, stop in
+            anchor = rect
+            stop.pointee = true
+        }
+        anchor = anchor.offsetBy(dx: textView.textContainerOrigin.x, dy: textView.textContainerOrigin.y)
+        let image = renderer.markdownImageLoader?.image(for: reference.source)
+        DLog("Show Markdown image \(reference.source) loaded=\(image != nil)")
+        MarkdownImagePopover.show(reference, image: image, relativeTo: anchor, of: textView)
+    }
+
     func updateColors(useSelectedTextColor: Bool, deferUpdate: Bool) {
         config.useSelectedTextColor = useSelectedTextColor
         if !deferUpdate {
@@ -515,6 +556,12 @@ extension TextViewPorthole: NSTextViewDelegate {
         }
     }
 
+    private static func linkTextAttributes(for visualAttributes: VisualAttributes) -> [NSAttributedString.Key: Any] {
+        return [.foregroundColor: visualAttributes.linkColor,
+                .underlineStyle: NSUnderlineStyle.single.rawValue,
+                .cursor: NSCursor.pointingHand]
+    }
+
     private func reallyUpdateColors() {
         needsUpdateColors = false
         let visualAttributes = VisualAttributes(colorMap: config.colorMap,
@@ -525,6 +572,7 @@ extension TextViewPorthole: NSTextViewDelegate {
         savedVisualAttributes = visualAttributes
         containerView.color = visualAttributes.textColor
         containerView.backgroundColor = visualAttributes.backgroundColor
+        textView.linkTextAttributes = Self.linkTextAttributes(for: visualAttributes)
         textView.textStorage?.setAttributedString(renderer.render(visualAttributes: visualAttributes))
         if let selectedTextAttributes = Self.selectedTextAttributes(config: config) {
             textView.selectedTextAttributes = selectedTextAttributes

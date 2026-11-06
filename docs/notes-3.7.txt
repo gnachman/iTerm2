@@ -724,6 +724,21 @@ Improvements:
   is shown at the top of the tab bar, beside the
   window buttons, window number, or proxy icon,
   even if you haven’t named the window.
+- Markdown files shown with imgcat look much
+  more like a rendered document: paragraphs
+  reflow instead of keeping the file’s line
+  breaks, headings are bold with space around
+  them, lists hang their text past the bullet or
+  number and keep their numbering, code gets a
+  background, blockquotes get a bar, tables size
+  their columns to fit, and rules span the
+  width. Nested lists indented with spaces, task
+  lists, tilde fences, bare URLs, HTML entities,
+  and footnotes are recognized, and links use
+  the profile’s link color. Images stored on
+  your Mac appear as placeholders; click one to
+  see the image in a popover. Images on the web
+  are never downloaded and appear as links.
 
 - With the Rainbow progress bar color scheme on
   macOS 26, a busy tab’s ring now carries a

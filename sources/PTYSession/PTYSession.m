@@ -14423,6 +14423,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self asyncCurrentLocalWorkingDirectory:completion];
 }
 
+- (NSString *)textViewKnownLocalWorkingDirectory {
+    return _directoryTracker.polledLocalDirectory;
+}
+
 // NOTE: This will not fetch the current directory if it's not already known to avoid blocking
 // the main thread. Don't use this unless you have to be synchronous.
 // Use asyncGetCurrentLocatioNWithCompletion instead.
