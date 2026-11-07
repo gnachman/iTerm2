@@ -27,6 +27,8 @@
 
 #import "iTermApplication.h"
 
+#import <objc/runtime.h>
+
 #import "SFSymbolEnum/SFSymbolEnum.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
@@ -96,6 +98,26 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     iTermLogExceptionForCrash(exception, "Uncaught exception");
 }
 
+// AppKit crashes through +[NSApplication _crashOnException:] for an exception raised
+// while drawing (among other places), which bypasses both the uncaught exception
+// handler and -reportException:. It's a class method, so overriding it in a subclass
+// doesn't help; its implementation is replaced instead.
+static void (*sOriginalCrashOnException)(id, SEL, NSException *);
+
+static void iTermCrashOnException(id self, SEL _cmd, NSException *exception) {
+    iTermLogExceptionForCrash(exception, "_crashOnException");
+    sOriginalCrashOnException(self, _cmd, exception);
+}
+
+static void iTermInstallCrashOnExceptionHook(void) {
+    Method method = class_getClassMethod([NSApplication class], NSSelectorFromString(@"_crashOnException:"));
+    if (!method) {
+        DLog(@"+[NSApplication _crashOnException:] not found");
+        return;
+    }
+    sOriginalCrashOnException = (void (*)(id, SEL, NSException *))method_setImplementation(method, (IMP)iTermCrashOnException);
+}
+
 @interface iTermApplication()
 @property(nonatomic, strong, readwrite) NSWindow *it_windowBecomingKey;
 @end
@@ -130,6 +152,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSSetUncaughtExceptionHandler(&iTermUncaughtExceptionHandler);
+        iTermInstallCrashOnExceptionHook();
         [sharedApplication addObserver:sharedApplication
                             forKeyPath:@"modalWindow"
                                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
