@@ -382,6 +382,27 @@ enum TmuxWorkgroupCommands {
         return "set -t $\(sessionID) \(TmuxWorkgroupState.instanceOptionName(instanceID: instanceID)) \(record.encoded)"
     }
 
+    /// The record's encoded value, or an empty reply if there is none.
+    static func showRecord(sessionID: Int, instanceID: String) -> String {
+        return "show -v -q -t $\(sessionID) \(TmuxWorkgroupState.instanceOptionName(instanceID: instanceID))"
+    }
+
+    /// Sets the record only if it still has the value `expected`, as read by showRecord: if
+    /// another client changed or removed it since, nothing changes and the guard fails. Nil if
+    /// `expected` is not a record value we may echo.
+    static func replaceRecord(sessionID: Int,
+                              instanceID: String,
+                              expected: String,
+                              record: TmuxWorkgroupState.InstanceRecord) -> String? {
+        guard TmuxWorkgroupState.InstanceRecord(encoded: expected) != nil else {
+            return nil
+        }
+        let name = TmuxWorkgroupState.instanceOptionName(instanceID: instanceID)
+        return guarded(target: "$\(sessionID)",
+                       condition: "#{==:#{\(name)},\(expected)}",
+                       action: setRecord(sessionID: sessionID, instanceID: instanceID, record: record))
+    }
+
     static func unsetRecord(sessionID: Int, instanceID: String) -> String {
         return "set -u -t $\(sessionID) \(TmuxWorkgroupState.instanceOptionName(instanceID: instanceID))"
     }

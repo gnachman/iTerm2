@@ -943,7 +943,8 @@ final class iTermWorkgroupInstance: NSObject {
         let tmuxBinding = TmuxWorkgroupBinding(leader: mainSession,
                                                workgroup: workgroup,
                                                instanceID: instanceUniqueIdentifier,
-                                               gitBase: CCGitBaseSelectorItem.defaultBase)
+                                               gitBase: CCGitBaseSelectorItem.defaultBase,
+                                               codeReviewModel: WorkgroupCodeReviewModelSelectorItem.defaultModelForNewWorkgroups)
         var peers: [String: iTermPromise<PTYSession>] = [:]
         peers[root.uniqueIdentifier] = iTermPromise<PTYSession>(value: mainSession)
         for peer in peerChildren {
@@ -1697,6 +1698,19 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
     }
 }
 
+extension iTermWorkgroupInstance {
+    // Rewrite a value in the instance's tmux record, if it has one and
+    // it's still this instance's to write: not after teardown, nor after
+    // another client ended it, either of which would put back a record
+    // that was just removed.
+    func updateTmuxRecord(_ change: @escaping (inout TmuxWorkgroupState.InstanceRecord) -> Void) {
+        guard let tmuxBinding, !didTeardown, !tmuxInstanceEndedElsewhere else {
+            return
+        }
+        tmuxBinding.updateRecord(change)
+    }
+}
+
 // Model selector picks from every toolbar (peer toolbars via their port's
 // pass-through) land here.
 extension iTermWorkgroupInstance: WorkgroupCodeReviewModelSelectorItemDelegate {
@@ -1704,12 +1718,18 @@ extension iTermWorkgroupInstance: WorkgroupCodeReviewModelSelectorItemDelegate {
                                   sender: WorkgroupCodeReviewModelSelectorItem) {
         RLog("iTermWorkgroupInstance.codeReviewModelDidChange \(model) owner=\(sender.ownerPeerID ?? "nil")")
         applyCodeReviewModel(model)
+        // Only a pick made here goes to the tmux record. A value restored
+        // from the record or from window restoration came from storage, and
+        // writing it back could undo another client's newer pick.
+        updateTmuxRecord { $0.codeReviewModel = model }
     }
 
     // Single source of truth for currentCodeReviewModel. Mirrors the value
     // into every model selector in the workgroup so siblings don't keep
     // showing a stale pick. Nothing restarts: running reviews keep their
-    // model and the next one picks up the new value.
+    // model and the next one picks up the new value. Writes nothing to
+    // the tmux record (see codeReviewModelDidChange), so adoption and
+    // restoration call it directly, as they set currentGitBase directly.
     func applyCodeReviewModel(_ model: String) {
         currentCodeReviewModel = model
         for port in allPeerPorts {
@@ -1753,6 +1773,9 @@ extension iTermWorkgroupInstance {
     func gitBaseChanged(_ base: String,
                         fromSender sender: CCGitBaseSelectorItem) {
         currentGitBase = base
+        // Without this the server keeps the base from when the
+        // workgroup was entered, and a reattach restores that.
+        updateTmuxRecord { $0.gitBase = base }
         // Sync every port's local cache + leaderScope, and mirror
         // the new value into every gitBaseSelector — peer-side via
         // applyGitBase, non-peer-side here. Without this fan-out,

@@ -54,10 +54,22 @@ final class TmuxWorkgroupAdoptionTests: XCTestCase {
     }
 
     private func adoption(_ workgroup: iTermWorkgroup, leader: Int, members: [String: Int] = [:],
-                          peers: [String: Int] = [:], active: String) -> A.Step {
+                          peers: [String: Int] = [:], active: String,
+                          codeReviewModel: String? = nil) -> A.Step {
         return .adopt(A.Adoption(instanceID: "I", workgroup: workgroup, gitBase: "main", leaderPaneID: leader,
                                  memberPaneIDsByConfigID: members, peerPaneIDsByConfigID: peers,
-                                 activeConfigID: active))
+                                 activeConfigID: active,
+                                 codeReviewModel: codeReviewModel))
+    }
+
+    // The adoption carries the record's code review model, so the adopting client restores it.
+    func testAdoptionCarriesTheRecordsModel() {
+        let local = workgroup("LOCAL", prefix: "L-")
+        var r = record(workgroup("REMOTE"))
+        r.codeReviewModel = "opus"
+        let d = derive(["I": r], panes: [S.Pane(paneID: 1, windowID: 1, tag: tag("I", 0))])
+        XCTAssertEqual(A.plan(derivation: d, localWorkgroups: [local], adoptedHere: []),
+                       [adoption(local, leader: 1, active: "L-ROOT", codeReviewModel: "opus")])
     }
 
     // MARK: - Parsing tmux's replies

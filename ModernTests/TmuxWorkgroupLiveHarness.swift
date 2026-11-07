@@ -526,6 +526,96 @@ final class TmuxWorkgroupLiveHarness: XCTestCase {
         }
     }
 
+    // Values changed after entry (the git base, the code review model) are rewritten into the
+    // record, so a client attaching later adopts the current ones. A client changing one value
+    // keeps another client's change to the other. Ending the instance removes the record, values
+    // and all.
+    func testUpdatedRecordValuesReachALaterClientAndGoAwayWithTheInstance() throws {
+        let a = try attach()
+        let leader = try server.int(["display", "-p", "-t", "s:0", "#{pane_id}"], prefix: "%")
+        let binding = try XCTUnwrap(TmuxWorkgroupBinding(gatewayProvider: { [weak a] in a?.gateway },
+                                                         sessionID: a.sessionID,
+                                                         workgroup: peersWorkgroup,
+                                                         instanceID: instance,
+                                                         gitBase: "main"))
+        binding.publish(leaderPaneID: leader)
+        let optionName = TmuxWorkgroupState.instanceOptionName(instanceID: instance)
+        func waitForRecord(_ matches: @escaping (TmuxWorkgroupState.InstanceRecord) -> Bool) {
+            let done = expectation(for: NSPredicate { _, _ in
+                guard let value = try? self.server.option(optionName),
+                      let record = TmuxWorkgroupState.InstanceRecord(encoded: value) else {
+                    return false
+                }
+                return matches(record)
+            }, evaluatedWith: nil)
+            wait(for: [done], timeout: 10)
+        }
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        waitForRecord { $0.codeReviewModel == "opus" }
+
+        // Another client, whose copy of the record predates the model change, changes the base.
+        let b = try attach()
+        let other = try XCTUnwrap(TmuxWorkgroupBinding(gatewayProvider: { [weak b] in b?.gateway },
+                                                       sessionID: b.sessionID,
+                                                       workgroup: peersWorkgroup,
+                                                       instanceID: instance,
+                                                       gitBase: "main",
+                                                       codeReviewModel: "sonnet"))
+        other.adoptLeader(paneID: leader)
+        other.updateRecord { $0.gitBase = "develop" }
+        waitForRecord { $0.gitBase == "develop" }
+
+        let c = try attach()
+        let record = try XCTUnwrap(derivation(c).instances.first?.record)
+        XCTAssertEqual(record.codeReviewModel, "opus")
+        XCTAssertEqual(record.gitBase, "develop")
+
+        binding.removeFromServer()
+        let gone = expectation(for: NSPredicate { _, _ in
+            (try? self.server.option(optionName)) == .some(nil)
+        }, evaluatedWith: nil)
+        wait(for: [gone], timeout: 10)
+        XCTAssertEqual(derivation(c).instances, [])
+    }
+
+    // The record is replaced only if it still has the value that was read, even for the largest
+    // shape a record holds, whose value appears twice in the command.
+    func testReplaceRecordIsACompareAndSetEvenForTheLargestRecord() throws {
+        let a = try attach()
+        func config(_ id: String, _ kind: iTermWorkgroupSessionConfig.Kind, parent: String?) -> iTermWorkgroupSessionConfig {
+            return iTermWorkgroupSessionConfig(uniqueIdentifier: id, parentID: parent, kind: kind, profileGUID: nil,
+                                               command: "", urlString: "", toolbarItems: [], displayName: id)
+        }
+        let tabs = (1..<TmuxWorkgroupState.Skeleton.maximumNodeCount).map { config("T\($0)", .tab, parent: "ROOT") }
+        let large = iTermWorkgroup(uniqueIdentifier: "WG", name: "W", sessions: [config("ROOT", .root, parent: nil)] + tabs)
+        let skeleton = try XCTUnwrap(TmuxWorkgroupState.Skeleton(workgroup: large))
+        let original = TmuxWorkgroupState.InstanceRecord(workgroupID: "WG", gitBase: "main", skeleton: skeleton)
+        var first = original
+        first.codeReviewModel = "opus"
+        var second = original
+        second.gitBase = "develop"
+        let optionName = TmuxWorkgroupState.instanceOptionName(instanceID: instance)
+        _ = sendList(a, [C.setRecord(sessionID: a.sessionID, instanceID: instance, record: original)])
+
+        let applied = try XCTUnwrap(C.replaceRecord(sessionID: a.sessionID, instanceID: instance,
+                                                    expected: original.encoded, record: first))
+        wait(for: [guarded(a, applied)], timeout: 10)
+        // Read before the first replace landed: stale now.
+        let stale = try XCTUnwrap(C.replaceRecord(sessionID: a.sessionID, instanceID: instance,
+                                                  expected: original.encoded, record: second))
+        wait(for: [guarded(a, stale)], timeout: 10)
+        XCTAssertEqual(a.outcomes, [.applied, .guardFailed])
+        XCTAssertEqual(try server.option(optionName), first.encoded)
+
+        // Gone: the replace doesn't bring it back.
+        _ = sendList(a, [C.unsetRecord(sessionID: a.sessionID, instanceID: instance)])
+        let afterRemoval = try XCTUnwrap(C.replaceRecord(sessionID: a.sessionID, instanceID: instance,
+                                                         expected: first.encoded, record: second))
+        wait(for: [guarded(a, afterRemoval)], timeout: 10)
+        XCTAssertEqual(a.outcomes.last, .guardFailed)
+        XCTAssertNil(try server.option(optionName))
+    }
+
     func testNoCrash() throws {
         let a = try attach()
         let leader = try publish(a)

@@ -277,31 +277,68 @@ enum TmuxWorkgroupState {
         var workgroupID: String
         var gitBase: String
         var skeleton: Skeleton
+        /// The model code reviews use (WorkgroupCodeReviewModelSelectorItem). Optional, and added
+        /// without a version bump, so records from before it existed still decode (as nil) and
+        /// older clients, which ignore unknown keys, still read records that have it.
+        ///
+        /// A new top-level value can be added the same way. Clients that rewrite the record
+        /// (TmuxWorkgroupBinding.updateRecord) keep top-level keys they don't know (see
+        /// unknownFields), so a value they can't read survives their writes. Builds before this
+        /// one never rewrite the record. Keys inside the skeleton are not kept, so a change there
+        /// needs a version bump, as a change of shape would anyway.
+        var codeReviewModel: String?
+        /// The top-level keys of the decoded record that this build doesn't know, as a JSON object,
+        /// written back by `encoded`. Nil if there were none.
+        private var unknownFields: Data? = nil
 
-        private enum CodingKeys: String, CodingKey {
+        private enum CodingKeys: String, CodingKey, CaseIterable {
             case version = "v"
             case workgroupID = "wg"
             case gitBase = "base"
             case skeleton = "skel"
+            case codeReviewModel = "crm"
         }
 
-        init(workgroupID: String, gitBase: String, skeleton: Skeleton) {
+        init(workgroupID: String, gitBase: String, skeleton: Skeleton, codeReviewModel: String? = nil) {
             self.version = TmuxWorkgroupState.currentVersion
             self.workgroupID = workgroupID
             self.gitBase = gitBase
             self.skeleton = skeleton
+            self.codeReviewModel = codeReviewModel
         }
 
         var encoded: String {
-            return TmuxWorkgroupState.encode(self, prefix: Self.prefix)
+            let known = TmuxWorkgroupState.encode(self, prefix: Self.prefix)
+            guard let unknownFields else {
+                return known
+            }
+            guard let knownJSON = TmuxWorkgroupState.hexDecoded(String(known.dropFirst(Self.prefix.count))),
+                  let knownObject = try? JSONSerialization.jsonObject(with: knownJSON) as? [String: Any],
+                  let unknownObject = try? JSONSerialization.jsonObject(with: unknownFields) as? [String: Any],
+                  let merged = try? JSONSerialization.data(withJSONObject: unknownObject.merging(knownObject) { _, ours in ours },
+                                                           options: [.sortedKeys, .withoutEscapingSlashes]) else {
+                it_fatalError("Failed to merge unknown fields into an instance record")
+            }
+            return Self.prefix + TmuxWorkgroupState.hexEncoded(merged)
         }
 
         /// Nil for garbage, hand edits, invalid skeletons, and versions other than ours (another
         /// client's newer format).
         init?(encoded: String) {
-            guard let record = TmuxWorkgroupState.decode(Self.self, from: encoded, prefix: Self.prefix),
+            guard var record = TmuxWorkgroupState.decode(Self.self, from: encoded, prefix: Self.prefix),
                   record.version == TmuxWorkgroupState.currentVersion else {
                 return nil
+            }
+            // decode checked the prefix and the hex, and the JSON is an object.
+            if let json = TmuxWorkgroupState.hexDecoded(String(encoded.dropFirst(Self.prefix.count))),
+               var object = try? JSONSerialization.jsonObject(with: json) as? [String: Any] {
+                for key in CodingKeys.allCases {
+                    object.removeValue(forKey: key.rawValue)
+                }
+                if !object.isEmpty {
+                    record.unknownFields = try? JSONSerialization.data(withJSONObject: object,
+                                                                       options: [.sortedKeys, .withoutEscapingSlashes])
+                }
             }
             self = record
         }

@@ -233,6 +233,43 @@ final class WorkgroupCodeReviewModelSelectorTests: XCTestCase {
     }
 }
 
+// The model in a tmux workgroup's record: only a pick made here writes it.
+final class TmuxWorkgroupCodeReviewModelTests: WorkgroupEntryTestBase {
+    private var tmux: TmuxRecordingGateway!
+
+    override func tearDown() {
+        tmux = nil
+        super.tearDown()
+    }
+
+    // Restoring a value read from the record (adoption) or saved with the window doesn't write it
+    // back: the record may have a newer pick by another client by now, which this would undo.
+    // A pick in the toolbar does write it.
+    func testRestoringTheModelDoesNotWriteTheRecordButAPickDoes() throws {
+        let root = WGFix.makeRoot()
+        let wg = WGFix.wrap(name: "rootOnly", sessions: [root])
+        let instance = try XCTUnwrap(enterWorkgroup(wg))
+        tmux = TmuxRecordingGateway()
+        let gateway = tmux.gateway
+        let binding = try XCTUnwrap(TmuxWorkgroupBinding(gatewayProvider: { gateway }, sessionID: 4, workgroup: wg,
+                                                         instanceID: instance.instanceUniqueIdentifier,
+                                                         gitBase: "main"))
+        binding.adoptLeader(paneID: 0)
+        instance.tmuxBinding = binding
+        let before = tmux.written.count
+
+        instance.applyCodeReviewModel("opus")
+        XCTAssertEqual(instance.currentCodeReviewModel, "opus")
+        XCTAssertEqual(tmux.written.count, before)
+
+        let item = WorkgroupCodeReviewModelSelectorItem(identifier: "m", priority: 1)
+        instance.codeReviewModelDidChange(model: "sonnet", sender: item)
+        XCTAssertEqual(instance.currentCodeReviewModel, "sonnet")
+        XCTAssertEqual(Array(tmux.written.dropFirst(before)),
+                       [TmuxWorkgroupCommands.showRecord(sessionID: 4, instanceID: instance.instanceUniqueIdentifier)])
+    }
+}
+
 private extension NSView {
     var subviewsRecursive: [NSView] {
         return subviews + subviews.flatMap { $0.subviewsRecursive }

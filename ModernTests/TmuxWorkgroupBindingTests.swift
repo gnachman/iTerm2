@@ -50,6 +50,209 @@ final class TmuxWorkgroupBindingTests: XCTestCase {
         ])
     }
 
+    private func record(gitBase: String = "main", codeReviewModel: String? = nil,
+                        workgroupID: String = "WG") throws -> TmuxWorkgroupState.InstanceRecord {
+        return TmuxWorkgroupState.InstanceRecord(workgroupID: workgroupID, gitBase: gitBase,
+                                                 skeleton: try XCTUnwrap(TmuxWorkgroupState.Skeleton(workgroup: workgroup)),
+                                                 codeReviewModel: codeReviewModel)
+    }
+
+    private var showRecord: String {
+        return C.showRecord(sessionID: 4, instanceID: "INSTANCE")
+    }
+
+    private func replaceRecord(expected: TmuxWorkgroupState.InstanceRecord,
+                               with record: TmuxWorkgroupState.InstanceRecord) throws -> String {
+        return try XCTUnwrap(C.replaceRecord(sessionID: 4, instanceID: "INSTANCE",
+                                             expected: expected.encoded, record: record))
+    }
+
+    // Answers a guarded command: the `if`, then the branch that ran.
+    private func replyToGuard(applied: Bool) {
+        tmux.reply()
+        tmux.reply(applied ? [] : [C.guardFailedMarker])
+    }
+
+    private func publish() {
+        binding.publish(leaderPaneID: 0)
+        tmux.reply()
+        tmux.reply()
+    }
+
+    // A change once the record is on the server reads it back and writes it with the change, if
+    // it still has the value that was read.
+    func testUpdateRecordRewritesThePublishedRecord() throws {
+        publish()
+        let published = tmux.written.count
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        XCTAssertEqual(Array(tmux.written.dropFirst(published)), [showRecord])
+        tmux.reply([try record().encoded])
+        XCTAssertEqual(Array(tmux.written.dropFirst(published)), [
+            showRecord,
+            try replaceRecord(expected: try record(), with: try record(codeReviewModel: "opus")),
+        ])
+        replyToGuard(applied: true)
+        XCTAssertEqual(tmux.written.count, published + 2)
+    }
+
+    // Another client changed a different field since this one last wrote. Only this client's
+    // field changes; theirs stays.
+    func testUpdateRecordKeepsAnotherClientsChange() throws {
+        publish()
+        binding.updateRecord { $0.codeReviewModel = "sonnet" }
+        tmux.reply([try record().encoded])
+        replyToGuard(applied: true)
+        let before = tmux.written.count
+        binding.updateRecord { $0.gitBase = "develop" }
+        // Meanwhile another client set the model to opus.
+        tmux.reply([try record(codeReviewModel: "opus").encoded])
+        XCTAssertEqual(Array(tmux.written.dropFirst(before)), [
+            showRecord,
+            try replaceRecord(expected: try record(codeReviewModel: "opus"),
+                              with: try record(gitBase: "develop", codeReviewModel: "opus")),
+        ])
+    }
+
+    // Another client changed the record between this one's read and its write: the guard fails,
+    // and the change is applied again to a fresh read.
+    func testUpdateRecordKeepsANewerClientsField() throws {
+        publish()
+        binding.updateRecord { $0.gitBase = "develop" }
+        // The record as a newer client wrote it, with a key this build doesn't know.
+        let ours = try XCTUnwrap(TmuxWorkgroupState.hexDecoded(String(try record().encoded.dropFirst(2))))
+        var newer = try XCTUnwrap(try JSONSerialization.jsonObject(with: ours) as? [String: Any])
+        newer["future"] = "kept"
+        let raw = "g_" + TmuxWorkgroupState.hexEncoded(try JSONSerialization.data(withJSONObject: newer, options: .sortedKeys))
+        tmux.reply([raw])
+        var expected = try XCTUnwrap(TmuxWorkgroupState.InstanceRecord(encoded: raw))
+        expected.gitBase = "develop"
+        XCTAssertEqual(tmux.written.last,
+                       try XCTUnwrap(C.replaceRecord(sessionID: 4, instanceID: "INSTANCE", expected: raw, record: expected)))
+        XCTAssertTrue(expected.encoded.contains(TmuxWorkgroupState.hexEncoded(Data(#""future":"kept""#.utf8))))
+    }
+
+    func testRecordChangedBetweenReadAndWriteIsReadAgain() throws {
+        publish()
+        binding.updateRecord { $0.gitBase = "develop" }
+        tmux.reply([try record().encoded])
+        let firstWrite = tmux.written.count
+        replyToGuard(applied: false)
+        XCTAssertEqual(Array(tmux.written.dropFirst(firstWrite)), [showRecord])
+        tmux.reply([try record(codeReviewModel: "opus").encoded])
+        XCTAssertEqual(tmux.written.last,
+                       try replaceRecord(expected: try record(codeReviewModel: "opus"),
+                                         with: try record(gitBase: "develop", codeReviewModel: "opus")))
+    }
+
+    // Another client ended the instance between this one's read and its write: the guard fails,
+    // and the fresh read finds no record, so nothing brings it back.
+    func testRecordRemovedBetweenReadAndWriteStaysRemoved() throws {
+        publish()
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        tmux.reply([try record().encoded])
+        replyToGuard(applied: false)
+        tmux.reply([""])
+        XCTAssertEqual(tmux.written.last, showRecord)
+    }
+
+    // Other clients keep winning: give up rather than retry forever.
+    func testUpdateRecordGivesUpAfterRepeatedConflicts() throws {
+        publish()
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        for _ in 0..<3 {
+            tmux.reply([try record().encoded])
+            replyToGuard(applied: false)
+        }
+        XCTAssertNotEqual(tmux.written.last, showRecord)
+        let afterGivingUp = tmux.written.count
+        // A later change starts afresh.
+        binding.updateRecord { $0.gitBase = "develop" }
+        XCTAssertEqual(Array(tmux.written.dropFirst(afterGivingUp)), [showRecord])
+    }
+
+    // A second change while the first is in flight waits for the first's write, so its read sees
+    // it, and both changes land.
+    func testUpdatesInQuickSuccessionBothLand() throws {
+        publish()
+        let published = tmux.written.count
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        binding.updateRecord { $0.gitBase = "develop" }
+        XCTAssertEqual(Array(tmux.written.dropFirst(published)), [showRecord])
+        tmux.reply([try record().encoded])
+        replyToGuard(applied: true)
+        XCTAssertEqual(Array(tmux.written.dropFirst(published)), [
+            showRecord,
+            try replaceRecord(expected: try record(), with: try record(codeReviewModel: "opus")),
+            showRecord,
+        ])
+        tmux.reply([try record(codeReviewModel: "opus").encoded])
+        XCTAssertEqual(tmux.written.last,
+                       try replaceRecord(expected: try record(codeReviewModel: "opus"),
+                                         with: try record(gitBase: "develop", codeReviewModel: "opus")))
+    }
+
+    // Already the server's value: nothing to write.
+    func testUpdateRecordWithNoChangeWritesNothing() throws {
+        publish()
+        binding.updateRecord { $0.gitBase = "main" }
+        let read = tmux.written.count
+        tmux.reply([try record().encoded])
+        XCTAssertEqual(tmux.written.count, read)
+    }
+
+    // A record that's gone ended elsewhere; writing would bring it back.
+    func testUpdateRecordWritesNothingWhenTheRecordIsGone() {
+        publish()
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        let read = tmux.written.count
+        tmux.reply([""])
+        XCTAssertEqual(tmux.written.count, read)
+    }
+
+    // Before publish, writing would leave a record with no tagged leader, which other clients
+    // remove as ended. The change waits for publish instead.
+    func testUpdateRecordBeforePublishWaitsForIt() throws {
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        XCTAssertEqual(tmux.written, [])
+        binding.publish(leaderPaneID: 0)
+        XCTAssertEqual(tmux.written, [
+            C.setRecord(sessionID: 4, instanceID: "INSTANCE", record: try record(codeReviewModel: "opus")) + "; " +
+            C.tagPane(paneID: 0, tag: TmuxWorkgroupState.PaneTag(instanceID: "INSTANCE", position: 0)),
+        ])
+    }
+
+    // Once removal starts, a write would bring the record back.
+    func testUpdateRecordAfterRemovalStartsWritesNothing() {
+        binding.publish(leaderPaneID: 0)
+        binding.removeFromServer()
+        let removing = tmux.written.count
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        XCTAssertEqual(tmux.written.count, removing)
+    }
+
+    // Removal that starts while the record is being read stops the write.
+    func testRemovalDuringTheReadWritesNothing() throws {
+        publish()
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        binding.removeFromServer()
+        let removing = tmux.written.count
+        tmux.reply([try record().encoded])
+        XCTAssertEqual(tmux.written.count, removing)
+    }
+
+    // An adopted binding rewrites the server's record, so the workgroup ID there, a hint other
+    // clients rely on, stays as it was rather than becoming this client's workgroup's ID.
+    func testAdoptedBindingKeepsTheRecordsWorkgroupID() throws {
+        binding.adoptLeader(paneID: 0)
+        binding.updateRecord { $0.codeReviewModel = "opus" }
+        let theirs = try record(codeReviewModel: "sonnet", workgroupID: "THEIRS")
+        tmux.reply([theirs.encoded])
+        XCTAssertEqual(tmux.written, [
+            showRecord,
+            try replaceRecord(expected: theirs, with: try record(codeReviewModel: "opus", workgroupID: "THEIRS")),
+        ])
+    }
+
     // Ask for the parent's directory, then split there running the command and tag the new pane,
     // in one list.
     func testCreateSplit() {

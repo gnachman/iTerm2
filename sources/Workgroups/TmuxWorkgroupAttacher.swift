@@ -352,6 +352,9 @@ final class TmuxWorkgroupAttacher: NSObject {
             RLog("TmuxWorkgroupAttacher: could not adopt \(instanceID)")
             return
         }
+        if let model = adoption.codeReviewModel {
+            instance.applyCodeReviewModel(model)
+        }
         instance.provenance = "Adopted from tmux session \(controller.sessionName ?? "") when iTerm2 attached to it."
         for (configID, session) in members.merging(peers, uniquingKeysWith: { first, _ in first }) {
             if let config = adoption.workgroup.session(withUniqueIdentifier: configID) {

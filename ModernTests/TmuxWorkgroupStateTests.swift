@@ -239,6 +239,57 @@ final class TmuxWorkgroupStateTests: XCTestCase {
         assertSafe(record.encoded, prefix: "g_")
     }
 
+    func testRecordWithACodeReviewModelRoundTrips() throws {
+        var withModel = record
+        withModel.codeReviewModel = "opus"
+        XCTAssertEqual(try XCTUnwrap(S.InstanceRecord(encoded: withModel.encoded)).codeReviewModel, "opus")
+        assertSafe(withModel.encoded, prefix: "g_")
+    }
+
+    // A record written before the field existed still decodes, with no model.
+    func testRecordWithoutACodeReviewModelDecodes() throws {
+        let decoded = try XCTUnwrap(S.InstanceRecord(encoded: rawRecord(skeleton: #"{"k":"root","m":"regular"}"#)))
+        XCTAssertNil(decoded.codeReviewModel)
+    }
+
+    // The field is added without a version bump, which relies on decoding ignoring keys it
+    // doesn't know: that is how a client that predates a field reads a record that has it.
+    func testRecordWithAnUnknownKeyDecodes() {
+        let raw = "g_" + hex(#"{"v":1,"wg":"WG","base":"main","skel":{"k":"root","m":"regular"},"future":1}"#)
+        XCTAssertNotNil(S.InstanceRecord(encoded: raw))
+    }
+
+    private func jsonObject(_ encoded: String) throws -> NSDictionary {
+        let json = try XCTUnwrap((String(encoded.dropFirst(2)) as NSString).dataFromHexValues())
+        return try XCTUnwrap(try JSONSerialization.jsonObject(with: json) as? NSDictionary)
+    }
+
+    // A newer client's top-level keys survive this one changing the record and writing it back,
+    // with whatever JSON they hold. This client's own values win.
+    func testRewritingARecordKeepsKeysItDoesNotKnow() throws {
+        let raw = "g_" + hex(#"{"v":1,"wg":"WG","base":"main","skel":{"k":"root","m":"regular"},"#
+                             + #""future":{"list":[1,2.5,true,null,"a/b"]},"later":"x"}"#)
+        var decoded = try XCTUnwrap(S.InstanceRecord(encoded: raw))
+        decoded.gitBase = "develop"
+        decoded.codeReviewModel = "opus"
+        let rewritten = decoded.encoded
+        assertSafe(rewritten, prefix: "g_")
+        XCTAssertEqual(try jsonObject(rewritten), [
+            "v": 1, "wg": "WG", "base": "develop", "crm": "opus",
+            "skel": ["k": "root", "m": "regular"],
+            "future": ["list": [1, 2.5, true, NSNull(), "a/b"]],
+            "later": "x",
+        ] as NSDictionary)
+        let reread = try XCTUnwrap(S.InstanceRecord(encoded: rewritten))
+        XCTAssertEqual(reread, decoded)
+        XCTAssertEqual(try jsonObject(reread.encoded), try jsonObject(rewritten))
+    }
+
+    // Without unknown keys, the encoding is exactly what it was.
+    func testRecordWithNoUnknownKeysEncodesAsBefore() throws {
+        XCTAssertEqual(try XCTUnwrap(S.InstanceRecord(encoded: record.encoded)).encoded, record.encoded)
+    }
+
     // Commands, names and anything else private never reach tmux.
     func testRecordHoldsNothingPrivate() throws {
         let secret = iTermWorkgroup(uniqueIdentifier: "WG", name: "SECRET-NAME", sessions: [

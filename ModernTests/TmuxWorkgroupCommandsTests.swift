@@ -321,6 +321,21 @@ final class TmuxWorkgroupCommandsTests: XCTestCase {
                        "set -u -t $2 \(TmuxWorkgroupState.instanceOptionName(instanceID: "I"))")
     }
 
+    // The record is replaced only if it still has the value that was read. A value that isn't a
+    // record is never echoed into the command.
+    func testReplaceRecord() {
+        let skeleton = TmuxWorkgroupState.Skeleton(root: .init(kind: .root, mode: .regular, children: []))!
+        let old = TmuxWorkgroupState.InstanceRecord(workgroupID: "W", gitBase: "main", skeleton: skeleton)
+        let new = TmuxWorkgroupState.InstanceRecord(workgroupID: "W", gitBase: "develop", skeleton: skeleton)
+        let name = TmuxWorkgroupState.instanceOptionName(instanceID: "I")
+        XCTAssertEqual(C.replaceRecord(sessionID: 2, instanceID: "I", expected: old.encoded, record: new),
+                       "if -F -t $2 '#{==:#{\(name)},\(old.encoded)}' " +
+                       "'set -t $2 \(name) \(new.encoded)' 'display -p \(C.guardFailedMarker)'")
+        for bad in ["", "g_", "g_ZZ", "g_00'; kill-server; '", old.encoded.uppercased(), "x" + old.encoded] {
+            XCTAssertNil(C.replaceRecord(sessionID: 2, instanceID: "I", expected: bad, record: new), bad)
+        }
+    }
+
     // MARK: - Client identity
 
     func testIdentityParsing() {

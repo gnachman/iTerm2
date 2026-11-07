@@ -113,6 +113,8 @@ enum TmuxWorkgroupAdoption {
         var activeConfigID: String
         /// For each nested group with a member in view, by its host's config ID, that member.
         var nestedActiveConfigIDs: [String: String] = [:]
+        /// From the record. Nil when it predates the field.
+        var codeReviewModel: String? = nil
     }
 
     enum Step: Equatable {
@@ -200,6 +202,7 @@ enum TmuxWorkgroupAdoption {
                                memberPaneIDsByConfigID: members,
                                peerPaneIDsByConfigID: peers,
                                activeConfigID: configIDs[leadersGroup?.visible ?? 0],
-                               nestedActiveConfigIDs: nestedActive))
+                               nestedActiveConfigIDs: nestedActive,
+                               codeReviewModel: instance.record.codeReviewModel))
     }
 }

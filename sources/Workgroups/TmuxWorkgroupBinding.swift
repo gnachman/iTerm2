@@ -17,7 +17,9 @@ final class TmuxWorkgroupBinding {
     private let gatewayProvider: () -> TmuxGateway?
     let sessionID: Int
     let instanceID: String
-    private let record: TmuxWorkgroupState.InstanceRecord
+    // What publish writes. Once the record is on the server, that copy is the truth: other clients
+    // change it too, so updateRecord changes the server's copy rather than writing this one.
+    private var record: TmuxWorkgroupState.InstanceRecord
     private let configIDsByPosition: [String]
     private let workgroup: iTermWorkgroup
     private(set) var leaderPaneID: Int?
@@ -35,8 +37,20 @@ final class TmuxWorkgroupBinding {
     /// (PaneTag.waiting).
     private var paneForPosition = [Int: Int]()
     private var waitingPaneIDs = Set<Int>()
+    // Set once this client starts removing the instance from the server, after which updateRecord
+    // must not write: that would bring the record back.
+    private var isBeingRemoved = false
+    // Changes waiting for the record to be read, and whether a read is outstanding. See
+    // updateRecord.
+    private var pendingRecordChanges = [(inout TmuxWorkgroupState.InstanceRecord) -> Void]()
+    private var isRewritingRecord = false
 
-    convenience init?(leader: PTYSession, workgroup: iTermWorkgroup, instanceID: String, gitBase: String) {
+    /// - Parameter codeReviewModel: Stored in the record so an adopting client gets it back.
+    convenience init?(leader: PTYSession,
+                      workgroup: iTermWorkgroup,
+                      instanceID: String,
+                      gitBase: String,
+                      codeReviewModel: String? = nil) {
         guard leader.isTmuxClient,
               let controller = leader.tmuxController,
               let gateway = controller.gateway,
@@ -47,7 +61,8 @@ final class TmuxWorkgroupBinding {
                   sessionID: Int(controller.sessionId),
                   workgroup: workgroup,
                   instanceID: instanceID,
-                  gitBase: gitBase)
+                  gitBase: gitBase,
+                  codeReviewModel: codeReviewModel)
         self.controller = controller
     }
 
@@ -55,7 +70,8 @@ final class TmuxWorkgroupBinding {
           sessionID: Int,
           workgroup: iTermWorkgroup,
           instanceID: String,
-          gitBase: String) {
+          gitBase: String,
+          codeReviewModel: String? = nil) {
         guard let skeleton = TmuxWorkgroupState.Skeleton(workgroup: workgroup),
               let ids = TmuxWorkgroupState.Skeleton.configIDsByPosition(in: workgroup) else {
             RLog("TmuxWorkgroupBinding: workgroup \(workgroup.uniqueIdentifier) has no storable shape")
@@ -66,7 +82,8 @@ final class TmuxWorkgroupBinding {
         self.instanceID = instanceID
         record = TmuxWorkgroupState.InstanceRecord(workgroupID: workgroup.uniqueIdentifier,
                                                    gitBase: gitBase,
-                                                   skeleton: skeleton)
+                                                   skeleton: skeleton,
+                                                   codeReviewModel: codeReviewModel)
         configIDsByPosition = ids
         self.workgroup = workgroup
     }
@@ -100,6 +117,99 @@ final class TmuxWorkgroupBinding {
         let tag = TmuxWorkgroupState.PaneTag(instanceID: instanceID, position: 0)
         gateway?.sendList([TmuxWorkgroupCommands.setRecord(sessionID: sessionID, instanceID: instanceID, record: record),
                            TmuxWorkgroupCommands.tagPane(paneID: leaderPaneID, tag: tag)]) { _ in }
+    }
+
+    /// Changes a value in the instance record (git base, code review model) on the server, so a
+    /// client that adopts the instance later gets the current value. Every attached client may
+    /// change values, so the record is read back and the change applied to that copy: a change
+    /// to one field leaves the others as the server has them, whoever set them. Only values
+    /// change, never the skeleton, so this takes no lock; the write is a compare-and-set instead
+    /// (see rewriteRecordIfNeeded).
+    ///
+    /// Before publish/adoptLeader nothing is written, since a record with no tagged leader is one
+    /// other clients remove as ended (publish writes the changed record then). Nothing is written
+    /// once removal has started, nor if the record is gone, even if another client removed it
+    /// after it was read: either would bring it back.
+    func updateRecord(_ change: @escaping (inout TmuxWorkgroupState.InstanceRecord) -> Void) {
+        change(&record)
+        guard leaderPaneID != nil, !isBeingRemoved else {
+            return
+        }
+        pendingRecordChanges.append(change)
+        rewriteRecordIfNeeded()
+    }
+
+    /// How many times a change is read and written before giving up, when other clients keep
+    /// changing the record in between.
+    private static let maximumRecordRewriteAttempts = 3
+
+    /// One read and write at a time. tmux runs commands in order, so the next read, sent after
+    /// this write, sees it; reads sent together would each miss the other's change.
+    ///
+    /// The write is a compare-and-set: it happens only if the record still has the value that was
+    /// read. Otherwise another client changed it in between, and the changes are applied again to
+    /// a fresh read, or, if it ended the instance, dropped.
+    private func rewriteRecordIfNeeded(_ retried: [(inout TmuxWorkgroupState.InstanceRecord) -> Void] = [],
+                                       attempt: Int = 1) {
+        guard !isRewritingRecord, let gateway else {
+            return
+        }
+        let changes = retried + pendingRecordChanges
+        guard !changes.isEmpty else {
+            return
+        }
+        pendingRecordChanges = []
+        isRewritingRecord = true
+        gateway.send(TmuxWorkgroupCommands.showRecord(sessionID: sessionID, instanceID: instanceID)) { [weak self] reply in
+            guard let self else {
+                return
+            }
+            guard !self.isBeingRemoved,
+                  let reply,
+                  let current = TmuxWorkgroupState.InstanceRecord(encoded: reply) else {
+                RLog("TmuxWorkgroupBinding: record of \(self.instanceID) is gone or unreadable; not changing it")
+                self.finishRewritingRecord()
+                return
+            }
+            var updated = current
+            for change in changes {
+                change(&updated)
+            }
+            guard updated != current,
+                  let gateway = self.gateway,
+                  let command = TmuxWorkgroupCommands.replaceRecord(sessionID: self.sessionID,
+                                                                    instanceID: self.instanceID,
+                                                                    expected: reply,
+                                                                    record: updated) else {
+                self.finishRewritingRecord()
+                return
+            }
+            gateway.sendGuarded(command) { [weak self] outcome in
+                guard let self else {
+                    return
+                }
+                guard outcome == .guardFailed, !self.isBeingRemoved else {
+                    if outcome == .failed {
+                        RLog("TmuxWorkgroupBinding: rewriting the record of \(self.instanceID) failed")
+                    }
+                    self.finishRewritingRecord()
+                    return
+                }
+                guard attempt < Self.maximumRecordRewriteAttempts else {
+                    RLog("TmuxWorkgroupBinding: the record of \(self.instanceID) keeps changing; giving up on rewriting it")
+                    self.finishRewritingRecord()
+                    return
+                }
+                RLog("TmuxWorkgroupBinding: the record of \(self.instanceID) changed since it was read; reading it again")
+                self.isRewritingRecord = false
+                self.rewriteRecordIfNeeded(changes, attempt: attempt + 1)
+            }
+        }
+    }
+
+    private func finishRewritingRecord() {
+        isRewritingRecord = false
+        rewriteRecordIfNeeded()
     }
 
     /// For an instance adopted from the server: its record and tags are already there.
@@ -569,6 +679,7 @@ final class TmuxWorkgroupBinding {
             RLog("TmuxWorkgroupBinding: cannot remove instance \(instanceID) from the server: no gateway")
             return
         }
+        isBeingRemoved = true
         controller?.workgroupAttacher?.instanceIsBeingRemoved(instanceID)
         Self.removeFromServer(gateway: gateway, sessionID: sessionID, instanceID: instanceID, leaderPaneID: leaderPaneID)
     }
@@ -670,6 +781,9 @@ final class TmuxWorkgroupBinding {
     /// The instance that asks has usually ended here already and released this binding by the time
     /// tmux answers, so the answer is acted on with what is captured now, not through the binding.
     func removeFromServerIfPaneIsGone(_ paneID: Int) {
+        // The instance has ended on this Mac either way; if the pane is still there, it is adopted
+        // again with a new binding.
+        isBeingRemoved = true
         let sessionID = self.sessionID
         let instanceID = self.instanceID
         let leaderPaneID = self.leaderPaneID
