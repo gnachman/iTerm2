@@ -21,6 +21,8 @@
 - (void)addSessionWithName:(NSString *)sessionName;
 - (void)attachToSessionWithNumber:(int)sessionNumber;
 - (NSNumber *)numberOfAttachedSession;
+// Sessions on the same tmux server that other connections are attached to.
+- (NSSet<NSNumber *> *)numbersOfSessionsAttachedByOtherConnections;
 - (void)selectedSessionDidChange;
 - (void)linkWindowId:(int)windowId
      inSessionNumber:(int)sourceSessionNumber
@@ -40,5 +42,7 @@
 - (void)setSessionObjects:(NSArray<iTermTmuxSessionObject *> *)names;
 - (void)selectSessionNumber:(int)number;
 - (void)endEditing;
+// Redraw the checkmarks after an attached session changes.
+- (void)reloadAttachmentIndicators;
 
 @end

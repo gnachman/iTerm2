@@ -18,6 +18,7 @@
 #import "iTermUserDefaults.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Global.h"
+#import "NSObject+iTerm.h"
 #import "TmuxSessionsTable.h"
 #import "TmuxController.h"
 #import "TSVParser.h"
@@ -39,6 +40,8 @@
     IBOutlet NSTextField *setting_;
     IBOutlet NSStepper *stepper_;
     IBOutlet NSButton *_openDashboardIfHiddenWindows;
+    // The connection whose sessions the sessions table is showing.
+    NSString *_sessionsTableClient;
 }
 
 + (TmuxDashboardController *)sharedInstance {
@@ -199,6 +202,37 @@
     return @([controller sessionId]);
 }
 
+- (NSSet<NSNumber *> *)numbersOfSessionsAttachedByOtherConnections {
+    TmuxController *current = [self tmuxController];
+    if (!current) {
+        return [NSSet set];
+    }
+    NSMutableSet<NSNumber *> *result = [NSMutableSet set];
+    for (TmuxController *other in [[TmuxControllerRegistry sharedInstance] allControllers]) {
+        if (other == current || other.detached) {
+            continue;
+        }
+        if (![TmuxDashboardController controller:other sharesServerWith:current]) {
+            continue;
+        }
+        [result addObject:@(other.sessionId)];
+    }
+    return result;
+}
+
+// Session numbers are only meaningful within one server, so another connection's attached session
+// is worth marking only when both connections are on the same one. The pid is learned
+// asynchronously after connecting and is 0 until then; don't guess before it's known.
++ (BOOL)controller:(TmuxController *)a sharesServerWith:(TmuxController *)b {
+    if (a.serverPid == 0 || a.serverPid != b.serverPid) {
+        return NO;
+    }
+    if (![NSObject object:a.serverSocketPath isEqualToObject:b.serverSocketPath]) {
+        return NO;
+    }
+    return [NSObject object:a.serverOriginIdentifier isEqualToObject:b.serverOriginIdentifier];
+}
+
 - (NSArray<iTermTmuxSessionObject *> *)sessionsTableModelValues:(id)sender {
     return [self.tmuxController sessionObjects];
 }
@@ -235,10 +269,16 @@
     if (!sessionNumber) {
         return;
     }
-    [[self tmuxController] listWindowsInSessionNumber:sessionNumber.intValue
-                                               target:self
-                                             selector:@selector(setWindows:forSession:)
-                                               object:[sessionsTable_ selectedSessionNumber]];
+    TmuxController *controller = [self tmuxController];
+    if (!controller || controller.detached) {
+        // listWindowsInSessionNumber: would never call back, so don't start the spinner.
+        return;
+    }
+    [windowsTable_ windowsWillLoad];
+    [controller listWindowsInSessionNumber:sessionNumber.intValue
+                                    target:self
+                                  selector:@selector(setWindows:forSession:)
+                                    object:sessionNumber];
 }
 
 - (void)setWindows:(TSVDocument *)doc forSession:(NSNumber *)sessionNumber {
@@ -358,6 +398,8 @@
 }
 
 - (void)tmuxControllerAttachedSessionChanged:(NSNotification *)notification {
+    // Any controller's attachment may affect the grayed checkmarks.
+    [sessionsTable_ reloadAttachmentIndicators];
     if ([[self window] isVisible]) {
         [sessionsTable_ selectSessionNumber:[[self tmuxController] sessionId]];
         [windowsTable_ updateEnabledStateOfButtons];
@@ -439,6 +481,13 @@
 
 - (IBAction)connectionSelectionDidChange:(id)sender {
     RLog(@"dashboard: connectionSelectionDidChange controller=%@", [self tmuxController]);
+    NSString *client = [self currentClient];
+    if (![NSObject object:client isEqualToObject:_sessionsTableClient]) {
+        // Clear first so a session number selected in the previous connection isn't carried over
+        // to an unrelated session with the same number in this one.
+        [sessionsTable_ setSessionObjects:@[]];
+        _sessionsTableClient = [client copy];
+    }
     [sessionsTable_ setSessionObjects:[[self tmuxController] sessionObjects]];
     [self reloadWindows];
 }

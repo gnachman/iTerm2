@@ -32,6 +32,8 @@ extern NSString *kWindowPasteboardType;
 @property (nonatomic, assign) id<TmuxWindowsTableProtocol> delegate;
 
 - (void)setWindows:(NSArray *)windows;
+// Shows a spinner until the next setWindows: if the table is empty.
+- (void)windowsWillLoad;
 - (void)setNameOfWindowWithId:(int)wid to:(NSString *)newName;
 - (NSArray<NSString *> *)names;
 - (void)updateEnabledStateOfButtons;

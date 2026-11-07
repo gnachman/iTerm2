@@ -7,6 +7,7 @@
 //
 
 #import "TmuxWindowsTable.h"
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "NSTextField+iTerm.h"
 
@@ -23,6 +24,7 @@ NSString *kWindowPasteboardType = @"com.googlecode.iterm2.kWindowPasteboardType"
     IBOutlet NSButton *openInWindowsButton_;
     IBOutlet NSButton *hideWindowButton_;
     IBOutlet NSSearchField *searchField_;
+    NSProgressIndicator *_spinner;
 }
 
 @synthesize delegate = delegate_;
@@ -39,10 +41,36 @@ NSString *kWindowPasteboardType = @"com.googlecode.iterm2.kWindowPasteboardType"
     [tableView_ setDraggingSourceOperationMask:NSDragOperationLink forLocal:NO];
     [tableView_ setTarget:self];
     [tableView_ setDoubleAction:@selector(didDoubleClickTableView:)];
+    [self addSpinner];
+}
+
+- (void)addSpinner {
+    NSScrollView *scrollView = tableView_.enclosingScrollView;
+    if (!scrollView.superview) {
+        return;
+    }
+    _spinner = [[NSProgressIndicator alloc] init];
+    _spinner.style = NSProgressIndicatorStyleSpinning;
+    _spinner.displayedWhenStopped = NO;
+    _spinner.translatesAutoresizingMaskIntoConstraints = NO;
+    [scrollView.superview addSubview:_spinner positioned:NSWindowAbove relativeTo:scrollView];
+    [NSLayoutConstraint activateConstraints:@[
+        [_spinner.centerXAnchor constraintEqualToAnchor:scrollView.centerXAnchor],
+        [_spinner.centerYAnchor constraintEqualToAnchor:scrollView.centerYAnchor] ]];
+}
+
+- (void)windowsWillLoad {
+    // Only when there's nothing to show. A refresh of a populated list keeps showing the old
+    // contents until the new ones arrive.
+    if (model_.count == 0) {
+        DLog(@"dashboard: start windows spinner");
+        [_spinner startAnimation:nil];
+    }
 }
 
 - (void)dealloc
 {
+    [_spinner release];
     [model_ release];
     [filteredModel_ release];
     [super dealloc];
@@ -56,6 +84,7 @@ NSString *kWindowPasteboardType = @"com.googlecode.iterm2.kWindowPasteboardType"
 
 - (void)setWindows:(NSArray *)windows
 {
+    [_spinner stopAnimation:nil];
     [model_ removeAllObjects];
     [model_ addObjectsFromArray:windows];
     [self resetFilteredModel];

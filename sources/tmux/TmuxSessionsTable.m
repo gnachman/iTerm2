@@ -18,6 +18,10 @@ extern NSString *kWindowPasteboardType;
 @implementation TmuxSessionsTable {
     NSMutableArray<iTermTmuxSessionObject *> *_model;
     BOOL canAttachToSelectedSession_;
+    // The session the user picked by clicking. Selections made by code, including the row
+    // NSTableView selects on its own because empty selection is disallowed, don't count.
+    NSNumber *_userSelectedSessionNumber;
+    BOOL _changingSelectionProgrammatically;
 
     IBOutlet NSTableColumn *checkColumn_;
     IBOutlet NSTableColumn *nameColumn_;
@@ -46,6 +50,7 @@ extern NSString *kWindowPasteboardType;
 
 - (void)dealloc {
     [_model release];
+    [_userSelectedSessionNumber release];
     [super dealloc];
 }
 
@@ -57,28 +62,72 @@ extern NSString *kWindowPasteboardType;
 - (void)setSessionObjects:(NSArray<iTermTmuxSessionObject *> *)sessions
 {
     RLog(@"dashboard: setSessionObjects:%@", sessions);
+    _changingSelectionProgrammatically = YES;
     // Reload in case a cell is being edited. Otherwise NSTableView asks for its row.
     [tableView_ reloadData];
     [_model removeAllObjects];
     [_model addObjectsFromArray:sessions];
     [tableView_ reloadData];
+    _changingSelectionProgrammatically = NO;
+
+    // Keep the session the user picked selected even if its row moved. Otherwise select the
+    // attached session (the one with the checkmark).
+    if (_userSelectedSessionNumber &&
+        [self indexOfSessionNumber:_userSelectedSessionNumber.intValue] != NSNotFound) {
+        DLog(@"dashboard: restore user selection %@", _userSelectedSessionNumber);
+        [self programmaticallySelectSessionNumber:_userSelectedSessionNumber.intValue];
+        return;
+    }
+    [_userSelectedSessionNumber release];
+    _userSelectedSessionNumber = nil;
+    NSNumber *attached = [delegate_ numberOfAttachedSession];
+    DLog(@"dashboard: select attached session %@", attached);
+    if (attached) {
+        [self programmaticallySelectSessionNumber:attached.intValue];
+    } else {
+        [self updateEnabledStateOfButtons];
+    }
+}
+
+- (NSInteger)indexOfSessionNumber:(int)number {
+    return [_model indexOfObjectPassingTest:^BOOL(iTermTmuxSessionObject * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj.number == number;
+    }];
 }
 
 - (void)selectSessionNumber:(int)number {
+    // The caller is following the attached session, which supersedes what the user picked.
+    [_userSelectedSessionNumber release];
+    _userSelectedSessionNumber = nil;
+    [self programmaticallySelectSessionNumber:number];
+}
+
+- (void)programmaticallySelectSessionNumber:(int)number {
     DLog(@"dashboard: Select session %@", @(number));
 
-    NSInteger i = [_model indexOfObjectPassingTest:^BOOL(iTermTmuxSessionObject * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return obj.number == number;
-    }];
+    // If more than one row matches, this picks the first.
+    const NSInteger i = [self indexOfSessionNumber:number];
     if (i != NSNotFound) {
+        _changingSelectionProgrammatically = YES;
         [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:i]
                 byExtendingSelection:NO];
+        _changingSelectionProgrammatically = NO;
+        [tableView_ scrollRowToVisible:i];
     }
     [self updateEnabledStateOfButtons];
 }
 
 - (void)endEditing {
     [tableView_ reloadData];
+}
+
+- (void)reloadAttachmentIndicators {
+    const NSUInteger column = [tableView_.tableColumns indexOfObject:checkColumn_];
+    if (column == NSNotFound) {
+        return;
+    }
+    [tableView_ reloadDataForRowIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, _model.count)]
+                          columnIndexes:[NSIndexSet indexSetWithIndex:column]];
 }
 
 - (IBAction)addSession:(id)sender
@@ -126,6 +175,10 @@ extern NSString *kWindowPasteboardType;
     if (aTableColumn == checkColumn_) {
         if ([[delegate_ numberOfAttachedSession] isEqual:@(sessionObject.number)]) {
             return @"✓";
+        } else if ([[delegate_ numbersOfSessionsAttachedByOtherConnections] containsObject:@(sessionObject.number)]) {
+            // Grayed: attached, but by a different connection than the one shown.
+            return [[[NSAttributedString alloc] initWithString:@"✓"
+                                                    attributes:@{ NSForegroundColorAttributeName: [NSColor tertiaryLabelColor] }] autorelease];
         } else {
             return @"";
         }
@@ -155,6 +208,11 @@ extern NSString *kWindowPasteboardType;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
+    if (!_changingSelectionProgrammatically) {
+        [_userSelectedSessionNumber release];
+        _userSelectedSessionNumber = [[self selectedSessionNumber] retain];
+        DLog(@"dashboard: user selected session %@", _userSelectedSessionNumber);
+    }
     [self updateEnabledStateOfButtons];
     [delegate_ selectedSessionDidChange];
 }

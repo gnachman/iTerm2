@@ -402,6 +402,11 @@ Improvements:
   newline instead of collapsing the note. Press
   Escape to collapse it and return to the
   terminal.
+- The tmux Dashboard now selects the session
+  you’re attached to when it opens, shows a
+  spinner while it loads the list of windows,
+  and shows a gray checkmark next to sessions
+  that another tmux connection is attached to.
 - The “Show status in tab subtitle” checkbox in
   the Session Status tool’s settings is now
   “Show status on tabs”. Turning it off hides
