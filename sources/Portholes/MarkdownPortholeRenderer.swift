@@ -30,8 +30,13 @@ class MarkdownPortholeRenderer {
                                  textColor: NSColor,
                                  backgroundColor: NSColor,
                                  imageLoader: MarkdownImageLoader?) -> NSAttributedString {
-        let preprocessed = MarkdownPreprocessor.process(markdown)
-        let md = SwiftyMarkdown(string: preprocessed.text)
+        let preprocessor = MarkdownPreprocessor(markdown)
+        let md = SwiftyMarkdown(string: preprocessor.text)
+        // Markdown files are hard-wrapped, so their lines reflow.
+        md.softBreakStyle = .space
+        md.inlineTransform = { [weak md] source in
+            preprocessor.transformInline(source, references: md?.linkReferences ?? [:])
+        }
         md.code.fontName = font.fontName
         md.bullet = "•"
 
@@ -48,14 +53,16 @@ class MarkdownPortholeRenderer {
         md.tableHeader.color = textColor
         md.tableCell.color = textColor
 
+        // The preprocessor collects images while SwiftyMarkdown renders.
+        let rendered = md.attributedString()
         let styler = MarkdownPortholeStyler(points: points,
                                             bodyFont: NSFont.systemFont(ofSize: points),
                                             codeFont: font,
                                             textColor: textColor,
                                             backgroundColor: backgroundColor,
-                                            images: preprocessed.images,
+                                            images: preprocessor.images,
                                             imageLoader: imageLoader)
-        return styler.style(md.attributedString())
+        return styler.style(rendered)
     }
 
     init(_ text: String) {

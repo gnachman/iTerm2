@@ -282,7 +282,7 @@ class RegularMessageCellView: MessageCellView, ChatFindableCellView {
     override func copyMenuItemClicked(_ sender: Any) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(textLabel.string, forType: .string)
+        pasteboard.setString(textLabel.attributedString().plainTextForPasteboard, forType: .string)
     }
 
     // The order here must match the segment order produced by

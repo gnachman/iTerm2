@@ -139,21 +139,28 @@ final class StreamedMarkdownCodeBlockTests: XCTestCase {
         XCTAssertEqual(runs(withSpaces), runs(clean))
     }
 
-    func test_sanitizeMarkdownLines() {
-        XCTAssertEqual(sanitizeMarkdownLines("  ```bash  \nx\n``` "), "```bash\nx\n```")
-        XCTAssertEqual(sanitizeMarkdownLines("```\t\nx\n```\t"), "```\nx\n```")
-        // Info strings SwiftyMarkdown can't parse are dropped from the opener.
-        XCTAssertEqual(sanitizeMarkdownLines("```c++\nx\n```"), "```\nx\n```")
-        XCTAssertEqual(sanitizeMarkdownLines("```Swift\nx\n```"), "```\nx\n```")
-        XCTAssertEqual(sanitizeMarkdownLines("```foo bar\nx\n```"), "```\nx\n```")
-        // Not fences: text before the backticks, or a backtick in the info string.
-        XCTAssertEqual(sanitizeMarkdownLines("echo ```  "), "echo ```  ")
-        XCTAssertEqual(sanitizeMarkdownLines("```a`b"), "```a`b")
-        // Whitespace-only lines are blank outside code blocks only.
-        XCTAssertEqual(sanitizeMarkdownLines("a\n  \nb"), "a\n\nb")
-        XCTAssertEqual(sanitizeMarkdownLines("```\n  \n```\n\t"), "```\n  \n```\n")
-        // An opening fence inside a block is code and is left alone.
-        XCTAssertEqual(sanitizeMarkdownLines("```\n  ```bash \n```"), "```\n  ```bash \n```")
+    func test_fenceVariantsAreCode() {
+        // Indented, trailing whitespace, and any info string without a backtick.
+        for fenced in ["  ```bash  \nx\n``` ", "```\t\nx\n```\t", "```c++\nx\n```",
+                       "```Swift\nx\n```", "```foo bar\nx\n```", "~~~\nx\n~~~"] {
+            let rendered = render(fenced + "\n\nafter")
+            // The space after the copy button has the code block's style.
+            XCTAssertEqual(codeBlockText(rendered), " x", "\(fenced.debugDescription): \(runs(rendered))")
+            XCTAssertFalse(rendered.string.contains("`"), "\(fenced.debugDescription): \(runs(rendered))")
+        }
+    }
+
+    func test_linesThatAreNotFences() {
+        // Text before the backticks, or a backtick in a backtick fence's info string.
+        for text in ["echo ```  ", "```a`b"] {
+            let rendered = render(text + "\nafter")
+            XCTAssertFalse(runs(rendered).contains { $0.lineStyle == "codeblock" }, "\(text.debugDescription): \(runs(rendered))")
+        }
+    }
+
+    func test_openingFenceInsideCodeIsCode() {
+        let rendered = render("```\n  ```bash \n```\n\nafter")
+        XCTAssertEqual(codeBlockText(rendered), " " + "  ```bash ", "\(runs(rendered))")
     }
 
     func test_whitespaceOnlyLineDoesNotMakeHeading() {

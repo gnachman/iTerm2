@@ -430,7 +430,7 @@ extension TextViewPorthole: Porthole {
     func copy(as mode: PortholeCopyMode) {
         let ranges = textView.selectedRanges.map { $0.rangeValue }
         let attributedStrings = ranges.map { textView.attributedString().attributedSubstring(from: $0) }
-        let strings = attributedStrings.map { $0.string }
+        let strings = attributedStrings.map { $0.plainTextForPasteboard }
         let linesPerGroup = strings.map { string in
             return string.components(separatedBy: "\n").count
         }
@@ -463,8 +463,8 @@ extension TextViewPorthole: Porthole {
             pboard.writeObjects([combined])
 
         case .controlSequences:
-            let combined = attributedStrings.joined(separator: NSAttributedString(string: "\n",
-                                                                                  attributes: [:]))
+            let combined = attributedStrings.map(\.withLineSeparatorsAsNewlines).joined(separator: NSAttributedString(string: "\n",
+                                                                                                                   attributes: [:]))
             let string: String = combined.asStringWithControlSequences
             pboard.writeObjects([string as NSPasteboardWriting])
         }

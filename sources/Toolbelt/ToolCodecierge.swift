@@ -1198,6 +1198,22 @@ class ClickableTextView: NSTextView, NSTextStorageDelegate {
         it_fatalError("init(coder:) has not been implemented")
     }
 
+    // Line breaks in rendered Markdown are U+2028, which plain text needs as newlines.
+    // copy: calls this with writablePasteboardTypes, whose plain-text type is the
+    // legacy NSStringPboardType, so the plain text is replaced after super writes it.
+    override func writeSelection(to pboard: NSPasteboard, types: [NSPasteboard.PasteboardType]) -> Bool {
+        guard super.writeSelection(to: pboard, types: types) else {
+            return false
+        }
+        if pboard.string(forType: .string) != nil, let textStorage {
+            let plainText = selectedRanges.map {
+                textStorage.attributedSubstring(from: $0.rangeValue).plainTextForPasteboard
+            }.joined(separator: "\n")
+            pboard.setString(plainText, forType: .string)
+        }
+        return true
+    }
+
     override func mouseMoved(with event: NSEvent) {
         if overClickable(event: event) != nil || linkURLAt(event: event) != nil {
             NSCursor.pointingHand.set()

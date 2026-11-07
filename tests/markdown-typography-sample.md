@@ -111,6 +111,35 @@ List item with multiple paragraphs:
 
 2. Second item.
 
+Blocks inside list items (the code and the quote line up with the item text):
+
+1. Install it:
+
+   ```shell
+   make install
+   ```
+
+2. Read the note:
+
+   > Restart after installing.
+
+3. Done.
+
+Four levels of nesting:
+
+- Level one
+  - Level two
+    - Level three
+      - Level four
+
+A numbered list broken by a fence at the margin, as language models write it:
+
+1. Clone the repository:
+```shell
+git clone https://example.com/repo.git
+```
+2. Build it.
+
 ## Blockquotes
 
 > A single level blockquote that is long enough to wrap onto a second line in
@@ -304,5 +333,163 @@ Nerd Font glyphs should survive (they look like boxes without a Nerd Font):  
 |---|---|
 | `--verbose` | Prints a great deal of extra information about every step the program takes, which is useful when working out why something went wrong. The short columns should not break mid-word. |
 | `-q` | Quiet. |
+
+## Code at the margin in list items
+
+Models often indent a fence under a list item but put the code, or the closing
+fence, at the left margin. The code should stay with its item, and item 2 should
+follow it:
+
+1. Install it:
+   ```bash
+npm ci
+# then build (a shell comment, not a heading)
+- old line, as in a diff
+npm run build
+```
+2. Run it.
+
+Indentation inside such code should keep its shape:
+
+1. Define it:
+   ```python
+def f():
+    if x:
+        pass
+   ```
+2. Call it.
+
+A fence that is never closed ends with its item, so the next item should be
+item 2 and its code should be its own:
+
+1. First:
+   ```bash
+   cmd1
+2. Second:
+   ```bash
+   cmd2
+   ```
+
+Prose at the margin after a blank line ends the item, as on GitHub. The
+sentence below should be ordinary text and the Python block should be code:
+
+- step
+  ```
+  code
+
+This sentence should not be code.
+
+```python
+print(1)
+```
+
+## Nesting
+
+A quote inside a list item should line up with the item's text, and a quote
+after the list should be separate and at the margin:
+
+- An item
+
+  > A quote in the item.
+
+> A quote after the list.
+
+Everything inside a quote should be dimmed, including its list and heading:
+
+> Quoted text.
+>
+> - A quoted list item
+>
+> #### A quoted heading
+
+A table in a quote should keep the quote bar through it and after it:
+
+> Before the table.
+>
+> | a | b |
+> |---|---|
+> | 1 | 2 |
+>
+> After the table.
+
+A table and a rule in a list item should line up with the item's text:
+
+1. An item with a table:
+
+   | a | b |
+   |---|---|
+   | 1 | 2 |
+
+2. An item with a rule:
+
+   ***
+
+A list nested under a wide marker should be nested:
+
+10.   Ten
+    - Nested under ten
+
+Ordered task items should keep their numbers:
+
+1. [x] Done
+2. [ ] Not done
+
+## Blocks next to each other
+
+Two code blocks with no blank line between them should be separate boxes:
+
+```sh
+ls
+```
+```python
+print(1)
+```
+
+Two code blocks separated by a blank line should have a clear gap:
+
+```sh
+ls
+```
+
+```sh
+pwd
+```
+
+A table right after a code block should have the same gap:
+
+```sh
+ls
+```
+
+| a |
+|---|
+| 1 |
+
+An empty code block should still show as a box:
+
+```
+```
+
+## Inline and HTML details
+
+Back-to-back footnote definitions should each be their own line.[^2][^3]
+
+[^2]: The second note.
+[^3]: The third note.
+
+A trailing break tag should not add an empty line under this sentence.<br>
+
+<details>
+<summary>This summary should not start with a space</summary>
+</details>
+
+A reference link whose label has an underscore should work: [the docs][api_ref].
+
+[api_ref]: https://iterm2.com/
+
+A definition directly under a paragraph line shows as text, as on GitHub:
+[not_a_definition]: https://iterm2.com/
+
+Three tildes used to hang the renderer: this is ~~~very~~~ odd.
 
 Final paragraph after everything, to check bottom spacing.

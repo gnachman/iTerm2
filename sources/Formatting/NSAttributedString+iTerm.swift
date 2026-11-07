@@ -139,6 +139,30 @@ class AttributeToControlSequenceConverter {
 }
 
 extension NSAttributedString {
+    /// Rendered Markdown breaks lines inside a paragraph with U+2028. As plain text
+    /// those must be newlines, or they paste into a shell as an invisible character.
+    /// Only text SwiftyMarkdown rendered, which has a line style, is changed. In code,
+    /// and in text that isn't rendered Markdown, the character is the author's.
+    var withLineSeparatorsAsNewlines: NSAttributedString {
+        let result = NSMutableAttributedString(attributedString: self)
+        let string = result.string as NSString
+        var i = string.length - 1
+        while i >= 0 {
+            if string.character(at: i) == 0x2028,
+               let lineStyle = result.attribute(.swiftyMarkdownLineStyle, at: i, effectiveRange: nil) as? String,
+               lineStyle != "codeblock" {
+                result.replaceCharacters(in: NSRange(location: i, length: 1), with: "\n")
+            }
+            i -= 1
+        }
+        return result
+    }
+
+    /// Plain text to put on the pasteboard. See withLineSeparatorsAsNewlines.
+    var plainTextForPasteboard: String {
+        return withLineSeparatorsAsNewlines.string
+    }
+
     var asStringWithControlSequences: String {
         let string = self.string as NSString
         var result = ""

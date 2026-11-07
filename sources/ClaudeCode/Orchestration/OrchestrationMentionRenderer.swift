@@ -17,6 +17,7 @@
 
 import AppKit
 import Foundation
+import SwiftyMarkdown
 
 enum OrchestrationMentionRenderer {
     // The mention syntax itself lives in MentionParser, which is shared with
@@ -66,13 +67,14 @@ enum OrchestrationMentionRenderer {
     // Renders `markdown` with `render` and then links its mentions. Mentions
     // are shielded from the markdown pass (see MentionParser.protect) because
     // the "_" in a stableID can otherwise be eaten as an emphasis delimiter.
-    // `render` is expected to be SwiftyMarkdown-backed, which makes indented
-    // lines code blocks.
+    // `render` is expected to be SwiftyMarkdown-backed. Mentions in its code
+    // blocks are left alone.
     static func linkMarkdown(_ markdown: String,
                              linkColor: NSColor,
                              atSignOptional: Bool = false,
                              render: (String) -> NSAttributedString) -> NSAttributedString {
-        return link(restore(MentionParser.protect(markdown, indentedCodeBlocks: true), in: render),
+        let protected = MentionParser.protect(markdown, codeLines: { SwiftyMarkdown.codeLines(in: markdown) })
+        return link(restore(protected, in: render),
                     linkColor: linkColor,
                     atSignOptional: atSignOptional)
     }

@@ -122,48 +122,68 @@ enum MentionParser {
     /// a deliberately loose approximation of CommonMark; erring toward
     /// excluding a span only means a mention in it is no worse off than
     /// before protection existed.
-    private static let unprotectedSpanRegex = try! NSRegularExpression(
-        pattern: [
+    private static func spanRegex(includingFences: Bool) -> NSRegularExpression {
+        // The fence pattern's group comes first, so the inline code pattern's
+        // backreference depends on whether it's there.
+        let codeGroup = includingFences ? 2 : 1
+        let fence = [
             // Fenced block: through the matching closing fence, or to the end.
             "^[ \\t]{0,3}(`{3,}|~{3,}).*?(?:^[ \\t]{0,3}\\1|\\z)",
+        ]
+        let others = [
             // Inline code: a backtick run through the next run of equal length,
             // not crossing a blank line.
-            "(`+)(?:(?!\\n[ \\t]*\\n).)+?(?<!`)\\2(?!`)",
+            "(`+)(?:(?!\\n[ \\t]*\\n).)+?(?<!`)\\\(codeGroup)(?!`)",
             // Link destination: "](...)".
             "\\]\\([^)\\n]*\\)",
             // Autolink: "<scheme:...>".
             "<[A-Za-z][A-Za-z0-9+.-]*:[^<>\\s]*>",
             // Bare URL.
             "https?://[^\\s<>()]+",
-        ].joined(separator: "|"),
-        options: [.anchorsMatchLines, .dotMatchesLineSeparators])
+        ]
+        return try! NSRegularExpression(pattern: ((includingFences ? fence : []) + others).joined(separator: "|"),
+                                        options: [.anchorsMatchLines, .dotMatchesLineSeparators])
+    }
 
-    /// Lines SwiftyMarkdown (the Mac renderer) treats as code blocks: four
-    /// leading spaces, or a leading tab that isn't one of its tab-indented
-    /// list-item tokens ("\t- ", "\t* ", "\t1. ", and the "\t\t" forms),
-    /// which it matches first. It gives these lines a copy button too. The
-    /// phone's inline-only markdown has no such blocks, so this is opt-in.
-    private static let indentedCodeLineRegex = try! NSRegularExpression(
-        pattern: "^(?: {4}|\\t(?!\\t?(?:[-*] |1\\. )))[^\\n]*",
-        options: [.anchorsMatchLines])
+    private static let unprotectedSpanRegex = spanRegex(includingFences: true)
+    /// For a caller that knows the code lines exactly, which the loose fence
+    /// pattern can contradict (a fence in a list item ends with the item).
+    private static let unprotectedInlineSpanRegex = spanRegex(includingFences: false)
 
     /// Replaces every mention (including bare stableIDs) outside the spans
     /// described at `unprotectedSpanRegex` with a purely alphanumeric
     /// placeholder that has no markdown meaning. A random nonce keeps
     /// placeholders from colliding with anything already in the text, and the
-    /// trailing "Z" keeps one index from being a prefix of another. Pass
-    /// `indentedCodeBlocks: true` when the renderer treats indented lines as
-    /// code (see `indentedCodeLineRegex`) so those are left alone too.
-    static func protect(_ string: String, indentedCodeBlocks: Bool = false) -> Protected {
+    /// trailing "Z" keeps one index from being a prefix of another.
+    /// `codeLines` returns the zero-based numbers of lines the renderer shows as
+    /// code blocks (lines are separated by "\n", "\r\n", or "\r"), which are
+    /// left alone too, in place of the loose fence pattern. It's called only if
+    /// there are mentions, since finding code can mean parsing the whole message.
+    /// The Mac gets them from SwiftyMarkdown, which matches its rendering exactly;
+    /// the phone passes nil and relies on unprotectedSpanRegex.
+    static func protect(_ string: String, codeLines: (() -> IndexSet)? = nil) -> Protected {
         var found = mentions(in: string, atSignOptional: true)
         guard !found.isEmpty else {
             return Protected(text: string, substitutions: [])
         }
         let fullRange = NSRange(location: 0, length: (string as NSString).length)
-        let regexes = indentedCodeBlocks
-            ? [unprotectedSpanRegex, indentedCodeLineRegex]
-            : [unprotectedSpanRegex]
-        let unprotected = regexes.flatMap { $0.matches(in: string, range: fullRange).map(\.range) }
+        let code = codeLines?() ?? IndexSet()
+        let codeLineRanges = code.isEmpty ? [] : lineRanges(of: string).enumerated().compactMap { i, range in
+            code.contains(i) ? range : nil
+        }
+        let spanMatches: [NSRange]
+        if codeLines == nil {
+            spanMatches = unprotectedSpanRegex.matches(in: string, range: fullRange).map(\.range)
+        } else {
+            // Blank out the code lines so the inline code pattern can't pair a fence
+            // line with another block's. Same-length spaces keep the offsets valid.
+            let masked = NSMutableString(string: string)
+            for range in codeLineRanges {
+                masked.replaceCharacters(in: range, with: String(repeating: " ", count: range.length))
+            }
+            spanMatches = unprotectedInlineSpanRegex.matches(in: masked as String, range: fullRange).map(\.range)
+        }
+        let unprotected = spanMatches + codeLineRanges
         found.removeAll { mention in
             unprotected.contains { NSIntersectionRange($0, mention.range).length > 0 }
         }
@@ -179,6 +199,28 @@ enum MentionParser {
             result.replaceCharacters(in: mention.range, with: placeholder)
         }
         return Protected(text: result as String, substitutions: substitutions)
+    }
+
+    /// The range of each line, without its terminator, splitting at "\n",
+    /// "\r\n", and "\r".
+    private static func lineRanges(of string: String) -> [NSRange] {
+        let ns = string as NSString
+        var result = [NSRange]()
+        var start = 0
+        var i = 0
+        while i < ns.length {
+            let c = ns.character(at: i)
+            if c == 0x0A || c == 0x0D {
+                result.append(NSRange(location: start, length: i - start))
+                if c == 0x0D && i + 1 < ns.length && ns.character(at: i + 1) == 0x0A {
+                    i += 1
+                }
+                start = i + 1
+            }
+            i += 1
+        }
+        result.append(NSRange(location: start, length: ns.length - start))
+        return result
     }
 
     private static func hasLeftBoundary(before location: Int, in ns: NSString) -> Bool {

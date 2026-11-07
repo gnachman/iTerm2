@@ -488,7 +488,7 @@ class MultipartMessageCellView: MessageCellView, ChatFindableCellView {
     }
 
     override func copyMenuItemClicked(_ sender: Any) {
-        let allText = textViews.map { $0.string }.joined(separator: "\n\n")
+        let allText = textViews.map { $0.attributedString().plainTextForPasteboard }.joined(separator: "\n\n")
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(allText, forType: .string)

@@ -9,6 +9,7 @@
 //
 
 import XCTest
+import SwiftyMarkdown
 import AppKit
 @testable import iTerm2SharedARC
 
@@ -292,6 +293,11 @@ final class OrchestrationMentionRendererTests: XCTestCase {
 
     // MARK: - Markdown
 
+    // Protects mentions as the Mac does, leaving SwiftyMarkdown's code alone.
+    private func protectForMac(_ markdown: String) -> MentionParser.Protected {
+        return MentionParser.protect(markdown, codeLines: { SwiftyMarkdown.codeLines(in: markdown) })
+    }
+
     // Two stableIDs in one paragraph put an underscore before each body, which
     // markdown pairs up as emphasis delimiters. Without protection the
     // underscores are consumed and the ids render as dead "ptysXXXX" text.
@@ -312,6 +318,15 @@ final class OrchestrationMentionRendererTests: XCTestCase {
             AttributedStringForGPTMarkdown($0, linkColor: .blue, textColor: .black) {}
         }
         XCTAssertEqual(rendered.string, "bold @\(id)")
+    }
+
+    // Finding code lines parses the whole message, so it's skipped when there's nothing to protect.
+    func test_protect_noMentions_doesNotAskForCodeLines() {
+        let protected = MentionParser.protect("plain text", codeLines: {
+            XCTFail("Asked for code lines")
+            return IndexSet()
+        })
+        XCTAssertEqual(protected.text, "plain text")
     }
 
     func test_protect_noMentions_isIdentity() {
@@ -338,15 +353,15 @@ final class OrchestrationMentionRendererTests: XCTestCase {
         XCTAssertTrue(rendered.string.contains("--session @\(id) make"))
     }
 
-    // SwiftyMarkdown also makes a line indented by four spaces or a tab a code
-    // block with a copy button, nested list items included.
+    // SwiftyMarkdown makes a line indented by four spaces or a tab after a blank
+    // line an indented code block with a copy button.
     func test_protect_skipsIndentedCodeLines() {
         let id = StableSessionID.generate()
         for line in ["    it2 session send --session @\(id) make",
                      "\tit2 session send --session @\(id) make",
                      "    - ask @\(id) to rerun"] {
-            let markdown = "Steps:\n\(line)\nThen @\(id)"
-            let protected = MentionParser.protect(markdown, indentedCodeBlocks: true)
+            let markdown = "Steps:\n\n\(line)\nThen @\(id)"
+            let protected = protectForMac(markdown)
             XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"], line)
             XCTAssertTrue(protected.text.contains("\n\(line)\n"), line)
 
@@ -357,13 +372,65 @@ final class OrchestrationMentionRendererTests: XCTestCase {
         }
     }
 
-    // SwiftyMarkdown matches its tab-indented list tokens before the tab code
-    // rule, so those lines are prose and still get protected.
-    func test_protect_tabIndentedListItemsStillProtected() {
+    // An unclosed fence in a list item ends with the item, so prose after it is
+    // protected even though the loose fence pattern would run to the end.
+    func test_protect_proseAfterUnclosedFenceInListItem() {
+        let first = StableSessionID.generate()
+        let second = StableSessionID.generate()
+        let markdown = "- Run:\n  ```\n  make\n\nThen ask @\(first) and @\(second) to check"
+        let protected = protectForMac(markdown)
+        XCTAssertEqual(protected.substitutions.map(\.original).sorted(), ["@\(first)", "@\(second)"].sorted())
+    }
+
+    // Fence lines are backtick runs to the inline code pattern. With a blank line in
+    // the first block, its closer could pair with the next block's opener and
+    // swallow the prose between them.
+    func test_protect_proseBetweenCodeBlocks() {
+        let id = StableSessionID.generate()
+        let markdown = "```\na\n\nb\n```\nHey @\(id) see\n```\nc\n```"
+        let protected = protectForMac(markdown)
+        XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"])
+    }
+
+    // A fence in a nested list item is indented four or more columns, past what
+    // the fence pattern in unprotectedSpanRegex allows, but it's still code.
+    func test_protect_skipsFencedCodeInNestedListItem() {
+        let id = StableSessionID.generate()
+        let markdown = "1. Step\n   - Run:\n     ```\n     it2 session send --session @\(id) make\n     ```\n\nThen @\(id)"
+        let protected = protectForMac(markdown)
+        XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"])
+        XCTAssertTrue(protected.text.contains("--session @\(id) make"))
+    }
+
+    // Indented lines that aren't code (a nested list item, text continuing a
+    // paragraph or an item) are prose, so their mentions are protected.
+    func test_protect_indentedProseIsProtected() {
+        let first = StableSessionID.generate()
+        let second = StableSessionID.generate()
+        for markdown in ["1. Coordinate the work\n    - ask @\(first) and @\(second) to run the tests",
+                         "Steps:\n    ask @\(first) and @\(second) to run the tests",
+                         "- a\n\n    ask @\(first) and @\(second) to run the tests"] {
+            let protected = protectForMac(markdown)
+            XCTAssertEqual(protected.substitutions.map(\.original).sorted(), ["@\(first)", "@\(second)"].sorted(), markdown)
+            let rendered = OrchestrationMentionRenderer.restore(protected) {
+                AttributedStringForGPTMarkdown($0, linkColor: .blue, textColor: .black) {}
+            }
+            XCTAssertEqual(MentionParser.mentions(in: rendered.string).map(\.token), [first, second], markdown)
+        }
+    }
+
+    // A tab is four columns, so a list marker after a tab at the top level is
+    // indented code, as in CommonMark, and is left alone.
+    func test_protect_skipsTabIndentedListMarkersAtTopLevel() {
         let id = StableSessionID.generate()
         for line in ["\t- ask @\(id)", "\t* ask @\(id)", "\t1. ask @\(id)", "\t\t- ask @\(id)"] {
-            let protected = MentionParser.protect(line, indentedCodeBlocks: true)
-            XCTAssertEqual(protected.substitutions.map(\.original), ["@\(id)"], line)
+            let protected = protectForMac(line)
+            XCTAssertEqual(protected.substitutions.map(\.original), [], line)
+            let rendered = AttributedStringForGPTMarkdown(line, linkColor: .blue, textColor: .black) {}
+            let style = rendered.attribute(NSAttributedString.Key("swiftyMarkdownLineStyle"),
+                                           at: rendered.length - 1,
+                                           effectiveRange: nil) as? String
+            XCTAssertEqual(style, "codeblock", line)
         }
     }
 

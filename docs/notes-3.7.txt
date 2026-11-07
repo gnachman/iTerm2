@@ -755,13 +755,24 @@ Improvements:
   number and keep their numbering, code gets a
   background, blockquotes get a bar, tables size
   their columns to fit, and rules span the
-  width. Nested lists indented with spaces, task
-  lists, tilde fences, bare URLs, HTML entities,
-  and footnotes are recognized, and links use
-  the profile’s link color. Images stored on
+  width. Code, quotes, and later paragraphs in a
+  list item line up with the item’s text, and
+  lists and quotes nest to any depth. Nested
+  lists indented with spaces, task lists, tilde
+  fences, bare URLs, HTML entities, and
+  footnotes are recognized, and links use the
+  profile’s link color. Images stored on
   your Mac appear as placeholders; click one to
   see the image in a popover. Images on the web
   are never downloaded and appear as links.
+- AI Chat shows Markdown replies the way they
+  are meant to look: lists nested with spaces
+  are indented, numbered lists can start at any
+  number and pick up again after a code block,
+  code blocks and quotes inside a list item stay
+  with it, quotes nest, task lists show
+  checkboxes, and ~~~ code fences are
+  recognized.
 
 - With the Rainbow progress bar color scheme on
   macOS 26, a busy tab’s ring now carries a

@@ -7,74 +7,12 @@
 
 import SwiftyMarkdown
 
-private let fenceLineRegex = try! NSRegularExpression(pattern: "^ *```[ \\t]*([^`]*?)[ \\t]*$")
-private let swiftyInfoStringRegex = try! NSRegularExpression(pattern: "^[a-z]*$")
-
-private struct Fence {
-    var infoString: String
-
-    // The opener in the only form SwiftyMarkdown accepts, ^```[a-z]*$. Other
-    // info strings, such as “c++”, “Swift”, or “js title”, are dropped because
-    // SwiftyMarkdown would not recognize the line as a fence at all.
-    var normalizedOpener: String {
-        let range = NSRange(infoString.startIndex..<infoString.endIndex, in: infoString)
-        if swiftyInfoStringRegex.firstMatch(in: infoString, options: [], range: range) != nil {
-            return "```" + infoString
-        }
-        return "```"
-    }
-}
-
-// Returns the fence if the line is one, or nil otherwise. SwiftyMarkdown only
-// accepts an opening fence matching ^```[a-z]*$ and a closing fence equal to
-// ```, while CommonMark also allows leading spaces, trailing whitespace, and
-// any info string without a backtick. Streamed replies often end in “``` ”
-// because the server sends a space after the last word.
-private func fence(_ line: String) -> Fence? {
-    let range = NSRange(line.startIndex..<line.endIndex, in: line)
-    guard let match = fenceLineRegex.firstMatch(in: line, options: [], range: range),
-          let infoRange = Range(match.range(at: 1), in: line) else {
-        return nil
-    }
-    return Fence(infoString: String(line[infoRange]))
-}
-
-// Prepares message markdown for SwiftyMarkdown, one line at a time. It
-// reduces code fences to the bare form SwiftyMarkdown recognizes and empties
-// whitespace-only lines outside code blocks. SwiftyMarkdown treats a
-// whitespace-only line as a setext heading underline, turning the line above
-// it (for example, the last line of a code block followed by a streamed
-// trailing space) into a heading. CommonMark treats such a line as blank.
-func sanitizeMarkdownLines(_ input: String) -> String {
-    var inCodeBlock = false
-    return input.components(separatedBy: "\n").map { line in
-        if let fence = fence(line) {
-            // Mirrors SwiftyMarkdown: any fence opens a block; only a bare
-            // ``` closes one.
-            if !inCodeBlock {
-                inCodeBlock = true
-                return fence.normalizedOpener
-            }
-            if fence.infoString.isEmpty {
-                inCodeBlock = false
-                return "```"
-            }
-            // An opening fence inside a block is code, not markup.
-            return line
-        }
-        if !inCodeBlock && !line.isEmpty && line.trimmingCharacters(in: .whitespaces).isEmpty {
-            return ""
-        }
-        return line
-    }.joined(separator: "\n")
-}
-
 private func SwiftyMarkdownForMessage(string unsafeString: String,
                                       linkColor: NSColor?,
                                       textColor: NSColor?) -> SwiftyMarkdown {
-    let massagedValue = sanitizeMarkdownLines(unsafeString)
-
-    let md = SwiftyMarkdown(string: massagedValue)
+    let md = SwiftyMarkdown(string: unsafeString)
+    // A newline in a chat message is a line break, as in other chat apps.
+    md.softBreakStyle = .lineBreak
     let pointSize = NSFont.systemFontSize
     if let fixedPitchFontName = NSFont.userFixedPitchFont(ofSize: pointSize)?.fontName {
         md.code.fontName = fixedPitchFontName

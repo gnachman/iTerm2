@@ -3,10 +3,10 @@
 //  iTerm2 ModernTests
 //
 //  How AI chat renders a reply's Markdown, end to end through
-//  Message.Content.attributedStringValue. SwiftyMarkdown's block parser is
-//  being replaced. The first section pins output that must not change; the
-//  second describes output that should change and fails until it does.
-//  StreamedMarkdownCodeBlockTests covers code blocks in streamed replies.
+//  Message.Content.attributedStringValue. The first section is output that
+//  predates SwiftyMarkdown's CommonMark block parser; the second is output that
+//  parser introduced. StreamedMarkdownCodeBlockTests covers code blocks in
+//  streamed replies.
 //
 
 import XCTest
@@ -47,7 +47,7 @@ final class ChatMarkdownRenderingTests: XCTestCase {
         return attributed.string.replacingOccurrences(of: "\u{FFFC} ", with: "")
     }
 
-    // MARK: - Output that must not change
+    // MARK: - Output that predates the block parser
 
     func testParagraphsSeparatedByBlankLine() {
         XCTAssertEqual(render("First.\n\nSecond.").string, "First.\n\nSecond.")
@@ -106,32 +106,38 @@ final class ChatMarkdownRenderingTests: XCTestCase {
         XCTAssertEqual(render("Call `snake_case_name()` now.").string, "Call snake_case_name() now.")
     }
 
+    func testListInQuoteIsIndentedLikeTheQuote() {
+        let attributed = render("> para\n>\n> - item")
+        let quote = attributes(of: "para", in: attributed)[.paragraphStyle] as? NSParagraphStyle
+        let item = attributes(of: "item", in: attributed)[.paragraphStyle] as? NSParagraphStyle
+        XCTAssertGreaterThan(quote?.firstLineHeadIndent ?? 0, 0)
+        XCTAssertEqual(item?.firstLineHeadIndent, quote?.firstLineHeadIndent)
+        XCTAssertGreaterThan(item?.headIndent ?? 0, quote?.headIndent ?? 0)
+    }
+
     func testFenceWithPunctuatedLanguage() {
-        // SwiftyMarkdown only accepts lowercase letters after the backticks, so
-        // sanitizeMarkdownLines drops other info strings from the opener.
+        // Any info string without a backtick, as in CommonMark.
         let attributed = render("```c++\nint x;\n```\n\nafter")
         XCTAssertEqual(attributes(of: "int x;", in: attributed)[lineStyleKey] as? String, "codeblock")
         XCTAssertEqual(attributes(of: "after", in: attributed)[lineStyleKey] as? String, "body")
         XCTAssertFalse(attributed.string.contains("c++"))
     }
 
-    // MARK: - Output that should change
+    // MARK: - Output from the block parser
 
     func testConsecutiveLinesFormOneParagraphWithALineBreak() {
-        // Today each line is its own paragraph. It looks the same, but a paragraph
-        // is now what a reader would call one.
+        // It looks like separate paragraphs, but a paragraph is what a reader would call one.
         XCTAssertEqual(render("one\ntwo").string, "one\u{2028}two")
     }
 
     func testSpaceIndentedListNests() {
-        // Models indent nested lists with spaces. Today they are flattened.
+        // Models indent nested lists with spaces.
         let attributed = render("- a\n  - b")
         XCTAssertEqual(attributed.string, "・\ta\n\t・\tb")
         XCTAssertEqual((attributes(of: "b", in: attributed)[listLevelKey] as? NSNumber)?.intValue, 1)
     }
 
     func testListStartsAtItsFirstNumber() {
-        // Today “3. a” is plain text.
         XCTAssertEqual(render("3. a\n4. b").string, "3.\ta\n4.\tb")
     }
 
@@ -147,10 +153,34 @@ final class ChatMarkdownRenderingTests: XCTestCase {
 
     func testNumberedListResumesAfterUnindentedFence() {
         // Models often break a numbered list with a fence at the margin and resume
-        // at the next number. Today “2. Run.” is plain text.
+        // at the next number.
         let attributed = render("1. Install:\n```\nmake\n```\n2. Run.")
         XCTAssertTrue(textWithoutButtons(attributed).hasSuffix("2.\tRun."), attributed.string.debugDescription)
         XCTAssertEqual(attributes(of: "Run.", in: attributed)[lineStyleKey] as? String, "orderedList")
+    }
+
+    func testEmptyCodeBlockKeepsItsCopyButton() {
+        // A model streaming “```swift” then “```” shows a code block before its content arrives.
+        XCTAssertEqual(copyButtonCount(render("```swift\n```\n\nafter")), 1)
+        XCTAssertEqual(copyButtonCount(render("Here:\n\n```swift\n```")), 1)
+    }
+
+    func testFenceInListItemWithCodeAtTheMargin() {
+        // Common in model replies. The rest of the reply must not become code.
+        let attributed = render("1. Install:\n   ```sh\nmake install\n   ```\n2. Run it\n\nThe end.")
+        XCTAssertEqual(attributes(of: "make install", in: attributed)[lineStyleKey] as? String, "codeblock")
+        XCTAssertEqual(attributes(of: "Run it", in: attributed)[lineStyleKey] as? String, "orderedList")
+        XCTAssertEqual(attributes(of: "The end.", in: attributed)[lineStyleKey] as? String, "body")
+    }
+
+    func testDefinitionLeavesNoEmptyLines() {
+        XCTAssertEqual(render("See [docs][1].\n\n[1]: https://iterm2.com").string, "See docs.")
+        XCTAssertEqual(render("a\n\n[x]: https://iterm2.com\n\nb").string, "a\n\nb")
+    }
+
+    func testCopiedTextHasNewlinesForLineBreaks() {
+        // The line separator must carry a line style for the copy conversion to apply.
+        XCTAssertEqual(render("one\ntwo\n\n- a\n  b").plainTextForPasteboard, "one\ntwo\n\n・\ta\nb")
     }
 
     func testTaskListItems() {

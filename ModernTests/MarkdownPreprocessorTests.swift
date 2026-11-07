@@ -2,22 +2,19 @@
 //  MarkdownPreprocessorTests.swift
 //  iTerm2 ModernTests
 //
-//  The imgcat Markdown porthole renders with SwiftyMarkdown, which understands
-//  a narrow dialect. MarkdownPreprocessor rewrites common Markdown into that
-//  dialect before rendering. These tests pin down the rewrites.
+//  The imgcat Markdown porthole passes each paragraph's source through
+//  MarkdownPreprocessor.transformInline before SwiftyMarkdown parses its inline
+//  content. These tests pin down those rewrites. MarkdownPortholeRenderingTests
+//  covers the rendered result, including block structure.
 //
 
 import XCTest
 @testable import iTerm2SharedARC
 
 final class MarkdownPreprocessorTests: XCTestCase {
-    private func normalize(_ s: String) -> String {
-        return MarkdownPreprocessor.normalize(s)
-    }
-
-    // An ordered item as the preprocessor emits it: “1. ” plus the encoded real number.
-    private func item(_ n: Int, _ text: String, level: Int = 0) -> String {
-        return String(repeating: "\t", count: level) + "1. " + MarkdownPreprocessor.encodedOrderedNumber(n) + text
+    /// Rewrites `paragraph` as part of a document that also contains `document`.
+    private func normalize(_ paragraph: String, in document: String? = nil) -> String {
+        return MarkdownPreprocessor(document ?? paragraph).transformInline(paragraph)
     }
 
     private func restored(_ s: String) -> String {
@@ -26,256 +23,13 @@ final class MarkdownPreprocessorTests: XCTestCase {
         return attributed.string
     }
 
-    // MARK: Paragraph reflow
-
-    func testWrappedParagraphLinesAreJoined() {
-        XCTAssertEqual(normalize("one two\nthree four\n\nfive"),
-                       "one two three four\n\nfive")
-    }
-
     private let br = MarkdownPreprocessor.lineBreak
 
-    func testTrailingDoubleSpaceIsAHardBreak() {
-        XCTAssertEqual(normalize("one  \ntwo\nthree"), "one" + br + "two three")
-    }
-
-    func testTrailingBackslashIsAHardBreak() {
-        XCTAssertEqual(normalize("one\\\ntwo"), "one" + br + "two")
-    }
-
-    func testHardBreakInsideListItemAndQuote() {
-        XCTAssertEqual(normalize("- a  \n  b"), "- a" + br + "b")
-        XCTAssertEqual(normalize("> a  \n> b"), "> a" + br + "b")
-    }
-
-    func testHardBreakBeforeBlankLineIsDropped() {
-        XCTAssertEqual(normalize("a  \n\nb"), "a\n\nb")
-    }
-
-    func testHeadingIsNotJoinedToFollowingText() {
-        XCTAssertEqual(normalize("# Title\ntext"), "# Title\ntext")
-    }
-
-    func testSetextUnderlineIsPreserved() {
-        XCTAssertEqual(normalize("Title\n=====\n\nSub\n---"), "Title\n===\n\nSub\n---")
-    }
-
-    func testReferenceDefinitionIsNotJoined() {
-        XCTAssertEqual(normalize("see [docs][d]\n[d]: https://example.com/"),
-                       "see [docs][d]\n[d]: https://example.com/")
-    }
-
-    // MARK: Code
-
-    func testFencedCodeIsLeftAlone() {
-        let md = "```swift\nlet a_b = *x*\n\nmore  \n```"
-        XCTAssertEqual(normalize(md), "```\nlet a_b = *x*\n \nmore  \n```")
-    }
-
-    func testTildeFenceBecomesBacktickFence() {
-        XCTAssertEqual(normalize("~~~\ncode\n~~~"), "```\ncode\n```")
-    }
-
-    func testIndentedFenceIsDedented() {
-        XCTAssertEqual(normalize("1. item\n\n   ```\n   code\n   ```"),
-                       item(1, "item") + "\n\n```\ncode\n```")
-    }
-
-    func testBlankLinesInsideFencesBecomeSpaces() {
-        XCTAssertEqual(normalize("```\na\n\nb\n```"), "```\na\n \nb\n```")
-    }
-
-    func testBlankLinesInsideIndentedCodeKeepTheBlockTogether() {
-        XCTAssertEqual(normalize("    a\n\n    b\n\npara"), "    a\n     \n    b\n\npara")
-    }
-
-    func testIndentedCodeBlockIsPreserved() {
-        XCTAssertEqual(normalize("para\n\n    for i in x:\n        print(i)\n\nafter"),
-                       "para\n\n    for i in x:\n        print(i)\n\nafter")
-    }
-
-    func testShorterFenceDoesNotCloseLongerOne() {
-        let normalized = normalize("````\n```swift\nlet x = 1\n```\n````\nafter")
-        let lines = normalized.components(separatedBy: "\n")
-        // SwiftyMarkdown ends a code block at any line that is exactly ```, so the
-        // inner closing fence must not reach it as one.
-        XCTAssertEqual(lines.filter { $0 == "```" }.count, 2)
-        XCTAssertEqual(restored(normalized), "```\n```swift\nlet x = 1\n```\n```\nafter")
-    }
-
-    func testIndentedCodeAfterHeading() {
-        XCTAssertEqual(normalize("# Title\n    code line\n    code2"),
-                       "# Title\n    code line\n    code2")
-    }
-
-    func testIndentedCodeContainingTableIsCode() {
-        XCTAssertEqual(normalize("    a | b\n    --|--"), "    a | b\n    --|--")
-    }
-
-    func testIndentedFenceInIndentedCodeIsCode() {
-        XCTAssertEqual(normalize("Example:\n\n    ```python\n    print(1)\n    ```\n\nafter"),
-                       "Example:\n\n    ```python\n    print(1)\n    ```\n\nafter")
-    }
-
-    func testIndentedFenceLineInsideFenceIsContent() {
-        XCTAssertEqual(normalize("```\n    ```\ncode\n```\nafter"),
-                       "```\n    ```\ncode\n```\nafter")
-    }
-
-    func testInlineCodeIsNotTransformed() {
-        XCTAssertEqual(normalize("use `a_b_c` and `&amp;`"), "use `a_b_c` and `&amp;`")
-    }
-
-    // MARK: Lists
-
-    func testOrderedListNumbersAreEncoded() {
-        XCTAssertEqual(normalize("1. a\n2. b\n10. c"),
-                       [item(1, "a"), item(2, "b"), item(3, "c")].joined(separator: "\n"))
-    }
-
-    func testOrderedListStartsAtFirstNumber() {
-        XCTAssertEqual(normalize("5. a\n6. b"), [item(5, "a"), item(6, "b")].joined(separator: "\n"))
-    }
-
-    func testOrderedListWithParenMarker() {
-        XCTAssertEqual(normalize("1) a\n2) b"), [item(1, "a"), item(2, "b")].joined(separator: "\n"))
-    }
-
-    func testNumberingContinuesAcrossIndentedBlocks() {
-        let md = "1. a\n\n   ```\n   code\n   ```\n\n2. b\n\n   > quote\n\n3. c"
-        XCTAssertEqual(normalize(md),
-                       item(1, "a") + "\n\n```\ncode\n```\n\n" + item(2, "b") + "\n\n> quote\n\n" + item(3, "c"))
-    }
-
-    func testNumberingRestartsAfterAParagraphAtTheMargin() {
-        XCTAssertEqual(normalize("1. a\n\npara\n\n1. b"),
-                       item(1, "a") + "\n\npara\n\n" + item(1, "b"))
-    }
-
-    func testPlusAndStarBulletsBecomeDashes() {
-        XCTAssertEqual(normalize("* a\n+ b\n- c"), "- a\n- b\n- c")
-    }
-
-    func testSpaceIndentedNestedListsBecomeTabIndented() {
-        XCTAssertEqual(normalize("- a\n    - b\n        - c\n- d"),
-                       "- a\n\t- b\n\t\t- c\n- d")
-    }
-
-    func testTwoSpaceIndentedNestedListsBecomeTabIndented() {
-        XCTAssertEqual(normalize("- a\n  - b\n    - c"), "- a\n\t- b\n\t\t- c")
-    }
-
-    func testNestedOrderedListUsesTabs() {
-        XCTAssertEqual(normalize("1. a\n    1. b\n    2. c\n2. d"),
-                       [item(1, "a"), item(1, "b", level: 1), item(2, "c", level: 1), item(2, "d")].joined(separator: "\n"))
-    }
-
-    func testIndentationInsideCodeDoesNotAffectListNesting() {
-        let md = "```yaml\nsteps:\n  - name: build\n```\n\n- a\n    - b"
-        XCTAssertEqual(normalize(md), "```\nsteps:\n  - name: build\n```\n\n- a\n\t- b")
-    }
-
-    func testTwoAndFourSpaceListsInOneDocument() {
-        XCTAssertEqual(normalize("- a\n  - b\n\npara\n\n- c\n    - d\n        - e"),
-                       "- a\n\t- b\n\npara\n\n- c\n\t- d\n\t\t- e")
-    }
-
-    func testItemBetweenColumnsNestsUnderNearestParent() {
-        XCTAssertEqual(normalize("- a\n    - b\n  - c"), "- a\n\t- b\n\t- c")
-    }
-
-    func testListItemContinuationLinesAreJoined() {
-        XCTAssertEqual(normalize("- a long\n  item\n- b"), "- a long item\n- b")
-    }
-
-    func testSecondContinuationParagraphIsNotCode() {
-        XCTAssertEqual(normalize("1. Step one\n\n    More detail.\n\n    Even more detail."),
-                       item(1, "Step one") + "\n\nMore detail.\n\nEven more detail.")
-    }
-
-    func testNestedItemAfterContinuationParagraphIsNotCode() {
-        XCTAssertEqual(normalize("- a\n\n    detail\n\n    - sub"),
-                       "- a\n\ndetail\n\n\t- sub")
-    }
-
-    func testCodeIndentedPastListContentIsCode() {
-        XCTAssertEqual(normalize("- a\n\n      code"),
-                       "- a\n\n    code")
-    }
-
-    func testNumberOtherThanOneDoesNotInterruptParagraph() {
-        XCTAssertEqual(normalize("The project was first released in\n2020. It has since grown a lot."),
-                       "The project was first released in 2020. It has since grown a lot.")
-    }
-
-    func testOneAndBulletsInterruptParagraph() {
-        XCTAssertEqual(normalize("a\n1. b"), "a\n" + item(1, "b"))
-        XCTAssertEqual(normalize("a\n- b"), "a\n- b")
-    }
-
-    func testSiblingItemAfterContinuationParagraph() {
-        XCTAssertEqual(normalize("1. one\n\n   para in item\n2. two"),
-                       item(1, "one") + "\n\npara in item\n" + item(2, "two"))
-    }
-
-    func testBlankLinesBetweenListItemsAreDropped() {
-        XCTAssertEqual(normalize("1. a\n\n2. b"), item(1, "a") + "\n" + item(2, "b"))
-    }
-
-    func testTaskListMarkersBecomeCheckboxGlyphs() {
-        XCTAssertEqual(normalize("- [x] done\n- [ ] todo\n- [X] also"),
-                       "- ☑ done\n- ☐ todo\n- ☑ also")
-    }
-
-    // MARK: Blockquotes
-
-    func testBlockquoteLinesAreJoined() {
-        XCTAssertEqual(normalize("> one\n> two\n>\n> three"), "> one two\n\n> three")
-    }
-
-    func testNestedBlockquoteIsFlattened() {
-        XCTAssertEqual(normalize("> > inner"), "> inner")
-    }
-
-    // MARK: Thematic breaks
-
-    func testStarAndUnderscoreRulesBecomeDashes() {
-        XCTAssertEqual(normalize("a\n\n***\n\nb\n\n___\n\nc\n\n- - -"),
-                       "a\n\n----\n\nb\n\n----\n\nc\n\n----")
-    }
-
-    func testRuleAtStartIsNotFrontMatter() {
-        // SwiftyMarkdown treats an exact “---” first line as YAML front matter and
-        // drops everything up to the next “---”.
-        XCTAssertEqual(normalize("***\nHello"), "----\nHello")
-    }
-
-    func testFrontMatterIsRemoved() {
-        XCTAssertEqual(normalize("---\ntitle: x\nlayout: post\n---\n\nHello"), "Hello")
-    }
-
-    func testFrontMatterClosedWithDotsIsRemoved() {
-        XCTAssertEqual(normalize("---\ntitle: x\n...\nHello"), "Hello")
-    }
-
-    func testRuleWithoutBlankLineBeforeGetsOne() {
-        XCTAssertEqual(normalize("a\n***\nb"), "a\n\n----\nb")
-    }
-
-    func testDashesDirectlyUnderTextStaySetextHeading() {
-        XCTAssertEqual(normalize("a\n---\nb"), "a\n---\nb")
-    }
-
-    // MARK: Tables
-
-    func testTableRowsGetOuterPipes() {
-        XCTAssertEqual(normalize("Name | Value\n---- | -----\nfoo | 1"),
-                       "| Name | Value |\n| ---- | ----- |\n| foo | 1 |")
-    }
-
-    func testTableWithPipesIsUnchanged() {
-        let md = "| a | b |\n|---|---|\n| 1 | 2 |"
-        XCTAssertEqual(normalize(md), md)
+    func testNoncharactersAreRemovedFromTheDocument() {
+        // Swift doesn't allow noncharacters in string literals.
+        let first = String(UnicodeScalar(UInt32(0xFDD0))!)
+        let last = String(UnicodeScalar(UInt32(0xFDEF))!)
+        XCTAssertEqual(MarkdownPreprocessor("a" + first + "b" + last + "c").text, "abc")
     }
 
     // MARK: Inline
@@ -366,7 +120,13 @@ final class MarkdownPreprocessorTests: XCTestCase {
     }
 
     func testBRTagIsAHardBreak() {
-        XCTAssertEqual(normalize("a<br>b\nc"), "a" + br + "b c")
+        XCTAssertEqual(normalize("a<br>b"), "a" + br + "b")
+    }
+
+    func testTrailingBRTagsAreDropped() {
+        XCTAssertEqual(normalize("a<br>"), "a")
+        XCTAssertEqual(normalize("a<br><br/>"), "a")
+        XCTAssertEqual(normalize("<br>"), "")
     }
 
     func testBlockHTMLTagsAreStripped() {
@@ -379,36 +139,42 @@ final class MarkdownPreprocessorTests: XCTestCase {
     }
 
     func testLocalImagesBecomePlaceholders() {
-        let result = MarkdownPreprocessor.process("a ![one](img/a_b.png) b ![two](<my pic.png> \"t\")")
-        XCTAssertEqual(result.text,
+        let source = "a ![one](img/a_b.png) b ![two](<my pic.png> \"t\")"
+        let preprocessor = MarkdownPreprocessor(source)
+        XCTAssertEqual(preprocessor.transformInline(source),
                        "a " + MarkdownPreprocessor.encodedImage(0) + " b " + MarkdownPreprocessor.encodedImage(1))
-        XCTAssertEqual(result.images, [MarkdownPreprocessor.Image(alt: "one", source: "img/a_b.png"),
+        XCTAssertEqual(preprocessor.images, [MarkdownPreprocessor.Image(alt: "one", source: "img/a_b.png"),
                                        MarkdownPreprocessor.Image(alt: "two", source: "my pic.png")])
     }
 
     func testFileAndDataURLImagesAreLocal() {
-        let result = MarkdownPreprocessor.process("![f](file:///tmp/x.png) ![d](data:image/png;base64,AAAA)")
-        XCTAssertEqual(result.images.map(\.source), ["file:///tmp/x.png", "data:image/png;base64,AAAA"])
+        let source = "![f](file:///tmp/x.png) ![d](data:image/png;base64,AAAA)"
+        let preprocessor = MarkdownPreprocessor(source)
+        _ = preprocessor.transformInline(source)
+        XCTAssertEqual(preprocessor.images.map(\.source), ["file:///tmp/x.png", "data:image/png;base64,AAAA"])
     }
 
     func testReferenceImagesResolve() {
-        let md = "![local][a] ![remote][B] ![a][]\n\n[a]: pic.png\n[b]: https://x/y.png"
-        let result = MarkdownPreprocessor.process(md)
-        XCTAssertEqual(result.text,
-                       MarkdownPreprocessor.encodedImage(0) + " [remote](https://x/y.png) " + MarkdownPreprocessor.encodedImage(1) +
-                       "\n\n[a]: pic.png\n[b]: https://x/y.png")
-        XCTAssertEqual(result.images.map(\.source), ["pic.png", "pic.png"])
+        // SwiftyMarkdown finds the definitions; labels match regardless of case.
+        let paragraph = "![local][a] ![remote][B] ![a][]"
+        let preprocessor = MarkdownPreprocessor(paragraph)
+        XCTAssertEqual(preprocessor.transformInline(paragraph, references: ["a": "pic.png", "b": "https://x/y.png"]),
+                       MarkdownPreprocessor.encodedImage(0) + " [remote](https://x/y.png) " + MarkdownPreprocessor.encodedImage(1))
+        XCTAssertEqual(preprocessor.images.map(\.source), ["pic.png", "pic.png"])
     }
 
     func testImagesInsideCodeSpansAreLeftAlone() {
-        let result = MarkdownPreprocessor.process("`![x](y.png)`")
-        XCTAssertEqual(result.text, "`![x](y.png)`")
-        XCTAssertTrue(result.images.isEmpty)
+        let preprocessor = MarkdownPreprocessor("`![x](y.png)`")
+        XCTAssertEqual(preprocessor.transformInline("`![x](y.png)`"), "`![x](y.png)`")
+        XCTAssertTrue(preprocessor.images.isEmpty)
     }
 
-    func testFootnotesBecomeSuperscripts() {
-        XCTAssertEqual(normalize("text[^1] more[^12]\n\n[^1]: note one\n[^12]: note twelve"),
-                       "text¹ more¹²\n\n¹ note one\n¹² note twelve")
+    func testFootnoteReferencesBecomeSuperscripts() {
+        XCTAssertEqual(normalize("text[^1] more[^12]"), "text¹ more¹²")
+    }
+
+    func testFootnoteDefinitionBecomesSuperscriptLabel() {
+        XCTAssertEqual(normalize("[^12]: note twelve"), "¹² note twelve")
     }
 
     // MARK: Escapes
