@@ -9529,43 +9529,43 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Build %@\n\n"
+            "value" : "Build %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Build %@\n\n"
+            "value" : "Build %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ビルド %@\n\n"
+            "value" : "ビルド %@"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "빌드 %@\n\n"
+            "value" : "빌드 %@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Compilação %@\n\n"
+            "value" : "Compilação %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сборка %@\n\n"
+            "value" : "Сборка %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "构建 %@\n\n"
+            "value" : "构建 %@"
           }
         }
       }
@@ -9817,43 +9817,43 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Neuigkeiten in 3.7?\n"
+            "value" : "Neuigkeiten in 3.7?"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "What’s New in 3.7?\n"
+            "value" : "What’s New in 3.7?"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "3.7の新機能\n"
+            "value" : "3.7の新機能"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "3.7의 새로운 기능\n"
+            "value" : "3.7의 새로운 기능"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Novidades da 3.7?\n"
+            "value" : "Novidades da 3.7?"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Что нового в 3.7?\n"
+            "value" : "Что нового в 3.7?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "3.7 版新功能？\n"
+            "value" : "3.7 版新功能？"
           }
         }
       }

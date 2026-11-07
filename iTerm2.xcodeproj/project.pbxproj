@@ -1055,6 +1055,7 @@
 		616ABD699141533212F458CF /* ToolStatusCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10914CB04BC4D2847EC8EB23 /* ToolStatusCellView.swift */; };
 		62025D1006F3996DFF3EC007 /* CommandExitNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B76CF833D5362C6A62ADF39 /* CommandExitNotification.swift */; };
 		626CFB7CD2E04AFC79333160 /* AutoModeTranscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADDE0AA9D613252189BF3C0 /* AutoModeTranscript.swift */; };
+		6328383D184EEC502DE25B1D /* AboutBackersColumnsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCA48E863C23115F2C739460 /* AboutBackersColumnsView.swift */; };
 		639530D5AD779882EF35DAE4 /* iTermLargeContentObject.h in Sources */ = {isa = PBXBuildFile; fileRef = 13C5AE44EEA24B945DE0A064 /* iTermLargeContentObject.h */; };
 		63E228527D9C344E2A67AAFC /* ChatBlobCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C59C22641253239F1BF6BB /* ChatBlobCapture.swift */; };
 		649189E05BC736F39075C7A0 /* TmuxFloatingPanePlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36092E847ABA2720F4C6620A /* TmuxFloatingPanePlacement.swift */; };
@@ -8969,6 +8970,7 @@
 		CB81962D4307FE25CB8DC773 /* iTermKeyCodeZeroCharacters.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermKeyCodeZeroCharacters.swift; sourceTree = "<group>"; };
 		CB8A1FD1AA63330D3CF79D89 /* AdapterShellEnvironment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdapterShellEnvironment.swift; sourceTree = "<group>"; };
 		CC80F2A9A6FBB24419560FD1 /* OrchestrationToolProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestrationToolProvider.swift; sourceTree = "<group>"; };
+		CCA48E863C23115F2C739460 /* AboutBackersColumnsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AboutBackersColumnsView.swift; sourceTree = "<group>"; };
 		CD3ADB0C1150400AB49C8698 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/TmuxDashboard.xcstrings; sourceTree = "<group>"; };
 		CD61537B8518CF9B95B983D9 /* AppleIntelligenceRunner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceRunner.swift; sourceTree = "<group>"; };
 		CDA05715892622B011834E98 /* KittyDnDController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KittyDnDController.swift; sourceTree = "<group>"; };
@@ -11314,6 +11316,7 @@
 				A62A77B12F9879A1007CAA0B /* iTermAboutWindow.m */,
 				A62A77B22F9879A1007CAA0B /* iTermAboutWindowController.h */,
 				A62A77B32F9879A1007CAA0B /* iTermAboutWindowController.m */,
+				CCA48E863C23115F2C739460 /* AboutBackersColumnsView.swift */,
 			);
 			path = AboutWindow;
 			sourceTree = "<group>";
@@ -20538,6 +20541,7 @@
 				0945FFDCA6294F6128D05ACC /* WorkgroupCodeReviewModelSelectorItem.swift in Sources */,
 				608E61C19C1F7F8251718E87 /* iTermTmuxTabGroups.swift in Sources */,
 				B391478CA638949AAEEB1327 /* DeleteClippingBuiltInFunction.swift in Sources */,
+				6328383D184EEC502DE25B1D /* AboutBackersColumnsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
