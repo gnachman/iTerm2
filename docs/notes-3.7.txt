@@ -2750,3 +2750,7 @@ Bug Fixes:
 - A custom tab title in one tmux session no
   longer appears on another tmux session’s tab
   after reattaching.
+- A hidden tmux window keeps its custom tab
+  title, and switching a tmux integration
+  client to another session no longer erases
+  that session’s custom tab titles.

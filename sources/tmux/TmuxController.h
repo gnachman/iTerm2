@@ -309,8 +309,11 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 // The @per_tab_settings value for the tabs among `tabs` that belong to this controller.
 - (NSString *)perTabSettingsForTabs:(NSArray<PTYTab *> *)tabs;
 - (void)saveTabGroups;
-// Forget the tab group membership of a tmux window that closed.
-- (void)tmuxWindowDidCloseForTabGroups:(int)windowID;
+// Forget the saved per-tab settings and tab group membership of a tmux window that closed.
+- (void)tmuxWindowDidClose:(int)windowID;
+// A tmux window joined the attached session. It may be one that closed earlier and came back
+// with the same ID, as move-window and link-window do.
+- (void)tmuxWindowDidAdd:(int)windowID;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
 // Floating panes (tmux 3.8 and later). Each change comes back as a layout change.

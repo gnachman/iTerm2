@@ -248,14 +248,20 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     NSDictionary<NSString *, NSString *> *_perWindowSettings;
 
     NSString *_lastSavePerTabSettingsCommand;
+    // tmux window ID (as a string) -> its per-tab setting, as last loaded or saved.
     NSDictionary<NSString *, NSString *> *_perTabSettings;
+    // Whether the attached session's @per_tab_settings and @tab_groups have been read. Saving
+    // before then would overwrite them.
+    BOOL _perTabSettingsLoaded;
+    BOOL _tabGroupsLoaded;
 
     NSString *_lastSaveTabGroupsCommand;
     // tmux window ID -> its tab group membership, as last loaded or saved.
     NSDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *_tabGroups;
     // tmux windows that closed while attached. Their tabs may linger briefly and must not be
-    // saved back into _tabGroups. tmux does not reuse window IDs.
-    NSMutableSet<NSNumber *> *_closedWindowIDsForTabGroups;
+    // saved back into _perTabSettings or _tabGroups. tmux does not reuse window IDs, but a window
+    // can leave the session and come back with the same ID (move-window, link-window).
+    NSMutableSet<NSNumber *> *_closedWindowIDs;
 
     // When positive do not send select-pane or select-window commands when the selected pane
     // or window changes. This is to prevent getting into a loop like this:
@@ -593,6 +599,12 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     sessionId_ = sessionid;
     _paneToActivateWhenCreated = -1;
     _tmuxCurrentWindowID = -1;
+    // The old session's saved tab state must not be written into the new session's options.
+    _perTabSettings = nil;
+    _perTabSettingsLoaded = NO;
+    _tabGroups = nil;
+    _tabGroupsLoaded = NO;
+    _closedWindowIDs = nil;
     _detaching = YES;
     [self closeAllPanes];
     _detaching = NO;
@@ -742,13 +754,22 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
-// Windows that closed while no iTerm2 with tab group support was attached left entries behind.
-// The next save writes the pruned set.
-- (void)forgetTabGroupsOfWindowsNotInInitialListing:(TSVDocument *)doc {
+// Windows that closed while this iTerm2 was not attached left entries behind. The next save
+// writes the pruned sets.
+- (void)forgetSavedTabStateOfWindowsNotInInitialListing:(TSVDocument *)doc {
     NSMutableSet<NSNumber *> *windowIDs = [NSMutableSet set];
     for (NSArray *record in doc.records) {
         [windowIDs addObject:@([self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]])];
     }
+    NSMutableDictionary<NSString *, NSString *> *perTabSettings = [NSMutableDictionary dictionary];
+    [_perTabSettings enumerateKeysAndObjectsUsingBlock:^(NSString *windowID, NSString *setting, BOOL *stop) {
+        if ([windowIDs containsObject:@(windowID.intValue)]) {
+            perTabSettings[windowID] = setting;
+        } else {
+            DLog(@"Forget per-tab setting of window %@, which no longer exists", windowID);
+        }
+    }];
+    _perTabSettings = [perTabSettings copy];
     NSMutableDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups = [NSMutableDictionary dictionary];
     [_tabGroups enumerateKeysAndObjectsUsingBlock:^(NSNumber *windowID, iTermTmuxTabGroupMembership *membership, BOOL *stop) {
         if ([windowIDs containsObject:windowID]) {
@@ -769,7 +790,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
     [self pinWindowSizesThenSetDeferredClientSizeForInitialListing:doc];
-    [self forgetTabGroupsOfWindowsNotInInitialListing:doc];
+    [self forgetSavedTabStateOfWindowsNotInInitialListing:doc];
     NSMutableArray<NSArray *> *windowsToOpen = [NSMutableArray array];
     BOOL haveHidden = NO;
     NSNumber *newWindowAffinity = nil;
@@ -3710,28 +3731,54 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
 }
 
-- (NSString *)perTabSettingsForTabs:(NSArray<PTYTab *> *)tabs {
-    NSMutableArray<NSString *> *settings = [NSMutableArray array];
+// Windows without a tab (hidden, buried, or parked) keep their saved settings. An open tab's
+// setting replaces its window's.
+- (NSDictionary<NSString *, NSString *> *)mergedPerTabSettingsForTabs:(NSArray<PTYTab *> *)tabs {
+    NSMutableDictionary<NSString *, NSString *> *settings =
+        [_perTabSettings mutableCopy] ?: [NSMutableDictionary dictionary];
     for (PTYTab *tab in tabs) {
         // Another session's tabs can share a window with this one's, and their window ids
         // collide with this session's.
-        if (!tab.isTmuxTab || tab.tmuxController != self) {
+        if (!tab.isTmuxTab ||
+            tab.tmuxController != self ||
+            [_closedWindowIDs containsObject:@(tab.tmuxWindow)]) {
             continue;
         }
-        NSString *setting = [tab tmuxPerTabSetting];
-        if (setting) {
-            [settings addObject:[NSString stringWithFormat:@"%d:%@", tab.tmuxWindow, setting]];
-        }
+        settings[[@(tab.tmuxWindow) stringValue]] = [tab tmuxPerTabSetting];
     }
-    return [settings componentsJoinedByString:@";"];
+    return settings;
 }
 
-- (void)savePerTabSettings {
+- (NSString *)encodedPerTabSettings:(NSDictionary<NSString *, NSString *> *)settings {
+    NSArray<NSString *> *windowIDs = [settings.allKeys sortedArrayUsingComparator:^NSComparisonResult(NSString *lhs, NSString *rhs) {
+        return [@(lhs.intValue) compare:@(rhs.intValue)];
+    }];
+    return [[windowIDs mapWithBlock:^id(NSString *windowID) {
+        return [NSString stringWithFormat:@"%@:%@", windowID, settings[windowID]];
+    }] componentsJoinedByString:@";"];
+}
+
+- (NSString *)perTabSettingsForTabs:(NSArray<PTYTab *> *)tabs {
+    return [self encodedPerTabSettings:[self mergedPerTabSettingsForTabs:tabs]];
+}
+
+// Every tab in every window. Callers pick out this controller's.
+- (NSArray<PTYTab *> *)allTabs {
     NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         [tabs addObjectsFromArray:term.tabs];
     }
-    NSString *arg = [self perTabSettingsForTabs:tabs];
+    return tabs;
+}
+
+- (void)savePerTabSettings {
+    // Until the session's settings have been read, saving would erase those of windows without
+    // a tab. Likewise while tabs close on detach or session change.
+    if (detached_ || _detaching || !_perTabSettingsLoaded) {
+        return;
+    }
+    _perTabSettings = [[self mergedPerTabSettingsForTabs:[self allTabs]] copy];
+    NSString *arg = [self encodedPerTabSettings:_perTabSettings];
     DLog(@"Save per-tab settings: %@", arg);
     NSString *command = [NSString stringWithFormat:@"set -t $%d @per_tab_settings \"%@\"",
                          sessionId_,
@@ -3745,12 +3792,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)getPerTabSettingsResponse:(NSString *)result {
     [self setPerTabSettingsFromString:[self decodedString:result optionalPrefix:iTermTmuxControllerEncodingPrefixPerTabSettings]];
+    _perTabSettingsLoaded = YES;
 }
 
 - (void)saveTabGroups {
     // Until the initial windows have opened and had their groups restored, saving would erase
-    // the groups of windows that don't have tabs yet. Likewise while tabs close on detach.
-    if (detached_ || !_haveOpenedInitialWindows || pendingWindowOpens_.count) {
+    // the groups of windows that don't have tabs yet. Likewise while tabs close on detach or
+    // session change, and before a newly attached session's groups have been read.
+    if (detached_ || _detaching || !_tabGroupsLoaded || !_haveOpenedInitialWindows || pendingWindowOpens_.count) {
         return;
     }
     // Windows without a tab (hidden, buried, parked, or on their way to opening) keep their
@@ -3759,25 +3808,23 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [_tabGroups mutableCopy] ?: [NSMutableDictionary dictionary];
     // group ID -> a live member's membership, which carries the group's current definition.
     NSMutableDictionary<NSString *, iTermTmuxTabGroupMembership *> *liveDefinitions = [NSMutableDictionary dictionary];
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        for (PTYTab *tab in term.tabs) {
-            if (!tab.isTmuxTab ||
-                tab.tmuxController != self ||
-                [_closedWindowIDsForTabGroups containsObject:@(tab.tmuxWindow)]) {
-                continue;
-            }
-            if (tab.tabGroupID.length == 0) {
-                [tabGroups removeObjectForKey:@(tab.tmuxWindow)];
-                continue;
-            }
-            iTermTmuxTabGroupMembership *membership =
-                [[iTermTmuxTabGroupMembership alloc] initWithGroupID:tab.tabGroupID
-                                                                name:tab.tabGroupName
-                                                               color:tab.tabGroupColor
-                                                           collapsed:tab.tabGroupCollapsed];
-            tabGroups[@(tab.tmuxWindow)] = membership;
-            liveDefinitions[tab.tabGroupID] = membership;
+    for (PTYTab *tab in [self allTabs]) {
+        if (!tab.isTmuxTab ||
+            tab.tmuxController != self ||
+            [_closedWindowIDs containsObject:@(tab.tmuxWindow)]) {
+            continue;
         }
+        if (tab.tabGroupID.length == 0) {
+            [tabGroups removeObjectForKey:@(tab.tmuxWindow)];
+            continue;
+        }
+        iTermTmuxTabGroupMembership *membership =
+            [[iTermTmuxTabGroupMembership alloc] initWithGroupID:tab.tabGroupID
+                                                            name:tab.tabGroupName
+                                                           color:tab.tabGroupColor
+                                                       collapsed:tab.tabGroupCollapsed];
+        tabGroups[@(tab.tmuxWindow)] = membership;
+        liveDefinitions[tab.tabGroupID] = membership;
     }
     // A tab-less window's entry holds its group's definition as of when it lost its tab. Bring it
     // up to date so a rename, recolor, or collapse made since then isn't lost.
@@ -3801,19 +3848,30 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
 }
 
-- (void)tmuxWindowDidCloseForTabGroups:(int)windowID {
-    if (!_closedWindowIDsForTabGroups) {
-        _closedWindowIDsForTabGroups = [NSMutableSet set];
+- (void)tmuxWindowDidAdd:(int)windowID {
+    [_closedWindowIDs removeObject:@(windowID)];
+}
+
+- (void)tmuxWindowDidClose:(int)windowID {
+    if (!_closedWindowIDs) {
+        _closedWindowIDs = [NSMutableSet set];
     }
-    [_closedWindowIDsForTabGroups addObject:@(windowID)];
-    if (!_tabGroups[@(windowID)]) {
-        return;
+    [_closedWindowIDs addObject:@(windowID)];
+    NSString *windowIDString = [@(windowID) stringValue];
+    if (_perTabSettings[windowIDString]) {
+        DLog(@"Forget per-tab setting of closed window %d", windowID);
+        NSMutableDictionary<NSString *, NSString *> *perTabSettings = [_perTabSettings mutableCopy];
+        [perTabSettings removeObjectForKey:windowIDString];
+        _perTabSettings = [perTabSettings copy];
+        [self savePerTabSettings];
     }
-    DLog(@"Forget tab group of closed window %d", windowID);
-    NSMutableDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups = [_tabGroups mutableCopy];
-    [tabGroups removeObjectForKey:@(windowID)];
-    _tabGroups = [tabGroups copy];
-    [self saveTabGroups];
+    if (_tabGroups[@(windowID)]) {
+        DLog(@"Forget tab group of closed window %d", windowID);
+        NSMutableDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups = [_tabGroups mutableCopy];
+        [tabGroups removeObjectForKey:@(windowID)];
+        _tabGroups = [tabGroups copy];
+        [self saveTabGroups];
+    }
 }
 
 - (void)getTabGroupsResponse:(NSString *)result {
@@ -3831,6 +3889,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         }
         return [[siblings.allObjects sortedArrayUsingSelector:@selector(compare:)] componentsJoinedByString:@","];
     }];
+    _tabGroupsLoaded = YES;
 }
 
 - (void)savePerWindowSettings {

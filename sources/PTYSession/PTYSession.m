@@ -11737,6 +11737,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)tmuxWindowAddedWithId:(int)windowId {
+    [_tmuxController tmuxWindowDidAdd:windowId];
     if (![_tmuxController window:windowId]) {
         [_tmuxController openWindowWithId:windowId
                               intentional:NO
@@ -11753,7 +11754,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     } else if ([_tmuxController isParkedWindow:windowId]) {
         [_tmuxController parkedWindowDidClose:windowId];
     }
-    [_tmuxController tmuxWindowDidCloseForTabGroups:windowId];
+    [_tmuxController tmuxWindowDidClose:windowId];
     [_tmuxController windowsChanged];
 }
 
