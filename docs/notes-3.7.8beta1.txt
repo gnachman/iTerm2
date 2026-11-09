@@ -1,0 +1,355 @@
+Version 3.7.8beta1 of iTerm2 was built on November
+9, 2026.
+
+New Features:
+- Grok is now a built-in AI provider. Pick it in
+  Settings > General > AI and enter an xAI API key
+  to chat with grok-4.7.
+- iTerm2 is now available in Korean. It is used
+  automatically when Korean is your preferred
+  language in System Settings > General > Language
+  & Region.
+- Session > Move Session > Move Session to
+  Floating Pane turns a split pane into a floating
+  pane, and a pane’s context menu has it too. The
+  Floating Panes menu is now under Window > Split
+  Pane, and its new Select Next Floating Pane item
+  cycles among them. In tmux integration, floating
+  a pane needs tmux 3.8.
+- The Code Review session’s toolbar in the Claude
+  Code workgroup has a model picker. Choose Fable,
+  Opus, Sonnet, Haiku, or type any model name; the
+  next review uses it. Click the star beside it to
+  make that model the default for new workgroups.
+  To use it in a custom review command, add the
+  Code Review Model toolbar item and put
+  \(codeReviewModelFlag) in the command.
+- it2 session add-clipping now prints the new
+  clipping’s ID, and the new it2 session
+  delete-clipping removes a clipping by its ID.
+  Code Review tells Claude Code to use it to
+  withdraw findings it no longer stands by.
+
+Other Improvements:
+- In beta builds, each session now handles its
+  output independently, so heavy output in some
+  sessions no longer makes typing lag in the
+  others. If you suspect it of causing a problem,
+  search Settings > Advanced for “new
+  implementation of session input”, turn that
+  setting off, and restart iTerm2. To limit how
+  much CPU heavy output can use, set “Sessions
+  processing output at once” in Settings > General
+  > Magic. Issue 13141.
+- Handling heavy terminal output uses less CPU,
+  especially output with emoji, combining marks,
+  or other characters made of several code points.
+- Reduced background CPU usage for tracking each
+  session’s running job, which previously grew
+  with the number of processes running on your
+  Mac. Issue 13182.
+- Drawing text uses less CPU when the GPU renderer
+  is off.
+- Markdown files shown with imgcat look much more
+  like a rendered document: paragraphs reflow,
+  headings are bold, lists hang their text past
+  the bullet or number and nest to any depth, code
+  gets a background, blockquotes get a bar, and
+  tables size their columns to fit. Task lists,
+  tilde fences, bare URLs, HTML entities, and
+  footnotes are recognized. Images stored on your
+  Mac appear as placeholders; click one to see it
+  in a popover. Images on the web are never
+  downloaded and appear as links.
+- AI Chat shows Markdown replies the way they are
+  meant to look: lists nested with spaces are
+  indented, numbered lists can start at any number
+  and pick up again after a code block, code
+  blocks and quotes inside a list item stay with
+  it, quotes nest, task lists show checkboxes, and
+  ~~~ code fences are recognized.
+- Tab groups of tmux Integration tabs are now
+  remembered by the tmux session, so they come
+  back with their names and colors when you detach
+  and reattach. Issue 13069.
+- The tmux Dashboard now selects the session
+  you’re attached to when it opens, shows a
+  spinner while it loads the list of windows, and
+  shows a gray checkmark next to sessions that
+  another tmux connection is attached to.
+- iTerm2 > Suppressed Alerts now also lists
+  announcements at the top of a session that are
+  no longer shown because you chose “Never,”
+  “Always,” “Don’t Ask Again,” or a similar
+  option. Select one and click Un-suppress to see
+  it again.
+- zsh, fish, and tcsh Shell Integration now mark
+  the right-hand prompt, so Select Current Command
+  and saved commands leave it out. In tcsh this
+  moves the right-hand prompt one column to the
+  left.
+- The window that shows a software update
+  downloading and installing can be minimized, so
+  it no longer has to sit in front of your
+  terminals until you are ready to relaunch. Issue
+  13152.
+- If automatic updates ever stop working, iTerm2
+  can still let you know a new version is
+  available and offer a link to download it.
+- In a Session Note, Shift-Return now inserts a
+  newline instead of collapsing the note. Press
+  Escape to collapse it and return to the
+  terminal. Issue 13180.
+- The “Show status in tab subtitle” checkbox in
+  the Session Status tool’s settings is now “Show
+  status on tabs”. Turning it off hides the
+  colored status dot on the tab too, not just the
+  status text. Issue 13186.
+- The AI Usage gauge in the workgroup toolbar no
+  longer shows a Session bar, since Anthropic
+  retired session limits. When it can’t read your
+  usage it now says why, such as the command
+  timing out, instead of just “No usage data”.
+- Hosts you allowed to use it2 over SSH are now
+  managed in Settings > General > Magic > Manage
+  Permissions, on a tab beside browser scripting
+  permissions.
+- The built-in AI model list adds GPT-6.1 Terra,
+  Gemini 4 Argon, and Claude Haiku 5.5.
+- With the Minimal or Compact theme and the tab
+  bar on the left or right, the window’s title is
+  shown at the top of the tab bar, beside the
+  window buttons, window number, or proxy icon,
+  even if you haven’t named the window.
+- The About window has been redesigned, with
+  buttons for the home page, bug reports and
+  credits, sponsors in a row of cards, and backers
+  listed in columns with higher-tier backers
+  first.
+- With the Rainbow progress bar color scheme on
+  macOS 26, a busy tab’s ring now carries a
+  rainbow that circles the tab outline instead of
+  a band sliding across it.
+- On macOS 26, the AI Chat window’s button for
+  showing and hiding the chat list is now in the
+  toolbar with the model picker instead of
+  floating over the conversation.
+- The warning beside the light/dark mode colors
+  checkbox in Settings > Profiles > Colors now
+  explains which colors go unused when a theme
+  always uses dark or light mode.
+
+Bug Fixes:
+- Fixed a hang where every window beachballed
+  after the Mac sat idle with Claude Code running.
+  If macOS was waiting for you to allow Claude
+  Code’s status updates to control iTerm2, each
+  update piled up behind the unanswered prompt
+  until iTerm2 stopped responding. Issue 13175.
+- Running a coprocess no longer leaves a file open
+  each time. After many coprocesses, iTerm2 could
+  run out of open files and fail to create new
+  sessions.
+- Programs that change colors with an escape
+  sequence, such as tmux when switching to a pane
+  whose program set its own cursor color, no
+  longer make iTerm2 lag and burn CPU, and no
+  longer kick the session out of Copy Mode. Issue
+  13192.
+- When one window holds tmux integration tabs from
+  more than one tmux session, activity in one
+  session no longer switches away from the tab you
+  are typing in from another session.
+- If a terminal session ends while AI chat is
+  waiting on a command in it, the chat now
+  continues instead of waiting forever.
+- With Reduce Flicker on, or in programs that use
+  synchronized updates, part of the screen could
+  stop updating until something else redrew it.
+- In tmux integration, full-screen programs such
+  as htop or vim could show garbled output in a
+  zoomed pane after zooming it or resizing the
+  window. Thanks to Yifan Gao (@gaoyifan) for the
+  fix.
+- With the Minimal or Compact theme and the tab
+  bar on the right, the window buttons no longer
+  permanently cover the top-left corner of the
+  terminal or web browser. They now appear when
+  you point at the corner. Issue 13153.
+- New tabs and split panes that reuse the previous
+  session’s directory, and the panes a Claude Code
+  workgroup opens, could start in the directory
+  you were in before your last cd if you pasted or
+  typed ahead the commands.
+- In a nested shell, such as bash started from zsh
+  or a poetry shell, new tabs and split panes that
+  reuse the previous session’s directory used the
+  outer shell’s directory instead of the one you
+  were in.
+- Close Other Tabs and Close Tabs to the Right now
+  ask before closing tabs with running jobs,
+  following Prompt Before Closing. Issue 13185.
+- The prompt shown when closing a window or a tab
+  with split panes now lists the jobs in every
+  pane, not just one of them.
+- Changing a profile’s Profile Type between
+  Terminal and Web Browser no longer makes open
+  sessions that use it lose their tab and window
+  names.
+- With several displays and “Displays have
+  separate Spaces” turned on, restoring a window
+  arrangement no longer moves its windows to the
+  display with the active Space. Issue 13002.
+- Dragging files from Finder into programs that
+  use the Kitty drag-and-drop protocol, such as
+  Yazi, no longer bounces back to Finder. Such
+  programs also keep accepting drags after iTerm2
+  restarts and restores their session. Issue
+  13176.
+- Opening Settings no longer asks for keychain
+  access, sometimes several times, to show whether
+  an AI API key is set.
+- Closing a window with tmux integration tabs and
+  choosing Detach now detaches every tmux session
+  in it, even if a non-tmux tab or another
+  session’s tab was selected. Closing the last tab
+  of one session asks only about that session’s
+  windows.
+- A custom tab title in one tmux session no longer
+  appears on another tmux session’s tab after
+  reattaching.
+- A hidden tmux window keeps its custom tab title,
+  and switching a tmux integration client to
+  another session no longer erases that session’s
+  custom tab titles or tab groups.
+- iTerm2 Buddy no longer shows AI chat requests
+  that already ran as waiting for approval.
+  Approving one ran it again and could make the
+  chat fail.
+- Find could miss matches in the terminal when
+  text shown with Edit > Render Selection Natively
+  also matched, and Find Next could get stuck on
+  the rendered text.
+- Selecting a different command while Find is open
+  now searches the newly selected command.
+- The output saved for a finished command, which
+  AI Chat and Codecierge use, could leave off its
+  last lines or start on the wrong line. They now
+  keep at most the last 2,000 lines of a command’s
+  output and say how many earlier lines were left
+  out.
+- AI Chat and Codecierge described a command that
+  was aborted, such as by Control-C at the prompt,
+  as having succeeded with exit status 0. They now
+  say it was aborted.
+- After a command was aborted or its prompt was
+  cleared away, features that work with the most
+  recent command could still refer to it.
+- When a shell integration prompt was taller than
+  four lines, its text and working directory were
+  taken from the wrong line.
+- The Python API’s GetPrompt could report the
+  working directory of a later line instead of the
+  prompt’s once output had scrolled off.
+- Commands saved to Command History no longer
+  include a right-hand prompt (such as zsh’s
+  RPROMPT) drawn on the same line. Issue 13168.
+- When the shell marked its right-hand prompt for
+  iTerm2, a command long enough to reach it was
+  saved to Command History with characters
+  missing.
+- Choosing a command from Auto Command Completion
+  could repeat the last character you typed (“aws”
+  became “awss”), especially with
+  zsh-autosuggestions.
+- A progress bar from a program that exits without
+  clearing it no longer stays up forever. It now
+  hides after 15 seconds with no update. Issue
+  13166.
+- Restoring a maximized pane after resizing the
+  window now fills the window. Issue 13161.
+- Dragging a tab to reorder it no longer tears it
+  off into a new window or drops it into a split
+  pane when the pointer strays a little above or
+  below the tab bar. Issue 13151.
+- “Preserve window size when tab bar shows or
+  hides” now also applies when the tab bar hides
+  after dragging a tab out of a window, and when
+  you change “Show tab bar even when there is only
+  one tab”. Issue 13165.
+- After dragging a tab, other windows go back to
+  exactly their original size. A window as tall as
+  the screen used to end up shorter.
+- With GPU rendering and a transparent window,
+  underlined text no longer makes all the other
+  text look soft or washed out. Issue 13194.
+- Double-clicking in a split pane that uses mouse
+  reporting while a different pane has keyboard
+  focus now reports both clicks to the program.
+- Choosing “Stop Codecierge” in its usage warning
+  could stop the wrong pane, and if the choice was
+  remembered, later Codecierge sessions ended
+  silently.
+- Ending a Codecierge goal and starting a new one
+  before the old goal’s reply arrived could add
+  that reply to the new goal’s transcript.
+- The Stop Scrolling and Fold trigger actions
+  sometimes did nothing when the matching line had
+  just arrived.
+- When a Fold trigger and another trigger matched
+  the same line, the other trigger could act on
+  the wrong line.
+- The Captured Output tool sometimes didn’t show a
+  line a Capture Output trigger had just matched,
+  or didn’t clear when a program asked it to.
+- The Uploads menu no longer pops open while
+  “Upload and Paste Path” is uploading and
+  pasting. If an upload fails, the menu now lists
+  files that could not be read or folders that
+  could not be archived.
+- Pressing Esc to cancel a paste that is waiting
+  for a shell prompt now also discards keystrokes
+  typed while it waited and any pastes queued
+  after it.
+- The offer to try the Claude Code Integration no
+  longer appears for claude commands that don’t
+  start a session, such as “claude -p” or “claude
+  plugin list”.
+- Choosing “Yes” when an app asks to read the
+  screen with DECRQCRA is now remembered after you
+  restart iTerm2.
+- After switching to another user account and back
+  with fast user switching, changing or removing a
+  hotkey now fully releases the old one.
+- If you installed shell integration with the
+  utilities, typing it2ssh could run an old copy
+  of it2ssh in ~/.iterm2 instead of the one that
+  comes with iTerm2.
+- An animated title, such as a spinner, in a tab
+  that isn’t selected now keeps moving instead of
+  changing only about once a second.
+- Typing at a nushell prompt no longer makes the
+  command line blink.
+- Session logs could garble text that arrived just
+  after a program changed the terminal’s character
+  encoding.
+- A selection could move to the wrong place when a
+  program scrolled part of the screen.
+- The auto composer could appear in the wrong
+  place when a prompt arrived along with a lot of
+  output.
+- When the cache of images drawn with the Kitty
+  graphics protocol filled up, it dropped the
+  oldest image rather than the one displayed least
+  recently.
+- The Memory Utilization status bar component no
+  longer makes macOS log a kernel warning every
+  second. Issue 13164.
+- In AI Chat, a code block whose language name has
+  punctuation or capitals, such as ```c++ or
+  ```Swift, now shows as code instead of turning
+  the rest of the reply into code.
+- In AI Chat, messages scrolling under the input
+  area are now blurred all the way up to the line
+  above the message field.
+
