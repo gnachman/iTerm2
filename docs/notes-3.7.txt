@@ -2766,3 +2766,8 @@ Bug Fixes:
   a Claude Code workgroup opens, could start in
   the directory you were in before your last cd
   if you pasted or typed ahead the commands.
+- In a nested shell, such as bash started from
+  zsh or a poetry shell, new tabs and split
+  panes that reuse the previous session’s
+  directory used the outer shell’s directory
+  instead of the one you were in.
