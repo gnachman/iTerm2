@@ -24,9 +24,11 @@
 //       - `vectorStore` (default "disabled").
 //       - `fixtureExempt` (default false): true for models that can't be
 //         refusal-fixtured (local Llama, on-device Apple, models unreachable
-//         for new keys, or models that block the refusal prompt at HTTP 400).
+//         for new keys, models that block the refusal prompt at HTTP 400, or
+//         models we don't send the refusal prompt to).
 //         Anything in AILiveHarness.unreachableForNewKeys / refusalBlockedAtHTTP
-//         MUST be marked fixtureExempt; the coverage test asserts they agree.
+//         / refusalNotCaptured MUST be marked fixtureExempt; the coverage test
+//         asserts they agree.
 //       - `economyModel` (optional): the name of a cheaper same-vendor model to
 //         prefer for high-frequency, low-stakes work (e.g. the orchestration
 //         screen-watch poller). Must name another entry in this catalog. See

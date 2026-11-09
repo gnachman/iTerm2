@@ -157,6 +157,16 @@ final class AILiveHarness: XCTestCase {
         "gemini-3.7-flash",
     ]
 
+    // Models whose refusal fixtures are deliberately not captured, so the refusal prompt is never
+    // sent to them. Sending prompts designed to be refused got the account behind our OpenAI key
+    // flagged for abuse, so new models don't get one. AIMetadataFixtureCoverageTest accepts these
+    // as fixtureExempt the same way it accepts the sets above.
+    static let refusalNotCaptured: Set<String> = [
+        "gpt-6.1-terra",
+        "gemini-4-argon",
+        "claude-haiku-5-5",
+    ]
+
     private static func models(forVendor vendor: String) -> [String] {
         if let raw = loadConfig()?["\(vendor.uppercased())_MODELS"], !raw.isEmpty {
             return splitModels(raw)
@@ -356,7 +366,9 @@ final class AILiveHarness: XCTestCase {
     private static func refusalModels(forVendor vendor: String,
                                       streaming: Bool,
                                       mode: RefusalMode) -> [String] {
-        let models = Self.models(forVendor: vendor)
+        let models = Self.models(forVendor: vendor).filter {
+            !Self.refusalNotCaptured.contains($0)
+        }
         guard mode == .missing else {
             return models
         }

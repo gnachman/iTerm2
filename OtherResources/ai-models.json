@@ -69,6 +69,7 @@
       "vendor": "openAI",
       "api": "responses",
       "url": "https://api.openai.com/v1/responses",
+      "fixtureExempt": true,
       "contextWindowTokens": 1050000,
       "maxResponseTokens": 128000,
       "features": [
@@ -697,6 +698,7 @@
       "vendor": "gemini",
       "api": "gemini",
       "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "fixtureExempt": true,
       "contextWindowTokens": 1048576,
       "maxResponseTokens": 65536,
       "features": [
@@ -923,6 +925,7 @@
       "vendor": "anthropic",
       "api": "anthropic",
       "url": "https://api.anthropic.com/v1/messages",
+      "fixtureExempt": true,
       "contextWindowTokens": 1000000,
       "maxResponseTokens": 128000,
       "features": [
