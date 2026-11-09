@@ -123,6 +123,26 @@ final class CompanionRenderableProbeTests: XCTestCase {
                        "a plain reply is never a resolved request")
     }
 
+    // The phone's subscribe-time history snapshot. Responses are hidden from the
+    // phone, so an auto-run request sent without its response looked pending and an
+    // Allow tap ran the tool a second time.
+    func testCompanionHistoryDropsAnsweredClassicRequests() {
+        let answeredID = UUID()
+        let autoRun = Message(chatID: "c", author: .agent, content: classicRequest("ls"),
+                              sentDate: Date(), uniqueID: answeredID)
+        let response = Message(chatID: "c", author: .user,
+                               content: .remoteCommandResponse(.success("ok"), answeredID, "execute_command", nil),
+                               sentDate: Date(), uniqueID: UUID())
+        let pending = Message(chatID: "c", author: .agent, content: classicRequest("git push"),
+                              sentDate: Date(), uniqueID: UUID())
+        let reply = msg(.markdown("done"), author: .agent)
+
+        let history = Message.companionHistory(from: [autoRun, response, reply, pending])
+
+        XCTAssertEqual(history.map(\.uniqueID), [reply.uniqueID, pending.uniqueID],
+                       "the answered request and its hidden response are dropped; the reply and the unanswered request remain")
+    }
+
     func testHasRenderableContentSince_answeredClassicRequestIsNotShown() throws {
         let dir = try makeTempDir()
         let chatdb = try XCTUnwrap(ChatDatabase(url: dir.appendingPathComponent("chatdb.sqlite")))

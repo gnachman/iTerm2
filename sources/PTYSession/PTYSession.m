@@ -4248,6 +4248,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     RLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    [self cancelRemoteCommandBecauseSessionEnded];
     // tmuxMode is cleared below, before observers are notified.
     const BOOL wasTmuxClient = (self.tmuxMode == TMUX_CLIENT);
     [self forgetAITitleState];
@@ -5208,6 +5209,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     RLog(@"  brokenPipe: set exited = YES");
+    [self cancelRemoteCommandBecauseSessionEnded];
     // This posts PTYSessionExitedDidChangeNotification, so the sleep-prevention coordinator stops
     // counting this dead-but-open pane as a Prevent Sleep requester.
     [self cleanUpAfterBrokenPipe];

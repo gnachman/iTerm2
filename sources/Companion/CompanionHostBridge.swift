@@ -1944,6 +1944,12 @@ final class CompanionHostBridge {
             return
         }
         RLog("Companion bridge: remote command decision \(decision.rawValue) for \(messageUniqueID)")
+        // The phone can show a stale prompt for a request that already ran or was
+        // answered (e.g., on the Mac). Don't change permissions or answer it again.
+        guard !client.requestIsSettled(messageUniqueID, inChat: chatID) else {
+            RLog("Companion bridge: ignoring decision for settled request \(messageUniqueID)")
+            return
+        }
         let category = remoteCommand.content.permissionCategory
         let browser = category.isBrowserSpecific
         let guid = browser ? listModel.chat(id: chatID)?.browserSessionGuid
@@ -2231,11 +2237,7 @@ final class CompanionHostBridge {
               let messages = model.messages(forChat: chatID, createIfNeeded: false) else {
             return []
         }
-        var result = [Message]()
-        for index in 0..<messages.count where !messages[index].hiddenFromClient {
-            result.append(messages[index])
-        }
-        return result
+        return Message.companionHistory(from: (0..<messages.count).map { messages[$0] })
     }
 
     // MARK: Sending

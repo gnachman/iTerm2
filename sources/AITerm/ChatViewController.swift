@@ -1960,6 +1960,11 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                 guard let chatID else {
                     return
                 }
+                // A prompt for a request that already ran or was answered is stale:
+                // don't change permissions or answer it again.
+                guard !client.requestIsSettled(messageID, inChat: chatID) else {
+                    return
+                }
                 let browser = remoteCommand.content.permissionCategory.isBrowserSpecific
                 let guid = if browser {
                     self.listModel.chat(id: chatID)?.browserSessionGuid

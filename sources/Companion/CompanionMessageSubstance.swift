@@ -87,6 +87,18 @@ extension Message {
         }
         return ids
     }
+
+    /// The messages to send the phone as a chat's history snapshot. Drops hidden
+    /// bookkeeping and, because .remoteCommandResponse is itself hidden, any .classic
+    /// request that already has a response: without its response the phone cannot
+    /// tell the request was resolved, renders it as a live Allow/Deny prompt, and an
+    /// Allow tap would run the tool a second time.
+    static func companionHistory(from messages: some Sequence<Message>) -> [Message] {
+        let answered = answeredRequestIDs(in: messages)
+        return messages.filter {
+            !$0.hiddenFromClient && !$0.isResolvedClassicRequest(answeredRequestIDs: answered)
+        }
+    }
 }
 
 extension Message.Subpart {

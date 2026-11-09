@@ -19,6 +19,9 @@ class ChatClient {
     }
     private let broker: ChatBroker
     let model: ChatListModel
+    // Remote command requests that have started but not yet published a response.
+    // See performRemoteCommand.
+    private var executingRequestIDs = Set<UUID>()
 
     init?() {
         guard let model = ChatListModel.instance,
@@ -231,14 +234,27 @@ class ChatClient {
                               in session: PTYSession,
                               chatID: String,
                               messageUniqueID: UUID) throws {
+        // A request can be acted on from more than one place (auto-run, the Mac's
+        // Allow button, the phone's Allow button). Run it at most once: a second run
+        // repeats its side effects (typing text, running a command) and stores a
+        // second response for the same tool call, which the vendor rejects when the
+        // history is replayed.
+        guard !requestIsSettled(messageUniqueID, inChat: chatID) else {
+            RLog("Ignoring duplicate execution of remote command request \(messageUniqueID) in chat \(chatID)")
+            return
+        }
         var done = false
         if request.shouldPublishNotice {
             try broker.publishNotice(chatID: chatID, notice: "\(request.markdownDescription)…")
         }
         let functionCallName = request.llmMessage.function_call?.name ?? "Unknown function call name"
+        // Inserted only once nothing can throw before execution starts: from here
+        // the completion or the catch below always removes it.
+        executingRequestIDs.insert(messageUniqueID)
         do {
             try session.execute(request) { [weak self] response, userNotice in
                 done = true
+                self?.executingRequestIDs.remove(messageUniqueID)
                 try self?.respondSuccessfullyToRemoteCommandRequest(inChat: chatID,
                                                                     requestUUID: messageUniqueID,
                                                                     message: response,
@@ -254,6 +270,7 @@ class ChatClient {
                 throw error
             }
             RLog("Remote command \(functionCallName) failed: \(error.localizedDescription)")
+            executingRequestIDs.remove(messageUniqueID)
             try respondToRemoteCommandRequestWithFailure(inChat: chatID,
                                                          requestUUID: messageUniqueID,
                                                          error: error,
@@ -272,12 +289,39 @@ class ChatClient {
         }
     }
 
+    // True if the request is running or already has a response, so acting on it
+    // again (running it, or answering it with a denial) would produce a second
+    // response for the same tool call. Checked by every path that runs or answers
+    // a request, so a stale Allow/Deny prompt (e.g., on the phone) is a no-op.
+    func requestIsSettled(_ requestID: UUID, inChat chatID: String) -> Bool {
+        executingRequestIDs.contains(requestID) || hasResponse(toRequest: requestID, inChat: chatID)
+    }
+
+    private func hasResponse(toRequest requestID: UUID, inChat chatID: String) -> Bool {
+        guard let messages = model.messages(forChat: chatID, createIfNeeded: false) else {
+            return false
+        }
+        // Newest first: a response follows its request, usually closely.
+        return (0..<messages.count).reversed().contains { index in
+            if case .remoteCommandResponse(_, requestID, _, _) = messages[index].content {
+                return true
+            }
+            return false
+        }
+    }
+
     func respondSuccessfullyToRemoteCommandRequest(inChat chatID: String,
                                                    requestUUID: UUID,
                                                    message: String,
                                                    functionCallName: String,
                                                    functionCallID: LLM.Message.FunctionCallID?,
                                                    userNotice: String?) throws {
+        // performRemoteCommand's own completion removes the request from
+        // executingRequestIDs before calling this, so only a real duplicate stops here.
+        guard !requestIsSettled(requestUUID, inChat: chatID) else {
+            RLog("Not publishing a second response to remote command request \(requestUUID) in chat \(chatID)")
+            return
+        }
         if let userNotice {
             try broker.publishNotice(chatID: chatID, notice: userNotice)
         }
@@ -299,6 +343,10 @@ class ChatClient {
                                                   error: Error,
                                                   functionCallName: String,
                                                   functionCallID: LLM.Message.FunctionCallID?) throws {
+        guard !requestIsSettled(requestUUID, inChat: chatID) else {
+            RLog("Not publishing a second failure response to remote command request \(requestUUID) in chat \(chatID)")
+            return
+        }
         let reason = error.localizedDescription
         try broker.publishNotice(chatID: chatID,
                                  notice: String(localized: "ChatClient.RemoteCommandFailed",

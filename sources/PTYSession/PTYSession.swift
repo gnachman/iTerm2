@@ -532,17 +532,29 @@ class RunningRemoteCommand: NSObject {
 
 extension PTYSession {
     func cancelRemoteCommand() {
+        cancelRemoteCommand(reason: "The function call was canceled by user request.")
+    }
+
+    // The session's process ended (exit, kill, restart) or the session is closing.
+    // A command waiting on the session would otherwise never complete, so its tool
+    // call would never get a response and the chat turn would wedge.
+    @objc
+    func cancelRemoteCommandBecauseSessionEnded() {
+        cancelRemoteCommand(reason: "The function call was canceled because the terminal session ended.")
+    }
+
+    private func cancelRemoteCommand(reason: String) {
         let previousState = runningRemoteCommand.state
         runningRemoteCommand.state = .none
         switch previousState {
         case .expectation(let expectation, let completion):
             expect.cancelExpectation(expectation)
-            completion("The function call was canceled by user request.")
+            completion(reason)
         case .futureString(let otsc):
-            otsc.call("The function call was canceled by user request.")
+            otsc.call(reason)
         case .waitingForMark(_, let otsc):
             screen.pause(atNextPrompt: nil)
-            otsc.call("The function call was canceled by user request.")
+            otsc.call(reason)
         case .none:
             break
         }

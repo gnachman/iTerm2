@@ -2754,3 +2754,10 @@ Bug Fixes:
   title, and switching a tmux integration
   client to another session no longer erases
   that session’s custom tab titles.
+- iTerm2 Buddy no longer shows AI chat requests
+  that already ran as waiting for approval.
+  Approving one ran it again and could make the
+  chat fail with an error from the AI provider.
+- If a terminal session ends while AI chat is
+  waiting on a command in it, the chat now
+  continues instead of waiting forever.
