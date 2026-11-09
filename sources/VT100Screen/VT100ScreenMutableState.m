@@ -4061,7 +4061,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     __weak __typeof(self) weakSelf = self;
     DLog(@"%p: Performing async working directory fetch for %@", self, fetches);
     dispatch_queue_t queue = _queue;
-    [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
+    [delegate screenGetWorkingDirectoryForReportedChange:NO completion:^(NSString *path) {
         DLog(@"%p: Async update got %@ for %@", weakSelf, path, fetches);
         if (path) {
             dispatch_async(queue, ^{
@@ -4103,21 +4103,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self setWorkingDirectory:workingDirectory
                     onAbsLine:absLine
                        pushed:pushed
-            verifiedLocalhost:NO
+                     locality:VT100ScreenWorkingDirectoryLocalityUnverified
                         token:token];
 }
 
-// verifiedLocalhost means the report itself proved it came from this machine (an OSC 7
-// machineID token that matched ours), so the directory is as good as polling the local shell.
-// The remote host on `line` can't tell you that: a report that names no host inherits the
-// previous one.
+// locality says whether the directory is known to be on this machine. The remote host on `line`
+// can't tell you that: a report that names no host inherits the previous one.
 - (void)setWorkingDirectory:(NSString *)workingDirectory
                   onAbsLine:(long long)absLine
                      pushed:(BOOL)pushed
-          verifiedLocalhost:(BOOL)verifiedLocalhost
+                   locality:(VT100ScreenWorkingDirectoryLocality)locality
                       token:(id<iTermOrderedToken>)token {
-    DLog(@"%p: setWorkingDirectory:%@ onLine:%lld verifiedLocalhost:%@ token:%@",
-         self, workingDirectory, absLine, @(verifiedLocalhost), token);
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%lld locality:%@ token:%@",
+         self, workingDirectory, absLine, @(locality), token);
     const int line = [self workingDirectoryLineForAbsLine:absLine];
     if (line < 0) {
         return;
@@ -4188,23 +4186,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                remoteHost:remoteHost
                                             withDirectory:workingDirectory
                                                  pushType:pushType
-                                        verifiedLocalhost:verifiedLocalhost
+                                                 locality:locality
                                                  accepted:accepted];
     } name:@"set pwd 2"];
 }
 
 - (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
                                 onAbsLine:(long long)cursorAbsLine
-                        verifiedLocalhost:(BOOL)verifiedLocalhost
+                                 locality:(VT100ScreenWorkingDirectoryLocality)locality
                                completion:(void (^)(void))completion {
-    DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@ verifiedLocalhost:%@",
-         dir, @(cursorAbsLine), @(verifiedLocalhost));
+    DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@ locality:%@",
+         dir, @(cursorAbsLine), @(locality));
     self.shouldExpectWorkingDirectoryUpdates = YES;
     BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow]];
     [self setWorkingDirectory:dir
                     onAbsLine:cursorAbsLine
                        pushed:YES
-            verifiedLocalhost:verifiedLocalhost
+                     locality:locality
                         token:nil];
     if (willChange) {
         int line = [self numberOfScrollbackLines] + self.cursorY;
@@ -4234,8 +4232,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self currentDirectoryDidChangeTo:dir verifiedLocalhost:NO completion:completion];
 }
 
-// verifiedLocalhost is as in setWorkingDirectory:onAbsLine:pushed:verifiedLocalhost:token:. It
-// describes `dir`. If `dir` is empty the directory is fetched by polling, which is always verified.
+// verifiedLocalhost describes a non-empty `dir`, which is reported as
+// VT100ScreenWorkingDirectoryLocalityVerifiedReport or VT100ScreenWorkingDirectoryLocalityUnverified
+// (see setWorkingDirectory:onAbsLine:pushed:locality:token:). An empty `dir` is filled in by a poll
+// and reported as VT100ScreenWorkingDirectoryLocalityLocalPoll.
 - (void)currentDirectoryDidChangeTo:(NSString *)dir
                   verifiedLocalhost:(BOOL)verifiedLocalhost
                          completion:(void (^)(void))completion {
@@ -4249,7 +4249,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (dir.length) {
         [self currentDirectoryReallyDidChangeTo:dir
                                       onAbsLine:cursorAbsLine
-                              verifiedLocalhost:verifiedLocalhost
+                                       locality:verifiedLocalhost ? VT100ScreenWorkingDirectoryLocalityVerifiedReport : VT100ScreenWorkingDirectoryLocalityUnverified
                                      completion:completion];
         return;
     }
@@ -4259,7 +4259,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     id<iTermOrderedToken> token = [self.currentDirectoryDidChangeOrderEnforcer newToken];
     DLog(@"Fetching directory asynchronously with token %@", token);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *workingDirectory) {
+        [delegate screenGetWorkingDirectoryForReportedChange:YES completion:^(NSString *workingDirectory) {
             DLog(@"For token %@, the working directory is %@", token, workingDirectory);
             if (![token commit]) {
                 return;
@@ -4267,12 +4267,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [weakSelf performBlockAsynchronously:^(VT100Terminal * _Nonnull terminal,
                                                    VT100ScreenMutableState * _Nonnull mutableState,
                                                    id<VT100ScreenDelegate>  _Nonnull delegate) {
-                // The directory came from polling, which is as good as it gets: the
-                // tracker already recorded it as the local directory when the poll
-                // finished, so don't make it poll again.
+                // The directory came from polling. The tracker treated the report as a push
+                // when the poll was requested and recorded the poll when it finished, so it
+                // must neither poll again nor treat this as a report it should trust over
+                // later polls.
                 [mutableState currentDirectoryReallyDidChangeTo:workingDirectory
                                                       onAbsLine:cursorAbsLine
-                                              verifiedLocalhost:YES
+                                                       locality:VT100ScreenWorkingDirectoryLocalityLocalPoll
                                                      completion:completion];
             }];
         }];

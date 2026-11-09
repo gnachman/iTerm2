@@ -35,6 +35,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)statFile:(NSString *)path
        withReply:(void (^)(struct stat statbuf, int error))reply;
 
+// The path the kernel reports for `directory` with symlinks resolved, in the
+// same form proc_pidinfo gives for a process's working directory, or nil.
+- (void)resolvePathOfDirectory:(NSString *)directory
+                     withReply:(void (^)(NSString * _Nullable resolved))reply;
+
 // Runs a single-command `script` in `shell`. `mode` picks which startup files
 // run (see iTermShellRunMode): bare for the fast path when the exported
 // environment suffices (SSH_AUTH_SOCK); interactive for variables set in the rc

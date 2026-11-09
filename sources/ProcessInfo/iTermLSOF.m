@@ -68,6 +68,27 @@
 
 @end
 
+// A shell at its prompt: it exec'ed (a forked subshell never does) and runs no script or -c
+// command. Neither a subshell nor a script shell does job control, so whatever it runs stays in
+// its group; when one leads the foreground group, the user's shell is the one that started it.
+static BOOL iTermWalkProcessIsShellAtPrompt(const iTermWalkProcess *process,
+                                            NSArray<NSString *> *(^arguments)(pid_t)) {
+    return (process->didExec &&
+            [iTermLSOF processNameIsAShell:[NSString stringWithUTF8String:process->name]] &&
+            ![iTermLSOF shellArgumentsRunScriptOrCommand:arguments(process->pid)]);
+}
+
+// Finds the shell the user is in when the foreground job isn't a shell at its prompt. See
+// +[iTermLSOF asyncWorkingDirectoryOfForegroundShellWithRootPid:...].
+@interface iTermForegroundShellWalk : NSObject
+// table holds iTermWalkProcess structs in any order.
+- (instancetype)initWithTable:(NSData *)table
+                    arguments:(NSArray<NSString *> *(^)(pid_t pid))arguments NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+// The pid of the shell whose directory to read, or -1 for none.
+- (pid_t)shellWithRoot:(pid_t)root group:(pid_t)group;
+@end
+
 @implementation iTermLSOF {
     iTermSocketAddress *_socketAddress;
 }
@@ -76,34 +97,30 @@
     return [iTermLSOFProxy sharedInstance];
 }
 
-+ (int)maximumLengthOfProcargs {
-    // KERN_ARGMAX is fixed for the life of the kernel, so read it once.
-    static int argmax;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        int mib[2] = { CTL_KERN, KERN_ARGMAX };
-        size_t syssize = sizeof(argmax);
-        if (sysctl(mib, 2, &argmax, &syssize, NULL, 0) == -1) {
-            argmax = -1;
-        }
-    });
-    return argmax;
-}
-
-+ (char *)procargsForProcess:(pid_t)pid {
-    int argmax = [self maximumLengthOfProcargs];
-    if (argmax < 0) {
-        return nil;
-    }
-
-    NSMutableData *procargsData = [NSMutableData dataWithLength:argmax];
-    char *procargs = procargsData.mutableBytes;
+// KERN_PROCARGS2 copies from the end of the process's argument area, so a buffer smaller than the
+// area gets only its tail, which is padding. Ask for the size first (a few KB, where KERN_ARGMAX is
+// 1 MB). With a byte to spare, a complete read comes back shorter than the buffer; one that fills
+// it means an exec in between grew the area, so try again.
++ (NSData *)procargsForProcess:(pid_t)pid {
     int mib[3] = { CTL_KERN, KERN_PROCARGS2, pid };
-    size_t syssize = argmax;
-    if (sysctl(mib, 3, procargs, &syssize, NULL, 0) == -1) {
-        return nil;
+    for (int attempt = 0; attempt < 2; attempt++) {
+        size_t size = 0;
+        if (sysctl(mib, 3, NULL, &size, NULL, 0) == -1 || size == 0) {
+            return nil;
+        }
+        NSMutableData *data = [NSMutableData dataWithLength:size + 1];
+        size_t length = data.length;
+        if (sysctl(mib, 3, data.mutableBytes, &length, NULL, 0) == -1) {
+            return nil;
+        }
+        if (length < data.length) {
+            // Keep a terminator after the last string so parsers can't read past the end.
+            const char *bytes = data.bytes;
+            data.length = (length > 0 && bytes[length - 1] == 0) ? length : length + 1;
+            return data;
+        }
     }
-    return procargs;
+    return nil;
 }
 
 + (NSString *)commandForProcess:(pid_t)pid execName:(NSString **)execName {
@@ -120,11 +137,12 @@
 }
 
 + (NSArray<NSString *> *)rawCommandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {
-    int argmax = [self maximumLengthOfProcargs];
-    char *procargs = [self procargsForProcess:pid];
-    if (procargs == nil) {
+    NSData *procargsData = [self procargsForProcess:pid];
+    if (procargsData.length < sizeof(int)) {
         return nil;
     }
+    const char *procargs = procargsData.bytes;
+    const size_t length = procargsData.length;
 
     // Consume argc
     size_t offset = 0;
@@ -133,16 +151,16 @@
     offset += sizeof(int);
 
     // Skip exec_path
-    char *exec_path = procargs + offset;
-    while (offset < argmax && procargs[offset] != 0) {
+    const char *exec_path = procargs + offset;
+    while (offset < length && procargs[offset] != 0) {
         ++offset;
     }
 
     // Skip trailing nulls
-    while (offset < argmax && procargs[offset] == 0) {
+    while (offset < length && procargs[offset] == 0) {
         ++offset;
     }
-    if (offset == argmax) {
+    if (offset == length) {
         return nil;
     }
     if (execName) {
@@ -151,9 +169,9 @@
 
     // Pull out null terminated argv components
     NSMutableArray<NSString *> *argv = [NSMutableArray array];
-    char *start = procargs + offset;
+    const char *start = procargs + offset;
     int argsConsumed = 0;
-    while (offset < argmax && argsConsumed < nargs) {
+    while (offset < length && argsConsumed < nargs) {
         if (procargs[offset] == 0) {
             NSString *string = [NSString stringWithUTF8String:start];
             if (string.length > 0) {
@@ -177,14 +195,12 @@
 }
 
 + (NSArray<NSString *> *)environmentForProcess:(pid_t)pid {
-    const int argmax = [self maximumLengthOfProcargs];
-    if (argmax < 0) {
+    NSData *procargsData = [self procargsForProcess:pid];
+    if (procargsData.length < sizeof(int)) {
         return nil;
     }
-    char *procargs = [self procargsForProcess:pid];
-    if (procargs == nil) {
-        return nil;
-    }
+    const char *procargs = procargsData.bytes;
+    const size_t length = procargsData.length;
 
     // Consume argc.
     size_t offset = 0;
@@ -193,19 +209,19 @@
     offset += sizeof(int);
 
     // Skip exec_path and its trailing nulls.
-    while (offset < (size_t)argmax && procargs[offset] != 0) {
+    while (offset < length && procargs[offset] != 0) {
         ++offset;
     }
-    while (offset < (size_t)argmax && procargs[offset] == 0) {
+    while (offset < length && procargs[offset] == 0) {
         ++offset;
     }
-    if (offset >= (size_t)argmax) {
+    if (offset >= length) {
         return @[];
     }
 
     // Skip the argv strings (nargs null-terminated entries).
     int argsConsumed = 0;
-    while (offset < (size_t)argmax && argsConsumed < nargs) {
+    while (offset < length && argsConsumed < nargs) {
         if (procargs[offset] == 0) {
             ++argsConsumed;
         }
@@ -213,15 +229,15 @@
     }
 
     // Skip any padding nulls before the environment block.
-    while (offset < (size_t)argmax && procargs[offset] == 0) {
+    while (offset < length && procargs[offset] == 0) {
         ++offset;
     }
 
     // The remaining null-terminated strings are the environment, terminated by
     // an empty string (i.e. a double null).
     NSMutableArray<NSString *> *env = [NSMutableArray array];
-    char *start = procargs + offset;
-    while (offset < (size_t)argmax) {
+    const char *start = procargs + offset;
+    while (offset < length) {
         if (procargs[offset] == 0) {
             if (start[0] == 0) {
                 break;
@@ -515,40 +531,48 @@ static void iTermNoteProcessTableReadResult(NSString *failure) {
     }
 }
 
-+ (BOOL)enumerateProcessTable:(void (^ NS_NOESCAPE)(pid_t pid, pid_t ppid, NSString *name, BOOL isForeground))block {
+// Every process's kinfo_proc from one KERN_PROC_ALL read, or nil with *failure set.
+static NSData *iTermReadProcessTable(NSString **failure) {
     // KERN_PROC_PID walks the kernel's whole process list to find one pid, so asking
     // about every process one at a time costs O(n^2). One KERN_PROC_ALL read returns
     // the same kinfo_proc for every process at once.
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
-    NSMutableData *data = nil;
-    size_t size = 0;
     // The table can grow between the size query and the read, so leave headroom and
     // retry a few times if it still outgrows the buffer.
     for (int attempt = 0; ; attempt++) {
-        size = 0;
+        size_t size = 0;
         if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
             const int savedErrno = errno;
-            iTermNoteProcessTableReadResult([NSString stringWithFormat:@"KERN_PROC_ALL size query failed: errno=%d (%s), attempt %d",
-                                             savedErrno, strerror(savedErrno), attempt + 1]);
-            return NO;
+            *failure = [NSString stringWithFormat:@"KERN_PROC_ALL size query failed: errno=%d (%s), attempt %d",
+                        savedErrno, strerror(savedErrno), attempt + 1];
+            return nil;
         }
         size += size / 8 + 64 * sizeof(struct kinfo_proc);
         const size_t bufferSize = size;
-        data = [NSMutableData dataWithLength:bufferSize];
+        NSMutableData *data = [NSMutableData dataWithLength:bufferSize];
         if (sysctl(mib, 3, data.mutableBytes, &size, NULL, 0) == 0) {
-            break;
+            data.length = size;
+            return data;
         }
         const int savedErrno = errno;
         if (savedErrno != ENOMEM || attempt == 3) {
-            iTermNoteProcessTableReadResult([NSString stringWithFormat:@"KERN_PROC_ALL read failed: errno=%d (%s), buffer %zu bytes, attempt %d",
-                                             savedErrno, strerror(savedErrno), bufferSize, attempt + 1]);
-            return NO;
+            *failure = [NSString stringWithFormat:@"KERN_PROC_ALL read failed: errno=%d (%s), buffer %zu bytes, attempt %d",
+                        savedErrno, strerror(savedErrno), bufferSize, attempt + 1];
+            return nil;
         }
         DLog(@"KERN_PROC_ALL table outgrew a %zu-byte buffer; retrying", bufferSize);
     }
-    iTermNoteProcessTableReadResult(nil);
+}
+
++ (BOOL)enumerateProcessTable:(void (^ NS_NOESCAPE)(pid_t pid, pid_t ppid, NSString *name, BOOL isForeground))block {
+    NSString *failure = nil;
+    NSData *data = iTermReadProcessTable(&failure);
+    iTermNoteProcessTableReadResult(failure);
+    if (!data) {
+        return NO;
+    }
     const struct kinfo_proc *procs = data.bytes;
-    const size_t count = size / sizeof(struct kinfo_proc);
+    const size_t count = data.length / sizeof(struct kinfo_proc);
     for (size_t i = 0; i < count; i++) {
         const struct kinfo_proc *kp = &procs[i];
         // proc_pidinfo, which this replaces, fails for zombies, so they were never in
@@ -667,6 +691,25 @@ static void iTermNoteProcessTableReadResult(NSString *failure) {
 
 + (NSString *)workingDirectoryOfProcess:(pid_t)pid {
     DLog(@"Want working directory of process %@ - SYNCHRONOUS METHOD!", @(pid));
+    return [self waitForWorkingDirectory:^(dispatch_queue_t queue, void (^block)(NSString *)) {
+        [self asyncWorkingDirectoryOfProcess:pid queue:queue block:block];
+    }];
+}
+
++ (NSString *)workingDirectoryOfForegroundShellWithRootPid:(pid_t)rootPid
+                                    foregroundProcessGroup:(pid_t)pgrp {
+    DLog(@"Want working directory of foreground shell under %@ (pgrp %@) - SYNCHRONOUS METHOD!",
+         @(rootPid), @(pgrp));
+    return [self waitForWorkingDirectory:^(dispatch_queue_t queue, void (^block)(NSString *)) {
+        [self asyncWorkingDirectoryOfForegroundShellWithRootPid:rootPid
+                                         foregroundProcessGroup:pgrp
+                                                          queue:queue
+                                                          block:block];
+    }];
+}
+
++ (NSString *)waitForWorkingDirectory:(void (^ NS_NOESCAPE)(dispatch_queue_t queue,
+                                                            void (^block)(NSString *)))lookup {
     static dispatch_queue_t queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -675,15 +718,189 @@ static void iTermNoteProcessTableReadResult(NSString *failure) {
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
     __block NSString *result = nil;
-    [self asyncWorkingDirectoryOfProcess:pid queue:queue block:^(NSString *pwd) {
-        DLog(@"Get result for pid %@: %@", @(pid), pwd);
+    lookup(queue, ^(NSString *pwd) {
+        DLog(@"Got result: %@", pwd);
         result = pwd;
         dispatch_group_leave(group);
-    }];
+    });
     dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW,
                                              0.5 * NSEC_PER_SEC));
     DLog(@"Result is %@", result);
     return result;
+}
+
++ (BOOL)processNameIsAShell:(NSString *)name {
+    static NSSet<NSString *> *shells;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        shells = [[NSSet alloc] initWithArray:@[ @"zsh", @"bash", @"sh", @"fish", @"tcsh", @"csh",
+                                                 @"ksh", @"dash", @"nu", @"xonsh", @"elvish" ]];
+    });
+    NSString *base = name.lastPathComponent;
+    if ([base hasPrefix:@"-"]) {
+        base = [base substringFromIndex:1];
+    }
+    return base.length > 0 && [shells containsObject:base];
+}
+
+static void iTermWalkProcessInit(iTermWalkProcess *process, const struct kinfo_proc *kp) {
+    process->pid = kp->kp_proc.p_pid;
+    process->ppid = kp->kp_eproc.e_ppid;
+    process->pgid = kp->kp_eproc.e_pgid;
+    process->didExec = (kp->kp_proc.p_flag & P_EXEC) != 0;
+    process->tty = kp->kp_eproc.e_tdev;
+    process->ttyForegroundProcessGroup = kp->kp_eproc.e_tpgid;
+    memcpy(process->name, kp->kp_proc.p_comm, MAXCOMLEN);
+    process->name[MAXCOMLEN] = 0;
+}
+
++ (pid_t)foregroundShellPidWithRootPid:(pid_t)rootPid foregroundProcessGroup:(pid_t)pgrp {
+    return [self foregroundShellPidWithRootPid:rootPid
+                        foregroundProcessGroup:pgrp
+                                        lookup:^BOOL(pid_t pid, iTermWalkProcess *process) {
+        int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
+        struct kinfo_proc kp;
+        memset(&kp, 0, sizeof(kp));
+        size_t size = sizeof(kp);
+        if (sysctl(mib, 4, &kp, &size, NULL, 0) < 0 || size == 0 || kp.kp_proc.p_stat == SZOMB) {
+            return NO;
+        }
+        iTermWalkProcessInit(process, &kp);
+        return YES;
+    }
+                                  processTable:^NSData *{
+        const uint64_t start = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+        NSString *failure = nil;
+        NSData *data = iTermReadProcessTable(&failure);
+        if (!data) {
+            DLog(@"Can't read the process table: %@", failure);
+            return nil;
+        }
+        const uint64_t read = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+        const struct kinfo_proc *procs = data.bytes;
+        const size_t count = data.length / sizeof(struct kinfo_proc);
+        NSMutableData *table = [NSMutableData dataWithLength:count * sizeof(iTermWalkProcess)];
+        iTermWalkProcess *processes = table.mutableBytes;
+        size_t n = 0;
+        for (size_t i = 0; i < count; i++) {
+            // A zombie has exited. Leaving it out lets a job whose leader exited be found through
+            // its other members.
+            if (procs[i].kp_proc.p_stat != SZOMB) {
+                iTermWalkProcessInit(&processes[n++], &procs[i]);
+            }
+        }
+        table.length = n * sizeof(iTermWalkProcess);
+        DLog(@"Read %@ processes in %@us, copied in %@us",
+             @(count), @((read - start) / 1000), @((clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - read) / 1000));
+        return table;
+    }
+                                     arguments:^NSArray<NSString *> *(pid_t pid) {
+        return [self rawCommandLineArgumentsForProcess:pid execName:nil];
+    }];
+}
+
++ (pid_t)foregroundShellPidWithRootPid:(pid_t)rootPid
+                foregroundProcessGroup:(pid_t)pgrp
+                                lookup:(BOOL (^ NS_NOESCAPE)(pid_t pid, iTermWalkProcess *process))lookup
+                          processTable:(NSData *(^ NS_NOESCAPE)(void))processTable
+                             arguments:(NSArray<NSString *> *(^)(pid_t pid))arguments {
+    // Most polls that matter land at a prompt (after Enter, an unverified push, or a title
+    // change), where the leader alone settles it.
+    iTermWalkProcess leader;
+    if (lookup(pgrp, &leader) &&
+        leader.pgid == pgrp &&
+        iTermWalkProcessIsShellAtPrompt(&leader, arguments)) {
+        DLog(@"Foreground shell is the leader %@ (%s)", @(pgrp), leader.name);
+        return pgrp;
+    }
+    NSData *table = processTable();
+    if (!table) {
+        return -1;
+    }
+    iTermForegroundShellWalk *walk = [[iTermForegroundShellWalk alloc] initWithTable:table
+                                                                           arguments:arguments];
+    return [walk shellWithRoot:rootPid group:pgrp];
+}
+
++ (BOOL)shellArgumentsRunScriptOrCommand:(NSArray<NSString *> *)argv {
+    if (argv.count < 2) {
+        // No arguments, or they couldn't be read (another user's process).
+        return NO;
+    }
+    NSString *shell = argv[0].lastPathComponent;
+    if ([shell hasPrefix:@"-"]) {
+        shell = [shell substringFromIndex:1];
+    }
+    const BOOL fish = [shell isEqualToString:@"fish"];
+    // Options whose value is the next argument, so it isn't mistaken for a script.
+    NSString *shortOptionsWithValues = fish ? @"Cdfo" : @"oO";
+    NSSet<NSString *> *longOptionsWithValues =
+        fish ? [NSSet setWithArray:@[ @"--init-command", @"--debug", @"--debug-output", @"--features" ]]
+             : [NSSet setWithArray:@[ @"--rcfile", @"--init-file", @"--emulate" ]];
+    for (NSUInteger i = 1; i < argv.count; i++) {
+        NSString *arg = argv[i];
+        if ([arg isEqualToString:@"--"] || [arg isEqualToString:@"-"]) {
+            // The end of the options. What follows is a script.
+            return i + 1 < argv.count;
+        }
+        if ([arg hasPrefix:@"--"]) {
+            if ([arg isEqualToString:@"--command"] || [arg hasPrefix:@"--command="]) {
+                return YES;
+            }
+            if ([longOptionsWithValues containsObject:arg]) {
+                i++;
+            }
+            continue;
+        }
+        if (arg.length > 1 && ([arg hasPrefix:@"-"] || [arg hasPrefix:@"+"])) {
+            for (NSUInteger j = 1; j < arg.length; j++) {
+                const unichar c = [arg characterAtIndex:j];
+                if (c == 'c') {
+                    return YES;
+                }
+                if (c == 's') {
+                    // Commands come from stdin; any operands are positional parameters.
+                    return NO;
+                }
+                if ([shortOptionsWithValues rangeOfString:[NSString stringWithCharacters:&c length:1]].location != NSNotFound) {
+                    if (j + 1 == arg.length) {
+                        i++;
+                    }
+                    break;
+                }
+            }
+            continue;
+        }
+        return YES;
+    }
+    return NO;
+}
+
++ (void)asyncWorkingDirectoryOfForegroundShellWithRootPid:(pid_t)rootPid
+                                   foregroundProcessGroup:(pid_t)pgrp
+                                                    queue:(dispatch_queue_t)queue
+                                                    block:(void (^)(NSString *pwd))block {
+    if (pgrp <= 0) {
+        DLog(@"No foreground process group; reading the root %@", @(rootPid));
+        [self asyncWorkingDirectoryOfProcess:rootPid queue:queue block:block];
+        return;
+    }
+    // The walk is a few sysctls, which needn't run on the main thread.
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        const pid_t pid = [self foregroundShellPidWithRootPid:rootPid foregroundProcessGroup:pgrp];
+        if (pid <= 0) {
+            dispatch_async(queue, ^{
+                block(nil);
+            });
+            return;
+        }
+        // Only the root gets the eldest-child fallback (for a root-owned login). Any other
+        // process's ancestors may be in other directories.
+        [self asyncWorkingDirectoryOfProcess:pid
+                                 canFallBack:pid == rootPid
+                                       queue:queue
+                                       block:block];
+    });
 }
 
 + (void)asyncWorkingDirectoryOfProcess:(pid_t)pid
@@ -734,6 +951,279 @@ static void iTermNoteProcessTableReadResult(NSString *failure) {
         block(dir);
         return;
     }];
+}
+
+@end
+
+
+// Bounds, in case pid reuse during the snapshot makes a cycle.
+static const int iTermForegroundShellWalkMaximumAncestors = 64;
+static const int iTermForegroundShellWalkMaximumRelayDepth = 8;
+
+static int iTermWalkProcessComparePids(const void *a, const void *b) {
+    const pid_t lhs = ((const iTermWalkProcess *)a)->pid;
+    const pid_t rhs = ((const iTermWalkProcess *)b)->pid;
+    return (lhs > rhs) - (lhs < rhs);
+}
+
+// Whether a process is on a terminal other than `tty`. One with no terminal isn't.
+static BOOL iTermWalkProcessIsOnOtherTerminal(const iTermWalkProcess *process, dev_t tty) {
+    return process->tty != tty && process->tty != NODEV;
+}
+
+@implementation iTermForegroundShellWalk {
+    // Sorted by pid.
+    NSMutableData *_table;
+    const iTermWalkProcess *_processes;
+    NSInteger _count;
+    // _parents[i] is the index of _processes[i]'s parent, or -1 if it isn't in the table.
+    NSMutableData *_parentData;
+    const NSInteger *_parents;
+    NSArray<NSString *> *(^_arguments)(pid_t);
+    // Terminals already searched, so a cycle can't recurse.
+    NSMutableSet<NSNumber *> *_visitedTTYs;
+}
+
+- (instancetype)initWithTable:(NSData *)table
+                    arguments:(NSArray<NSString *> *(^)(pid_t pid))arguments {
+    self = [super init];
+    if (self) {
+        const uint64_t start = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+        _table = [table mutableCopy];
+        _count = _table.length / sizeof(iTermWalkProcess);
+        qsort(_table.mutableBytes, _count, sizeof(iTermWalkProcess), iTermWalkProcessComparePids);
+        _processes = _table.bytes;
+        _parentData = [NSMutableData dataWithLength:_count * sizeof(NSInteger)];
+        NSInteger *parents = _parentData.mutableBytes;
+        for (NSInteger i = 0; i < _count; i++) {
+            parents[i] = [self indexOfPid:_processes[i].ppid];
+        }
+        _parents = parents;
+        _arguments = [arguments copy];
+        _visitedTTYs = [NSMutableSet set];
+        DLog(@"Indexed %@ processes in %@us",
+             @(_count), @((clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - start) / 1000));
+    }
+    return self;
+}
+
+- (NSInteger)indexOfPid:(pid_t)pid {
+    NSInteger low = 0;
+    NSInteger high = _count - 1;
+    while (low <= high) {
+        const NSInteger mid = low + (high - low) / 2;
+        const pid_t value = _processes[mid].pid;
+        if (value == pid) {
+            return mid;
+        }
+        if (value < pid) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    return -1;
+}
+
+- (BOOL)isShellAtPrompt:(NSInteger)i {
+    return iTermWalkProcessIsShellAtPrompt(&_processes[i], _arguments);
+}
+
+- (pid_t)shellWithRoot:(pid_t)root group:(pid_t)group {
+    BOOL unused = NO;
+    return [self shellWithRoot:root group:group depth:0 found:&unused];
+}
+
+// Searches the terminal whose foreground process group is `group` and whose session started at
+// `root`. depth is 0 for the session's own terminal and counts relays below it. For a relayed
+// terminal, *found says whether it has an interactive shell, and so whether the return value
+// (which may still be -1) is the answer. If not, the caller uses its own.
+- (pid_t)shellWithRoot:(pid_t)root group:(pid_t)group depth:(int)depth found:(BOOL *)found {
+    const BOOL relayed = depth > 0;
+    *found = YES;
+    NSInteger leader = [self indexOfPid:group];
+    if (leader >= 0 && _processes[leader].pgid != group) {
+        leader = -1;
+    }
+    if (leader >= 0 && [self isShellAtPrompt:leader]) {
+        DLog(@"Foreground shell is the leader %@ (%s) at depth %@", @(group), _processes[leader].name, @(depth));
+        return group;
+    }
+    if (leader < 0 && group == root) {
+        DLog(@"Root %@ is unknown; using it", @(root));
+        return root;
+    }
+
+    // The foreground job is a command. Find the shell that started it.
+    BOOL candidateIsShell = NO;
+    NSInteger start = -1;
+    const pid_t candidate = [self shellThatStartedJob:group
+                                                 root:root
+                                               leader:leader
+                                              isShell:&candidateIsShell
+                                                start:&start];
+    if (relayed && candidate < 0) {
+        // Something is odd, e.g., the job is starting or exiting. Report nothing rather than
+        // the outer shell, which may not be the one the user is in.
+        return -1;
+    }
+
+    // A job that relays another terminal: the user is typing into whatever runs on it.
+    const NSInteger relay = start >= 0 ? [self relayBelowGroup:group tty:_processes[start].tty] : -1;
+    if (relay >= 0 && depth < iTermForegroundShellWalkMaximumRelayDepth) {
+        const iTermWalkProcess *process = &_processes[relay];
+        DLog(@"Job %@ relays terminal %@ through %@ (%s)", @(group), @(process->tty), @(process->pid), process->name);
+        BOOL innerFound = NO;
+        const pid_t inner = [self shellWithRoot:process->pid
+                                          group:process->ttyForegroundProcessGroup
+                                          depth:depth + 1
+                                          found:&innerFound];
+        if (innerFound) {
+            DLog(@"Foreground shell is %@, on terminal %@", @(inner), @(process->tty));
+            return inner;
+        }
+        DLog(@"No interactive shell on terminal %@", @(process->tty));
+    }
+    if (relayed) {
+        *found = candidateIsShell;
+        return candidateIsShell ? candidate : -1;
+    }
+    return candidate;
+}
+
+// The shell that started the job in `group`, or root if the walk reaches it, or -1 if it can't be
+// found (including when the walk leaves the root's tree). *isShell says whether it's an
+// interactive shell. *start is the index of the job's process the walk began at.
+- (pid_t)shellThatStartedJob:(pid_t)group
+                        root:(pid_t)root
+                      leader:(NSInteger)leader
+                     isShell:(BOOL *)isShell
+                       start:(NSInteger *)start {
+    const NSInteger rootIndex = [self indexOfPid:root];
+    if (group == root) {
+        // The root itself runs the job, e.g., the session runs a script, not a shell.
+        *start = rootIndex;
+        *isShell = NO;
+        return root;
+    }
+    if (leader < 0) {
+        // The leader exited while the rest of the job runs (`ps aux | less` once ps finishes), or
+        // its pid was reused. The shell that started the job is above any process still in it.
+        DLog(@"No leader of process group %@; trying its other members", @(group));
+        leader = [self anyMemberOfGroup:group];
+        if (leader < 0) {
+            DLog(@"No member of process group %@", @(group));
+            return -1;
+        }
+        if (_processes[leader].pid == root) {
+            *start = leader;
+            *isShell = NO;
+            return root;
+        }
+    }
+    *start = leader;
+    // Only a shell doing job control puts a command in a new process group, so the nearest
+    // ancestor outside the foreground group is the shell that started the foreground job.
+    // Subshells and shells running scripts within the job are skipped, whatever their names.
+    NSInteger i = leader;
+    for (int steps = 0; steps < iTermForegroundShellWalkMaximumAncestors; steps++) {
+        const pid_t ppid = _processes[i].ppid;
+        if (ppid <= 1) {
+            // Not below the root, e.g., the process launchd adopted after its parent exited.
+            // Some other shell's directory would be wrong, so give nothing.
+            DLog(@"Process group %@ isn't below %@", @(group), @(root));
+            return -1;
+        }
+        if (ppid == root) {
+            DLog(@"Reached the root %@ walking up from %@", @(root), @(group));
+            *isShell = rootIndex >= 0 && [self isShellAtPrompt:rootIndex];
+            return root;
+        }
+        i = _parents[i];
+        if (i < 0) {
+            DLog(@"Can't find process %@ while walking up from %@", @(ppid), @(group));
+            return -1;
+        }
+        if (_processes[i].pgid != group) {
+            DLog(@"%@ (%s) started the job %@", @(ppid), _processes[i].name, @(group));
+            *isShell = [iTermLSOF processNameIsAShell:[NSString stringWithUTF8String:_processes[i].name]];
+            return ppid;
+        }
+    }
+    DLog(@"Gave up walking up from %@", @(group));
+    return -1;
+}
+
+// Prefers a member that still has its parent: one launchd adopted no longer leads to the shell.
+- (NSInteger)anyMemberOfGroup:(pid_t)group {
+    NSInteger best = -1;
+    for (NSInteger i = 0; i < _count; i++) {
+        if (_processes[i].pgid != group) {
+            continue;
+        }
+        if (_processes[i].ppid > 1) {
+            // The table is sorted, so this has the lowest pid of those with parents.
+            return i;
+        }
+        if (best < 0) {
+            best = i;
+        }
+    }
+    return best;
+}
+
+// The index of the process at the top of the only other terminal below the job in `group`, which
+// is on `tty`, or -1 if there's none or more than one. A process on another terminal is below the
+// job if its ancestors reach a member of the job before any process on another terminal, which
+// also makes it the topmost on its own: relays nested in it are found by the search on its
+// terminal, not counted here. Processes without a terminal (e.g., those Claude Code runs) don't
+// count, but what they start does.
+- (NSInteger)relayBelowGroup:(pid_t)group tty:(dev_t)tty {
+    if (tty == NODEV) {
+        return -1;
+    }
+    [_visitedTTYs addObject:@(tty)];
+    NSInteger relay = -1;
+    for (NSInteger i = 0; i < _count; i++) {
+        if (!iTermWalkProcessIsOnOtherTerminal(&_processes[i], tty) ||
+            ![self isBelowGroup:group tty:tty index:i]) {
+            continue;
+        }
+        if (relay >= 0) {
+            DLog(@"Both %@ and %@ below job %@ are on other terminals", @(_processes[relay].pid), @(_processes[i].pid), @(group));
+            return -1;
+        }
+        relay = i;
+    }
+    if (relay < 0) {
+        return -1;
+    }
+    if ([_visitedTTYs containsObject:@(_processes[relay].tty)]) {
+        DLog(@"Terminal %@ was already searched", @(_processes[relay].tty));
+        return -1;
+    }
+    if (_processes[relay].ttyForegroundProcessGroup <= 0) {
+        DLog(@"Terminal %@ has no foreground process group", @(_processes[relay].tty));
+        return -1;
+    }
+    return relay;
+}
+
+// Whether the ancestors of _processes[index] reach a member of `group` before any process on a
+// terminal other than `tty`.
+- (BOOL)isBelowGroup:(pid_t)group tty:(dev_t)tty index:(NSInteger)index {
+    NSInteger i = _parents[index];
+    for (int steps = 0; i >= 0 && steps < iTermForegroundShellWalkMaximumAncestors; steps++) {
+        const iTermWalkProcess *process = &_processes[i];
+        if (process->pgid == group) {
+            return YES;
+        }
+        if (iTermWalkProcessIsOnOtherTerminal(process, tty)) {
+            return NO;
+        }
+        i = _parents[i];
+    }
+    return NO;
 }
 
 @end

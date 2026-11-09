@@ -173,9 +173,11 @@
 #import "iTermSetFindStringNotification.h"
 #import "iTermSharedImageStore.h"
 #import "iTermShellHistoryController.h"
+#import "iTermLSOF.h"
 #import "iTermShortcut.h"
 #import "iTermShortcutInputView.h"
 #import "iTermSlowOperationGateway.h"
+#import "iTermSyntheticConfParser.h"
 #import "iTermSnippetsModel.h"
 #import "iTermSoundPlayer.h"
 #import "iTermStandardKeyMapper.h"
@@ -11799,17 +11801,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 // nothing is running tmux in it, so leave tmux mode before anything is typed into the shell (QA
 // finding F-832). Another job, like ssh, can't be told apart from tmux, so it is trusted.
 + (BOOL)processNameIsAShell:(NSString *)name {
-    static NSSet<NSString *> *shells;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        shells = [[NSSet alloc] initWithArray:@[ @"zsh", @"bash", @"sh", @"fish", @"tcsh", @"csh",
-                                                 @"ksh", @"dash", @"nu", @"xonsh", @"elvish" ]];
-    });
-    NSString *base = name.lastPathComponent;
-    if ([base hasPrefix:@"-"]) {
-        base = [base substringFromIndex:1];
-    }
-    return base.length > 0 && [shells containsObject:base];
+    return [iTermLSOF processNameIsAShell:name];
 }
 
 - (void)stopRestoredTmuxModeIfNoTmuxIsRunning {
@@ -17894,8 +17886,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [[_delegate realParentWindow] incrementBadge];
 }
 
-- (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
-    DLog(@"screenGetWorkingDirectoryWithCompletion");
+- (void)screenGetWorkingDirectoryForReportedChange:(BOOL)reportedChange
+                                        completion:(void (^)(NSString *))completion {
+    DLog(@"screenGetWorkingDirectoryForReportedChange:%@", @(reportedChange));
+    if (reportedChange) {
+        // Before adding the completion, so it isn't given a poll from before the report.
+        [_directoryTracker directoryChangeReportedWithoutDirectory];
+    }
     [_directoryTracker addOneTimeCompletion:completion];
     [_directoryTracker poll];
 }
@@ -20931,15 +20928,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                      remoteHost:(id<VT100RemoteHostReading>)remoteHost
                                   withDirectory:(NSString *)directory
                                        pushType:(VT100ScreenWorkingDirectoryPushType)pushType
-                              verifiedLocalhost:(BOOL)verifiedLocalhost
+                                       locality:(VT100ScreenWorkingDirectoryLocality)locality
                                        accepted:(BOOL)accepted {
-    DLog(@"screenLogWorkingDirectoryOnAbsoluteLine:%@ remoteHost:%@ withDirectory:%@ pushType:%@ verifiedLocalhost:%@ accepted:%@",
-         @(absLine), remoteHost, directory, @(pushType), @(verifiedLocalhost), @(accepted));
+    DLog(@"screenLogWorkingDirectoryOnAbsoluteLine:%@ remoteHost:%@ withDirectory:%@ pushType:%@ locality:%@ accepted:%@",
+         @(absLine), remoteHost, directory, @(pushType), @(locality), @(accepted));
     [_directoryTracker screenLogWorkingDirectoryOnAbsoluteLine:absLine
                                                     remoteHost:remoteHost
                                                  withDirectory:directory
                                                       pushType:pushType
-                                             verifiedLocalhost:verifiedLocalhost
+                                                      locality:locality
                                                       accepted:accepted];
 }
 
@@ -24677,6 +24674,10 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
     return _shell.pid;
 }
 
+- (pid_t)directoryTrackerForegroundProcessGroup:(iTermSessionDirectoryTracker *)tracker {
+    return _shell.foregroundProcessGroup;
+}
+
 - (NSString *)directoryTrackerEnvironmentPWD:(iTermSessionDirectoryTracker *)tracker {
     return self.environment[@"PWD"];
 }
@@ -24691,6 +24692,16 @@ static const int iTermNestedFramerRecoveryMaximumExtensions = 4;
 
 - (id<iTermWorkingDirectoryProvider>)directoryTrackerWorkingDirectoryProvider:(iTermSessionDirectoryTracker *)tracker {
     return _shell;
+}
+
+- (void)directoryTracker:(iTermSessionDirectoryTracker *)tracker
+resolveSymlinksInDirectory:(NSString *)directory
+              completion:(void (^)(NSString *))completion {
+    [[iTermSlowOperationGateway sharedInstance] resolvePathOfDirectory:directory
+                                                            completion:^(NSString *resolved) {
+        // Polls get the same treatment (see iTermLSOF), so the two compare as strings.
+        completion(resolved ? [[iTermSyntheticConfParser sharedInstance] pathByReplacingPrefixWithSyntheticRoot:resolved] : nil);
+    }];
 }
 
 - (id<iTermSSHIdentityProvider>)directoryTrackerSSHIdentityProvider:(iTermSessionDirectoryTracker *)tracker {

@@ -38,6 +38,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)statFile:(NSString *)path
       completion:(void (^)(struct stat, int))completion;
 
+// Resolves symlinks in `directory`, giving the path in the form the kernel
+// reports for a process's working directory. Unlike most methods here, the
+// completion runs exactly once, on the main queue: with nil if the path can't
+// be resolved, the service isn't ready or fails mid-call, or the lookup times
+// out (the service gives up on a hung filesystem after several seconds). While
+// an earlier lookup of the same path is stuck past that timeout, it replies nil
+// at once rather than strand another thread.
+- (void)resolvePathOfDirectory:(NSString *)directory
+                    completion:(void (^)(NSString * _Nullable resolved))completion;
+
 - (void)asyncGetInfoForProcess:(int)pid
                         flavor:(int)flavor
                            arg:(uint64_t)arg

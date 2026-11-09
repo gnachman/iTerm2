@@ -203,13 +203,24 @@ static void HandleSigChld(int n) {
     return path;
 }
 
+- (pid_t)foregroundProcessGroup {
+    __block pid_t pgrp = -1;
+    [self withFileDescriptor:^(int fd) {
+        pgrp = tcgetpgrp(fd);
+    }];
+    return pgrp;
+}
+
+// Both report the directory of the shell the user is in, which may be nested below this task's
+// process. See iTermLSOF.
 - (NSString *)getWorkingDirectory {
     DLog(@"Want working directory of %@ - SYNCHRONOUS", @(self.pid));
     if (self.pid == -1) {
         DLog(@"Want to use the kernel to get the working directory but pid = -1");
         return nil;
     }
-    return [iTermLSOF workingDirectoryOfProcess:self.pid];
+    return [iTermLSOF workingDirectoryOfForegroundShellWithRootPid:self.pid
+                                            foregroundProcessGroup:self.foregroundProcessGroup];
 }
 
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion {
@@ -219,7 +230,10 @@ static void HandleSigChld(int n) {
         completion(nil);
         return;
     }
-    [iTermLSOF asyncWorkingDirectoryOfProcess:self.pid queue:dispatch_get_main_queue() block:completion];
+    [iTermLSOF asyncWorkingDirectoryOfForegroundShellWithRootPid:self.pid
+                                          foregroundProcessGroup:self.foregroundProcessGroup
+                                                           queue:dispatch_get_main_queue()
+                                                           block:completion];
 }
 
 - (Coprocess *)coprocess {

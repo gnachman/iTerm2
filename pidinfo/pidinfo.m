@@ -55,12 +55,16 @@
     dispatch_queue_t _queue;
     int _numWedged;
     _Atomic int _count;
+    // Directory path -> when each running resolution of it began (system uptime). Guarded by
+    // @synchronized on itself.
+    NSMutableDictionary<NSString *, NSMutableArray<NSNumber *> *> *_directoryResolutionStarts;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _queue = dispatch_queue_create("com.iterm2.pidinfo", DISPATCH_QUEUE_CONCURRENT);
+        _directoryResolutionStarts = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -476,6 +480,78 @@ static DrainResult DrainFDNonBlocking(int fd, NSMutableData * _Nullable sink) {
     }];
 }
 
+// A hung filesystem (e.g., a hard-mounted network volume whose server is gone) leaves the thread
+// stuck in the kernel after the watchdog gives up on it. Callers retry, so don't start another
+// attempt for a path while an earlier one is stuck past the timeout: each would strand another
+// thread, and enough of them stop _queue from running anything. Attempts that are merely
+// concurrent proceed, since resolution is normally quick.
+- (void)resolvePathOfDirectory:(NSString *)directory
+                     withReply:(void (^)(NSString * _Nullable))reply {
+    const NSTimeInterval now = [NSProcessInfo processInfo].systemUptime;
+    NSNumber *start = @(now);
+    BOOL stuck = NO;
+    @synchronized (_directoryResolutionStarts) {
+        NSMutableArray<NSNumber *> *starts = _directoryResolutionStarts[directory];
+        for (NSNumber *earlier in starts) {
+            if (now - earlier.doubleValue >= [self riskyBlockTimeout]) {
+                stuck = YES;
+                break;
+            }
+        }
+        if (!stuck) {
+            if (!starts) {
+                starts = [NSMutableArray array];
+                _directoryResolutionStarts[directory] = starts;
+            }
+            [starts addObject:start];
+        }
+    }
+    if (stuck) {
+        syslog(LOG_INFO, "Not resolving a directory whose previous resolution is stuck");
+        reply(nil);
+        return;
+    }
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil);
+            return;
+        }
+        NSString *resolved = nil;
+        // F_GETPATH asks the kernel for the vnode's path, the same lookup proc_pidinfo
+        // does for a working directory, so the two can be compared as strings.
+        // Opening needs read permission, which a directory you can cd into may lack,
+        // so fall back to realpath.
+        const int fd = open(directory.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+        if (fd >= 0) {
+            char buffer[MAXPATHLEN];
+            if (fcntl(fd, F_GETPATH, buffer) == 0) {
+                resolved = [NSString stringWithUTF8String:buffer];
+            }
+            close(fd);
+        }
+        if (!resolved) {
+            char buffer[PATH_MAX];
+            if (realpath(directory.fileSystemRepresentation, buffer)) {
+                resolved = [NSString stringWithUTF8String:buffer];
+            }
+        }
+        @synchronized (self->_directoryResolutionStarts) {
+            NSMutableArray<NSNumber *> *starts = self->_directoryResolutionStarts[directory];
+            const NSUInteger i = [starts indexOfObject:start];
+            if (i != NSNotFound) {
+                [starts removeObjectAtIndex:i];
+            }
+            if (starts.count == 0) {
+                [self->_directoryResolutionStarts removeObjectForKey:directory];
+            }
+        }
+        if (!completion()) {
+            return;
+        }
+        reply(resolved);
+    }];
+}
+
 BOOL FileIsRegularExecutableFile(NSString *filename) {
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
@@ -548,13 +624,16 @@ static BOOL FileIsRegularExecutableFileUsingSearchPathsIfNeeded(NSString *filena
 //     reply(SUCCESS);
 //   }];
 // }];
-- (void)performRiskyBlock:(void (^)(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)))block {
+- (NSTimeInterval)riskyBlockTimeout {
 #if DEBUG
-    const NSTimeInterval timeout = 30;
+    return 30;
 #else
-    const NSTimeInterval timeout = 10;
+    return 10;
 #endif
-    [self performRiskyBlockWithTimeout:timeout block:block];
+}
+
+- (void)performRiskyBlock:(void (^)(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)))block {
+    [self performRiskyBlockWithTimeout:[self riskyBlockTimeout] block:block];
 }
 
 - (void)performRiskyBlockWithTimeout:(NSTimeInterval)timeout

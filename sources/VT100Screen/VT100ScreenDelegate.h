@@ -90,6 +90,18 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
     VT100ScreenWorkingDirectoryPushTypeStrongPush
 };
 
+// How a reported working directory is known to be on this machine.
+typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryLocality) {
+    // It might be a remote path that looks local (e.g., an OSC 7 without a machineID).
+    VT100ScreenWorkingDirectoryLocalityUnverified,
+    // The report proved it came from this machine (an OSC 7 machineID matching ours), so the
+    // directory is as good as a poll of the local shell.
+    VT100ScreenWorkingDirectoryLocalityVerifiedReport,
+    // It came from polling the local shell. The tracker records polls as they finish, so it
+    // needn't record this one again.
+    VT100ScreenWorkingDirectoryLocalityLocalPoll
+};
+
 @protocol VT100ScreenDelegate <NSObject, iTermImmutableColorMapDelegate, iTermObject, iTermTriggerSideEffectExecutor>
 
 // Screen contents have become dirty and should be redrawn right away.
@@ -296,7 +308,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 
 - (void)screenDisinterSession;
 
-- (void)screenGetWorkingDirectoryWithCompletion:(void (^ _Nonnull)(NSString * _Nullable workingDirectory))completion;
+// Polls for the working directory. reportedChange means the shell reported a directory change
+// without saying where (e.g., an empty CurrentDir), which is a strong push.
+- (void)screenGetWorkingDirectoryForReportedChange:(BOOL)reportedChange
+                                        completion:(void (^ _Nonnull)(NSString * _Nullable workingDirectory))completion;
 
 // Show/hide the cursor.
 - (void)screenSetCursorVisible:(BOOL)visible;
@@ -436,7 +451,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
                                      remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost
                                   withDirectory:(NSString * _Nullable)directory
                                        pushType:(VT100ScreenWorkingDirectoryPushType)pushType
-                              verifiedLocalhost:(BOOL)verifiedLocalhost
+                                       locality:(VT100ScreenWorkingDirectoryLocality)locality
                                        accepted:(BOOL)accepted;
 
 - (void)screenSuggestShellIntegrationUpgrade;

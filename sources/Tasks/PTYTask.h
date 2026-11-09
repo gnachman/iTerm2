@@ -166,6 +166,9 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 @property(nonatomic, readonly) id sessionRestorationIdentifier;
 
 @property(atomic, readonly) pid_t pid;
+// The terminal's foreground process group, or -1 if unknown (e.g., no pty of our own, as in tmux
+// integration).
+@property(nonatomic, readonly) pid_t foregroundProcessGroup;
 // Externally, only PTYSession should assign to this when reattaching to a server.
 @property(atomic, readonly) NSString *tty;
 @property(atomic, readonly) NSString *path;

@@ -21,12 +21,15 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
     BOOL _wantsPoll;
     NSInteger _generation;
     NSMutableArray<iTermWorkingDirectoryPollerClosure> *_completions;
+    // Parallel to _completions: the request stamp when each was added.
+    NSMutableArray<NSNumber *> *_completionStamps;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _completions = [NSMutableArray array];
+        _completionStamps = [NSMutableArray array];
         _pwdPollRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Working directory poller"
                                                          minimumInterval:1];
     }
@@ -39,7 +42,6 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
     self = [self init];
     if (self) {
         __weak __typeof(self) weakSelf = self;
-        _completions = [NSMutableArray array];
         _tmuxOptionMonitor = [[iTermTmuxOptionMonitor alloc] initWithGateway:gateway
                                                                        scope:scope
                                                         fallbackVariableName:nil
@@ -113,40 +115,64 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
     }
     __weak __typeof(self) weakSelf = self;
     NSInteger generation = _generation;
-    [iTermLSOF asyncWorkingDirectoryOfProcess:pid queue:dispatch_get_main_queue() block:^(NSString *pwd) {
+    const NSInteger requestStamp = [self.delegate workingDirectoryPollerRequestStamp];
+    [iTermLSOF asyncWorkingDirectoryOfForegroundShellWithRootPid:pid
+                                          foregroundProcessGroup:[self.delegate workingDirectoryPollerForegroundProcessGroup]
+                                                           queue:dispatch_get_main_queue()
+                                                           block:^(NSString *pwd) {
         DLog(@"Got: %@", pwd);
-        [weakSelf setDirectory:pwd generation:generation];
+        [weakSelf setDirectory:pwd generation:generation requestStamp:requestStamp];
     }];
 }
 
 - (void)addOneTimeCompletion:(void (^)(NSString * _Nullable))completion {
     [_completions addObject:completion];
+    [_completionStamps addObject:@([self.delegate workingDirectoryPollerRequestStamp])];
 }
 
-- (void)setDirectory:(NSString *)directory generation:(NSInteger)generation {
-    DLog(@"setDirectory:%@ generation:%@", directory, @(generation));
-    [self didInferWorkingDirectory:directory valid:generation == _generation];
+- (void)setDirectory:(NSString *)directory
+          generation:(NSInteger)generation
+        requestStamp:(NSInteger)requestStamp {
+    DLog(@"setDirectory:%@ generation:%@ requestStamp:%@", directory, @(generation), @(requestStamp));
+    [self didInferWorkingDirectory:directory valid:generation == _generation requestStamp:requestStamp];
     [self pollIfNeeded];
 }
 
-- (void)didInferWorkingDirectory:(NSString *)pwd valid:(BOOL)valid {
-    DLog(@"didInferWorkingDirectory:%@ valid:%@", pwd, @(valid));
+- (void)didInferWorkingDirectory:(NSString *)pwd valid:(BOOL)valid requestStamp:(NSInteger)requestStamp {
+    DLog(@"didInferWorkingDirectory:%@ valid:%@ requestStamp:%@", pwd, @(valid), @(requestStamp));
     if (pwd) {
         _haveFoundInitialDirectory = YES;
     }
-    NSArray<iTermWorkingDirectoryPollerClosure> *completions = [_completions copy];
-    [_completions removeAllObjects];
-    [completions enumerateObjectsUsingBlock:^(iTermWorkingDirectoryPollerClosure  _Nonnull completion, NSUInteger idx, BOOL * _Nonnull stop) {
+    // A request that began before a completion was added may describe the shell before
+    // whatever prompted it, so leave that completion for a later result.
+    NSMutableArray<iTermWorkingDirectoryPollerClosure> *ready = [NSMutableArray array];
+    for (NSInteger i = _completions.count - 1; i >= 0; i--) {
+        if (_completionStamps[i].integerValue <= requestStamp) {
+            [ready insertObject:_completions[i] atIndex:0];
+            [_completions removeObjectAtIndex:i];
+            [_completionStamps removeObjectAtIndex:i];
+        }
+    }
+    for (iTermWorkingDirectoryPollerClosure completion in ready) {
         completion(pwd);
-    }];
+    }
     [self.delegate workingDirectoryPollerDidFindWorkingDirectory:pwd
-                                                     invalidated:!valid];
+                                                     invalidated:!valid
+                                                    requestStamp:requestStamp];
 }
 
 - (void)tmuxOptionMonitorDidProduceDirectory:(NSString *)directory {
     // These can't be invalidated because we don't have local lookups competing with remote.
     // Remote should always win.
-    [self setDirectory:directory generation:_generation];
+    // Stamp with the current value, not the one from when updateOnce was sent. tmux evaluates
+    // the path when it handles the command (or checks a subscription) and writes the result
+    // into the same ordered stream as the pane's %output. A value from before the shell's cd
+    // therefore precedes the prompt's OSC 7 in that stream and is handled before the push,
+    // which only reaches the tracker later, by way of the mutation thread. A value handled
+    // after the push was evaluated after it was emitted, so it's current.
+    [self setDirectory:directory
+            generation:_generation
+          requestStamp:[self.delegate workingDirectoryPollerRequestStamp]];
 }
 
 @end

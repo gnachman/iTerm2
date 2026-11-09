@@ -199,7 +199,7 @@ class SpyingScreenDelegate: FakeSession {
 
     // MARK: - Overrides
 
-    override func screenGetWorkingDirectory(completion: @escaping (String?) -> Void) {
+    override func screenGetWorkingDirectory(forReportedChange reportedChange: Bool, completion: @escaping (String?) -> Void) {
         getWorkingDirectoryCalls.append(GetWorkingDirectoryCall())
         titleEvents.append("pwd")
         completion(polledWorkingDirectory)
@@ -214,7 +214,7 @@ class SpyingScreenDelegate: FakeSession {
                                             remoteHost: (any VT100RemoteHostReading)?,
                                             withDirectory directory: String?,
                                             pushType: VT100ScreenWorkingDirectoryPushType,
-                                            verifiedLocalhost: Bool,
+                                            locality: VT100ScreenWorkingDirectoryLocality,
                                             accepted: Bool) {
         logWorkingDirectoryCalls.append(LogWorkingDirectoryCall(path: directory, line: line))
     }

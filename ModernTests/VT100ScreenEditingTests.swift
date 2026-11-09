@@ -93,7 +93,7 @@ private class VT100ScreenEditingSession: FakeSession {
         pointSizeRequests.append(proposedSize)
     }
 
-    override func screenGetWorkingDirectory(completion: @escaping (String?) -> Void) {
+    override func screenGetWorkingDirectory(forReportedChange reportedChange: Bool, completion: @escaping (String?) -> Void) {
         completion(polledWorkingDirectory)
     }
 
@@ -101,7 +101,7 @@ private class VT100ScreenEditingSession: FakeSession {
                                             remoteHost: (any VT100RemoteHostReading)?,
                                             withDirectory directory: String?,
                                             pushType: VT100ScreenWorkingDirectoryPushType,
-                                            verifiedLocalhost: Bool,
+                                            locality: VT100ScreenWorkingDirectoryLocality,
                                             accepted: Bool) {
         workingDirectoryLog.append((absLine: absLine, directory: directory))
     }

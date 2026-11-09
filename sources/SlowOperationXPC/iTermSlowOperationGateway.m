@@ -132,6 +132,12 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
 
     // statFile:withReply: returns a struct and int – no registration needed.
 
+    // For resolvePathOfDirectory:withReply:
+    [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithObject:[NSString class]]
+                                                   forSelector:@selector(resolvePathOfDirectory:withReply:)
+                                                 argumentIndex:0
+                                                       ofReply:YES];
+
     // For runShellScript:shell:mode:withReply: (reply block: NSData *output, NSData *error, int status)
     [_connectionToService.remoteObjectInterface setClasses:[NSSet setWithArray:@[[NSData class], [NSNumber class]]]
                                                    forSelector:@selector(runShellScript:shell:mode:withReply:)
@@ -249,6 +255,34 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         dispatch_async(dispatch_get_main_queue(), ^{
             completion(statbuf, error);
         });
+    }];
+}
+
+// Delivers exactly once so callers can tell an outstanding request from a dropped
+// one; the error handler covers the reply block being dropped (see runScript:).
+- (void)resolvePathOfDirectory:(NSString *)directory
+                    completion:(void (^)(NSString * _Nullable))completion {
+    if (!self.ready) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(nil);
+        });
+        return;
+    }
+    __block atomic_flag delivered = ATOMIC_FLAG_INIT;
+    void (^deliver)(NSString * _Nullable) = ^(NSString * _Nullable value) {
+        if (atomic_flag_test_and_set(&delivered)) {
+            return;
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(value);
+        });
+    };
+    id<pidinfoProtocol> proxy =
+        [_connectionToService remoteObjectProxyWithErrorHandler:^(NSError *error) {
+            deliver(nil);
+        }];
+    [proxy resolvePathOfDirectory:directory withReply:^(NSString *resolved) {
+        deliver(resolved);
     }];
 }
 

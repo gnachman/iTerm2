@@ -24,6 +24,10 @@ class MockDirectoryTrackerDelegate: NSObject, @preconcurrency iTermSessionDirect
     var escapeSequencesDisabled = false
     var workingDirectoryProvider: MockWorkingDirectoryProvider?
     var sshIdentityProvider: (any SSHIdentityProvider)?
+    /// Directories passed to resolveSymlinksInDirectory, in order.
+    var resolveRequests: [String] = []
+    /// Completions for those requests, so a test decides when (and whether) each finishes.
+    var resolveCompletions: [(String?) -> Void] = []
 
     func directoryTrackerDidChangeDirectory(_ tracker: iTermSessionDirectoryTracker) {
         didChangeDirectoryCalled = true
@@ -55,6 +59,10 @@ class MockDirectoryTrackerDelegate: NSObject, @preconcurrency iTermSessionDirect
         return processID
     }
 
+    func directoryTrackerForegroundProcessGroup(_ tracker: iTermSessionDirectoryTracker) -> pid_t {
+        return -1
+    }
+
     func directoryTrackerEnvironmentPWD(_ tracker: iTermSessionDirectoryTracker) -> String? {
         return environmentPWD
     }
@@ -75,6 +83,13 @@ class MockDirectoryTrackerDelegate: NSObject, @preconcurrency iTermSessionDirect
         return sshIdentityProvider
     }
 
+    func directoryTracker(_ tracker: iTermSessionDirectoryTracker,
+                          resolveSymlinksInDirectory directory: String,
+                          completion: @escaping (String?) -> Void) {
+        resolveRequests.append(directory)
+        resolveCompletions.append(completion)
+    }
+
     func reset() {
         didChangeDirectoryCalled = false
         didUpdateCurrentDirectoryPath = nil
@@ -92,6 +107,9 @@ class MockDirectoryTrackerDelegate: NSObject, @preconcurrency iTermSessionDirect
     var asyncDelay: TimeInterval = 0
     var getWorkingDirectoryCalled = false
     var getWorkingDirectoryAsyncCalled = false
+    /// When set, async requests wait in deferredCompletions until the test runs them.
+    var deferCompletions = false
+    var deferredCompletions: [(String?) -> Void] = []
 
     @objc var getWorkingDirectory: String? {
         getWorkingDirectoryCalled = true
@@ -100,6 +118,10 @@ class MockDirectoryTrackerDelegate: NSObject, @preconcurrency iTermSessionDirect
 
     @objc func getWorkingDirectory(completion: @escaping (String?) -> Void) {
         getWorkingDirectoryAsyncCalled = true
+        if deferCompletions {
+            deferredCompletions.append(completion)
+            return
+        }
         if asyncDelay > 0 {
             DispatchQueue.main.asyncAfter(deadline: .now() + asyncDelay) {
                 completion(self.asyncResult)
@@ -408,7 +430,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         mockDelegate.escapeSequencesDisabled = false
 
         // When
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/test", invalidated: false)
+        pollerFound("/Users/test", invalidated: false)
 
         // Then
         XCTAssertEqual(mockDelegate.createMarkDirectory, "/Users/test")
@@ -420,7 +442,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         tracker.shouldExpectCurrentDirUpdates = false
 
         // When
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/test", invalidated: true)
+        pollerFound("/Users/test", invalidated: true)
 
         // Then
         XCTAssertNil(mockDelegate.createMarkDirectory)
@@ -434,7 +456,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         mockDelegate.reset()
 
         // When
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/polled", invalidated: true)
+        pollerFound("/Users/polled", invalidated: true)
 
         // Then
         XCTAssertEqual(tracker.lastLocalDirectory, "/Users/pushed") // unchanged
@@ -448,7 +470,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         tracker.workingDirectoryPollerDisabled = true
 
         // When
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/test", invalidated: false)
+        pollerFound("/Users/test", invalidated: false)
 
         // Then
         XCTAssertNil(mockDelegate.createMarkDirectory)
@@ -460,7 +482,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         mockDelegate.escapeSequencesDisabled = false
 
         // When
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/test", invalidated: false)
+        pollerFound("/Users/test", invalidated: false)
 
         // Then
         XCTAssertNil(mockDelegate.createMarkDirectory)
@@ -473,7 +495,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         tracker.workingDirectoryPollerDisabled = false
 
         // When
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/test", invalidated: false)
+        pollerFound("/Users/test", invalidated: false)
 
         // Then
         XCTAssertEqual(mockDelegate.createMarkDirectory, "/Users/test")
@@ -485,7 +507,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         tracker.shouldExpectCurrentDirUpdates = false
 
         // When
-        tracker.workingDirectoryPollerDidFindWorkingDirectory(nil, invalidated: false)
+        pollerFound(nil, invalidated: false)
 
         // Then
         XCTAssertNil(mockDelegate.createMarkDirectory)
@@ -516,7 +538,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
         // The poller reports the local ssh process's cwd (e.g. after a key press
         // and a line feed), arriving after the remote push.
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        pollerFound("/Users/local", invalidated: false)
 
         XCTAssertEqual(sessionPath, "/tmp/qa125")
         XCTAssertEqual(tracker.lastDirectory, "/tmp/qa125")
@@ -527,7 +549,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     func testInvalidatedPollerResult_AfterRemotePush_DoesNotChangeSessionPath() {
         pushRemoteDirectory("/tmp/qa125")
 
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: true)
+        pollerFound("/Users/local", invalidated: true)
 
         XCTAssertEqual(sessionPath, "/tmp/qa125")
         XCTAssertEqual(tracker.lastLocalDirectory, "/Users/local")
@@ -671,7 +693,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     // `cd foo; claude` pasted: the poller last ran before the cd, so its cached result is
     // stale. The push from the prompt after the cd must refresh it.
     func testUnverifiedStrongPush_PollsLocalDirectory() {
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/before", invalidated: false)
+        pollerFound("/Users/before", invalidated: false)
         let provider = MockWorkingDirectoryProvider()
         provider.asyncResult = "/Users/after"
         mockDelegate.workingDirectoryProvider = provider
@@ -680,7 +702,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
                                           remoteHost: VT100RemoteHost.localhost(),
                                           withDirectory: "/Users/after",
                                           pushType: .strongPush,
-                                          verifiedLocalhost: false,
+                                          locality: .unverified,
                                           accepted: true)
 
         XCTAssertTrue(provider.getWorkingDirectoryAsyncCalled)
@@ -690,7 +712,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     // A push proven local by a machineID token is as good as a poll, and keeps the
     // user's unresolved symlinks.
     func testVerifiedStrongPush_UsesPushedDirectoryWithoutPolling() {
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/before", invalidated: false)
+        pollerFound("/Users/before", invalidated: false)
         let provider = MockWorkingDirectoryProvider()
         provider.asyncResult = "/private/resolved/after"
         mockDelegate.workingDirectoryProvider = provider
@@ -699,7 +721,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
                                           remoteHost: VT100RemoteHost.localhost(),
                                           withDirectory: "/Users/after",
                                           pushType: .strongPush,
-                                          verifiedLocalhost: true,
+                                          locality: .verifiedReport,
                                           accepted: true)
 
         XCTAssertFalse(provider.getWorkingDirectoryAsyncCalled)
@@ -717,7 +739,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
                                           remoteHost: VT100RemoteHost.localhost(),
                                           withDirectory: "/home/remote",
                                           pushType: .strongPush,
-                                          verifiedLocalhost: false,
+                                          locality: .unverified,
                                           accepted: true)
 
         XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/local")
@@ -729,8 +751,333 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         waitForExpectations(timeout: 1.0)
     }
 
+    // A poll resolves symlinks. It must not replace the readable path a verified push gave,
+    // whether it comes from the line-feed poller or a local-only poll.
+    func testPollAfterVerifiedPush_KeepsPushedSymlinkPath() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Volumes/Data/src"
+        mockDelegate.workingDirectoryProvider = provider
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/Users/me/src",
+                                          pushType: .strongPush,
+                                          locality: .verifiedReport,
+                                          accepted: true)
+
+        pollerFound("/Volumes/Data/src", invalidated: false)
+        tracker.pollLocalDirectoryOnly()
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/src")
+    }
+
+    /// A poller result for a request that began just now, after any push so far.
+    private func pollerFound(_ pwd: String?, invalidated: Bool) {
+        tracker.workingDirectoryPollerDidFindWorkingDirectory(pwd,
+                                                              invalidated: invalidated,
+                                                              requestStamp: tracker.workingDirectoryPollerRequestStamp())
+    }
+
+    private func pushVerified(_ directory: String) {
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: directory,
+                                          pushType: .strongPush,
+                                          locality: .verifiedReport,
+                                          accepted: true)
+    }
+
+    // Once the pushed symlink's target is known, polls of the target keep the symlink.
+    func testPollOfResolvedPushedDirectory_KeepsSymlinkPath() {
+        pushVerified("/Users/me/src")
+        XCTAssertEqual(mockDelegate.resolveRequests, ["/Users/me/src"])
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+
+        pollerFound("/Volumes/Data/src", invalidated: false)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/src")
+    }
+
+    // A poll naming neither the pushed directory nor its target means the shell moved without
+    // reporting it (e.g., it exec'ed a shell without shell integration and cd'ed).
+    func testPollOfOtherDirectoryAfterResolution_Wins() {
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+
+        pollerFound("/tmp/elsewhere", invalidated: false)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/tmp/elsewhere")
+    }
+
+    // Re-pushing the same directory, as every prompt does, keeps the cached resolution.
+    func testRepushOfSameDirectory_DoesNotResolveAgain() {
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+        pushVerified("/Users/me/src")
+
+        XCTAssertEqual(mockDelegate.resolveRequests.count, 1)
+        pollerFound("/Volumes/Data/src", invalidated: false)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/src")
+    }
+
+    // Symlinks can change, so a new pushed directory discards the old resolution, and a
+    // resolution of the old directory that finishes late is ignored.
+    func testNewPush_DiscardsResolutionOfPreviousDirectory() {
+        pushVerified("/Users/me/a")
+        pushVerified("/Users/me/b")
+        XCTAssertEqual(mockDelegate.resolveRequests, ["/Users/me/a", "/Users/me/b"])
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/a")
+
+        // b is still resolving, so it's kept even though a's target was polled.
+        pollerFound("/Volumes/Data/a", invalidated: false)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/b")
+
+        mockDelegate.resolveCompletions[1]("/Volumes/Data/b")
+        pollerFound("/Volumes/Data/a", invalidated: false)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Volumes/Data/a")
+    }
+
+    // A line-feed poll that began before the push may describe where the shell was before it.
+    func testPollerResultFromBeforeVerifiedPush_IsIgnored() {
+        let stamp = tracker.workingDirectoryPollerRequestStamp()
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/me/before",
+                                                              invalidated: true,
+                                                              requestStamp: stamp)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/src")
+    }
+
+    // Pressing Enter on `cd foo` starts a line-feed poll while the shell is still in the old
+    // directory. The prompt's unverified push starts a refresh poll. If the refresh returns
+    // first, the old poll must not put the old directory back.
+    func testPollerResultFromBeforeUnverifiedPush_DoesNotOverrideRefresh() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.deferCompletions = true
+        mockDelegate.workingDirectoryProvider = provider
+        let stamp = tracker.workingDirectoryPollerRequestStamp()
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: nil,
+                                          withDirectory: "/new",
+                                          pushType: .strongPush,
+                                          locality: .unverified,
+                                          accepted: true)
+        provider.deferredCompletions[0]("/new")
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/old",
+                                                              invalidated: true,
+                                                              requestStamp: stamp)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/new")
+    }
+
+    // An empty CurrentDir report is filled in with whichever poll finishes first, which may
+    // have begun before a newer push. The tracker already recorded that poll, stale-checked,
+    // so the push carrying its result must not override a newer verified push.
+    func testPushOfPolledDirectory_DoesNotReplaceNewerVerifiedPush() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.deferCompletions = true
+        mockDelegate.workingDirectoryProvider = provider
+        pushVerified("/Users/me/new")
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/Users/me/old",
+                                          pushType: .strongPush,
+                                          locality: .localPoll,
+                                          accepted: true)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/new")
+        XCTAssertEqual(mockDelegate.resolveRequests, ["/Users/me/new"])
+        XCTAssertTrue(provider.deferredCompletions.isEmpty)
+        // It isn't a new push either, so a poll begun after the verified push still counts.
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/new")
+        pollerFound("/tmp/elsewhere", invalidated: false)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/tmp/elsewhere")
+    }
+
+    // An empty CurrentDir report says the shell moved, so a poll that began before it is
+    // stale even if it lands after the poll that fills in the report.
+    func testPollerResultFromBeforeEmptyReport_DoesNotOverrideFillInPoll() {
+        pollerFound("/old", invalidated: false)
+        let stamp = tracker.workingDirectoryPollerRequestStamp()
+
+        tracker.directoryChangeReportedWithoutDirectory()
+        pollerFound("/new", invalidated: false)
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/old",
+                                                              invalidated: false,
+                                                              requestStamp: stamp)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/new")
+    }
+
+    // The report says the shell moved, so the poll filling it in replaces a verified push even
+    // before the push's resolution is known.
+    func testEmptyReport_LetsFillInPollReplaceUnresolvedVerifiedPush() {
+        pushVerified("/Users/me/src")
+
+        tracker.directoryChangeReportedWithoutDirectory()
+        pollerFound("/tmp/elsewhere", invalidated: false)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/tmp/elsewhere")
+    }
+
+    // With nothing recorded, a new session polls. If a push makes that poll stale before it
+    // finishes, its result is still better than nothing while the push's own poll runs.
+    func testAsyncLocalDirectory_UsesStalePollWhenNothingRecorded() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.deferCompletions = true
+        mockDelegate.workingDirectoryProvider = provider
+        var result: String?
+        tracker.asyncCurrentLocalWorkingDirectory { result = $0 }
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: nil,
+                                          withDirectory: "/Users/me/pushed",
+                                          pushType: .strongPush,
+                                          locality: .unverified,
+                                          accepted: true)
+        provider.deferredCompletions[0]("/Users/me/polled")
+
+        XCTAssertEqual(result, "/Users/me/polled")
+        XCTAssertNil(tracker.verifiedLocalDirectory)
+    }
+
+    // A weak push invalidates the poller's requests but establishes nothing, so a poll that
+    // began before it still applies.
+    func testPollerResultFromBeforeWeakPush_Applies() {
+        let stamp = tracker.workingDirectoryPollerRequestStamp()
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: nil,
+                                          withDirectory: "/Users/titled",
+                                          pushType: .weakPush,
+                                          accepted: true)
+
+        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/polled",
+                                                              invalidated: true,
+                                                              requestStamp: stamp)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/polled")
+    }
+
+    // A resolution that comes back empty (the service wasn't ready, or it failed) is retried
+    // on the next push of the same directory; otherwise the shell moving without a push
+    // would never be detected.
+    func testFailedResolution_IsRetriedOnRepush() {
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0](nil)
+
+        pushVerified("/Users/me/src")
+        XCTAssertEqual(mockDelegate.resolveRequests, ["/Users/me/src", "/Users/me/src"])
+
+        mockDelegate.resolveCompletions[1]("/Volumes/Data/src")
+        pollerFound("/tmp/elsewhere", invalidated: false)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/tmp/elsewhere")
+    }
+
+    // While a resolution is outstanding, a re-push doesn't start another.
+    func testOutstandingResolution_IsNotDuplicatedOnRepush() {
+        pushVerified("/Users/me/src")
+        pushVerified("/Users/me/src")
+
+        XCTAssertEqual(mockDelegate.resolveRequests.count, 1)
+    }
+
+    // A resolution of a replaced directory doesn't count as outstanding for the new one.
+    func testResolutionOfReplacedDirectory_DoesNotBlockRetry() {
+        pushVerified("/Users/me/a")
+        pushVerified("/Users/me/b")
+        mockDelegate.resolveCompletions[1](nil)
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/a")
+
+        pushVerified("/Users/me/b")
+
+        XCTAssertEqual(mockDelegate.resolveRequests, ["/Users/me/a", "/Users/me/b", "/Users/me/b"])
+    }
+
+    // Likewise for a local-only poll that began before the push.
+    func testLocalPollStartedBeforeVerifiedPush_IsIgnored() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.deferCompletions = true
+        mockDelegate.workingDirectoryProvider = provider
+        tracker.pollLocalDirectoryOnly()
+
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+        provider.deferredCompletions[0]("/Users/me/before")
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/src")
+    }
+
+    // ssh from a local shell (nested or not) to a host whose reports are unverified, whether
+    // third-party, older scripts without a machineID, or ours proving it's remote. The poll
+    // reads the local shell that ran ssh, which is still in the pushed directory, so the
+    // pushed spelling stays.
+    func testUnverifiedPushAfterVerifiedPush_KeepsPushedPathWhenPollNamesIt() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Volumes/Data/src"
+        mockDelegate.workingDirectoryProvider = provider
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 101,
+                                          remoteHost: nil,
+                                          withDirectory: "/home/remote",
+                                          pushType: .strongPush,
+                                          locality: .unverified,
+                                          accepted: true)
+
+        XCTAssertTrue(provider.getWorkingDirectoryAsyncCalled)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/me/src")
+    }
+
+    // A local shell without a machineID (e.g., `exec fish`) that cd's: the poll after its push
+    // names another directory, so it wins.
+    func testUnverifiedPushAfterVerifiedPush_PollOfOtherDirectoryWins() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/tmp/y"
+        mockDelegate.workingDirectoryProvider = provider
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 101,
+                                          remoteHost: nil,
+                                          withDirectory: "/tmp/y",
+                                          pushType: .strongPush,
+                                          locality: .unverified,
+                                          accepted: true)
+
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/tmp/y")
+    }
+
+    // An unverified push says the shell may have moved, so before the verified push's
+    // resolution is known its poll, and later polls, apply.
+    func testUnverifiedPushAfterVerifiedPush_LetsPollsApplyAgain() {
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Users/local"
+        mockDelegate.workingDirectoryProvider = provider
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 100,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/Users/me/src",
+                                          pushType: .strongPush,
+                                          locality: .verifiedReport,
+                                          accepted: true)
+
+        tracker.screenLogWorkingDirectory(onAbsoluteLine: 101,
+                                          remoteHost: VT100RemoteHost.localhost(),
+                                          withDirectory: "/home/remote",
+                                          pushType: .strongPush,
+                                          locality: .unverified,
+                                          accepted: true)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/local")
+
+        pollerFound("/Users/elsewhere", invalidated: false)
+        XCTAssertEqual(tracker.verifiedLocalDirectory, "/Users/elsewhere")
+    }
+
     func testRejectedPush_DoesNotTouchLocalDirectory() {
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/before", invalidated: false)
+        pollerFound("/Users/before", invalidated: false)
         let provider = MockWorkingDirectoryProvider()
         provider.asyncResult = "/Users/after"
         mockDelegate.workingDirectoryProvider = provider
@@ -739,7 +1086,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
                                           remoteHost: VT100RemoteHost.localhost(),
                                           withDirectory: "/Users/after",
                                           pushType: .strongPush,
-                                          verifiedLocalhost: true,
+                                          locality: .verifiedReport,
                                           accepted: false)
 
         XCTAssertFalse(provider.getWorkingDirectoryAsyncCalled)
@@ -750,7 +1097,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
 
     func testAsyncCurrentLocalWorkingDirectory_CachedValue() {
         // Given: Simulate a poller result to set verifiedLocalDirectory
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/cached", invalidated: false)
+        pollerFound("/Users/cached", invalidated: false)
         let provider = MockWorkingDirectoryProvider()
         mockDelegate.workingDirectoryProvider = provider
 
@@ -821,7 +1168,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     func testAsyncInitialDirectory_NoConductor_UsesLocalDirectory() {
         // Given: Simulate a poller result to set verifiedLocalDirectory
         mockDelegate.sshIdentityProvider = nil
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        pollerFound("/Users/local", invalidated: false)
 
         let expectation = self.expectation(description: "completion called")
 
@@ -921,7 +1268,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
     func testAsyncInitialDirectory_LocalSessionToLocalSession_ReturnsDirectory() {
         // Given: Simulate a poller result to set verifiedLocalDirectory
         mockDelegate.sshIdentityProvider = nil
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local", invalidated: false)
+        pollerFound("/Users/local", invalidated: false)
 
         let expectation = self.expectation(description: "completion called")
 
@@ -944,7 +1291,7 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         // Given: Remote shell pushed a directory via OSC 7 (treated as local because no hostname)
         tracker.setLastDirectory("/home/remote/path", remote: false, pushed: true)
         // But the poller knows the real local directory
-        tracker.workingDirectoryPollerDidFindWorkingDirectory("/Users/local/path", invalidated: false)
+        pollerFound("/Users/local/path", invalidated: false)
 
         let expectation = self.expectation(description: "completion called")
 

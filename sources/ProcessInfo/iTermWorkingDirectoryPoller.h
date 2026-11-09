@@ -15,8 +15,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermWorkingDirectoryPollerDelegate<NSObject>
 - (BOOL)workingDirectoryPollerShouldPoll;
-- (void)workingDirectoryPollerDidFindWorkingDirectory:(nullable NSString *)path invalidated:(BOOL)invalidated;
+// requestStamp is what workingDirectoryPollerRequestStamp returned when the
+// request began, so the delegate can tell which events preceded it.
+- (void)workingDirectoryPollerDidFindWorkingDirectory:(nullable NSString *)path
+                                          invalidated:(BOOL)invalidated
+                                         requestStamp:(NSInteger)requestStamp;
 - (pid_t)workingDirectoryPollerProcessID;
+// The terminal's foreground process group, or -1 if unknown.
+- (pid_t)workingDirectoryPollerForegroundProcessGroup;
+// A value recorded when a request begins and handed back with its result. It
+// must never decrease.
+- (NSInteger)workingDirectoryPollerRequestStamp;
 @end
 
 @interface iTermWorkingDirectoryPoller : NSObject
@@ -34,6 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)didReceiveLineFeed;
 - (void)userDidPressKey;
 - (void)invalidateOutstandingRequests;
+// Runs on the next result of a request that began no earlier than this call,
+// judged by workingDirectoryPollerRequestStamp.
 - (void)addOneTimeCompletion:(void (^)(NSString * _Nullable))completion;
 
 @end
