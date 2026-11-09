@@ -14433,7 +14433,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (NSString *)textViewKnownLocalWorkingDirectory {
-    return _directoryTracker.polledLocalDirectory;
+    return _directoryTracker.verifiedLocalDirectory;
 }
 
 // NOTE: This will not fetch the current directory if it's not already known to avoid blocking
