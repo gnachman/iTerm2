@@ -63,7 +63,7 @@ isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
                            blockIDList:(NSString * _Nullable)blocokIDList
                            controlCode:(NSNumber * _Nullable)code;
 - (instancetype _Nullable)initWithDictionary:(NSDictionary *)dict;
-- (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs;
+- (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute * _Nullable)rhs;
 - (NSData *)data;
 // Returns a copy with lineAttribute set. If the receiver is nil and attr is
 // non-singleWidth, creates a new minimal attribute.

@@ -371,22 +371,16 @@ NSString *const iTermExternalAttributeBlockIDDelimiter = @"\uf8ff";
 }
 
 - (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other {
-    if (other == nil && self.attributes.count == 0) {
-        return YES;
+    if ([(id)other isKindOfClass:[iTermUniformExternalAttributes class]]) {
+        return [other isEqualToExternalAttributeIndex:self];
     }
     NSMutableSet<NSNumber *> *keys = [NSMutableSet setWithArray:self.attributes.allKeys];
     [keys addObjectsFromArray:other.attributes.allKeys];
     for (NSNumber *key in keys) {
-        iTermExternalAttribute *lhs = self.attributes[key];
-        iTermExternalAttribute *rhs = self.attributes[key];
-        if (lhs) {
-            if (![lhs isEqualToExternalAttribute:rhs]) {
-                return NO;
-            }
-        } else {
-            if (![rhs isEqualToExternalAttribute:lhs]) {
-                return NO;
-            }
+        // Either side may be missing this key, so use the nil-safe comparison.
+        if (![iTermExternalAttribute externalAttribute:self.attributes[key]
+                            isEqualToExternalAttribute:other.attributes[key]]) {
+            return NO;
         }
     }
     return YES;
@@ -1022,6 +1016,9 @@ static NSArray<NSNumber *> *iTermUnderlineColorAsArray(const VT100TerminalColorV
 }
 
 - (BOOL)isEqualToExternalAttribute:(iTermExternalAttribute *)rhs {
+    if (!rhs) {
+        return NO;
+    }
     if (![NSObject object:_url isEqualToObject:rhs.url]) {
         return NO;
     }
@@ -1128,6 +1125,23 @@ static NSArray<NSNumber *> *iTermUnderlineColorAsArray(const VT100TerminalColorV
 
 - (BOOL)isEmpty {
     return _attr == nil || _attr.isDefault;
+}
+
+- (BOOL)isEqualToExternalAttributeIndex:(id<iTermExternalAttributeIndexReading>)other {
+    if ([(id)other isKindOfClass:[iTermUniformExternalAttributes class]]) {
+        return [iTermExternalAttribute externalAttribute:_attr isEqualToExternalAttribute:other[0]];
+    }
+    // A uniform index covers every column but a sparse one covers finitely
+    // many, so they can only be equal if both are effectively empty.
+    if (!self.isEmpty) {
+        return NO;
+    }
+    for (iTermExternalAttribute *attr in other.attributes.allValues) {
+        if (!attr.isDefault) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (iTermLineAttribute)uniformLineAttribute {
