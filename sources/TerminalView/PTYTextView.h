@@ -405,7 +405,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (CGFloat)textViewRightExtra;
 - (CGFloat)textViewPanelReservation;
 - (void)textViewLiveSelectionDidEnd;
-- (void)textViewShowJSONPromotion;
+// Returns YES if the promotion was shown.
+- (BOOL)textViewShowJSONPromotion;
 - (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark;
 - (void)textViewCancelSingleClick;
 - (void)textViewRevealChannelWithUID:(NSString *)uid;

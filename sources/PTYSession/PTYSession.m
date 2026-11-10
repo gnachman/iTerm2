@@ -16289,12 +16289,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
-- (void)textViewShowJSONPromotion {
-    if ([self.textview.replacementPayloadsForSelection anyWithBlock:^BOOL(iTermSelectionReplacement *replacement) {
+- (BOOL)textViewShowJSONPromotion {
+    if (![self.textview.replacementPayloadsForSelection anyWithBlock:^BOOL(iTermSelectionReplacement *replacement) {
         return replacement.kind == iTermSelectionReplacementKindJson;
     }]) {
-        [self.naggingController showJSONPromotion];
+        DLog(@"Not showing JSON promotion because the selection has no JSON replacement");
+        return NO;
     }
+    [self.naggingController showJSONPromotion];
+    return YES;
 }
 
 - (void)textViewUserDidClickPathMark:(id<iTermPathMarkReading>)pathMark {

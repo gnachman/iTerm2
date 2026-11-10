@@ -4166,8 +4166,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     __weak __typeof(self) weakSelf = self;
     [iTermJSONPrettyPrinter promoteIfJSONWithString:copyString
-                                           callback:^{
-        [weakSelf.delegate textViewShowJSONPromotion];
+                                           callback:^BOOL{
+        return [weakSelf.delegate textViewShowJSONPromotion];
     }];
 }
 

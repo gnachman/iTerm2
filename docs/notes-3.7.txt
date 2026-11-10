@@ -401,3 +401,9 @@ Bug Fixes:
 - Gestures in Settings > Pointer are now listed
   in a consistent order instead of shifting
   around between visits.
+- The announcement offering to pretty-print a
+  hard-to-read JSON blob you copied could stop
+  appearing without ever being shown, such as
+  after copying text that began with a brace
+  but wasn’t JSON. Thanks to Kim Dong Han
+  (@ehdgks0627) for part of the fix.
