@@ -107,7 +107,7 @@
     }
     NSRange closeQuote = [typeString rangeOfString:@"\"" options:0 range:NSMakeRange(1, typeString.length - 1)];
     assert(closeQuote.location != NSNotFound);
-    NSString *className = [typeString substringWithRange:NSMakeRange(1, closeQuote.location - 2)];
+    NSString *className = [typeString substringWithRange:NSMakeRange(1, closeQuote.location - 1)];
     return [[iTermReflectionMethodArgument alloc] initWithObjectHavingClassName:className
                                                                    argumentName:argumentName];
 }
