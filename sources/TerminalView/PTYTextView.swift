@@ -675,7 +675,7 @@ extension PTYTextView: ExternalSearchResultsController {
                                                                      y: range.upperBound - 1))
         let firstLine = dataSource.screenCharArray(forLine: Int32(max(0, range.lowerBound - overflow)))
         let lastLine = dataSource.screenCharArray(forLine: Int32(max(0, range.upperBound - 1 - overflow)))
-        let line = firstEllipsisLast(firstLine, lastLine, length: dataSource.width(), count: Int(absRange.end.y - absRange.start.y) - 1)
+        let line = Self.firstEllipsisLast(firstLine, lastLine, length: dataSource.width(), count: Int(absRange.end.y - absRange.start.y) - 1)
 
         let blockMarks = dataSource.blockMarkDictionary(onLine: absRange.start.y)
         dataSource.replace(absRange,
@@ -686,24 +686,58 @@ extension PTYTextView: ExternalSearchResultsController {
         didFoldOrUnfold()
     }
 
+    // The fold summary is always a single-width line, even when the first folded line is double
+    // width or double height: its bottom half is hidden and the rest of the summary can't be
+    // doubled. Returns a copy without the DWL_SPACERs that follow each character on such lines and
+    // with the line attribute removed from its external attributes, which would otherwise make the
+    // whole summary double height once it is in scrollback.
+    private static func singleWidthCopy(_ sca: ScreenCharArray) -> ScreenCharArray {
+        let sourceEA = sca.eaIndex
+        let eaIndex = iTermExternalAttributeIndex()
+        var cells = [screen_char_t]()
+        cells.reserveCapacity(Int(sca.length))
+        for i in 0..<Int(sca.length) where !ScreenCharIsDWL_SPACER(sca.line[i]) {
+            if let attr = sourceEA?.attribute(at: Int32(i))?.copy(with: iTermLineAttribute.singleWidth),
+               !attr.isDefault {
+                eaIndex.setAttributes(attr, at: Int32(cells.count), count: 1)
+            }
+            cells.append(sca.line[i])
+        }
+        let result = cells.withUnsafeBufferPointer { buffer in
+            MutableScreenCharArray(copyOfLine: buffer.baseAddress!,
+                                   length: Int32(buffer.count),
+                                   continuation: sca.continuation)
+        }
+        result.setExternalAttributesIndex(eaIndex)
+        return result
+    }
+
     // Make a display line that summarizes a folded region as [first line prefix] [ellipsis] [last line prefix].
-    private func firstEllipsisLast(_ first: ScreenCharArray,
+    static func firstEllipsisLast(_ untrimmedFirst: ScreenCharArray,
                                    _ untrimmedLast: ScreenCharArray,
                                    length: Int32,
                                    count: Int) -> ScreenCharArray {
         if length <= 0 {
             return ScreenCharArray.emptyLine(ofLength: 0)
         }
+        let first = singleWidthCopy(untrimmedFirst)
         let n = untrimmedLast.number(ofLeadingEmptyCellsWhereSpaceIsEmpty: true)
         let last = untrimmedLast.subArray(from: n)
         let firstMaxLength = first.length - first.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
         let lastMaxLength = last.length - last.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
 
-        var mid = String(localized: "PTYTextView.MidLineCount", defaultValue: " …\(count) lines… ", comment: "Middle-of-range line count marker; %lld is the number of lines. Keep the surrounding ellipses and spaces.")
-        if mid.utf16.count + 10 > length {
-            mid = "…"
+        // Measure the marker in cells, not UTF-16 units: combining marks take fewer cells and
+        // wide characters take more, and the layout math below must match what gets appended.
+        func cells(_ string: String) -> ScreenCharArray {
+            let array = MutableScreenCharArray()
+            array.append(string, fg: screen_char_t(), bg: screen_char_t())
+            return array
         }
-        let midLength = Int32(mid.utf16.count)
+        var mid = cells(String(localized: "PTYTextView.MidLineCount", defaultValue: " …\(count) lines… ", comment: "Middle-of-range line count marker; %lld is the number of lines. Keep the surrounding ellipses and spaces."))
+        if mid.length + 10 > length {
+            mid = cells("…")
+        }
+        let midLength = mid.length
 
         var firstLength = firstMaxLength
         var lastLength = lastMaxLength
@@ -725,7 +759,7 @@ extension PTYTextView: ExternalSearchResultsController {
         result.append(first.paddedOrTruncated(toLength: UInt(firstLength)))
 
         // ellipsis
-        result.append(mid, fg: screen_char_t(), bg: screen_char_t())
+        result.append(mid)
 
         // last
         result.append(last.paddedOrTruncated(toLength: UInt(lastLength)))
@@ -735,10 +769,16 @@ extension PTYTextView: ExternalSearchResultsController {
             result.append(ScreenCharArray.emptyLine(ofLength: -overage))
         }
 
+        // The first line keeps its original styling so prompts that depend on colors (such as
+        // powerline segments) stay intact. Only the parts added for the fold get the muted style.
+        let firstStyledLength = Int(max(0, firstLength))
+        let mutedRange = NSRange(location: firstStyledLength,
+                                 length: max(0, Int(result.length) - firstStyledLength))
+
         var bg = screen_char_t()
         bg.backgroundColorMode = ColorModeAlternate.rawValue
         bg.backgroundColor = UInt32(ALTSEM_DEFAULT)
-        result.setBackground(bg, in: NSRange(location: 0, length: Int(length)))
+        result.setBackground(bg, in: mutedRange)
 
         var fg = screen_char_t()
         fg.foregroundColorMode = ColorModeAlternate.rawValue
@@ -747,8 +787,10 @@ extension PTYTextView: ExternalSearchResultsController {
         fg.fgGreen = 0
         fg.faint = 1
         fg.italic = 1
-        result.setForeground(fg, in: NSRange(location: 0, length: Int(length)))
-        result.setExternalAttributesIndex(first.eaIndex)
+        result.setForeground(fg, in: mutedRange)
+        // Truncation drops external attributes, so restore those of the visible part of the first
+        // line. Cells past it hold the marker and last line and must not inherit them.
+        result.setExternalAttributesIndex(first.eaIndex?.subAttributes(in: NSRange(location: 0, length: firstStyledLength)))
 
         var continuation = bg
         continuation.code = UInt16(EOL_HARD)

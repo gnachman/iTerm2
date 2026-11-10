@@ -415,3 +415,9 @@ Bug Fixes:
   other’s Session Status. As with tmux outside
   of tmux integration, iTerm2 can’t tell which
   Zellij tab is showing, so no status is shown.
+- Folding a command no longer strips the colors
+  from its first line, which mangled prompts
+  with colored segments such as powerline
+  themes. A folded double-width or
+  double-height first line is no longer spaced
+  out or drawn at double size.
