@@ -136,9 +136,31 @@ extension SoftwareUpdater: SPUUpdaterDelegate {
             DLog("No usable appcast URL for \(key)")
             return nil
         }
-        let feedURL = url.appendingQueryParameter("shard=\(iTermController.shard())")
+        var feedURL = url.appendingQueryParameter("shard=\(iTermController.shard())")
+        if let token = Self.testFeedToken {
+            // The server answers with a test appcast for this token. The appcast can only come
+            // from iterm2.com, and Sparkle still checks every update's EdDSA signature, team ID,
+            // and version, so this can't install anything that isn't a genuine release.
+            RLog("Using the test appcast for token \(token)")
+            feedURL = (feedURL as NSURL).appendingQueryParameter("test=\(token)")
+        }
         DLog("Appcast URL is \(feedURL.absoluteString)")
         return feedURL.absoluteString
+    }
+
+    // Set with `defaults write com.googlecode.iterm2 NoSyncSoftwareUpdateTestFeed TOKEN` to ask
+    // iterm2.com for a test appcast. NoSync keeps it out of settings loaded from a custom folder
+    // or URL. Tokens are limited to letters, digits, “-”, and “_” so they need no escaping.
+    private static let testFeedTokenKey = "NoSyncSoftwareUpdateTestFeed"
+
+    private static var testFeedToken: String? {
+        guard let token = iTermUserDefaults.userDefaults().string(forKey: testFeedTokenKey),
+              !token.isEmpty,
+              token.count <= 64,
+              token.unicodeScalars.allSatisfy({ ($0.isASCII && CharacterSet.alphanumerics.contains($0)) || $0 == "-" || $0 == "_" }) else {
+            return nil
+        }
+        return token
     }
 
     // The two methods below fire, in this order, before Sparkle asks the app to quit for an
