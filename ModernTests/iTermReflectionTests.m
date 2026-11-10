@@ -2,64 +2,53 @@
 //  iTermReflectionTests.m
 //  ModernTests
 //
-//  Covers how iTermReflection extracts class names from object type
-//  encodings. Compiled methods usually encode object arguments as a bare @,
-//  so these tests register methods with explicit encodings to exercise the
-//  quoted @"ClassName" form.
+//  Covers how iTermReflectionMethodArgument extracts class names from object
+//  type encodings. The Objective-C runtime does not parse quoted class names
+//  in method type encodings, so these tests call the type-string parser
+//  directly rather than going through a registered method.
 //
 
 #import <XCTest/XCTest.h>
-#import <objc/runtime.h>
 
 #import "iTermReflection.h"
 
-static void iTermReflectionTestsNoOp(id self, SEL _cmd, id arg) {
-}
+@interface iTermReflectionMethodArgument (Testing)
++ (iTermReflectionMethodArgument *)argumentForTypeString:(NSString *)typeString
+                                            argumentName:(NSString *)argumentName;
+@end
 
 @interface iTermReflectionTests : XCTestCase
 @end
 
 @implementation iTermReflectionTests
 
-// Returns the reflected argument for a one-argument method on a fresh class
-// whose only argument has the given type encoding.
-- (iTermReflectionMethodArgument *)argumentForEncoding:(const char *)argumentEncoding {
-    NSString *className = [NSString stringWithFormat:@"iTermReflectionTestsClass_%@",
-                           [[NSUUID UUID].UUIDString stringByReplacingOccurrencesOfString:@"-" withString:@""]];
-    Class theClass = objc_allocateClassPair([NSObject class], className.UTF8String, 0);
-    XCTAssertNotNil(theClass);
-    SEL selector = NSSelectorFromString(@"value:");
-    NSString *types = [NSString stringWithFormat:@"v@:%s", argumentEncoding];
-    XCTAssertTrue(class_addMethod(theClass, selector, (IMP)iTermReflectionTestsNoOp, types.UTF8String));
-    objc_registerClassPair(theClass);
-
-    iTermReflection *reflection = [[iTermReflection alloc] initWithClass:theClass selector:selector];
-    XCTAssertEqual(reflection.arguments.count, 1);
-    iTermReflectionMethodArgument *argument = reflection.arguments.firstObject;
+- (iTermReflectionMethodArgument *)argumentForTypeString:(NSString *)typeString {
+    iTermReflectionMethodArgument *argument =
+        [iTermReflectionMethodArgument argumentForTypeString:typeString argumentName:@"value"];
     XCTAssertEqualObjects(argument.argumentName, @"value");
     return argument;
 }
 
 - (void)testQuotedClassNameIsExtractedWhole {
-    iTermReflectionMethodArgument *argument = [self argumentForEncoding:"@\"NSString\""];
+    iTermReflectionMethodArgument *argument = [self argumentForTypeString:@"@\"NSString\""];
     XCTAssertEqual(argument.type, iTermReflectionMethodArgumentTypeObject);
     XCTAssertEqualObjects(argument.className, @"NSString");
 }
 
 - (void)testSingleCharacterClassName {
-    iTermReflectionMethodArgument *argument = [self argumentForEncoding:"@\"X\""];
+    iTermReflectionMethodArgument *argument = [self argumentForTypeString:@"@\"X\""];
     XCTAssertEqual(argument.type, iTermReflectionMethodArgumentTypeObject);
     XCTAssertEqualObjects(argument.className, @"X");
 }
 
 - (void)testEmptyQuotedClassName {
-    iTermReflectionMethodArgument *argument = [self argumentForEncoding:"@\"\""];
+    iTermReflectionMethodArgument *argument = [self argumentForTypeString:@"@\"\""];
     XCTAssertEqual(argument.type, iTermReflectionMethodArgumentTypeObject);
     XCTAssertEqualObjects(argument.className, @"");
 }
 
 - (void)testUnquotedObjectFallsBackToNSObject {
-    iTermReflectionMethodArgument *argument = [self argumentForEncoding:"@"];
+    iTermReflectionMethodArgument *argument = [self argumentForTypeString:@"@"];
     XCTAssertEqual(argument.type, iTermReflectionMethodArgumentTypeObject);
     XCTAssertEqualObjects(argument.className, @"NSObject");
 }
