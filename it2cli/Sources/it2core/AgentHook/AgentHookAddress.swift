@@ -32,6 +32,13 @@ struct AgentHookAddress {
 /// to know whether it is running locally or remotely; `environment` is the hook's, wherever it
 /// ran, never this process's.
 ///
+/// Zellij is treated like plain tmux, and for the same reason: it multiplexes many panes onto the
+/// one session iTerm2 sees, and iTerm2 cannot know which of them is on screen. Every pane inherits
+/// the TERM_SESSION_ID of the session Zellij was started in, so without this, agents in different
+/// Zellij tabs all wrote to that one session and overwrote each other (issue 13201). Zellij sets
+/// $ZELLIJ (to "0") in every pane; its presence alone decides this, and it is checked before $TMUX
+/// because tmux running inside Zellij is still drawn in a Zellij pane.
+///
 /// A plain shell on such a host has neither tmux nor TERM_SESSION_ID (the variable does not cross
 /// ssh). There `originSessionID`, the session the call arrived on as iTerm2 itself recorded it,
 /// is the address. It never comes from the hook's own input. A pane address still wins over it:
@@ -48,6 +55,9 @@ func resolveAgentHookAddress(environment: [String: String],
     let termSessionGUID: String? = environment["TERM_SESSION_ID"].flatMap { value in
         // "w0t0p0:D1B2BAE2-3D01-4BB6-9021-27D6CF210957" -- the GUID is everything after the colon.
         value.firstIndex(of: ":").map { String(value[value.index(after: $0)...]) }
+    }
+    guard environment["ZELLIJ"] == nil else {
+        return nil
     }
     let addressArgs: [String]
     // $TMUX alone decides this. A half-set pair ($TMUX without $TMUX_PANE) still means the process is

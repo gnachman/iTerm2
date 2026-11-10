@@ -407,3 +407,8 @@ Bug Fixes:
   after copying text that began with a brace
   but wasn’t JSON. Thanks to Kim Dong Han
   (@ehdgks0627) for part of the fix.
+- With the Claude Code Integration, agents
+  running inside Zellij no longer overwrite each
+  other’s Session Status. As with tmux outside
+  of tmux integration, iTerm2 can’t tell which
+  Zellij tab is showing, so no status is shown.

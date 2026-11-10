@@ -124,8 +124,9 @@ struct IT2ClientContext {
     /// An allowlist, applied here as well as in it2.py. The remote's environment holds
     /// credentials, tokens and paths that have no business reaching the Mac, and a remote host
     /// is not a trust boundary we control: it2.py filtering is a courtesy, this is the rule.
-    /// PATH in particular must never arrive this way.
-    static let allowedEnvNames: Set<String> = ["TMUX", "TMUX_PANE", "TERM_SESSION_ID",
+    /// PATH in particular must never arrive this way. ZELLIJ only says the caller is inside
+    /// Zellij, where agent hooks report nothing; its value is always "0".
+    static let allowedEnvNames: Set<String> = ["TMUX", "TMUX_PANE", "TERM_SESSION_ID", "ZELLIJ",
                                                "IT2_SUITE", "IT2_PY"]
 
     /// `environment` reduced to the allowlist.

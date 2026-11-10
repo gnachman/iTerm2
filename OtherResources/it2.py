@@ -482,9 +482,10 @@ MAX_STDIN_BYTES = 1024 * 1024
 # app needs exactly these to address a session.
 #   TMUX, TMUX_PANE  - which tmux pane this is, for pane addressing
 #   TERM_SESSION_ID  - the session, when iTerm2 forked the job itself
+#   ZELLIJ           - set inside Zellij, where agent hooks report nothing
 #   IT2_SUITE        - which iTerm2 instance
 #   IT2_PY           - which interpreter this connection uploaded
-ALLOWED_ENV_NAMES = ("TMUX", "TMUX_PANE", "TERM_SESSION_ID", "IT2_SUITE", "IT2_PY")
+ALLOWED_ENV_NAMES = ("TMUX", "TMUX_PANE", "TERM_SESSION_ID", "ZELLIJ", "IT2_SUITE", "IT2_PY")
 
 
 def allowed_environment(env):

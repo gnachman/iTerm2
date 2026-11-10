@@ -434,10 +434,10 @@ def test_stdin_unreadable_is_not_fatal():
 
 def test_env_allowlist_sends_only_what_is_listed():
     env = {"TMUX": "/tmp/s,1,0", "TMUX_PANE": "%3", "TERM_SESSION_ID": "w0t0p0:ABC",
-           "IT2_SUITE": "alt7", "IT2_PY": "/home/u/.iterm2/it2.abc.py",
+           "ZELLIJ": "0", "IT2_SUITE": "alt7", "IT2_PY": "/home/u/.iterm2/it2.abc.py",
            "AWS_SECRET_ACCESS_KEY": "nope", "PATH": "/usr/bin"}
     sent = it2mod.allowed_environment(env)
-    check(sorted(sent) == ["IT2_PY", "IT2_SUITE", "TERM_SESSION_ID", "TMUX", "TMUX_PANE"],
+    check(sorted(sent) == ["IT2_PY", "IT2_SUITE", "TERM_SESSION_ID", "TMUX", "TMUX_PANE", "ZELLIJ"],
           "allowlist leaked or dropped: %r" % sorted(sent))
     check("AWS_SECRET_ACCESS_KEY" not in sent, "secrets must never cross the wire")
     check(sent["TMUX_PANE"] == "%3", "values pass through")

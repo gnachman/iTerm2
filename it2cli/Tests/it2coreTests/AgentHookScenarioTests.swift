@@ -602,6 +602,34 @@ final class AgentHookScenarioTests: XCTestCase {
         XCTAssertEqual(backend.calls, [])
     }
 
+    // Inside Zellij nothing is reported, as in plain tmux: every pane inherits the TERM_SESSION_ID
+    // of the session Zellij started in, so agents in different Zellij tabs would overwrite one
+    // status (issue 13201). Not even a remote call's origin or a tmux pane inside Zellij is used.
+    func testInsideZellijNothingIsReported() throws {
+        let environments: [[String: String]] = [
+            ["TERM_SESSION_ID": "w0t0p0:ABC", "ZELLIJ": "0", "IT2_SOCK": "/x"],
+            ["TMUX": "/private/tmp/tmux-501/default,52533,0", "TMUX_PANE": "%3", "ZELLIJ": "0", "IT2_SOCK": "/x"],
+        ]
+        for environment in environments {
+            let backend = FakeAgentStatusBackend()
+            try AgentHookHandler.handle(payload: try payload("claude/UserPromptSubmit"),
+                                        agent: .claude,
+                                        environment: environment,
+                                        backend: backend,
+                                        report: { _ in })
+            XCTAssertEqual(backend.calls, [], "\(environment)")
+        }
+        let backend = FakeAgentStatusBackend()
+        try AgentHookHandler.handle(payload: try payload("claude/UserPromptSubmit"),
+                                    agent: .claude,
+                                    environment: ["ZELLIJ": "0"],
+                                    originSessionID: "ORIGIN-GUID",
+                                    inProcess: true,
+                                    backend: backend,
+                                    report: { _ in })
+        XCTAssertEqual(backend.calls, [])
+    }
+
     func testNothingToAddressReportsNothing() throws {
         let backend = FakeAgentStatusBackend()
         try AgentHookHandler.handle(payload: try payload("claude/UserPromptSubmit"),
