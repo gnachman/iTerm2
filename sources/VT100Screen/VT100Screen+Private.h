@@ -30,7 +30,6 @@ extern NSString *const kScreenStateShellIntegrationInstalledKey;
 extern NSString *const kScreenStateLastCommandMarkKey;
 extern NSString *const kScreenStatePrimaryGridStateKey;
 extern NSString *const kScreenStateAlternateGridStateKey;
-extern NSString *const kScreenStateCursorCoord;
 extern NSString *const kScreenStateProtectedMode;
 extern NSString *const kScreenStateProgressKey;
 

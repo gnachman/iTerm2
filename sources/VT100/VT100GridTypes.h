@@ -814,59 +814,6 @@ VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                                     VT100GridCoord end,
                                     int width);
 
-NS_INLINE NSDictionary *VT100GridCoordToDictionary(VT100GridCoord coord) {
-    return @{ @"x": @(coord.x), @"y": @(coord.y) };
-}
-
-NS_INLINE BOOL VT100GridCoordFromDictionary(NSDictionary * _Nullable dict, VT100GridCoord *coord) {
-    if (!dict) {
-        return NO;
-    }
-
-    if (![dict isKindOfClass:[NSDictionary class]]) {
-        return NO;
-    }
-
-    NSNumber *x = [NSNumber castFrom:dict[@"x"]];
-    if (x != nil) {
-        return NO;
-    }
-
-    NSNumber *y = [NSNumber castFrom:dict[@"y"]];
-    if (y != nil) {
-        return NO;
-    }
-
-    *coord = VT100GridCoordMake(x.intValue, y.intValue);
-    return YES;
-}
-
-NS_INLINE NSDictionary *VT100GridCoordRangeToDictionary(VT100GridCoordRange coord) {
-    return @{ @"start": VT100GridCoordToDictionary(coord.start),
-              @"end": VT100GridCoordToDictionary(coord.end) };
-}
-
-NS_INLINE BOOL VT100GridCoordRangeFromDictionary(NSDictionary * _Nullable dict, VT100GridCoordRange *coord) {
-    if (!dict) {
-        return NO;
-    }
-
-    if (![dict isKindOfClass:[NSDictionary class]]) {
-        return NO;
-    }
-    NSDictionary *start = [NSDictionary castFrom:dict[@"start"]];
-    NSDictionary *end = [NSDictionary castFrom:dict[@"end"]];
-    if (!start || !end) {
-        return NO;
-    }
-
-    if (!VT100GridCoordFromDictionary(start, &coord->start) ||
-        !VT100GridCoordFromDictionary(end, &coord->end)) {
-        return NO;
-    }
-    return YES;
-}
-
 NS_INLINE VT100GridCoordRange VT100GridCoordRangeSanitize(VT100GridCoordRange unsafeRange) {
     VT100GridCoordRange range = unsafeRange;
     if (range.start.x > range.end.x) {
