@@ -34,6 +34,9 @@ class JSONPrettyPrinter: NSObject {
         }
         busy = true
         DispatchQueue.global().async {
+            defer {
+                DispatchQueue.main.async { busy = false }
+            }
             guard let data = string.data(using: .utf8) else {
                 return
             }
@@ -44,7 +47,6 @@ class JSONPrettyPrinter: NSObject {
                let desiredNumberOfLines = JSONPrettyPrinter(maybeObject as AnyObject)?.result.attributedStrings.count {
                 let actualNumberOfLines = string.ranges(of: "\n").count
                 DispatchQueue.main.async {
-                    busy = false
                     if desiredNumberOfLines < 10 {
                         return
                     }
