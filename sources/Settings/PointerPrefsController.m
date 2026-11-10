@@ -1289,7 +1289,7 @@ typedef enum {
         NSArray *otherParts = [PointerPrefsController buttonKeyComponents:other];
         if (!selfParts && !otherParts) {
             return NSOrderedSame;
-        } else if (!selfParts && !otherParts) {
+        } else if (!selfParts && otherParts) {
             return NSOrderedAscending;
         } else if (selfParts && !otherParts) {
             return NSOrderedDescending;
@@ -1320,7 +1320,7 @@ typedef enum {
         if (result != NSOrderedSame) {
             return result;
         }
-        result = [[NSNumber numberWithInt:[[selfParts objectAtIndex:2] intValue]] compare:[NSNumber numberWithInt:[[otherParts objectAtIndex:2] intValue]]];
+        result = [@([PointerPrefsController maskForModChars:[selfParts objectAtIndex:2]]) compare:@([PointerPrefsController maskForModChars:[otherParts objectAtIndex:2]])];
         if (result != NSOrderedSame) {
             return result;
         }

@@ -398,3 +398,6 @@ Bug Fixes:
   panes that reuse the previous session’s
   directory used the outer shell’s directory
   instead of the one you were in.
+- Gestures in Settings > Pointer are now listed
+  in a consistent order instead of shifting
+  around between visits.
