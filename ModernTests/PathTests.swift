@@ -24,7 +24,7 @@ final class PathTests: XCTestCase {
         // The trailing path component is the custom suite name (set by the
         // test runner to keep tests from clobbering real prefs) when one is
         // configured, otherwise iTerm2.
-        let expected = (iTermUserDefaults.customSuiteName() as String?) ?? "iTerm2"
+        let expected = (iTermUserDefaults.customSuiteDirectoryName() as String?) ?? "iTerm2"
         XCTAssertTrue(path!.hasSuffix("/\(expected)"),
                       "Path \(path!) should end with /\(expected)")
     }
@@ -36,7 +36,7 @@ final class PathTests: XCTestCase {
         // Then
         XCTAssertNotNil(path)
         XCTAssertTrue(path!.contains("Application Support"))
-        let expected = (iTermUserDefaults.customSuiteName() as String?) ?? "iTerm2"
+        let expected = (iTermUserDefaults.customSuiteDirectoryName() as String?) ?? "iTerm2"
         XCTAssertTrue(path!.hasSuffix("/\(expected)"),
                       "Path \(path!) should end with /\(expected)")
     }
@@ -76,6 +76,27 @@ final class PathTests: XCTestCase {
             XCTAssertFalse(name.isEmpty, "If a suite name is set, it should not be empty")
         }
         // nil is also valid - means no custom suite
+    }
+
+    // MARK: - Suite Directory Name Tests
+
+    func testSuiteDirectoryName_NoSuite() {
+        XCTAssertNil(iTermUserDefaults.directoryName(forSuiteName: nil))
+    }
+
+    func testSuiteDirectoryName_OrdinarySuiteIsUnchanged() {
+        XCTAssertEqual(iTermUserDefaults.directoryName(forSuiteName: "iterm2-alt3"), "iterm2-alt3")
+        XCTAssertEqual(iTermUserDefaults.directoryName(forSuiteName: "iterm2-dev"), "iterm2-dev")
+    }
+
+    // The main app's folders are ~/Library/Application Support/iTerm2 and ~/.config/iterm2 (or
+    // ~/.iterm2). On a case-insensitive volume a suite named iterm2 in any case would share them.
+    func testSuiteDirectoryName_SuiteMatchingMainAppGetsDistinctName() {
+        for suite in ["iterm2", "iTerm2", "ITERM2"] {
+            let name = iTermUserDefaults.directoryName(forSuiteName: suite)
+            XCTAssertEqual(name, suite + ".suite")
+            XCTAssertNotEqual(name?.lowercased(), "iterm2")
+        }
     }
 
     // MARK: - Integration Tests

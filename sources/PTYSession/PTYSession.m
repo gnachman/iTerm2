@@ -3574,8 +3574,10 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     NSString *suiteName = [iTermUserDefaults customSuiteName];
-    if (suiteName) {
-        env[@"IT2_SUITE"] = suiteName;
+    // Clients use IT2_SUITE only to find this instance's Application Support folder.
+    NSString *suiteDirectoryName = [iTermUserDefaults customSuiteDirectoryName];
+    if (suiteDirectoryName) {
+        env[@"IT2_SUITE"] = suiteDirectoryName;
     }
 
     [PTYSession applyIT2AppPathTo:env
@@ -11693,7 +11695,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // The local it2 finds its socket by suite, so a second instance running under -suite can be
     // told apart from the main one, and it asks THIS bundle for a cookie rather than whatever
     // IT2_APP_PATH the tmux server froze into every pane when some other build started it.
-    return @{ @"suite": [iTermUserDefaults customSuiteName] ?: @"iTerm2",
+    // it2 treats the suite as the name of the Application Support folder, so advertise that.
+    return @{ @"suite": [iTermUserDefaults customSuiteDirectoryName] ?: @"iTerm2",
               @"app": [[NSBundle mainBundle] bundlePath] };
 }
 

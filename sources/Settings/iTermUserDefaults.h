@@ -29,6 +29,19 @@ extern NSString *const iTermUserDefaultsMigrationValuesAfterKey;
 // Returns the custom suite name if one was set via setCustomSuiteName:, otherwise nil.
 + (nullable NSString *)customSuiteName;
 
+// The name to use in place of the suite name for this instance's folders on disk (its
+// Application Support folder, dot directory, and secure settings fallback) and for IT2_SUITE,
+// which clients use to find those folders. Returns nil when no custom suite was set.
+//
+// Usually this is the suite name itself. But the main app's folders are named iTerm2 and
+// iterm2, and the default macOS file system is case-insensitive, so a suite named iterm2 in any
+// case (as a checkout at ~/git/iterm2 gets) would share them. A development build would then
+// adopt the main app's session servers and use its sockets. Such a suite gets a distinct name.
++ (nullable NSString *)customSuiteDirectoryName;
+
+// The pure form of customSuiteDirectoryName, for testing.
++ (nullable NSString *)directoryNameForSuiteName:(nullable NSString *)suiteName;
+
 // Returns the custom suite if set, otherwise standardUserDefaults.
 + (NSUserDefaults *)userDefaults;
 

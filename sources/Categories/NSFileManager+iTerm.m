@@ -131,7 +131,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 // exist).
 //
 - (NSString *)applicationSupportDirectory {
-    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *suiteName = [iTermUserDefaults customSuiteDirectoryName];
     NSString *executableName = suiteName ?: [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
     NSError *error;
     DLog(@"Want app support directory");
@@ -173,7 +173,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (NSString *)applicationSupportDirectoryWithoutCreating {
     NSString *base = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
-    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *suiteName = [iTermUserDefaults customSuiteDirectoryName];
     NSString *appname = suiteName ?: [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
     return [base stringByAppendingPathComponent:appname];
 }
@@ -204,7 +204,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
                                                      error:&error];
     NSString *linkName = [self spacelessAppSupportWithoutCreatingLink];
 
-    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *suiteName = [iTermUserDefaults customSuiteDirectoryName];
     NSString *executableName = suiteName ?: [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
     NSString *realFolder = [realAppSupport stringByAppendingPathComponent:executableName];
 
@@ -383,7 +383,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 
 - (NSString *)_homeDirectoryDotDir {
     NSString *homedir = NSHomeDirectory();
-    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *suiteName = [iTermUserDefaults customSuiteDirectoryName];
     NSString *baseName = suiteName ?: @"iterm2";
 
     __block NSString *xdgConfigHome = [homedir stringByAppendingPathComponent:@".config"];

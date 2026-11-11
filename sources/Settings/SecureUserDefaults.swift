@@ -278,7 +278,7 @@ class iTermSecureUserDefaults: NSObject {
 // Save secure user defaults here if the home directory is on a network mount.
 // Secure user defaults must be writable only by root and network mounts obviously can't do that.
 fileprivate var FallbackFolder: String {
-    if let suite = iTermUserDefaults.customSuiteName() as String? {
+    if let suite = iTermUserDefaults.customSuiteDirectoryName() as String? {
         return "/usr/local/\(suite)-secure-settings"
     }
     return "/usr/local/iTerm2-secure-settings"

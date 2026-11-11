@@ -73,6 +73,20 @@ static NSString *const iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice = @
     return gCustomSuiteName;
 }
 
++ (NSString *)customSuiteDirectoryName {
+    return [self directoryNameForSuiteName:gCustomSuiteName];
+}
+
++ (NSString *)directoryNameForSuiteName:(NSString *)suiteName {
+    if (!suiteName) {
+        return nil;
+    }
+    if ([suiteName caseInsensitiveCompare:@"iterm2"] == NSOrderedSame) {
+        return [suiteName stringByAppendingString:@".suite"];
+    }
+    return suiteName;
+}
+
 static NSArray *iTermUserDefaultsGetTypedArray(NSUserDefaults *userDefaults, Class objectClass, NSString *key) {
     return [[NSArray castFrom:[userDefaults objectForKey:key]] mapWithBlock:^id(id anObject) {
         return [objectClass castFrom:anObject];

@@ -1038,7 +1038,7 @@ private struct SecureUserDefaultsImporterExporter {
         // directory is on a network mount lives outside any folder entity,
         // so clear it explicitly here.
         let folder: String
-        if let suite = iTermUserDefaults.customSuiteName() as String?, !suite.isEmpty {
+        if let suite = iTermUserDefaults.customSuiteDirectoryName() as String?, !suite.isEmpty {
             folder = "/usr/local/\(suite)-secure-settings"
         } else {
             folder = "/usr/local/iTerm2-secure-settings"

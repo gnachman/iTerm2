@@ -294,6 +294,7 @@ static const int iTermMultiServerMaxForeignServersToSkip = 128;
     // ~/Library/Application Support/{suite}/ and ~/.{suite}/), so the filename does not need to
     // re-encode the suite name.
     NSString *suiteName = [iTermUserDefaults customSuiteName];
+    NSString *suiteDirectoryName = [iTermUserDefaults customSuiteDirectoryName];
 
     NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
     NSString *normalFilename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
@@ -317,8 +318,8 @@ static const int iTermMultiServerMaxForeignServersToSkip = 128;
     }
 
     NSString *homedir = NSHomeDirectory();
-    NSString *dotdirName = suiteName
-        ? [NSString stringWithFormat:@".%@", suiteName]
+    NSString *dotdirName = suiteDirectoryName
+        ? [NSString stringWithFormat:@".%@", suiteDirectoryName]
         : @".iterm2";
     NSString *dotdir = [homedir stringByAppendingPathComponent:dotdirName];
     NSString *shortFilename = [NSString stringWithFormat:@"%d.socket", number];

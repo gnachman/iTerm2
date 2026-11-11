@@ -878,9 +878,10 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     // reads IT2_SUITE to find that path; without it a menu-launched script would
     // default to “iTerm2” and connect to the main instance’s socket instead. Mirror
     // what PTYSession does for terminal sessions.
-    NSString *suiteName = [iTermUserDefaults customSuiteName];
-    if (suiteName) {
-        environment[@"IT2_SUITE"] = suiteName;
+    // That folder is named by customSuiteDirectoryName, which is usually the suite name.
+    NSString *suiteDirectoryName = [iTermUserDefaults customSuiteDirectoryName];
+    if (suiteDirectoryName) {
+        environment[@"IT2_SUITE"] = suiteDirectoryName;
     } else {
         // Do not let a stale IT2_SUITE inherited from our own environment leak through
         // to the script and point it at the wrong instance's socket.
