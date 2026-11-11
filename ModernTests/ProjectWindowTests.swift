@@ -69,6 +69,27 @@ final class ProjectWindowTests: XCTestCase {
         XCTAssertNil(coordinator.selectedProject)
     }
 
+    func testSameProjectTabSelectionWinsOverLateLaunch() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        let project = catalog.projects[0]
+        coordinator.selectProject(project)
+        window.projectTabAssociations["chosen"] = project.identifier
+        window.projectActiveTabIdentifier = "chosen"
+        coordinator.activeTabDidChange()
+        window.projectTabAssociations["late"] = project.identifier
+        window.completion?("late")
+        XCTAssertEqual(window.projectActiveTabIdentifier, "chosen")
+        XCTAssertEqual((coordinator.restorableState()["remembered"] as? [String: String])?[project.identifier], "chosen")
+        coordinator.openTerminal(inDirectory: "/tmp/subdirectory")
+        window.projectActiveTabIdentifier = "chosen"
+        coordinator.activeTabDidChange()
+        window.completion?("late")
+        XCTAssertEqual(window.projectActiveTabIdentifier, "chosen")
+    }
+
     func testFileTreeLaunchUsesRequestedDirectoryAndKeepsRootPinned() {
         let (catalog, _) = makeCatalog()
         let window = Window()

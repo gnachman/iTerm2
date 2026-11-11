@@ -153,6 +153,7 @@
     DLog(@"fork");
 
     iTermForkState forkState = {
+        .requiresInitialDirectory = [(PTYTask *)task requiresInitialDirectory],
         .connectionFd = -1,
         .deadMansPipe = { 0, 0 },
     };

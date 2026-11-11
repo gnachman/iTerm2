@@ -920,16 +920,20 @@ static void HandleSigChld(int n) {
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     NSString *initialPwd = [[env objectForKey:@"PWD"] stringByStandardizingPath];
+    const BOOL requiredDirectory = self.requiresInitialDirectory;
+    _requiredInitialDirectoryFailed = NO;
     DLog(@"initialPwd=%@, jobManager=%@", initialPwd, self.jobManager);
     [self.jobManager forkAndExecWithTtyState:ttyState
                                      argpath:commandToExec
                                         argv:argv
-                                  initialPwd:initialPwd ?: NSHomeDirectory()
+                                  initialPwd:initialPwd ?: (requiredDirectory ? @"" : NSHomeDirectory())
                                   newEnviron:newEnviron
                                         task:self
                                   completion:
      ^(iTermJobManagerForkAndExecStatus status, NSNumber *optionalErrorCode) {
         dispatch_async(dispatch_get_main_queue(), ^{
+            self->_requiredInitialDirectoryFailed = requiredDirectory && status != iTermJobManagerForkAndExecStatusSuccess;
+            self.requiresInitialDirectory = NO;
             [self didForkAndExec:progpath
                       withStatus:status
                optionalErrorCode:optionalErrorCode];

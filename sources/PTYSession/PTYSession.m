@@ -3935,6 +3935,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                       maybeScaleFactor:_textview.window.backingScaleFactor
                                 isUTF8:isUTF8
                             completion:^{
+                    if (_shell.requiredInitialDirectoryFailed) {
+                        if (completion) { completion(NO); }
+                        return;
+                    }
                     id<iTermWindowController> pty = self.delegate.realParentWindow;
                     if (pty.fullScreenPromise) {
                         DLog(@"Wait for window to enter full screen before sending initial text");

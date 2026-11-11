@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) int readFD;
 @property (nonatomic) int writeFD;
 @property (nonatomic) pid_t serverPID;
+@property (nonatomic) int protocolVersion;
 @property (nonatomic, readonly) NSMutableArray<iTermFileDescriptorMultiClientChild *> *children;
 @property (nonatomic, readonly) NSMutableDictionary<NSNumber *, iTermFileDescriptorMultiClientPendingLaunch *> *pendingLaunches;
 @property (nonatomic, strong) dispatch_source_t daemonProcessSource;

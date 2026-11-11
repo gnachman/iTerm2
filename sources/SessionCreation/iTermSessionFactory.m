@@ -321,9 +321,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)setWorkingDirectory:(NSString *)suggestion {
-    NSString *pwd = suggestion;
+    NSString *pwd = self.requiresInitialDirectory ? (self.oldCWD ?: @"") : suggestion;
     DLog(@"using pwd of %@", pwd);
-    if ([pwd length] == 0) {
+    if (!self.requiresInitialDirectory && [pwd length] == 0) {
         if (self.oldCWD) {
             pwd = self.oldCWD;
             DLog(@"pwd was empty. Use oldCWD of %@", pwd);
@@ -343,7 +343,7 @@ NS_ASSUME_NONNULL_BEGIN
     // starts (issue 12955). Skip this in ssh mode, where the path refers to the remote host and
     // can't be checked against the local filesystem.
     const BOOL willLaunch = !self.hasServerConnection && self.partialAttachment == nil;
-    if (willLaunch && !self.ssh && pwd.length > 0) {
+    if (willLaunch && !self.requiresInitialDirectory && !self.ssh && pwd.length > 0) {
         // Check the same path the shell will actually chdir to. PTYTask standardizes PWD (which
         // expands a leading tilde) before launch, so a custom directory like “~/www” exists on disk
         // even though the raw string does not. Standardize here too so we don't misreport a valid
@@ -455,6 +455,11 @@ NS_ASSUME_NONNULL_BEGIN
 // Execute the given program and set the window title if it is uninitialized.
 - (void)startProgramForRequest:(iTermSessionAttachOrLaunchRequest *)request
                     completion:(void (^)(BOOL))completion {
+    if (request.requiresInitialDirectory && !request.oldCWD.isAbsolutePath) {
+        completion(NO);
+        return;
+    }
+    request.session.shell.requiresInitialDirectory = request.requiresInitialDirectory;
     [request.session startProgram:request.computedCommand
                               ssh:request.ssh
                           browser:request.browser

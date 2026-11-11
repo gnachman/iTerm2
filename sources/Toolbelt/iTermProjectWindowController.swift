@@ -16,6 +16,7 @@ import Foundation
     private var observer: NSObjectProtocol?
     private var rememberedTabs = [String: String]()
     private var pending = Set<String>()
+    private(set) var selectionGeneration: UInt64 = 0
     private(set) var selectedProjectIdentifier: String?
     var sidebarVisible = false
     var sidebarWidth: CGFloat = 220 {
@@ -47,6 +48,7 @@ import Foundation
 
     func activeTabDidChange() {
         guard let delegate = delegate else { return }
+        selectionGeneration &+= 1
         tabsDidChange()
         let associations = delegate.projectTabAssociations
         selectedProjectIdentifier = delegate.projectActiveTabIdentifier.flatMap { associations[$0] }
@@ -59,6 +61,7 @@ import Foundation
 
     func selectProject(_ project: iTermProjectDirectory) {
         guard catalog.project(withIdentifier: project.identifier) != nil, let delegate = delegate else { return }
+        if selectedProjectIdentifier != project.identifier { selectionGeneration &+= 1 }
         selectedProjectIdentifier = project.identifier
         delegate.projectStateDidChange()
         let associations = delegate.projectTabAssociations
@@ -69,10 +72,12 @@ import Foundation
             return
         }
         guard pending.insert(project.identifier).inserted else { return }
+        let generation = selectionGeneration
         delegate.projectLaunch(project, directory: project.rootDirectory) { [weak self] tab in
             guard let self = self else { return }
             self.pending.remove(project.identifier)
-            guard self.catalog.project(withIdentifier: project.identifier) != nil, let tab = tab else { return }
+            guard self.catalog.project(withIdentifier: project.identifier) != nil, let tab = tab,
+                  generation == self.selectionGeneration else { return }
             self.rememberedTabs[project.identifier] = tab
             if self.selectedProjectIdentifier == project.identifier { self.delegate?.projectSelectTab(tab) }
         }
@@ -80,8 +85,9 @@ import Foundation
 
     func openTerminal(inDirectory directory: String) {
         guard let project = selectedProject else { return }
+        let generation = selectionGeneration
         delegate?.projectLaunch(project, directory: directory) { [weak self] tab in
-            guard let self = self, let tab = tab else { return }
+            guard let self = self, let tab = tab, generation == self.selectionGeneration else { return }
             if self.selectedProjectIdentifier == project.identifier { self.delegate?.projectSelectTab(tab) }
         }
     }

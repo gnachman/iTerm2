@@ -121,6 +121,7 @@ typedef struct {
     NSData *argpath;
     char **argv;
     NSData *initialPwd;
+    BOOL requiresInitialDirectory;
     char **environ;
 } iTermMultiServerJobManagerForkRequest;
 
@@ -135,6 +136,7 @@ typedef struct {
     DLog(@"begin");
     iTermMultiServerJobManagerForkRequest forkRequest = {
         .ttyState = ttyState,
+        .requiresInitialDirectory = [(PTYTask *)task requiresInitialDirectory],
         .argpath = [NSData dataWithBytes:argpath.UTF8String length:strlen(argpath.UTF8String) + 1],
         .argv = [argv nullTerminatedCStringArray],
         .initialPwd = [NSData dataWithBytes:initialPwd.UTF8String length:strlen(initialPwd.UTF8String) + 1],
@@ -222,6 +224,7 @@ typedef struct {
                      argpath:forkRequest.argpath.bytes
                         argv:forkRequest.argv
                   initialPwd:forkRequest.initialPwd.bytes
+    requiresInitialDirectory:forkRequest.requiresInitialDirectory
                   newEnviron:forkRequest.environ
                     callback:callback];
 }

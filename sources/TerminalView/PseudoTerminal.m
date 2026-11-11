@@ -1,3 +1,4 @@
+#import "iTermRequiredDirectory.h"
 #import "PseudoTerminal+Private.h"
 #import "PseudoTerminal+TouchBar.h"
 #import "PseudoTerminal+WindowStyle.h"
@@ -5195,14 +5196,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             completion:(void (^)(NSString *))completion {
     __weak __typeof(self) weakSelf = self;
     // Directory validation must precede shell creation and must not block the UI on unavailable disks.
+    const uint64_t selectionGeneration = _projectController.selectionGeneration;
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        BOOL isDirectory = NO;
-        const BOOL available = [directory isAbsolutePath] &&
-            [[NSFileManager defaultManager] fileExistsAtPath:directory isDirectory:&isDirectory] && isDirectory &&
-            [[NSFileManager defaultManager] isReadableFileAtPath:directory];
+        const BOOL available = iTermRequiredDirectoryValidate(directory.fileSystemRepresentation) == 0;
         dispatch_async(dispatch_get_main_queue(), ^{
             PseudoTerminal *term = [[weakSelf retain] autorelease];
             if (!term || term->_closing || term->_deallocing ||
+                term->_projectController.selectionGeneration != selectionGeneration ||
                 ![[iTermProjectCatalog shared] projectWithIdentifier:project.identifier] ||
                 ![term->_projectController.selectedProjectIdentifier isEqual:project.identifier]) {
                 completion(nil);
@@ -12786,7 +12786,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
-    [_contentView.toolbelt refreshTools];
+    [self refreshTools];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
@@ -16496,6 +16496,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             completion(newSession, ok);
         }
     }];
+    launchRequest.requiresInitialDirectory = forceUseOldCWD;
     [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
 
     // On Lion, a window that can join all spaces can't go fullscreen.

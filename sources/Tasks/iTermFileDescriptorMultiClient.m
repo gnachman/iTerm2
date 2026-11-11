@@ -100,6 +100,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                                  argv:(char **)argv
                           environment:(char **)environment
                                   pwd:(const char *)pwd
+             requiresInitialDirectory:(BOOL)requiresInitialDirectory
                              ttyState:(iTermTTYState)ttyState
                              callback:(iTermMultiClientLaunchCallback *)callback {
     DLog(@"begin");
@@ -109,6 +110,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                                        argv:argv
                                 environment:environment
                                         pwd:pwd
+                   requiresInitialDirectory:requiresInitialDirectory
                                    ttyState:ttyState
                                       state:state
                                    callback:callback];
@@ -280,7 +282,7 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
         .type = iTermMultiServerRPCTypeHandshake,
         .payload = {
             .handshake = {
-                .maximumProtocolVersion = iTermMultiServerProtocolVersion2
+                .maximumProtocolVersion = iTermMultiServerProtocolVersion3
             }
         }
     };
@@ -352,10 +354,12 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
                 return;
             }
             DLog(@"Got a valid handshake response for %@", socketPath);
-            if (boxedMessage.decoded->payload.handshake.protocolVersion != iTermMultiServerProtocolVersion2) {
+            const int version = boxedMessage.decoded->payload.handshake.protocolVersion;
+            if (version != iTermMultiServerProtocolVersion2 && version != iTermMultiServerProtocolVersion3) {
                 completion(state, NO, 0, -1);
                 return;
             }
+            [(iTermFileDescriptorMultiClientState *)state setProtocolVersion:version];
             completion(state,
                        YES,
                        boxedMessage.decoded->payload.handshake.numChildren,
@@ -462,10 +466,19 @@ static unsigned long long MakeUniqueID(void) {
                                  argv:(char **)argv
                           environment:(char **)environment
                                   pwd:(const char *)pwd
+             requiresInitialDirectory:(BOOL)requiresInitialDirectory
                              ttyState:(iTermTTYState)ttyState
                                 state:(iTermFileDescriptorMultiClientState *)state
                              callback:(iTermMultiClientLaunchCallback *)callback {
     DLog(@"begin");
+    if (requiresInitialDirectory && state.protocolVersion < iTermMultiServerProtocolVersion3) {
+        // Old servers may ignore new fields, so never send a strict request to them.
+        NSError *error = [NSError errorWithDomain:iTermFileDescriptorMultiClientErrorDomain
+                                             code:iTermFileDescriptorMultiClientErrorCodeForkFailed
+                                         userInfo:@{ @"code": @(ENOTSUP) }];
+        [callback invokeWithObject:[iTermResult withError:error]];
+        return;
+    }
     const unsigned long long uniqueID = MakeUniqueID();
     iTermMultiServerClientOriginatedMessage message = {
         .type = iTermMultiServerRPCTypeLaunch,
@@ -482,7 +495,8 @@ static unsigned long long MakeUniqueID(void) {
                 .pixel_height = ttyState.win.ws_ypixel,
                 .isUTF8 = !!(ttyState.term.c_iflag & IUTF8),
                 .pwd = pwd,
-                .uniqueId = uniqueID
+                .uniqueId = uniqueID,
+                .requiresInitialDirectory = requiresInitialDirectory
             }
         }
     };

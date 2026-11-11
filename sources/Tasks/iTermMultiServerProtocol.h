@@ -10,7 +10,8 @@
 enum {
     iTermMultiServerProtocolVersionRejected = -1,
     iTermMultiServerProtocolVersion1 = 1,
-    iTermMultiServerProtocolVersion2 = 2
+    iTermMultiServerProtocolVersion2 = 2,
+    iTermMultiServerProtocolVersion3 = 3 // Strict initial-directory acknowledgement
 };
 
 typedef enum {
@@ -57,6 +58,7 @@ typedef enum {
 
     iTermMultiServerTagTerminationPid,
     iTermMultiServerTagTerminationStatus,
+    iTermMultiServerTagLaunchRequestRequiresInitialDirectory,
 } iTermMultiServerTagLaunch;
 
 typedef struct {
@@ -107,6 +109,7 @@ typedef struct {
 
     // iTermMultiServerTagLaunchRequestUniqueId
     unsigned long long uniqueId;
+    int requiresInitialDirectory; // Optional v3 field; absent means NO.
 } iTermMultiServerRequestLaunch;
 
 // NOTE: The PTY master file descriptor is also passed with this message.

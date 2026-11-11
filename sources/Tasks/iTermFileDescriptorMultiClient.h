@@ -68,6 +68,7 @@ typedef NS_ENUM(NSUInteger, iTermFileDescriptorMultiClientErrorCode) {
                                  argv:(char *_Nonnull *_Nonnull)argv
                           environment:(char *_Nonnull *_Nonnull)environment
                                   pwd:(const char *)pwd
+             requiresInitialDirectory:(BOOL)requiresInitialDirectory
                              ttyState:(iTermTTYState)ttyStatePtr
                              callback:(iTermMultiClientLaunchCallback *)callback;
 
