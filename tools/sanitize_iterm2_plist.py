@@ -56,6 +56,9 @@ TOP-LEVEL keys
   NoSyncWorkgroupGitBaseRecents .......... git base/ref recents
   NoSyncWorkgroupCodeReviewModelRecents .. code review model name recents
   WorkgroupCodeReviewDefaultModel ........ default code review model name
+  NoSyncProjectDirectories ............... local project roots (removed)
+  ProjectFileTreeRoot .................... toolbelt restoration root path
+  ProjectFileTreeExpandedPaths ........... expansion paths keyed by project root (removed)
   NoSyncRecentArchives ................... archive file paths
   NoSyncOllamaDiscoveredModels ........... discovered Ollama models, keyed by
                                            endpoint URL (removed, not redacted:
@@ -186,6 +189,10 @@ def is_profile_boolean_parameter(value):
 # anywhere in the tree (values only; dict keys are never matched), so nested
 # and embedded structures are covered automatically by the recursive walk.
 CONTENT_KEYS = {
+    # project catalog and file tree restoration (dictionary keys can contain paths)
+    "NoSyncProjectDirectories": REMOVE,
+    "ProjectFileTreeRoot": REDACT_V,
+    "ProjectFileTreeExpandedPaths": REMOVE,
     # commands / coprocesses
     "Command": REDACT_V,
     "command": REDACT_V,
