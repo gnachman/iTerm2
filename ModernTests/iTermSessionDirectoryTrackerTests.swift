@@ -808,6 +808,65 @@ final class iTermSessionDirectoryTrackerTests: XCTestCase, @preconcurrency iTerm
         XCTAssertEqual(tracker.verifiedLocalDirectory, "/tmp/elsewhere")
     }
 
+    private func initialDirectory(fresh: Bool) -> String? {
+        var result: String?
+        let expectation = self.expectation(description: "completion called")
+        tracker.asyncInitialDirectoryForNewSession(sshIdentity: nil, fresh: fresh) { pwd in
+            result = pwd
+            expectation.fulfill()
+        }
+        waitForExpectations(timeout: 1.0)
+        return result
+    }
+
+    // Without shell integration nothing refreshes the cached directory after a cd, and the
+    // poller waits for a keypress before polling again, so `cd foo` and `claude` typed ahead
+    // leave it stale. A fresh lookup polls and sees where the shell is now.
+    func testFreshLookup_SeesCdThatWasNotReported() {
+        pollerFound("/Users/before", invalidated: false)
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Users/after"
+        mockDelegate.workingDirectoryProvider = provider
+
+        XCTAssertEqual(initialDirectory(fresh: false), "/Users/before")
+        XCTAssertFalse(provider.getWorkingDirectoryAsyncCalled)
+
+        XCTAssertEqual(initialDirectory(fresh: true), "/Users/after")
+        XCTAssertTrue(provider.getWorkingDirectoryAsyncCalled)
+    }
+
+    // The fresh poll gives the resolved path, which must not replace a verified push's
+    // readable symlink path when they name the same directory.
+    func testFreshLookup_KeepsVerifiedPushedSymlinkPath() {
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/Volumes/Data/src"
+        mockDelegate.workingDirectoryProvider = provider
+
+        XCTAssertEqual(initialDirectory(fresh: true), "/Users/me/src")
+    }
+
+    // A nested shell without shell integration can cd after the outer shell's last push.
+    func testFreshLookup_PollWinsOverOutdatedVerifiedPush() {
+        pushVerified("/Users/me/src")
+        mockDelegate.resolveCompletions[0]("/Volumes/Data/src")
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = "/tmp/elsewhere"
+        mockDelegate.workingDirectoryProvider = provider
+
+        XCTAssertEqual(initialDirectory(fresh: true), "/tmp/elsewhere")
+    }
+
+    func testFreshLookup_FallsBackToCachedDirectoryWhenPollFails() {
+        pollerFound("/Users/before", invalidated: false)
+        let provider = MockWorkingDirectoryProvider()
+        provider.asyncResult = nil
+        mockDelegate.workingDirectoryProvider = provider
+
+        XCTAssertEqual(initialDirectory(fresh: true), "/Users/before")
+    }
+
     // Re-pushing the same directory, as every prompt does, keeps the cached resolution.
     func testRepushOfSameDirectory_DoesNotResolveAgain() {
         pushVerified("/Users/me/src")

@@ -41,6 +41,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateOnce;
 
+// Asks tmux for the value now, even when a subscription would report it later (tmux checks those
+// about once a second) or an updateOnce request is outstanding. tmux evaluates the command after
+// everything the pane wrote before it, so the value reflects the pane's state as of now. The value
+// is delivered as any update is, and then to `completion`, which gets nil if tmux reported an
+// error or there is no gateway. If the gateway goes away first, `completion` is never called.
+- (void)fetchNowWithCompletion:(void (^)(NSString * _Nullable value))completion;
+
 // Begin regular updates
 - (void)startTimer;
 

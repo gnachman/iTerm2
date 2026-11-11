@@ -336,6 +336,25 @@ class iTermSessionDirectoryTracker: NSObject {
         sshIdentity: SSHIdentity?,
         completion: @escaping (String?) -> Void
     ) {
+        asyncInitialDirectoryForNewSession(sshIdentity: sshIdentity,
+                                           fresh: false,
+                                           completion: completion)
+    }
+
+    /// Like asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory(sshIdentity:completion:),
+    /// but when `fresh` is true the local shell is polled now rather than trusting
+    /// verifiedLocalDirectory. A strong push refreshes that value, but nothing does when the shell
+    /// doesn't report its directory (no shell integration, or a nested shell without it): the
+    /// poller re-polls only on a line feed that follows a keypress, so after `cd foo` and `claude`
+    /// arrive together (pasted, or typed ahead) it last polled before the cd took effect. Callers
+    /// that must reflect the shell's directory right now (workgroup peers spawned when an agent
+    /// starts) pass true.
+    @objc
+    func asyncInitialDirectoryForNewSession(
+        sshIdentity: SSHIdentity?,
+        fresh: Bool,
+        completion: @escaping (String?) -> Void
+    ) {
         // If the new session is SSH, we need special handling
         if let newSessionSSHIdentity = sshIdentity {
             // New session is SSH - only use lastDirectory if it's from the same SSH host
@@ -353,7 +372,8 @@ class iTermSessionDirectoryTracker: NSObject {
 
         // New session is local - use local directory logic
         let envPwd = delegate?.directoryTrackerEnvironmentPWD(self)
-        asyncCurrentLocalWorkingDirectory { [weak self] pwd in
+        let lookup = fresh ? asyncFreshLocalWorkingDirectory : asyncCurrentLocalWorkingDirectory
+        lookup { [weak self] pwd in
             guard self != nil else {
                 completion(envPwd)
                 return
@@ -384,6 +404,52 @@ class iTermSessionDirectoryTracker: NSObject {
             // finishes it's still the best guess. It's the raw poll, never a pushed path that
             // might be remote.
             completion(self?.verifiedLocalDirectory ?? pwd)
+        }
+    }
+
+    /// Like asyncCurrentLocalWorkingDirectory(completion:) but always polls first. The poll goes
+    /// through recordPolledLocalDirectory, so a verified push still wins while the poll names it
+    /// or its resolution, and the poll wins when the shell has moved without reporting it.
+    ///
+    /// A tmux client pane has no local process to read, so ask tmux for the pane's directory.
+    @objc
+    func asyncFreshLocalWorkingDirectory(completion: @escaping (String?) -> Void) {
+        if pwdPoller.isTmux {
+            asyncFreshTmuxWorkingDirectory(completion: completion)
+            return
+        }
+        DLog("\(d(delegate)): asyncFreshLocalWorkingDirectory requested. Cached value is \(verifiedLocalDirectory ?? "nil")")
+        updateLocalDirectoryWithCompletion { [weak self] pwd in
+            DLog("\(d(self?.delegate)): fresh updateLocalDirectory finished with \(pwd ?? "nil"); verified is now \(self?.verifiedLocalDirectory ?? "nil")")
+            completion(self?.verifiedLocalDirectory ?? pwd)
+        }
+    }
+
+    /// How long to wait for tmux to report a pane's directory before settling for the cached one.
+    private static let freshTmuxDirectoryTimeout: TimeInterval = 2
+
+    /// Asks tmux for the pane's directory directly. Neither the cached value nor a subscription
+    /// will do: tmux checks subscriptions about once a second, so the cache can lag a `cd` by
+    /// that much. The reply is recorded like any poll result before the completion runs, so a
+    /// verified push still wins as it does for a local poll. If tmux doesn't answer in time (the
+    /// gateway went away), settle for the cached value. The gateway keeps the reply closure until
+    /// tmux answers, possibly forever, so it holds the caller's completion only weakly through
+    /// a box that gives it up when either path finishes.
+    private func asyncFreshTmuxWorkingDirectory(completion: @escaping (String?) -> Void) {
+        DLog("\(d(delegate)): Requesting the tmux pane's directory. Cached value is \(verifiedLocalDirectory ?? "nil")")
+        let box = OneShotDirectoryCompletion(completion)
+        pwdPoller.fetchTmuxDirectoryNow { [weak self] pwd in
+            MainActor.assumeIsolated {
+                DLog("\(d(self?.delegate)): tmux reported pane directory \(pwd ?? "nil"); verified is \(self?.verifiedLocalDirectory ?? "nil")")
+                box.finish(self?.verifiedLocalDirectory ?? pwd)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.freshTmuxDirectoryTimeout) { [weak self] in
+            guard box.isPending else {
+                return
+            }
+            DLog("\(d(self?.delegate)): Timed out waiting for the tmux pane's directory; using \(self?.verifiedLocalDirectory ?? "nil")")
+            box.finish(self?.verifiedLocalDirectory)
         }
     }
 
@@ -817,5 +883,28 @@ extension iTermSessionDirectoryTracker: iTermWorkingDirectoryPollerDelegate {
         // PTYSession handles the actual screen mutation.
         DLog("\(d(delegate)): Valid polled directory: \(pwd) - notifying delegate to create mark")
         delegate?.directoryTracker(self, createMarkForPolledDirectory: pwd)
+    }
+}
+
+/// Calls its completion at most once and then releases it, so whoever still holds the box (a tmux
+/// reply that may never come) doesn't keep the completion's captures alive.
+@MainActor
+private final class OneShotDirectoryCompletion {
+    private var completion: ((String?) -> Void)?
+
+    init(_ completion: @escaping (String?) -> Void) {
+        self.completion = completion
+    }
+
+    var isPending: Bool {
+        return completion != nil
+    }
+
+    func finish(_ directory: String?) {
+        guard let completion else {
+            return
+        }
+        self.completion = nil
+        completion(directory)
     }
 }

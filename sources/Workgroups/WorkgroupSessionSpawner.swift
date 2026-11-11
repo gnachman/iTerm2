@@ -304,7 +304,7 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                                parent: PTYSession) {
         let mode = config.mode
         let urlString = config.urlString
-        parent.asyncInitialDirectoryForNewSessionBased { [session] oldCWD in
+        parent.asyncFreshInitialDirectoryForNewSession { [session] oldCWD in
             // Wrap workgroup-supplied commands so they go through
             // /usr/bin/login + ShellLauncher and pick up the user's
             // dotfiles / PATH. The launcher path here bypasses the

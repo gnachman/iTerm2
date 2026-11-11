@@ -2508,7 +2508,7 @@ extension PTYSession {
                     seal.reject(iTermError("Session terminated"))
                     return
                 }
-                asyncInitialDirectoryForNewSessionBased { [weak self] oldCWD in
+                asyncFreshInitialDirectoryForNewSession { [weak self] oldCWD in
                     guard let self else {
                         seal.reject(iTermError("Session terminated"))
                         return

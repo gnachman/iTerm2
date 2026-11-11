@@ -57,6 +57,10 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 
 #pragma mark - API
 
+- (BOOL)isTmux {
+    return _tmuxOptionMonitor != nil;
+}
+
 - (void)didReceiveLineFeed {
     DLog(@"didReceiveLineFeed");
     [_pwdPollRateLimit performRateLimitedSelector:@selector(maybePollForWorkingDirectory) onTarget:self withObject:nil];
@@ -128,6 +132,16 @@ typedef void (^iTermWorkingDirectoryPollerClosure)(NSString * _Nullable);
 - (void)addOneTimeCompletion:(void (^)(NSString * _Nullable))completion {
     [_completions addObject:completion];
     [_completionStamps addObject:@([self.delegate workingDirectoryPollerRequestStamp])];
+}
+
+- (void)fetchTmuxDirectoryNowWithCompletion:(void (^)(NSString * _Nullable))completion {
+    if (!_tmuxOptionMonitor) {
+        completion(nil);
+        return;
+    }
+    // The monitor delivers the value through tmuxOptionMonitorDidProduceDirectory: before
+    // calling this block, so the delegate has recorded it by then.
+    [_tmuxOptionMonitor fetchNowWithCompletion:completion];
 }
 
 - (void)setDirectory:(NSString *)directory

@@ -20918,6 +20918,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                                                      completion:completion];
 }
 
+- (void)asyncFreshInitialDirectoryForNewSession:(void (^)(NSString *pwd))completion {
+    [_directoryTracker asyncInitialDirectoryForNewSessionWithSshIdentity:nil
+                                                                   fresh:YES
+                                                              completion:completion];
+}
+
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion {
     [_directoryTracker asyncCurrentLocalWorkingDirectoryWithCompletion:completion];
 }

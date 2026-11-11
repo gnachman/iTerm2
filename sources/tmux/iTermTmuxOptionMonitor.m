@@ -152,14 +152,43 @@
                         flags:kTmuxGatewayCommandShouldTolerateErrors];
 }
 
+- (void)fetchNowWithCompletion:(void (^)(NSString *))completion {
+    TmuxGateway *gateway = self.gateway;
+    if (!gateway) {
+        DLog(@"%@: no gateway to fetch from", self);
+        completion(nil);
+        return;
+    }
+    NSString *command = [self command];
+    DLog(@"Fetch now with command %@", command);
+    [gateway sendCommand:command
+          responseTarget:self
+        responseSelector:@selector(didFetchNow:completion:)
+          responseObject:[completion copy]
+                   flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
+- (void)didFetchNow:(NSString *)value completion:(void (^)(NSString *))completion {
+    DLog(@"%@ didFetchNow:%@", self, value);
+    if (value) {
+        [self deliver:value];
+    }
+    completion(value);
+}
+
 - (void)didFetch:(NSString *)value {
     DLog(@"%@ didFetch:%@", self, value);
+    // Clear this even on failure, or every later updateOnce would be skipped.
+    _haveOutstandingRequest = NO;
     if (!value) {
         // Probably the pane went away and we'll be dealloced soon.
         return;
     }
+    [self deliver:value];
+}
+
+- (void)deliver:(NSString *)value {
     _lastValue = [value copy];
-    _haveOutstandingRequest = NO;
     if (_variableName) {
         [self.scope setValue:value forVariableNamed:_variableName];
     }
