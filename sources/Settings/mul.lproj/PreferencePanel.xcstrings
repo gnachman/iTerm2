@@ -50078,49 +50078,49 @@
       }
     },
     "WVK-xs-N2h.ibShadowedToolTip" : {
-      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When enabled, small horizontal cursor movements are animated. Not available for block cursors.\"; ObjectID = \"WVK-xs-N2h\";",
+      "comment" : "Class = \"NSButton\"; ibShadowedToolTip = \"When enabled, small horizontal cursor movements are animated. The box cursor animates only when GPU rendering is in use.\"; ObjectID = \"WVK-xs-N2h\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wenn aktiviert, werden kleine horizontale Cursorbewegungen animiert. Nicht verfügbar für Blockcursor."
+            "state" : "needs_review",
+            "value" : "Wenn aktiviert, werden kleine horizontale Cursorbewegungen animiert. Der Blockcursor wird nur animiert, wenn GPU-Rendering verwendet wird."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "When enabled, small horizontal cursor movements are animated. Not available for block cursors."
+            "value" : "When enabled, small horizontal cursor movements are animated. The box cursor animates only when GPU rendering is in use."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "有効にすると、小さな水平方向のカーソル移動がアニメーション化されます。ブロックカーソルでは使用できません。"
+            "state" : "needs_review",
+            "value" : "有効にすると、小さな水平方向のカーソル移動がアニメーション化されます。ブロックカーソルは、GPUレンダリングを使用している場合にのみアニメーション化されます。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "켜면 커서의 작은 가로 이동에 애니메이션이 적용됩니다. 블록 커서에서는 사용할 수 없습니다."
+            "state" : "needs_review",
+            "value" : "켜면 커서의 작은 가로 이동에 애니메이션이 적용됩니다. 블록 커서는 GPU 렌더링을 사용할 때만 애니메이션이 적용됩니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quando ativado, pequenos movimentos horizontais do cursor são animados. Não disponível para cursores em bloco."
+            "state" : "needs_review",
+            "value" : "Quando ativado, pequenos movimentos horizontais do cursor são animados. O cursor em bloco só é animado quando a renderização por GPU está em uso."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Если этот параметр включён, небольшие горизонтальные перемещения курсора анимируются. Недоступно для блочных курсоров."
+            "state" : "needs_review",
+            "value" : "Если этот параметр включён, небольшие горизонтальные перемещения курсора анимируются. Блочный курсор анимируется, только если используется рендеринг на GPU."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "启用后，小幅水平光标移动会带有动画。方块光标不可用。"
+            "state" : "needs_review",
+            "value" : "启用后，小幅水平光标移动会带有动画。块状光标仅在使用 GPU 渲染时才会有动画。"
           }
         }
       }

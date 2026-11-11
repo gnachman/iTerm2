@@ -3925,8 +3925,13 @@ iTermKittyImageDraw *iTermFindKittyImageDrawForVirtualPlaceholder(NSArray<iTermK
     if (![self cursorIsSolidRectangle]) {
         return NO;
     }
-    // Block cursor inverts character colors - doesn't work for smooth slide
-    return _cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL;
+    // The box cursor also redraws the character underneath it in a
+    // contrasting color. The Metal renderer handles that mid-slide by
+    // crossfading each covered column by coverage (see
+    // applyBoxCursorTextColorTweakForRow: in iTermMetalPerFrameState.m). The
+    // legacy renderer cannot, so PTYTextView does not slide a box cursor on
+    // the legacy path.
+    return _cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL || _cursorType == CURSOR_BOX;
 }
 
 typedef struct {

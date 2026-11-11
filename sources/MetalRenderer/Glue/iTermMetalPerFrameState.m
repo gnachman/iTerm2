@@ -357,6 +357,7 @@ typedef struct {
     const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
     _cursorInfo = [[iTermMetalCursorInfo alloc] init];
     _cursorInfo.fadeAlpha = 1.0;
+    _cursorInfo.slideAnimationInProgress = textView.slideAnimationInProgress;
     // Decide the HDR-cursor treatment once, where the profile hint, headroom, and
     // background are all known, so the cursor renderer and the bold path agree.
     // Uses the default background (like the legacy renderer) as the dark test.
@@ -385,6 +386,7 @@ typedef struct {
     const CGPoint pointOffset = [textView metalCursorAnimationPixelOffset];
     _cursorInfo.pixelOffset = CGPointMake(pointOffset.x * _configuration->_scale,
                                           pointOffset.y * _configuration->_scale);
+    _cursorInfo.columnOffset = _configuration->_cellSize.width > 0 ? pointOffset.x / _configuration->_cellSize.width : 0;
 
     // For smooth blink the cursor is considered visible whenever it would be
     // drawn ignoring the blinked-out phase, and the blink is conveyed by
@@ -2142,9 +2144,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     }
 }
 
-// Tweaks the text color for the cell that has a box cursor. This is a per-frame
-// effect (it depends on the cursor position and fade animation, not the row's
-// content), so it is applied after both a cache hit and a fresh build.
+// Tweaks the text color for the cell(s) under a box cursor. This is a
+// per-frame effect (it depends on the cursor position and fade animation,
+// not the row's content), so it is applied after both a cache hit and a
+// fresh build.
 - (void)applyBoxCursorTextColorTweakForRow:(int)row
                                      width:(int)width
                                 attributes:(iTermMetalGlyphAttributes *)attributes {
@@ -2169,20 +2172,20 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                              faint:NO
                                       isBackground:NO];
     }
-    if (_cursorInfo.coord.x < width) {
-        cursorTextColor.w = 1;
-        const CGFloat fade = _cursorInfo.fadeAlpha;
-        if (fade >= 1.0) {
-            attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
-        } else {
-            // Smooth blink: crossfade the glyph from its normal color toward
-            // the cursor text color as the cursor fades in, so it matches the
-            // box fill being composited at the same alpha underneath.
-            vector_float4 normal = attributes[_cursorInfo.coord.x].foregroundColor;
-            normal.w = 1;
-            attributes[_cursorInfo.coord.x].foregroundColor = simd_mix(normal, cursorTextColor, simd_make_float4(fade, fade, fade, fade));
-        }
-    }
+    cursorTextColor.w = 1;
+
+    // During a smooth slide the box only partially covers one or two adjacent
+    // columns, so crossfade each covered column's foreground toward
+    // cursorTextColor in proportion to its coverage (scaled by the smooth
+    // blink fade). At rest this is coord.x with full coverage, which reduces
+    // to a flat assignment. The driver crossfades the backgrounds to match.
+    const CGFloat fade = _cursorInfo.fadeAlpha;
+    [_cursorInfo enumerateBoxCoverageInRowOfWidth:width block:^(int x, CGFloat coverage) {
+        const CGFloat t = coverage * fade;
+        vector_float4 normal = attributes[x].foregroundColor;
+        normal.w = 1;
+        attributes[x].foregroundColor = simd_mix(normal, cursorTextColor, simd_make_float4(t, t, t, t));
+    }];
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {

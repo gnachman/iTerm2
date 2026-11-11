@@ -15,6 +15,7 @@
 #import "iTermCursorBlinkFadePreset.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermFontPanel.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "NSDictionary+iTerm.h"
@@ -178,6 +179,17 @@
                     key:KEY_CURSOR_SMOOTH_SLIDE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    // The box cursor's smooth slide only works with GPU rendering on (see
+    // cursorTypeSupportsSmoothSlide), which can change while this panel is
+    // open. This uses the token-based subscription rather than
+    // NSNotificationCenter because windowWillClose removes all
+    // NSNotificationCenter observers and awakeFromNib does not run again when
+    // the panel is reopened.
+    [iTermPreferenceDidChangeNotification subscribe:self block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+        if ([notification.key isEqualToString:kPreferenceKeyUseMetal]) {
+            [weakSelf updateSmoothSlideEnabled];
+        }
+    }];
     [self updateSmoothSlideEnabled];
 
     info = [self defineControl:_cursorSmoothBlink
@@ -439,6 +451,7 @@
     // this is where the smooth-blink controls get their correct initial enabled
     // state.
     [self updateSmoothBlinkControlsEnabled];
+    [self updateSmoothSlideEnabled];
 }
 
 - (NSArray *)keysForBulkCopy {
@@ -519,6 +532,12 @@
         case CURSOR_VERTICAL:
             return YES;
         case CURSOR_BOX:
+            // The box cursor's smooth slide only animates on the Metal
+            // renderer (see cursorSupportsSmoothSlide in
+            // iTermTextDrawingHelper.m), so don't offer it at all when GPU
+            // rendering is off in General settings - it would just silently
+            // do nothing.
+            return [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
         case CURSOR_DEFAULT:
             return NO;
     }

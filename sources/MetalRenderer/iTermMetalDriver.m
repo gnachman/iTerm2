@@ -56,6 +56,22 @@
 
 
 @implementation iTermMetalCursorInfo
+
+- (void)enumerateBoxCoverageInRowOfWidth:(int)width
+                                   block:(void (^ NS_NOESCAPE)(int x, CGFloat coverage))block {
+    const CGFloat boxLeft = _coord.x + _columnOffset;
+    const CGFloat boxRight = boxLeft + (_doubleWidth ? 2 : 1);
+    const int firstColumn = MAX(0, (int)floor(boxLeft));
+    const int lastColumn = MIN(width - 1, (int)ceil(boxRight) - 1);
+    for (int x = firstColumn; x <= lastColumn; x++) {
+        const CGFloat coverage = MIN(1, MAX(0, MIN(boxRight, x + 1) - MAX(boxLeft, x)));
+        if (coverage <= 0.001) {
+            continue;
+        }
+        block(x, coverage);
+    }
+}
+
 @end
 
 @implementation iTermMetalIMEInfo
@@ -1469,14 +1485,25 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                                                         cursorInfo.cursorColor.blueComponent,
                                                         1);
         const CGFloat fade = cursorInfo.fadeAlpha;
-        if (fade >= 1.0) {
-            glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
-            glyphAttributes[cursorInfo.coord.x].backgroundColor = cursorBg;
-        } else {
-            const vector_float4 t = simd_make_float4(fade, fade, fade, fade);
-            glyphAttributes[cursorInfo.coord.x].backgroundColor = simd_mix(cursorInfo.backgroundColor, cursorBg, t);
-        }
-        glyphAttributes[cursorInfo.coord.x].hasUnderlineColor = NO;
+        // During a slide the box can straddle two columns. Each covered
+        // column's foreground was crossfaded by coverage in the per-frame
+        // state, so crossfade the background its glyph is antialiased against
+        // by the same amount. At rest this touches only coord.x.
+        const int width = frameData.gridSize.width;
+        [cursorInfo enumerateBoxCoverageInRowOfWidth:width block:^(int x, CGFloat coverage) {
+            const CGFloat t = coverage * fade;
+            if (t >= 1.0) {
+                glyphAttributes[x].foregroundColor = cursorInfo.textColor;
+                glyphAttributes[x].backgroundColor = cursorBg;
+            } else {
+                // The cursor's own cell uses the background computed for the
+                // cursor (as before slides were supported); a neighbor the box
+                // is sliding over uses that cell's background.
+                const vector_float4 normalBg = (x == cursorInfo.coord.x) ? cursorInfo.backgroundColor : glyphAttributes[x].backgroundColor;
+                glyphAttributes[x].backgroundColor = simd_mix(normalBg, cursorBg, simd_make_float4(t, t, t, t));
+            }
+            glyphAttributes[x].hasUnderlineColor = NO;
+        }];
         [rowWithCursor.attributesData checkForOverrun];
     }
 
@@ -1519,12 +1546,14 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.hdrBrightness = cursorInfo.hdrBrightness;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.fadeAlpha = cursorFadeAlpha;
+                tState.pixelOffset = cursorInfo.pixelOffset;
 
                 tState = [frameData transientStateForRenderer:_frameCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.fadeAlpha = cursorFadeAlpha;
+                tState.pixelOffset = cursorInfo.pixelOffset;
                 break;
             }
             case CURSOR_VERTICAL: {

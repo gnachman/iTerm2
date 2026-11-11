@@ -17,6 +17,12 @@
     BOOL _capturingSlideScreenshot;  // Prevents recursion during screenshot capture
     __weak NSView *_slideLegacyView; // Weak reference to the legacy view for animation
     BOOL _animationInProgress;
+    // Incremented each time a Metal slide begins, so a deferred end can tell
+    // whether it still refers to the current slide.
+    NSUInteger _metalAnimationGeneration;
+    // YES while a deferred endMetalAnimation is queued, so that frames drawn
+    // after the slide completes do not each queue another one.
+    BOOL _metalEndPending;
 }
 
 + (CFTimeInterval)animationDuration {
@@ -85,6 +91,7 @@
 
     // Set animation state
     _animationInProgress = YES;
+    _metalAnimationGeneration += 1;
     _slideStartTime = CACurrentMediaTime();
     _slideStartRect = actualFrom;
     _slideEndRect = to;
@@ -157,9 +164,23 @@
     if (progress >= 1.0) {
         // Defer ending animation to avoid state changes during frame preparation
         DLog(@"cursorPixelOffset: animation complete, returning zero");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self endMetalAnimation];
-        });
+        if (!_metalEndPending) {
+            _metalEndPending = YES;
+            const NSUInteger generation = _metalAnimationGeneration;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self->_metalEndPending = NO;
+                if (self->_metalAnimationGeneration != generation) {
+                    // A new slide began after this was queued. Ending now
+                    // would cut it short and make the cursor jump.
+                    DLog(@"Skipping stale end of Metal slide animation");
+                    return;
+                }
+                [self endMetalAnimation];
+                // Draw one more frame now that animationInProgress is NO so
+                // the cursor settles onto the resting render path.
+                [self->_delegate cursorSlideAnimatorRequestDelegateRedraw];
+            });
+        }
         return CGPointZero;
     }
 

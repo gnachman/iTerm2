@@ -31,6 +31,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL cursorShadow;
 // Pixel offset for smooth cursor animation (applied in addition to coord-based position)
 @property (nonatomic) CGPoint pixelOffset;
+// pixelOffset.x expressed in cells. Nonzero only while a smooth slide is in
+// progress.
+@property (nonatomic) CGFloat columnOffset;
+// YES while a smooth-slide animation is sliding the cursor between cells.
+// While set, a box cursor may straddle two columns, so the character
+// inversion is crossfaded per column by coverage rather than applied flat
+// to coord.x (see enumerateBoxCoverageInRowOfWidth:block:).
+@property (nonatomic) BOOL slideAnimationInProgress;
 // Opacity in [0, 1] for smooth blink fading. 1 means fully opaque (the default).
 // The character drawn over a box cursor is crossfaded toward the normal text
 // color as this approaches 0 (see iTermMetalPerFrameState).
@@ -55,6 +63,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL useHDRWhite;
 // The profile's requested peak HDR brightness (KEY_HDR_CURSOR_BRIGHTNESS).
 @property (nonatomic) CGFloat hdrBrightness;
+
+// Calls `block` for each column in [0, width) that the box cursor currently
+// overlaps, with the fraction of that column it covers in (0, 1]. Takes
+// columnOffset into account but not fadeAlpha. At rest this is exactly
+// coord.x with coverage 1.
+- (void)enumerateBoxCoverageInRowOfWidth:(int)width
+                                   block:(void (^ NS_NOESCAPE)(int x, CGFloat coverage))block;
 @end
 
 @interface iTermMetalIMEInfo : NSObject

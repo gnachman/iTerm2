@@ -164,6 +164,10 @@ Improvements:
 - Remapped modifier keys now apply in a
   floating hotkey window and in Open Quickly
   while another app is active.
+- Smooth-typing animation in Settings >
+  Profiles > Text now works with the box cursor
+  when GPU rendering is on. Thanks to Brian
+  Taylor (@pilotboy72) for the change.
 
 Bug Fixes:
 - The tooltip for “Enable support for
