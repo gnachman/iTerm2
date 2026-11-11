@@ -15,7 +15,7 @@ import Foundation
     private let catalog: iTermProjectCatalog
     private var observer: NSObjectProtocol?
     private var rememberedTabs = [String: String]()
-    private var pending = Set<String>()
+    private var pending = [String: (identifier: UUID, generation: UInt64)]()
     private(set) var selectionGeneration: UInt64 = 0
     private(set) var selectedProjectIdentifier: String?
     var sidebarVisible = false
@@ -71,11 +71,14 @@ import Foundation
             delegate.projectSelectTab(tab)
             return
         }
-        guard pending.insert(project.identifier).inserted else { return }
         let generation = selectionGeneration
+        guard pending[project.identifier]?.generation != generation else { return }
+        let requestIdentifier = UUID()
+        pending[project.identifier] = (requestIdentifier, generation)
         delegate.projectLaunch(project, directory: project.rootDirectory) { [weak self] tab in
-            guard let self = self else { return }
-            self.pending.remove(project.identifier)
+            guard let self = self,
+                  self.pending[project.identifier]?.identifier == requestIdentifier else { return }
+            self.pending.removeValue(forKey: project.identifier)
             guard self.catalog.project(withIdentifier: project.identifier) != nil, let tab = tab,
                   generation == self.selectionGeneration else { return }
             self.rememberedTabs[project.identifier] = tab

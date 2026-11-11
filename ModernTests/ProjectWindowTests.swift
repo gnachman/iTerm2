@@ -8,12 +8,14 @@ final class ProjectWindowTests: XCTestCase {
         var launches = 0
         var directories = [String]()
         var completion: ((String?) -> Void)?
+        var completions = [(String?) -> Void]()
         func projectSelectTab(_ identifier: String) { projectActiveTabIdentifier = identifier }
         func projectAssign(_ project: String?, toTab identifier: String) { projectTabAssociations[identifier] = project ?? "" }
         func projectLaunch(_ project: iTermProjectDirectory, directory: String, completion: @escaping (String?) -> Void) {
             launches += 1
             directories.append(directory)
             self.completion = completion
+            completions.append(completion)
         }
         func projectStateDidChange() {}
     }
@@ -67,6 +69,39 @@ final class ProjectWindowTests: XCTestCase {
         XCTAssertEqual(window.projectTabAssociations["new"], "")
         XCTAssertEqual(other.projectTabAssociations["moved"], "")
         XCTAssertNil(coordinator.selectedProject)
+    }
+
+    func testReturningToProjectSupersedesStalePreflightInEitherCompletionOrder() {
+        for oldCompletesFirst in [true, false] {
+            let (catalog, _) = makeCatalog()
+            let window = Window()
+            let coordinator = iTermProjectWindowController(catalog: catalog)
+            coordinator.delegate = window
+            let projectA = catalog.projects[0]
+            let projectB = catalog.projects[1]
+            coordinator.selectProject(projectA)
+            coordinator.selectProject(projectB)
+            coordinator.selectProject(projectA)
+            XCTAssertEqual(window.directories, [projectA.rootDirectory, projectB.rootDirectory, projectA.rootDirectory])
+            guard window.completions.count == 3 else { continue }
+            if oldCompletesFirst {
+                window.completions[0](nil) // Original A rejects its stale preflight generation.
+                window.completions[1](nil)
+                coordinator.selectProject(projectA)
+                XCTAssertEqual(window.launches, 3) // Old completion must not clear replacement A.
+            }
+            window.projectTabAssociations["final-a"] = projectA.identifier
+            window.completions[2]("final-a")
+            if !oldCompletesFirst {
+                window.completions[0](nil)
+                window.completions[1](nil)
+            }
+            XCTAssertEqual(window.projectActiveTabIdentifier, "final-a")
+            XCTAssertEqual(coordinator.selectedProjectIdentifier, projectA.identifier)
+            XCTAssertEqual((coordinator.restorableState()["remembered"] as? [String: String])?[projectA.identifier], "final-a")
+            coordinator.selectProject(projectA)
+            XCTAssertEqual(window.launches, 3)
+        }
     }
 
     func testSameProjectTabSelectionWinsOverLateLaunch() {
@@ -147,7 +182,8 @@ final class ProjectWindowTests: XCTestCase {
         let name = "ProjectWindowTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
         addTeardownBlock { defaults.removePersistentDomain(forName: name) }
-        defaults.set([["identifier": UUID().uuidString, "rootDirectory": "/tmp"]], forKey: iTermProjectCatalog.defaultsKey)
+        defaults.set([["identifier": UUID().uuidString, "rootDirectory": "/tmp"],
+                      ["identifier": UUID().uuidString, "rootDirectory": "/var"]], forKey: iTermProjectCatalog.defaultsKey)
         return (iTermProjectCatalog(defaults: defaults), defaults)
     }
 }

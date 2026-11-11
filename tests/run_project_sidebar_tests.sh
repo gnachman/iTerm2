@@ -7,6 +7,7 @@ trap 'rm -rf "$project_test_tmp"' EXIT
 project_test_developer="$(xcode-select -p)/Platforms/MacOSX.platform/Developer"
 sed '/@testable import iTerm2SharedARC/d' "$project_test_repo/ModernTests/ProjectSidebarTests.swift" > "$project_test_tmp/ProjectSidebarTests.swift"
 sed '/@testable import iTerm2SharedARC/d' "$project_test_repo/ModernTests/ProjectWindowTests.swift" > "$project_test_tmp/ProjectWindowTests.swift"
+sed '/@testable import iTerm2SharedARC/d' "$project_test_repo/ModernTests/FileTreeRestorationTests.swift" > "$project_test_tmp/FileTreeRestorationTests.swift"
 cat > "$project_test_tmp/Stubs.swift" <<'SWIFT'
 import Foundation
 // The executable has no app host: only the app's defaults provider is replaced.
@@ -19,6 +20,7 @@ import XCTest
 let suite = XCTestSuite(name: "Project Sidebars")
 suite.addTest(ProjectSidebarTests.defaultTestSuite)
 suite.addTest(ProjectWindowTests.defaultTestSuite)
+suite.addTest(FileTreeRestorationTests.defaultTestSuite)
 suite.run()
 exit(suite.testRun!.hasSucceeded ? 0 : 1)
 SWIFT
@@ -30,6 +32,8 @@ xcrun swiftc -swift-version 5 -warnings-as-errors \
     "$project_test_repo/sources/Toolbelt/iTermProjectDirectory.swift" \
     "$project_test_repo/sources/Toolbelt/iTermFileTreeDataSource.swift" \
     "$project_test_repo/sources/Toolbelt/iTermProjectWindowController.swift" \
+    "$project_test_repo/sources/Toolbelt/iTermFileTreeState.swift" \
+    "$project_test_tmp/FileTreeRestorationTests.swift" \
     "$project_test_tmp/ProjectWindowTests.swift" \
     "$project_test_tmp/Stubs.swift" "$project_test_tmp/ProjectSidebarTests.swift" "$project_test_tmp/main.swift" \
     -o "$project_test_tmp/tests"
