@@ -10,7 +10,7 @@
 		</data>
 		<key>Resources/Info.plist</key>
 		<data>
-		49i6oyeaLwBAIOF8RPk2NDIqwrQ=
+		G5rY8lK2UBemYl+ZJP4CGIDLem0=
 		</data>
 		<key>Resources/ReleaseNotesColorStyle.css</key>
 		<data>
@@ -22,7 +22,7 @@
 		</data>
 		<key>Resources/SUUpdatePermissionPrompt.nib</key>
 		<data>
-		5Mf+L6QCT1PpJeMOPcZV4Y0g3h8=
+		Sj67Ou8Y1tbOQhF7Sbo5PHEneAk=
 		</data>
 		<key>Resources/ar.lproj/Sparkle.strings</key>
 		<dict>
@@ -346,7 +346,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			XhS9GSchyklJtr4slsitIzO9xZQ=
+			AXPNLvfSRA2F+SGToxa5tFKUwkY=
 			</data>
 			<key>requirement</key>
 			<string>identifier Autoupdate and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D</string>
@@ -586,7 +586,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			//or9AfPcysmuGFTL/KRWOC15nUIWWFhF4plKqh4HvE=
+			zvMe0nX2er+trdldRTs7KB5hzmiuqVaDew22A0BhSCc=
 			</data>
 		</dict>
 		<key>Resources/ReleaseNotesColorStyle.css</key>
@@ -607,7 +607,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			B48tcqSoEoY3JXP7tLPC2aV3sisDoLc0d6DFjcC3+ZM=
+			NadpBH6/aF6alUNnocFYsJ7lTu1sTorMcbgNkzVqHdE=
 			</data>
 		</dict>
 		<key>Resources/ar.lproj/Sparkle.strings</key>
@@ -929,7 +929,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ILREbzUIbCTdDeAjADF3PO9K/3w=
+			bQM9lSwYWuj0Qap6ivQqLyYD9Ww=
 			</data>
 			<key>requirement</key>
 			<string>identifier "org.sparkle-project.Sparkle.Updater" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D</string>

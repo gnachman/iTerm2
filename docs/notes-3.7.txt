@@ -53,6 +53,11 @@ Improvements:
 - If automatic updates ever stop working, iTerm2
   can still let you know a new version is available
   and offer a link to download it.
+- An update download that loses its network
+  connection now picks up where it left off, or
+  starts over, instead of failing with “An error
+  occurred while downloading the update.” Issue
+  13199.
 - In a Session Note, Shift-Return now inserts a
   newline instead of collapsing the note. Press
   Escape to collapse it and return to the
