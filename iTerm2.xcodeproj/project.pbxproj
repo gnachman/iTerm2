@@ -1060,6 +1060,7 @@
 		6328383D184EEC502DE25B1D /* AboutBackersColumnsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCA48E863C23115F2C739460 /* AboutBackersColumnsView.swift */; };
 		639530D5AD779882EF35DAE4 /* iTermLargeContentObject.h in Sources */ = {isa = PBXBuildFile; fileRef = 13C5AE44EEA24B945DE0A064 /* iTermLargeContentObject.h */; };
 		63E228527D9C344E2A67AAFC /* ChatBlobCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C59C22641253239F1BF6BB /* ChatBlobCapture.swift */; };
+		64092936C7FB00C18AE12255 /* iTermProjectWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7849CABC92F458456EBAA49C /* iTermProjectWindowController.swift */; };
 		649189E05BC736F39075C7A0 /* TmuxFloatingPanePlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36092E847ABA2720F4C6620A /* TmuxFloatingPanePlacement.swift */; };
 		64EC42E62879047B5E0EF077 /* CompanionMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE0FD36EF2CD108D533CC26 /* CompanionMessages.swift */; };
 		65226AC1E9F2BCABC102670E /* FlowControlMonitorWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E300468361106B82C9C9DF62 /* FlowControlMonitorWindowController.swift */; };
@@ -6093,6 +6094,7 @@
 		76421C2E762130B690D1ADC5 /* RegexAtomIterator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RegexAtomIterator.swift; sourceTree = "<group>"; };
 		77FCEB05FACE33F5F7947261 /* iTermWindowBorderView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWindowBorderView.swift; sourceTree = "<group>"; };
 		78369949C86466303F34E966 /* ClaudeInteractivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeInteractivity.swift; sourceTree = "<group>"; };
+		7849CABC92F458456EBAA49C /* iTermProjectWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermProjectWindowController.swift; sourceTree = "<group>"; };
 		78BC7E35842CFC775D14EB91 /* CompanionPluginHTTPError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPluginHTTPError.swift; sourceTree = "<group>"; };
 		78C411C47C727715D6E54062 /* DiffWaitingPromptView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiffWaitingPromptView.swift; sourceTree = "<group>"; };
 		795985DF96920C5D3F9FD1D6 /* TmuxWorkgroupPeerCreator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TmuxWorkgroupPeerCreator.swift; sourceTree = "<group>"; };
@@ -12298,6 +12300,7 @@
 				8BF169A7F31FA4B1F644B5D8 /* iTermProjectSidebarView.swift */,
 				124169DC1658C5EE9AF9CD26 /* iTermFileTreeDataSource.swift */,
 				B2414BB4315A7AE7539A824B /* iTermToolFileTree.swift */,
+				7849CABC92F458456EBAA49C /* iTermProjectWindowController.swift */,
 			);
 			path = Toolbelt;
 			sourceTree = "<group>";
@@ -20562,6 +20565,7 @@
 				52C8BD1DD57BE8398F2B9560 /* iTermProjectSidebarView.swift in Sources */,
 				27CC50C21AA3ACC846338DE3 /* iTermFileTreeDataSource.swift in Sources */,
 				808B145AC6927BB02F390943 /* iTermToolFileTree.swift in Sources */,
+				64092936C7FB00C18AE12255 /* iTermProjectWindowController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1122,6 +1122,12 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="bWM-We-TVH"/>
+                            <menuItem title="Project Sidebar" identifier="Project Sidebar" id="prj-SB-menu">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleProjectSidebar:" target="-1" id="prj-SB-action"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Toolbelt" identifier="Toolbelt" id="1295">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Toolbelt" id="1296">

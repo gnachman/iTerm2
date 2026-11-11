@@ -1,6 +1,9 @@
 Version TBD (unreleased; built off master)
 
 Major New Features:
+- View > Project Sidebar organizes local folders
+  with reusable terminal tabs and a File Tree in
+  the Toolbelt.
 - Grok is now a built-in AI provider. Pick it
   in Settings > General > AI and enter an xAI
   API key to chat with grok-4.7.

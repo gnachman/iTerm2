@@ -117,7 +117,7 @@ final class CompanionMainThreadMonitor: CompanionMainStallSource {
     ///   while anything is subscribed. Tests pass false and call tick().
     /// - after: runs a block after a delay, off the main thread. Injected for
     ///   tests.
-    init(now: @escaping @Sendable () -> TimeInterval = CompanionMainThreadMonitor.uptimeExcludingSleep,
+    init(now: @escaping @Sendable () -> TimeInterval = { CompanionMainThreadMonitor.uptimeExcludingSleep() },
          runOnMain: @escaping @Sendable (@escaping @Sendable () -> Void) -> Void = { DispatchQueue.main.async(execute: $0) },
          ticksAutomatically: Bool = true,
          after: @escaping @Sendable (TimeInterval, @escaping @Sendable () -> Void) -> Void = { delay, block in

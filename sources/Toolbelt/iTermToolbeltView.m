@@ -30,6 +30,8 @@
 #import <QuartzCore/QuartzCore.h>
 
 // Localization unneeded
+NSString *const kFileTreeToolName = @"File Tree";
+// Localization unneeded
 NSString *const kActionsToolName = @"Actions";
 // Localization unneeded
 NSString *const kCapturedOutputToolName = @"Captured Output";
@@ -92,6 +94,7 @@ static NSString *const kDynamicToolURL = @"URL";
 
 + (void)initialize {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
+    [iTermToolbeltView registerToolWithName:kFileTreeToolName withClass:[iTermToolFileTree class]];
     [iTermToolbeltView registerToolWithName:kActionsToolName withClass:[iTermToolActions class]];
     [iTermToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
     [iTermToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
@@ -119,6 +122,7 @@ static NSString *const kDynamicToolURL = @"URL";
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         map = @{
+            kFileTreeToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.FileTree", nil, [NSBundle mainBundle], @"File Tree", @"Name of the project file tree tool"),
             kActionsToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.Actions", nil, [NSBundle mainBundle], @"Actions", @"Name of the Actions toolbelt tool"),
             kCapturedOutputToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.CapturedOutput", nil, [NSBundle mainBundle], @"Captured Output", @"Name of the Captured Output toolbelt tool"),
             kCommandHistoryToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.CommandHistory", nil, [NSBundle mainBundle], @"Command History", @"Name of the Command History toolbelt tool"),
@@ -463,6 +467,8 @@ static NSString *const kDynamicToolURL = @"URL";
     } else {
         [self addToolWithName:theName];
     }
+    self.fileTreeView.rootDirectory = self.projectRootDirectory;
+    self.fileTreeView.openTerminal = self.projectOpenTerminal;
     [self forceSplitterSubviewsToRespectSizeConstraints];
 }
 
@@ -628,6 +634,20 @@ static NSString *const kDynamicToolURL = @"URL";
     return YES;
 }
 
+- (iTermToolFileTree *)fileTreeView {
+    return (iTermToolFileTree *)[self toolWithName:kFileTreeToolName];
+}
+
+- (void)setProjectRootDirectory:(NSString *)directory {
+    _projectRootDirectory = [directory copy];
+    self.fileTreeView.rootDirectory = directory;
+}
+
+- (void)setProjectOpenTerminal:(void (^)(NSString *))callback {
+    _projectOpenTerminal = [callback copy];
+    self.fileTreeView.openTerminal = callback;
+}
+
 - (void)refreshTools {
     [[self commandHistoryView] updateCommands];
     [[self capturedOutputView] updateCapturedOutput];
@@ -637,6 +657,8 @@ static NSString *const kDynamicToolURL = @"URL";
     [[self codeciergeView] currentSessionDidChange];
     [[self namedMarksView] setNamedMarks:[self.delegate toolbeltNamedMarks]];
     [self updateForProfileType];
+    self.fileTreeView.rootDirectory = self.projectRootDirectory;
+    self.fileTreeView.openTerminal = self.projectOpenTerminal;
 }
 
 - (void)updateForProfileType {
@@ -657,6 +679,8 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)relayoutAllTools {
+    self.fileTreeView.rootDirectory = self.projectRootDirectory;
+    self.fileTreeView.openTerminal = self.projectOpenTerminal;
     const NSRect desiredFrame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
     if (!NSEqualRects(_splitter.frame, desiredFrame)) {
         // In issue 10712 we get in a loop where we set the splitter to its current frame which

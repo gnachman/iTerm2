@@ -602,8 +602,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         // A sheet that does not block when there is a window; app-modal otherwise.
         warning.window = window
         warning.runModalAsync { [weak self] _, _ in
-            self?.close()
-            CompanionPairingWindowController.shared.showAndBeginPairing()
+            DispatchQueue.main.async { [weak self] in
+                self?.close()
+                CompanionPairingWindowController.shared.showAndBeginPairing()
+            }
         }
     }
 

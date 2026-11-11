@@ -4528,6 +4528,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (activeFloat) {
         [theTab setActiveSession:activeFloat];
     }
+    theTab.projectIdentifier = [NSString castFrom:arrangement[@"Project Identifier"]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
     theTab.tabGroupID = [arrangement[TAB_ARRANGEMENT_GROUP_ID] nilIfNull];
@@ -4878,6 +4879,8 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                    encoder:(id<iTermEncoderAdapter>)encoder
                    options:(NSDictionary *)options {
     DLog(@"Encode tab %@", self);
+    // Localization unneeded: arrangement metadata key.
+    if (self.projectIdentifier) { encoder[@"Project Identifier"] = self.projectIdentifier; }
     encoder[TAB_ARRANGEMENT_PINNED] = @(self.isPinned);
     if (self.tabGroupID) {
         encoder[TAB_ARRANGEMENT_GROUP_ID] = self.tabGroupID;

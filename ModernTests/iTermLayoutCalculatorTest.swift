@@ -43,6 +43,86 @@ final class iTermLayoutCalculatorTest: XCTestCase {
         return inputs
     }
 
+    func testProjectSidebarFrameMatrix() {
+        for position in [kLayoutTabPositionTop, kLayoutTabPositionBottom, kLayoutTabPositionLeft, kLayoutTabPositionRight] {
+            for visible in [false, true] {
+                for toolbelt in [false, true] {
+                    for statusOnTop in [false, true] {
+                        var input = makeDefaultInputs()
+                        input.contentViewWidth = 1200
+                        input.tabPosition = position
+                        input.tabBarVisible = visible ? true : false
+                        input.shouldShowToolbelt = toolbelt ? true : false
+                        input.hasStatusBar = true
+                        input.statusBarOnTop = statusOnTop ? true : false
+                        let baseline = iTermLayoutCalculator.calculateLayout(with: input)
+                        input.shouldShowProjectSidebar = true
+                        input.projectSidebarWidth = 220
+                        input.minimumTerminalWidth = 200
+                        let result = iTermLayoutCalculator.calculateLayout(with: input)
+                        XCTAssertEqual(result.projectSidebarFrame.width, 220)
+                        XCTAssertEqual(result.tabViewFrame.minX, baseline.tabViewFrame.minX + 220)
+                        XCTAssertEqual(result.tabViewFrame.width, baseline.tabViewFrame.width - 220)
+                        XCTAssertEqual(result.statusBarFrame.minX, result.tabViewFrame.minX)
+                        XCTAssertEqual(result.statusBarFrame.width, result.tabViewFrame.width)
+                        XCTAssertEqual(result.toolbeltFrame, baseline.toolbeltFrame)
+                        XCTAssertEqual(result.tabViewFrame.height, baseline.tabViewFrame.height)
+                    }
+                }
+            }
+        }
+    }
+
+    func testProjectSidebarClearsCompactWindowControls() {
+        var input = makeDefaultInputs()
+        input.shouldShowProjectSidebar = true
+        input.projectSidebarWidth = 220
+        input.projectSidebarTopInset = 30
+        let output = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(output.projectSidebarFrame.maxY, 570)
+        XCTAssertEqual(output.projectSidebarFrame.minY, 0)
+        XCTAssertEqual(output.tabViewFrame.minX, 220)
+    }
+
+    func testProjectSidebarFullscreenTransition() {
+        var input = makeDefaultInputs()
+        input.shouldShowProjectSidebar = true
+        input.projectSidebarWidth = 220
+        input.inFullscreen = true
+        input.tabBarOnLoan = true
+        input.tabBarShouldBeAccessory = true
+        input.tabBarAccessoryOverlapsContent = true
+        input.notchInset = 32
+        input.shouldShowToolbelt = true
+        let accessory = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(accessory.projectSidebarFrame.height, 540)
+        XCTAssertEqual(accessory.projectSidebarFrame.height, accessory.toolbeltFrame.height)
+        input.shouldLeaveEmptyAreaAtTop = true
+        let transition = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(transition.projectSidebarFrame, accessory.projectSidebarFrame)
+        input.inFullscreen = false
+        input.tabBarOnLoan = false
+        input.tabBarAccessoryOverlapsContent = false
+        input.shouldLeaveEmptyAreaAtTop = false
+        input.notchInset = 0
+        XCTAssertEqual(iTermLayoutCalculator.calculateLayout(with: input).projectSidebarFrame.height, 600)
+    }
+
+    func testProjectSidebarSuppressesAndRecoversWithoutChangingPreference() {
+        var input = makeDefaultInputs()
+        input.shouldShowProjectSidebar = true
+        input.projectSidebarWidth = 220
+        input.minimumTerminalWidth = 400
+        input.contentViewWidth = 600
+        XCTAssertEqual(iTermLayoutCalculator.calculateLayout(with: input).projectSidebarFrame, .zero)
+        input.contentViewWidth = 900
+        XCTAssertEqual(iTermLayoutCalculator.calculateLayout(with: input).projectSidebarFrame.width, 220)
+        input.projectSidebarWidth = 999
+        XCTAssertEqual(iTermLayoutCalculator.calculateLayout(with: input).projectSidebarFrame.width, 360)
+        input.projectSidebarWidth = 1
+        XCTAssertEqual(iTermLayoutCalculator.calculateLayout(with: input).projectSidebarFrame.width, 180)
+    }
+
     // MARK: - Tab Bar Overlap Tests
 
     /// Test: Fullscreen + accessory overlaps content -> frame should shrink

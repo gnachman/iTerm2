@@ -17,6 +17,7 @@
 @class iTermTabBarControlView;
 @protocol iTermTabBarControlViewDelegate;
 @class iTermToolbeltView;
+@class iTermProjectSidebarView;
 @protocol iTermToolbeltViewDelegate;
 @protocol PSMTabBarControlDelegate;
 @protocol PSMPUAFontProvider;
@@ -25,6 +26,7 @@
 @protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate, iTermSwipeHandler>
 - (void)repositionWidgets;
 - (void)rootTerminalViewDidResizeContentArea;
+- (CGFloat)rootTerminalViewMinimumTerminalWidth;
 - (BOOL)haveTopBorder;
 - (BOOL)haveBottomBorder;
 - (BOOL)haveLeftBorder;
@@ -105,6 +107,12 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 // view isn't needed such as for fullscreen windows or windows without a
 // title bar (e.g., top-of-screen).
 @property(nonatomic, readonly) NSView<iTermSolidColorView> *divisionView;
+
+@property(nonatomic, readonly) iTermProjectSidebarView *projectSidebar;
+@property(nonatomic) BOOL shouldShowProjectSidebar;
+@property(nonatomic) CGFloat projectSidebarWidth;
+@property(nonatomic, readonly) CGFloat effectiveProjectSidebarWidth;
+- (CGFloat)effectiveProjectSidebarWidthForContentWidth:(CGFloat)width;
 
 // Toolbelt view. Goes on the right side of the terminal window, if visible.
 @property(nonatomic, readonly) iTermToolbeltView *toolbelt;

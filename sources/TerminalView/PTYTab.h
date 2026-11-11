@@ -53,6 +53,9 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
   PTYSplitViewDelegate,
   PSMTabBarControlRepresentedObjectIdentifierProtocol>
 
+// Stable local-project ownership; nil for an unassigned tab.
+@property(nonatomic, copy) NSString *projectIdentifier;
+
 @property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 
 // Parent controller. Always set. Equals one of realParent or fakeParent.

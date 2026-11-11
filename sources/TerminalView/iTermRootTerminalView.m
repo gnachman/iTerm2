@@ -131,6 +131,8 @@ typedef struct {
 @property(nonatomic, strong) iTermTabBarControlView *tabBarControl;
 @property(nonatomic, strong) SolidColorView *divisionView;
 @property(nonatomic, strong) iTermToolbeltView *toolbelt;
+@property(nonatomic, strong) iTermProjectSidebarView *projectSidebar;
+@property(nonatomic, strong) iTermDragHandleView *projectSidebarDragHandle;
 @property(nonatomic, strong) iTermDragHandleView *verticalTabBarDragHandle;
 // How far the stoplight hotbox and everything that moves with it is slid left.
 // A single property drives all the views so a slide always starts from where
@@ -321,6 +323,17 @@ typedef struct {
         [_tabView setDelegate:_tabBarControl];
         _tabBarControl.delegate = tabBarDelegate;
         _tabBarControl.hideForSingleTab = NO;
+
+        _projectSidebarWidth = 220;
+        self.projectSidebar = [[iTermProjectSidebarView alloc] initWithFrame:NSZeroRect];
+        self.projectSidebar.hidden = YES;
+        self.projectSidebar.autoresizingMask = iTermMaskWithoutFixedMarginsOnFlexibleAxes(NSViewHeightSizable);
+        [self addSubview:self.projectSidebar];
+        self.projectSidebarDragHandle = [[iTermDragHandleView alloc] initWithFrame:NSZeroRect];
+        self.projectSidebarDragHandle.delegate = self;
+        self.projectSidebarDragHandle.isVertical = NO;
+        self.projectSidebarDragHandle.hidden = YES;
+        [self addSubview:self.projectSidebarDragHandle];
 
         // Create the toolbelt with its current default size.
         _toolbeltWidth = [iTermPreferences floatForKey:kPreferenceKeyDefaultToolbeltWidth];
@@ -787,7 +800,7 @@ typedef struct {
     const CGFloat toolbeltWidth = ([self shouldShowToolbelt]
                                    ? floor([self maximumToolbeltWidthForViewWidth:NSWidth(self.frame)])
                                    : 0);
-    const CGFloat stripWidth = NSWidth(self.frame) - toolbeltWidth;
+    const CGFloat stripWidth = NSWidth(self.frame) - toolbeltWidth - self.effectiveProjectSidebarWidth;
     // -tabBarInsetsForCompactWindow reserves this after the name, so it is space
     // the tabs never get either. Ignoring it let a large setting crowd the tabs,
     // which is the one thing this allowance exists to prevent.
@@ -916,7 +929,7 @@ typedef struct {
     // left-align it and make it as wide as the available space.
     // This mirrors what NSWindow's title does.
     const CGFloat mostGenerousInset = MAX(MAX(insets.left, insets.right), iTermRootTerminalViewWindowNumberLabelMargin);
-    const CGFloat containerWidth = NSWidth(self.frame) - ([self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0);
+    const CGFloat containerWidth = NSWidth(self.frame) - self.effectiveProjectSidebarWidth - ([self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0);
     const NSSize fittingSize = textField.fittingSize;
     const CGFloat desiredWidth = fittingSize.width;
     CGFloat leftInset = mostGenerousInset;
@@ -945,7 +958,7 @@ typedef struct {
             y -= 1.5;
         }
     }
-    NSRect rect = NSMakeRect([self retinaRound:leftInset],
+    NSRect rect = NSMakeRect(self.effectiveProjectSidebarWidth + [self retinaRound:leftInset],
                              y,
                              ceil(MAX(0, containerWidth - leftInset - rightInset)),
                              ceil(fittingSize.height));
@@ -1464,7 +1477,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                                                       icon:icon
                                                  textColor:_windowTitleLabel.textColor
                                                       font:_windowTitleLabel.font
-                                                     width:NSWidth(self.frame)
+                                                     width:NSWidth(self.frame) - self.effectiveProjectSidebarWidth
                                              toolbeltWidth:[self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0.0
                                                     insets:[self.delegate tabBarInsets]
                                        tabBarControlOnLoan:_tabBarControlOnLoan
@@ -1659,6 +1672,20 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // window name is context for the tabs, not a peer of the tab titles.
     [self applyWindowNameBesideTabsAttributes];
     _windowTitleLabel.textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle];
+}
+
+- (CGFloat)effectiveProjectSidebarWidth {
+    return [self effectiveProjectSidebarWidthForContentWidth:NSWidth(self.bounds)];
+}
+
+- (CGFloat)effectiveProjectSidebarWidthForContentWidth:(CGFloat)width {
+    iTermLayoutInputs inputs = [self layoutInputsForWindow:self.window];
+    inputs.contentViewWidth = width;
+    return [iTermLayoutCalculator effectiveProjectSidebarWidthWithInputs:inputs];
+}
+
+- (void)setProjectSidebarWidth:(CGFloat)width {
+    _projectSidebarWidth = isfinite(width) ? MIN(360, MAX(180, width)) : 220;
 }
 
 #pragma mark - Toolbelt
@@ -1866,6 +1893,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // Toolbelt
     inputs.toolbeltWidth = floor(self.toolbeltWidth);
     inputs.shouldShowToolbelt = self.shouldShowToolbelt;
+
+    inputs.shouldShowProjectSidebar = self.shouldShowProjectSidebar;
+    inputs.projectSidebarWidth = self.projectSidebarWidth;
+    inputs.minimumTerminalWidth = [self.delegate rootTerminalViewMinimumTerminalWidth];
+    if ((_standardWindowButtonsView && !_standardWindowButtonsView.hidden) || [self.delegate enableStoplightHotbox]) {
+        inputs.projectSidebarTopInset = MAX(_tabBarControl.height, iTermStoplightHotboxHeight);
+    }
 
     // Status bar
     iTermStatusBarViewController *statusBarViewController = [_delegate rootTerminalViewSharedStatusBarViewController];
@@ -2260,6 +2294,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     } else {
         [self layoutSubviewsWithVisibleTabBarForWindow:thisWindow inlineToolbelt:showToolbeltInline];
     }
+    const iTermLayoutOutputs projectLayout = [iTermLayoutCalculator calculateLayoutWithInputs:[self layoutInputsForWindow:thisWindow]];
+    const NSRect projectFrame = projectLayout.projectSidebarFrame;
+    self.projectSidebar.hidden = NSIsEmptyRect(projectFrame);
+    self.projectSidebar.frame = projectFrame;
+    self.projectSidebarDragHandle.hidden = self.projectSidebar.hidden;
+    self.projectSidebarDragHandle.frame = self.projectSidebar.hidden ? NSZeroRect :
+        NSMakeRect(NSMaxX(projectFrame) - 3, NSMinY(projectFrame), 3, NSHeight(projectFrame));
     const CGFloat notchHeight = [self notchInset];
     _notchMask.hidden = (notchHeight == 0);
     _notchMask.frame = NSMakeRect(0, NSHeight(self.bounds) - notchHeight, NSWidth(self.bounds), notchHeight);
@@ -2346,7 +2387,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth {
     const CGFloat minimumWidth = [self minimumTabBarWidth];
-    const CGFloat maximumWidth = MAX(1, contentWidth - [iTermPreferences sideMargins] * 2 - 10);
+    const CGFloat maximumWidth = MAX(1, contentWidth - self.effectiveProjectSidebarWidth - [iTermPreferences sideMargins] * 2 - 10);
     return MAX(MIN(maximumWidth, preferredWidth), minimumWidth);
 }
 
@@ -2563,6 +2604,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 // For the left-side or right-side tab bar.
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
+    if (dragHandle == self.projectSidebarDragHandle) {
+        const CGFloat originalWidth = self.projectSidebarWidth;
+        self.projectSidebarWidth += delta;
+        [self layoutSubviews];
+        [self.delegate rootTerminalViewDidResizeContentArea];
+        return self.projectSidebarWidth - originalWidth;
+    }
     CGFloat originalValue = _leftTabBarPreferredWidth;
     const BOOL isRight = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_RightTab);
     const CGFloat signedDelta = isRight ? -delta : delta;

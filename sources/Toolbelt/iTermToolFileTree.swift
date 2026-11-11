@@ -77,6 +77,10 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         header.stringValue = String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree header when no project is selected")
     }
     required init?(coder: NSCoder) { it_fatalError("init(coder:) has not been implemented") }
+    static func isDynamic() -> Bool { false }
+    required convenience init!(frame: NSRect, url: URL!, identifier: String!) {
+        self.init(frame: frame)
+    }
     static var supportedProfileTypes: ProfileType { .terminal }
     func minimumHeight() -> CGFloat { 150 }
     override var isFlipped: Bool { true }
