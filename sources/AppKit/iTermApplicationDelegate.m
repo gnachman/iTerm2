@@ -2259,6 +2259,9 @@ static iTermKeyEventReplayer *gReplayer;
     if ([components.path isEqualToString:@"pop-channel"]) {
         [self popChannel:url];
     }
+    if ([components.path isEqualToString:@"unpin-hotkey-window"]) {
+        [self unpinHotkeyWindowFromURL:url];
+    }
     return NO;
 }
 
@@ -2291,6 +2294,39 @@ static iTermKeyEventReplayer *gReplayer;
     [[iTermChatWindowController instanceShowingErrors:YES] showChatWindow];
     [[iTermChatWindowController instanceShowingErrors:NO] selectChatWithID:chatID];
 
+}
+
+- (void)unpinHotkeyWindowFromURL:(NSURL *)url {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    NSString *guid = nil;
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+        if ([item.name isEqualToString:@"s"] && !guid) {
+            guid = item.value;
+        } else if ([item.name isEqualToString:@"t"]) {
+            token = item.value;
+        }
+    }
+    if (!guid) {
+        return;
+    }
+    if (![[NSWorkspace sharedWorkspace] it_checkToken:token]) {
+        DLog(@"Bad token for unpin-hotkey-window");
+        return;
+    }
+    PTYSession *session = [[iTermController sharedInstance] sessionWithGUID:guid];
+    if (!session) {
+        DLog(@"No session with guid %@", guid);
+        return;
+    }
+    PseudoTerminal *term = [PseudoTerminal castFrom:session.delegate.realParentWindow];
+    iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+    if (!profileHotkey) {
+        DLog(@"Session %@ is not in a hotkey window", guid);
+        return;
+    }
+    DLog(@"Unpin hotkey window for session %@", guid);
+    profileHotkey.autoHides = YES;
 }
 
 - (void)popChannel:(NSURL *)url {

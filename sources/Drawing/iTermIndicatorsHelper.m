@@ -415,6 +415,11 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         return [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"Indicator.HiddenFloatingPanes", nil, [NSBundle mainBundle], @"%ld floating panes are hidden.", @"Help text for the indicator shown when a tab's floating panes are hidden. %ld is the number of hidden floating panes."),
                 (long)self.hiddenFloatingPaneCount];
     }
+    if ([name isEqualToString:kiTermIndicatorPinned]) {
+        NSString *unpinURL = [NSString stringWithFormat:@"iterm2:unpin-hotkey-window?s=%@&t=%@", sessionID, [[NSWorkspace sharedWorkspace] it_newToken]];
+        return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Indicator.PinnedHotkeyWindow", nil, [NSBundle mainBundle], @"This Hotkey Window is pinned. [Unpin](%@)", @"Help text, interpreted as markdown, for the indicator shown in a pinned Hotkey Window. Unpin is a link that unpins the window. %@ is the link’s URL and must stay inside the parentheses."),
+                unpinURL];
+    }
     // NOTE: These messages are interpreted as markdown.
     NSDictionary<NSString *, NSString *> *messages = @{
         kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",
@@ -429,7 +434,6 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
         kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
         kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
-        kiTermIndicatorPinned: @"This Hotkey Window is pinned.",
         kiTermIndicatorAIChatLinked: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Unlink from AI Chat](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal AI Chat](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
         kiTermIndicatorAIChatStreaming: [NSString stringWithFormat:@"Commands run in this session are automatically sent to an AI chat, along with their output. [Stop sending](iterm2:disable-streaming-session-chat?s=%@&t=%@)",
                                          sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
