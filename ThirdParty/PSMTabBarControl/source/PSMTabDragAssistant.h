@@ -119,6 +119,38 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
                                inTabBar:(PSMTabBarControl *)control
     NS_SWIFT_NAME(groupContainingDrop(of:inTabBar:));
 
+// For a whole-group drag, the top-level group a drop at `target` lands inside
+// (the dragged group becomes its sub-group), or nil. Cells in `excluded` and
+// placeholders are transparent. Exposed for unit tests.
+- (NSString *)parentGroupForGroupDropAtTarget:(PSMTabBarCell *)target
+                                               inCells:(NSArray<PSMTabBarCell *> *)cells
+                                             excluding:(NSArray<PSMTabBarCell *> *)excluded
+    NS_SWIFT_NAME(parentGroupForGroupDrop(at:in:excluding:));
+
+// If the tab at `index` ends an expanded top-level group's run (counting its
+// sub-groups' tabs), that group's id; otherwise nil. A nestable group drag gets
+// a slot after it that drops at the end of the group, inside it.
+- (NSString *)topLevelTabGroupEndingRunAtIndex:(NSInteger)index
+                                       inCells:(NSArray<PSMTabBarCell *> *)cells
+    NS_SWIFT_NAME(topLevelTabGroupEndingRun(at:in:));
+
+// The slot to target when the mouse is over the open placeholder `slot`. A gap
+// holding more than one join slot is split into one zone per choice.
+- (PSMTabBarCell *)slotInGapAroundPlaceholder:(PSMTabBarCell *)slot
+                                      inCells:(NSArray<PSMTabBarCell *> *)cells
+                                      atMouse:(NSPoint)mouseLoc
+                                   horizontal:(BOOL)horizontal
+    NS_SWIFT_NAME(slotInGap(around:in:atMouse:horizontal:));
+
+// Where a whole-group drag may land given the proposed slot: interior slots of
+// groups it may not enter snap to that group's near edge. Exposed for unit tests.
+- (PSMTabBarCell *)groupDropTargetForProposedTarget:(PSMTabBarCell *)proposed
+                                            inCells:(NSArray<PSMTabBarCell *> *)cells
+                                            atMouse:(NSPoint)mouseLoc
+                                         horizontal:(BOOL)horizontal
+                                    draggedParentID:(NSString *)draggedParentID
+                                            canNest:(BOOL)canNest;
+
 @end
 
 @interface PSMTabBarControl (DragAccessors)

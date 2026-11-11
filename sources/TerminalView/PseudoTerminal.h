@@ -148,6 +148,10 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (void)apiSetTabGroupCollapsedWithCompletion:(void (^)(id, NSError *))completion
                                      group_id:(NSString *)groupID
                                     collapsed:(NSNumber *)collapsed;
+// An empty parent_group_id makes the group top-level.
+- (void)apiSetTabGroupParentWithCompletion:(void (^)(id, NSError *))completion
+                                  group_id:(NSString *)groupID
+                           parent_group_id:(NSString *)parentGroupID;
 
 // Put every tab in `tabs` into one brand-new tab group named `name`. A tab
 // that already belonged to a group is moved out of it into the new group.
@@ -155,6 +159,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // than two tabs. Used by workgroups to gather the initial tab plus every tab
 // spawned at entry into a single group.
 - (void)groupTabs:(NSArray<PTYTab *> *)tabs withName:(NSString *)name;
+// Moves one tab into a new top-level group (as New Group does after asking for
+// a name) and returns the group's id.
+- (NSString *)addTab:(PTYTab *)theTab toNewGroupWithName:(NSString *)name;
 
 // Snapshot / restore a tab's group membership (id/name/color/collapsed).
 // Used to revert the entry tab's grouping when a workgroup exits. A snapshot
@@ -166,17 +173,27 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // since capture). Lets callers test "did grouping touch this tab" without
 // depending on the snapshot's internal shape.
 - (BOOL)tabGroupSnapshot:(NSDictionary *)snapshot describesCurrentGroupOfTab:(PTYTab *)tab;
+// For a tab just restored from an arrangement (undo close): drops a group that
+// now lives in another window and a parent link that is no longer valid, then
+// adopts the group's current definition.
+- (void)validateRestoredTabGroupOfTab:(PTYTab *)tab;
 // Put `tab` in the group `groupID`. The definition is used only if no other tab in this window is
 // in that group yet; otherwise the tab adopts the existing members’ definition. Does nothing if
 // another window hosts the group. Used to restore the groups of tmux tabs on attach.
 // Normally a collapsed group expands if it ends up holding the active tab. While restoring many
 // tabs, the active tab is just whichever opened last, so pass deferExpansion=YES and call
 // -settleTabGroupsAfterDeferredExpansion once they have all been added.
+// A non-nil parentGroupID nests the group in that top-level group, unless the parent lives in
+// another window or is a sub-group itself, in which case the group is top-level.
 - (void)addTab:(PTYTab *)tab
 toTabGroupWithID:(NSString *)groupID
           name:(NSString *)name
          color:(NSColor *)color
      collapsed:(BOOL)collapsed
+ parentGroupID:(NSString *)parentGroupID
+    parentName:(NSString *)parentName
+   parentColor:(NSColor *)parentColor
+parentCollapsed:(BOOL)parentCollapsed
 deferringExpansion:(BOOL)deferExpansion;
 // Restores the invariant that the active tab is not in a collapsed group, preferring to move the
 // selection out of the group over expanding it.

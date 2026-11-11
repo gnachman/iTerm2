@@ -78,6 +78,9 @@ def check_hierarchy(window):
 
     parent_idx = [i for i, tab in enumerate(window.tabs) if in_parent(tab)]
     child_idx = [i for i, tab in enumerate(window.tabs) if in_child(tab)]
+    if not parent_idx or not child_idx:
+        problems.append("no tabs in the parent or the child: %d/%d" % (len(parent_idx), len(child_idx)))
+        return problems
     if parent_idx != list(range(parent_idx[0], parent_idx[-1] + 1)):
         problems.append("parent run is not contiguous: %s" % parent_idx)
     if child_idx != list(range(child_idx[0], child_idx[-1] + 1)):
@@ -128,7 +131,9 @@ async def main(connection):
         group = {g.name: g for g in window.tab_groups}[name]
         if group.collapsed != value:
             problems.append("%s.collapsed is %s, wanted %s" % (name, group.collapsed, value))
-        if window.current_tab.tab_group and window.current_tab.tab_group.collapsed:
+        current = window.current_tab
+        if ((current.tab_group and current.tab_group.collapsed) or
+                (current.tab_group_parent and current.tab_group_parent.collapsed)):
             problems.append("the active tab is in a collapsed group")
         problems += check_hierarchy(window)
     elif mode == "width":

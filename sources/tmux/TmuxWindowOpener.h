@@ -73,6 +73,8 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *perTabSettings;
 // tmux window ID -> the tab group a newly opened tab for it should join.
 @property (nonatomic, copy) NSDictionary<NSNumber *, iTermTmuxTabGroupMembership *> *tabGroups;
+// Sub-group ID -> its parent's definition.
+@property (nonatomic, copy) NSDictionary<NSString *, iTermTmuxTabGroupMembership *> *tabGroupParents;
 @property (nonatomic) BOOL shouldWorkAroundTabBug;
 
 + (TmuxWindowOpener *)windowOpener;

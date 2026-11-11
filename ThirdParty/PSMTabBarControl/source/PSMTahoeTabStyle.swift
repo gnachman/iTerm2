@@ -1069,7 +1069,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
 
-    @objc func tabGroupCollapsedChipCellWidth(forName name: String, memberCount count: Int) -> CGFloat {
+    // `nested` needs no extra room here: the pill grows past the chip by the
+    // run outset, which is 0 for a sub-group, and this width already assumes
+    // none.
+    @objc func tabGroupCollapsedChipCellWidth(forName name: String,
+                                              memberCount count: Int,
+                                              nested: Bool) -> CGFloat {
         let font = Self.groupNameFont
         let label = Self.collapsedChipLabel(forName: name, count: count)
         let textWidth = ceil((label as NSString).size(withAttributes: [.font: font]).width)

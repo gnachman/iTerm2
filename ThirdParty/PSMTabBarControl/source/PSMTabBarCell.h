@@ -90,6 +90,9 @@
 // the id of the group a tab dropped here should join (its "end of group" slot).
 // nil on every non-slot cell and on slots that don't join a group.
 @property(nonatomic, copy) NSString *joinsTabGroupIdentifier;
+// When joinsTabGroupIdentifier is a sub-group, its parent. The slot is inside
+// the parent's run too, so the parent's outline grows over it.
+@property(nonatomic, copy) NSString *joinsTabGroupParentIdentifier;
 // YES for a drag drop-slot placeholder that joins a COLLAPSED group (its
 // front-of-group or end-of-group slot). Such a group draws no member cells, so
 // the drag code uses this flag to recognize when the cursor is over a collapsed

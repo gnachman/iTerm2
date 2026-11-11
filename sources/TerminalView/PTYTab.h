@@ -220,6 +220,9 @@ typedef NS_ENUM(NSInteger, iTermHiddenFloatingPanesActivity) {
                   settingCustomLocale:(NSString *)lang;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                        profileMutator:(Profile *(^)(Profile *))profileMutator;
+// The tab arrangement without its tab group parent, so its group restores as a
+// top-level group.
++ (NSDictionary *)arrangementRemovingTabGroupParent:(NSDictionary *)arrangement;
 
 + (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
                                   inArrangement:(NSDictionary *)arrangement;

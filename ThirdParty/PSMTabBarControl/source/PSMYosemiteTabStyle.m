@@ -1355,6 +1355,26 @@ static const CGFloat kPSMSquaredGroupNameVPad = 6;   // vertical padding (vertic
 static const CGFloat kPSMSquaredGroupBArea = 6;      // colored area between the name and the first tab
 static const CGFloat kPSMSquaredGroupOutset = 1;     // outline sits this far outside the tabs
 static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse chevron on a collapsed chip
+static const CGFloat kPSMSquaredSubgroupInset = 3;   // how far a sub-group's box sits inside its parent's
+
+// A sub-group's box would otherwise share its parent's edges across the bar and
+// at the trailing end (both use the same outset), so the two outlines would
+// merge. Pull it in on those sides so it reads as nested, leaving a 2pt gap
+// inside the parent's outline. The leading edge is the sub-group's chip, which
+// the parent's outline never runs along.
+static NSRect PSMSquaredSubgroupBox(NSRect box, BOOL horizontal) {
+    const CGFloat inset = kPSMSquaredSubgroupInset;
+    if (horizontal) {
+        box.origin.y += inset;
+        box.size.height = MAX(0, NSHeight(box) - 2 * inset);
+        box.size.width = MAX(0, NSWidth(box) - inset);
+    } else {
+        box.origin.x += inset;
+        box.size.width = MAX(0, NSWidth(box) - 2 * inset);
+        box.size.height = MAX(0, NSHeight(box) - inset);
+    }
+    return box;
+}
 
 - (BOOL)usesExternalTabGroupDecoration {
     return YES;
@@ -1428,10 +1448,15 @@ static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse
     return [@(count) stringValue];
 }
 
-- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name memberCount:(NSInteger)count {
+- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name
+                                     memberCount:(NSInteger)count
+                                          nested:(BOOL)nested {
     NSString *label = [self collapsedLabelForName:name count:count];
     const CGFloat textWidth = ceil([label sizeWithAttributes:@{ NSFontAttributeName: [self squaredGroupNameFont] }].width);
-    return textWidth + kPSMSquaredGroupNamePad * 2 + kPSMSquaredCollapsedChevron;
+    // A sub-group's box gives up its trailing inset (PSMSquaredSubgroupBox), so
+    // reserve it or the label is truncated.
+    const CGFloat inset = nested ? kPSMSquaredSubgroupInset : 0;
+    return textWidth + kPSMSquaredGroupNamePad * 2 + kPSMSquaredCollapsedChevron + inset;
 }
 
 - (void)drawSquaredCollapsedTabGroupChip:(PSMTabBarCell *)chip
@@ -1458,6 +1483,14 @@ static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse
     } else {
         box.size.width = MAX(0, NSWidth(box) - 1);
     }
+    // Center the label and chevron on the box as it is before a sub-group's
+    // inset. On a vertical bar the inset comes off the bottom only, which would
+    // lift them half the inset above the expanded sub-group's name band (whose
+    // top edge it doesn't move), so the name would jump on collapse.
+    const CGFloat midY = NSMidY(box);
+    if (chip.tabGroupParentIdentifier.length > 0) {
+        box = PSMSquaredSubgroupBox(box, bar.orientation == PSMTabBarHorizontalOrientation);
+    }
     if (NSWidth(box) <= 0 || NSHeight(box) <= 0) {
         return;
     }
@@ -1478,14 +1511,14 @@ static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse
     const CGFloat pad = kPSMSquaredGroupNamePad;
     const CGFloat chevronW = kPSMSquaredCollapsedChevron;
     NSRect textRect = NSMakeRect(NSMinX(box) + pad,
-                                 NSMidY(box) - textHeight / 2.0,
+                                 midY - textHeight / 2.0,
                                  MAX(0, NSWidth(box) - pad * 2 - chevronW),
                                  textHeight);
     [label drawInRect:textRect withAttributes:attrs];
 
     // Downward chevron: the collapse affordance.
     const CGFloat cx = NSMaxX(box) - pad - chevronW / 2.0;
-    const CGFloat cy = NSMidY(box);
+    const CGFloat cy = midY;
     const CGFloat half = 3;
     NSBezierPath *chevron = [NSBezierPath bezierPath];
     [chevron moveToPoint:NSMakePoint(cx - half, cy + half / 2.0)];
@@ -1558,6 +1591,9 @@ static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse
         box.size.height = MAX(0, NSHeight(box) - 1);
     } else {
         box.size.width = MAX(0, NSWidth(box) - 1);
+    }
+    if (chip.tabGroupParentIdentifier.length > 0) {
+        box = PSMSquaredSubgroupBox(box, horizontal);
     }
 
     // Solid group-color block: the chip name area up to the first tab, sized to

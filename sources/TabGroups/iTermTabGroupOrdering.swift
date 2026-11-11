@@ -280,14 +280,18 @@ class iTermTabGroupOrdering: NSObject {
     // canonical order snap a split sub-group back together, undoing the move.
     // `groupIDs[i]` is tab i's own group, `parentIDs[i]` that group's parent (nil
     // for a top-level group). Rules for the selected tab and the neighbor it would
-    // cross, when both are in the same top-level group:
+    // cross:
     //   - both in the same sub-group: swap.
-    //   - the tab is in a sub-group and the neighbor is not: leave the sub-group
-    //     for its parent, in place (membership -> the parent).
-    //   - the tab is a direct member and the neighbor is in a sub-group: jump the
-    //     whole sub-group run, so a sub-group is never split.
-    // Returns nil when these rules don't apply (neighbor outside the top-level
-    // group, or both direct members); the caller then uses singleTabMove.
+    //   - the tab is in a sub-group and the neighbor is not (including a
+    //     neighbor outside the top-level group, or none at the end of the bar):
+    //     leave the sub-group for its parent, in place (membership -> the
+    //     parent). A further step then leaves the parent as a direct member.
+    //   - the tab is a direct member and the neighbor is in a sub-group of the
+    //     same top-level group: jump the whole sub-group run, so a sub-group is
+    //     never split.
+    // Returns nil when these rules don't apply (a direct member whose neighbor
+    // is outside its group, or both direct members); the caller then uses
+    // singleTabMove.
     static func nestedSingleTabMove(groupIDs: [String?],
                                     parentIDs: [String?],
                                     selectedIndex s: Int,
@@ -298,9 +302,7 @@ class iTermTabGroupOrdering: NSObject {
         }
         let dir = offset > 0 ? 1 : -1
         let neighbor = s + dir
-        guard neighbor >= 0, neighbor < n else {
-            return nil
-        }
+        let identity = Array(0..<n)
         func topLevel(_ i: Int) -> String? {
             guard let gid = groupIDs[i] else {
                 return nil
@@ -310,10 +312,16 @@ class iTermTabGroupOrdering: NSObject {
         func subgroup(_ i: Int) -> String? {
             return parentIDs[i] != nil ? groupIDs[i] : nil
         }
-        guard let top = topLevel(s), topLevel(neighbor) == top else {
+        guard let top = topLevel(s) else {
             return nil
         }
-        let identity = Array(0..<n)
+        guard neighbor >= 0, neighbor < n, topLevel(neighbor) == top else {
+            if subgroup(s) != nil {
+                // At the sub-group's edge, which is also the parent's.
+                return SingleTabMove(order: identity, newGroupID: top, changesMembership: true)
+            }
+            return nil
+        }
         if let mine = subgroup(s) {
             if subgroup(neighbor) == mine {
                 var order = identity

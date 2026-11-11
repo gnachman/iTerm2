@@ -17,6 +17,7 @@
     [self registerSetName];
     [self registerSetColor];
     [self registerSetCollapsed];
+    [self registerSetParent];
 }
 
 // The window that currently hosts the group. The same-window invariant means at
@@ -105,6 +106,31 @@
              return;
          }
          [term apiSetTabGroupCollapsedWithCompletion:completion group_id:groupID collapsed:collapsed];
+     }];
+    [[iTermBuiltInFunctions sharedInstance] registerFunction:func namespace:@"iterm2"];
+}
+
+// An empty parent_group_id makes the group top-level. The parent must be in the
+// group's window.
++ (void)registerSetParent {
+    iTermBuiltInFunction *func =
+    [[iTermBuiltInFunction alloc] initWithName:@"set_tab_group_parent"
+                                     arguments:@{ @"group_id": [NSString class],
+                                                  @"parent_group_id": [NSString class] }
+                             optionalArguments:[NSSet set]
+                                 defaultValues:@{}
+                                       context:iTermVariablesSuggestionContextApp
+                        sideEffectsPlaceholder:@"[set_tab_group_parent]"
+                                         block:
+     ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock _Nonnull completion) {
+         NSString *groupID = parameters[@"group_id"];
+         NSString *parentGroupID = parameters[@"parent_group_id"];
+         PseudoTerminal *term = [self terminalForTabGroupID:groupID];
+         if (!term) {
+             completion(nil, [self noSuchGroupError]);
+             return;
+         }
+         [term apiSetTabGroupParentWithCompletion:completion group_id:groupID parent_group_id:parentGroupID];
      }];
     [[iTermBuiltInFunctions sharedInstance] registerFunction:func namespace:@"iterm2"];
 }

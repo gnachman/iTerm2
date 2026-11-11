@@ -85,7 +85,17 @@ static os_log_t PSMTabDragLog(void) {
     // The dragged group's parent when it is a sub-group (it may then be dropped
     // inside its parent's run), else nil.
     NSString *_draggedGroupParentID;
+    // Whether the dragged group may be dropped inside another group to become
+    // its sub-group (it has no sub-groups of its own).
+    BOOL _draggedGroupCanNest;
     NSArray<PSMTabBarCell *> *_draggedGroupMembers;
+
+    // Where the mouse was when -slotInGapAroundPlaceholder:... last chose a slot
+    // in a gap with several join slots. The choice holds until the mouse moves,
+    // because the slots open at slightly different places and a relayout alone
+    // would otherwise flip it back and forth under a still mouse.
+    NSPoint _gapChoiceMouse;
+    BOOL _haveGapChoiceMouse;
 
     // While the cursor is over a COLLAPSED group's chip during a single-tab drag,
     // the id of that group. It drives the chip highlight and the join-on-drop
@@ -510,6 +520,25 @@ static os_log_t PSMTabDragLog(void) {
 // unit is the group's block (chip + members): one wide placeholder (group width)
 // stands in for the run, the drag image is a snapshot of the run, and the drop is
 // handled by the group branches in -reallyPerformDragOperation:/-draggedImageEndedAt:.
+// The frame of a dragged group's whole run: its chip, its tabs, and its
+// sub-groups' chips. A collapsed sub-group's chip can end the run, past every
+// visible tab.
+- (NSRect)frameOfRunWithChip:(PSMTabBarCell *)chip
+                     members:(NSArray<PSMTabBarCell *> *)members
+                    inTabBar:(PSMTabBarControl *)control {
+    NSRect runFrame = [chip frame];
+    for (PSMTabBarCell *c in members) {
+        runFrame = NSUnionRect(runFrame, [c frame]);
+    }
+    NSString *gid = chip.tabGroupIdentifier;
+    for (PSMTabBarCell *c in [control cells]) {
+        if (c != chip && c.isTabGroupChip && [c.tabGroupParentIdentifier isEqualToString:gid]) {
+            runFrame = NSUnionRect(runFrame, [c frame]);
+        }
+    }
+    return runFrame;
+}
+
 - (void)startDraggingGroupWithChip:(PSMTabBarCell *)chip
                            members:(NSArray<PSMTabBarCell *> *)members
                         fromTabBar:(PSMTabBarControl *)control
@@ -529,6 +558,15 @@ static os_log_t PSMTabDragLog(void) {
     _draggedGroupParentID = [[chip tabGroupParentIdentifier] copy];
     [_draggedGroupMembers release];
     _draggedGroupMembers = [members copy];
+    // Members of the group's own sub-groups carry their sub-group's id. A group
+    // with sub-groups can't itself be nested (one level deep).
+    _draggedGroupCanNest = YES;
+    for (PSMTabBarCell *member in members) {
+        if (![member.tabGroupIdentifier isEqualToString:_draggedGroupID]) {
+            _draggedGroupCanNest = NO;
+            break;
+        }
+    }
 
     // draggedCellIndex = first member's position among non-chip cells.
     NSArray *startCells = [control cells];
@@ -539,10 +577,7 @@ static os_log_t PSMTabDragLog(void) {
     // The dragged unit is the whole run: chip + members. Its frame drives the
     // placeholder width (via the sine curve) so every drop slot opens to group
     // width, and it is the drag image.
-    NSRect runFrame = [chip frame];
-    for (PSMTabBarCell *c in members) {
-        runFrame = NSUnionRect(runFrame, [c frame]);
-    }
+    NSRect runFrame = [self frameOfRunWithChip:chip members:members inTabBar:control];
     [self addSineCurveWidthsWithOrientation:[control orientation] size:runFrame.size];
 
     [[control overflowPopUpButton] setHidden:YES];
@@ -571,7 +606,11 @@ static os_log_t PSMTabDragLog(void) {
     capture.size.height += 1;
     capture = NSIntersectionRect(capture, [control bounds]);
     NSBitmapImageRep *rep = [control bitmapImageRepForCachingDisplayInRect:capture];
+    // Only the dragged group's decoration: a sub-group's image must not carry
+    // its parent's outline.
+    control.onlyTabGroupRunDecorationIdentifier = _draggedGroupID;
     [control cacheDisplayInRect:capture toBitmapImageRep:rep];
+    control.onlyTabGroupRunDecorationIdentifier = nil;
     NSImage *dragImage = [[[NSImage alloc] initWithSize:capture.size] autorelease];
     [dragImage addRepresentation:rep];
 
@@ -899,16 +938,25 @@ static os_log_t PSMTabDragLog(void) {
          (long)(destination ? (NSInteger)[[destination cells] indexOfObject:[self targetCell]] : -1),
          anchor ? [anchor label] : @"(end)");
     NSString *gid = [[_draggedGroupID retain] autorelease];
+    // Decide nesting while the chips are still in place.
+    NSString *parentID = nil;
+    if (destination && _draggedGroupCanNest) {
+        parentID = [self parentGroupForGroupDropAtTarget:[self targetCell]
+                                                 inCells:[destination cells]
+                                               excluding:_draggedGroupMembers];
+    }
+    RLog(@"tabGroup: groupDrop parent=%@", parentID ?: @"(none)");
     [self restoreDraggedGroupToSource];
 
     id delegate = [[self sourceTabBar] delegate];
     if (items.count > 0 && destination &&
-        [delegate respondsToSelector:@selector(tabView:dropGroupWithID:members:inTabBar:beforeTabViewItem:)]) {
+        [delegate respondsToSelector:@selector(tabView:dropGroupWithID:members:inTabBar:beforeTabViewItem:parentGroupID:)]) {
         [delegate tabView:[[self sourceTabBar] tabView]
           dropGroupWithID:gid
                   members:items
                  inTabBar:destination
-        beforeTabViewItem:anchor];
+        beforeTabViewItem:anchor
+            parentGroupID:parentID];
     }
     [self finishDrag];
 }
@@ -1430,6 +1478,8 @@ static os_log_t PSMTabDragLog(void) {
     _draggedGroupParentID = nil;
     [_draggedGroupMembers release];
     _draggedGroupMembers = nil;
+    _draggedGroupCanNest = NO;
+    _haveGapChoiceMouse = NO;
     [self resetCollapsedDragTargetingState];
 #if PSM_DEBUG_DRAG_PERFORMANCE
     NSLog(@"[PSMTabDrag] Stopping animation timer. Final FPS stats: %d frames recorded", (int)_timerFireTimes.count);
@@ -1955,17 +2005,6 @@ static os_log_t PSMTabDragLog(void) {
         removeFlag = NO;
         // -cellForPoint: skips chips, so a chip hover is handled explicitly below.
         const BOOL horizontalAxis = ([control orientation] == PSMTabBarHorizontalOrientation);
-        // Is a collapsed group present in this bar? When one is, the drop slots beside
-        // it must stay closed except when the drop settles (see the gap-open latch
-        // below), and this flag gates tracking the last-recompute mouse position that
-        // that latch uses.
-        BOOL hasCollapsedJoinSlot = NO;
-        for (PSMTabBarCell *c in cells) {
-            if (c.isCollapsedGroupJoinSlot) {
-                hasCollapsedJoinSlot = YES;
-                break;
-            }
-        }
         // Which collapsed chip is under the cursor NOW. Hit-test against the pill's
         // SETTLED position (all drop slots closed), NOT its live frame, so a gap
         // opening beside a pill can't slide it out from under the cursor and feed
@@ -2000,7 +2039,11 @@ static os_log_t PSMTabDragLog(void) {
             // would drop to the positional fallback and flip the target as the
             // between gap opens). The seam lies past the pill's drawn width, so it
             // reads as this pill's far third -> "between", matching the boundary.
-            const NSInteger rightPill = [self collapsedGroupChipAtIndex:idx adjacentPillChipIndexInCells:cells direction:1];
+            // Only a pill gets the extension: an expanded group's chip would
+            // swallow its whole run, up to the next pill.
+            const NSInteger rightPill = ([self chipLeadsCollapsedRunInCells:cells atIndex:idx]
+                                         ? [self collapsedGroupChipAtIndex:idx adjacentPillChipIndexInCells:cells direction:1]
+                                         : NSNotFound);
             if (rightPill != NSNotFound && rightPill < settledCellCount) {
                 hi = MAX(hi, PSM_SETTLED_ORIGIN(rightPill));
             }
@@ -2076,9 +2119,10 @@ static os_log_t PSMTabDragLog(void) {
         // mouseSteady always means "the mouse barely moved since LAST tick" = paused.
         // Updating only on recompute left a held tick comparing against a two-tick-old
         // position, mis-reporting steadiness if the mouse moved during the hold.
-        if (hasCollapsedJoinSlot) {
-            _collapsedDragLastTargetMouseLoc = mouseLoc;
-        }
+        // Track it whether or not this bar has collapsed-group join slots: a group
+        // drag has none, yet the slots beside a collapsed group still open only
+        // once the mouse pauses.
+        _collapsedDragLastTargetMouseLoc = mouseLoc;
         // HOLD the current target only while a pill change is pending (debounce=2:
         // don't act on an unconfirmed one-tick reading -- this absorbs the one-frame
         // slot-before-group jitter). Otherwise recompute every tick: the settled
@@ -2138,18 +2182,27 @@ static os_log_t PSMTabDragLog(void) {
                 // else A's right third and B's left third target different slots and
                 // fight (the layout oscillates as the cursor flips between them).
                 NSInteger leftChipForBetween = NSNotFound;   // chip whose after-run slot is the gap
+                // A collapsed sub-group that ends its parent's run: its right
+                // third drops the tab into the parent as its last tab. Nothing
+                // else reaches that slot, because the sub-group's tabs are hidden
+                // and the gap after it holds only one join slot, so it isn't split.
+                PSMTabBarCell *parentEndSlot = nil;
                 if (along < oneThird) {
                     const NSInteger leftPill = [self collapsedGroupChipAtIndex:ci adjacentPillChipIndexInCells:cells direction:-1];
                     if (leftPill != NSNotFound) {
                         leftChipForBetween = leftPill;   // gap = slot after the LEFT group's run
                     }
                 } else if (along >= twoThirds) {
-                    if ([self collapsedGroupChipAtIndex:ci adjacentPillChipIndexInCells:cells direction:1] != NSNotFound) {
+                    parentEndSlot = [self parentEndSlotAfterCollapsedSubgroupAtChipIndex:ci inCells:cells];
+                    if (!parentEndSlot &&
+                        [self collapsedGroupChipAtIndex:ci adjacentPillChipIndexInCells:cells direction:1] != NSNotFound) {
                         leftChipForBetween = ci;         // gap = slot after THIS (left) group's run
                     }
                 }
-                const BOOL doJoin = (leftChipForBetween == NSNotFound);
-                if (doJoin) {
+                const BOOL doJoin = (leftChipForBetween == NSNotFound && !parentEndSlot);
+                if (parentEndSlot) {
+                    proposedTarget = parentEndSlot;
+                } else if (doJoin) {
                     // Highlight this pill; NO slot opens on or beside it.
                     [_collapsedGroupJoinTargetID release];
                     _collapsedGroupJoinTargetID = [chipUnderMouse.tabGroupIdentifier copy];
@@ -2208,7 +2261,10 @@ static os_log_t PSMTabDragLog(void) {
                 const NSInteger overIndex = [cells indexOfObject:overCell];
                 if ([overCell isPlaceholder]) {
                     // mouse among cells - placeholder
-                    proposedTarget = overCell;
+                    proposedTarget = [self slotInGapAroundPlaceholder:overCell
+                                                              inCells:cells
+                                                              atMouse:mouseLoc
+                                                           horizontal:([control orientation] == PSMTabBarHorizontalOrientation)];
                 } else if ([overCell isTabGroupChip]) {
                     // Over the group chip: aim for the drop slot just before the
                     // group. Chips are inert, never a drop target themselves.
@@ -2318,13 +2374,16 @@ static os_log_t PSMTabDragLog(void) {
                                                 direction:-1];
         }
 
-        // A whole group can't be dropped inside another group, so never offer a
-        // slot in another group's interior; snap it to that group's near edge.
+        // A whole group can be dropped inside an expanded top-level group to
+        // become its sub-group, if it has no sub-groups of its own. Any other
+        // group's interior is off limits; snap the slot to that group's near edge.
         if (_draggedGroupID.length > 0 && proposedTarget) {
-            proposedTarget = [self groupDropTargetAvoidingOtherGroups:proposedTarget
-                                                              inCells:cells
-                                                              atMouse:mouseLoc
-                                                           horizontal:([control orientation] == PSMTabBarHorizontalOrientation)];
+            proposedTarget = [self groupDropTargetForProposedTarget:proposedTarget
+                                                            inCells:cells
+                                                            atMouse:mouseLoc
+                                                         horizontal:([control orientation] == PSMTabBarHorizontalOrientation)
+                                                    draggedParentID:_draggedGroupParentID
+                                                             canNest:_draggedGroupCanNest];
         }
 
         if (proposedTarget != [self targetCell]) {
@@ -2690,13 +2749,19 @@ static os_log_t PSMTabDragLog(void) {
             }
             frame.size.width = [control widthOfTabGroupChipCellForIdentifier:chip.tabGroupIdentifier
                                                                    collapsed:collapsedRun
-                                                                 memberCount:memberCount];
+                                                                 memberCount:memberCount
+                                                                      nested:(chip.tabGroupParentIdentifier.length > 0)];
         } else {
             if (!NSIsEmptyRect(reference)) {
                 frame.origin.x = reference.origin.x;
                 frame.size.width = reference.size.width;
             }
             frame.size.height = [control heightOfTabGroupChipCell:chip];
+        }
+        if (chip.isCollapsedHidden) {
+            // A sub-group's chip inside a collapsed parent takes no room, as in
+            // the bar's own layout.
+            frame.size = NSZeroSize;
         }
         [chip setFrame:frame];
     }
@@ -2713,10 +2778,25 @@ static os_log_t PSMTabDragLog(void) {
         PSMTabBarCell *c = cells[i];
         [withSlots addObject:c];
         // The front-of-group and end-of-group slots are "join this group"
-        // affordances that only make sense for a single-tab drag. A whole-group
-        // drag is never allowed to land inside another group, so add neither.
+        // affordances. A whole-group drag gets them only for expanded top-level
+        // groups, and only when the dragged group can be nested.
         const BOOL draggingGroup = (_draggedGroupID.length > 0);
         if ([c isTabGroupChip]) {
+            // A group that can be nested may drop at the front of an expanded
+            // top-level group, which is the only interior slot of a one-tab group.
+            if (draggingGroup && _draggedGroupCanNest && c.tabGroupParentIdentifier.length == 0 &&
+                [self tabGroupChipAtIndex:i hasExpandedMemberInCells:cells]) {
+                NSRect slotFrame = [c frame];
+                for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+                    if (![cells[j] isTabGroupChip]) {
+                        slotFrame = [cells[j] frame];
+                        break;
+                    }
+                }
+                [withSlots addObject:[[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
+                                                                             expanded:NO
+                                                                        inControlView:control] autorelease]];
+            }
             if (!draggingGroup) {
                 // Front-of-group slot, sized to the first member.
                 NSRect slotFrame = [c frame];
@@ -2773,6 +2853,19 @@ static os_log_t PSMTabDragLog(void) {
             continue;
         }
         if (draggingGroup) {
+            // A group that can be nested may also drop at the end of an
+            // expanded top-level group: after the last cell of its run, which
+            // may be a sub-group's tab.
+            if (_draggedGroupCanNest && ![c isPlaceholder]) {
+                NSString *topGid = [self topLevelTabGroupEndingRunAtIndex:i inCells:cells];
+                if (topGid && ![self gapAfterIndex:i inCells:cells holdsOwnSlotOfTabGroup:topGid]) {
+                    PSMTabBarCell *endSlot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[c frame]
+                                                                                    expanded:NO
+                                                                               inControlView:control] autorelease];
+                    endSlot.joinsTabGroupIdentifier = topGid;
+                    [withSlots addObject:endSlot];
+                }
+            }
             continue;
         }
         // Only real member tabs end a run. The dragged cell's own drop slot is
@@ -2813,11 +2906,163 @@ static os_log_t PSMTabDragLog(void) {
             // highlight (the join zone would extend past the visible pill).
             if (![c isCollapsedHidden]) {
                 endSlot.joinsTabGroupIdentifier = gid;
+                endSlot.joinsTabGroupParentIdentifier = c.tabGroupParentIdentifier;
             }
             [withSlots addObject:endSlot];
         }
+        // When a sub-group ends its parent's run, the parent gets an end slot
+        // too, just past the sub-group's, so a tab can join the parent as its
+        // last member. Not when the dragged tab's own slot, which already
+        // keeps it in the parent, sits in this gap.
+        NSString *parentGid = c.tabGroupParentIdentifier;
+        if (parentGid.length > 0 &&
+            [[self topLevelTabGroupEndingRunAtIndex:i inCells:cells] isEqualToString:parentGid] &&
+            ![self gapAfterIndex:i inCells:cells holdsOwnSlotOfTabGroup:parentGid]) {
+            PSMTabBarCell *parentEndSlot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[c frame]
+                                                                                  expanded:NO
+                                                                             inControlView:control] autorelease];
+            parentEndSlot.joinsTabGroupIdentifier = parentGid;
+            [withSlots addObject:parentEndSlot];
+        }
+    }
+    // Slots sized from a collapsed group's hidden tabs have no cross-axis
+    // extent, so they would open invisibly and the mouse could never hit them.
+    // The animation sets their size along the axis.
+    const NSRect slotReference = NSIsEmptyRect(reference) ? [control bounds] : reference;
+    for (PSMTabBarCell *slot in withSlots) {
+        if (!slot.isPlaceholder) {
+            continue;
+        }
+        NSRect frame = slot.frame;
+        if (horizontal && NSHeight(frame) <= 0) {
+            frame.origin.y = slotReference.origin.y;
+            frame.size.height = slotReference.size.height;
+        } else if (!horizontal && NSWidth(frame) <= 0) {
+            frame.origin.x = slotReference.origin.x;
+            frame.size.width = slotReference.size.width;
+        }
+        slot.frame = frame;
     }
     [cells setArray:withSlots];
+}
+
+// If the tab at `index` is the last cell of an expanded top-level group's run
+// (its own group's, or its parent's when it's in a sub-group), that group's id;
+// otherwise nil. Placeholders are transparent.
+- (NSString *)topLevelTabGroupEndingRunAtIndex:(NSInteger)index
+                                       inCells:(NSArray<PSMTabBarCell *> *)cells {
+    PSMTabBarCell *c = cells[index];
+    if ([c isTabGroupChip] || [c isPlaceholder]) {
+        return nil;
+    }
+    NSString *topGid = c.tabGroupParentIdentifier.length > 0 ? c.tabGroupParentIdentifier : c.tabGroupIdentifier;
+    if (topGid.length == 0 || [c isCollapsedByTabGroup:topGid]) {
+        return nil;
+    }
+    for (NSInteger j = index + 1; j < (NSInteger)cells.count; j++) {
+        if ([cells[j] isPlaceholder]) {
+            continue;
+        }
+        if ([cells[j] continuesRunOfTabGroup:topGid]) {
+            return nil;
+        }
+        break;
+    }
+    return topGid;
+}
+
+// Whether the placeholders right after `index` include a dragged tab's own slot
+// in `gid` (a placeholder carrying that group id).
+- (BOOL)gapAfterIndex:(NSInteger)index
+              inCells:(NSArray<PSMTabBarCell *> *)cells
+holdsOwnSlotOfTabGroup:(NSString *)gid {
+    for (NSInteger j = index + 1; j < (NSInteger)cells.count; j++) {
+        PSMTabBarCell *c = cells[j];
+        if (![c isPlaceholder]) {
+            return NO;
+        }
+        if ([c.tabGroupIdentifier isEqualToString:gid]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// When the mouse is over an open slot in a gap holding more than one join
+// slot (the end of a sub-group that also ends its parent), split the gap into
+// equal zones, one per choice in order: each join slot (or dragged tab's own
+// slot), then the slot after the group. Otherwise returns `slot`. The slots
+// open at slightly different places (a sub-group's is inside its outline's
+// padding), so the zones shift as they trade width; the choice therefore
+// holds until the mouse moves.
+- (PSMTabBarCell *)slotInGapAroundPlaceholder:(PSMTabBarCell *)slot
+                                      inCells:(NSArray<PSMTabBarCell *> *)cells
+                                      atMouse:(NSPoint)mouseLoc
+                                   horizontal:(BOOL)horizontal {
+    const NSInteger idx = [cells indexOfObject:slot];
+    if (idx == NSNotFound || ![slot isPlaceholder]) {
+        return slot;
+    }
+    NSInteger lo = idx;
+    while (lo > 0 && [cells[lo - 1] isPlaceholder]) {
+        lo--;
+    }
+    NSInteger hi = idx;
+    while (hi + 1 < (NSInteger)cells.count && [cells[hi + 1] isPlaceholder]) {
+        hi++;
+    }
+    NSMutableArray<PSMTabBarCell *> *choices = [NSMutableArray array];
+    NSRect gap = cells[lo].frame;
+    for (NSInteger k = lo; k <= hi; k++) {
+        PSMTabBarCell *c = cells[k];
+        gap = NSUnionRect(gap, c.frame);
+        if (!c.isCollapsedGroupJoinSlot &&
+            (c.joinsTabGroupIdentifier.length > 0 || c.tabGroupIdentifier.length > 0)) {
+            [choices addObject:c];
+        }
+    }
+    if (choices.count < 2) {
+        return slot;
+    }
+    if (choices.lastObject != cells[hi]) {
+        [choices addObject:cells[hi]];
+    }
+    PSMTabBarCell *current = [self targetCell];
+    const CGFloat kStillMouseSlop = 2;
+    if (current && [choices containsObject:current] && _haveGapChoiceMouse &&
+        fabs(mouseLoc.x - _gapChoiceMouse.x) <= kStillMouseSlop &&
+        fabs(mouseLoc.y - _gapChoiceMouse.y) <= kStillMouseSlop) {
+        return current;
+    }
+    _gapChoiceMouse = mouseLoc;
+    _haveGapChoiceMouse = YES;
+    const CGFloat start = horizontal ? NSMinX(gap) : NSMinY(gap);
+    const CGFloat length = horizontal ? NSWidth(gap) : NSHeight(gap);
+    if (length <= 0) {
+        return slot;
+    }
+    const CGFloat along = (horizontal ? mouseLoc.x : mouseLoc.y) - start;
+    const NSInteger zone = (NSInteger)floor(along / (length / choices.count));
+    return choices[MAX(0, MIN((NSInteger)choices.count - 1, zone))];
+}
+
+// Whether the group whose chip is at `chipIndex` shows any member in `cells`
+// (so it isn't collapsed, and its tabs aren't all being dragged).
+- (BOOL)tabGroupChipAtIndex:(NSInteger)chipIndex hasExpandedMemberInCells:(NSArray<PSMTabBarCell *> *)cells {
+    NSString *gid = cells[chipIndex].tabGroupIdentifier;
+    for (NSInteger j = chipIndex + 1; j < (NSInteger)cells.count; j++) {
+        PSMTabBarCell *c = cells[j];
+        if ([c isPlaceholder]) {
+            continue;
+        }
+        if (![c continuesRunOfTabGroup:gid]) {
+            return NO;
+        }
+        if (![c isTabGroupChip] && ![c isCollapsedByTabGroup:gid]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 // With chips still present in `control`, return the group id whose bracket the
@@ -2916,8 +3161,15 @@ static os_log_t PSMTabDragLog(void) {
     // its parent (landing just before a sub-group's chip is inside the parent but
     // not the sub-group); a top-level chip, nothing. The cell before contributes
     // its full path, a chip included (landing just after a chip is inside it).
+    return [[self groupPathEnclosingDropBetween:beforeReal and:afterReal] lastObject];
+}
+
+// The groups, outermost first, that a drop between `beforeReal` and `afterReal`
+// lands inside (see -groupContainingDropOfCell:inTabBar:).
+- (NSArray<NSString *> *)groupPathEnclosingDropBetween:(PSMTabBarCell *)beforeReal
+                                                   and:(PSMTabBarCell *)afterReal {
     if (!afterReal || !beforeReal) {
-        return nil;
+        return @[];
     }
     NSArray<NSString *> *afterPath = [afterReal tabGroupPath];
     if (afterReal.isTabGroupChip && afterPath.count > 0) {
@@ -2925,14 +3177,48 @@ static os_log_t PSMTabDragLog(void) {
         afterPath = [afterPath subarrayWithRange:NSMakeRange(0, afterPath.count - 1)];
     }
     NSArray<NSString *> *beforePath = [beforeReal tabGroupPath];
-    NSString *joined = nil;
-    for (NSUInteger level = 0; level < MIN(afterPath.count, beforePath.count); level++) {
-        if (![afterPath[level] isEqualToString:beforePath[level]]) {
-            break;
-        }
-        joined = afterPath[level];
+    NSUInteger shared = 0;
+    while (shared < MIN(afterPath.count, beforePath.count) &&
+           [afterPath[shared] isEqualToString:beforePath[shared]]) {
+        shared++;
     }
-    return joined;
+    return [afterPath subarrayWithRange:NSMakeRange(0, shared)];
+}
+
+// For a whole-group drag, the top-level group a drop at `target` lands inside,
+// which the dragged group becomes a sub-group of, or nil if it lands outside
+// every group. Cells in `excluded` (the dragged group's own) and placeholders
+// are transparent.
+- (NSString *)parentGroupForGroupDropAtTarget:(PSMTabBarCell *)target
+                                      inCells:(NSArray<PSMTabBarCell *> *)cells
+                                    excluding:(NSArray<PSMTabBarCell *> *)excluded {
+    const NSInteger idx = target ? [cells indexOfObject:target] : NSNotFound;
+    if (idx == NSNotFound) {
+        return nil;
+    }
+    if (target.joinsTabGroupIdentifier.length > 0) {
+        // The slot at the end of a group, inside it.
+        return target.joinsTabGroupIdentifier;
+    }
+    if (target.tabGroupIdentifier.length > 0) {
+        // A sub-group's own slot, which carries its parent's id. It may be the
+        // parent's only content, leaving no neighbor inside the parent.
+        return target.tabGroupIdentifier;
+    }
+    PSMTabBarCell *(^neighbor)(NSInteger, NSInteger) = ^PSMTabBarCell *(NSInteger start, NSInteger step) {
+        for (NSInteger k = start; k >= 0 && k < (NSInteger)cells.count; k += step) {
+            PSMTabBarCell *c = cells[k];
+            if (![c isPlaceholder] && ![excluded containsObject:c]) {
+                return c;
+            }
+        }
+        return nil;
+    };
+    // Nesting is one level deep, so a drop inside a sub-group still nests in
+    // that sub-group's parent. Targeting keeps such drops out, so this is a
+    // backstop.
+    return [[self groupPathEnclosingDropBetween:neighbor(idx - 1, -1)
+                                            and:neighbor(idx, 1)] firstObject];
 }
 
 // The nearest cell to one side of the given index that is not a group chip
@@ -3005,6 +3291,29 @@ static os_log_t PSMTabDragLog(void) {
     return NSNotFound;
 }
 
+// If the chip at `ci` is a collapsed sub-group's that ends its parent's run,
+// the parent's end slot in the gap after it; else nil.
+- (PSMTabBarCell *)parentEndSlotAfterCollapsedSubgroupAtChipIndex:(NSInteger)ci
+                                                          inCells:(NSArray<PSMTabBarCell *> *)cells {
+    PSMTabBarCell *chip = cells[ci];
+    NSString *gid = chip.tabGroupIdentifier;
+    NSString *parentGid = chip.tabGroupParentIdentifier;
+    if (gid.length == 0 || parentGid.length == 0) {
+        return nil;
+    }
+    NSInteger j = ci + 1;
+    // Its tabs, and the slots among and before them.
+    while (j < (NSInteger)cells.count &&
+           ([cells[j] isPlaceholder] ? ![cells[j].joinsTabGroupIdentifier isEqualToString:parentGid]
+                                     : (![cells[j] isTabGroupChip] && [cells[j].tabGroupIdentifier isEqualToString:gid]))) {
+        j++;
+    }
+    if (j < (NSInteger)cells.count && [cells[j] isPlaceholder] && !cells[j].isCollapsedGroupJoinSlot) {
+        return cells[j];
+    }
+    return nil;
+}
+
 - (PSMTabBarCell *)slotAfterCollapsedGroupRunAtChipIndex:(NSInteger)ci
                                                  inCells:(NSArray<PSMTabBarCell *> *)cells {
     NSString *gid = [cells[ci] tabGroupIdentifier];
@@ -3046,16 +3355,20 @@ static os_log_t PSMTabDragLog(void) {
     return nil;
 }
 
-// A whole-group drag must not land inside another group. If `proposed` (a drop-
-// slot placeholder) sits in another group's interior -- strictly between its
-// chip and its last member -- snap it to that group's near edge instead: the
+// Where a whole-group drag may land. If `proposed` (a drop-slot placeholder)
+// sits in a group's interior -- strictly between its chip and its last member --
+// that the dragged group may not enter, snap it to that group's near edge: the
 // slot before the chip when the mouse is in the group's leading half, else the
-// slot after the last member. Slots at a run's edges, and everywhere outside a
-// run, are returned unchanged.
-- (PSMTabBarCell *)groupDropTargetAvoidingOtherGroups:(PSMTabBarCell *)proposed
-                                              inCells:(NSArray<PSMTabBarCell *> *)cells
-                                              atMouse:(NSPoint)mouseLoc
-                                           horizontal:(BOOL)horizontal {
+// slot after the last member. The dragged group may enter its own parent, and,
+// when `canNest`, any expanded top-level group (to become its sub-group). A
+// sub-group's interior is always off limits since nesting is one level deep.
+// Slots at a run's edges, and everywhere outside a run, are returned unchanged.
+- (PSMTabBarCell *)groupDropTargetForProposedTarget:(PSMTabBarCell *)proposed
+                                            inCells:(NSArray<PSMTabBarCell *> *)cells
+                                            atMouse:(NSPoint)mouseLoc
+                                         horizontal:(BOOL)horizontal
+                                    draggedParentID:(NSString *)draggedParentID
+                                            canNest:(BOOL)canNest {
     const NSInteger p = [cells indexOfObject:proposed];
     if (p == NSNotFound) {
         return proposed;
@@ -3065,11 +3378,12 @@ static os_log_t PSMTabDragLog(void) {
             continue;
         }
         NSString *gid = cells[c].tabGroupIdentifier;
-        if (_draggedGroupParentID.length > 0 && [gid isEqualToString:_draggedGroupParentID]) {
+        if (draggedParentID.length > 0 && [gid isEqualToString:draggedParentID]) {
             // A sub-group may move around inside its own parent's run.
             continue;
         }
         NSInteger last = c;
+        BOOL expanded = NO;
         for (NSInteger j = c + 1; j < (NSInteger)cells.count; j++) {
             if ([cells[j] isPlaceholder]) {
                 continue;
@@ -3078,11 +3392,23 @@ static os_log_t PSMTabDragLog(void) {
                 break;
             }
             last = j;
+            if (![cells[j] isTabGroupChip] && ![cells[j] isCollapsedByTabGroup:gid]) {
+                expanded = YES;
+            }
+        }
+        if (canNest && expanded && cells[c].tabGroupParentIdentifier.length == 0) {
+            // It may become this group's sub-group.
+            continue;
         }
         // Interior slots are those strictly inside the run: c < p <= last (the
         // slot after the last member, at last+1, is the run's trailing edge).
         if (c < p && p <= last) {
-            const NSRect runRect = NSUnionRect([cells[c] frame], [cells[last] frame]);
+            // Every cell of the run: its last cell may be a collapsed
+            // sub-group's hidden tab, with an empty frame.
+            NSRect runRect = [cells[c] frame];
+            for (NSInteger k = c + 1; k <= last; k++) {
+                runRect = NSUnionRect(runRect, [cells[k] frame]);
+            }
             const CGFloat mid = horizontal ? NSMidX(runRect) : NSMidY(runRect);
             const CGFloat along = horizontal ? mouseLoc.x : mouseLoc.y;
             if (along < mid && c - 1 >= 0 && [cells[c - 1] isPlaceholder]) {
@@ -3177,6 +3503,7 @@ static os_log_t PSMTabDragLog(void) {
     // Now that the pure placeholder math is done, put the chips back so they
     // stay visible during the drag.
     [self reinsertDragChipsInTabBar:control];
+    [self latchDragOriginSlotOpen];
     ILog(@"distributePlaceholdersInTabBar:withDraggedCell:%@", cell);
     return;
 }
@@ -3196,10 +3523,10 @@ static os_log_t PSMTabDragLog(void) {
     // `chip` unretained, so it is deallocated by the strip. Reading [chip frame]
     // afterward is a use-after-free. Members are tab cells, not chips, so they
     // survive the strip and stay valid below.
-    NSRect runFrame = [chip frame];
-    for (PSMTabBarCell *c in members) {
-        runFrame = NSUnionRect(runFrame, [c frame]);
-    }
+    NSRect runFrame = [self frameOfRunWithChip:chip members:members inTabBar:control];
+    // Read before the strip frees `chip`. Not from a member: a group's first
+    // member may be in one of its sub-groups, whose parent is the group itself.
+    NSString *parentGid = [[chip.tabGroupParentIdentifier copy] autorelease];
     [self distributePlaceholdersInTabBar:control];
     NSMutableArray *cells = [control cells];
     const NSInteger cA = [cells indexOfObject:members.firstObject];
@@ -3219,17 +3546,45 @@ static os_log_t PSMTabDragLog(void) {
                                                                expanded:YES
                                                           inControlView:control] autorelease];
     pc.truncationStyle = members.firstObject.truncationStyle;
+    // A sub-group's slot stays inside its parent: it carries the parent's id,
+    // like a dragged member's slot carries its group's, so the parent's chip
+    // stays before it and its outline encloses it. Dropping it back there
+    // leaves the sub-group where it was. At the parent's edge, keep the
+    // flanking placeholder on the outward side as the "drop outside the
+    // parent" slot, as for a group's edge member in a single-tab drag.
+    BOOL keepLeadingPlaceholder = NO;
+    BOOL keepTrailingPlaceholder = NO;
+    if (parentGid.length > 0) {
+        pc.tabGroupIdentifier = parentGid;
+        BOOL (^inParent)(NSInteger) = ^BOOL(NSInteger k) {
+            return k >= 0 && k < (NSInteger)cells.count && [cells[k] isInTabGroup:parentGid];
+        };
+        keepLeadingPlaceholder = !inParent(cA - 2);
+        keepTrailingPlaceholder = !inParent(cB + 2);
+    }
     [cells replaceObjectAtIndex:cA withObject:pc];
     // Remove the members' interior + the placeholder after the last member.
-    for (NSInteger i = cB + 1; i >= cA + 1; i--) {
+    const NSInteger lastRemoved = keepTrailingPlaceholder ? cB : cB + 1;
+    for (NSInteger i = lastRemoved; i >= cA + 1; i--) {
         [cells removeObjectAtIndex:i];
     }
     // Remove the placeholder before the first member.
-    if (cA - 1 >= 0) {
+    if (cA - 1 >= 0 && !keepLeadingPlaceholder) {
         [cells removeObjectAtIndex:(cA - 1)];
     }
     [self setTargetCell:pc];
     [self reinsertDragChipsInTabBar:control];
+    [self latchDragOriginSlotOpen];
+}
+
+// The slot a drag starts from is already open. A slot beside a collapsed group
+// otherwise opens only once the mouse pauses on it (see _collapsedDropSettled),
+// so without this the origin slot would close as soon as the mouse moved,
+// shoving the tabs after it and back. It stays open while it is the target.
+- (void)latchDragOriginSlotOpen {
+    PSMTabBarCell *origin = [self targetCell];
+    _collapsedOpenSlotTarget = origin;
+    _collapsedDropSettled = (origin != nil);
 }
 
 - (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control {
@@ -3255,6 +3610,25 @@ static os_log_t PSMTabDragLog(void) {
     } else {
         draggedCellFrame = [[[control cells] objectAtIndex:0] frame];
         truncationStyle = [[[control cells] objectAtIndex:0] truncationStyle];
+    }
+    // A collapsed group's first member has a zero frame. Slots sized from it
+    // would have no cross-axis extent, so the mouse could never hit one and
+    // targeting would fall back to positional guesses. Take the cross-axis
+    // from a full-size tab instead.
+    const BOOL horizontalBar = ([control orientation] == PSMTabBarHorizontalOrientation);
+    if (horizontalBar ? NSHeight(draggedCellFrame) <= 0 : NSWidth(draggedCellFrame) <= 0) {
+        NSRect reference = [PSMTabBarControl firstFullSizeTabCellFrameInCells:[control cells]];
+        if (NSIsEmptyRect(reference)) {
+            // Every tab is collapsed: use the bar itself.
+            reference = [control bounds];
+        }
+        if (horizontalBar) {
+            draggedCellFrame.origin.y = reference.origin.y;
+            draggedCellFrame.size.height = reference.size.height;
+        } else {
+            draggedCellFrame.origin.x = reference.origin.x;
+            draggedCellFrame.size.width = reference.size.width;
+        }
     }
     for (i = 0; i < numVisibleTabs; i++) {
         PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:draggedCellFrame expanded:NO inControlView:control] autorelease];

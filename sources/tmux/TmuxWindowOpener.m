@@ -672,12 +672,17 @@ static int OctalValue(const char *bytes) {
         [tab setPerTabSettings:_perTabSettings[widStr]];
         iTermTmuxTabGroupMembership *membership = self.tabGroups[@(windowIndex_)];
         if (membership && tab.tabGroupID == nil) {
-            DLog(@"Restore tab group %@ for window %d", membership.groupID, windowIndex_);
+            iTermTmuxTabGroupMembership *parent = self.tabGroupParents[membership.groupID];
+            DLog(@"Restore tab group %@ (parent %@) for window %d", membership.groupID, parent.groupID, windowIndex_);
             [[PseudoTerminal castFrom:tab.realParentWindow] addTab:tab
                                                   toTabGroupWithID:membership.groupID
                                                               name:membership.name
                                                              color:membership.color
                                                          collapsed:membership.collapsed
+                                                   parentGroupID:parent.groupID
+                                                      parentName:parent.name
+                                                     parentColor:parent.color
+                                                 parentCollapsed:parent.collapsed
                                                 deferringExpansion:self.initial];
         }
     }

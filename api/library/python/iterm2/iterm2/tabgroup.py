@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .capabilities import check_supports_tab_groups
+from .capabilities import (
+    check_supports_nested_tab_groups,
+    check_supports_tab_groups,
+)
 from .rpc import async_invoke_app_function
 from .util import invocation_string
 
@@ -103,7 +106,8 @@ class TabGroup:
 
         Tab groups nest one level deep, so a parent never has a parent. Create
         a sub-group with :meth:`iterm2.Window.async_create_tab_group` and its
-        `parent` argument.
+        `parent` argument, or nest an existing group with
+        :meth:`async_set_parent`.
 
         :returns: The parent group's identifier, or `None`.
         """
@@ -158,3 +162,31 @@ class TabGroup:
             {"group_id": self.__group_id, "collapsed": 1 if collapsed else 0},
         )
         return await async_invoke_app_function(self.connection, invocation)
+
+    async def async_set_parent(self, parent: TabGroup | None) -> None:
+        """
+        Nests this group in another one, or makes it top-level.
+
+        The group's tabs move to the end of the parent's tabs. Making a
+        sub-group top-level moves its tabs to just after its old parent's.
+        Tab groups nest one level deep, so `parent` must be a top-level group
+        in the same window, and this group must not have sub-groups of its own.
+
+        Requires iTerm2 with API protocol 1.24 or later.
+
+        :param parent: The :class:`~iterm2.tabgroup.TabGroup` to nest this one
+            in, or `None` to make it top-level.
+
+        :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong (for
+            example, if `parent` is in another window or is itself a
+            sub-group).
+        """
+        check_supports_nested_tab_groups(self.connection)
+        invocation = invocation_string(
+            "iterm2.set_tab_group_parent",
+            {
+                "group_id": self.__group_id,
+                "parent_group_id": parent.group_id if parent is not None else "",
+            },
+        )
+        await async_invoke_app_function(self.connection, invocation)

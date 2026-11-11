@@ -777,6 +777,9 @@ class MainMenu:
             ADD_TAB_TO_NEW_GROUP = MenuItemIdentifier(
                 "Add Tab to New Group…", "Add Tab to New Group"
             )
+            MOVE_TAB_TO_NEW_SUBGROUP = MenuItemIdentifier(
+                "Move Tab to New Sub-group…", "Move Tab to New Sub-group"
+            )
             REMOVE_TAB_FROM_GROUP = MenuItemIdentifier(
                 "Remove Tab from Group", "Remove Tab from Group"
             )

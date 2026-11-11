@@ -159,6 +159,295 @@ final class PSMTabGroupDragTests: XCTestCase {
         XCTAssertGreaterThan(target.frame.width, 200)
     }
 
+    // [chip P][chip S][S 1][S 2][P 1][Loner]: P's first content is sub-group S.
+    private func makeNestedBar() -> (subgroupChip: PSMTabBarCell, subgroupMembers: [PSMTabBarCell]) {
+        var x: CGFloat = 0
+        var cells: [PSMTabBarCell] = []
+        func add(_ cell: PSMTabBarCell, width: CGFloat) {
+            cell.frame = NSRect(x: x, y: 0, width: width, height: 24)
+            x += width
+            cells.append(cell)
+        }
+        func makeChip(_ groupID: String, parent: String?) -> PSMTabBarCell {
+            let cell = PSMTabBarCell(controlView: control)!
+            cell.isTabGroupChip = true
+            cell.tabGroupIdentifier = groupID
+            cell.tabGroupParentIdentifier = parent
+            add(cell, width: 40)
+            return cell
+        }
+        func makeTab(_ groupID: String?, parent: String?, _ label: String) -> PSMTabBarCell {
+            let cell = PSMTabBarCell(controlView: control)!
+            cell.tabGroupIdentifier = groupID
+            cell.tabGroupParentIdentifier = parent
+            let item = NSTabViewItem(identifier: label as NSString)
+            item.label = label
+            items.append(item)
+            cell.representedObject = item
+            add(cell, width: 100)
+            return cell
+        }
+        _ = makeChip("P", parent: nil)
+        let subgroupChip = makeChip("S", parent: "P")
+        let s1 = makeTab("S", parent: "P", "S 1")
+        let s2 = makeTab("S", parent: "P", "S 2")
+        _ = makeTab("P", parent: nil, "P 1")
+        _ = makeTab(nil, parent: nil, "Loner")
+        control.cells().setArray(cells)
+        return (subgroupChip, [s1, s2])
+    }
+
+    // Dragging a sub-group leaves its slot inside the parent: the parent's chip
+    // stays before it, and dropping it back there keeps it nested. The slot
+    // before the parent's chip is outside the parent.
+    func testDraggedSubgroupSlotStaysInsideParent() {
+        let (chip, members) = makeNestedBar()
+        let assistant = PSMTabDragAssistant.shared()!
+        assistant.startDraggingGroup(withChip: chip,
+                                     members: members,
+                                     fromTabBar: control,
+                                     withMouseDownEvent: mouseDownEvent(at: NSPoint(x: 60, y: 12)))
+        let cells = control.cells() as! [PSMTabBarCell]
+        guard let slot = assistant.targetCell(),
+              let slotIndex = cells.firstIndex(where: { $0 === slot }),
+              let parentChipIndex = cells.firstIndex(where: { $0.isTabGroupChip && $0.tabGroupIdentifier == "P" }) else {
+            XCTFail("missing own slot or parent chip: \(cells)")
+            return
+        }
+        XCTAssertLessThan(parentChipIndex, slotIndex, "the parent's chip must stay before the sub-group's slot")
+        XCTAssertEqual(assistant.parentGroupForGroupDrop(at: slot, in: cells, excluding: members), "P")
+        guard let outside = cells[..<parentChipIndex].last(where: { $0.isPlaceholder }) else {
+            XCTFail("no slot before the parent's chip: \(cells)")
+            return
+        }
+        XCTAssertNil(assistant.parentGroupForGroupDrop(at: outside, in: cells, excluding: members))
+        XCTAssertNil(control.onlyTabGroupRunDecorationIdentifier, "the drag image filter must be cleared")
+    }
+
+    // [chip P][chip S, collapsed][P 1][P 2][P 3][Loner][chip Q, collapsed]:
+    // S is P's first item. Collapsed members have zero frames, as in the app.
+    private func makeBarWithCollapsedSubgroupFirst() -> (subgroupChip: PSMTabBarCell, subgroupMembers: [PSMTabBarCell]) {
+        var x: CGFloat = 0
+        var cells: [PSMTabBarCell] = []
+        func add(_ cell: PSMTabBarCell, width: CGFloat) {
+            cell.frame = NSRect(x: x, y: 0, width: width, height: 24)
+            x += width
+            cells.append(cell)
+        }
+        func makeChip(_ groupID: String, parent: String?, width: CGFloat) -> PSMTabBarCell {
+            let cell = PSMTabBarCell(controlView: control)!
+            cell.isTabGroupChip = true
+            cell.tabGroupIdentifier = groupID
+            cell.tabGroupParentIdentifier = parent
+            add(cell, width: width)
+            return cell
+        }
+        func makeTab(_ groupID: String?, parent: String?, _ label: String, hidden: Bool) -> PSMTabBarCell {
+            let cell = PSMTabBarCell(controlView: control)!
+            cell.tabGroupIdentifier = groupID
+            cell.tabGroupParentIdentifier = parent
+            cell.isCollapsedHidden = hidden
+            let item = NSTabViewItem(identifier: label as NSString)
+            item.label = label
+            items.append(item)
+            cell.representedObject = item
+            add(cell, width: hidden ? 0 : 250)
+            if hidden {
+                cell.frame = NSRect(x: cell.frame.minX, y: 0, width: 0, height: 0)
+            } else {
+                cell.dragBaseWidth = 250
+            }
+            return cell
+        }
+        _ = makeChip("P", parent: nil, width: 29)
+        let subgroupChip = makeChip("S", parent: "P", width: 61)
+        let s1 = makeTab("S", parent: "P", "S 1", hidden: true)
+        let s2 = makeTab("S", parent: "P", "S 2", hidden: true)
+        _ = makeTab("P", parent: nil, "P 1", hidden: false)
+        _ = makeTab("P", parent: nil, "P 2", hidden: false)
+        _ = makeTab("P", parent: nil, "P 3", hidden: false)
+        _ = makeTab(nil, parent: nil, "Loner", hidden: false)
+        _ = makeChip("Q", parent: nil, width: 50)
+        _ = makeTab("Q", parent: nil, "Q 1", hidden: true)
+        control.cells().setArray(cells)
+        return (subgroupChip, [s1, s2])
+    }
+
+    // Dragging a collapsed sub-group to just before its parent's chip must
+    // settle under a still mouse. Opening the slot before the parent slides the
+    // parent's chip off the mouse, which is then over the slot. A collapsed
+    // group's members have zero frames; slots sized from them had no height,
+    // so the mouse missed the slot and targeting fell back to the slot past the
+    // chip, closing the slot and sliding the chip back.
+    func testStillMouseBeforeParentChipSettlesWhenDraggingCollapsedSubgroup() {
+        let assistant = PSMTabDragAssistant.shared()!
+        let savedScrollable = useFieldBar()
+        defer { iTermPreferences.setBool(savedScrollable, forKey: kPreferenceKeyScrollableSideTabBar) }
+        var failures: [String] = []
+        for x in stride(from: CGFloat(130), through: CGFloat(200), by: 0.5) {
+            assistant.finishDrag()
+            items = []
+            let (chip, members) = makeBarWithCollapsedSubgroupFirst()
+            let grab = NSMidX(chip.frame) + 136
+            assistant.startDraggingGroup(withChip: chip,
+                                         members: members,
+                                         fromTabBar: control,
+                                         withMouseDownEvent: mouseDownEvent(at: NSPoint(x: grab, y: 12)))
+            for i in 0...20 {
+                assistant.setCurrentMouseLoc(NSPoint(x: grab + (x - grab) * CGFloat(i) / 20, y: 12))
+                assistant.calculateDragAnimation(forTabBar: control)
+            }
+            var targets: [Int] = []
+            for _ in 0..<40 {
+                assistant.setCurrentMouseLoc(NSPoint(x: x, y: 12))
+                assistant.calculateDragAnimation(forTabBar: control)
+                let cells = control.cells() as! [PSMTabBarCell]
+                targets.append(assistant.targetCell().flatMap { t in cells.firstIndex { $0 === t } } ?? -1)
+            }
+            let tail = Array(targets.suffix(12))
+            if !tail.allSatisfy({ $0 == tail.first }) {
+                failures.append("x=\(x) targets=\(tail)")
+            }
+        }
+        XCTAssertTrue(failures.isEmpty, "the drop slot flapped under a still mouse:\n\(failures.joined(separator: "\n"))")
+    }
+
+    // Match the bar in the field: scrollable, 1007pt wide, minimal style, with the
+    // window buttons in the bar. Returns the scrollable setting to restore.
+    private func useFieldBar() -> Bool {
+        let savedScrollable = iTermPreferences.bool(forKey: kPreferenceKeyScrollableSideTabBar)
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyScrollableSideTabBar)
+        window.setContentSize(NSSize(width: 1007, height: 400))
+        control.frame = NSRect(x: 0, y: 376, width: 1007, height: 24)
+        control.style = PSMYosemiteTabStyle()
+        // Compact windows put the window buttons in the tab bar.
+        control.insets = NSEdgeInsets(top: 0, left: 136, bottom: 0, right: 0)
+        return savedScrollable
+    }
+
+    // [chip S, collapsed][chip P][P 1][P 2][P 3], laid out from x=136.
+    private func makeBarWithCollapsedGroupBeforeExpandedGroup() -> (chip: PSMTabBarCell, members: [PSMTabBarCell]) {
+        var x: CGFloat = 136
+        var cells: [PSMTabBarCell] = []
+        func add(_ cell: PSMTabBarCell, width: CGFloat) {
+            cell.frame = NSRect(x: x, y: 0, width: width, height: width > 0 ? 24 : 0)
+            x += width
+            cells.append(cell)
+        }
+        func makeChip(_ groupID: String, width: CGFloat) -> PSMTabBarCell {
+            let cell = PSMTabBarCell(controlView: control)!
+            cell.isTabGroupChip = true
+            cell.tabGroupIdentifier = groupID
+            add(cell, width: width)
+            return cell
+        }
+        func makeTab(_ groupID: String?, _ label: String, hidden: Bool) -> PSMTabBarCell {
+            let cell = PSMTabBarCell(controlView: control)!
+            cell.tabGroupIdentifier = groupID
+            cell.isCollapsedHidden = hidden
+            let item = NSTabViewItem(identifier: label as NSString)
+            item.label = label
+            items.append(item)
+            cell.representedObject = item
+            add(cell, width: hidden ? 0 : 255)
+            if !hidden {
+                cell.dragBaseWidth = 255
+            }
+            return cell
+        }
+        _ = makeChip("S", width: 52)
+        _ = makeTab("S", "S 1", hidden: true)
+        _ = makeTab("S", "S 2", hidden: true)
+        let chip = makeChip("P", width: 30)
+        let p1 = makeTab("P", "P 1", hidden: false)
+        let p2 = makeTab("P", "P 2", hidden: false)
+        let p3 = makeTab("P", "P 3", hidden: false)
+        control.cells().setArray(cells)
+        return (chip, [p1, p2, p3])
+    }
+
+    private func targetIndex() -> Int {
+        let cells = control.cells() as! [PSMTabBarCell]
+        return PSMTabDragAssistant.shared().targetCell().flatMap { t in cells.firstIndex { $0 === t } } ?? -1
+    }
+
+    // Picking up a group right after a collapsed group must not open the slot
+    // before the collapsed group, even for a tick: that shoves it aside and
+    // back. Hovering over the leading part of the collapsed group's chip must
+    // then open that slot, so the group can be dropped before it.
+    func testDraggingGroupPastCollapsedGroup() {
+        let assistant = PSMTabDragAssistant.shared()!
+        let savedScrollable = useFieldBar()
+        defer { iTermPreferences.setBool(savedScrollable, forKey: kPreferenceKeyScrollableSideTabBar) }
+        let (chip, members) = makeBarWithCollapsedGroupBeforeExpandedGroup()
+        let collapsedChip = (control.cells() as! [PSMTabBarCell]).first { $0.tabGroupIdentifier == "S" && $0.isTabGroupChip }!
+        let collapsedChipFrame = collapsedChip.frame
+        let grab = NSMidX(chip.frame)
+        assistant.startDraggingGroup(withChip: chip,
+                                     members: members,
+                                     fromTabBar: control,
+                                     withMouseDownEvent: mouseDownEvent(at: NSPoint(x: grab, y: 12)))
+        func slotBeforeCollapsedGroup() -> PSMTabBarCell? {
+            let cells = control.cells() as! [PSMTabBarCell]
+            guard let ci = cells.firstIndex(where: { $0.isTabGroupChip && $0.tabGroupIdentifier == "S" }) else { return nil }
+            return cells[..<ci].last(where: { $0.isPlaceholder })
+        }
+        var jumped: [String] = []
+        // The mouse path from the field log: a little left, then right, never
+        // pausing.
+        let path: [CGFloat] = (0..<10).map { grab - 11 + CGFloat($0) * 2 }
+        for (tick, mouseX) in path.enumerated() {
+            assistant.setCurrentMouseLoc(NSPoint(x: mouseX, y: 12))
+            assistant.calculateDragAnimation(forTabBar: control)
+            if let before = slotBeforeCollapsedGroup(), assistant.targetCell() === before || before.currentStep > 0 {
+                jumped.append("tick \(tick): target=\(targetIndex()) step=\(before.currentStep)")
+            }
+            // The slot the group left must stay open, or everything after it
+            // shifts and comes back.
+            if let own = assistant.targetCell(), own.currentStep < Int32(kPSMTabDragAnimationSteps - 1) {
+                jumped.append("tick \(tick): own slot step=\(own.currentStep)")
+            }
+        }
+        XCTAssertTrue(jumped.isEmpty, "picking up the group moved the collapsed group: \(jumped)")
+
+        // Move over the leading quarter of the collapsed chip and hold. (The
+        // drag rebuilds chip cells, so look it up by group.)
+        let x = collapsedChipFrame.minX + collapsedChipFrame.width / 4
+        for i in 0...20 {
+            assistant.setCurrentMouseLoc(NSPoint(x: grab + (x - grab) * CGFloat(i) / 20, y: 12))
+            assistant.calculateDragAnimation(forTabBar: control)
+        }
+        for _ in 0..<30 {
+            assistant.setCurrentMouseLoc(NSPoint(x: x, y: 12))
+            assistant.calculateDragAnimation(forTabBar: control)
+        }
+        let before = slotBeforeCollapsedGroup()
+        XCTAssertNotNil(before)
+        XCTAssertTrue(assistant.targetCell() === before,
+                      "hovering the collapsed group's leading part must target the slot before it; target=\(targetIndex())")
+        XCTAssertGreaterThan(before?.frame.width ?? 0, 0, "the slot before the collapsed group must open")
+    }
+
+    // With the filter set, only that group's run and its sub-groups' runs are
+    // decorated, so a sub-group's drag image leaves out its parent's outline
+    // and a parent's drag image keeps its sub-groups'.
+    func testDecorationFilterKeepsOnlyThatGroup() {
+        _ = makeNestedBar()
+        var decorated: [String] = []
+        control.onlyTabGroupRunDecorationIdentifier = "S"
+        control.enumerateTabGroupRuns(rectForCell: nil) { _, _, _, gid in decorated.append(gid) }
+        control.onlyTabGroupRunDecorationIdentifier = nil
+        XCTAssertEqual(decorated, ["S"])
+        decorated = []
+        control.onlyTabGroupRunDecorationIdentifier = "P"
+        control.enumerateTabGroupRuns(rectForCell: nil) { _, _, _, gid in decorated.append(gid) }
+        control.onlyTabGroupRunDecorationIdentifier = nil
+        XCTAssertEqual(Set(decorated), ["P", "S"], "the parent's drag image lost its sub-group")
+        decorated = []
+        control.enumerateTabGroupRuns(rectForCell: nil) { _, _, _, gid in decorated.append(gid) }
+        XCTAssertEqual(Set(decorated), ["P", "S"])
+    }
+
     // Dragging a group into ANOTHER bar and hovering past its last tab (or
     // past its trailing group) must target the trailing drop slot and open it,
     // so the user sees where the group will land before releasing.

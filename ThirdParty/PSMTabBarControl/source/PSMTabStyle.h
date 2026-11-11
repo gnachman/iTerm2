@@ -81,8 +81,11 @@ NS_ASSUME_NONNULL_BEGIN
 // Width to reserve for a COLLAPSED group's chip cell: the name capsule plus a
 // member-count badge and a collapse chevron (a collapsed run has no visible
 // member tabs, so the chip is the whole affordance). Defaults to the expanded
-// name-only chip width when unimplemented.
-- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name memberCount:(NSInteger)count;
+// name-only chip width when unimplemented. `nested` is YES for a sub-group's
+// chip, which a style may draw inset inside its parent's outline.
+- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name
+                                     memberCount:(NSInteger)count
+                                          nested:(BOOL)nested;
 @required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;

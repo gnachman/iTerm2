@@ -1999,6 +1999,13 @@ DQ
                                                 <action selector="addTabToNewGroupAction:" target="-1" id="tgA-02-act"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Move Tab to New Sub-group…" identifier="Move Tab to New Sub-group" id="tgS-01-sub">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <accessibility identifier="Move Tab to New Sub-group…"/>
+                                            <connections>
+                                                <action selector="addTabToNewSubgroupAction:" target="-1" id="tgS-02-act"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem title="Remove Tab from Group" identifier="Remove Tab from Group" id="tgR-01-rem">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <accessibility identifier="Remove Tab from Group"/>

@@ -44,11 +44,13 @@ New Features:
   tmux 3.8.
 - Tab groups can now be nested one level deep.
   Right-click a tab in a group and choose “Move
-  Tab to New Sub-group…”. A sub-group gets its
-  own chip inside its parent's run, and each
-  level collapses on its own. In the Python API,
-  pass parent= to create_tab_group; a TabGroup
-  reports its parent_group_id.
+  Tab to New Sub-group…”, or drag a group into
+  another one. A group’s right-click menu can
+  also move it into another group or back out.
+  Each level collapses on its own. In the Python
+  API, create_tab_group takes parent=, and a
+  TabGroup has parent_group_id and
+  async_set_parent.
 - The Code Review session’s toolbar in the
   Claude Code workgroup has a model picker.
   Choose Fable, Opus, Sonnet, Haiku, or type any

@@ -149,12 +149,15 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 // A whole tab group was dropped onto `destTabBar` (this window's or another's)
 // during a chip drag. `members` are the group's member tabs in order; insert them
 // before `anchor` (or at the end if nil), carrying the group's definition. The
-// delegate must move the whole block, not resolve per-tab membership.
+// delegate must move the whole block, not resolve per-tab membership. A non-nil
+// `parentGroupID` is the top-level group the drop landed inside, which the
+// dropped group becomes a sub-group of.
 - (void)tabView:(NSTabView*)aTabView
     dropGroupWithID:(NSString *)groupID
             members:(NSArray<NSTabViewItem *> *)members
            inTabBar:(PSMTabBarControl *)destTabBar
-  beforeTabViewItem:(nullable NSTabViewItem *)anchor;
+  beforeTabViewItem:(nullable NSTabViewItem *)anchor
+      parentGroupID:(nullable NSString *)parentGroupID;
 // A whole tab group was dropped outside any tab bar: tear it off into a new
 // window positioned at `screenPoint` (top-left), carrying the group's definition.
 - (void)tabView:(NSTabView*)aTabView
@@ -236,6 +239,10 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // decoration (chip + enclosing outline) is left out of it. The live bar keeps
 // its decoration during the drag so groups remain visible as drop targets.
 @property(nonatomic, assign) BOOL suppressTabGroupRunDecoration;
+// Set transiently while capturing a group drag image: when non-nil, only this
+// group's decoration and its sub-groups' are drawn. A sub-group's image then
+// leaves out the outline of the parent it sits in.
+@property(nonatomic, copy, nullable) NSString *onlyTabGroupRunDecorationIdentifier;
 // YES while a collapse/expand slide is running. A style can clip each cell's
 // drawing to its frame during the slide so a shrinking member's title cannot
 // overflow past the group outline.
@@ -462,10 +469,11 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell;
 // Width of a horizontal group-chip cell from explicit state, for a synthesized
 // chip (e.g. a drag chip not in the control's cells): a collapsed chip is wider
-// (member-count badge + chevron).
+// (member-count badge + chevron). `nested` is YES for a sub-group's chip.
 - (CGFloat)widthOfTabGroupChipCellForIdentifier:(NSString *)identifier
                                       collapsed:(BOOL)collapsed
-                                    memberCount:(NSInteger)memberCount;
+                                    memberCount:(NSInteger)memberCount
+                                         nested:(BOOL)nested;
 // Height of a vertical group-chip cell (a one-row header band).
 - (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell;
 // Map an NSTabView index to the index of the corresponding tab cell in a

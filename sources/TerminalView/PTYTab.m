@@ -4648,6 +4648,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }];
 }
 
++ (NSDictionary *)arrangementRemovingTabGroupParent:(NSDictionary *)arrangement {
+    NSMutableDictionary *result = [arrangement mutableCopy];
+    [result removeObjectsForKeys:@[ TAB_ARRANGEMENT_GROUP_PARENT_ID,
+                                    TAB_ARRANGEMENT_GROUP_PARENT_NAME,
+                                    TAB_ARRANGEMENT_GROUP_PARENT_COLOR,
+                                    TAB_ARRANGEMENT_GROUP_PARENT_COLLAPSED ]];
+    return result;
+}
+
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
              replacingProfileWithGUID:(NSString *)badGuid
                           withProfile:(Profile *)goodProfile {

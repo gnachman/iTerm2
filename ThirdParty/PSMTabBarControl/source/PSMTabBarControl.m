@@ -2691,7 +2691,8 @@ typedef struct {
     const PSMTabGroupRun run = [self tabGroupRunAfterChipAtIndex:index];
     return [self widthOfTabGroupChipCellForIdentifier:cell.tabGroupIdentifier
                                             collapsed:(run.memberCount > 0 && run.allCollapsed)
-                                          memberCount:run.memberCount];
+                                          memberCount:run.memberCount
+                                               nested:(cell.tabGroupParentIdentifier.length > 0)];
 }
 
 // Chip width from explicit group state, so a SYNTHESIZED chip (a drag chip that
@@ -2701,11 +2702,12 @@ typedef struct {
 // dragged group jump wider on drop.
 - (CGFloat)widthOfTabGroupChipCellForIdentifier:(NSString *)identifier
                                       collapsed:(BOOL)collapsed
-                                    memberCount:(NSInteger)memberCount {
+                                    memberCount:(NSInteger)memberCount
+                                         nested:(BOOL)nested {
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:identifier];
     NSString *name = group ? group.name : @"";
     if (collapsed && memberCount > 0) {
-        return [self collapsedChipCellWidthForGroupName:name memberCount:memberCount];
+        return [self collapsedChipCellWidthForGroupName:name memberCount:memberCount nested:nested];
     }
     return [self chipCellWidthForGroupName:name];
 }
@@ -2720,17 +2722,19 @@ typedef struct {
 }
 
 // Width of a collapsed group-chip cell, in this bar's style.
-- (CGFloat)collapsedChipCellWidthForGroupName:(NSString *)name memberCount:(NSInteger)count {
+- (CGFloat)collapsedChipCellWidthForGroupName:(NSString *)name
+                                  memberCount:(NSInteger)count
+                                       nested:(BOOL)nested {
     name = name ?: @"";
-    NSString *key = [NSString stringWithFormat:@"WC:%@:%ld:%@",
-                     [(NSObject *)self.style class], (long)count, name];
+    NSString *key = [NSString stringWithFormat:@"WC:%@:%ld:%d:%@",
+                     [(NSObject *)self.style class], (long)count, (int)nested, name];
     NSNumber *cached = [PSMChipSizeCache() objectForKey:key];
     if (cached) {
         return cached.doubleValue;
     }
     CGFloat width;
-    if ([self.style respondsToSelector:@selector(tabGroupCollapsedChipCellWidthForName:memberCount:)]) {
-        width = [self.style tabGroupCollapsedChipCellWidthForName:name memberCount:count];
+    if ([self.style respondsToSelector:@selector(tabGroupCollapsedChipCellWidthForName:memberCount:nested:)]) {
+        width = [self.style tabGroupCollapsedChipCellWidthForName:name memberCount:count nested:nested];
     } else {
         // Fallback: the name-only width (the count/chevron may crowd, but the
         // basic styles don't draw a collapsed chip anyway).
@@ -5177,6 +5181,17 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     return changed;
 }
 
+// While a group drag image is captured, only the dragged group and its own
+// sub-groups are decorated. A dragged sub-group still leaves out its parent.
+- (BOOL)tabGroupChipPassesDecorationFilter:(PSMTabBarCell *)chip {
+    NSString *only = self.onlyTabGroupRunDecorationIdentifier;
+    if (!only) {
+        return YES;
+    }
+    return ([chip.tabGroupIdentifier isEqualToString:only] ||
+            [chip.tabGroupParentIdentifier isEqualToString:only]);
+}
+
 // Enumerate each FULLY collapsed tab group: a chip whose following same-group
 // members all exist and are all collapsed-hidden. The member count is derived
 // from _cells (the members are still there), so no data-source round trip is
@@ -5187,6 +5202,9 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
         PSMTabBarCell *chip = _cells[i];
         if (![chip isTabGroupChip] || chip.tabGroupIdentifier.length == 0) {
+            continue;
+        }
+        if (![self tabGroupChipPassesDecorationFilter:chip]) {
             continue;
         }
         // A chip that fell past the fit boundary is marked in-overflow but keeps a
@@ -5249,6 +5267,9 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
         if (![chip isTabGroupChip] || gid.length == 0) {
             continue;
         }
+        if (![self tabGroupChipPassesDecorationFilter:chip]) {
+            continue;
+        }
         NSRect tabsRect = NSZeroRect;
         PSMTabBarCell *firstTab = nil;
         BOOL any = NO;
@@ -5298,7 +5319,8 @@ static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
                     // is being dragged and no real member precedes it).
                     tabsRect = any ? NSUnionRect(tabsRect, rect(c)) : rect(c);
                     any = YES;
-                } else if (any && [c.joinsTabGroupIdentifier isEqualToString:gid]) {
+                } else if (any && ([c.joinsTabGroupIdentifier isEqualToString:gid] ||
+                                   [c.joinsTabGroupParentIdentifier isEqualToString:gid])) {
                     tabsRect = NSUnionRect(tabsRect, rect(c));
                 }
                 continue;

@@ -96,3 +96,43 @@ def test_create_tab_group_with_parent_needs_protocol_1_24(monkeypatch):
     with pytest.raises(iterm2.capabilities.AppVersionTooOld):
         asyncio.run(window.async_create_tab_group(
             "Sub", [window.tabs[0]], parent=window.tabs[2].tab_group))
+
+
+def test_set_parent_sends_parent_id(monkeypatch):
+    window, _ = make_window()
+    calls = []
+
+    async def async_invoke_app_function(connection, invocation, timeout=-1):
+        calls.append(invocation)
+
+    monkeypatch.setattr(iterm2.tabgroup, "async_invoke_app_function", async_invoke_app_function)
+    group = window.tabs[1].tab_group
+    asyncio.run(group.async_set_parent(window.tabs[2].tab_group))
+
+    assert calls[0].startswith("iterm2.set_tab_group_parent(")
+    assert 'group_id: "C"' in calls[0]
+    assert 'parent_group_id: "P"' in calls[0]
+
+
+def test_set_parent_none_makes_top_level(monkeypatch):
+    window, _ = make_window()
+    calls = []
+
+    async def async_invoke_app_function(connection, invocation, timeout=-1):
+        calls.append(invocation)
+
+    monkeypatch.setattr(iterm2.tabgroup, "async_invoke_app_function", async_invoke_app_function)
+    asyncio.run(window.tabs[1].tab_group.async_set_parent(None))
+
+    assert 'parent_group_id: ""' in calls[0]
+
+
+def test_set_parent_needs_protocol_1_24(monkeypatch):
+    window, _ = make_window(protocol_version=(1, 23))
+
+    async def async_invoke_app_function(*args, **kwargs):
+        raise AssertionError("must not be called")
+
+    monkeypatch.setattr(iterm2.tabgroup, "async_invoke_app_function", async_invoke_app_function)
+    with pytest.raises(iterm2.capabilities.AppVersionTooOld):
+        asyncio.run(window.tabs[1].tab_group.async_set_parent(window.tabs[2].tab_group))

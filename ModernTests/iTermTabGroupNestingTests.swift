@@ -149,11 +149,27 @@ final class iTermTabGroupNestingTests: XCTestCase {
         XCTAssertEqual(order(m), [0, 1, 2])
     }
 
-    // Two direct members, or a neighbor outside the top-level group: not handled
-    // here (the flat single-tab move applies).
+    // [P chip][p1][S chip][s1][s2] | [x] with s2 selected, Move Right: s2 becomes
+    // a direct member of P in place rather than leaving both groups at once.
+    func testSubgroupEdgeAtParentEdgeLeavesToParent() {
+        let m = move(["P", "S", "S", nil], [nil, "P", "P", nil], 2, 1)
+        XCTAssertEqual(m?.changesMembership, true)
+        XCTAssertEqual(m?.newGroupID, "P")
+        XCTAssertEqual(order(m), [0, 1, 2, 3])
+    }
+
+    // The same at either end of the bar, where there's no neighbor at all.
+    func testSubgroupAtEndOfBarLeavesToParent() {
+        XCTAssertEqual(move(["S", "S"], ["P", "P"], 1, 1)?.newGroupID, "P")
+        XCTAssertEqual(move(["S", "S"], ["P", "P"], 0, -1)?.newGroupID, "P")
+    }
+
+    // Two direct members, or a direct member whose neighbor is outside its
+    // group: not handled here (the flat single-tab move applies).
     func testFallsBackOutsideNestedCases() {
         XCTAssertNil(move(["P", "P"], [nil, nil], 0, 1))
-        XCTAssertNil(move(["S", nil], ["P", nil], 0, 1))
+        XCTAssertNil(move(["P", nil], [nil, nil], 0, 1))
+        XCTAssertNil(move(["P", "S"], [nil, "P"], 0, -1))
         XCTAssertNil(move([nil, nil], [nil, nil], 0, 1))
     }
 

@@ -994082,6 +994082,30 @@
         }
       }
     },
+    "PseudoTerminal.MoveGroupInto" : {
+      "comment" : "Submenu listing the tab groups this tab group can be nested in",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Group Into"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.MoveGroupOutOfParent" : {
+      "comment" : "Menu item that makes a nested tab group a top-level tab group",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Group Out of Parent Group"
+          }
+        }
+      }
+    },
     "PseudoTerminal.MoveGroupToNewWindow" : {
       "comment" : "Menu item that moves a tab group to a new window",
       "extractionState" : "extracted_with_value",
@@ -994342,6 +994366,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "將群組移至新視窗"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.MoveTabToNewSubgroup" : {
+      "comment" : "Menu item that creates a new tab group nested inside the tab’s current group and moves the tab into it",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Tab to New Sub-group…"
           }
         }
       }
@@ -996777,6 +996813,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在群組中新增標籤頁"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.NewTabSubgroup" : {
+      "comment" : "Title of the dialog for creating a tab group nested inside another tab group",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Tab Sub-group"
           }
         }
       }
@@ -1006135,6 +1006183,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "名稱：%1$@\n描述檔：%2$@\n指令：%3$@"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.UnnamedGroup" : {
+      "comment" : "Menu item naming a tab group that has no name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unnamed Group"
           }
         }
       }
@@ -1213898,6 +1213958,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沒有這個標籤頁群組"
+          }
+        }
+      }
+    },
+    "TabSwitcher.LastSeenAgo" : {
+      "comment" : "Tab switcher: shown beside a tab to say how long ago it was last selected. The argument is a localized duration such as “2h 5m”.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Last seen %@ ago"
+          }
+        }
+      }
+    },
+    "TabSwitcher.LastSeenJustNow" : {
+      "comment" : "Tab switcher: shown beside a tab that was selected less than a minute ago",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Last seen just now"
+          }
+        }
+      }
+    },
+    "TabSwitcher.TmuxClient" : {
+      "comment" : "Tab switcher: describes a tab that shows a tmux window, for the badge’s tooltip and VoiceOver",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "tmux window"
+          }
+        }
+      }
+    },
+    "TabSwitcher.TmuxGateway" : {
+      "comment" : "Tab switcher: describes a tab whose session runs tmux in control mode, for the badge’s tooltip and VoiceOver",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "tmux gateway"
           }
         }
       }
