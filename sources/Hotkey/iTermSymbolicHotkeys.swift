@@ -21,6 +21,14 @@ class iTermSymbolicHotkeys: NSObject {
         | NSEvent.ModifierFlags.command.rawValue
         | NSEvent.ModifierFlags.function.rawValue
 
+    // IDs of the Shift variants of Mission Control (34), Application Windows
+    // (35), Show Desktop (37), Dashboard (63), and Move left/right a space
+    // (80/82). Each pairs with a base shortcut (32, 33, 36, 62, 79, 81) plus
+    // Shift. They once ran the base action in slow motion but no longer do
+    // anything, yet macOS leaves them enabled. Deferring to them made
+    // Ctrl-Shift-Arrow a dead key. Issue 13202.
+    private static let ignoredIDs: Set<String> = ["34", "35", "37", "63", "80", "82"]
+
     @objc(haveBoundKeyForKeycode:modifiers:)
     static func haveBoundKey(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) -> Bool {
         guard let userDefaults = UserDefaults(suiteName: "com.apple.symbolichotkeys") else {
@@ -31,8 +39,17 @@ class iTermSymbolicHotkeys: NSObject {
             DLog("AppleSymbolicHotKeys not in defaults")
             return false
         }
+        return haveBoundKey(keyCode: keyCode, modifiers: modifiers, hotkeys: dict)
+    }
+
+    static func haveBoundKey(keyCode: UInt16,
+                             modifiers: NSEvent.ModifierFlags,
+                             hotkeys dict: [AnyHashable: Any]) -> Bool {
         let eventMods = modifiers.rawValue & relevantModifierMask
-        for rawObj in dict.values {
+        for (key, rawObj) in dict {
+            if ignoredIDs.contains("\(key)") {
+                continue
+            }
             guard let obj = rawObj as? [AnyHashable: Any] else {
                 continue
             }
@@ -47,7 +64,7 @@ class iTermSymbolicHotkeys: NSObject {
                 continue
             }
             if parameters[1] == keyCode {
-                DLog("Found entry for keycode \(keyCode): \(parameters) and modifiers is \(modifiers.rawValue)")
+                DLog("Found entry \(key) for keycode \(keyCode): \(parameters) and modifiers is \(modifiers.rawValue)")
                 // Exact match on the relevant modifier bits. Subset matching
                 // would cause a hotkey for, e.g., Ctrl+Right to also fire on
                 // Ctrl+Shift+Right. Issue 12859.

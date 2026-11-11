@@ -421,3 +421,7 @@ Bug Fixes:
   themes. A folded double-width or
   double-height first line is no longer spaced
   out or drawn at double size.
+- On macOS 15 and later, Control-Shift-Arrow
+  keys sent nothing to the terminal when the
+  Mission Control or Spaces shortcuts were
+  enabled.
