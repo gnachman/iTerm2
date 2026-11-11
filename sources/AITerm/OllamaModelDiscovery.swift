@@ -33,6 +33,13 @@ class OllamaModelDiscovery: NSObject {
     // Build a discovery URL (e.g. /api/tags, /api/show) for a configured chat
     // endpoint, keeping scheme/host/port/userinfo AND any leading path prefix.
     private static func discoveryURL(fromEndpoint endpoint: String, apiPath: String) -> URL? {
+        return discoveryURL(fromEndpoint: endpoint) { basePath(fromURLPath: $0) + apiPath }
+    }
+
+    // Parse a configured endpoint and replace its path with transformPath(path),
+    // keeping scheme/host/port/userinfo/query verbatim. Shared with
+    // AIModelListDiscovery, which derives /models the same way.
+    static func discoveryURL(fromEndpoint endpoint: String, transformPath: (String) -> String) -> URL? {
         var url = URL(string: endpoint)
         // A scheme-less "host:port[/path]" parses with scheme="host" and host=nil
         // (e.g. "localhost:11434"), which would fail discovery permanently. Default
@@ -50,7 +57,7 @@ class OllamaModelDiscovery: NSObject {
               let host = components.host, !host.isEmpty else {
             return nil
         }
-        components.path = basePath(fromURLPath: url.path) + apiPath
+        components.path = transformPath(url.path)
         return components.url
     }
 
@@ -429,9 +436,9 @@ class OllamaModelDiscovery: NSObject {
 
     // A data task that goes through the aiProxy advanced setting, like chat
     // requests and Test Connection do. Each task gets its own session, which is
-    // released once the task finishes.
-    private static func proxiedDataTask(with request: URLRequest,
-                                        completionHandler: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
+    // released once the task finishes. Shared with AIModelListDiscovery.
+    static func proxiedDataTask(with request: URLRequest,
+                                completionHandler: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
         guard let proxy = AIProxySetting.connectionProxyDictionary() else {
             return URLSession.shared.dataTask(with: request, completionHandler: completionHandler)
         }

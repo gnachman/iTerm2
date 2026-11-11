@@ -35,6 +35,10 @@ New Features:
   withdraw findings it no longer stands by.
 
 Improvements:
+- Fetch Models in the manual AI model editor now
+  lists the models on OpenAI- and
+  Anthropic-compatible servers such as vLLM, LM
+  Studio, and llama.cpp, not just Ollama.
 - Tab groups of tmux Integration tabs are now
   remembered by the tmux session, so they come
   back with their names and colors when you

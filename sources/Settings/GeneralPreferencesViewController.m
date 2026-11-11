@@ -703,6 +703,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
     NSButton *_testButton;
     NSButton *_fetchModelsButton;
+    // A Fetch Models request is in flight. The button stays disabled and reads
+    // “Fetching…” until it finishes, whatever else changes in the editor.
+    BOOL _fetchingModels;
     NSProgressIndicator *_testSpinner;
     // For -layoutForTranslations: the right-aligned labels in the left column,
     // the checkboxes in the right column, the buttons pinned to the right
@@ -948,9 +951,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     y -= rowHeight + 8;
 
     _nameField = addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelLabel", nil, [NSBundle mainBundle], @"Model:", @"Label for the model name field"), _base[kAIManualModelNameKey]);
-    // Shrink the Model field and add a button that lists the models installed on
-    // the server (Ollama /api/tags), so the user can pick instead of typing an
-    // exact tag. Harmless for non-Ollama endpoints (it just reports none found).
+    // Shrink the Model field and add a button that lists the models on the server
+    // (Ollama /api/tags, or GET /models for OpenAI- and Anthropic-style APIs), so
+    // the user can pick instead of typing an exact name.
     {
         const CGFloat fetchWidth = 130;
         NSRect nameFrame = _nameField.frame;
@@ -958,7 +961,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         _nameField.frame = nameFrame;
         _fetchModelsButton = [NSButton buttonWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server")
                                                 target:self
-                                                action:@selector(fetchOllamaModels:)];
+                                                action:@selector(fetchModels:)];
         _fetchModelsButton.bezelStyle = NSBezelStyleRounded;
         _fetchModelsButton.frame = NSMakeRect(NSMaxX(nameFrame) + 6, nameFrame.origin.y - 1,
                                               fetchWidth, 24);
@@ -1380,6 +1383,24 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)apiKeyHintInputDidChange:(id)sender {
     [self updateEditorAPIKeyHint];
+    [self updateFetchModelsButton];
+}
+
+// The one place the Fetch Models button's title and enabled state are set, so a
+// change to the API or discovery mode can't clobber an in-flight fetch. It needs
+// a lister for the selected API: Ollama's native one or the OpenAI-style
+// GET /models. Gemini has neither.
+- (void)updateFetchModelsButton {
+    if (_fetchingModels) {
+        _fetchModelsButton.enabled = NO;
+        _fetchModelsButton.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchingProgress", nil, [NSBundle mainBundle], @"Fetching…", @"Transient button title while the app lists models from the server");
+        return;
+    }
+    const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
+    _fetchModelsButton.enabled = (api == iTermAIAPILlama || [iTermAIModelListDiscovery supportsAPI:api]);
+    const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
+    _fetchModelsButton.title = dynamic ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.RefreshModels", nil, [NSBundle mainBundle], @"Refresh Models", @"Button that re-lists models installed on the Ollama server")
+                                       : NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server");
 }
 
 - (void)controlTextDidChange:(NSNotification *)notification {
@@ -1742,11 +1763,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     _credentialPopup.enabled = !dynamic;
     [self updateEditorAPIKeyHint];
-    _fetchModelsButton.title = dynamic ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.RefreshModels", nil, [NSBundle mainBundle], @"Refresh Models", @"Button that re-lists models installed on the Ollama server")
-                                       : NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server");
+    [self updateFetchModelsButton];
 }
 
-- (void)fetchOllamaModels:(id)sender {
+- (void)fetchModels:(id)sender {
     [_window makeFirstResponder:nil];
     NSString *url =
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
@@ -1756,10 +1776,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                          _window);
         return;
     }
+    if (_fetchingModels) {
+        return;
+    }
     NSButton *button = _fetchModelsButton;
-    NSString *savedTitle = button.title;
-    button.enabled = NO;
-    button.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchingProgress", nil, [NSBundle mainBundle], @"Fetching…", @"Transient button title while the app lists models from the Ollama server");
+    _fetchingModels = YES;
+    [self updateFetchModelsButton];
     NSArray<NSDictionary<NSString *, NSString *> *> *headers = [self nonEmptyHeaders];
     __weak __typeof(self) weakSelf = self;
 
@@ -1772,12 +1794,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                               headers:headers
                                                 force:YES
                                            completion:^(NSInteger count, BOOL failed) {
-            button.enabled = YES;
-            button.title = savedTitle;
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf) {
                 return;
             }
+            strongSelf->_fetchingModels = NO;
+            [strongSelf updateFetchModelsButton];
             // The cache is now seeded for this URL: repopulate the model popup so
             // the discovered tags are selectable without reopening the editor.
             [strongSelf reloadDynamicModelPopup];
@@ -1798,31 +1820,54 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // Single-model mode: list the names and offer one to paste into the Model
     // field. Here an empty server IS a dead end (nothing to pick), so the names
     // path's "no models" error is appropriate.
-    [iTermOllamaModelDiscovery fetchModelNamesFromEndpoint:url
-                                                   headers:headers
-                                                   timeout:10
-                                                completion:^(NSArray<NSString *> *names, NSString *errorMessage) {
-        button.enabled = YES;
-        button.title = savedTitle;
+    void (^completion)(NSArray<NSString *> *, NSString *) = ^(NSArray<NSString *> *names, NSString *errorMessage) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
+        strongSelf->_fetchingModels = NO;
+        [strongSelf updateFetchModelsButton];
         if (errorMessage) {
-            iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotFetchModelsTitle", nil, [NSBundle mainBundle], @"Could Not Fetch Models", @"Alert title shown when listing the Ollama server's models fails"),
+            iTermGeneralPreferencesShowSheet(NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotFetchModelsTitle", nil, [NSBundle mainBundle], @"Could Not Fetch Models", @"Alert title shown when listing the server's models fails"),
                                              errorMessage,
                                              strongSelf->_window);
             return;
         }
-        [strongSelf presentOllamaModelMenu:names fromButton:button];
-    }];
+        // Discovery mode turned on while the fetch ran: its popup replaces the
+        // Model field, so a menu filling that hidden field would do nothing.
+        if (strongSelf->_dynamicModelsButton.state == NSControlStateValueOn) {
+            return;
+        }
+        [strongSelf presentModelMenu:names fromButton:button];
+    };
+    const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
+    if (api == iTermAIAPILlama) {
+        [iTermOllamaModelDiscovery fetchModelNamesFromEndpoint:url
+                                                       headers:headers
+                                                       timeout:10
+                                                    completion:completion];
+        return;
+    }
+    NSString *name =
+        [_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    NSString *apiKey = [iTermAIModelListDiscovery apiKeyForURL:url
+                                                           api:api
+                                                     modelName:name
+                                                    credential:[self selectedCredentialStoredValue]
+                                                   modelAPIKey:[self trimmedModelAPIKey]];
+    [iTermAIModelListDiscovery fetchModelNamesFromEndpoint:url
+                                                       api:api
+                                                    apiKey:apiKey
+                                                   headers:headers
+                                                   timeout:10
+                                                completion:completion];
 }
 
-- (void)presentOllamaModelMenu:(NSArray<NSString *> *)names fromButton:(NSButton *)button {
+- (void)presentModelMenu:(NSArray<NSString *> *)names fromButton:(NSButton *)button {
     NSMenu *menu = [[NSMenu alloc] init];
     for (NSString *name in names) {
         NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:name
-                                                      action:@selector(ollamaModelMenuItemSelected:)
+                                                      action:@selector(modelMenuItemSelected:)
                                                keyEquivalent:@""];
         item.target = self;
         item.representedObject = name;
@@ -1833,7 +1878,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                             inView:button];
 }
 
-- (void)ollamaModelMenuItemSelected:(NSMenuItem *)item {
+- (void)modelMenuItemSelected:(NSMenuItem *)item {
     NSString *name = item.representedObject;
     if ([name isKindOfClass:NSString.class]) {
         _nameField.stringValue = name;

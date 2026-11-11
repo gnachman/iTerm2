@@ -2546,7 +2546,7 @@
       }
     },
     "AIModelEditor.CouldNotFetchModelsTitle" : {
-      "comment" : "Alert title shown when listing the Ollama server's models fails",
+      "comment" : "Alert title shown when listing the server's models fails",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -3170,7 +3170,7 @@
       }
     },
     "AIModelEditor.FetchingProgress" : {
-      "comment" : "Transient button title while the app lists models from the Ollama server",
+      "comment" : "Transient button title while the app lists models from the server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -4970,6 +4970,198 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ API 密钥"
+          }
+        }
+      }
+    },
+    "AIModelList.BadURL" : {
+      "comment" : "Error shown by Fetch Models in the AI model editor when the server URL can't be turned into a model-listing URL; %@ is the URL the user entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es konnte nicht ermittelt werden, wo „%@“ seine Modelle auflistet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not work out where “%@” lists its models."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」がモデルの一覧を提供している場所を特定できませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”이(가) 모델 목록을 제공하는 위치를 알아낼 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível determinar onde “%@” lista seus modelos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось определить, где «%@» предоставляет список моделей."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法确定“%@”在何处列出其模型。"
+          }
+        }
+      }
+    },
+    "AIModelList.HTTPError" : {
+      "comment" : "Error shown by Fetch Models in the AI model editor when the server answers with an HTTP error; first placeholder is the model-listing URL, second is the numeric HTTP status code",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ hat den HTTP-Status %2$lld zurückgegeben. Der Server unterstützt das Auflisten von Modellen möglicherweise nicht oder erfordert eine Authentifizierung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ returned HTTP status %2$lld. The server may not support listing models, or may need authentication."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ がHTTPステータス %2$lld を返しました。サーバーがモデルの一覧表示に対応していないか、認証が必要な可能性があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@에서 HTTP 상태 %2$lld을(를) 반환했습니다. 서버가 모델 목록 조회를 지원하지 않거나 인증이 필요할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ retornou o status HTTP %2$lld. O servidor pode não oferecer suporte à listagem de modelos ou pode exigir autenticação."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ вернул HTTP-статус %2$lld. Возможно, сервер не поддерживает получение списка моделей или требует аутентификации."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 返回了 HTTP 状态 %2$lld。服务器可能不支持列出模型，或者需要身份验证。"
+          }
+        }
+      }
+    },
+    "AIModelList.NoModels" : {
+      "comment" : "Error shown by Fetch Models in the AI model editor when the server's model list is empty or unreadable; %@ is the model-listing URL",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ hat keine Modelle aufgelistet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ did not list any models."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ はモデルを1つも返しませんでした。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@에서 모델을 하나도 반환하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não listou nenhum modelo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не вернул ни одной модели."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未列出任何模型。"
+          }
+        }
+      }
+    },
+    "AIModelList.Unreachable" : {
+      "comment" : "Error shown by Fetch Models in the AI model editor when the server can't be reached; first %@ is the model-listing URL, second %@ is the underlying network error",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ konnte nicht erreicht werden, um die Modelle aufzulisten: %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not reach %1$@ to list its models: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルの一覧を取得するために %1$@ に接続できませんでした: %2$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모델 목록을 가져오기 위해 %1$@에 연결할 수 없습니다: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível acessar %1$@ para listar os modelos: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к %1$@ для получения списка моделей: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到 %1$@ 以列出其模型：%2$@"
           }
         }
       }
@@ -9476,7 +9668,7 @@
     },
     "About.BackersHeading" : {
       "comment" : "About window heading. Keep the <a href=...> HTML tags and the URLs. ‘Patreon’ and ‘GitHub Sponsors’ are brand names, keep them. Only translate the prose ‘iTerm2 is supported by these backers on’ and ‘and’.",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -9518,6 +9710,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2由<a href=\"https://patreon.com/gnachman\">Patreon</a>和<a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>的赞助者支持"
+          }
+        }
+      }
+    },
+    "About.SupportFooter" : {
+      "comment" : "About window footer inviting the user to sponsor the project. Keep the <a href=...> HTML tags and the URLs. ‘Patreon’ and ‘GitHub Sponsors’ are brand names, keep them. Only translate the prose ‘Support iTerm2 on’ and ‘or’.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterstützen Sie iTerm2 auf <a href=\"https://patreon.com/gnachman\">Patreon</a> oder <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Support iTerm2 on <a href=\"https://patreon.com/gnachman\">Patreon</a> or <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<a href=\"https://patreon.com/gnachman\">Patreon</a> または <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a> で iTerm2 を支援"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<a href=\"https://patreon.com/gnachman\">Patreon</a> 또는 <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>에서 iTerm2를 후원하세요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apoie o iTerm2 no <a href=\"https://patreon.com/gnachman\">Patreon</a> ou no <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поддержите iTerm2 на <a href=\"https://patreon.com/gnachman\">Patreon</a> или <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 <a href=\"https://patreon.com/gnachman\">Patreon</a> 或 <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a> 上支持 iTerm2"
+          }
+        }
+      }
+    },
+    "AboutWindow.BackersHeading" : {
+      "comment" : "Small uppercase heading in the about window above the list of individual backers",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterstützer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Backers"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支援者"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "후원자"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apoiadores"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Меценаты"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支持者"
           }
         }
       }
@@ -9571,7 +9859,7 @@
       }
     },
     "AboutWindow.Credits" : {
-      "comment" : "Link title in the about window that opens the credits page",
+      "comment" : "Button title in the about window that opens the credits page",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -9667,7 +9955,7 @@
       }
     },
     "AboutWindow.HomePage" : {
-      "comment" : "Link title in the about window that opens the iTerm2 home page",
+      "comment" : "Button title in the about window that opens the iTerm2 home page",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -9763,49 +10051,97 @@
       }
     },
     "AboutWindow.ReportBug" : {
-      "comment" : "Link title in the about window that opens the bug reporting page",
+      "comment" : "Button title in the about window that opens the bug reporting page",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Einen Fehler melden"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Report a bug"
+            "value" : "Report a Bug"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "バグを報告"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "버그 보고"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Reportar um bug"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Сообщить об ошибке"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "报告问题"
+          }
+        }
+      }
+    },
+    "AboutWindow.SponsorsHeading" : {
+      "comment" : "Small uppercase heading in the about window above the row of sponsor logos",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sponsoren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sponsors"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポンサー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스폰서"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patrocinadores"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спонсоры"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "赞助商"
           }
         }
       }
@@ -85578,6 +85914,102 @@
         }
       }
     },
+    "DeleteClipping.MissingArgument" : {
+      "comment" : "Error shown when delete_clipping is called without a required argument",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erforderliches Argument fehlt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Missing required argument"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必須の引数がありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "필수 인수가 없습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Argumento obrigatório ausente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отсутствует обязательный аргумент"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少必需的参数"
+          }
+        }
+      }
+    },
+    "DeleteClipping.NotFound" : {
+      "comment" : "Error shown when delete_clipping is given an ID that matches no clipping. The placeholder is the ID.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Ausschnitt mit der ID %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No clipping with ID %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID %@ のクリッピングはありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID가 %@인 클리핑이 없습니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum recorte com o ID %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет фрагмента с идентификатором %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有 ID 为 %@ 的剪贴"
+          }
+        }
+      }
+    },
     "DependencyEditor.AddDependencyMessage" : {
       "comment" : "Prompt asking which dependency to add",
       "extractionState" : "extracted_with_value",
@@ -103342,7 +103774,7 @@
     },
     "GeneralPrefs.BrowserScriptingPermissions" : {
       "comment" : "Search index display name for the panel listing websites where Python API scripts may load URLs or run JavaScript in a browser session",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104830,7 +105262,7 @@
     },
     "GeneralPrefs.RemoteHostGrants" : {
       "comment" : "Search index name for the button that lists remote hosts always allowed to use the iTerm2 API over SSH integration; matches that button’s title",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -104968,6 +105400,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在访达中显示"
+          }
+        }
+      }
+    },
+    "GeneralPrefs.ScriptingPermissions" : {
+      "comment" : "Search index display name for the panel listing websites where Python API scripts may load URLs or run JavaScript in a browser session, and remote hosts always allowed to use the iTerm2 API over SSH integration",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berechtigungen für Skripte und entfernte Hosts"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Permissions for scripts and remote hosts"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリプトとリモートホストの権限"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "스크립트 및 원격 호스트 권한"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permissões para scripts e hosts remotos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешения для скриптов и удалённых хостов"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "脚本和远程主机的权限"
           }
         }
       }
@@ -106635,7 +107115,7 @@
     },
     "IT2HostGrants.Done" : {
       "comment" : "Button that closes the list of remote hosts always allowed to use the iTerm2 API",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -106923,7 +107403,7 @@
     },
     "IT2HostGrants.WindowTitle" : {
       "comment" : "Title of the sheet listing remote hosts always allowed to use the iTerm2 API over SSH integration",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -121673,6 +122153,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已拷贝"
+          }
+        }
+      }
+    },
+    "MarkdownPorthole.ImageUnavailable" : {
+      "comment" : "Shown in a popover when an image in Markdown displayed in the terminal can't be shown. The placeholder is the image's path or URL as written in the Markdown.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ konnte nicht angezeigt werden. Es können nur Bilder aus Dateien auf diesem Mac angezeigt werden, und Bilder aus dem Web werden nie heruntergeladen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Couldn’t show “%@”. Only images in files on this Mac can be shown, and web images are never downloaded."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」を表示できませんでした。表示できるのはこのMac上のファイルの画像のみで、Web上の画像はダウンロードされません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”을(를) 표시할 수 없습니다. 이 Mac에 있는 파일의 이미지만 표시할 수 있으며, 웹 이미지는 다운로드하지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível mostrar “%@”. Só é possível mostrar imagens de arquivos neste Mac, e imagens da web nunca são baixadas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось показать «%@». Можно показывать только изображения из файлов на этом Mac, а изображения из интернета никогда не загружаются."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法显示“%@”。只能显示此 Mac 上文件中的图像，并且绝不会下载网络图像。"
+          }
+        }
+      }
+    },
+    "MarkdownPorthole.ShowImageToolTip" : {
+      "comment" : "Tooltip on a placeholder for an image in Markdown shown in the terminal. Clicking it shows the image in a popover.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klicken, um das Bild anzuzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Click to show the image"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クリックして画像を表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "클릭하여 이미지 표시"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clique para mostrar a imagem"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите, чтобы показать изображение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按以显示图像"
           }
         }
       }
@@ -201058,6 +201634,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "安装 Python 运行时"
+          }
+        }
+      }
+    },
+    "ScriptingPermissions.APIOverSSHTab" : {
+      "comment" : "Tab listing the remote hosts always allowed to use the iTerm2 API over SSH integration",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API-Zugriff über SSH"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API Access over SSH"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH経由のAPIアクセス"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH를 통한 API 접근"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acesso à API via SSH"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доступ к API через SSH"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 SSH 访问 API"
+          }
+        }
+      }
+    },
+    "ScriptingPermissions.BrowserTab" : {
+      "comment" : "Tab listing the websites on which scripts may load URLs or run JavaScript in a browser session",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Browser-Skripting"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Browser Scripting"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブラウザスクリプト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "브라우저 스크립팅"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts no navegador"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрипты в браузере"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浏览器脚本"
           }
         }
       }
