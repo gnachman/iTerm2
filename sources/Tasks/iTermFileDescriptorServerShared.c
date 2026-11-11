@@ -177,6 +177,14 @@ ssize_t iTermFileDescriptorClientWrite(int fd, const void *buffer, size_t buffer
     return totalWritten;
 }
 
+static ssize_t iTermFileDescriptorSendMsg(int connectionFd, const struct msghdr *message) {
+    ssize_t rc;
+    do {
+        rc = sendmsg(connectionFd, message, 0);
+    } while (rc == -1 && errno == EINTR);
+    return rc;
+}
+
 ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
                                                               void *buffer,
                                                               size_t bufferSize,
@@ -249,9 +257,22 @@ ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
     FDLog(LOG_DEBUG, "Send message of length %d, iovlen=%d along with file descriptor %d",
           (int)bufferSize, (int)message.msg_iovlen, fdToSend);
 
-    ssize_t rc = sendmsg(connectionFd, &message, 0);
-    while (rc == -1 && errno == EINTR) {
-        rc = sendmsg(connectionFd, &message, 0);
+    ssize_t rc = iTermFileDescriptorSendMsg(connectionFd, &message);
+    if (rc == -1 && errno == EMSGSIZE && bufferSize > 0) {
+        // When the peer has not read anything and the socket's buffer is completely full, macOS
+        // fails a sendmsg that carries a file descriptor with EMSGSIZE instead of blocking. This
+        // happens when the server sends many messages in a row (such as one report per child
+        // during the handshake) faster than the client reads them, because the blocking write
+        // of the previous message can leave the buffer exactly full. Wait until there is room
+        // and try again. Writability means at least the low-water mark (2 KB) is free, which is
+        // far more than one byte plus a control message, so a second EMSGSIZE is a real error.
+        FDLog(LOG_DEBUG, "sendmsg failed with EMSGSIZE. Waiting for the socket to become writable.");
+        int writable = 0;
+        if (iTermSelectForWriting(&connectionFd, 1, &writable, 1) == 1) {
+            rc = iTermFileDescriptorSendMsg(connectionFd, &message);
+        } else {
+            errno = EMSGSIZE;
+        }
     }
     if (rc >= 0 && rc < bufferSize) {
         // I don't know if this is possible, but you don't want to send the file descriptor

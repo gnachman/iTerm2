@@ -452,3 +452,8 @@ Bug Fixes:
   Detach or Kill no longer quits iTerm2 before
   the hidden session that started tmux can
   reappear. Issue 12644.
+- After an upgrade or restart, iTerm2 could fail
+  to reconnect to running sessions, especially
+  when many were open. Each one was replaced by
+  a new shell showing a “Session contents
+  restored” banner.

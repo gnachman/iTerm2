@@ -23,6 +23,7 @@
 #import "iTermCommandRunner.h"
 #import "iTermConfigGenerationTracker.h"
 #import "iTermData.h"
+#import "iTermFileDescriptorServerShared.h"
 #import "iTermRowOutputCache.h"
 #import "iTermRowRenderInputs.h"
 #import "iTermTLVCodec.h"
