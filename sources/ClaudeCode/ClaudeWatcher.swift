@@ -42,7 +42,7 @@ class ClaudeWatcher: NSObject {
           offerOverride: ((String) -> Void)? = nil) {
         self.threshold = threshold
         self.sessionExitedProvider = sessionExitedProvider ?? { guid in
-            guard let session = iTermController.sharedInstance().session(withGUID: guid) else {
+            guard let session = iTermController.sharedInstance()?.session(withGUID: guid) else {
                 return nil
             }
             return session.exited
@@ -183,7 +183,7 @@ extension ClaudeWatcher {
     }
 
     func offerClaudeCodeStatusTool(sessionID: String) {
-        guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
+        guard let session = iTermController.sharedInstance()?.session(withGUID: sessionID) else {
             DLog("ClaudeWatcher session \(sessionID) not found")
             return
         }

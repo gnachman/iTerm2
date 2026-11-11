@@ -121,10 +121,19 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         // and is checked separately, once per host. hostConductor covers a tmux pane over ssh.
         // Notifications are posted on the main thread.
         MainActor.assumeIsolated {
+            // During app termination +[iTermController releaseSharedInstance] nils the shared
+            // controller before windows close, and closing them ends their jobs, which posts this
+            // notification. sharedInstance() imports as an implicitly unwrapped optional, so
+            // using it unchecked would trap. There is nothing to check or prompt about while
+            // quitting.
+            guard let controller = iTermController.sharedInstance() else {
+                DLog("No iTermController; ignoring job change")
+                return
+            }
             var local = Set<String>()
             var remote = [String: PTYSession]()
             for guid in sessions {
-                guard let session = iTermController.sharedInstance().session(withGUID: guid),
+                guard let session = controller.session(withGUID: guid),
                       let conductor = session.hostConductor, conductor.framing else {
                     local.insert(guid)
                     continue
@@ -135,7 +144,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
                 }
             }
             for guid in sessions.subtracting(local).sorted() {
-                if let session = iTermController.sharedInstance().session(withGUID: guid) {
+                if let session = controller.session(withGUID: guid) {
                     checkIt2Reachability(session: session)
                 }
             }
@@ -191,7 +200,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
     @MainActor
     private func retryDeferredIt2Checks() {
         for guid in it2Scheduler.takeDeferred() {
-            if let session = iTermController.sharedInstance().anySession(withGUID: guid) {
+            if let session = iTermController.sharedInstance()?.anySession(withGUID: guid) {
                 checkIt2Reachability(session: session)
             }
         }
@@ -419,7 +428,7 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
                 // Any of the sessions running claude will do: the reinstall
                 // resolves CLAUDE_CONFIG_DIR for that session's profile.
                 let session = sessionGUIDs.lazy
-                    .compactMap { iTermController.sharedInstance().session(withGUID: $0) }
+                    .compactMap { iTermController.sharedInstance()?.session(withGUID: $0) }
                     .first
                 ClaudeCodeOnboarding.show(session: session)
             }

@@ -457,3 +457,6 @@ Bug Fixes:
   when many were open. Each one was replaced by
   a new shell showing a “Session contents
   restored” banner.
+- Fixed a crash when quitting iTerm2, including
+  to install an update, while Claude Code was
+  running in a session.
