@@ -170,21 +170,30 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         selectedPath = (outline.item(atRow: outline.selectedRow) as? iTermFileTreeEntry)?.path
     }
     private func request(_ path: String) {
-        guard !stopped, !loading.contains(path), source.cachedListing(atPath: path) == nil else { return }
+        guard !stopped, (path == rootDirectory || entries[path]?.isExpandable == true), !loading.contains(path), source.cachedListing(atPath: path) == nil else { return }
         loading.insert(path)
         let generation = source.generation
         source.loadDirectory(atPath: path) { [weak self] result in
             guard let self, self.source.generation == generation else { return }
             self.loading.remove(path)
+            guard path == self.rootDirectory || self.entries[path]?.isExpandable == true else { return }
             switch result {
             case .success(let children):
                 let childPaths = Set(children.map(\.path))
+                let expandablePaths = Set(children.filter(\.isExpandable).map(\.path))
                 let removedPaths = self.entries.keys.filter {
-                    URL(fileURLWithPath: $0).deletingLastPathComponent().path == path && !childPaths.contains($0)
+                    URL(fileURLWithPath: $0).deletingLastPathComponent().path == path && (!childPaths.contains($0) || (self.entries[$0]?.isExpandable == true && !expandablePaths.contains($0)))
                 }
                 for removed in removedPaths {
                     let descendants = self.entries.keys.filter { $0 == removed || $0.hasPrefix(removed + "/") }
                     for descendant in descendants { self.entries.removeValue(forKey: descendant) }
+                    let obsolete = Set(self.readErrors.keys).union(self.loading).union(self.expandedPaths).filter {
+                        $0 == removed || $0.hasPrefix(removed + "/")
+                    }
+                    for descendant in obsolete { self.readErrors.removeValue(forKey: descendant) }
+                    self.loading.subtract(obsolete)
+                    self.expandedPaths.subtract(obsolete)
+                    if let selected = self.selectedPath, selected == removed || selected.hasPrefix(removed + "/") { self.selectedPath = nil }
                 }
                 for entry in children {
                     if let existing = self.entries[entry.path], existing.isExpandable == entry.isExpandable { continue }
@@ -213,6 +222,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
             if row >= 0 { outline.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false) }
         }
         restoring = false
+        // An already-expanded NSOutline item does not emit willExpand after cache reset.
+        // Drive visible remembered expansions from current listings instead.
+        for path in source.directoriesNeedingLoad(expandedPaths: expandedPaths) { request(path) }
     }
     @objc private func toggleHidden(_ sender: Any?) {
         loading.removeAll()

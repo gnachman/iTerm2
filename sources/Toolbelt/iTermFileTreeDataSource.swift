@@ -32,6 +32,22 @@ final class iTermFileTreeDataSource {
 
     func cachedListing(atPath path: String) -> Listing? { cache[path] }
 
+    /// Load remembered expansions using current directory membership, independent of outline callbacks.
+    /// Descendants become candidates only after their expanded parent has been listed.
+    func directoriesNeedingLoad(expandedPaths: Set<String>) -> [String] {
+        guard let rootPath else { return [] }
+        var needed = [String]()
+        func visit(_ path: String) {
+            guard let listing = cache[path] else { needed.append(path); return }
+            guard case .success(let children) = listing else { return }
+            for child in children where child.isExpandable && expandedPaths.contains(child.path) {
+                visit(child.path)
+            }
+        }
+        visit(rootPath)
+        return needed
+    }
+
     func reset(rootPath: String?) {
         generation += 1
         self.rootPath = rootPath
@@ -70,9 +86,23 @@ final class iTermFileTreeDataSource {
                 guard let self, self.generation == generation, self.requests[path]?.0 == token,
                       let pending = self.requests.removeValue(forKey: path) else { return }
                 self.cache[path] = result
+                if case .success(let children) = result { self.reconcileDescendants(of: path, children: children) }
                 pending.1.forEach { $0(result) }
             }
         }
+    }
+
+    /// A successful parent listing is authoritative, including when a child failed before it.
+    private func reconcileDescendants(of path: String, children: [iTermFileTreeEntry]) {
+        let childPaths = Set(children.filter(\.isExpandable).map(\.path))
+        let prefix = path == "/" ? "/" : path + "/"
+        let tracked = Set(cache.keys).union(requests.keys)
+        let obsolete = tracked.filter { descendant in
+            guard descendant != path, descendant.hasPrefix(prefix) else { return false }
+            let name = descendant.dropFirst(prefix.count).split(separator: "/").first.map(String.init) ?? ""
+            return !childPaths.contains(prefix + name)
+        }
+        invalidate(directoryPaths: obsolete)
     }
 
     private static func list(path: String, showsHiddenFiles: Bool) -> Listing {
@@ -90,7 +120,10 @@ final class iTermFileTreeDataSource {
                 let values = try child.resourceValues(forKeys: keys)
                 if !showsHiddenFiles && (values.isHidden == true || child.lastPathComponent.hasPrefix(".")) { continue }
                 let directory = values.isDirectory == true
-                entries.append(iTermFileTreeEntry(path: child.path, name: child.lastPathComponent,
+                // Foundation can return /private/var URLs for a /var root. Preserve the
+                // parent spelling so every cached identity remains rooted in rootPath.
+                let childPath = (path as NSString).appendingPathComponent(child.lastPathComponent)
+                entries.append(iTermFileTreeEntry(path: childPath, name: child.lastPathComponent,
                                                   isDirectory: directory,
                                                   isExpandable: directory && values.isPackage != true && values.isSymbolicLink != true))
             }

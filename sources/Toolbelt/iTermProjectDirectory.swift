@@ -4,7 +4,10 @@ import Foundation
 final class iTermProjectDirectory: NSObject {
     let identifier: String
     let rootDirectory: String
-    var name: String { URL(fileURLWithPath: rootDirectory).lastPathComponent.isEmpty ? rootDirectory : URL(fileURLWithPath: rootDirectory).lastPathComponent }
+    var name: String {
+        let component = URL(fileURLWithPath: rootDirectory).lastPathComponent
+        return component.isEmpty ? rootDirectory : component
+    }
 
     init(identifier: String, rootDirectory: String) {
         self.identifier = identifier

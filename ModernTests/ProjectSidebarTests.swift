@@ -138,4 +138,83 @@ final class ProjectSidebarTests: XCTestCase {
         wait(for: [cancelled, drained], timeout: 5)
         XCTAssertTrue(source.loadedDirectoryPaths.isEmpty)
     }
+    func testExpandedDirectoriesReloadAfterVisibilityResetAndHiddenToggle() throws {
+        let folder = root.appendingPathComponent("folder")
+        let nested = folder.appendingPathComponent("nested")
+        try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
+        try Data().write(to: nested.appendingPathComponent("visible"))
+        try Data().write(to: nested.appendingPathComponent(".hidden"))
+        let source = iTermFileTreeDataSource()
+        source.reset(rootPath: root.path)
+        let expanded: Set<String> = [folder.path, nested.path]
+        func reloadRememberedExpansion() {
+            let done = expectation(description: "visible remembered expanded directories reloaded")
+            func loadNext() {
+                let paths = source.directoriesNeedingLoad(expandedPaths: expanded)
+                guard let path = paths.first else { done.fulfill(); return }
+                source.loadDirectory(atPath: path) { result in
+                    if case .failure = result { XCTFail("expanded directory failed to reload") }
+                    loadNext()
+                }
+            }
+            loadNext()
+            wait(for: [done], timeout: 5)
+            XCTAssertEqual(Set(source.loadedDirectoryPaths), [root.path, folder.path, nested.path])
+        }
+        reloadRememberedExpansion()
+        source.reset(rootPath: root.path) // Same cache reset used by hiding the view.
+        reloadRememberedExpansion()
+        XCTAssertEqual(try? source.cachedListing(atPath: nested.path)?.get().map(\.name), ["visible"])
+        source.showsHiddenFiles = true
+        reloadRememberedExpansion()
+        XCTAssertEqual(try? source.cachedListing(atPath: nested.path)?.get().map(\.name), [".hidden", "visible"])
+    }
+
+    func testParentRefreshReconcilesDeletedSubtreeForBothCompletionOrders() throws {
+        for parentFirst in [true, false] {
+            let folder = root.appendingPathComponent("folder")
+            let nested = folder.appendingPathComponent("nested")
+            try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
+            let queue = DispatchQueue(label: "ProjectSidebarTests.reconcile")
+            let source = iTermFileTreeDataSource(ioQueue: queue)
+            source.reset(rootPath: root.path)
+            let loaded = expectation(description: "initial nested listings")
+            loaded.expectedFulfillmentCount = 3
+            for path in [root.path, folder.path, nested.path] {
+                source.loadDirectory(atPath: path) { _ in loaded.fulfill() }
+            }
+            wait(for: [loaded], timeout: 5)
+            try FileManager.default.moveItem(at: folder, to: root.appendingPathComponent("renamed"))
+            source.invalidate(directoryPaths: [root.path, folder.path, nested.path])
+            queue.suspend()
+            let refreshed = expectation(description: "parent and obsolete children settle")
+            refreshed.expectedFulfillmentCount = 3
+            let paths = parentFirst ? [root.path, folder.path, nested.path] : [nested.path, folder.path, root.path]
+            for path in paths { source.loadDirectory(atPath: path) { _ in refreshed.fulfill() } }
+            let drained = expectation(description: "all old callbacks discarded")
+            queue.async { DispatchQueue.main.async { drained.fulfill() } }
+            queue.resume()
+            wait(for: [refreshed, drained], timeout: 5)
+            XCTAssertNil(source.cachedListing(atPath: folder.path))
+            XCTAssertNil(source.cachedListing(atPath: nested.path))
+            XCTAssertEqual(source.loadedDirectoryPaths, [root.path])
+            XCTAssertTrue(source.directoriesNeedingLoad(expandedPaths: [folder.path, nested.path]).isEmpty)
+            try FileManager.default.removeItem(at: root.appendingPathComponent("renamed"))
+        }
+    }
+
+    func testMissingRootRetainsItsReadError() {
+        let source = iTermFileTreeDataSource()
+        let missing = root.appendingPathComponent("missingRoot").path
+        source.reset(rootPath: missing)
+        let done = expectation(description: "real root failure remains available for retry")
+        source.loadDirectory(atPath: missing) { result in
+            guard case .failure = result else { XCTFail("missing root reported success"); done.fulfill(); return }
+            guard case .failure? = source.cachedListing(atPath: missing) else { XCTFail("root error pruned"); done.fulfill(); return }
+            done.fulfill()
+        }
+        wait(for: [done], timeout: 5)
+        XCTAssertEqual(source.loadedDirectoryPaths, [missing])
+    }
+
 }
