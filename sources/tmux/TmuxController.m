@@ -240,6 +240,8 @@ static const NSTimeInterval kTmuxServerLocalityRetryWindow = 10;
     NSMutableSet<NSNumber *> *_panesInLayouts;
     iTermTmuxSubscriptionHandle *_paneBorderLinesSubscription;
     BOOL _versionDetected;
+    // A kill-window went out for the attached session. See -exitExpected.
+    BOOL _killedWindow;
     // terminal guid -> [(tmux window id, tab index), ...]
     NSMutableDictionary<NSString *, NSMutableArray<iTermTuple<NSNumber *, NSNumber *> *> *> *_buriedWindows;
     NSString *_lastSaveBuriedIndexesCommand;
@@ -597,6 +599,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     self.sessionGuid = nil;
     self.sessionName = newSessionName;
     sessionId_ = sessionid;
+    _killedWindow = NO;
     _paneToActivateWhenCreated = -1;
     _tmuxCurrentWindowID = -1;
     // The old session's saved tab state must not be written into the new session's options.
@@ -1473,6 +1476,15 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         [self withdrawIT2ClientRecord];
         [self.gateway detach];
     }
+}
+
+- (BOOL)exitExpected {
+    if (gateway_.detachSent) {
+        return YES;
+    }
+    // Every window that isn't hidden or parked is in an iTerm2 window, so when the caller sees no
+    // windows the kills took the rest and the session is going away with them.
+    return _killedWindow && hiddenWindows_.count == 0 && _parkedWindows.count == 0;
 }
 
 - (void)detach {
@@ -3267,6 +3279,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 }
 
 - (void)killWindow:(int)window {
+    _killedWindow = YES;
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermTmuxControllerWillKillWindow object:@(window)];
     [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
            responseTarget:nil

@@ -59,6 +59,7 @@
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
 #import "QLPreviewPanel+iTerm.h"
+#import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
 #import "ToastWindowController.h"
@@ -967,6 +968,17 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     if (terminals.count > 0) {
         // The last window wasn't really closed, it was just the hotkey window getting ordered out or a window entering fullscreen.
         RLog(@"Not quitting automatically. Terminals are %@", terminals);
+        return NO;
+    }
+    PTYSession *buriedGateway = [[[iTermBuriedSessions sharedInstance] buriedSessions] objectPassingTest:^BOOL(PTYSession *session, NSUInteger index, BOOL *stop) {
+        return session.isTmuxGateway && session.tmuxController.exitExpected;
+    }];
+    if (buriedGateway && [iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession]) {
+        // Closing the last tmux window can detach or kill the session before its %exit has been
+        // handled. When it is, the gateway gets unburied into a window, so don't quit out from
+        // under it. A gateway that is merely buried (e.g., its windows were hidden) won't come
+        // back on its own, so it doesn't count. Issue 12644.
+        RLog(@"Not quitting because buried tmux gateway %@ will be restored when tmux exits", buriedGateway);
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {

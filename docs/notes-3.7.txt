@@ -434,3 +434,8 @@ Bug Fixes:
   keys sent nothing to the terminal when the
   Mission Control or Spaces shortcuts were
   enabled.
+- With “Quit when all windows are closed” on,
+  closing the last tmux window and choosing
+  Detach or Kill no longer quits iTerm2 before
+  the hidden session that started tmux can
+  reappear. Issue 12644.

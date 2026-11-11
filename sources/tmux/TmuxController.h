@@ -265,6 +265,10 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)killWindow:(int)window;
 - (void)unlinkWindowWithId:(int)windowId;
 - (void)requestDetach;
+// YES when tmux is expected to end control mode soon: a detach went out, or a window kill went out
+// and no hidden or parked window will keep the session alive. When it ends, a buried gateway is
+// restored, so the app shouldn't quit for having no windows in the meantime. See issue 12644.
+@property(nonatomic, readonly) BOOL exitExpected;
 - (void)renameWindowWithId:(int)windowId
            inSessionNumber:(NSNumber *)sessionNumber
                     toName:(NSString *)newName;
