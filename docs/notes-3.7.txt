@@ -421,6 +421,12 @@ Bug Fixes:
   a Claude Code workgroup opens, could start in
   the directory you were in before your last cd
   if you pasted or typed ahead the commands.
+- With tmux integration connected to another
+  machine, panes a Claude Code workgroup opened
+  outside of tmux could show a notice that their
+  directory was unavailable, or start in an
+  unrelated directory on your Mac. They now
+  start in your home directory.
 - In a nested shell, such as bash started from
   zsh or a poetry shell, new tabs and split
   panes that reuse the previous session’s

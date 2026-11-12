@@ -304,7 +304,10 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                                parent: PTYSession) {
         let mode = config.mode
         let urlString = config.urlString
-        parent.asyncFreshInitialDirectoryForNewSession { [session] oldCWD in
+        // The spawn set session.workgroupRemoteHost, which decides whether it runs on the
+        // leader's host (see workgroupPeerLaunchCommand).
+        parent.asyncWorkgroupPeerStartingDirectory(
+            runsOnRemoteHost: session.workgroupRemoteHost != nil) { [session] oldCWD in
             // Wrap workgroup-supplied commands so they go through
             // /usr/bin/login + ShellLauncher and pick up the user's
             // dotfiles / PATH. The launcher path here bypasses the

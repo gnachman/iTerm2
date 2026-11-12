@@ -2508,7 +2508,10 @@ extension PTYSession {
                     seal.reject(iTermError("Session terminated"))
                     return
                 }
-                asyncFreshInitialDirectoryForNewSession { [weak self] oldCWD in
+                // Read once: it decides both where the peer runs (workgroupRemoteHost, below)
+                // and the directory it starts in.
+                let remoteHost = self.remoteHostForNewWorkgroupPeer
+                asyncWorkgroupPeerStartingDirectory(runsOnRemoteHost: remoteHost != nil) { [weak self] oldCWD in
                     guard let self else {
                         seal.reject(iTermError("Session terminated"))
                         return
@@ -2539,7 +2542,6 @@ extension PTYSession {
                     // A leader on a host reached through SSH Integration: the peer runs there,
                     // where the files are. Its connection must set up it2 so an agent in it can
                     // report, whatever the leader's profile says about shell integration.
-                    let remoteHost = self.remoteHostForNewWorkgroupPeer
                     if let remoteHost {
                         profile[KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY] = true
                         profile[KEY_SSH_CONFIG] = remoteHost.sshConfig ?? [:]

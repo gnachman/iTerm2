@@ -215,8 +215,9 @@ static void HandleSigChld(int n) {
 // process. See iTermLSOF.
 - (NSString *)getWorkingDirectory {
     DLog(@"Want working directory of %@ - SYNCHRONOUS", @(self.pid));
-    if (self.pid == -1) {
-        DLog(@"Want to use the kernel to get the working directory but pid = -1");
+    // A tmux client's pid is 0: it has no process of its own on this Mac.
+    if (self.pid <= 0) {
+        DLog(@"Want to use the kernel to get the working directory but pid = %@", @(self.pid));
         return nil;
     }
     return [iTermLSOF workingDirectoryOfForegroundShellWithRootPid:self.pid
@@ -225,8 +226,9 @@ static void HandleSigChld(int n) {
 
 - (void)getWorkingDirectoryWithCompletion:(void (^)(NSString *pwd))completion {
     DLog(@"Want working directory of %@ - async", @(self.pid));
-    if (self.pid == -1) {
-        DLog(@"Want to use the kernel to get the working directory but pid = -1");
+    // A tmux client's pid is 0: it has no process of its own on this Mac.
+    if (self.pid <= 0) {
+        DLog(@"Want to use the kernel to get the working directory but pid = %@", @(self.pid));
         completion(nil);
         return;
     }
