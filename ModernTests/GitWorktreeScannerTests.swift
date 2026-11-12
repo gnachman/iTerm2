@@ -290,6 +290,26 @@ final class GitWorktreeScannerTests: XCTestCase {
         if snapshots.count == 2 { XCTAssertTrue(snapshots[0] === snapshots[1]) }
     }
 
+    func testNormalGitAdminDirectoryMatchesCheckoutDiscovery() throws {
+        let fixture = try GitFixture()
+        defer { fixture.remove() }
+        let linked = fixture.base + "/side"
+        try fixture.git(["worktree", "add", "-b", "side", linked])
+        let scanner = iTermGitWorktreeScanner(executor: ProcessGitExecutor())
+        let fromCheckout = scan(scanner, directory: fixture.root)
+        let fromAdmin = scan(scanner, directory: fixture.root + "/.git")
+        XCTAssertNil(fromCheckout.1)
+        XCTAssertNil(fromAdmin.1)
+        XCTAssertEqual(fromAdmin.0?.rootDirectory, fixture.root)
+        XCTAssertEqual(fromAdmin.0?.commonDirectory, fixture.root + "/.git")
+        XCTAssertEqual(fromAdmin.0?.worktrees.map { $0.rootDirectory }, [fixture.root, linked])
+        XCTAssertEqual(fromAdmin.0?.worktrees.map { $0.branch }, ["main", "side"])
+        XCTAssertTrue(fromAdmin.0?.worktrees.first?.isMain == true)
+        XCTAssertTrue(fromAdmin.0?.worktrees.first?.available == true)
+        XCTAssertEqual(fromAdmin.0?.worktrees.map { $0.rootDirectory },
+                       fromCheckout.0?.worktrees.map { $0.rootDirectory })
+    }
+
     func testBareRepositoryWithoutOptionalConfigKeepsLinkedCheckout() throws {
         let fixture = try GitFixture()
         defer { fixture.remove() }

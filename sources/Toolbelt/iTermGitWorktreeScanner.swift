@@ -312,7 +312,10 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
     }
 
     private func mainCheckout(directory: String, common: String, gitDirectory: String, job: Job) throws -> MainCheckout? {
-        guard gitDirectory == common else { return nil }
+        // Administrative-directory callers cannot provide a toplevel even
+        // though Git can list their checkouts. Enrichment is optional for them;
+        // the authoritative listing still determines the main/root rows.
+        guard gitDirectory == common, !Self.contains(common, directory: directory) else { return nil }
         let bare = try command(["rev-parse", "--is-bare-repository"], directory: directory, job: job)
         guard bare.status == 0 else { throw Self.commandError(bare.status) }
         if bare.output == Data("true\n".utf8) { return nil }
