@@ -47,6 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
                    argpath:(const char *)argpath
                       argv:(char **)argv
                 initialPwd:(const char *)initialPwd
+  requiresInitialDirectory:(BOOL)requiresInitialDirectory
                 newEnviron:(char **)newEnviron
                   callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback;
 

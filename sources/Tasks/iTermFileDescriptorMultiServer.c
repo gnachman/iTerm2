@@ -6,6 +6,7 @@
 //
 
 #include "iTermFileDescriptorMultiServer.h"
+#include "iTermRequiredDirectory.h"
 
 #include "iTermCLogging.h"
 #include "iTermFileDescriptorServerShared.h"
@@ -196,21 +197,27 @@ static int LaunchLegacy(const iTermMultiServerRequestLaunch *launch,
                       iTermTTYCellSizeMake(launch->columns, launch->rows),
                       iTermTTYPixelSizeMake(launch->pixel_width, launch->pixel_height),
                       launch->isUTF8);
-    int fd;
+    int fd = -1;
+    iTermRequiredDirectoryChannel directoryChannel;
+    *errorPtr = iTermRequiredDirectoryOpenChannel(launch->requiresInitialDirectory, &directoryChannel);
+    if (*errorPtr) { forkState->pid = -1; return -1; }
     forkState->numFileDescriptorsToPreserve = 3;
     FDLog(LOG_DEBUG, "Forking...");
     forkState->pid = forkpty(&fd, ttyStatePtr->tty, &ttyStatePtr->term, &ttyStatePtr->win);
     if (forkState->pid == (pid_t)0) {
         // Child
+        iTermRequiredDirectoryEnterInChild(launch->pwd, directoryChannel);
         iTermExec(launch->path,
                   launch->argv,
                   1,  /* close file descriptors */
                   0,  /* restore resource limits */
                   forkState,
-                  launch->pwd,
+                  launch->requiresInitialDirectory ? NULL : launch->pwd,
                   launch->envp,
                   2);  // write errors to stderr
     }
+    const int directoryError = iTermRequiredDirectoryFinishInParent(directoryChannel, &forkState->pid, &fd);
+    if (directoryError) { *errorPtr = directoryError; return -1; }
     if (forkState->pid == -1) {
         *errorPtr = errno;
         FDLog(LOG_DEBUG, "forkpty failed: %s", strerror(errno));
@@ -229,23 +236,29 @@ static int LaunchModern(const iTermMultiServerRequestLaunch *launch,
                       iTermTTYCellSizeMake(launch->columns, launch->rows),
                       iTermTTYPixelSizeMake(launch->pixel_width, launch->pixel_height),
                       launch->isUTF8);
-    int fd;
+    int fd = -1;
+    iTermRequiredDirectoryChannel directoryChannel;
+    *errorPtr = iTermRequiredDirectoryOpenChannel(launch->requiresInitialDirectory, &directoryChannel);
+    if (*errorPtr) { forkState->pid = -1; return -1; }
     forkState->numFileDescriptorsToPreserve = 3;
     FDLog(LOG_DEBUG, "Forking...");
     forkState->pid = forkpty(&fd, ttyStatePtr->tty, &ttyStatePtr->term, &ttyStatePtr->win);
     if (forkState->pid == (pid_t)0) {
         // Child
+        iTermRequiredDirectoryEnterInChild(launch->pwd, directoryChannel);
         int fds[] = { 0, 1, 2 };
         iTermSpawn(launch->path,
                    launch->argv,
                    fds,
                    forkState->numFileDescriptorsToPreserve,
-                   launch->pwd,
+                   launch->requiresInitialDirectory ? NULL : launch->pwd,
                    launch->envp,
                    2,  // write errors to stderr
                    disclaim,
                    0);
     }
+    const int directoryError = iTermRequiredDirectoryFinishInParent(directoryChannel, &forkState->pid, &fd);
+    if (directoryError) { *errorPtr = directoryError; return -1; }
     if (forkState->pid == -1) {
         *errorPtr = errno;
         FDLog(LOG_DEBUG, "forkpty failed: %s", strerror(errno));
@@ -329,7 +342,7 @@ static int HandleLaunchRequest(int fd, const iTermMultiServerRequestLaunch *laun
     int masterFd = Launch(launch, &forkState, &ttyState, &error);
     if (masterFd < 0) {
         return SendLaunchResponse(fd,
-                                  -1 /* status */,
+                                  launch->requiresInitialDirectory ? error : -1 /* status */,
                                   0 /* pid */,
                                   -1 /* masterFd */,
                                   "" /* tty */,
@@ -517,7 +530,8 @@ static int HandleHandshake(int fd, iTermMultiServerRequestHandshake *handshake) 
         .type = iTermMultiServerRPCTypeHandshake,
         .payload = {
             .handshake = {
-                .protocolVersion = iTermMultiServerProtocolVersion2,
+                .protocolVersion = handshake->maximumProtocolVersion >= iTermMultiServerProtocolVersion3 ?
+                    iTermMultiServerProtocolVersion3 : iTermMultiServerProtocolVersion2,
                 .numChildren = GetNumberOfReportableChildren(),
                 .pid = getpid()
             }

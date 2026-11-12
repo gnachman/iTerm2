@@ -412,6 +412,7 @@ static const int iTermMultiServerMaxForeignServersToSkip = 128;
                    argpath:(const char *)argpath
                       argv:(char **)argv
                 initialPwd:(const char *)initialPwd
+  requiresInitialDirectory:(BOOL)requiresInitialDirectory
                 newEnviron:(char **)newEnviron
                   callback:(iTermCallback<id, iTermResult<iTermFileDescriptorMultiClientChild *> *> *)callback {
     DLog(@"begin");
@@ -430,6 +431,7 @@ static const int iTermMultiServerMaxForeignServersToSkip = 128;
                                                argv:argv
                                         environment:newEnviron
                                                 pwd:initialPwd
+                           requiresInitialDirectory:requiresInitialDirectory
                                            ttyState:ttyState
                                            callback:callback];
     }];

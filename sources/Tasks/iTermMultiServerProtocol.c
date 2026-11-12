@@ -45,6 +45,7 @@ typedef enum iTermMultiServerProtocolError {
     iTermMultiServerProtocolErrorLaunchRequestMissingUTF8 = 307,
     iTermMultiServerProtocolErrorLaunchRequestMissingPWD = 308,
     iTermMultiServerProtocolErrorLaunchRequestMissingUniqueID = 309,
+    iTermMultiServerProtocolErrorLaunchRequestInvalidRequiredDirectory = 310,
 
     iTermMultiServerProtocolErrorLaunchResponseMissingStatus = 400,
     iTermMultiServerProtocolErrorLaunchResponseMissingPID = 401,
@@ -150,6 +151,15 @@ static int ParseLaunchReqest(iTermClientServerProtocolMessageParser *parser,
     if (iTermClientServerProtocolParseTaggedInt(parser, &out->uniqueId, sizeof(out->uniqueId), iTermMultiServerTagLaunchRequestUniqueId)) {
         return iTermMultiServerProtocolErrorLaunchRequestMissingUniqueID;
     }
+    out->requiresInitialDirectory = 0;
+    if ((size_t)parser->offset < parser->message->message.msg_iov[0].iov_len) {
+        if (iTermClientServerProtocolParseTaggedInt(parser, &out->requiresInitialDirectory,
+                                                    sizeof(out->requiresInitialDirectory),
+                                                    iTermMultiServerTagLaunchRequestRequiresInitialDirectory) ||
+            out->requiresInitialDirectory != 1) {
+            return iTermMultiServerProtocolErrorLaunchRequestInvalidRequiredDirectory;
+        }
+    }
     return 0;
 }
 
@@ -183,6 +193,12 @@ static int EncodeLaunchRequest(iTermClientServerProtocolMessageEncoder *encoder,
         return iTermMultiServerProtocolErrorEncodingFailed;
     }
     if (iTermClientServerProtocolEncodeTaggedInt(encoder, &launch->uniqueId, sizeof(launch->uniqueId), iTermMultiServerTagLaunchRequestUniqueId)) {
+        return iTermMultiServerProtocolErrorEncodingFailed;
+    }
+    if (launch->requiresInitialDirectory &&
+        iTermClientServerProtocolEncodeTaggedInt(encoder, &launch->requiresInitialDirectory,
+                                                 sizeof(launch->requiresInitialDirectory),
+                                                 iTermMultiServerTagLaunchRequestRequiresInitialDirectory)) {
         return iTermMultiServerProtocolErrorEncodingFailed;
     }
     return 0;
@@ -433,6 +449,12 @@ int iTermMultiServerProtocolParseMessageFromServer(iTermClientServerProtocolMess
             int rc = ParseLaunchResponse(&parser, &out->payload.launch);
             if (rc) {
                 return rc;
+            }
+            // Failed launches deliberately carry no PTY descriptor. Preserve their errno so
+            // the client can complete the launch as failed instead of losing the connection.
+            if (out->payload.launch.status != 0) {
+                out->payload.launch.fd = -1;
+                return 0;
             }
             return iTermMultiServerProtocolGetFileDescriptor(message, &out->payload.launch.fd);
         }

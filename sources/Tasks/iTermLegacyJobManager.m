@@ -118,6 +118,7 @@
                                                       newEnviron:(NSArray<NSString *> *)newEnviron
                                                             task:(id<iTermTask>)task {
     iTermForkState forkState = {
+        .requiresInitialDirectory = [(PTYTask *)task requiresInitialDirectory],
         .connectionFd = -1,
         .deadMansPipe = { 0, 0 },
     };

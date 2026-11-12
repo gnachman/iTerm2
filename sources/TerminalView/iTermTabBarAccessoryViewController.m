@@ -37,7 +37,12 @@
 }
 
 - (void)loadView {
-    self.view = _view;
+    // Keep corner controls outside the tab bar's overflow and new-tab hit regions.
+    NSView *container = [[NSView alloc] initWithFrame:_view.frame];
+    _view.frame = container.bounds;
+    _view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [container addSubview:_view];
+    self.view = container;
 }
 
 - (__kindof NSView *)realView {

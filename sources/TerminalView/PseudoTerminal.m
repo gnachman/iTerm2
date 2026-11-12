@@ -1,3 +1,4 @@
+#import "iTermRequiredDirectory.h"
 #import "PseudoTerminal+Private.h"
 #import "PseudoTerminal+TouchBar.h"
 #import "PseudoTerminal+WindowStyle.h"
@@ -252,6 +253,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 };
 
 @interface PseudoTerminal () <
+    iTermProjectWindowDelegate,
+    iTermProjectSidebarDelegate,
     iTermBroadcastInputHelperDelegate,
     iTermGraphCodable,
     iTermObject,
@@ -296,6 +299,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 @end
 
 @implementation PseudoTerminal {
+    iTermProjectWindowController *_projectController;
+    NSString *_projectForNewTab;
+    NSUInteger _projectSessionPlacementDepth;
 
     // Reentrancy guard for -enforceTabGroupContiguityInvariant (it reorders
     // tabs, which can funnel back through reorder plumbing).
@@ -1113,6 +1119,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
     _deallocing = YES;
+    _projectController.delegate = nil;
+    [_projectController release];
+    _projectController = nil;
+    [_projectForNewTab release];
     [_contentView shutdown];
 
     [self closeInstantReplayWindow];
@@ -1294,10 +1304,33 @@ ITERM_WEAKLY_REFERENCEABLE
     });
 }
 
+- (CGFloat)rootTerminalViewMinimumTerminalWidth {
+    CGFloat width = 1;
+    for (PTYTab *tab in self.tabs) {
+        width = MAX(width, tab.minSize.width);
+    }
+    return width;
+}
+
 - (void)rootTerminalViewDidResizeContentArea {
+    _projectController.sidebarWidth = _contentView.projectSidebarWidth;
     // Fixes an analog of issue 4323 that happens with left-side tabs. More
     // details in -toolbeltDidFinishGrowing.
     [self fitTabsToWindow];
+}
+
+- (void)rootTerminalViewToggleProjectSidebar {
+    [self toggleProjectSidebar:nil];
+}
+
+- (void)rootTerminalViewToggleFileTree {
+    if (!_contentView.shouldShowToolbelt) { [self prepareProjectFileTree]; }
+    hidingToolbeltShouldResizeWindow_ = NO;
+    _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
+    [self repositionWidgets];
+    [self fitTabsToWindow];
+    [self notifyTmuxOfWindowResize];
+    [self invalidateRestorableState];
 }
 
 - (void)toggleBroadcastingToCurrentSession:(id)sender {
@@ -4444,10 +4477,14 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     [_locationLockController loadArrangement:arrangement];
     self.scope.windowTitleOverrideFormat = arrangement[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE];
 
-    _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
+    _contentView.shouldShowToolbelt = NO;
     [_contentView constrainToolbeltWidth];
     [_contentView setToolbeltProportions:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS]];
     [_contentView.toolbelt restoreFromState:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT]];
+    [[self projectController] restoreFromState:[NSDictionary castFrom:arrangement[@"Project Sidebar"]] ?: @{}];
+    _contentView.shouldShowProjectSidebar = _projectController.sidebarVisible;
+    _contentView.projectSidebarWidth = _projectController.sidebarWidth;
+    [_projectController activeTabDidChange];
 
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
@@ -4778,6 +4815,10 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
               includingContents:(BOOL)includeContents
                         encoder:(id<iTermEncoderAdapter>)result {
     NSRect rect = [[self window] frame];
+    if (_projectController) {
+        _projectController.sidebarWidth = _contentView.projectSidebarWidth;
+        result[@"Project Sidebar"] = [_projectController restorableState];
+    }
 
     return [PseudoTerminal populateArrangementWith:tabsOrSession
                                  includingContents:includeContents
@@ -5025,8 +5066,439 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)refreshTools {
+    [self projectController];
+    [self projectStateDidChange];
     [_contentView.toolbelt refreshTools];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
+}
+
+#pragma mark - Local projects
+
+- (iTermProjectWindowController *)projectController {
+    if (_deallocing || _closing) { return nil; }
+    if (!_projectController) {
+        _projectController = [[iTermProjectWindowController alloc] init];
+        _projectController.delegate = self;
+        _contentView.projectSidebar.delegate = self;
+        [self projectStateDidChange];
+    }
+    return _projectController;
+}
+
+- (NSDictionary<NSString *, NSString *> *)projectTabAssociations {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    for (PTYTab *tab in self.tabs) {
+        result[tab.stringUniqueIdentifier] = tab.projectIdentifier ?: @"";
+    }
+    return result;
+}
+
+- (NSString *)projectActiveTabIdentifier {
+    return self.currentTab.stringUniqueIdentifier;
+}
+
+- (void)projectSelectTab:(NSString *)identifier {
+    for (PTYTab *tab in self.tabs) {
+        if ([tab.stringUniqueIdentifier isEqual:identifier]) {
+            [_contentView.tabView selectTabViewItem:tab.tabViewItem];
+            break;
+        }
+    }
+}
+
+- (void)projectAssign:(NSString *)project toTab:(NSString *)identifier {
+    for (PTYTab *tab in self.tabs) {
+        if ([tab.stringUniqueIdentifier isEqual:identifier]) {
+            tab.projectIdentifier = project.length ? project : nil;
+            for (PTYSession *session in tab.sessions) {
+                session.projectIdentifier = project ?: @"";
+                session.liveSession.projectIdentifier = project ?: @"";
+            }
+            break;
+        }
+    }
+}
+
+- (PTYSession *)projectBindingSession:(PTYSession *)session { return session.liveSession ?: session; }
+
+- (NSArray<iTermProjectSessionContext *> *)projectSessionContexts {
+    NSMutableArray<iTermProjectSessionContext *> *contexts = [NSMutableArray array];
+    NSMutableSet<NSString *> *seen = [NSMutableSet set];
+    for (PTYTab *tab in self.tabs) {
+        for (PTYSession *session in tab.sessions) {
+            PTYSession *binding = [self projectBindingSession:session];
+            if ([seen containsObject:binding.stableID]) { continue; }
+            [seen addObject:binding.stableID];
+            NSString *project = [iTermProjectSessionOwnership effectiveIdentifier:binding.projectIdentifier inheriting:tab.projectIdentifier];
+            [contexts addObject:[[[iTermProjectSessionContext alloc] initWithSessionIdentifier:binding.stableID
+                tabIdentifier:tab.stringUniqueIdentifier projectIdentifier:project exited:binding.exited] autorelease]];
+        }
+    }
+    return contexts;
+}
+
+- (NSString *)projectActiveSessionIdentifier { return [self projectBindingSession:self.currentSession].stableID; }
+
+- (void)projectAssignSession:(NSString *)project toSession:(NSString *)identifier {
+    for (PTYSession *session in self.allSessions) {
+        PTYSession *binding = [self projectBindingSession:session];
+        if ([binding.stableID isEqualToString:identifier]) {
+            binding.projectIdentifier = project ?: @""; session.projectIdentifier = project ?: @""; return;
+        }
+    }
+}
+
+- (void)projectSelectSession:(NSString *)identifier {
+    for (PTYSession *session in self.allSessions) {
+        PTYSession *binding = [self projectBindingSession:session];
+        if (![binding.stableID isEqualToString:identifier] || binding.exited) { continue; }
+        PTYTab *tab = [self tabForSession:session];
+        if (!tab || ![self.tabs containsObject:tab]) { return; }
+        [_contentView.tabView selectTabViewItem:tab.tabViewItem];
+        [tab setActiveSessionRestoringFocus:session];
+        return;
+    }
+}
+
+- (void)assignTabToProject:(NSMenuItem *)sender {
+    NSArray<NSString *> *identifiers = sender.representedObject;
+    NSString *project = identifiers[1];
+    if (project.length && ![[iTermProjectCatalog shared] projectWithIdentifier:project]) {
+        return;
+    }
+    [self projectAssign:project toTab:identifiers[0]];
+    if (_projectSessionPlacementDepth == 0) { [[self projectController] activeTabDidChange]; }
+}
+
+- (void)projectStateDidChange {
+    _contentView.projectSidebar.tree = [[[iTermProjectSidebarTree alloc] initWithCatalog:[iTermProjectCatalog shared]] autorelease];
+    _contentView.projectSidebar.selectedProjectIdentifier = _projectController.selectedProjectIdentifier;
+    _contentView.projectSidebar.selectedWorktreeIdentifier = _projectController.selectedWorktreeIdentifier;
+    // Availability depends on the session, not a synchronous working-directory poll.
+    PTYSession *session = [self projectBindingSession:self.currentSession];
+    _contentView.projectSidebar.canAddCurrentDirectory =
+        session && !session.exited && !session.isBrowserSession && !session.sshIdentity;
+    NSString *rootDirectory = _projectController.selectedRootDirectory;
+    if (![_contentView.toolbelt.projectRootDirectory isEqualToString:rootDirectory]) {
+        _contentView.toolbelt.projectRootDirectory = rootDirectory;
+    }
+    __weak __typeof(self) weakSelf = self;
+    _contentView.toolbelt.projectOpenTerminal = ^(NSString *directory, iTermOpenStyle style) {
+        [[weakSelf projectController] openTerminalInDirectory:directory style:style];
+    };
+    _contentView.toolbelt.projectCanOpenTerminal = ^BOOL(iTermOpenStyle style) { return [weakSelf projectCanLaunchWithStyle:style]; };
+}
+
+- (void)projectWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
+    PTYSession *session = [self projectBindingSession:self.currentSession];
+    if (_closing || _deallocing || !session || session.exited || session.isBrowserSession || session.sshIdentity) {
+        completion(nil);
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    __weak PTYSession *weakSession = session;
+    [session asyncCurrentLocalWorkingDirectory:^(NSString *directory) {
+        PseudoTerminal *term = [[weakSelf retain] autorelease];
+        PTYSession *original = [[weakSession retain] autorelease];
+        if (!term || term->_closing || term->_deallocing || !original || [term projectBindingSession:term.currentSession] != original ||
+            original.exited || original.isBrowserSession || original.sshIdentity) {
+            completion(nil);
+            return;
+        }
+        completion(directory);
+    }];
+}
+
+- (void)toggleProjectSidebar:(id)sender {
+    iTermProjectWindowController *controller = [self projectController];
+    controller.sidebarVisible = !controller.sidebarVisible;
+    _contentView.shouldShowProjectSidebar = controller.sidebarVisible;
+    [self repositionWidgets];
+    [self fitTabsToWindow];
+    [self invalidateRestorableState];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectProject:(iTermProjectDirectory *)project openIfNeeded:(BOOL)openIfNeeded {
+    DLog(@"Select project %@ in window %@", project.identifier, self.terminalGuid);
+    [[self projectController] selectProject:project openIfNeeded:openIfNeeded];
+    [self prepareProjectFileTree];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectWorktree:(iTermGitWorktree *)worktree openIfNeeded:(BOOL)openIfNeeded {
+    [[self projectController] selectWorktree:worktree openIfNeeded:openIfNeeded];
+    [self prepareProjectFileTree];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectRepository:(iTermGitRepositorySnapshot *)repository openIfNeeded:(BOOL)openIfNeeded {
+    [[self projectController] selectRepository:repository openIfNeeded:openIfNeeded];
+    [self prepareProjectFileTree];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar openProject:(iTermProjectDirectory *)project style:(iTermOpenStyle)style {
+    [[self projectController] openProject:project style:style];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar openWorktree:(iTermGitWorktree *)worktree style:(iTermOpenStyle)style {
+    [[self projectController] openWorktree:worktree style:style];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar openRepository:(iTermGitRepositorySnapshot *)repository style:(iTermOpenStyle)style {
+    DLog(@"Open repository %@ in window %@ with style %lu", repository.identifier, self.terminalGuid, (unsigned long)style);
+    [[self projectController] openRepository:repository style:style];
+}
+
+- (BOOL)projectSidebar:(iTermProjectSidebarView *)sidebar canOpenTerminalWithStyle:(iTermOpenStyle)style {
+    return [self projectCanLaunchWithStyle:style];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar refreshRepositories:(NSArray<NSString *> *)identifiers {
+    [[iTermProjectCatalog shared] refreshRepositories:identifiers];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar removeRepository:(iTermGitRepositorySnapshot *)repository {
+    [[iTermProjectCatalog shared] removeRepositoryWithIdentifier:repository.identifier];
+}
+
+- (void)projectReportError:(NSError *)error {
+    [self showProjectError:error.localizedDescription];
+}
+
+- (void)prepareProjectFileTree {
+    if (![[iTermToolbeltView configuredTools] containsObject:kFileTreeToolName]) {
+        [iTermToolbeltView toggleShouldShowTool:kFileTreeToolName];
+    }
+    [_contentView.toolbelt refreshTools];
+    [self projectStateDidChange];
+}
+
+- (void)projectSidebarAddFolder:(iTermProjectSidebarView *)sidebar {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = YES;
+    panel.canChooseFiles = NO;
+    panel.allowsMultipleSelection = NO;
+    __weak __typeof(self) weakSelf = self;
+    [panel beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response) {
+        if (response == NSModalResponseOK) {
+            [weakSelf addProjectDirectory:panel.URL.path];
+        }
+    }];
+}
+
+- (void)projectSidebarAddCurrentDirectory:(iTermProjectSidebarView *)sidebar {
+    __weak __typeof(self) weakSelf = self;
+    [[self projectController] addCurrentDirectoryWithCompletion:^(iTermProjectDirectory *project, NSError *error) {
+        PseudoTerminal *term = [[weakSelf retain] autorelease];
+        if (!term || term->_closing || term->_deallocing) { return; }
+        if (error) {
+            [term showProjectError:error.localizedDescription];
+        } else if (project) {
+            [term prepareProjectFileTree];
+        }
+    }];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar removeProject:(iTermProjectDirectory *)project {
+    DLog(@"Remove project %@ from the shared catalog", project.identifier);
+    [[iTermProjectCatalog shared] removeProjectWithIdentifier:project.identifier];
+}
+
+- (void)showProjectError:(NSString *)message {
+    [iTermWarning showWarningWithTitle:message
+                              actions:@[iTermLocalizedOK()]
+                            accessory:nil
+                           identifier:@"NoSyncProjectDirectoryError"
+                          silenceable:kiTermWarningTypePersistent
+                              heading:NSLocalizedStringWithDefaultValue(@"Projects.Error", nil, [NSBundle mainBundle], @"Could Not Open Project", @"Error heading for an unavailable project directory or terminal")
+                               window:self.window];
+}
+
+- (void)addProjectDirectory:(NSString *)directory {
+    __weak __typeof(self) weakSelf = self;
+    [[self projectController] addDirectoryAtPath:directory completion:^(iTermProjectDirectory *project, NSError *error) {
+        PseudoTerminal *term = [[weakSelf retain] autorelease];
+        if (!term || term->_closing || term->_deallocing) { return; }
+        if (error && error.code != NSUserCancelledError) {
+            [term showProjectError:error.localizedDescription];
+        } else if (project) {
+            [term prepareProjectFileTree];
+        }
+    }];
+}
+
+- (Profile *)projectProfileForStyle:(iTermOpenStyle)style {
+    Profile *profile = nil;
+    if (style == iTermOpenStyleVerticalSplit || style == iTermOpenStyleHorizontalSplit) {
+        profile = [self profileForSplittingCurrentSession];
+        if (profile.profileType != ProfileTypeTerminal || profile.sshIdentity) { profile = nil; }
+    }
+    if (!profile) { profile = [[ProfileModel sharedInstance] defaultBookmark]; }
+    if (profile.profileType == ProfileTypeTerminal && !profile.sshIdentity) { return profile; }
+    for (Profile *candidate in [[ProfileModel sharedInstance] bookmarks]) {
+        if (candidate.profileType == ProfileTypeTerminal && !candidate.sshIdentity) { return candidate; }
+    }
+    return nil;
+}
+
+- (BOOL)projectCanLaunchWithStyle:(iTermOpenStyle)style {
+    if (_closing || _deallocing) { return NO; }
+    Profile *profile = [self projectProfileForStyle:style];
+    if (!profile) { return NO; }
+    switch (style) {
+        case iTermOpenStyleWindow: return YES;
+        case iTermOpenStyleTab: return !_layoutLocked || self.numberOfTabs == 0;
+        case iTermOpenStyleVerticalSplit:
+        case iTermOpenStyleHorizontalSplit:
+            return self.currentSession && !self.currentSession.exited && !self.currentSession.isBrowserSession &&
+                [self projectBindingSession:self.currentSession] == self.currentSession &&
+                ([self.currentTab splitTargetForSession:self.currentSession] ?: self.currentSession) == self.currentSession &&
+                !self.currentSession.isTmuxClient && !self.currentTab.isTmuxTab && !_layoutLocked && !self.currentSession.locked &&
+                [self canSplitPaneVertically:style == iTermOpenStyleVerticalSplit withBookmark:profile];
+        case iTermOpenStyleFloatingPane: return NO;
+    }
+    return NO;
+}
+
+- (void)projectRemoveFailedSession:(PTYSession *)session {
+    PTYTab *tab = [self tabForSession:session];
+    if (!tab || ![self.tabs containsObject:tab]) { return; }
+    [session terminate];
+    if (tab.sessions.count == 1 && tab.sessions.firstObject == session) { [self closeTab:tab]; }
+    else { [tab removeSession:session]; }
+}
+
+- (void)projectLaunch:(iTermProjectDirectory *)project
+             directory:(NSString *)directory
+            completion:(void (^)(NSString *))completion {
+    [self projectLaunch:project directory:directory style:iTermOpenStyleTab
+        targetSessionIdentifier:self.currentSession.stableID completion:^(iTermProjectTerminalLaunchResult *result) {
+        completion(result.tabIdentifier);
+    }];
+}
+
+- (void)projectLaunch:(iTermProjectDirectory *)project
+             directory:(NSString *)directory
+                 style:(iTermOpenStyle)style
+ targetSessionIdentifier:(NSString *)targetIdentifier
+            completion:(void (^)(iTermProjectTerminalLaunchResult *))completion {
+    __weak __typeof(self) weakSelf = self;
+    const uint64_t generation = _projectController.selectionGeneration;
+    __weak NSWindow *originKeyWindow = NSApp.keyWindow;
+    const BOOL originAppActive = NSApp.isActive;
+    NSString *target = [[targetIdentifier copy] autorelease];
+    Profile *profile = [self projectProfileForStyle:style];
+    if (![self projectCanLaunchWithStyle:style] || ![directory isAbsolutePath] ||
+        [directory rangeOfString:[NSString stringWithFormat:@"%C", (unichar)0]].location != NSNotFound) {
+        completion(nil);
+        return;
+    }
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        const BOOL available = iTermRequiredDirectoryValidate(directory.fileSystemRepresentation) == 0;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            PseudoTerminal *term = [[weakSelf retain] autorelease];
+            if (!term || term->_closing || term->_deallocing ||
+                ![term->_projectController isLaunchRequestCurrentWithTargetSessionIdentifier:target generation:generation] ||
+                ![[iTermProjectCatalog shared] projectWithIdentifier:project.identifier] ||
+                ![term projectCanLaunchWithStyle:style]) { completion(nil); return; }
+            if (!available) {
+                [term showProjectError:NSLocalizedStringWithDefaultValue(@"Projects.DirectoryUnavailable", nil, [NSBundle mainBundle], @"The selected directory is unavailable. Reconnect its disk or choose another project.", @"Message when a project directory cannot be read")];
+                completion(nil); return;
+            }
+            __block BOOL canceled = NO;
+            void (^finished)(PTYSession *, BOOL) = ^(PTYSession *session, BOOL ok) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    PseudoTerminal *source = [[weakSelf retain] autorelease];
+                    PseudoTerminal *owner = session ? [[iTermController sharedInstance] terminalWithSession:session] : nil;
+                    if (!ok) {
+                        if (owner == source && [session.projectIdentifier isEqualToString:project.identifier]) {
+                            [owner projectRemoveFailedSession:session];
+                        }
+                        const BOOL current = source && !source->_closing && !source->_deallocing &&
+                            [source->_projectController isLaunchRequestCurrentWithTargetSessionIdentifier:target generation:generation] &&
+                            (style != iTermOpenStyleWindow ||
+                             (NSApp.keyWindow == originKeyWindow && NSApp.isActive == originAppActive));
+                        if (!canceled && current) {
+                            [source showProjectError:NSLocalizedStringWithDefaultValue(@"Projects.LaunchFailed", nil, [NSBundle mainBundle], @"The terminal could not be started in this project.", @"Message when project terminal launch fails")];
+                        }
+                        completion(nil); return;
+                    }
+                    PTYTab *tab = [owner tabForSession:session];
+                    if (!owner || !tab || session.exited ||
+                        ![session.projectIdentifier isEqualToString:project.identifier] ||
+                        (style != iTermOpenStyleWindow && owner != source)) { completion(nil); return; }
+                    completion([[[iTermProjectTerminalLaunchResult alloc] initWithSessionIdentifier:session.stableID
+                        tabIdentifier:tab.stringUniqueIdentifier windowIdentifier:owner.terminalGuid] autorelease]);
+                });
+            };
+            if (style == iTermOpenStyleWindow) {
+                [iTermSessionLauncher launchBookmark:profile inTerminal:nil style:iTermOpenStyleWindow withURL:nil
+                    hotkeyWindowType:iTermHotkeyWindowTypeNone makeKey:NO canActivate:NO respectTabbingMode:NO index:nil command:nil
+                    makeSession:^(Profile *resolvedProfile, PseudoTerminal *window, void (^done)(PTYSession *)) {
+                        PseudoTerminal *source = [[weakSelf retain] autorelease];
+                        if (!source || source->_closing || source->_deallocing ||
+                            ![source->_projectController isLaunchRequestCurrentWithTargetSessionIdentifier:target generation:generation] ||
+                            NSApp.keyWindow != originKeyWindow || NSApp.isActive != originAppActive) {
+                            canceled = YES; done(nil); return;
+                        }
+                        window->_projectForNewTab = [project.identifier copy];
+                        window->_projectSessionPlacementDepth++;
+                        @try {
+                        [window createTabWithProfile:resolvedProfile withCommand:nil environment:nil tabIndex:nil previousDirectory:directory
+                            parent:nil forceUseOldCWD:YES completion:^(PTYSession *session, BOOL ok) {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    PseudoTerminal *source = [[weakSelf retain] autorelease];
+                                    const BOOL current = source && !source->_closing && !source->_deallocing &&
+                                        [source->_projectController isLaunchRequestCurrentWithTargetSessionIdentifier:target generation:generation] &&
+                                        NSApp.keyWindow == originKeyWindow && NSApp.isActive == originAppActive &&
+                                        [[iTermProjectCatalog shared] projectWithIdentifier:project.identifier];
+                                    const BOOL valid = ok && session && !session.exited &&
+                                        [[iTermController sharedInstance] terminalWithSession:session] == window &&
+                                        [window tabForSession:session] && [session.projectIdentifier isEqualToString:project.identifier];
+                                    if (!valid || !current) {
+                                        canceled = !current;
+                                        if (session && [[iTermController sharedInstance] terminalWithSession:session] == window &&
+                                            [session.projectIdentifier isEqualToString:project.identifier]) { [window projectRemoveFailedSession:session]; }
+                                        done(nil);
+                                    } else {
+                                        // Commit presentation before the launcher schedules its profile’s fullscreen transition.
+                                        [[window projectController] activeSessionDidChange];
+                                        [window.window makeKeyAndOrderFront:window];
+                                        [[iTermController sharedInstance] setCurrentTerminal:window];
+                                        [window.window makeFirstResponder:session.mainResponder];
+                                        done(session);
+                                    }
+                                });
+                            }];
+                        } @finally { [window->_projectForNewTab release]; window->_projectForNewTab = nil; window->_projectSessionPlacementDepth--; }
+                    } didMakeSession:nil completion:finished];
+                return;
+            }
+            PTYSession *original = term.currentSession;
+            PTYTab *originalTab = term.currentTab;
+            term->_projectSessionPlacementDepth++;
+            @try {
+                if (style == iTermOpenStyleTab) {
+                    const BOOL selectNewTabs = term.automaticallySelectNewTabs;
+                    const BOOL orderNewTabs = term.automaticallyOrderFrontNewTabs;
+                    term.automaticallySelectNewTabs = NO; term.automaticallyOrderFrontNewTabs = NO;
+                    term->_projectForNewTab = [project.identifier copy];
+                    @try {
+                        [term createTabWithProfile:profile withCommand:nil environment:nil tabIndex:nil previousDirectory:directory
+                            parent:nil forceUseOldCWD:YES completion:finished];
+                    } @finally {
+                        [term->_projectForNewTab release]; term->_projectForNewTab = nil;
+                        term.automaticallySelectNewTabs = selectNewTabs; term.automaticallyOrderFrontNewTabs = orderNewTabs;
+                    }
+                } else {
+                    [term splitVertically:style == iTermOpenStyleVerticalSplit before:NO profile:profile targetSession:original
+                        oldCWD:directory parentScope:original.variablesScope forceUseOldCWD:YES projectIdentifier:project.identifier completion:finished];
+                }
+                if (original && [term.tabs containsObject:originalTab] && [originalTab.sessions containsObject:original]) {
+                    [term->_contentView.tabView selectTabViewItem:originalTab.tabViewItem];
+                    [originalTab setActiveSessionRestoringFocus:original];
+                }
+            } @finally { term->_projectSessionPlacementDepth--; }
+        });
+    });
 }
 
 - (void)refreshNamedMarks {
@@ -5166,6 +5638,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)windowWillClose:(NSNotification *)aNotification {
    RLog(@"windowWillClose %@", self);
     _closing = YES;
+    _projectController.delegate = nil;
+    _contentView.projectSidebar.delegate = nil;
     [iTermWindowCornerRadiusDetector windowDidClose:self.window];
     if (self.isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
@@ -5896,6 +6370,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSEdgeInsets)tabBarInsets {
+    NSEdgeInsets insets = [self tabBarInsetsWithoutSidebarControls];
+    if (_contentView.sidebarControlsShareTopBar) {
+        if (_contentView.tabBarControlOnLoan || _contentView.effectiveProjectSidebarWidth == 0) { insets.left += 36; }
+    }
+    return insets;
+}
+
+- (NSEdgeInsets)tabBarInsetsWithoutSidebarControls {
     iTermWindowType effectiveWindowType = self.windowType;
     if (exitingLionFullscreen_) {
         effectiveWindowType = self.savedWindowType;
@@ -6164,6 +6646,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
     // Compute proposed tab size (window minus decorations).
     NSSize decorationSize = [self windowDecorationSize];
+    // The proposed width, not the current width, decides whether the optional sidebar fits.
+    const NSRect proposedContent = [sender contentRectForFrameRect:NSMakeRect(0, 0, proposedFrameSize.width, proposedFrameSize.height)];
+    decorationSize.width += [_contentView effectiveProjectSidebarWidthForContentWidth:NSWidth(proposedContent)] - _contentView.effectiveProjectSidebarWidth;
     NSSize internalDecorationSize = self.currentSession.view.internalDecorationSize;
     NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width - internalDecorationSize.width,
                                 proposedFrameSize.height - decorationSize.height - internalDecorationSize.height);
@@ -7679,6 +8164,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self hideAutoCommandHistory];
     }
     PTYTab *tab = [tabViewItem identifier];
+    if (_projectSessionPlacementDepth == 0) { [[self projectController] activeTabDidChange]; }
     // Invariant: the active tab is never inside a collapsed group. Any path that
     // selects a collapsed member (cmd-number, next/prev, close-forwarding, the
     // scripting API) funnels through here, so expand its group synchronously
@@ -8406,6 +8892,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView {
+    [_projectController tabsDidChange];
     PtyLog(@"%s(%d):-[PseudoTerminal tabViewDidChangeNumberOfTabViewItems]", __FILE__, __LINE__);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
@@ -8545,16 +9032,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self updateToolbeltAppearance];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self updateTouchBarIfNeeded:NO];
-
-    if (_contentView.tabView.numberOfTabViewItems == 1 &&
-        _previousNumberOfTabs == 0 &&
-        [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile] &&
-        !_contentView.shouldShowToolbelt) {
-        // This is the first tab of a new window. Open the toolbelt if that's what the profile
-        // wants. You can't open the toolbelt until there is at least one session, so that's why
-        // it's done here instead of in finishInitializationWithSmartLayout.
-        [self toggleToolbeltVisibility:self];
-    }
 
     _previousNumberOfTabs = _contentView.tabView.numberOfTabViewItems;
 
@@ -8892,6 +9369,21 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     addSeparator();
 
     addTabColor();
+    NSMenu *projects = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+    for (iTermProjectDirectory *project in [iTermProjectCatalog shared].projects) {
+        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:project.name action:@selector(assignTabToProject:) keyEquivalent:@""] autorelease];
+        item.target = self;
+        item.representedObject = @[[(PTYTab *)tabViewItem.identifier stringUniqueIdentifier], project.identifier];
+        item.state = [[(PTYTab *)tabViewItem.identifier projectIdentifier] isEqual:project.identifier] ? NSControlStateValueOn : NSControlStateValueOff;
+        [projects addItem:item];
+    }
+    NSMenuItem *unassign = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"Projects.Unassign", nil, [NSBundle mainBundle], @"No Project", @"Remove project ownership from a tab") action:@selector(assignTabToProject:) keyEquivalent:@""] autorelease];
+    unassign.target = self;
+    unassign.representedObject = @[[(PTYTab *)tabViewItem.identifier stringUniqueIdentifier], @""];
+    [projects addItem:unassign];
+    NSMenuItem *projectMenu = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"Projects.AssignTab", nil, [NSBundle mainBundle], @"Assign to Project", @"Tab context menu submenu") action:nil keyEquivalent:@""] autorelease];
+    projectMenu.submenu = projects;
+    [rootMenu addItem:projectMenu];
     for (NSMenuItem *item in rootMenu.itemArray) {
         item.target = self;
     }
@@ -11040,6 +11532,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
     // set our preferences
     newSession.profile = profile;
+    newSession.projectIdentifier = [self projectBindingSession:oldSession].projectIdentifier;
 
     [self setupSession:newSession withSize:nil];
     [newSession setSize:oldSession.screen.size];
@@ -11944,7 +12437,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     [self fitTabsToWindow];
 
-    if (targetSession == [[self currentTab] activeSession] && [self newPaneTakesFocus]) {
+    if (_projectSessionPlacementDepth == 0 && targetSession == [[self currentTab] activeSession] && [self newPaneTakesFocus]) {
         [[self currentTab] setActiveSession:newSession];
     }
     [tab recheckBlur];
@@ -12088,6 +12581,19 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                          oldCWD:(NSString *)oldCWD
                     parentScope:(iTermVariableScope *)parentScope
                      completion:(void (^)(PTYSession *, BOOL))completion {
+    return [self splitVertically:isVertical before:before profile:theBookmark targetSession:targetSession oldCWD:oldCWD
+        parentScope:parentScope forceUseOldCWD:NO projectIdentifier:nil completion:completion];
+}
+
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                         before:(BOOL)before
+                        profile:(Profile *)theBookmark
+                  targetSession:(PTYSession *)targetSession
+                         oldCWD:(NSString *)oldCWD
+                    parentScope:(iTermVariableScope *)parentScope
+                 forceUseOldCWD:(BOOL)forceUseOldCWD
+              projectIdentifier:(NSString *)projectIdentifier
+                     completion:(void (^)(PTYSession *, BOOL))completion {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         TmuxController *controller = [targetSession tmuxController];
@@ -12136,6 +12642,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     PTYSession* newSession = [[self.sessionFactory newSessionWithProfile:theBookmark
                                                                   parent:targetSession] autorelease];
+    if (projectIdentifier != nil) { newSession.projectIdentifier = projectIdentifier; }
     [self splitVertically:isVertical
                    before:before
             addingSession:newSession
@@ -12154,7 +12661,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                                                     environment:@{}
                                                     customShell:[ITAddressBookMgr customShellForProfile:theBookmark]
                                                          oldCWD:oldCWD
-                                                 forceUseOldCWD:NO
+                                                 forceUseOldCWD:forceUseOldCWD
                                                         command:nil
                                                          isUTF8:nil
                                                   substitutions:nil
@@ -12167,6 +12674,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
     }
                                                      completion:completion];
+    launchRequest.requiresInitialDirectory = forceUseOldCWD;
     [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
     return newSession;
 }
@@ -12544,10 +13052,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)tabActiveSessionDidChange {
+    if (_projectSessionPlacementDepth == 0) { [[self projectController] activeSessionDidChange]; }
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
-    [_contentView.toolbelt refreshTools];
+    [self refreshTools];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
@@ -14311,7 +14820,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 // Returns the size of the stuff outside the tabview.
 - (NSSize)windowDecorationSize {
-    NSSize decorationSize = NSZeroSize;
+    NSSize decorationSize = NSMakeSize(_contentView.effectiveProjectSidebarWidth, _contentView.sidebarControlsAdditionalHeight);
 
     if (!_contentView.tabBarControl.flashing &&
         [self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
@@ -14707,7 +15216,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidCreateTerminalWindowNotification object:self];
             }
         }
-        if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
+        if (_projectSessionPlacementDepth == 0 && self.windowInitialized && !_fullScreen && !_restoringWindow) {
             RLog(@"insertTab: window is initialized, not full screen, and we are not restoring windows.");
             if (self.isHotKeyWindow && self.window.alphaValue == 0) {
                 RLog(@"This appears to be an invisible hotkey window %@", self);
@@ -14733,7 +15242,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
-        if (!openInBackground &&
+        if (_projectSessionPlacementDepth == 0 && !openInBackground &&
             (_automaticallyOrderFrontNewTabs || self.tabs.count == 1)) {
             // A background tab (automaticallyOrderFrontNewTabs == NO), or a tab
             // the caller asked to open in the background, should not become the
@@ -14771,9 +15280,13 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if ([[self allSessions] indexOfObject:aSession] != NSNotFound) {
         return [self tabForSession:aSession];
     }
+    NSString *project = _projectForNewTab ?: [iTermProjectSessionOwnership effectiveIdentifier:aSession.projectIdentifier
+        inheriting:[iTermProjectSessionOwnership effectiveIdentifier:self.currentSession.projectIdentifier inheriting:self.currentTab.projectIdentifier]];
+    if (aSession.projectIdentifier == nil || _projectForNewTab) { aSession.projectIdentifier = project; }
     // create a new tab
     PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession
                                       parentWindow:self];
+    aTab.projectIdentifier = project.length ? project : nil;
     [aSession setIgnoreResizeNotifications:YES];
     if ([self numberOfTabs] == 0) {
         [aTab setReportIdealSizeAsCurrent:YES];
@@ -16189,6 +16702,18 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                    previousDirectory:(NSString *)previousDirectory
                               parent:(PTYSession *)parent
                           completion:(void (^)(PTYSession *, BOOL ok))completion {
+    return [self createTabWithProfile:profile withCommand:command environment:environment tabIndex:tabIndex
+                  previousDirectory:previousDirectory parent:parent forceUseOldCWD:NO completion:completion];
+}
+
+- (PTYSession *)createTabWithProfile:(Profile *)profile
+                         withCommand:(NSString *)command
+                         environment:(NSDictionary *)environment
+                            tabIndex:(NSNumber *)tabIndex
+                   previousDirectory:(NSString *)previousDirectory
+                              parent:(PTYSession *)parent
+                      forceUseOldCWD:(BOOL)forceUseOldCWD
+                          completion:(void (^)(PTYSession *, BOOL ok))completion {
     iTermObjectType objectType;
     if ([_contentView.tabView numberOfTabViewItems] == 0) {
         objectType = iTermWindowObject;
@@ -16230,7 +16755,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
                                                     environment:environment
                                                     customShell:[ITAddressBookMgr customShellForProfile:profile]
                                                          oldCWD:previousDirectory
-                                                 forceUseOldCWD:NO
+                                                 forceUseOldCWD:forceUseOldCWD
                                                         command:nil
                                                          isUTF8:nil
                                                   substitutions:nil
@@ -16241,6 +16766,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
             completion(newSession, ok);
         }
     }];
+    launchRequest.requiresInitialDirectory = forceUseOldCWD;
     [self.sessionFactory attachOrLaunchWithRequest:launchRequest];
 
     // On Lion, a window that can join all spaces can't go fullscreen.
@@ -16673,6 +17199,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)tabInvalidateProxyIcon:(PTYTab *)tab {
     if (tab == self.currentTab) {
         [self updateProxyIcon];
+        // Directory tracking may become available only after the shell has started.
+        [[self projectController] selectInitialWorkingDirectoryIfNeeded];
     }
 }
 

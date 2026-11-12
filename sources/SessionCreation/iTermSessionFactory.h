@@ -29,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, nullable, copy) NSDictionary *environment;
 @property (nonatomic, nullable, copy) NSString *customShell;
 @property (nonatomic, nullable, copy) NSString *oldCWD;
+@property (nonatomic) BOOL requiresInitialDirectory; // Project-only: forbid home fallback and require child chdir acknowledgement.
 @property (nonatomic) BOOL forceUseOldCWD;  // Change custom directory setting to make it use the passed-in oLDCWD
 @property (nonatomic, nullable, copy) NSString *command;   // Overrides profile's command if nonnil
 @property (nonatomic) BOOL isUTF8;

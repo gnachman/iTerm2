@@ -29,6 +29,16 @@ typedef struct {
     CGFloat toolbeltWidth;
     BOOL shouldShowToolbelt;
 
+    /// Independent left project panel. Zero width uses the 220 point default.
+    CGFloat projectSidebarWidth;
+    BOOL shouldShowProjectSidebar;
+    CGFloat minimumTerminalWidth;
+    CGFloat projectSidebarTopInset; // Room for compact-window controls.
+
+    /// Persistent corner buttons; their leading inset clears the window controls.
+    BOOL sidebarControlsVisible;
+    CGFloat sidebarControlsLeadingInset;
+
     /// Status bar
     CGFloat statusBarHeight;
     BOOL hasStatusBar;
@@ -64,6 +74,11 @@ typedef struct {
 
 /// Output frame rects from layout calculation.
 typedef struct {
+    CGRect leftSidebarButtonFrame;
+    CGRect rightSidebarButtonFrame;
+    CGFloat sidebarControlsAdditionalHeight;
+    CGRect projectSidebarFrame;
+
     /// Frame for the tab view (main content area)
     CGRect tabViewFrame;
 
@@ -84,6 +99,8 @@ typedef struct {
 /// Pure layout calculator with no AppKit dependencies.
 /// All layout logic is encapsulated here for easy unit testing.
 @interface iTermLayoutCalculator : NSObject
+
++ (CGFloat)effectiveProjectSidebarWidthWithInputs:(iTermLayoutInputs)inputs;
 
 /// Calculate layout frames given input parameters.
 /// This is a pure function with no side effects.

@@ -162,9 +162,9 @@
                       completion:
      ^(PTYSession *session, BOOL willCallCompletionBlock) {
          RLog(@"session=%@ willCallCompletionBlock=%@", session, @(willCallCompletionBlock));
-         if (!session && windowController.numberOfTabs == 0) {
+         if (!session) {
              DLog(@"abort");
-             [[windowController window] close];
+             if (windowController.numberOfTabs == 0) { [[windowController window] close]; }
              if (!willCallCompletionBlock) {
                  [weakSelf setFinishedWithSuccess:NO];
              }

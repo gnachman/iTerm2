@@ -744,6 +744,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // guid for binding a chat or a companion reference to a session.
 @property(nonatomic, readonly) NSString *stableID;
 
+// Per-pane local project ownership. Nil inherits legacy tab ownership; empty is unassigned.
+@property(nonatomic, nullable, copy) NSString *projectIdentifier;
+
 // Indicates if this session predates a tmux split pane. Used to figure out which pane is new when
 // layout changes due to a user-initiated pane split.
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;

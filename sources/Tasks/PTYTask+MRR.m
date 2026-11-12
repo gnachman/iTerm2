@@ -1,3 +1,4 @@
+#import "iTermRequiredDirectory.h"
 //
 //  PTYTask+MRR.m
 //  iTerm2Shared
@@ -79,13 +80,32 @@ int iTermForkAndExecToRunJobInServer(iTermForkState *forkState,
     DLog(@"Calling iTermPosixTTYReplacementForkPty");
     int fd = -1;
     assert([iTermAdvancedSettingsModel runJobsInServers]);
+    iTermRequiredDirectoryChannel directoryChannel;
+    const int directoryChannelError = iTermRequiredDirectoryOpenChannel(forkState->requiresInitialDirectory, &directoryChannel);
+    if (directoryChannelError) {
+        close(forkState->connectionFd);
+        close(serverConnectionFd);
+        close(forkState->deadMansPipe[0]);
+        close(forkState->deadMansPipe[1]);
+        forkState->pid = -1;
+        errno = directoryChannelError;
+        return -1;
+    }
     forkState->pid = iTermPosixTTYReplacementForkPty(&fd, ttyState, serverConnectionFd, forkState->deadMansPipe[1]);
 
     if (forkState->pid == (pid_t)0) {
         // Child
-        iTermExec(argpath, argv, closeFileDescriptors, 1, forkState, initialPwd, newEnviron, 1);
+        iTermRequiredDirectoryEnterInChild(initialPwd, directoryChannel);
+        iTermExec(argpath, argv, closeFileDescriptors, 1, forkState,
+                  forkState->requiresInitialDirectory ? NULL : initialPwd, newEnviron, 1);
     }
 
+    const int directoryError = iTermRequiredDirectoryFinishInParent(directoryChannel, &forkState->pid, &fd);
+    if (directoryError) {
+        close(forkState->connectionFd);
+        close(forkState->deadMansPipe[0]);
+        errno = directoryError;
+    }
     return fd;
 }
 
@@ -96,13 +116,24 @@ int iTermForkAndExecToRunJobDirectly(iTermForkState *forkState,
                                      BOOL closeFileDescriptors,
                                      const char *initialPwd,
                                      char **newEnviron) {
-    int fd;
+    int fd = -1;
+    iTermRequiredDirectoryChannel directoryChannel;
+    const int directoryChannelError = iTermRequiredDirectoryOpenChannel(forkState->requiresInitialDirectory, &directoryChannel);
+    if (directoryChannelError) {
+        forkState->pid = -1;
+        errno = directoryChannelError;
+        return -1;
+    }
     forkState->numFileDescriptorsToPreserve = 3;
     forkState->pid = forkpty(&fd, ttyState->tty, &ttyState->term, &ttyState->win);
     if (forkState->pid == (pid_t)0) {
         // Child
-        iTermExec(argpath, argv, closeFileDescriptors, 1, forkState, initialPwd, newEnviron, 1);
+        iTermRequiredDirectoryEnterInChild(initialPwd, directoryChannel);
+        iTermExec(argpath, argv, closeFileDescriptors, 1, forkState,
+                  forkState->requiresInitialDirectory ? NULL : initialPwd, newEnviron, 1);
     }
+    const int directoryError = iTermRequiredDirectoryFinishInParent(directoryChannel, &forkState->pid, &fd);
+    if (directoryError) { errno = directoryError; }
     return fd;
 }
 

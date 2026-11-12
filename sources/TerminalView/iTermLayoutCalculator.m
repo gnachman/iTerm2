@@ -30,9 +30,87 @@ const int kLayoutTabPositionRight = 3;
 
 @implementation iTermLayoutCalculator
 
+// Resolve visibility from available terminal space without changing the saved preference.
++ (CGFloat)effectiveProjectSidebarWidthWithInputs:(iTermLayoutInputs)inputs {
+    if (!inputs.shouldShowProjectSidebar) {
+        return 0;
+    }
+    const CGFloat preferred = inputs.projectSidebarWidth > 0 ? inputs.projectSidebarWidth : 220;
+    const CGFloat width = MIN(360, MAX(180, preferred));
+    const BOOL vertical = inputs.tabBarVisible && !inputs.tabBarFlashing &&
+        (inputs.tabPosition == kLayoutTabPositionLeft || inputs.tabPosition == kLayoutTabPositionRight);
+    const CGFloat reserved = (inputs.shouldShowToolbelt ? inputs.toolbeltWidth : 0) +
+        (vertical ? inputs.leftTabBarWidth : 0);
+    return inputs.contentViewWidth - reserved - width >= inputs.minimumTerminalWidth ? width : 0;
+}
+
++ (iTermLayoutOutputs)offsetOutputs:(iTermLayoutOutputs)outputs
+                            inputs:(iTermLayoutInputs)inputs
+                             width:(CGFloat)width {
+    if (width == 0) {
+        return outputs;
+    }
+    outputs.tabViewFrame.origin.x += width;
+    if (!CGRectIsEmpty(outputs.tabBarFrame)) {
+        outputs.tabBarFrame.origin.x += width;
+    }
+    if (!CGRectIsEmpty(outputs.statusBarFrame)) {
+        outputs.statusBarFrame.origin.x += width;
+    }
+    if (!CGRectIsEmpty(outputs.toolbeltFrame)) {
+        outputs.toolbeltFrame.origin.x += width;
+    }
+    // Match the independent Toolbelt's fullscreen/notch handling.
+    inputs.shouldShowToolbelt = YES;
+    inputs.toolbeltWidth = width;
+    outputs.projectSidebarFrame = [self toolbeltFrameWithInputs:inputs];
+    outputs.projectSidebarFrame.origin.x = 0;
+    outputs.projectSidebarFrame.size.height = MAX(0, outputs.projectSidebarFrame.size.height - inputs.projectSidebarTopInset);
+    return outputs;
+}
+
 #pragma mark - Main Entry Point
 
 + (iTermLayoutOutputs)calculateLayoutWithInputs:(iTermLayoutInputs)inputs {
+    if (inputs.sidebarControlsVisible) {
+        const BOOL sharedTopBar = !inputs.tabBarOnLoan && !inputs.tabBarFlashing &&
+            ((inputs.tabBarVisible && inputs.tabPosition == kLayoutTabPositionTop) ||
+             inputs.drawWindowTitleInPlaceOfTabBar);
+        const CGFloat stripHeight = sharedTopBar ? inputs.tabBarHeight : 32;
+        const CGFloat extraHeight = sharedTopBar ? 0 : stripHeight;
+        const CGRect fullFrame = CGRectMake(0, 0, inputs.contentViewWidth, inputs.contentViewHeight);
+        const CGRect belowAccessory = [self tabViewFrameByShrinkingForFullScreenTabBar:fullFrame withInputs:inputs];
+        const CGFloat accessoryHeight = inputs.shouldLeaveEmptyAreaAtTop ? inputs.tabBarHeight :
+            CGRectGetHeight(fullFrame) - CGRectGetHeight(belowAccessory);
+
+        iTermLayoutInputs content = inputs;
+        content.sidebarControlsVisible = NO;
+        content.contentViewHeight = MAX(0, inputs.contentViewHeight - extraHeight);
+        content.projectSidebarTopInset = MAX(0, inputs.projectSidebarTopInset - extraHeight);
+        if (sharedTopBar) {
+            content.projectSidebarTopInset = MAX(content.projectSidebarTopInset, stripHeight);
+        }
+        iTermLayoutOutputs outputs = [self calculateLayoutWithInputs:content];
+        if (sharedTopBar && !inputs.shouldShowToolbelt && !CGRectIsEmpty(outputs.tabBarFrame)) {
+            outputs.tabBarFrame.size.width = MAX(0, outputs.tabBarFrame.size.width - 36);
+        }
+        if (sharedTopBar && !CGRectIsEmpty(outputs.toolbeltFrame)) {
+            outputs.toolbeltFrame.size.height = MAX(0, outputs.toolbeltFrame.size.height - stripHeight);
+        }
+
+        const CGFloat buttonWidth = MIN(28, MAX(0, (inputs.contentViewWidth - 24) / 2));
+        const CGFloat buttonHeight = MIN(28, MAX(0, stripHeight - 4));
+        const CGFloat right = MAX(8, inputs.contentViewWidth - 8 - buttonWidth);
+        const CGFloat preferredLeft = isfinite(inputs.sidebarControlsLeadingInset) ? inputs.sidebarControlsLeadingInset : 8;
+        const CGFloat left = MAX(8, MIN(MAX(8, preferredLeft), right - buttonWidth - 8));
+        const CGFloat y = MAX(0, inputs.contentViewHeight - inputs.notchInset - accessoryHeight - stripHeight +
+                              (stripHeight - buttonHeight) / 2);
+        outputs.leftSidebarButtonFrame = CGRectMake(left, y, buttonWidth, buttonHeight);
+        outputs.rightSidebarButtonFrame = CGRectMake(right, y, buttonWidth, buttonHeight);
+        outputs.sidebarControlsAdditionalHeight = extraHeight;
+        return outputs;
+    }
+
     if (!inputs.tabBarVisible) {
         return [self calculateLayoutWithHiddenTabBarInputs:inputs];
     }
@@ -54,6 +132,14 @@ const int kLayoutTabPositionRight = 3;
 #pragma mark - Hidden Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithHiddenTabBarInputs:(iTermLayoutInputs)inputs {
+    if (inputs.shouldShowProjectSidebar) {
+        const CGFloat width = [self effectiveProjectSidebarWidthWithInputs:inputs];
+        iTermLayoutInputs center = inputs;
+        center.shouldShowProjectSidebar = NO;
+        center.contentViewWidth -= width;
+        return [self offsetOutputs:[self calculateLayoutWithHiddenTabBarInputs:center] inputs:inputs width:width];
+    }
+
     iTermLayoutOutputs outputs = {0};
 
     // Calculate decoration heights
@@ -121,6 +207,14 @@ const int kLayoutTabPositionRight = 3;
 #pragma mark - Visible Top Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithVisibleTopTabBarInputs:(iTermLayoutInputs)inputs {
+    if (inputs.shouldShowProjectSidebar) {
+        const CGFloat width = [self effectiveProjectSidebarWidthWithInputs:inputs];
+        iTermLayoutInputs center = inputs;
+        center.shouldShowProjectSidebar = NO;
+        center.contentViewWidth -= width;
+        return [self offsetOutputs:[self calculateLayoutWithVisibleTopTabBarInputs:center] inputs:inputs width:width];
+    }
+
     iTermLayoutOutputs outputs = {0};
 
     outputs.decorationHeightBottom = 0;
@@ -191,6 +285,14 @@ const int kLayoutTabPositionRight = 3;
 #pragma mark - Visible Bottom Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithVisibleBottomTabBarInputs:(iTermLayoutInputs)inputs {
+    if (inputs.shouldShowProjectSidebar) {
+        const CGFloat width = [self effectiveProjectSidebarWidthWithInputs:inputs];
+        iTermLayoutInputs center = inputs;
+        center.shouldShowProjectSidebar = NO;
+        center.contentViewWidth -= width;
+        return [self offsetOutputs:[self calculateLayoutWithVisibleBottomTabBarInputs:center] inputs:inputs width:width];
+    }
+
     iTermLayoutOutputs outputs = {0};
 
     // Tab bar at bottom
@@ -244,6 +346,14 @@ const int kLayoutTabPositionRight = 3;
 #pragma mark - Visible Left Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithVisibleLeftTabBarInputs:(iTermLayoutInputs)inputs {
+    if (inputs.shouldShowProjectSidebar) {
+        const CGFloat width = [self effectiveProjectSidebarWidthWithInputs:inputs];
+        iTermLayoutInputs center = inputs;
+        center.shouldShowProjectSidebar = NO;
+        center.contentViewWidth -= width;
+        return [self offsetOutputs:[self calculateLayoutWithVisibleLeftTabBarInputs:center] inputs:inputs width:width];
+    }
+
     iTermLayoutOutputs outputs = {0};
 
     outputs.decorationHeightTop = inputs.notchInset;
@@ -303,6 +413,14 @@ const int kLayoutTabPositionRight = 3;
 #pragma mark - Visible Right Tab Bar Layout
 
 + (iTermLayoutOutputs)calculateLayoutWithVisibleRightTabBarInputs:(iTermLayoutInputs)inputs {
+    if (inputs.shouldShowProjectSidebar) {
+        const CGFloat width = [self effectiveProjectSidebarWidthWithInputs:inputs];
+        iTermLayoutInputs center = inputs;
+        center.shouldShowProjectSidebar = NO;
+        center.contentViewWidth -= width;
+        return [self offsetOutputs:[self calculateLayoutWithVisibleRightTabBarInputs:center] inputs:inputs width:width];
+    }
+
     iTermLayoutOutputs outputs = {0};
 
     outputs.decorationHeightTop = inputs.notchInset;
