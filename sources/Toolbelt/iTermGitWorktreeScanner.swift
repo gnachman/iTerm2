@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 @objcMembers
 final class iTermGitWorktree: NSObject {
@@ -477,12 +478,27 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
     }
 
     private static func normalizedPath(_ path: String, relativeTo base: String? = nil) -> String {
-        let absolute = (path as NSString).isAbsolutePath ? path :
-            ((base ?? FileManager.default.currentDirectoryPath) as NSString).appendingPathComponent(path)
-        let url = URL(fileURLWithPath: absolute).standardizedFileURL
-        // Preserve stale registrations instead of resolving only a prefix of a
-        // missing path (which would incorrectly change their registered identity).
-        return FileManager.default.fileExists(atPath: url.path) ? url.resolvingSymlinksInPath().path : url.path
+        let absolute = path.hasPrefix("/") ? path :
+            (base ?? FileManager.default.currentDirectoryPath) + "/" + path
+        // Foundation rewrites physical /private paths to /var or /tmp aliases.
+        // Use the same POSIX identity as the catalog, and resolve the original
+        // path before collapsing components so symlink/.. traverses physically.
+        if let resolved = absolute.withCString({ Darwin.realpath($0, nil) }) {
+            defer { free(resolved) }
+            return String(cString: resolved)
+        }
+        // Unavailable registrations retain their absolute spelling. Do not
+        // resolve only an existing prefix or let NSURL rewrite /private aliases.
+        var components = [Substring]()
+        for component in absolute.split(separator: "/") {
+            if component == "." { continue }
+            if component == ".." {
+                if !components.isEmpty { components.removeLast() }
+            } else {
+                components.append(component)
+            }
+        }
+        return "/" + components.joined(separator: "/")
     }
 
     private static func hasRepositoryMarker(_ directory: String) throws -> Bool {

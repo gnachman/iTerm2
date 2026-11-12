@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import XCTest
 #if !GIT_WORKTREE_SCANNER_STANDALONE
 @testable import iTerm2SharedARC
@@ -310,6 +311,55 @@ final class GitWorktreeScannerTests: XCTestCase {
                        fromCheckout.0?.worktrees.map { $0.rootDirectory })
     }
 
+    func testRawAndAliasPathsUsePhysicalRepositoryIdentity() throws {
+        let fixture = try GitFixture()
+        defer { fixture.remove() }
+        let expectedRoot = try physicalPath(fixture.root)
+        let expectedCommon = try physicalPath(fixture.root + "/.git")
+        let alias = fixture.base + "/checkout-alias"
+        try FileManager.default.createSymbolicLink(atPath: alias, withDestinationPath: fixture.root)
+        let rawTempRoot = NSTemporaryDirectory() + (fixture.base as NSString).lastPathComponent + "/ main checkout \n"
+        let scanner = iTermGitWorktreeScanner(executor: ProcessGitExecutor())
+        for directory in [fixture.root, rawTempRoot, alias] {
+            let result = scan(scanner, directory: directory)
+            XCTAssertNil(result.1)
+            XCTAssertEqual(result.0?.rootDirectory, expectedRoot)
+            XCTAssertEqual(result.0?.commonDirectory, expectedCommon)
+            XCTAssertEqual(result.0?.identifier, expectedCommon)
+            XCTAssertEqual(result.0?.worktrees.first?.identifier, expectedRoot)
+        }
+    }
+
+    func testSymlinkParentTraversalUsesPhysicalTargetRepository() throws {
+        let origin = try GitFixture()
+        let target = try GitFixture()
+        defer { origin.remove(); target.remove() }
+        let nested = target.root + "/nested"
+        try FileManager.default.createDirectory(atPath: nested, withIntermediateDirectories: false)
+        let jump = origin.root + "/jump"
+        try FileManager.default.createSymbolicLink(atPath: jump, withDestinationPath: nested)
+        let result = scan(iTermGitWorktreeScanner(executor: ProcessGitExecutor()), directory: jump + "/..")
+        XCTAssertNil(result.1)
+        XCTAssertEqual(result.0?.rootDirectory, try physicalPath(target.root))
+        XCTAssertEqual(result.0?.commonDirectory, try physicalPath(target.root + "/.git"))
+    }
+
+    func testMissingRegistrationKeepsPrivateAliasAndLexicalSegments() throws {
+        let fixture = try GitFixture()
+        defer { fixture.remove() }
+        let prefix = "/private/tmp/git-scanner-missing-" + UUID().uuidString
+        let registered = prefix + "/./child/../checkout "
+        let expected = prefix + "/checkout "
+        let scanner = iTermGitWorktreeScanner(executor: RegisteredPathGitExecutor(registered: registered))
+        let result = scan(scanner, directory: fixture.root)
+        XCTAssertNil(result.1)
+        let missing = result.0?.worktrees.first { $0.branch == "missing" }
+        XCTAssertEqual(missing?.rootDirectory, expected)
+        XCTAssertEqual(missing?.identifier, expected)
+        XCTAssertTrue(missing?.prunable == true)
+        XCTAssertFalse(missing?.available ?? true)
+    }
+
     func testBareRepositoryWithoutOptionalConfigKeepsLinkedCheckout() throws {
         let fixture = try GitFixture()
         defer { fixture.remove() }
@@ -353,11 +403,19 @@ final class GitWorktreeScannerTests: XCTestCase {
 
 }
 
+private func physicalPath(_ path: String) throws -> String {
+    guard let resolved = path.withCString({ Darwin.realpath($0, nil) }) else {
+        throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
+    }
+    defer { free(resolved) }
+    return String(cString: resolved)
+}
+
 private final class GitFixture {
     let base: String
     let root: String
     init(separate: Bool = false) throws {
-        base = FileManager.default.temporaryDirectory.appendingPathComponent("git-scanner-" + UUID().uuidString).resolvingSymlinksInPath().path
+        base = try physicalPath(NSTemporaryDirectory()) + "/git-scanner-" + UUID().uuidString
         root = base + "/ main checkout \n"
         try FileManager.default.createDirectory(atPath: root, withIntermediateDirectories: true)
         try git(separate ? ["init", "-b", "main", "--separate-git-dir", base + "/admin"] : ["init", "-b", "main"])
@@ -531,6 +589,18 @@ private final class MainEnrichmentGitExecutor: ProcessGitExecutor {
             mainMetadataRelease.wait()
         }
         return result
+    }
+}
+
+private final class RegisteredPathGitExecutor: ProcessGitExecutor {
+    let registered: String
+    init(registered: String) { self.registered = registered }
+    override func run(arguments: [String], directory: String, timeout: TimeInterval) -> iTermGitWorktreeCommandResult {
+        let result = super.run(arguments: arguments, directory: directory, timeout: timeout)
+        guard arguments == ["worktree", "list", "--porcelain", "-z"], result.status == 0 else { return result }
+        var output = result.output
+        output.append(Data("worktree \(registered)\0HEAD abc\0branch refs/heads/missing\0prunable fixture\0\0".utf8))
+        return .init(output: output, status: result.status)
     }
 }
 
