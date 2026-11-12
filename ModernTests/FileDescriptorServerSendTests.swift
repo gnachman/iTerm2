@@ -56,31 +56,101 @@ final class FileDescriptorServerSendTests: XCTestCase {
         return result
     }
 
-    func testSendingFileDescriptorOnFullSocketWaitsForRoom() {
+    // A plain sendmsg of one byte plus a descriptor, bypassing the code under test. Returns
+    // errno on failure or 0 on success.
+    private func rawSendFileDescriptor(socket: Int32, fd: Int32) -> Int32 {
+        var payload: UInt8 = 0
+        let controlLength = Int(MemoryLayout<cmsghdr>.size + MemoryLayout<Int32>.size)
+        var control = [UInt8](repeating: 0, count: controlLength + 8)
+        return withUnsafeMutablePointer(to: &payload) { payloadPointer in
+            var iov = iovec(iov_base: payloadPointer, iov_len: 1)
+            return control.withUnsafeMutableBytes { controlBytes in
+                withUnsafeMutablePointer(to: &iov) { iovPointer in
+                    var message = msghdr()
+                    message.msg_iov = iovPointer
+                    message.msg_iovlen = 1
+                    message.msg_control = controlBytes.baseAddress
+                    message.msg_controllen = socklen_t(controlLength)
+                    let header = controlBytes.baseAddress!.assumingMemoryBound(to: cmsghdr.self)
+                    header.pointee.cmsg_len = socklen_t(controlLength)
+                    header.pointee.cmsg_level = SOL_SOCKET
+                    header.pointee.cmsg_type = SCM_RIGHTS
+                    let data = controlBytes.baseAddress!.advanced(by: MemoryLayout<cmsghdr>.size)
+                    data.storeBytes(of: fd, as: Int32.self)
+                    return sendmsg(socket, &message, 0) == -1 ? errno : 0
+                }
+            }
+        }
+    }
+
+    private final class Waiter {
+        let receiver: Int32
+        let filler: Int
+        var calls = 0
+        var drained = [UInt8]()
+        init(receiver: Int32, filler: Int) {
+            self.receiver = receiver
+            self.filler = filler
+        }
+    }
+
+    // The premise: on a full socket, a descriptor send fails with EMSGSIZE rather than
+    // blocking. If macOS ever starts blocking instead, the fix is unnecessary.
+    func testRawDescriptorSendOnFullSocketFailsWithMessageTooLong() {
+        _ = fillSocket(sockets[0])
+        XCTAssertEqual(rawSendFileDescriptor(socket: sockets[0], fd: pipeFDs[0]), EMSGSIZE)
+    }
+
+    // Deterministic: the socket is full when the send starts, so it must ask the waiter for
+    // room. The waiter drains the socket on this thread, and the retry must then succeed.
+    func testSendingFileDescriptorOnFullSocketWaitsForRoomAndRetries() {
         let sender = sockets[0]
         let receiver = sockets[1]
         let filler = fillSocket(sender)
         XCTAssertGreaterThan(filler, 0)
+        XCTAssertEqual(rawSendFileDescriptor(socket: sender, fd: pipeFDs[0]), EMSGSIZE)
 
-        let sent = expectation(description: "sent")
-        let started = DispatchSemaphore(value: 0)
-        var result = 0
-        var savedErrno: Int32 = 0
-        let fdToSend = pipeFDs[0]
-        DispatchQueue.global().async {
-            var payload: UInt8 = 0x2a
-            started.signal()
-            result = iTermFileDescriptorServerSendMessageAndFileDescriptor(sender, &payload, 1, fdToSend)
-            savedErrno = errno
-            sent.fulfill()
+        let waiter = Waiter(receiver: receiver, filler: filler)
+        var payload: UInt8 = 0x2a
+        let result = withExtendedLifetime(waiter) {
+            iTermFileDescriptorServerSendMessageAndFileDescriptorWithWaiter(
+                sender, &payload, 1, pipeFDs[0],
+                { _, context in
+                    let waiter = Unmanaged<Waiter>.fromOpaque(context!).takeUnretainedValue()
+                    waiter.calls += 1
+                    var buffer = [UInt8](repeating: 0, count: waiter.filler)
+                    var total = 0
+                    while total < waiter.filler {
+                        let n = buffer.withUnsafeMutableBytes {
+                            read(waiter.receiver, $0.baseAddress! + total, waiter.filler - total)
+                        }
+                        if n <= 0 {
+                            return 0
+                        }
+                        total += n
+                    }
+                    waiter.drained.append(contentsOf: buffer[0..<total])
+                    return 1
+                },
+                Unmanaged.passUnretained(waiter).toOpaque())
         }
-        started.wait()
+        let savedErrno = errno
 
-        // Drain the filler, which makes room for the pending send.
-        XCTAssertEqual(readExactly(receiver, count: filler).count, filler)
-        wait(for: [sent], timeout: 60)
-
+        XCTAssertEqual(waiter.calls, 1, "The send should have waited for room exactly once")
+        XCTAssertEqual(waiter.drained.count, filler)
         XCTAssertEqual(result, 1, "send failed: \(String(cString: strerror(savedErrno)))")
         XCTAssertEqual(readExactly(receiver, count: 1), [0x2a])
+    }
+
+    // When the waiter reports an error (for example, the client went away), the send fails
+    // instead of retrying.
+    func testSendFailsWhenWaiterReportsError() {
+        let sender = sockets[0]
+        _ = fillSocket(sender)
+        var payload: UInt8 = 0x2a
+        let result = iTermFileDescriptorServerSendMessageAndFileDescriptorWithWaiter(
+            sender, &payload, 1, pipeFDs[0], { _, _ in 0 }, nil)
+        XCTAssertEqual(result, -1)
+        XCTAssertEqual(errno, EMSGSIZE)
     }
 }

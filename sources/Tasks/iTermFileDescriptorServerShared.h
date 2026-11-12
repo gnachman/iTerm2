@@ -28,6 +28,18 @@ ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptor(int connectionFd,
                                                               size_t bufferSize,
                                                               int fdToSend);
 
+// Blocks until fd is writable. Returns nonzero if it is, or 0 on error.
+typedef int (*iTermFileDescriptorWaitForWritable)(int fd, void *context);
+
+// Like iTermFileDescriptorServerSendMessageAndFileDescriptor, but calls waitForWritable when
+// sendmsg fails because the socket is full, so tests can control when room appears.
+ssize_t iTermFileDescriptorServerSendMessageAndFileDescriptorWithWaiter(int connectionFd,
+                                                                        void *buffer,
+                                                                        size_t bufferSize,
+                                                                        int fdToSend,
+                                                                        iTermFileDescriptorWaitForWritable waitForWritable,
+                                                                        void *waiterContext);
+
 ssize_t iTermFileDescriptorServerWriteLengthAndBuffer(int connectionFd,
                                                       void *buffer,
                                                       size_t bufferSize,
