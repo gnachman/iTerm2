@@ -469,6 +469,7 @@ static NSString *const kDynamicToolURL = @"URL";
     }
     self.fileTreeView.rootDirectory = self.projectRootDirectory;
     self.fileTreeView.openTerminal = self.projectOpenTerminal;
+    self.fileTreeView.canOpenTerminal = self.projectCanOpenTerminal;
     [self forceSplitterSubviewsToRespectSizeConstraints];
 }
 
@@ -644,9 +645,14 @@ static NSString *const kDynamicToolURL = @"URL";
     self.fileTreeView.rootDirectory = directory;
 }
 
-- (void)setProjectOpenTerminal:(void (^)(NSString *))callback {
+- (void)setProjectOpenTerminal:(void (^)(NSString *, iTermOpenStyle))callback {
     _projectOpenTerminal = [callback copy];
     self.fileTreeView.openTerminal = callback;
+}
+
+- (void)setProjectCanOpenTerminal:(BOOL (^)(iTermOpenStyle))callback {
+    _projectCanOpenTerminal = [callback copy];
+    self.fileTreeView.canOpenTerminal = callback;
 }
 
 - (void)refreshTools {
@@ -660,6 +666,7 @@ static NSString *const kDynamicToolURL = @"URL";
     [self updateForProfileType];
     self.fileTreeView.rootDirectory = self.projectRootDirectory;
     self.fileTreeView.openTerminal = self.projectOpenTerminal;
+    self.fileTreeView.canOpenTerminal = self.projectCanOpenTerminal;
 }
 
 - (void)updateForProfileType {
@@ -682,6 +689,7 @@ static NSString *const kDynamicToolURL = @"URL";
 - (void)relayoutAllTools {
     self.fileTreeView.rootDirectory = self.projectRootDirectory;
     self.fileTreeView.openTerminal = self.projectOpenTerminal;
+    self.fileTreeView.canOpenTerminal = self.projectCanOpenTerminal;
     const NSRect desiredFrame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
     if (!NSEqualRects(_splitter.frame, desiredFrame)) {
         // In issue 10712 we get in a loop where we set the splitter to its current frame which

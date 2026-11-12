@@ -3,6 +3,7 @@
 #import "FutureMethods.h"
 #import "iTermToolWrapper.h"
 #import "PTYSplitView.h"
+#import "iTermOpenStyle.h"
 
 @protocol PTYSplitViewDelegate;
 @class iTermToolFileTree;
@@ -35,7 +36,8 @@ extern NSString *const kToolbeltShouldHide;
 
 @property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
 @property(nonatomic, copy) NSString *projectRootDirectory;
-@property(nonatomic, copy) void (^projectOpenTerminal)(NSString *directory);
+@property(nonatomic, copy) void (^projectOpenTerminal)(NSString *directory, iTermOpenStyle style);
+@property(nonatomic, copy) BOOL (^projectCanOpenTerminal)(iTermOpenStyle style);
 @property(nonatomic, readonly) iTermToolFileTree *fileTreeView;
 @property(nonatomic, readonly) ToolDirectoriesView *directoriesView;
 @property(nonatomic, readonly) ToolCapturedOutputView *capturedOutputView;

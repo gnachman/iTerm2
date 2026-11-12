@@ -1,7 +1,7 @@
 import AppKit
 
 @objcMembers
-final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NSOutlineViewDelegate {
+final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NSOutlineViewDelegate, NSMenuDelegate {
     var rootDirectory: String? {
         didSet {
             guard oldValue != rootDirectory else { return }
@@ -9,7 +9,10 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
             resetViewForRoot()
         }
     }
-    var openTerminal: ((String) -> Void)?
+    var openTerminal: ((String, iTermOpenStyle) -> Void)?
+    var canOpenTerminal: ((iTermOpenStyle) -> Bool)?
+    private var terminalMenuDirectory: (path: String, generation: Int)?
+    private var terminalMenuItem: NSMenuItem?
     private let treeState = iTermFileTreeState()
     private var source: iTermFileTreeDataSource { treeState.source }
     private let outline = NSOutlineView()
@@ -453,14 +456,25 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     }
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
+        menu.delegate = self
         let actions: [(String, Selector)] = [
             (String(localized: "FileTree.CopyRelative", defaultValue: "Copy Relative Path", comment: "Copy path relative to project root"), #selector(copyRelative(_:))),
             (String(localized: "FileTree.CopyAbsolute", defaultValue: "Copy Absolute Path", comment: "Copy full filesystem path"), #selector(copyAbsolute(_:))),
-            (String(localized: "FileTree.Reveal", defaultValue: "Reveal in Finder", comment: "Show selected file in Finder"), #selector(reveal(_:))),
-            (String(localized: "FileTree.NewTerminal", defaultValue: "New Terminal Here", comment: "Open terminal in selected directory or file parent"), #selector(newTerminal(_:)))
+            (String(localized: "FileTree.Reveal", defaultValue: "Reveal in Finder", comment: "Show selected file in Finder"), #selector(reveal(_:)))
         ]
         for (title, selector) in actions { let item = NSMenuItem(title: title, action: selector, keyEquivalent: ""); item.target = self; menu.addItem(item) }
+        let item = NSMenuItem(title: String(localized: "FileTree.NewTerminal", defaultValue: "Open Terminal Here", comment: "Choose how to open a terminal in the selected directory or file parent"), action: nil, keyEquivalent: "")
+        terminalMenuItem = item; menu.addItem(item)
         return menu
+    }
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        terminalMenuDirectory = menuEntry().map { entry in
+            (entry.isDirectory ? entry.path : (entry.path as NSString).deletingLastPathComponent, source.generation)
+        }
+        terminalMenuItem?.submenu = iTermProjectTerminalMenu.make(target: self, action: #selector(newTerminal(_:))) { [weak self] style in
+            guard let self, self.terminalMenuDirectory != nil else { return false }
+            return self.canOpenTerminal?(style) == true
+        }
     }
     @objc private func openSelection(_ sender: Any?) {
         guard let entry = outline.item(atRow: outline.clickedRow) as? iTermFileTreeEntry else { return }
@@ -489,9 +503,10 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     }
     private func copy(_ path: String) { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(path, forType: .string) }
     @objc private func reveal(_ sender: Any?) { if let entry = menuEntry() { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: entry.path)]) } }
-    @objc private func newTerminal(_ sender: Any?) {
-        guard let entry = menuEntry() else { return }
-        openTerminal?(entry.isDirectory ? entry.path : URL(fileURLWithPath: entry.path).deletingLastPathComponent().path)
+    @objc private func newTerminal(_ sender: NSMenuItem) {
+        guard sender.tag >= 0, let style = iTermOpenStyle(rawValue: UInt(sender.tag)),
+              let directory = terminalMenuDirectory, directory.generation == source.generation else { return }
+        openTerminal?(directory.path, style)
     }
     func restorableState() -> [AnyHashable: Any] { treeState.restorableState() }
     func restore(fromState state: [AnyHashable: Any]) {

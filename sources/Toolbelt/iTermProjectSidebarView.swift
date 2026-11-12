@@ -3,6 +3,9 @@ import AppKit
 @objc protocol iTermProjectSidebarDelegate: AnyObject {
     func projectSidebar(_ sidebar: iTermProjectSidebarView, didSelectProject project: iTermProjectDirectory)
     func projectSidebar(_ sidebar: iTermProjectSidebarView, didSelectWorktree worktree: iTermGitWorktree)
+    func projectSidebar(_ sidebar: iTermProjectSidebarView, openProject project: iTermProjectDirectory, style: iTermOpenStyle)
+    func projectSidebar(_ sidebar: iTermProjectSidebarView, openWorktree worktree: iTermGitWorktree, style: iTermOpenStyle)
+    func projectSidebar(_ sidebar: iTermProjectSidebarView, canOpenTerminalWithStyle style: iTermOpenStyle) -> Bool
     func projectSidebarAddFolder(_ sidebar: iTermProjectSidebarView)
     func projectSidebarAddCurrentDirectory(_ sidebar: iTermProjectSidebarView)
     func projectSidebar(_ sidebar: iTermProjectSidebarView, removeProject project: iTermProjectDirectory)
@@ -10,7 +13,7 @@ import AppKit
     func projectSidebar(_ sidebar: iTermProjectSidebarView, refreshRepositories identifiers: [String]?)
 }
 
-@objcMembers final class iTermProjectSidebarView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate {
+@objcMembers final class iTermProjectSidebarView: NSView, NSOutlineViewDataSource, NSOutlineViewDelegate, NSMenuDelegate {
     weak var delegate: iTermProjectSidebarDelegate?
     var tree: iTermProjectSidebarTree? { didSet { publishTree() } }
     var selectedProjectIdentifier: String? { didSet { if oldValue != selectedProjectIdentifier { updateSelection(reveal: true) } } }
@@ -32,6 +35,7 @@ import AppKit
     private var expandedRepositories = Set<String>()
     private var refreshTimer: Timer?
     private var observers = [NSObjectProtocol]()
+    private var terminalMenuNode: iTermProjectSidebarNode?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -48,6 +52,7 @@ import AppKit
         outline.delegate = self
         outline.dataSource = self
         outline.backgroundColor = .controlBackgroundColor
+        let menu = NSMenu(); menu.delegate = self; outline.menu = menu
         outline.setAccessibilityLabel(title.stringValue)
         scroll.documentView = outline
         scroll.hasVerticalScroller = true
@@ -169,6 +174,25 @@ import AppKit
     func outlineViewItemDidCollapse(_ notification: Notification) {
         guard let node = notification.userInfo?["NSObject"] as? iTermProjectSidebarNode, let repository = node.repository else { return }
         expandedRepositories.remove(repository.identifier)
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        let row = outline.clickedRow >= 0 ? outline.clickedRow : outline.selectedRow
+        terminalMenuNode = outline.item(atRow: row) as? iTermProjectSidebarNode
+        menu.removeAllItems()
+        guard let node = terminalMenuNode, node.kind == .folder || node.kind == .worktree else { return }
+        let item = NSMenuItem(title: String(localized: "Projects.OpenTerminal", defaultValue: "Open Terminal", comment: "Project/worktree context menu for explicit terminal opening"), action: nil, keyEquivalent: "")
+        item.submenu = iTermProjectTerminalMenu.make(target: self, action: #selector(openTerminalWithStyle(_:))) { [weak self] style in
+            guard let self, node.worktree?.available != false else { return false }
+            return self.delegate?.projectSidebar(self, canOpenTerminalWithStyle: style) == true
+        }
+        menu.addItem(item)
+    }
+
+    @objc private func openTerminalWithStyle(_ item: NSMenuItem) {
+        guard item.tag >= 0, let style = iTermOpenStyle(rawValue: UInt(item.tag)), let node = terminalMenuNode else { return }
+        if let worktree = node.worktree { delegate?.projectSidebar(self, openWorktree: worktree, style: style) }
+        else if let project = node.project { delegate?.projectSidebar(self, openProject: project, style: style) }
     }
 
     override func viewDidMoveToWindow() {

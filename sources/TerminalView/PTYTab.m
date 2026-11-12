@@ -4529,6 +4529,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [theTab setActiveSession:activeFloat];
     }
     theTab.projectIdentifier = [NSString castFrom:arrangement[@"Project Identifier"]];
+    for (PTYSession *session in theTab.sessions) {
+        if (session.projectIdentifier == nil) { session.projectIdentifier = theTab.projectIdentifier; }
+    }
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
     theTab.tabGroupID = [arrangement[TAB_ARRANGEMENT_GROUP_ID] nilIfNull];

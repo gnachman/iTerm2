@@ -1375,6 +1375,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [iTermCPUUtilization setInstance:nil forSessionID:_guid];
     [_guid release];
     [_stableID release];
+    [_projectIdentifier release];
     [_lastCommand release];
     [_substitutions release];
     [_automaticProfileSwitcher release];
@@ -2388,6 +2389,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     // set our preferences
     [aSession setProfile:theBookmark];
+    aSession.projectIdentifier = [iTermProjectSessionOwnership identifierFromArrangement:arrangement];
 
     [aSession setScreenSize:[sessionView frame].size parent:[delegate realParentWindow]];
 
@@ -8025,6 +8027,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     result[SESSION_ARRANGEMENT_STABLE_ID] = _stableID;
+    NSDictionary *projectFields = [iTermProjectSessionOwnership arrangementFieldsWithProjectIdentifier:self.projectIdentifier];
+    for (NSString *key in projectFields) { result[key] = projectFields[key]; }
     if (_lastActivityOrdinal > 0) {
         result[SESSION_ARRANGEMENT_LAST_ACTIVITY_ORDINAL] = @(_lastActivityOrdinal);
     }

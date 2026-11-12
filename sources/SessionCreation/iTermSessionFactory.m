@@ -390,6 +390,7 @@ NS_ASSUME_NONNULL_BEGIN
     [aSession setProfile:profile];
     if (parent) {
         [aSession setParentScope:parent.variablesScope];
+        aSession.projectIdentifier = parent.projectIdentifier;
     }
     NSString *guid = profile[KEY_GUID];
     NSString *name = profile[KEY_NAME];
