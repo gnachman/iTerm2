@@ -4200,6 +4200,12 @@ typedef struct {
                                                          faint:NO
                                                   isBackground:NO];
     }
+    if (hdrCursor && _useSmartCursorColor) {
+        // Smart cursor color is suppressed for the HDR cursor (see below), but the
+        // user still asked for legible contrast, and black is the best contrast
+        // against a full-white block. The Metal path does the same.
+        cursorTextColor = [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:1];
+    }
     cursor.hdrComponentValue = hdrComponentValue;
     _drawBoldCursorCharacter = hdrCursor;
     // When the HDR hint applies we force a full-white fill (see above), so smart

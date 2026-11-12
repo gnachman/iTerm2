@@ -491,6 +491,12 @@ typedef struct {
                                                              components[1],
                                                              components[2],
                                                              components[3]);
+                } else if (drawingHelper.useSmartCursorColor && _cursorInfo.useHDRWhite) {
+                    // Smart cursor color is suppressed for the HDR cursor, which
+                    // is forced to a full-white block (we are focused here, so
+                    // hdrCursorForcesWhiteForType:focused: holds). Black gives the
+                    // contrast the user asked for. The legacy path does the same.
+                    _cursorInfo.textColor = simd_make_float4(0, 0, 0, 1);
                 } else {
                     if (_configuration->_renderInputs.reverseVideo) {
                         _cursorInfo.textColor = [_configuration->_colorMap fastColorForKey:kColorMapForeground];
