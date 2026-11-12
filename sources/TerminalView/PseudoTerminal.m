@@ -15566,9 +15566,6 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return ok;
     } else if ([item action] == @selector(setDefaultToolbeltWidth:)) {
         return _contentView.shouldShowToolbelt;
-    } else if ([item action] == @selector(toggleProjectSidebar:)) {
-        item.state = _contentView.shouldShowProjectSidebar ? NSControlStateValueOn : NSControlStateValueOff;
-        return YES;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSControlStateValueOn : NSControlStateValueOff];
         return [[iTermToolbeltView availableConfiguredToolsForProfileType:self.currentSession.profile.profileType] count] > 0;
