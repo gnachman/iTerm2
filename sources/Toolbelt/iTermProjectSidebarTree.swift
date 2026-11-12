@@ -24,7 +24,19 @@ import Foundation
         isLoading = loading
         if let worktree {
             let name = worktree.branch ?? (worktree.head.isEmpty ? (worktree.rootDirectory as NSString).lastPathComponent : String(worktree.head.prefix(8)))
-            if !worktree.available {
+            if worktree.branch == nil && !worktree.head.isEmpty {
+                if !worktree.available {
+                    title = String(localized: "Projects.UnavailableDetachedWorktreeTitle", defaultValue: "Detached HEAD · \(name) · Unavailable", comment: "Unavailable detached checkout row; placeholder is the abbreviated commit ID")
+                } else if worktree.isMain && worktree.locked {
+                    title = String(localized: "Projects.MainLockedDetachedWorktreeTitle", defaultValue: "Detached HEAD · \(name) · Main · Locked", comment: "Detached main checkout row with a Git lock; placeholder is the abbreviated commit ID")
+                } else if worktree.isMain {
+                    title = String(localized: "Projects.MainDetachedWorktreeTitle", defaultValue: "Detached HEAD · \(name) · Main", comment: "Detached main checkout row; placeholder is the abbreviated commit ID")
+                } else if worktree.locked {
+                    title = String(localized: "Projects.LockedDetachedWorktreeTitle", defaultValue: "Detached HEAD · \(name) · Locked", comment: "Detached checkout row with a Git lock; placeholder is the abbreviated commit ID")
+                } else {
+                    title = String(localized: "Projects.DetachedWorktreeTitle", defaultValue: "Detached HEAD · \(name)", comment: "Checkout that points directly to a commit instead of a branch; placeholder is the abbreviated commit ID")
+                }
+            } else if !worktree.available {
                 title = String(localized: "Projects.WorktreeUnavailableTitle", defaultValue: "\(name) · Unavailable", comment: "Worktree row for an unavailable directory; placeholder is its branch or name")
             } else if worktree.isMain && worktree.locked {
                 title = String(localized: "Projects.MainLockedWorktreeTitle", defaultValue: "\(name) · Main · Locked", comment: "Main checkout row with a Git lock; placeholder is its branch or name")
@@ -69,12 +81,7 @@ import Foundation
         for project in catalog.projects {
             if let common = project.gitCommonDirectory, let repository = repositories[common] {
                 guard admitted.insert(common).inserted else { continue }
-                var worktrees = repository.worktrees
-                var seen = Set(worktrees.map(\.identifier))
-                for remembered in catalog.projects where remembered.gitCommonDirectory == common {
-                    guard let item = catalog.worktree(forProjectIdentifier: remembered.identifier), seen.insert(item.identifier).inserted else { continue }
-                    worktrees.append(item)
-                }
+                var worktrees = repository.worktrees.filter(\.available)
                 worktrees.sort {
                     if $0.isMain != $1.isMain { return $0.isMain }
                     let first = $0.branch ?? $0.rootDirectory, second = $1.branch ?? $1.rootDirectory
@@ -108,6 +115,15 @@ import Foundation
 
     func node(withIdentifier identifier: String) -> iTermProjectSidebarNode? { nodes[identifier] }
     func node(forProjectIdentifier identifier: String) -> iTermProjectSidebarNode? { projectNodes[identifier] }
+    func selectionNode(projectIdentifier: String?, worktreeIdentifier: String?, preferredRepositoryIdentifier: String?) -> iTermProjectSidebarNode? {
+        let node = worktreeIdentifier.flatMap { nodes["worktree:" + $0] } ?? projectIdentifier.flatMap { projectNodes[$0] }
+        if let preferredRepositoryIdentifier, let preferred = nodes["repository:" + preferredRepositoryIdentifier],
+           node?.repository?.identifier == preferredRepositoryIdentifier ||
+            (node?.project != nil && node?.project?.rootDirectory == preferred.repository?.rootDirectory) {
+            return preferred
+        }
+        return node
+    }
     func isEquivalent(to other: iTermProjectSidebarTree) -> Bool {
         roots.count == other.roots.count && zip(roots, other.roots).allSatisfy { $0.isEquivalent(to: $1) }
     }

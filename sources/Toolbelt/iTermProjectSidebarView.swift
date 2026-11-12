@@ -38,6 +38,8 @@ import AppKit
     private var refreshTimer: Timer?
     private var observers = [NSObjectProtocol]()
     private var terminalMenuNode: iTermProjectSidebarNode?
+    private var preferredRepositoryIdentifier: String?
+    private var handlingSidebarSelection = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -125,9 +127,13 @@ import AppKit
     }
 
     private func updateSelection(reveal: Bool) {
-        let node = selectedWorktreeIdentifier.flatMap { publishedTree?.node(withIdentifier: "worktree:" + $0) } ??
-            selectedProjectIdentifier.flatMap { publishedTree?.node(forProjectIdentifier: $0) }
-        if reveal, let repository = node?.repository, let parent = publishedTree?.node(withIdentifier: "repository:" + repository.identifier) {
+        let preferred = preferredRepositoryIdentifier.flatMap { publishedTree?.node(withIdentifier: "repository:" + $0) }
+        let node = handlingSidebarSelection && preferred != nil ? preferred : publishedTree?.selectionNode(
+            projectIdentifier: selectedProjectIdentifier, worktreeIdentifier: selectedWorktreeIdentifier,
+            preferredRepositoryIdentifier: preferredRepositoryIdentifier)
+        if !handlingSidebarSelection, node?.identifier != preferred?.identifier { preferredRepositoryIdentifier = nil }
+        if reveal, node?.kind == .worktree, let repository = node?.repository,
+           let parent = publishedTree?.node(withIdentifier: "repository:" + repository.identifier) {
             updatingSelection = true
             if !outline.isItemExpanded(parent) { outline.expandItem(parent) }
             updatingSelection = false
@@ -174,6 +180,10 @@ import AppKit
         select(node, openIfNeeded: true)
     }
     private func select(_ node: iTermProjectSidebarNode, openIfNeeded: Bool) {
+        preferredRepositoryIdentifier = node.kind == .repository ? node.repository?.identifier : nil
+        let wasHandlingSelection = handlingSidebarSelection
+        handlingSidebarSelection = true
+        defer { handlingSidebarSelection = wasHandlingSelection }
         if let worktree = node.worktree { delegate?.projectSidebar(self, didSelectWorktree: worktree, openIfNeeded: openIfNeeded) }
         else if let project = node.project { delegate?.projectSidebar(self, didSelectProject: project, openIfNeeded: openIfNeeded) }
         else if let repository = node.repository { delegate?.projectSidebar(self, didSelectRepository: repository, openIfNeeded: openIfNeeded) }

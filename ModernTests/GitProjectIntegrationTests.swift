@@ -132,6 +132,50 @@ final class GitProjectIntegrationTests: XCTestCase {
         XCTAssertEqual(tree.roots[0].children.map { $0.worktree?.identifier }, [f.main, f.linked])
     }
 
+    func testProjectHeaderPreferenceKeepsDirectorySelectedAcrossWorktreeUpdates() throws {
+        let f = try fixture()
+        let scanner = Scanner(); scanner.snapshot = f.snapshot
+        let catalog = catalog(f, scanner: scanner)
+        ready(catalog) { !catalog.isScanning && catalog.repositories.count == 1 }
+        let tree = iTermProjectSidebarTree(catalog: catalog)
+        for worktree in [f.main, f.linked] {
+            let selected = tree.selectionNode(projectIdentifier: nil, worktreeIdentifier: worktree,
+                                              preferredRepositoryIdentifier: f.common)
+            XCTAssertEqual(selected?.identifier, "repository:" + f.common)
+            XCTAssertEqual(selected?.kind, .repository)
+        }
+        XCTAssertEqual(tree.selectionNode(projectIdentifier: f.records[1]["identifier"], worktreeIdentifier: nil,
+                                         preferredRepositoryIdentifier: f.common)?.kind, .repository)
+    }
+
+    func testBranchSelectionWithoutProjectHeaderPreferenceStillFollowsWorktree() throws {
+        let f = try fixture()
+        let scanner = Scanner(); scanner.snapshot = f.snapshot
+        let catalog = catalog(f, scanner: scanner)
+        ready(catalog) { !catalog.isScanning && catalog.repositories.count == 1 }
+        let tree = iTermProjectSidebarTree(catalog: catalog)
+        XCTAssertEqual(tree.selectionNode(projectIdentifier: nil, worktreeIdentifier: f.linked,
+                                         preferredRepositoryIdentifier: nil)?.identifier, "worktree:" + f.linked)
+        XCTAssertEqual(tree.selectionNode(projectIdentifier: nil, worktreeIdentifier: f.linked,
+                                         preferredRepositoryIdentifier: "removed-repository")?.identifier, "worktree:" + f.linked)
+        XCTAssertNil(tree.selectionNode(projectIdentifier: nil, worktreeIdentifier: nil,
+                                        preferredRepositoryIdentifier: f.common))
+    }
+
+    func testProjectHeaderPreferenceDoesNotOverrideAnotherDirectory() throws {
+        let f = try fixture()
+        let other = f.base.appendingPathComponent("other")
+        try FileManager.default.createDirectory(at: other, withIntermediateDirectories: true)
+        let otherIdentifier = UUID().uuidString
+        let scanner = Scanner(); scanner.snapshot = f.snapshot
+        let catalog = catalog(f, scanner: scanner, records: f.records + [["identifier": otherIdentifier, "rootDirectory": other.path]])
+        ready(catalog) { !catalog.isScanning && catalog.repositories.count == 1 }
+        let node = iTermProjectSidebarTree(catalog: catalog).selectionNode(projectIdentifier: otherIdentifier, worktreeIdentifier: nil,
+                                                                         preferredRepositoryIdentifier: f.common)
+        XCTAssertEqual(node?.kind, .folder)
+        XCTAssertEqual(node?.project?.identifier, otherIdentifier)
+    }
+
     func testRealGitDiscoveryMatchesPhysicalCanonicalSubdirectory() throws {
         let f = try fixture()
         let executor = GitExecutor()
@@ -176,7 +220,7 @@ final class GitProjectIntegrationTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: f.main))
     }
 
-    func testMissingRememberedWorktreeKeepsOwnershipAndUnavailableRow() throws {
+    func testMissingRememberedWorktreeKeepsOwnershipButIsRemovedFromSidebar() throws {
         let f = try fixture()
         let scanner = Scanner(); scanner.snapshot = f.snapshot
         let catalog = catalog(f, scanner: scanner)
@@ -190,8 +234,55 @@ final class GitProjectIntegrationTests: XCTestCase {
         XCTAssertEqual(remembered?.identifier, f.linked)
         XCTAssertEqual(remembered?.available, false)
         let tree = iTermProjectSidebarTree(catalog: catalog)
-        XCTAssertEqual(tree.roots[0].children.count, 2)
-        XCTAssertEqual(tree.roots[0].children.last?.worktree?.available, false)
+        XCTAssertEqual(tree.roots[0].children.map { $0.worktree?.identifier }, [f.main])
+        XCTAssertNil(tree.node(withIdentifier: "worktree:" + f.linked))
+        XCTAssertNil(tree.node(forProjectIdentifier: f.records[2]["identifier"]!))
+    }
+
+    func testUnavailableRegisteredWorktreeIsHiddenUntilItsDirectoryReturns() throws {
+        let f = try fixture()
+        let scanner = Scanner()
+        scanner.snapshot = .init(commonDirectory: f.common, rootDirectory: f.main, worktrees: [
+            f.snapshot.worktrees[0],
+            .init(rootDirectory: f.linked, branch: "feature", head: "2222222", isMain: false, available: false)])
+        let catalog = catalog(f, scanner: scanner)
+        ready(catalog) { !catalog.isScanning && catalog.repositories.count == 1 }
+        XCTAssertEqual(catalog.repositories.first?.worktrees.count, 2)
+        XCTAssertEqual(iTermProjectSidebarTree(catalog: catalog).roots[0].children.map { $0.worktree?.identifier }, [f.main])
+        XCTAssertEqual(catalog.projects.count, f.records.count)
+        scanner.snapshot = f.snapshot
+        catalog.refreshRepositories([f.common])
+        ready(catalog) { !catalog.isScanning && catalog.worktree(withIdentifier: f.linked)?.available == true }
+        XCTAssertEqual(iTermProjectSidebarTree(catalog: catalog).roots[0].children.map { $0.worktree?.identifier }, [f.main, f.linked])
+    }
+
+    func testDetachedWorktreeStaysVisibleWithExplicitHeadLabel() throws {
+        let f = try fixture()
+        let scanner = Scanner()
+        scanner.snapshot = .init(commonDirectory: f.common, rootDirectory: f.main, worktrees: [
+            f.snapshot.worktrees[0],
+            .init(rootDirectory: f.linked, branch: nil, head: "f49c0f758b8790342589593e98cc329a928e0e27", isMain: false)])
+        let catalog = catalog(f, scanner: scanner)
+        ready(catalog) { !catalog.isScanning && catalog.repositories.count == 1 }
+        let row = try XCTUnwrap(iTermProjectSidebarTree(catalog: catalog).node(withIdentifier: "worktree:" + f.linked))
+        XCTAssertEqual(row.title, "Detached HEAD · f49c0f75")
+        XCTAssertFalse(row.hasError)
+    }
+
+    func testDetachedWorktreeLabelPreservesMainLockedAndUnavailableStates() {
+        let cases: [(Bool, Bool, Bool, String)] = [
+            (false, false, true, "Detached HEAD · 12345678"),
+            (true, false, true, "Detached HEAD · 12345678 · Main"),
+            (false, true, true, "Detached HEAD · 12345678 · Locked"),
+            (true, true, true, "Detached HEAD · 12345678 · Main · Locked"),
+            (false, false, false, "Detached HEAD · 12345678 · Unavailable")
+        ]
+        for (main, locked, available, title) in cases {
+            let worktree = iTermGitWorktree(rootDirectory: "/repo", branch: nil, head: "1234567890abcdef", isMain: main,
+                                           locked: locked, available: available)
+            let row = iTermProjectSidebarNode(identifier: "worktree:/repo", kind: .worktree, worktree: worktree)
+            XCTAssertEqual(row.title, title)
+        }
     }
 
     func testWorktreeSwitchUsesRecentTabAcrossDifferentSubdirectoryProjects() throws {
