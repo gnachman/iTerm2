@@ -14,6 +14,7 @@
 #import "iTermSnippetsModel.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSStringITerm.h"
 #import "PTYTextView.h"  // just for PTYTextViewSelectionExtensionUnit
 #import "ProfileModel.h"
 
@@ -512,9 +513,15 @@ static NSString *GetProfileName(NSString *guid) {
             actionString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.ToggleSetting", nil, [NSBundle mainBundle], @"Toggle %@", @"Key binding action name; %@ is the name of the setting to toggle"), self.toggleSettingLabel];
             break;
 
-        case KEY_ACTION_SET_CHARACTER_ENCODING:
-            actionString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SetCharacterEncoding", nil, [NSBundle mainBundle], @"Set Character Encoding to “%@”", @"Key binding action name; %@ is the name of the character encoding"), [NSString localizedNameOfStringEncoding:_parameter.integerValue]];
+        case KEY_ACTION_SET_CHARACTER_ENCODING: {
+            const NSStringEncoding encoding = (NSStringEncoding)_parameter.integerValue;
+            if (encoding != 0 && [NSString it_isAvailableStringEncoding:encoding]) {
+                actionString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SetCharacterEncoding", nil, [NSBundle mainBundle], @"Set Character Encoding to “%@”", @"Key binding action name; %@ is the name of the character encoding"), [NSString localizedNameOfStringEncoding:encoding]];
+            } else {
+                actionString = NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SetUnavailableCharacterEncoding", nil, [NSBundle mainBundle], @"Set Character Encoding to unavailable encoding", @"Key binding action name shown when the referenced character encoding is not supported on this Mac");
+            }
             break;
+        }
     }
 
     switch (self.applyMode) {

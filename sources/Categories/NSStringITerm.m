@@ -64,6 +64,34 @@
 
 @implementation NSString (iTerm)
 
++ (NSArray<NSNumber *> *)it_sortedAvailableStringEncodings {
+    static NSArray<NSNumber *> *sorted;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableArray<NSDictionary *> *pairs = [NSMutableArray array];
+        for (const NSStringEncoding *ptr = [NSString availableStringEncodings]; *ptr; ++ptr) {
+            [pairs addObject:@{ @"encoding": @(*ptr),
+                                @"name": [NSString localizedNameOfStringEncoding:*ptr] }];
+        }
+        [pairs sortUsingComparator:^NSComparisonResult(NSDictionary *lhs, NSDictionary *rhs) {
+            return [lhs[@"name"] caseInsensitiveCompare:rhs[@"name"]];
+        }];
+        sorted = [pairs mapWithBlock:^id(NSDictionary *pair) {
+            return pair[@"encoding"];
+        }];
+    });
+    return sorted;
+}
+
++ (BOOL)it_isAvailableStringEncoding:(NSStringEncoding)encoding {
+    for (const NSStringEncoding *ptr = [NSString availableStringEncodings]; *ptr; ++ptr) {
+        if (*ptr == encoding) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 + (NSString *)stringWithInt:(int)num {
     return [NSString stringWithFormat:@"%d", num];
 }

@@ -66,7 +66,6 @@
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
 #import "TriggerController.h"
-#import "ToastWindowController.h"
 #import "VT100DCSParser.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen+Search.h"
@@ -13368,18 +13367,19 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             break;
         case KEY_ACTION_SET_CHARACTER_ENCODING: {
             const NSStringEncoding encoding = (NSStringEncoding)action.parameter.integerValue;
-            if (encoding != 0) {
-                // Persist into the session's divorced profile so Edit Session and
-                // session restores reflect the change; reloadProfile applies it live.
-                [self setSessionSpecificProfileValues:@{ KEY_CHARACTER_ENCODING: @(encoding) }];
-                NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SetCharacterEncodingToast",
-                                                                                                 nil,
-                                                                                                 [NSBundle mainBundle],
-                                                                                                 @"Character encoding set to %@",
-                                                                                                 @"Toast shown after changing the character encoding with a key binding; %@ is the name of the encoding"),
-                                     [NSString localizedNameOfStringEncoding:encoding]];
-                [ToastWindowController showToastWithMessage:message];
+            if (encoding == 0 || ![NSString it_isAvailableStringEncoding:encoding]) {
+                DLog(@"Ignoring set-character-encoding binding with unavailable encoding %@", action.parameter);
+                break;
             }
+            // Persist into the session's divorced profile so Edit Session and
+            // session restores reflect the change; reloadProfile applies it live.
+            [self setSessionSpecificProfileValues:@{ KEY_CHARACTER_ENCODING: @(encoding) }];
+            [_view showUnobtrusiveMessage:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"KeyBindingAction.SetCharacterEncodingToast",
+                                                                                                      nil,
+                                                                                                      [NSBundle mainBundle],
+                                                                                                      @"Character encoding set to %@",
+                                                                                                      @"Message shown in the session after changing the character encoding with a key binding; %@ is the name of the encoding"),
+                                          [NSString localizedNameOfStringEncoding:encoding]]];
             break;
         }
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:

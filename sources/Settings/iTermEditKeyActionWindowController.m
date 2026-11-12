@@ -20,6 +20,7 @@
 #import "NSArray+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSScreen+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "RegexKitLite.h"
@@ -342,6 +343,8 @@ const CGFloat sideMarginWidth = 40;
     IBOutlet NSTextField *_profileLabel;
     IBOutlet NSTextField *_encodingLabel;
     IBOutlet NSPopUpButton *_encodingPopup;
+    // Present only while editing a binding whose encoding is unavailable.
+    NSMenuItem *_unavailableEncodingItem;
     IBOutlet NSTextField *_colorPresetsLabel;
     IBOutlet NSPopUpButton *_colorPresetsPopup;
     IBOutlet NSPopUpButton *_snippetsPopup;
@@ -528,6 +531,7 @@ const CGFloat sideMarginWidth = 40;
     _sequenceTableViewController.delegate = self;
     _menuToSelectPopup.delegate = self;
     _settingToTogglePopup.delegate = self;
+    [self populateEncodings];
 
     switch (self.mode) {
         case iTermEditKeyActionWindowControllerModeKeyboardShortcut:
@@ -625,7 +629,7 @@ const CGFloat sideMarginWidth = 40;
         [_selectionMovementUnit selectItemWithTag:[parameterValue ?: @"" integerValue]];
     }
     if (!_encodingPopup.isHidden) {
-        [self populateEncodingsSelecting:parameterValue ?: @""];
+        [self selectEncodingForParameter:parameterValue ?: @""];
     }
     if (!_secondaryComboViewContainer.isHidden && !secondary) {
         [_sequenceTableViewController setActions:[parameterValue ?: @"" keyBindingActionsFromSequenceParameter]];
@@ -656,27 +660,43 @@ const CGFloat sideMarginWidth = 40;
     [self updateError];
 }
 
-- (void)populateEncodingsSelecting:(NSString *_Nullable)value {
+// Fills the encoding popup. Each item's representedObject is the parameter
+// value to save when it is selected. Called once, when the window loads.
+- (void)populateEncodings {
     [_encodingPopup removeAllItems];
-    NSStringEncoding const *encodingPtr;
-    NSMutableArray<NSNumber *> *encodings = [NSMutableArray array];
-    for (encodingPtr = [NSString availableStringEncodings]; *encodingPtr; ++encodingPtr) {
-        [encodings addObject:@(*encodingPtr)];
+    for (NSNumber *encoding in [NSString it_sortedAvailableStringEncodings]) {
+        const NSStringEncoding value = encoding.unsignedIntegerValue;
+        [_encodingPopup addItemWithTitle:[NSString localizedNameOfStringEncoding:value]];
+        _encodingPopup.lastItem.tag = value;
+        _encodingPopup.lastItem.representedObject = [encoding stringValue];
     }
-    [encodings sortUsingComparator:^NSComparisonResult(NSNumber *_Nonnull lhs, NSNumber *_Nonnull rhs) {
-        return [[NSString localizedNameOfStringEncoding:lhs.unsignedIntegerValue]
-                compare:[NSString localizedNameOfStringEncoding:rhs.unsignedIntegerValue]
-                options:NSCaseInsensitiveSearch];
-    }];
-    for (NSNumber *anEncoding in encodings) {
-        [_encodingPopup addItemWithTitle:[NSString localizedNameOfStringEncoding:anEncoding.unsignedIntegerValue]];
-        [[_encodingPopup lastItem] setTag:anEncoding.unsignedIntegerValue];
+    [_encodingPopup selectItemWithTag:NSUTF8StringEncoding];
+}
+
+- (void)selectEncodingForParameter:(NSString *)parameter {
+    if (_unavailableEncodingItem) {
+        [_encodingPopup.menu removeItem:_unavailableEncodingItem];
+        _unavailableEncodingItem = nil;
     }
-    NSStringEncoding selected = (NSStringEncoding)value.integerValue;
-    if (!selected) {
-        selected = NSUTF8StringEncoding;
+    const NSInteger value = parameter.integerValue;
+    if (value == 0) {
+        // No encoding chosen yet.
+        [_encodingPopup selectItemWithTag:NSUTF8StringEncoding];
+        return;
     }
-    [_encodingPopup selectItemWithTag:selected];
+    if ([NSString it_isAvailableStringEncoding:(NSStringEncoding)value]) {
+        [_encodingPopup selectItemWithTag:value];
+        return;
+    }
+    // The binding names an encoding this Mac lacks (e.g., it was imported or
+    // synced). Keep it so saving the binding does not silently change it.
+    DLog(@"Encoding %@ is not available", parameter);
+    _unavailableEncodingItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"EditKeyAction.UnavailableEncoding", nil, [NSBundle mainBundle], @"Unavailable Encoding", @"Shown in the character encoding popup when a key binding refers to an encoding that this Mac does not support")
+                                                          action:nil
+                                                   keyEquivalent:@""];
+    _unavailableEncodingItem.representedObject = [parameter copy];
+    [_encodingPopup.menu insertItem:_unavailableEncodingItem atIndex:0];
+    [_encodingPopup selectItem:_unavailableEncodingItem];
 }
 
 - (void)setAction:(KEY_ACTION)keyAction parameter:(NSString *)parameter applyMode:(iTermActionApplyMode)applyMode {
@@ -797,9 +817,6 @@ const CGFloat sideMarginWidth = 40;
     [_profileLabel setHidden:config.profileLabelHidden];
     [_encodingLabel setHidden:config.encodingLabelHidden];
     [_encodingPopup setHidden:config.encodingPopupHidden];
-    if (!config.encodingPopupHidden) {
-        [self populateEncodingsSelecting:config.parameterValue ?: @""];
-    }
     [_menuToSelectPopup setHidden:config.menuToSelectPopupHidden];
     [_settingToTogglePopup setHidden:config.settingToTogglePopupHidden];
     _shortcutField.disableKeyRemapping = config.shortcutFieldDisableKeyRemapping;
@@ -1070,7 +1087,7 @@ const CGFloat sideMarginWidth = 40;
             return [[_colorPresetsPopup selectedItem] title];
 
         case KEY_ACTION_SET_CHARACTER_ENCODING:
-            return [@(_encodingPopup.selectedTag) stringValue];
+            return [_encodingPopup.selectedItem representedObject] ?: @"";
 
         case KEY_ACTION_SEND_SNIPPET:
             return [[_snippetsPopup selectedItem] representedObject];
@@ -1122,7 +1139,11 @@ const CGFloat sideMarginWidth = 40;
         [_snippetsPopup populateWithSnippetsSelectingActionKey:_snippetsPopup.selectedItem.representedObject];
         [_menuToSelectPopup reloadData];
         [_settingToTogglePopup reloadData];
-        [self populateEncodingsSelecting:[@(_encodingPopup.selectedTag) stringValue]];
+        // The action changed, so its parameter starts out empty. Reset the
+        // encoding popup so a new action does not inherit the encoding (or the
+        // unavailable-encoding placeholder) left over from whatever was shown
+        // before, such as another row of a sequence.
+        [self selectEncodingForParameter:@""];
         const BOOL secondary = (view == _secondaryComboView);
         if (secondary) {
             [_sequenceTableViewController setActionForCurrentItem:view.selectedTag];

@@ -91963,6 +91963,12 @@
             "value" : "文字エンコーディングを設定…"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문자 인코딩 설정…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -95243,6 +95249,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar 标签"
+          }
+        }
+      }
+    },
+    "EditKeyAction.UnavailableEncoding" : {
+      "comment" : "Shown in the character encoding popup when a key binding refers to an encoding that this Mac does not support",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verfügbare Kodierung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unavailable Encoding"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "利用できないエンコーディング"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용할 수 없는 인코딩"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codificação indisponível"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недоступная кодировка"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不可用的编码"
           }
         }
       }
@@ -116336,6 +116390,12 @@
             "value" : "文字エンコーディングを「%@」に設定"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문자 인코딩을 “%@”(으)로 설정"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -116357,7 +116417,7 @@
       }
     },
     "KeyBindingAction.SetCharacterEncodingToast" : {
-      "comment" : "Toast shown after changing the character encoding with a key binding; %@ is the name of the encoding",
+      "comment" : "Message shown in the session after changing the character encoding with a key binding; %@ is the name of the encoding",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -116378,6 +116438,12 @@
             "value" : "文字エンコーディングを%@に設定しました"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문자 인코딩이 %@(으)로 설정됨"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -116394,6 +116460,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "字符编码已设置为%@"
+          }
+        }
+      }
+    },
+    "KeyBindingAction.SetUnavailableCharacterEncoding" : {
+      "comment" : "Key binding action name shown when the referenced character encoding is not supported on this Mac",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeichenkodierung auf nicht verfügbare Kodierung festlegen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Set Character Encoding to unavailable encoding"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字エンコーディングを利用できないエンコーディングに設定"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문자 인코딩을 사용할 수 없는 인코딩으로 설정"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir codificação de caracteres para codificação indisponível"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Задать недоступную кодировку"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将字符编码设置为不可用的编码"
           }
         }
       }

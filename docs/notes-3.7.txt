@@ -33,6 +33,10 @@ New Features:
   delete-clipping removes a clipping by its ID.
   Code Review tells Claude Code to use it to
   withdraw findings it no longer stands by.
+- A new key binding action, Set Character
+  Encoding, switches the current session’s
+  character encoding with one keystroke. Find it
+  under Profile in the key binding editor.
 
 Improvements:
 - Fetch Models in the manual AI model editor now

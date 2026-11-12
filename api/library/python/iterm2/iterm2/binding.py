@@ -615,6 +615,7 @@ class BindingAction(enum.Enum):
     DUPLICATE_TAB = 61
     MOVE_TO_SPLIT_PANE = 62
     SEND_SNIPPET = 63
+    SET_CHARACTER_ENCODING = 78
 
 
 def decode_key_binding(key: str, obj: Mapping[str, Any]) -> KeyBinding:

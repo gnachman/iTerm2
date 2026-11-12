@@ -10,6 +10,7 @@
 
 #import "ITAddressBookMgr.h"
 #import "NSImage+iTerm.h"
+#import "NSStringITerm.h"
 #import "iTermController.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSizeRememberingView.h"
@@ -608,32 +609,12 @@ static const NSInteger iTermBellSoundOtherTag = 1;
 
 - (void)populateEncodings {
     [_characterEncoding removeAllItems];
-    for (NSNumber *anEncoding in [self sortedEncodings]) {
-        NSString *theTitle = [NSString localizedNameOfStringEncoding:[anEncoding unsignedIntValue]];
+    for (NSNumber *anEncoding in [NSString it_sortedAvailableStringEncodings]) {
+        NSString *theTitle = [NSString localizedNameOfStringEncoding:[anEncoding unsignedIntegerValue]];
         [_characterEncoding addItemWithTitle:theTitle];
-        [[_characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
+        [[_characterEncoding lastItem] setTag:[anEncoding unsignedIntegerValue]];
     }
 }
-
-// Comparator for sorting encodings
-static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
-    NSString *localizedA = [NSString localizedNameOfStringEncoding:[a unsignedIntValue]];
-    NSString *localizedB = [NSString localizedNameOfStringEncoding:[b unsignedIntValue]];
-    return [localizedA caseInsensitiveCompare:localizedB];
-}
-
-- (NSArray *)sortedEncodings {
-    NSStringEncoding const *encodingPtr;
-    NSMutableArray *encodings = [NSMutableArray array];
-
-    for (encodingPtr = [NSString availableStringEncodings]; *encodingPtr; ++encodingPtr) {
-        [encodings addObject:@(*encodingPtr)];
-    }
-    [encodings sortUsingFunction:CompareEncodingByLocalizedName context:NULL];
-
-    return encodings;
-}
-
 
 #pragma mark - Action
 
