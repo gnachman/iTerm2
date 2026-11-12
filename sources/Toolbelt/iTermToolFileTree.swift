@@ -1,7 +1,7 @@
 import AppKit
 
 @objcMembers
-final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NSOutlineViewDelegate, SCEventListenerProtocol {
+final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NSOutlineViewDelegate {
     var rootDirectory: String? {
         didSet {
             guard oldValue != rootDirectory else { return }
@@ -37,7 +37,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     private var retryPath: String?
     private var readErrors = [String: String]()
     private var openError: String?
-    private let watcher = SCEvents()
+    private var watcher: iTermFileTreeWatcher?
     private var refreshWork: DispatchWorkItem?
     private var changedPaths = Set<String>()
     private var observers = [NSObjectProtocol]()
@@ -100,8 +100,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         retry.controlSize = .small
         retry.isHidden = true
         retry.setAccessibilityLabel(retry.title)
-        watcher._delegate = self
-        watcher._notificationLatency = 0.5
+        watcher = iTermFileTreeWatcher { [weak self] root, paths in
+            self?.fileTreePathsChanged(paths, root: root)
+        }
         outline.menu = makeMenu()
         header.stringValue = String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree header when no project is selected")
     }
@@ -208,7 +209,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
                 entries = treeState.preparePublishedTreeFromCache()
                 restoreOutline()
             }
-            if !watcher.isWatchingPaths { watcher.startWatchingPaths([rootDirectory]) }
+            watcher?.watch(root: rootDirectory)
             request(rootDirectory)
             if refreshOnResume {
                 scheduleResumeRefresh()
@@ -229,7 +230,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
     }
     private func stopWatching() {
-        watcher.stopWatchingPaths()
+        watcher?.stop()
         resumeRefreshWork?.cancel()
         resumeRefreshWork = nil
         refreshWork?.cancel()
@@ -248,8 +249,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         observers.removeAll()
     }
     deinit {
-        watcher.stopWatchingPaths()
-        watcher._delegate = nil
+        watcher?.stop()
         refreshWork?.cancel()
         resumeRefreshWork?.cancel()
         publicationWork?.cancel()
@@ -428,26 +428,24 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     @objc private func retryRead(_ sender: Any?) {
         if let retryPath { refreshDirectories([retryPath]) }
     }
-    func pathWatcher(_ pathWatcher: SCEvents!, eventOccurred event: SCEvent!) {
-        guard let path = event?._eventPath else { return }
+    private func fileTreePathsChanged(_ paths: [String], root: String) {
+        guard visible, !stopped, rootDirectory == root else { return }
         let generation = source.generation
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.visible, !self.stopped, self.source.generation == generation else { return }
-            self.changedPaths.insert(path)
-            self.refreshWork?.cancel()
-            let work = DispatchWorkItem { [weak self] in
-                guard let self else { return }
-                let paths = Set(self.source.loadedDirectoryPaths.filter { loaded in
-                    self.changedPaths.contains { changed in
-                        loaded == changed || changed == "/" || loaded == "/" || loaded.hasPrefix(changed + "/") || changed.hasPrefix(loaded + "/")
-                    }
-                })
-                self.changedPaths.removeAll()
-                self.refreshDirectories(paths)
-            }
-            self.refreshWork = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+        changedPaths.formUnion(paths)
+        refreshWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.visible, !self.stopped, self.rootDirectory == root,
+                  self.source.generation == generation else { return }
+            let paths = Set(self.source.loadedDirectoryPaths.filter { loaded in
+                self.changedPaths.contains { changed in
+                    loaded == changed || changed == "/" || loaded == "/" || loaded.hasPrefix(changed + "/") || changed.hasPrefix(loaded + "/")
+                }
+            })
+            self.changedPaths.removeAll()
+            self.refreshDirectories(paths)
         }
+        refreshWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
     private func menuEntry() -> iTermFileTreeEntry? {
         let row = outline.clickedRow >= 0 ? outline.clickedRow : outline.selectedRow
