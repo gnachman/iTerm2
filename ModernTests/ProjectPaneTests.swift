@@ -100,6 +100,38 @@ final class ProjectPaneTests: XCTestCase {
         XCTAssertEqual(window.requests.first?.project, catalog.projects[0].identifier)
         XCTAssertEqual(window.requests.first?.target, "a")
     }
+    func testSingleSelectionOnlyReusesAndDoubleSelectionOpensUnopenedFolder() throws {
+        let (catalog, window, controller) = setup()
+        let project = catalog.projects[1]
+        window.projectSessionContexts.removeLast()
+        controller.selectProject(project, openIfNeeded: false)
+        XCTAssertTrue(window.requests.isEmpty)
+        XCTAssertEqual(controller.selectedProjectIdentifier, project.identifier)
+        XCTAssertEqual(controller.selectedRootDirectory, project.rootDirectory)
+        XCTAssertTrue(window.selected.isEmpty)
+        XCTAssertEqual(window.projectActiveSessionIdentifier, "a")
+        controller.selectProject(project, openIfNeeded: true)
+        let request = try XCTUnwrap(window.requests.first)
+        XCTAssertEqual(request.style, .tab)
+        window.projectSessionContexts.append(context("opened", project.identifier))
+        request.completion(.init(sessionIdentifier: "opened", tabIdentifier: "mixed", windowIdentifier: "w"))
+        controller.selectProject(project, openIfNeeded: false)
+        controller.selectProject(project, openIfNeeded: true)
+        XCTAssertEqual(window.projectActiveSessionIdentifier, "opened")
+        XCTAssertEqual(window.requests.count, 1)
+    }
+    func testSingleUnopenedSelectionCancelsEarlierPendingLaunch() {
+        let (catalog, window, controller) = setup()
+        window.projectSessionContexts.removeLast()
+        controller.openProject(catalog.projects[0], style: .tab)
+        let generation = controller.selectionGeneration
+        controller.selectProject(catalog.projects[1], openIfNeeded: false)
+        XCTAssertGreaterThan(controller.selectionGeneration, generation)
+        window.projectSessionContexts.append(context("late", catalog.projects[0].identifier))
+        window.requests[0].completion(.init(sessionIdentifier: "late", tabIdentifier: "mixed", windowIdentifier: "w"))
+        XCTAssertTrue(window.selected.isEmpty)
+        XCTAssertEqual(window.requests.count, 1)
+    }
     func testUnavailableSplitReportsErrorWithoutLegacyFallback() {
         let (_, window, controller) = setup()
         window.canLaunch = false
@@ -318,6 +350,148 @@ final class ProjectPaneTests: XCTestCase {
         window.projectSessionContexts.append(context("linked", request.project, tab: "new"))
         request.completion(.init(sessionIdentifier: "linked", tabIdentifier: "new", windowIdentifier: "w"))
         XCTAssertEqual(window.selected, ["linked"])
+    }
+    func testUnopenedWorktreeRequiresDoubleSelectionAndReusesCreatedPane() throws {
+        let (catalog, window, controller, _, _) = try gitSetup()
+        let repository = try XCTUnwrap(catalog.repositories.first)
+        let main = try XCTUnwrap(repository.rootWorktree)
+        window.projectSessionContexts.removeFirst(2)
+        window.projectActiveSessionIdentifier = "c"
+        controller.activeSessionDidChange()
+        let projectCount = catalog.projects.count
+        controller.selectWorktree(main, openIfNeeded: false)
+        XCTAssertTrue(window.requests.isEmpty)
+        XCTAssertEqual(controller.selectedRootDirectory, main.rootDirectory)
+        XCTAssertEqual(catalog.projects.count, projectCount)
+        XCTAssertEqual(window.projectActiveSessionIdentifier, "c")
+        let launch = expectation(description: "double-click worktree launch")
+        window.didLaunch = { launch.fulfill() }
+        controller.selectWorktree(main, openIfNeeded: true)
+        controller.selectWorktree(main, openIfNeeded: true)
+        wait(for: [launch], timeout: 5)
+        let request = try XCTUnwrap(window.requests.first)
+        XCTAssertEqual(request.directory, main.rootDirectory)
+        XCTAssertEqual(request.style, .tab)
+        window.projectSessionContexts.append(context("opened", request.project, tab: "new"))
+        request.completion(.init(sessionIdentifier: "opened", tabIdentifier: "new", windowIdentifier: "w"))
+        controller.selectWorktree(main, openIfNeeded: false)
+        controller.selectWorktree(main, openIfNeeded: true)
+        XCTAssertEqual(window.projectActiveSessionIdentifier, "opened")
+        XCTAssertEqual(window.requests.count, 1)
+    }
+    func testRightTreeMenuOpensClickedDirectoryAfterSingleUnopenedWorktreeSelection() throws {
+        let (catalog, window, controller, _, base) = try gitSetup()
+        let main = try XCTUnwrap(catalog.repositories.first?.rootWorktree)
+        window.projectSessionContexts.removeFirst(2)
+        window.projectActiveSessionIdentifier = "c"
+        controller.activeSessionDidChange()
+        controller.selectWorktree(main, openIfNeeded: false)
+        XCTAssertNil(controller.selectedProjectIdentifier)
+        let directory = base.appendingPathComponent("main/two").path
+        let launch = expectation(description: "right-tree launch from worktree preview")
+        window.didLaunch = { launch.fulfill() }
+        controller.openTerminal(inDirectory: directory, style: .verticalSplit)
+        wait(for: [launch], timeout: 5)
+        let request = try XCTUnwrap(window.requests.first)
+        XCTAssertEqual(request.directory, directory)
+        XCTAssertEqual(request.style, .verticalSplit)
+        XCTAssertEqual(request.target, "c")
+        XCTAssertEqual(catalog.project(withIdentifier: request.project)?.rootDirectory, main.rootDirectory)
+        XCTAssertTrue(window.selected.isEmpty)
+    }
+    func testRepositoryDirectorySingleSelectionUsesRecentRootPane() throws {
+        let (catalog, window, controller, _, _) = try gitSetup()
+        let repository = try XCTUnwrap(catalog.repositories.first)
+        window.projectActiveSessionIdentifier = "b"
+        controller.activeSessionDidChange()
+        window.projectActiveSessionIdentifier = "c"
+        controller.activeSessionDidChange()
+        controller.selectRepository(repository, openIfNeeded: false)
+        XCTAssertEqual(window.projectActiveSessionIdentifier, "b")
+        controller.selectRepository(repository, openIfNeeded: true)
+        XCTAssertTrue(window.requests.isEmpty)
+    }
+    func testUnopenedRepositoryDirectorySingleSelectionDoesNotCreateTerminal() throws {
+        let (catalog, window, controller, _, _) = try gitSetup()
+        let repository = try XCTUnwrap(catalog.repositories.first)
+        window.projectSessionContexts.removeFirst(2)
+        window.projectActiveSessionIdentifier = "c"
+        controller.activeSessionDidChange()
+        controller.selectRepository(repository, openIfNeeded: false)
+        XCTAssertTrue(window.requests.isEmpty)
+        XCTAssertTrue(window.selected.isEmpty)
+        let launch = expectation(description: "double-click repository launch")
+        window.didLaunch = { launch.fulfill() }
+        controller.selectRepository(repository, openIfNeeded: true)
+        wait(for: [launch], timeout: 5)
+        XCTAssertEqual(window.requests.first?.directory, repository.rootDirectory)
+        XCTAssertEqual(window.requests.first?.style, .tab)
+    }
+    func testRepositoryDirectoryMenuLaunchesItsRootFromAnotherActiveWorktreeInEachMode() throws {
+        for style in [iTermOpenStyle.tab, .verticalSplit, .horizontalSplit, .window] {
+            let (catalog, window, controller, _, _) = try gitSetup()
+            let repository = try XCTUnwrap(iTermProjectSidebarTree(catalog: catalog).roots.first?.repository)
+            window.projectActiveSessionIdentifier = "c"
+            controller.activeSessionDidChange()
+            let source = controller.selectedProjectIdentifier
+            let launch = expectation(description: "repository root launch")
+            window.didLaunch = { launch.fulfill() }
+            controller.openRepository(repository, style: style)
+            wait(for: [launch], timeout: 5)
+            let request = try XCTUnwrap(window.requests.first)
+            XCTAssertEqual(request.directory, repository.rootDirectory)
+            XCTAssertEqual(catalog.project(withIdentifier: request.project)?.rootDirectory, repository.rootDirectory)
+            XCTAssertEqual(request.style, style)
+            XCTAssertEqual(request.target, "c")
+            XCTAssertEqual(controller.selectedProjectIdentifier, source)
+            XCTAssertTrue(window.selected.isEmpty)
+        }
+    }
+    func testRepositoryDirectoryWithoutRootWorktreeStillOpensDisplayedDirectory() throws {
+        let (catalog, window, controller, scanner, _) = try gitSetup()
+        let old = try XCTUnwrap(scanner.snapshot)
+        scanner.snapshot = .init(commonDirectory: old.commonDirectory, rootDirectory: old.rootDirectory,
+                                 worktrees: old.worktrees.filter { !$0.isMain })
+        let refreshed = expectation(description: "rootless repository refreshed")
+        catalog.refreshProject(withIdentifier: catalog.projects[2].identifier) { _ in refreshed.fulfill() }
+        wait(for: [refreshed], timeout: 5)
+        let repository = try XCTUnwrap(catalog.repositories.first)
+        XCTAssertNil(repository.rootWorktree)
+        window.projectActiveSessionIdentifier = "c"
+        controller.activeSessionDidChange()
+        let launch = expectation(description: "repository directory launch")
+        window.didLaunch = { launch.fulfill() }
+        controller.openRepository(repository, style: .tab)
+        wait(for: [launch], timeout: 5)
+        XCTAssertEqual(window.requests.first?.directory, repository.rootDirectory)
+        XCTAssertEqual(window.requests.first?.target, "c")
+    }
+    func testRepositoryDirectoryPreparationCancelsOnPaneChangeOrRepositoryRemoval() throws {
+        for remove in [false, true] {
+            let (catalog, window, controller, _, base) = try gitSetup()
+            let repository = try XCTUnwrap(catalog.repositories.first)
+            controller.openRepository(repository, style: .horizontalSplit)
+            if remove { catalog.removeRepository(withIdentifier: repository.identifier) }
+            else {
+                window.projectActiveSessionIdentifier = "c"
+                controller.activeSessionDidChange()
+            }
+            let drained = expectation(description: "repository validation drained")
+            catalog.addDirectory(atPath: base.appendingPathComponent("barrier").path) { _, _ in drained.fulfill() }
+            wait(for: [drained], timeout: 5)
+            XCTAssertTrue(window.requests.isEmpty)
+            XCTAssertNil(catalog.projects.first { $0.rootDirectory == repository.rootDirectory })
+        }
+    }
+    func testRemovedRepositoryCannotBeReopenedFromDirectoryMenu() throws {
+        let (catalog, window, controller, _, _) = try gitSetup()
+        let repository = try XCTUnwrap(catalog.repositories.first)
+        catalog.removeRepository(withIdentifier: repository.identifier)
+        for style in [iTermOpenStyle.tab, .verticalSplit, .horizontalSplit, .window] {
+            controller.openRepository(repository, style: style)
+        }
+        XCTAssertTrue(window.requests.isEmpty)
+        XCTAssertTrue(catalog.projects.isEmpty)
     }
     func testExplicitWorktreeLaunchKeepsSourceSelectionAndPassesEachMode() throws {
         for style in [iTermOpenStyle.tab, .verticalSplit, .horizontalSplit, .window] {

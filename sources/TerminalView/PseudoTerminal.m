@@ -5218,14 +5218,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self invalidateRestorableState];
 }
 
-- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectProject:(iTermProjectDirectory *)project {
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectProject:(iTermProjectDirectory *)project openIfNeeded:(BOOL)openIfNeeded {
     DLog(@"Select project %@ in window %@", project.identifier, self.terminalGuid);
-    [[self projectController] selectProject:project];
+    [[self projectController] selectProject:project openIfNeeded:openIfNeeded];
     [self prepareProjectFileTree];
 }
 
-- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectWorktree:(iTermGitWorktree *)worktree {
-    [[self projectController] selectWorktree:worktree];
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectWorktree:(iTermGitWorktree *)worktree openIfNeeded:(BOOL)openIfNeeded {
+    [[self projectController] selectWorktree:worktree openIfNeeded:openIfNeeded];
+    [self prepareProjectFileTree];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectRepository:(iTermGitRepositorySnapshot *)repository openIfNeeded:(BOOL)openIfNeeded {
+    [[self projectController] selectRepository:repository openIfNeeded:openIfNeeded];
     [self prepareProjectFileTree];
 }
 
@@ -5235,6 +5240,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)projectSidebar:(iTermProjectSidebarView *)sidebar openWorktree:(iTermGitWorktree *)worktree style:(iTermOpenStyle)style {
     [[self projectController] openWorktree:worktree style:style];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar openRepository:(iTermGitRepositorySnapshot *)repository style:(iTermOpenStyle)style {
+    DLog(@"Open repository %@ in window %@ with style %lu", repository.identifier, self.terminalGuid, (unsigned long)style);
+    [[self projectController] openRepository:repository style:style];
 }
 
 - (BOOL)projectSidebar:(iTermProjectSidebarView *)sidebar canOpenTerminalWithStyle:(iTermOpenStyle)style {

@@ -284,8 +284,22 @@ import Foundation
     }
 
     func selectProject(_ project: iTermProjectDirectory) {
+        selectProject(project, openIfNeeded: true)
+    }
+
+    func selectProject(_ project: iTermProjectDirectory, openIfNeeded: Bool) {
         guard catalog.project(withIdentifier: project.identifier) != nil, let delegate = delegate else { return }
-        if let worktree = catalog.worktree(forProjectIdentifier: project.identifier) { selectWorktree(worktree); return }
+        if let worktree = catalog.worktree(forProjectIdentifier: project.identifier) {
+            selectWorktree(worktree, openIfNeeded: openIfNeeded)
+            return
+        }
+        let associations = targetAssociations
+        let remembered = rememberedTabs[project.identifier].flatMap { associations[$0] == project.identifier ? $0 : nil }
+        let existing = remembered ?? associations.keys.sorted().first(where: { associations[$0] == project.identifier })
+        guard openIfNeeded || existing != nil else {
+            selectUnopenedProject(project.identifier, worktree: nil)
+            return
+        }
         worktreeIntent = nil
         if selectedProjectIdentifier != project.identifier || currentDirectoryActionGeneration != nil || explicitLaunchPending {
             selectionGeneration &+= 1
@@ -295,9 +309,7 @@ import Foundation
         currentDirectoryActionGeneration = nil
         selectedProjectIdentifier = project.identifier
         delegate.projectStateDidChange()
-        let associations = targetAssociations
-        let remembered = rememberedTabs[project.identifier].flatMap { associations[$0] == project.identifier ? $0 : nil }
-        if let tab = remembered ?? associations.keys.sorted().first(where: { associations[$0] == project.identifier }) {
+        if let tab = existing {
             rememberedTabs[project.identifier] = tab
             selectTarget(tab)
             return
@@ -318,13 +330,11 @@ import Foundation
     }
 
     func selectWorktree(_ worktree: iTermGitWorktree) {
+        selectWorktree(worktree, openIfNeeded: true)
+    }
+
+    func selectWorktree(_ worktree: iTermGitWorktree, openIfNeeded: Bool) {
         guard let current = catalog.worktree(withIdentifier: worktree.identifier), let delegate else { return }
-        if selectedWorktreeIdentifier != current.identifier || currentDirectoryActionGeneration != nil || explicitLaunchPending {
-            selectionGeneration &+= 1
-            launchOrigin = nil
-            explicitLaunchPending = false
-        }
-        currentDirectoryActionGeneration = nil
         let associations = targetAssociations
         let tabs = associations.keys.filter { tab in
             associations[tab].flatMap { catalog.worktree(forProjectIdentifier: $0)?.identifier } == current.identifier
@@ -332,7 +342,18 @@ import Foundation
         let remembered = rememberedWorktreeTabs[current.identifier].flatMap { tabs.contains($0) ? $0 : nil }
         let persisted = rememberedTabs.values.filter { tabs.contains($0) }.sorted().first
         let recent = tabs.sorted().max { (tabVisits[$0] ?? 0) < (tabVisits[$1] ?? 0) }
-        if let tab = remembered ?? recent ?? persisted {
+        let existing = remembered ?? recent ?? persisted
+        guard openIfNeeded || existing != nil else {
+            selectUnopenedProject(catalog.projects.first { $0.rootDirectory == current.rootDirectory }?.identifier, worktree: current)
+            return
+        }
+        if selectedWorktreeIdentifier != current.identifier || currentDirectoryActionGeneration != nil || explicitLaunchPending {
+            selectionGeneration &+= 1
+            launchOrigin = nil
+            explicitLaunchPending = false
+        }
+        currentDirectoryActionGeneration = nil
+        if let tab = existing {
             worktreeIntent = nil
             selectedProjectIdentifier = associations[tab]
             rememberedWorktreeTabs[current.identifier] = tab
@@ -376,6 +397,31 @@ import Foundation
         }
     }
 
+    private func cancelPendingSidebarLaunch() {
+        selectionGeneration &+= 1
+        launchOrigin = nil
+        explicitLaunchPending = false
+        currentDirectoryActionGeneration = nil
+    }
+
+    private func selectUnopenedProject(_ identifier: String?, worktree: iTermGitWorktree?) {
+        cancelPendingSidebarLaunch()
+        worktreeIntent = worktree
+        selectedProjectIdentifier = identifier
+        delegate?.projectStateDidChange()
+    }
+
+    func selectRepository(_ repository: iTermGitRepositorySnapshot, openIfNeeded: Bool) {
+        guard let current = catalog.repositories.first(where: { $0.identifier == repository.identifier }) else { return }
+        if let worktree = current.rootWorktree { selectWorktree(worktree, openIfNeeded: openIfNeeded); return }
+        if let project = catalog.projects.first(where: { $0.rootDirectory == current.rootDirectory }) {
+            selectProject(project, openIfNeeded: openIfNeeded)
+            return
+        }
+        if openIfNeeded { openRepository(current, style: .tab) }
+        else { cancelPendingSidebarLaunch() }
+    }
+
     private func isCurrentWorktreeRequest(_ worktree: String, request: UUID, generation: UInt64) -> Bool {
         pendingWorktrees[worktree]?.identifier == request && generation == selectionGeneration &&
             worktreeIntent?.identifier == worktree && catalog.worktree(withIdentifier: worktree)?.available == true &&
@@ -401,7 +447,35 @@ import Foundation
         beginExplicitLaunch(project: current, directory: current.rootDirectory, style: style)
     }
 
+    func openRepository(_ repository: iTermGitRepositorySnapshot, style: iTermOpenStyle) {
+        guard let current = catalog.repositories.first(where: { $0.identifier == repository.identifier }) else { return }
+        if let worktree = current.rootWorktree {
+            openWorktree(worktree, style: style)
+            return
+        }
+        // Bare repositories have a directory heading without a corresponding worktree row.
+        let origin = beginLaunchIntent()
+        guard canLaunch(style) else { return }
+        let isCurrent = { [weak self] in
+            guard let self else { return false }
+            return self.isLaunchRequestCurrent(targetSessionIdentifier: origin.target, generation: origin.generation) &&
+                self.catalog.repositories.contains { $0.identifier == current.identifier && $0.rootDirectory == current.rootDirectory }
+        }
+        catalog.addDirectoryIfCurrent(atPath: current.rootDirectory, shouldAdd: isCurrent) { [weak self] project, error in
+            guard let self, isCurrent() else { return }
+            guard let project else {
+                if let error, error.code != NSUserCancelledError { self.delegate?.projectReportError?(error) }
+                return
+            }
+            self.performExplicitLaunch(project, directory: current.rootDirectory, style: style, origin: origin)
+        }
+    }
+
     func openWorktree(_ worktree: iTermGitWorktree, style: iTermOpenStyle) {
+        openWorktree(worktree, directory: worktree.rootDirectory, style: style)
+    }
+
+    @nonobjc private func openWorktree(_ worktree: iTermGitWorktree, directory: String, style: iTermOpenStyle) {
         guard let current = catalog.worktree(withIdentifier: worktree.identifier) else { return }
         let origin = beginLaunchIntent()
         guard current.available else { reportUnavailableWorktree(); return }
@@ -416,11 +490,15 @@ import Foundation
                 if let error, error.code != NSUserCancelledError { self.delegate?.projectReportError?(error) }
                 return
             }
-            self.performExplicitLaunch(project, directory: current.rootDirectory, style: style, origin: origin)
+            self.performExplicitLaunch(project, directory: directory, style: style, origin: origin)
         }
     }
 
     func openTerminal(inDirectory directory: String, style: iTermOpenStyle) {
+        if let worktree = worktreeIntent {
+            openWorktree(worktree, directory: directory, style: style)
+            return
+        }
         guard let project = selectedProject else { return }
         if let worktree = catalog.worktree(forProjectIdentifier: project.identifier), !worktree.available {
             _ = beginLaunchIntent()

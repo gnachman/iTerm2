@@ -109,6 +109,15 @@ final class GitProjectIntegrationTests: XCTestCase {
         NotificationCenter.default.removeObserver(token)
     }
 
+    func testRepositoryDirectoryTargetsDisplayedRootRatherThanFirstBranch() throws {
+        let main = iTermGitWorktree(rootDirectory: "/repo", branch: "main", head: "a", isMain: true, available: false)
+        let linked = iTermGitWorktree(rootDirectory: "/linked", branch: "feature", head: "b", isMain: false)
+        let repository = iTermGitRepositorySnapshot(commonDirectory: "/repo/.git", rootDirectory: "/repo", worktrees: [linked, main])
+        XCTAssertEqual(repository.rootWorktree?.identifier, main.identifier)
+        XCTAssertEqual(repository.rootWorktree?.available, false)
+        let bare = iTermGitRepositorySnapshot(commonDirectory: "/bare", rootDirectory: "/bare", worktrees: [linked])
+        XCTAssertNil(bare.rootWorktree)
+    }
     func testNestedProjectsGroupByRepositoryAndKeepLegacyIdentifiers() throws {
         let f = try fixture()
         let scanner = Scanner(); scanner.snapshot = f.snapshot

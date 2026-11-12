@@ -30,6 +30,7 @@ final class iTermGitRepositorySnapshot: NSObject {
     let rootDirectory: String
     let worktrees: [iTermGitWorktree]
     var identifier: String { commonDirectory }
+    var rootWorktree: iTermGitWorktree? { worktrees.first { $0.rootDirectory == rootDirectory } }
 
     init(commonDirectory: String, rootDirectory: String, worktrees: [iTermGitWorktree]) {
         self.commonDirectory = commonDirectory
