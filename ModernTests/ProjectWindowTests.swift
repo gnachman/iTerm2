@@ -9,6 +9,12 @@ final class ProjectWindowTests: XCTestCase {
         var directories = [String]()
         var completion: ((String?) -> Void)?
         var completions = [(String?) -> Void]()
+        var workingDirectory: String?
+        var directoryReads = 0
+        var directoryCompletion: ((String?) -> Void)?
+        var directoryCompletions = [(String?) -> Void]()
+        var delaysDirectoryRead = false
+        var stateChanged: (() -> Void)?
         func projectSelectTab(_ identifier: String) { projectActiveTabIdentifier = identifier }
         func projectAssign(_ project: String?, toTab identifier: String) { projectTabAssociations[identifier] = project ?? "" }
         func projectLaunch(_ project: iTermProjectDirectory, directory: String, completion: @escaping (String?) -> Void) {
@@ -17,7 +23,241 @@ final class ProjectWindowTests: XCTestCase {
             self.completion = completion
             completions.append(completion)
         }
-        func projectStateDidChange() {}
+        func projectStateDidChange() { stateChanged?() }
+        func projectWorkingDirectory(completion: @escaping (String?) -> Void) {
+            directoryReads += 1
+            if delaysDirectoryRead { directoryCompletion = completion; directoryCompletions.append(completion) }
+            else { completion(workingDirectory) }
+        }
+    }
+
+    func testReturningToUnownedTabSupersedesItsPendingDirectoryRead() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["a": "", "b": ""]
+        window.delaysDirectoryRead = true
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        for tab in ["a", "b", "a"] {
+            window.projectActiveTabIdentifier = tab
+            coordinator.activeTabDidChange()
+        }
+        XCTAssertEqual(window.directoryReads, 3)
+        guard window.directoryCompletions.count == 3 else { return }
+        window.directoryCompletions[0]("/tmp")
+        window.directoryCompletions[1]("/var")
+        let selected = expectation(description: "replacement cwd associated")
+        window.stateChanged = { if coordinator.selectedProjectIdentifier == catalog.projects[0].identifier { selected.fulfill() } }
+        window.directoryCompletions[2]("/tmp")
+        wait(for: [selected], timeout: 5)
+        XCTAssertEqual(window.projectTabAssociations["a"], catalog.projects[0].identifier)
+        XCTAssertEqual(window.projectTabAssociations["b"], "")
+        XCTAssertEqual(window.projectActiveTabIdentifier, "a")
+    }
+
+    func testSymlinkSpelledWorkingDirectoryReusesCanonicalParentProject() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let repo = root.appendingPathComponent("repo")
+        let alias = root.appendingPathComponent("alias")
+        try FileManager.default.createDirectory(at: repo.appendingPathComponent("sub"), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: repo)
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let name = "ProjectWindowAliasTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        addTeardownBlock { defaults.removePersistentDomain(forName: name) }
+        let identifier = UUID().uuidString
+        defaults.set([["identifier": identifier, "rootDirectory": repo.standardizedFileURL.resolvingSymlinksInPath().path]], forKey: iTermProjectCatalog.defaultsKey)
+        let catalog = iTermProjectCatalog(defaults: defaults)
+        let window = Window()
+        window.projectTabAssociations = ["opened": ""]
+        window.projectActiveTabIdentifier = "opened"
+        window.workingDirectory = alias.appendingPathComponent("sub").path
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        let selected = expectation(description: "canonical parent selected")
+        window.stateChanged = { if coordinator.selectedProjectIdentifier != nil { selected.fulfill() } }
+        coordinator.activeTabDidChange()
+        wait(for: [selected], timeout: 5)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, identifier)
+        XCTAssertEqual(catalog.projects.count, 1)
+        XCTAssertEqual(window.projectTabAssociations["opened"], identifier)
+    }
+
+    func testUnownedTerminalSelectsExistingWorkingDirectoryWithoutSwitchingTabs() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["plain": ""]
+        window.projectActiveTabIdentifier = "plain"
+        window.workingDirectory = "/tmp"
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        let selected = expectation(description: "cwd associated")
+        window.stateChanged = { if coordinator.selectedProjectIdentifier == catalog.projects[0].identifier { selected.fulfill() } }
+        coordinator.activeTabDidChange()
+        wait(for: [selected], timeout: 5)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, catalog.projects[0].identifier)
+        XCTAssertEqual(window.projectTabAssociations["plain"], catalog.projects[0].identifier)
+        XCTAssertEqual(window.projectActiveTabIdentifier, "plain")
+        XCTAssertEqual(window.launches, 0)
+    }
+
+    func testCanonicalAliasProjectWinsOverShallowerLiteralAncestor() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let repo = root.appendingPathComponent("repo")
+        let alias = root.appendingPathComponent("alias")
+        try FileManager.default.createDirectory(at: repo.appendingPathComponent("sub"), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: repo)
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let name = "ProjectWindowAliasAncestorTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        addTeardownBlock { defaults.removePersistentDomain(forName: name) }
+        let identifier = UUID().uuidString
+        defaults.set([["identifier": UUID().uuidString, "rootDirectory": "/"],
+                      ["identifier": identifier, "rootDirectory": alias.standardizedFileURL.path]],
+                     forKey: iTermProjectCatalog.defaultsKey)
+        let catalog = iTermProjectCatalog(defaults: defaults)
+        let window = Window()
+        window.projectTabAssociations = ["opened": ""]
+        window.projectActiveTabIdentifier = "opened"
+        window.workingDirectory = repo.appendingPathComponent("sub").path
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        let selected = expectation(description: "deepest canonical project selected")
+        window.stateChanged = { if coordinator.selectedProjectIdentifier != nil { selected.fulfill() } }
+        coordinator.activeTabDidChange()
+        wait(for: [selected], timeout: 5)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, identifier)
+        XCTAssertEqual(window.projectTabAssociations["opened"], identifier)
+        XCTAssertEqual(catalog.projects.count, 2)
+    }
+
+    func testUnknownWorkingDirectoryIsAddedAndAssignedToTheOpenedTerminal() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let name = "ProjectWindowCwdTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        addTeardownBlock { defaults.removePersistentDomain(forName: name) }
+        let catalog = iTermProjectCatalog(defaults: defaults)
+        let window = Window()
+        window.projectTabAssociations = ["opened": ""]
+        window.projectActiveTabIdentifier = "opened"
+        window.workingDirectory = root.path
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        let drained = expectation(description: "cwd directory added")
+        catalog.addDirectory(atPath: root.path) { _, _ in drained.fulfill() }
+        wait(for: [drained], timeout: 5)
+        let project = try XCTUnwrap(catalog.projects.first)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, project.identifier)
+        XCTAssertEqual(window.projectTabAssociations["opened"], project.identifier)
+        XCTAssertEqual(window.projectActiveTabIdentifier, "opened")
+        XCTAssertEqual(window.launches, 0)
+        XCTAssertEqual(catalog.projects.count, 1)
+    }
+
+    func testLateWorkingDirectoryDoesNotOverrideUserProjectSelection() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["plain": "", "owned": catalog.projects[1].identifier]
+        window.projectActiveTabIdentifier = "plain"
+        window.delaysDirectoryRead = true
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        coordinator.selectProject(catalog.projects[1])
+        window.directoryCompletion?("/tmp")
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, catalog.projects[1].identifier)
+        XCTAssertEqual(window.projectActiveTabIdentifier, "owned")
+        XCTAssertEqual(window.projectTabAssociations["plain"], "")
+    }
+
+    func testOwnedTerminalKeepsItsProjectAndDoesNotReadWorkingDirectory() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["owned": catalog.projects[0].identifier]
+        window.projectActiveTabIdentifier = "owned"
+        window.workingDirectory = "/var"
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        coordinator.selectInitialWorkingDirectoryIfNeeded()
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, catalog.projects[0].identifier)
+        XCTAssertEqual(window.directoryReads, 0)
+        XCTAssertEqual(window.launches, 0)
+    }
+
+    func testMissingWorkingDirectoryCanRetryWhenShellTrackingBecomesAvailable() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["plain": ""]
+        window.projectActiveTabIdentifier = "plain"
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        XCTAssertNil(coordinator.selectedProjectIdentifier)
+        window.workingDirectory = "/tmp"
+        let selected = expectation(description: "available cwd selected")
+        window.stateChanged = { if coordinator.selectedProjectIdentifier == catalog.projects[0].identifier { selected.fulfill() } }
+        coordinator.selectInitialWorkingDirectoryIfNeeded()
+        wait(for: [selected], timeout: 5)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, catalog.projects[0].identifier)
+        XCTAssertEqual(window.projectTabAssociations["plain"], catalog.projects[0].identifier)
+        XCTAssertEqual(window.launches, 0)
+    }
+
+    func testDirectoryReadCannotAssociateClosedOrMovedTab() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["closing": ""]
+        window.projectActiveTabIdentifier = "closing"
+        window.delaysDirectoryRead = true
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        window.projectTabAssociations.removeValue(forKey: "closing")
+        window.projectActiveTabIdentifier = nil
+        coordinator.tabsDidChange()
+        window.directoryCompletion?("/tmp")
+        XCTAssertNil(coordinator.selectedProjectIdentifier)
+        XCTAssertNil(window.projectTabAssociations["closing"])
+    }
+
+    func testCatalogAdditionDoesNotCancelPendingUserProjectSelection() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        let project = catalog.projects[0]
+        coordinator.selectProject(project)
+        let generation = coordinator.selectionGeneration
+        let done = expectation(description: "other directory added")
+        catalog.addDirectory(atPath: root.path) { _, _ in done.fulfill() }
+        wait(for: [done], timeout: 5)
+        XCTAssertEqual(coordinator.selectionGeneration, generation)
+        window.projectTabAssociations["launched"] = project.identifier
+        window.completion?("launched")
+        XCTAssertEqual(window.projectActiveTabIdentifier, "launched")
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, project.identifier)
+    }
+
+    func testAbandonedDirectoryValidationDoesNotAddAProject() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let (catalog, _) = makeCatalog()
+        let done = expectation(description: "abandoned directory resolved")
+        catalog.addDirectoryIfCurrent(atPath: root.path, shouldAdd: { false }) { project, error in
+            XCTAssertNil(project)
+            XCTAssertEqual(error?.code, NSUserCancelledError)
+            done.fulfill()
+        }
+        wait(for: [done], timeout: 5)
+        XCTAssertEqual(catalog.projects.map(\.rootDirectory), ["/tmp", "/var"])
     }
 
     func testRememberedTabFallbackMoveAndUnownedSelection() {

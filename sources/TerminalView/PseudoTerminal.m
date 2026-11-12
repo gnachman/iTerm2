@@ -5127,6 +5127,26 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     };
 }
 
+- (void)projectWorkingDirectoryWithCompletion:(void (^)(NSString *))completion {
+    PTYSession *session = self.currentSession;
+    if (_closing || _deallocing || !session || session.exited || session.isBrowserSession || session.sshIdentity) {
+        completion(nil);
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    __weak PTYSession *weakSession = session;
+    [session asyncCurrentLocalWorkingDirectory:^(NSString *directory) {
+        PseudoTerminal *term = [[weakSelf retain] autorelease];
+        PTYSession *original = [[weakSession retain] autorelease];
+        if (!term || term->_closing || term->_deallocing || !original || term.currentSession != original ||
+            original.exited || original.isBrowserSession || original.sshIdentity) {
+            completion(nil);
+            return;
+        }
+        completion(directory);
+    }];
+}
+
 - (void)toggleProjectSidebar:(id)sender {
     iTermProjectWindowController *controller = [self projectController];
     controller.sidebarVisible = !controller.sidebarVisible;
@@ -16944,6 +16964,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (void)tabInvalidateProxyIcon:(PTYTab *)tab {
     if (tab == self.currentTab) {
         [self updateProxyIcon];
+        // Directory tracking may become available only after the shell has started.
+        [[self projectController] selectInitialWorkingDirectoryIfNeeded];
     }
 }
 

@@ -8,6 +8,8 @@ import Foundation
     func projectAssign(_ project: String?, toTab identifier: String)
     func projectLaunch(_ project: iTermProjectDirectory, directory: String, completion: @escaping (String?) -> Void)
     func projectStateDidChange()
+    @objc(projectWorkingDirectoryWithCompletion:)
+    optional func projectWorkingDirectory(completion: @escaping (String?) -> Void)
 }
 
 @objcMembers final class iTermProjectWindowController: NSObject {
@@ -16,6 +18,8 @@ import Foundation
     private var observer: NSObjectProtocol?
     private var rememberedTabs = [String: String]()
     private var pending = [String: (identifier: UUID, generation: UInt64)]()
+    private var pendingWorkingDirectories = [String: (identifier: UUID, generation: UInt64)]()
+    private var completedWorkingDirectories = Set<String>()
     private(set) var selectionGeneration: UInt64 = 0
     private(set) var selectedProjectIdentifier: String?
     var sidebarVisible = false
@@ -44,6 +48,8 @@ import Foundation
     func tabsDidChange() {
         let associations = delegate?.projectTabAssociations ?? [:]
         rememberedTabs = rememberedTabs.filter { associations[$0.value] == $0.key }
+        completedWorkingDirectories = completedWorkingDirectories.filter { associations[$0] != nil }
+        pendingWorkingDirectories = pendingWorkingDirectories.filter { associations[$0.key] != nil }
     }
 
     func activeTabDidChange() {
@@ -55,8 +61,54 @@ import Foundation
             .flatMap { catalog.project(withIdentifier: $0)?.identifier }
         if let project = selectedProjectIdentifier, let tab = delegate.projectActiveTabIdentifier {
             rememberedTabs[project] = tab
+            completedWorkingDirectories.insert(tab)
         }
         delegate.projectStateDidChange()
+        selectInitialWorkingDirectoryIfNeeded()
+    }
+
+    func selectInitialWorkingDirectoryIfNeeded() {
+        guard let delegate, let tab = delegate.projectActiveTabIdentifier,
+              delegate.projectTabAssociations[tab] == "", selectedProjectIdentifier == nil,
+              !completedWorkingDirectories.contains(tab), pendingWorkingDirectories[tab]?.generation != selectionGeneration,
+              let readDirectory = delegate.projectWorkingDirectory else { return }
+        let request = UUID()
+        let generation = selectionGeneration
+        pendingWorkingDirectories[tab] = (request, generation)
+        readDirectory { [weak self] path in
+            guard let self, self.isCurrentWorkingDirectoryRequest(tab, request: request, generation: generation) else { return }
+            guard let path, NSString(string: path).isAbsolutePath, !path.contains("\0") else {
+                self.pendingWorkingDirectories.removeValue(forKey: tab)
+                return
+            }
+            self.catalog.addDirectoryIfCurrent(atPath: path, reuseContainingProject: true, shouldAdd: { [weak self] in
+                    self?.isCurrentWorkingDirectoryRequest(tab, request: request, generation: generation) == true
+                }) { [weak self] project, _ in
+                    guard let self else { return }
+                    if let project { self.assignInitialProject(project, toTab: tab, request: request, generation: generation) }
+                    else if self.pendingWorkingDirectories[tab]?.identifier == request { self.pendingWorkingDirectories.removeValue(forKey: tab) }
+                }
+        }
+    }
+
+    private func isCurrentWorkingDirectoryRequest(_ tab: String, request: UUID, generation: UInt64) -> Bool {
+        guard pendingWorkingDirectories[tab]?.identifier == request else { return false }
+        guard generation == selectionGeneration, delegate?.projectActiveTabIdentifier == tab,
+              delegate?.projectTabAssociations[tab] == "", selectedProjectIdentifier == nil else {
+            pendingWorkingDirectories.removeValue(forKey: tab)
+            return false
+        }
+        return true
+    }
+
+    private func assignInitialProject(_ project: iTermProjectDirectory, toTab tab: String, request: UUID, generation: UInt64) {
+        guard isCurrentWorkingDirectoryRequest(tab, request: request, generation: generation) else { return }
+        pendingWorkingDirectories.removeValue(forKey: tab)
+        completedWorkingDirectories.insert(tab)
+        delegate?.projectAssign(project.identifier, toTab: tab)
+        selectedProjectIdentifier = project.identifier
+        rememberedTabs[project.identifier] = tab
+        delegate?.projectStateDidChange()
     }
 
     func selectProject(_ project: iTermProjectDirectory) {
@@ -97,10 +149,13 @@ import Foundation
 
     private func catalogDidChange() {
         guard let delegate = delegate else { return }
+        var removedAssociation = false
         for (tab, project) in delegate.projectTabAssociations where !project.isEmpty && catalog.project(withIdentifier: project) == nil {
             delegate.projectAssign(nil, toTab: tab)
+            removedAssociation = true
         }
-        activeTabDidChange()
+        if removedAssociation || (selectedProjectIdentifier != nil && selectedProject == nil) { activeTabDidChange() }
+        else { delegate.projectStateDidChange() }
     }
 
     // Localization unneeded: arrangement field names.

@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 @objcMembers
 final class iTermProjectDirectory: NSObject {
@@ -44,15 +45,51 @@ final class iTermProjectCatalog: NSObject {
         projects.first { $0.identifier == identifier }
     }
 
+    @nonobjc func project(containingDirectory path: String) -> iTermProjectDirectory? {
+        projects.filter {
+            path == $0.rootDirectory || path.hasPrefix($0.rootDirectory == "/" ? "/" : $0.rootDirectory + "/")
+        }.max { $0.rootDirectory.count < $1.rootDirectory.count }
+    }
+
     @objc(addDirectoryAtPath:completion:)
     func addDirectory(atPath path: String, completion: @escaping (iTermProjectDirectory?, NSError?) -> Void) {
+        addDirectoryIfCurrent(atPath: path, shouldAdd: { true }, completion: completion)
+    }
+
+    @nonobjc func addDirectoryIfCurrent(atPath path: String, reuseContainingProject: Bool = false, shouldAdd: @escaping () -> Bool,
+                                       completion: @escaping (iTermProjectDirectory?, NSError?) -> Void) {
+        let existingProjects = projects
         ioQueue.async {
             let result = Self.canonicalDirectory(path)
+            var matchedProjects = [(identifier: String, depth: Int)]()
+            if reuseContainingProject, case .success(let canonical) = result {
+                for project in existingProjects {
+                    guard case .success(let root) = Self.canonicalDirectory(project.rootDirectory),
+                          canonical == root || canonical.hasPrefix(root == "/" ? "/" : root + "/") else { continue }
+                    matchedProjects.append((project.identifier, root.count))
+                }
+            }
+            let canonicalMatches = matchedProjects
             DispatchQueue.main.async {
+                guard shouldAdd() else {
+                    completion(nil, NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError))
+                    return
+                }
                 switch result {
                 case .failure(let error): completion(nil, error as NSError)
                 case .success(let canonical):
-                    if let existing = self.projects.first(where: { $0.rootDirectory == canonical }) {
+                    var existing = reuseContainingProject
+                        ? self.project(containingDirectory: canonical)
+                        : self.projects.first(where: { $0.rootDirectory == canonical })
+                    var existingDepth = existing?.rootDirectory.count ?? -1
+                    for canonicalMatch in canonicalMatches {
+                        if let normalized = self.project(withIdentifier: canonicalMatch.identifier),
+                           canonicalMatch.depth > existingDepth {
+                            existing = normalized
+                            existingDepth = canonicalMatch.depth
+                        }
+                    }
+                    if let existing {
                         completion(existing, nil)
                         return
                     }
@@ -81,13 +118,15 @@ final class iTermProjectCatalog: NSObject {
         guard NSString(string: path).isAbsolutePath, !path.contains("\0") else {
             return .failure(NSError(domain: NSCocoaErrorDomain, code: NSFileReadInvalidFileNameError))
         }
-        let url = URL(fileURLWithPath: path).standardizedFileURL.resolvingSymlinksInPath()
-        do {
-            let values = try url.resourceValues(forKeys: [.isDirectoryKey])
-            guard values.isDirectory == true else {
-                return .failure(NSError(domain: NSCocoaErrorDomain, code: NSFileReadUnsupportedSchemeError))
-            }
-            return .success(url.path)
-        } catch { return .failure(error) }
+        guard let resolved = realpath((path as NSString).fileSystemRepresentation, nil) else {
+            return .failure(NSError(domain: NSPOSIXErrorDomain, code: Int(errno)))
+        }
+        defer { free(resolved) }
+        let canonical = FileManager.default.string(withFileSystemRepresentation: resolved, length: strlen(resolved))
+        var directory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: canonical, isDirectory: &directory), directory.boolValue else {
+            return .failure(NSError(domain: NSPOSIXErrorDomain, code: Int(ENOTDIR)))
+        }
+        return .success(canonical)
     }
 }
