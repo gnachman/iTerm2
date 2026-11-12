@@ -17,6 +17,12 @@
             "value" : "Silently ignore errors from this command"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorar en silencio los errores de este comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Coprocess command to run:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comando del coproceso que ejecutar:"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "OK"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -161,6 +179,12 @@
             "value" : "Cancel"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -207,6 +231,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Enter Command"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introducir comando"
           }
         },
         "ja" : {

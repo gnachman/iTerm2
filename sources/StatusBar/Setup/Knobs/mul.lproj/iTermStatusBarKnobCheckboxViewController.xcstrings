@@ -17,6 +17,12 @@
             "value": "Check"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcar"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",

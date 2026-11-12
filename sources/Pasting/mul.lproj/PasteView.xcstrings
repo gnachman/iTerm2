@@ -17,6 +17,12 @@
             "value": "Pasting…"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pegando…"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "new",
             "value": "Cancel"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
           }
         },
         "ja": {

@@ -17,6 +17,12 @@
             "value" : "A simple script that doesn't have any dependencies besides the iterm2 library."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un script sencillo que no tiene más dependencias que la biblioteca iterm2."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62,6 +68,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "😈"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "😈"
           }
         },
@@ -113,6 +125,12 @@
             "value" : "Basic"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Básico"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -158,6 +176,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "😊"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "😊"
           }
         },
@@ -209,6 +233,12 @@
             "value" : "Long-Running Daemon"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daemon de larga duración"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Simple"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sencillo"
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Cancel"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351,6 +393,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Choose this template for a simple script that performs actions and terminates."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige esta plantilla para un script sencillo que realiza acciones y termina."
           }
         },
         "ja" : {
@@ -401,6 +449,12 @@
             "value" : "A script that depends on PyPI packages other than the iterm2 library. A private pyenv will be created for this script."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un script que depende de paquetes de PyPI distintos de la biblioteca iterm2. Se creará un pyenv privado para este script."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -446,6 +500,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "🔗"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "🔗"
           }
         },
@@ -497,6 +557,12 @@
             "value" : "Choose a script template:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una plantilla de script:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -543,6 +609,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Full Environment"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entorno completo"
           }
         },
         "ja" : {
@@ -593,6 +665,12 @@
             "value" : "Choose this template for a script that stays running and responds to notifications."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige esta plantilla para un script que sigue en ejecución y responde a notificaciones."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -638,6 +716,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "🛠️"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "🛠️"
           }
         },
@@ -687,6 +771,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Choose a Python environment:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige un entorno de Python:"
           }
         },
         "ja" : {

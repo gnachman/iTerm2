@@ -17,6 +17,12 @@
             "value": "Include timestamps"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluir marcas de tiempo"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "new",
             "value": "File Format:"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formato de archivo:"
           }
         },
         "ja": {

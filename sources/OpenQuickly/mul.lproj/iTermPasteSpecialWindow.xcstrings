@@ -17,6 +17,12 @@
             "value" : "mm:ss"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "xxx lines, xxx bytes."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx líneas, xxx bytes."
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Paste"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -161,6 +179,12 @@
             "value" : "Cancel"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -207,6 +231,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Minimum duration:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duración mínima:"
           }
         },
         "ja" : {

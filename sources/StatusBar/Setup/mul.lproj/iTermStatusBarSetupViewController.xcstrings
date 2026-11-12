@@ -17,6 +17,12 @@
             "value" : "Drag a component from the menu to Active Components to add it to your status bar."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra un componente del menú a Componentes activos para añadirlo a tu barra de estado."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Prefer tight packing to stable positioning"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferir el empaquetado compacto a la posición estable"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "OK"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Active Components"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Componentes activos"
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Disabled"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Remove components with empty values"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar componentes con valores vacíos"
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Draw separator between status bar and terminal"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dibujar un separador entre la barra de estado y la terminal"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351,6 +393,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Automatic"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
           }
         },
         "ja" : {
@@ -401,6 +449,12 @@
             "value" : "Status Bar Component Menu"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menú de componentes de la barra de estado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -447,6 +501,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Advanced…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanzado…"
           }
         },
         "ja" : {
@@ -497,6 +557,12 @@
             "value" : "The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El algoritmo de empaquetado compacto permite que se vean más componentes de la barra de estado a la vez, pero tienden a moverse más."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -543,6 +609,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "🌈 Auto-Rainbow:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Arcoíris automático:"
           }
         },
         "ja" : {
@@ -593,6 +665,12 @@
             "value" : "Font name goes here"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquí va el nombre del tipo de letra"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -639,6 +717,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Dark Colors"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colores oscuros"
           }
         },
         "ja" : {
@@ -689,6 +773,12 @@
             "value" : "Change"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +825,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Default Text Color:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color de texto predeterminado:"
           }
         },
         "ja" : {
@@ -785,6 +881,12 @@
             "value" : "Configure Component"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurar componente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -831,6 +933,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "The tight packing algorithm allows more status bar components to be visible at a time but they tend to jump around more."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El algoritmo de empaquetado compacto permite que se vean más componentes de la barra de estado a la vez, pero tienden a moverse más."
           }
         },
         "ja" : {
@@ -881,6 +989,12 @@
             "value" : "Separator Color:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color del separador:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -927,6 +1041,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Cancel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         },
         "ja" : {
@@ -977,6 +1097,12 @@
             "value" : "Light Colors"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colores claros"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1149,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Font:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de letra:"
           }
         },
         "ja" : {
@@ -1073,6 +1205,12 @@
             "value" : "Background Color:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color de fondo:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1121,6 +1259,12 @@
             "value" : "OK"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1167,6 +1311,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Draws a thin line between the status bar and the terminal content."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dibuja una línea fina entre la barra de estado y el contenido de la terminal."
           }
         },
         "ja" : {

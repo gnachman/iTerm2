@@ -17,6 +17,12 @@
             "value" : "Zoom Out"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alejar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Install Python Runtime"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar entorno de ejecución de Python"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Move Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Duplicate Session"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar sesión"
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Open Location…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ubicación…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Increase Height"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar alto"
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Move Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -353,6 +395,12 @@
             "value" : "Focus Reporting"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informe del foco"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -398,6 +446,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Normal"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Normal"
           }
         },
@@ -449,6 +503,12 @@
             "value" : "Move Divider Up"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor hacia arriba"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +555,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Replace with Base 64-Decoded Value"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar por valor decodificado de Base 64"
           }
         },
         "ja" : {
@@ -545,6 +611,12 @@
             "value" : "Session"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +663,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Move Session to Split Pane"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sesión a panel dividido"
           }
         },
         "ja" : {
@@ -641,6 +719,12 @@
             "value" : "Password Manager"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestor de contraseñas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -687,6 +771,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Item 1"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ítem 1"
           }
         },
         "ja" : {
@@ -737,6 +827,12 @@
             "value" : "Centered"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -783,6 +879,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Replace Selection"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar selección"
           }
         },
         "ja" : {
@@ -833,6 +935,12 @@
             "value" : "Left of Screen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A la izquierda de la pantalla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -879,6 +987,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Application Cursor"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor de aplicación"
           }
         },
         "ja" : {
@@ -929,6 +1043,12 @@
             "value" : "Arrangements"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disposiciones"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1095,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Fold Selected Lines"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plegar líneas seleccionadas"
           }
         },
         "ja" : {
@@ -1025,6 +1151,12 @@
             "value" : "Open Recent Directories…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir directorios recientes…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1071,6 +1203,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Full Screen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pantalla completa"
           }
         },
         "ja" : {
@@ -1121,6 +1259,12 @@
             "value" : "Set Named Mark"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Establecer marca con nombre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1167,6 +1311,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Actions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acciones"
           }
         },
         "ja" : {
@@ -1217,6 +1367,12 @@
             "value" : "Capture GPU Frame"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturar fotograma de la GPU"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1263,6 +1419,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Marks and Annotations"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas y anotaciones"
           }
         },
         "ja" : {
@@ -1313,6 +1475,12 @@
             "value" : "Full-Height Left of Screen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura completa a la izquierda de la pantalla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1359,6 +1527,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Duplicate Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar ventana"
           }
         },
         "ja" : {
@@ -1409,6 +1583,12 @@
             "value" : "Auto Command Completion"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocompletar comandos"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1635,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Window Style"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estilo de ventana"
           }
         },
         "ja" : {
@@ -1505,6 +1691,12 @@
             "value" : "GPU Renderer Availability"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponibilidad del renderizador de GPU"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1551,6 +1743,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventana"
           }
         },
         "ja" : {
@@ -1601,6 +1799,12 @@
             "value" : "Minimize"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimizar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1649,6 +1853,12 @@
             "value" : "Window"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventana"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1694,6 +1904,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "iTerm2"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "iTerm2"
           }
         },
@@ -1745,6 +1961,12 @@
             "value" : "iTerm2"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1793,6 +2015,12 @@
             "value" : "Change Profile in Arrangement…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar perfil en la disposición…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1838,6 +2066,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Shell"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Shell"
           }
         },
@@ -1889,6 +2123,12 @@
             "value" : "Set Default Width"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir ancho predeterminado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1934,6 +2174,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Shell"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Shell"
           }
         },
@@ -1985,6 +2231,12 @@
             "value" : "Help"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayuda"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2031,6 +2283,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Help"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayuda"
           }
         },
         "ja" : {
@@ -2081,6 +2339,12 @@
             "value" : "iTerm2 Help"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayuda de iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2127,6 +2391,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Preferences…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes…"
           }
         },
         "ja" : {
@@ -2177,6 +2447,12 @@
             "value" : "Services"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servicios"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2223,6 +2499,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Services"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servicios"
           }
         },
         "ja" : {
@@ -2273,6 +2555,12 @@
             "value" : "Hide iTerm2"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2319,6 +2607,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Quit iTerm2"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir de iTerm2"
           }
         },
         "ja" : {
@@ -2369,6 +2663,12 @@
             "value" : "Hide Others"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar otros"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2415,6 +2715,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Show All"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar todo"
           }
         },
         "ja" : {
@@ -2465,6 +2771,12 @@
             "value" : "Cut"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cortar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2511,6 +2823,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Edit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edición"
           }
         },
         "ja" : {
@@ -2561,6 +2879,12 @@
             "value" : "Edit"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edición"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2607,6 +2931,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Select All"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar todo"
           }
         },
         "ja" : {
@@ -2657,6 +2987,12 @@
             "value" : "Paste"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2703,6 +3039,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Clear Buffer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar búfer"
           }
         },
         "ja" : {
@@ -2753,6 +3095,12 @@
             "value" : "Log"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registro"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2799,6 +3147,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Log"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registro"
           }
         },
         "ja" : {
@@ -2849,6 +3203,12 @@
             "value" : "About iTerm2"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2895,6 +3255,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Profiles"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfiles"
           }
         },
         "ja" : {
@@ -2945,6 +3311,12 @@
             "value" : "Profiles"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfiles"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2991,6 +3363,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Close Terminal Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar ventana de Terminal"
           }
         },
         "ja" : {
@@ -3041,6 +3419,12 @@
             "value" : "Close All Panes in Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar todos los paneles de la pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3087,6 +3471,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Page Setup…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustar página…"
           }
         },
         "ja" : {
@@ -3137,6 +3527,12 @@
             "value" : "Save Selected Text…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar texto seleccionado…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3183,6 +3579,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Clear Scrollback Buffer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar búfer de desplazamiento"
           }
         },
         "ja" : {
@@ -3233,6 +3635,12 @@
             "value" : "Use Selection for Find"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar selección para buscar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3279,6 +3687,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Find"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar"
           }
         },
         "ja" : {
@@ -3329,6 +3743,12 @@
             "value" : "Find"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3375,6 +3795,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Find Next"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar siguiente"
           }
         },
         "ja" : {
@@ -3425,6 +3851,12 @@
             "value" : "Find Previous"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3471,6 +3903,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Jump to Selection"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir a la selección"
           }
         },
         "ja" : {
@@ -3521,6 +3959,12 @@
             "value" : "View"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visualización"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3567,6 +4011,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "View"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visualización"
           }
         },
         "ja" : {
@@ -3617,6 +4067,12 @@
             "value" : "Make Text Bigger"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar texto"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3663,6 +4119,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Make Text Smaller"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir texto"
           }
         },
         "ja" : {
@@ -3713,6 +4175,12 @@
             "value" : "Print"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimir"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3759,6 +4227,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Screen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pantalla"
           }
         },
         "ja" : {
@@ -3809,6 +4283,12 @@
             "value" : "Print"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimir"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3855,6 +4335,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Selection"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selección"
           }
         },
         "ja" : {
@@ -3905,6 +4391,12 @@
             "value" : "Buffer"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Búfer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3951,6 +4443,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Select Previous Tab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar pestaña anterior"
           }
         },
         "ja" : {
@@ -4001,6 +4499,12 @@
             "value" : "Select Next Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar pestaña siguiente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4047,6 +4551,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Select Tab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar pestaña"
           }
         },
         "ja" : {
@@ -4097,6 +4607,12 @@
             "value" : "Select Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4143,6 +4659,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "New Tab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva pestaña"
           }
         },
         "ja" : {
@@ -4193,6 +4715,12 @@
             "value" : "New Window"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva ventana"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4239,6 +4767,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Press Option for New Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pulsa Opción para ventana nueva"
           }
         },
         "ja" : {
@@ -4289,6 +4823,12 @@
             "value" : "Open In New Window"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir en ventana nueva"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4337,6 +4877,12 @@
             "value" : "Check for Updates…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar actualizaciones…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4382,6 +4928,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Zoom"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Zoom"
           }
         },
@@ -4433,6 +4985,12 @@
             "value" : "Reset"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4479,6 +5037,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Toggle Full Screen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar/desactivar pantalla completa"
           }
         },
         "ja" : {
@@ -4529,6 +5093,12 @@
             "value" : "Toggle Debug Logging"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar/desactivar registro de depuración"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4575,6 +5145,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Open Profiles…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir perfiles…"
           }
         },
         "ja" : {
@@ -4625,6 +5201,12 @@
             "value" : "Edit Session…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar sesión…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4671,6 +5253,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Start Instant Replay"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar repetición instantánea"
           }
         },
         "ja" : {
@@ -4721,6 +5309,12 @@
             "value" : "Undo"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deshacer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4767,6 +5361,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Redo"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rehacer"
           }
         },
         "ja" : {
@@ -4817,6 +5417,12 @@
             "value" : "Open Paste History…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir historial de pegado…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4863,6 +5469,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Open Autocomplete…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir autocompletado…"
           }
         },
         "ja" : {
@@ -4913,6 +5525,12 @@
             "value" : "Paste Special"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegado especial"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4959,6 +5577,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Paste Special"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegado especial"
           }
         },
         "ja" : {
@@ -5009,6 +5633,12 @@
             "value" : "Paste Selection"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar selección"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5055,6 +5685,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Paste Slowly"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar lentamente"
           }
         },
         "ja" : {
@@ -5105,6 +5741,12 @@
             "value" : "Secure Keyboard Entry"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrada segura de teclado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5151,6 +5793,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Arrange Windows Horizontally"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organizar ventanas horizontalmente"
           }
         },
         "ja" : {
@@ -5201,6 +5849,12 @@
             "value" : "Close"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5247,6 +5901,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Split Vertically with Current Profile"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir verticalmente con el perfil actual"
           }
         },
         "ja" : {
@@ -5297,6 +5957,12 @@
             "value" : "Split Horizontally with Current Profile"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir horizontalmente con el perfil actual"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5343,6 +6009,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Save Window Arrangement"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar disposición de ventanas"
           }
         },
         "ja" : {
@@ -5393,6 +6065,12 @@
             "value" : "Select Split Pane"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar panel dividido"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5439,6 +6117,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Select Split Pane"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar panel dividido"
           }
         },
         "ja" : {
@@ -5489,6 +6173,12 @@
             "value" : "Select Pane Above"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar panel de arriba"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5535,6 +6225,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Select Pane Below"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar panel de abajo"
           }
         },
         "ja" : {
@@ -5585,6 +6281,12 @@
             "value" : "Select Pane Left"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar panel de la izquierda"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5631,6 +6333,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Select Pane Right"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar panel de la derecha"
           }
         },
         "ja" : {
@@ -5681,6 +6389,12 @@
             "value" : "Use Transparency"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar transparencia"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5727,6 +6441,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Maximize Active Pane"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximizar panel activo"
           }
         },
         "ja" : {
@@ -5777,6 +6497,12 @@
             "value" : "Item 3"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ítem 3"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5823,6 +6549,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Item 2"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ítem 2"
           }
         },
         "ja" : {
@@ -5873,6 +6605,12 @@
             "value" : "Item 1"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ítem 1"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5919,6 +6657,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Set Mark"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Establecer marca"
           }
         },
         "ja" : {
@@ -5969,6 +6713,12 @@
             "value" : "Jump to Mark"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir a la marca"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6015,6 +6765,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Next Pane"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel siguiente"
           }
         },
         "ja" : {
@@ -6065,6 +6821,12 @@
             "value" : "Previous Pane"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6111,6 +6873,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Show Tabs in Fullscreen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar pestañas en pantalla completa"
           }
         },
         "ja" : {
@@ -6161,6 +6929,12 @@
             "value" : "Broadcast Input"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6207,6 +6981,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Broadcast Input"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada"
           }
         },
         "ja" : {
@@ -6257,6 +7037,12 @@
             "value" : "Broadcast Input to All Panes in All Tabs"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada a todos los paneles de todas las pestañas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6303,6 +7089,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Broadcast Input to All Panes in Current Tab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transmitir entrada a todos los paneles de la pestaña actual"
           }
         },
         "ja" : {
@@ -6353,6 +7145,12 @@
             "value" : "Send Input to Current Session Only"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar entrada solo a la sesión actual"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6399,6 +7197,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Restore Window Arrangement"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposición de ventanas"
           }
         },
         "ja" : {
@@ -6449,6 +7253,12 @@
             "value" : "Restore Window Arrangement"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposición de ventanas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6495,6 +7305,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Find Cursor"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar cursor"
           }
         },
         "ja" : {
@@ -6545,6 +7361,12 @@
             "value" : "Split Horizontally…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir horizontalmente…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6591,6 +7413,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Split Vertically…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir verticalmente…"
           }
         },
         "ja" : {
@@ -6641,6 +7469,12 @@
             "value" : "Toolbelt"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caja de herramientas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6687,6 +7521,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Toolbelt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caja de herramientas"
           }
         },
         "ja" : {
@@ -6737,6 +7577,12 @@
             "value" : "Show Toolbelt"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar caja de herramientas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6783,6 +7629,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "New Tab with Current Profile"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva pestaña con el perfil actual"
           }
         },
         "ja" : {
@@ -6833,6 +7685,12 @@
             "value" : "Run Coprocess…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutar coproceso…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6879,6 +7737,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Stop Coprocess"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener coproceso"
           }
         },
         "ja" : {
@@ -6929,6 +7793,12 @@
             "value" : "Copy"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6975,6 +7845,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Move Tab to New Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover pestaña a nueva ventana"
           }
         },
         "ja" : {
@@ -7025,6 +7901,12 @@
             "value" : "Move Tab Right"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover pestaña a la derecha"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7073,6 +7955,12 @@
             "value" : "Show Background Pattern Indicator"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar indicador de patrón de fondo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7118,6 +8006,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "tmux"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "tmux"
           }
         },
@@ -7169,6 +8063,12 @@
             "value" : "tmux"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7215,6 +8115,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "New Tmux Tab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva pestaña de tmux"
           }
         },
         "ja" : {
@@ -7265,6 +8171,12 @@
             "value" : "New Tmux Window"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva ventana de tmux"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7311,6 +8223,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Detach"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconectar"
           }
         },
         "ja" : {
@@ -7361,6 +8279,12 @@
             "value" : "Dashboard"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablero"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7407,6 +8331,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Make Text Normal Size"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño normal del texto"
           }
         },
         "ja" : {
@@ -7457,6 +8387,12 @@
             "value" : "Restore Text and Session Size"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar tamaño del texto y de la sesión"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7503,6 +8439,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Make iTerm2 Default Term"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacer de iTerm2 la terminal predeterminada"
           }
         },
         "ja" : {
@@ -7553,6 +8495,12 @@
             "value" : "Make Terminal Default Term"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacer de Terminal la terminal predeterminada"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7599,6 +8547,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Toggle Broadcast Input to Current Session"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar/desactivar transmisión de entrada a la sesión actual"
           }
         },
         "ja" : {
@@ -7649,6 +8603,12 @@
             "value" : "Paste Faster"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar más rápido"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7695,6 +8655,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Paste Slower"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar más despacio"
           }
         },
         "ja" : {
@@ -7745,6 +8711,12 @@
             "value" : "Paste Slowly Faster"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar despacio más rápido"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7791,6 +8763,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Paste Slowly Slower"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar despacio más despacio"
           }
         },
         "ja" : {
@@ -7841,6 +8819,12 @@
             "value" : "Reset Character Set"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer juego de caracteres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7889,6 +8873,12 @@
             "value" : "Archives"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivos"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7934,6 +8924,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "VT400"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "VT400"
           }
         },
@@ -7985,6 +8981,12 @@
             "value" : "Annotate Selection"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotar selección"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8031,6 +9033,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Zoom In on Selection"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ampliar selección"
           }
         },
         "ja" : {
@@ -8081,6 +9089,12 @@
             "value" : "Move Divider Left"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor hacia la izquierda"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8127,6 +9141,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Disable All"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar todo"
           }
         },
         "ja" : {
@@ -8177,6 +9197,12 @@
             "value" : "Move Session"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sesión"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8223,6 +9249,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Show Composer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar compositor"
           }
         },
         "ja" : {
@@ -8273,6 +9305,12 @@
             "value" : "Force Detach"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forzar desconexión"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8319,6 +9357,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Named Marks"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas con nombre"
           }
         },
         "ja" : {
@@ -8369,6 +9413,12 @@
             "value" : "Find…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8415,6 +9465,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Export Recording"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar grabación"
           }
         },
         "ja" : {
@@ -8465,6 +9521,12 @@
             "value" : "No Title Bar"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin barra de título"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8510,6 +9572,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "VT500"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "VT500"
           }
         },
@@ -8561,6 +9629,12 @@
             "value" : "Show Clippings"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar recortes"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8607,6 +9681,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Companion Device Settings"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes del dispositivo complementario"
           }
         },
         "ja" : {
@@ -8657,6 +9737,12 @@
             "value" : "Copy Mode"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de copia"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8703,6 +9789,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Move Session"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sesión"
           }
         },
         "ja" : {
@@ -8753,6 +9845,12 @@
             "value" : "Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8799,6 +9897,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Clear to Start of Selection"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar hasta el inicio de la selección"
           }
         },
         "ja" : {
@@ -8849,6 +9953,12 @@
             "value" : "Copy Performance Stats"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar estadísticas de rendimiento"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8894,6 +10004,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Scripts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Scripts"
           }
         },
@@ -8945,6 +10061,12 @@
             "value" : "Save Current Window as Arrangement"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar ventana actual como disposición"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8991,6 +10113,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Triggers"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disparadores"
           }
         },
         "ja" : {
@@ -9041,6 +10169,12 @@
             "value" : "Show Cursor Guide"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar guía del cursor"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9087,6 +10221,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Lock Size"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear tamaño"
           }
         },
         "ja" : {
@@ -9137,6 +10277,12 @@
             "value" : "Log to File"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrar en archivo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9185,6 +10331,12 @@
             "value" : "Export…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportar…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9230,6 +10382,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Web"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Web"
           }
         },
@@ -9281,6 +10439,12 @@
             "value" : "Report Associated Text"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informar de texto asociado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9327,6 +10491,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "New Python Script"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo script de Python"
           }
         },
         "ja" : {
@@ -9377,6 +10547,12 @@
             "value" : "Open Source Licenses"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licencias de código abierto"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9423,6 +10599,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Clear Instant Replay"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar repetición instantánea"
           }
         },
         "ja" : {
@@ -9473,6 +10655,12 @@
             "value" : "Decrease Height"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir alto"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9518,6 +10706,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Scripts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Scripts"
           }
         },
@@ -9569,6 +10763,12 @@
             "value" : "Reveal Scripts in Finder"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar scripts en Finder"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9615,6 +10815,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Save Contents…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar contenido…"
           }
         },
         "ja" : {
@@ -9665,6 +10871,12 @@
             "value" : "Bring All To Front"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traer todo al frente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9711,6 +10923,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Fold All"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plegar todo"
           }
         },
         "ja" : {
@@ -9761,6 +10979,12 @@
             "value" : "Archives"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivos"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9807,6 +11031,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Restore Window Arrangement as Tabs"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposición de ventanas como pestañas"
           }
         },
         "ja" : {
@@ -9857,6 +11087,12 @@
             "value" : "Add Annotation at Cursor"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir anotación en el cursor"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9903,6 +11139,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Disable Transparency for Active Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar transparencia en la ventana activa"
           }
         },
         "ja" : {
@@ -9953,6 +11195,12 @@
             "value" : "Paste Bracketing"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegado entre delimitadores"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9999,6 +11247,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Replace with Pretty-Printed JSON"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar por JSON con formato legible"
           }
         },
         "ja" : {
@@ -10049,6 +11303,12 @@
             "value" : "Nach vorne bringen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traer al frente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10095,6 +11355,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schwebenden Bereich andocken"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acoplar panel flotante"
           }
         },
         "ja" : {
@@ -10145,6 +11411,12 @@
             "value" : "Schwebende Bereiche ausblenden"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar paneles flotantes"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10191,6 +11463,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schwebenden Bereich nach unten bewegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover panel flotante hacia abajo"
           }
         },
         "ja" : {
@@ -10241,6 +11519,12 @@
             "value" : "Schwebenden Bereich nach links bewegen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover panel flotante a la izquierda"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10287,6 +11571,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schwebenden Bereich nach rechts bewegen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover panel flotante a la derecha"
           }
         },
         "ja" : {
@@ -10337,6 +11627,12 @@
             "value" : "Schwebenden Bereich nach oben bewegen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover panel flotante hacia arriba"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10383,6 +11679,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neuer schwebender Bereich mit aktuellem Profil"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo panel flotante con el perfil actual"
           }
         },
         "ja" : {
@@ -10433,6 +11735,12 @@
             "value" : "Schwebende Bereiche"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paneles flotantes"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10479,6 +11787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schwebende Bereiche"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paneles flotantes"
           }
         },
         "ja" : {
@@ -10529,6 +11843,12 @@
             "value" : "Nach hinten stellen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar al fondo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10575,6 +11895,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Show Tip of the Day"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar consejo del día"
           }
         },
         "ja" : {
@@ -10625,6 +11951,12 @@
             "value" : "Next Annotation"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotación siguiente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10671,6 +12003,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Cockpit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cabina"
           }
         },
         "ja" : {
@@ -10721,6 +12059,12 @@
             "value" : "Move Session to Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sesión a pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10767,6 +12111,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Bottom of Screen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parte inferior de la pantalla"
           }
         },
         "ja" : {
@@ -10817,6 +12167,12 @@
             "value" : "Prompt to Convert Tabs to Spaces when Pasting"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preguntar si convertir tabuladores en espacios al pegar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10863,6 +12219,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Alerts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas"
           }
         },
         "ja" : {
@@ -10913,6 +12275,12 @@
             "value" : "Copy with Control Sequences"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar con secuencias de control"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10959,6 +12327,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Resize Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar tamaño de la ventana"
           }
         },
         "ja" : {
@@ -11009,6 +12383,12 @@
             "value" : "Reset"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11055,6 +12435,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Duplicate Tab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar pestaña"
           }
         },
         "ja" : {
@@ -11105,6 +12491,12 @@
             "value" : "Reload Page"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recargar página"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11151,6 +12543,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Move Session to Window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover sesión a ventana"
           }
         },
         "ja" : {
@@ -11201,6 +12599,12 @@
             "value" : "Report All Keys as Escape Codes"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informar de todas las teclas como códigos de escape"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11247,6 +12651,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Raw Key Reporting Mode"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de informe de teclas sin procesar"
           }
         },
         "ja" : {
@@ -11297,6 +12707,12 @@
             "value" : "Import…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11343,6 +12759,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Warn Before Multi-Line Paste"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avisar antes de pegar varias líneas"
           }
         },
         "ja" : {
@@ -11393,6 +12815,12 @@
             "value" : "Show Inline Chat"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar chat en línea"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11439,6 +12867,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Toggle Buffer Input"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar/desactivar entrada en búfer"
           }
         },
         "ja" : {
@@ -11489,6 +12923,12 @@
             "value" : "Remote host can control iTerm2"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El host remoto puede controlar iTerm2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11535,6 +12975,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abschneiden von Einstellungssteuerelementen prüfen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprobar truncamiento de los controles de ajustes"
           }
         },
         "ja" : {
@@ -11585,6 +13031,12 @@
             "value" : "Triggers"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disparadores"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11631,6 +13083,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Selection Respects Soft Boundaries"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La selección respeta los límites flexibles"
           }
         },
         "ja" : {
@@ -11681,6 +13139,12 @@
             "value" : "Exit Workgroup"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir del grupo de trabajo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11727,6 +13191,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Select Output of Last Command"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar salida del último comando"
           }
         },
         "ja" : {
@@ -11777,6 +13247,12 @@
             "value" : "Restart Session"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar sesión"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11823,6 +13299,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Open Python REPL"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Python REPL"
           }
         },
         "ja" : {
@@ -11873,6 +13355,12 @@
             "value" : "Top of Screen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parte superior de la pantalla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11919,6 +13407,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Merge All Windows"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Combinar todas las ventanas"
           }
         },
         "ja" : {
@@ -11969,6 +13463,12 @@
             "value" : "Pin Hotkey Window"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fijar ventana de tecla rápida"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12015,6 +13515,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "modifyOtherKeys Mode 2"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys modo 2"
           }
         },
         "ja" : {
@@ -12065,6 +13571,12 @@
             "value" : "Open Quickly"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir rápidamente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12111,6 +13623,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Manage"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionar"
           }
         },
         "ja" : {
@@ -12161,6 +13679,12 @@
             "value" : "Disambiguate Escape"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desambiguar Esc"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12207,6 +13731,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Pick Result to Open"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir resultado para abrir"
           }
         },
         "ja" : {
@@ -12257,6 +13787,12 @@
             "value" : "Limit Multi-Line Paste Warning to Shell Prompt"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limitar aviso de pegado de varias líneas al prompt del shell"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12303,6 +13839,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Enable Triggers in Interactive Apps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar disparadores en apps interactivas"
           }
         },
         "ja" : {
@@ -12353,6 +13895,12 @@
             "value" : "Item 2"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ítem 2"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12399,6 +13947,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Mouse Reporting"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informe del ratón"
           }
         },
         "ja" : {
@@ -12449,6 +14003,12 @@
             "value" : "Marks and Annotations"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas y anotaciones"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12495,6 +14055,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Lock Layout"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear diseño"
           }
         },
         "ja" : {
@@ -12545,6 +14111,12 @@
             "value" : "Lock Location"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear ubicación"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12591,6 +14163,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "New Window with Current Profile"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva ventana con el perfil actual"
           }
         },
         "ja" : {
@@ -12641,6 +14219,12 @@
             "value" : "Bury Session"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enterrar sesión"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12687,6 +14271,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Show Modal Alert Box"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar cuadro de alerta modal"
           }
         },
         "ja" : {
@@ -12737,6 +14327,12 @@
             "value" : "Enable All"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar todo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12783,6 +14379,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Next Mark"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marca siguiente"
           }
         },
         "ja" : {
@@ -12833,6 +14435,12 @@
             "value" : "Arrange Windows"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organizar ventanas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12879,6 +14487,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Find All Smart Selection Matches"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar todas las coincidencias de selección inteligente"
           }
         },
         "ja" : {
@@ -12929,6 +14543,12 @@
             "value" : "Play a Sound"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir un sonido"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12975,6 +14595,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Open Command History…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir historial de comandos…"
           }
         },
         "ja" : {
@@ -13025,6 +14651,12 @@
             "value" : "Copy with Styles"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar con estilos"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13071,6 +14703,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Alternate Screen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pantalla alternativa"
           }
         },
         "ja" : {
@@ -13121,6 +14759,12 @@
             "value" : "Full-Height Right of Screen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura completa a la derecha de la pantalla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13166,6 +14810,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "ssh"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "ssh"
           }
         },
@@ -13217,6 +14867,12 @@
             "value" : "Standard Key Reporting Mode"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de informe de teclas estándar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13263,6 +14919,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Resize Split Pane"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar tamaño del panel dividido"
           }
         },
         "ja" : {
@@ -13313,6 +14975,12 @@
             "value" : "Alerts"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13359,6 +15027,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Notify on Status Change"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificar al cambiar el estado"
           }
         },
         "ja" : {
@@ -13409,6 +15083,12 @@
             "value" : "Select Next Tab Group"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar grupo de pestañas siguiente"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13455,6 +15135,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Uninstall Claude Code Integration"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desinstalar integración con Claude Code"
           }
         },
         "ja" : {
@@ -13505,6 +15191,12 @@
             "value" : "Edit Tab Title"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar título de la pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13551,6 +15243,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Arrangements"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disposiciones"
           }
         },
         "ja" : {
@@ -13601,6 +15299,12 @@
             "value" : "Previous Peer"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13647,6 +15351,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Report Alternate Keys"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informar de teclas alternativas"
           }
         },
         "ja" : {
@@ -13697,6 +15407,12 @@
             "value" : "Split Pane"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel dividido"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13743,6 +15459,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Terminal State"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado de la terminal"
           }
         },
         "ja" : {
@@ -13793,6 +15515,12 @@
             "value" : "Undo Close"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deshacer cierre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13839,6 +15567,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "AI Chats"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chats de IA"
           }
         },
         "ja" : {
@@ -13889,6 +15623,12 @@
             "value" : "Forward"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adelante"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13935,6 +15675,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Lock Split Pane Width"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear ancho del panel dividido"
           }
         },
         "ja" : {
@@ -13985,6 +15731,12 @@
             "value" : "Workgroups"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupos de trabajo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14031,6 +15783,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Save Archive of Current Session…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar archivo de la sesión actual…"
           }
         },
         "ja" : {
@@ -14081,6 +15839,12 @@
             "value" : "Replace Selection"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar selección"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14126,6 +15890,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "VT300"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "VT300"
           }
         },
@@ -14177,6 +15947,12 @@
             "value" : "Show Annotations"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar anotaciones"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14222,6 +15998,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "ssh"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "ssh"
           }
         },
@@ -14273,6 +16055,12 @@
             "value" : "Manage"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14319,6 +16107,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Item 3"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ítem 3"
           }
         },
         "ja" : {
@@ -14369,6 +16163,12 @@
             "value" : "Select Previous Tab Group"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar grupo de pestañas anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14415,6 +16215,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Buried Sessions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones enterradas"
           }
         },
         "ja" : {
@@ -14465,6 +16271,12 @@
             "value" : "Previous Annotation"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotación anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14511,6 +16323,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Alert on Marks in Offscreen Sessions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertar sobre marcas en sesiones fuera de pantalla"
           }
         },
         "ja" : {
@@ -14561,6 +16379,12 @@
             "value" : "Zentriert, ohne Titelleiste"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrada, sin barra de título"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14607,6 +16431,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Install Claude Code Integration"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar integración con Claude Code"
           }
         },
         "ja" : {
@@ -14657,6 +16487,12 @@
             "value" : "Post Notification"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publicar notificación"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14703,6 +16539,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Current Session is Broadcast Source"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sesión actual es el origen de la transmisión"
           }
         },
         "ja" : {
@@ -14753,6 +16595,12 @@
             "value" : "Alert on Next Mark"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertar en la siguiente marca"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14799,6 +16647,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Increase Width"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar ancho"
           }
         },
         "ja" : {
@@ -14849,6 +16703,12 @@
             "value" : "CSI u Mode"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo CSI u"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14895,6 +16755,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Move Divider Down"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor hacia abajo"
           }
         },
         "ja" : {
@@ -14945,6 +16811,12 @@
             "value" : "Resize Split Pane"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar tamaño del panel dividido"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14991,6 +16863,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Reinstall Claude Code Integration"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinstalar integración con Claude Code"
           }
         },
         "ja" : {
@@ -15041,6 +16919,12 @@
             "value" : "Install Shell Integration"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar integración con el shell"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15087,6 +16971,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Filter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
           }
         },
         "ja" : {
@@ -15137,6 +17027,12 @@
             "value" : "Edit Triggers"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar disparadores"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15183,6 +17079,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Pause Pane"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar panel"
           }
         },
         "ja" : {
@@ -15233,6 +17135,12 @@
             "value" : "Save Retrospective Debug Logs"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar registros de depuración retrospectivos"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15279,6 +17187,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Snippets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmentos"
           }
         },
         "ja" : {
@@ -15329,6 +17243,12 @@
             "value" : "Select Current Command"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar comando actual"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15375,6 +17295,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Make Screenshot…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hacer captura de pantalla…"
           }
         },
         "ja" : {
@@ -15425,6 +17351,12 @@
             "value" : "Render Selection Natively"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderizar selección de forma nativa"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15471,6 +17403,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Show Session Note"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar nota de la sesión"
           }
         },
         "ja" : {
@@ -15521,6 +17459,12 @@
             "value" : "Snippets"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmentos"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15567,6 +17511,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Edit Window Title"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar título de la ventana"
           }
         },
         "ja" : {
@@ -15617,6 +17567,12 @@
             "value" : "Suppressed Alerts…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertas suprimidas…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15663,6 +17619,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Previous Mark"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marca anterior"
           }
         },
         "ja" : {
@@ -15713,6 +17675,12 @@
             "value" : "Install Already-Downloaded Python Runtime"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar entorno de ejecución de Python ya descargado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15759,6 +17727,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Move Divider Right"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover divisor hacia la derecha"
           }
         },
         "ja" : {
@@ -15809,6 +17783,12 @@
             "value" : "Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pestaña"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15855,6 +17835,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Download Files…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargar archivos…"
           }
         },
         "ja" : {
@@ -15905,6 +17891,12 @@
             "value" : "Move Tab Left"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover pestaña a la izquierda"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15951,6 +17943,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Add Tab to New Group…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir pestaña a nuevo grupo…"
           }
         },
         "ja" : {
@@ -16001,6 +17999,12 @@
             "value" : "Show Toolbar"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar barra de herramientas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16047,6 +18051,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Remove Tab from Group"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar pestaña del grupo"
           }
         },
         "ja" : {
@@ -16097,6 +18107,12 @@
             "value" : "Auto Composer"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compositor automático"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16143,6 +18159,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Open AI Chat…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir chat de IA…"
           }
         },
         "ja" : {
@@ -16193,6 +18215,12 @@
             "value" : "Show Timestamps"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar marcas de tiempo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16239,6 +18267,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Advanced Paste…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegado avanzado…"
           }
         },
         "ja" : {
@@ -16289,6 +18323,12 @@
             "value" : "Arrange Windows"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organizar ventanas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16335,6 +18375,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Emulation Level"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nivel de emulación"
           }
         },
         "ja" : {
@@ -16385,6 +18431,12 @@
             "value" : "Select Matches"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar coincidencias"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16431,6 +18483,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Open Selection"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir selección"
           }
         },
         "ja" : {
@@ -16481,6 +18539,12 @@
             "value" : "History"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historial"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16527,6 +18591,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Restore Archive…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar archivo…"
           }
         },
         "ja" : {
@@ -16577,6 +18647,12 @@
             "value" : "Window Style"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estilo de ventana"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16623,6 +18699,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Full-Width Bottom of Screen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancho completo en la parte inferior de la pantalla"
           }
         },
         "ja" : {
@@ -16673,6 +18755,12 @@
             "value" : "Literal Controls"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controles literales"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16719,6 +18807,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Clear Find"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar búsqueda"
           }
         },
         "ja" : {
@@ -16769,6 +18863,12 @@
             "value" : "Explain Output with AI"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explicar salida con IA"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16815,6 +18915,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Emulation Level"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nivel de emulación"
           }
         },
         "ja" : {
@@ -16865,6 +18971,12 @@
             "value" : "Find URLs"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar URLs"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16911,6 +19023,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Replace with Pretty-Printed JSON"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar por JSON con formato legible"
           }
         },
         "ja" : {
@@ -16961,6 +19079,12 @@
             "value" : "Actions"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acciones"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17007,6 +19131,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Size Changes Update Profile"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los cambios de tamaño actualizan el perfil"
           }
         },
         "ja" : {
@@ -17057,6 +19187,12 @@
             "value" : "Remove Recent Profiles from Dock Menu"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar perfiles recientes del menú del Dock"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17103,6 +19239,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Buried Sessions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones enterradas"
           }
         },
         "ja" : {
@@ -17153,6 +19295,12 @@
             "value" : "Manage Dependencies…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionar dependencias…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17199,6 +19347,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Back"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrás"
           }
         },
         "ja" : {
@@ -17249,6 +19403,12 @@
             "value" : "Workgroups"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupos de trabajo"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17295,6 +19455,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Load Arrangement from File…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargar disposición desde archivo…"
           }
         },
         "ja" : {
@@ -17345,6 +19511,12 @@
             "value" : "Copy Mode Shortcuts"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atajos del modo de copia"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17391,6 +19563,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Split Pane"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel dividido"
           }
         },
         "ja" : {
@@ -17441,6 +19619,12 @@
             "value" : "Resize Window"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar tamaño de la ventana"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17487,6 +19671,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Report All Event Types"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informar de todos los tipos de eventos"
           }
         },
         "ja" : {
@@ -17537,6 +19727,12 @@
             "value" : "Add Trigger…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir disparador…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17582,6 +19778,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Web"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Web"
           }
         },
@@ -17633,6 +19835,12 @@
             "value" : "modifyOtherKeys Mode 1"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys modo 1"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17679,6 +19887,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Decrease Width"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir ancho"
           }
         },
         "ja" : {
@@ -17729,6 +19943,12 @@
             "value" : "Right of Screen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A la derecha de la pantalla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17775,6 +19995,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Paste File Base64-Encoded"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar archivo codificado en Base64"
           }
         },
         "ja" : {
@@ -17825,6 +20051,12 @@
             "value" : "Clear to Last Mark"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar hasta la última marca"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17871,6 +20103,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Arrange Split Panes Evenly"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distribuir paneles divididos de forma uniforme"
           }
         },
         "ja" : {
@@ -17921,6 +20159,12 @@
             "value" : "Import Recording"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar grabación"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17967,6 +20211,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Application Keypad"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclado numérico de aplicación"
           }
         },
         "ja" : {
@@ -18017,6 +20267,12 @@
             "value" : "Full-Width Top of Screen"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancho completo en la parte superior de la pantalla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18062,6 +20318,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "VT100"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "VT100"
           }
         },
@@ -18113,6 +20375,12 @@
             "value" : "VT200"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18159,6 +20427,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Disconnect"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconectar"
           }
         },
         "ja" : {
@@ -18209,6 +20483,12 @@
             "value" : "Warn Before Pasting One Line Ending in a Newline at Shell Prompt"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avisar antes de pegar una línea que termina en salto de línea en el prompt del shell"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18255,6 +20535,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Find Globally…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar globalmente…"
           }
         },
         "ja" : {
@@ -18305,6 +20591,12 @@
             "value" : "Maximized"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximizada"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18351,6 +20643,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Console"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consola"
           }
         },
         "ja" : {
@@ -18401,6 +20699,12 @@
             "value" : "New Tab Next to Current Tab"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva pestaña junto a la pestaña actual"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18447,6 +20751,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Restore Window Arrangement as Tabs"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar disposición de ventanas como pestañas"
           }
         },
         "ja" : {
@@ -18497,6 +20807,12 @@
             "value" : "Replace with Base 64-Encoded Value"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar por valor codificado en Base 64"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18543,6 +20859,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Engage Artificial Intelligence"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar inteligencia artificial"
           }
         },
         "ja" : {
@@ -18593,6 +20915,12 @@
             "value" : "Session"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18641,6 +20969,12 @@
             "value" : "Named Marks"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcas con nombre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18687,6 +21021,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Next Peer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par siguiente"
           }
         },
         "ja" : {

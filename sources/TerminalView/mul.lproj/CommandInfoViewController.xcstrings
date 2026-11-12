@@ -17,6 +17,12 @@
             "value" : "/directory"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65,6 +71,12 @@
             "value" : "Copy directory"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar directorio"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -110,6 +122,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "12 bytes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "12 bytes"
           }
         },
@@ -161,6 +179,12 @@
             "value" : "Select command’s output"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar la salida del comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -206,6 +230,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1h 35m"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1h 35m"
           }
         },
@@ -257,6 +287,12 @@
             "value" : "Output:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salida:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +339,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Copied"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado"
           }
         },
         "ja" : {
@@ -353,6 +395,12 @@
             "value" : "Copy command to clipboard"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar comando al portapapeles"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +447,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Started at %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciado a las %@"
           }
         },
         "ja" : {
@@ -449,6 +503,12 @@
             "value" : "Open command in Composer"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir comando en el compositor"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +555,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Draggable Folder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpeta arrastrable"
           }
         },
         "ja" : {
@@ -545,6 +611,12 @@
             "value" : "command"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +663,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Write command to terminal"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribir comando en la terminal"
           }
         },
         "ja" : {
@@ -641,6 +719,12 @@
             "value" : "Directory:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -687,6 +771,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Return Code:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de retorno:"
           }
         },
         "ja" : {
@@ -737,6 +827,12 @@
             "value" : "Write directory to terminal"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribir directorio en la terminal"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -783,6 +879,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Running Time:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiempo de ejecución:"
           }
         },
         "ja" : {
@@ -833,6 +935,12 @@
             "value" : "Copy command’s output"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar la salida del comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -879,6 +987,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Share command…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir comando…"
           }
         },
         "ja" : {
@@ -929,6 +1043,12 @@
             "value" : "Command:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comando:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -974,6 +1094,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "127"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "127"
           }
         },
@@ -1023,6 +1149,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Disable showing offscreen command"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar mostrar el comando fuera de pantalla"
           }
         },
         "ja" : {

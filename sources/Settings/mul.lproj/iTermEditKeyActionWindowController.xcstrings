@@ -17,6 +17,12 @@
             "value" : "Move by Mark"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por marca"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Set Keyboard Shortcut"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir atajo de teclado"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Cancel"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Color Preset:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preajuste de color:"
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Action:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acción:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Label to show in Touch Bar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta que mostrar en la Touch Bar"
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Move by Character"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por carácter"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351,6 +393,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "ex: 0x7f"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "p. ej.: 0x7f"
           }
         },
         "ja" : {
@@ -401,6 +449,12 @@
             "value" : "Profile:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -447,6 +501,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Move by Word"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por palabra"
           }
         },
         "ja" : {
@@ -497,6 +557,12 @@
             "value" : "Error message goes here"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El mensaje de error aparece aquí"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -545,6 +611,12 @@
             "value" : "Action:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acción:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -590,6 +662,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Esc+"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Esc+"
           }
         },
@@ -641,6 +719,12 @@
             "value" : "Keyboard Shortcut:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atajo de teclado:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -689,6 +773,12 @@
             "value" : "Move by Line"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover por línea"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +825,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "OK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
           }
         },
         "ja" : {

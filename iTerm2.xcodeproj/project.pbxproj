@@ -1175,6 +1175,7 @@
 		90C2E83D1854DB67AD5F08E1 /* AIExplanationRequest+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C9EF4B4D9DF2F4E3CA2A3F5 /* AIExplanationRequest+Mac.swift */; };
 		912D29CFF1994D9E50295715 /* WorkgroupPresets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14CEFBAD0421B3A960496A9 /* WorkgroupPresets.swift */; };
 		913D206F542831FFE1244B1E /* KittyDnDPasteboardDropData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1778C425F487D1B0B80016 /* KittyDnDPasteboardDropData.swift */; };
+		922305886078B0369CEB6655 /* repl_banner-es.txt in Resources */ = {isa = PBXBuildFile; fileRef = DE91DA5FD52DB461DF902B9A /* repl_banner-es.txt */; };
 		92A29632EF0D9D0E455E2AA6 /* UserVariableAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467CB6090319516B1F45E9FD /* UserVariableAssignment.swift */; };
 		93192814C6B3391E62C3E35F /* FloatingPaneGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */; };
 		9459958EBE38B60F9848F811 /* NSFont+BijectionIdentifiable.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB51348EA9D7FCF98DED3D17 /* NSFont+BijectionIdentifiable.swift */; };
@@ -4753,6 +4754,7 @@
 		D14E96013DD1B056E5D3648A /* KittyDnDViewDragHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B3B7308CA423F151EA51042 /* KittyDnDViewDragHost.swift */; };
 		D2EA0869C83835F0422A576A /* iTermTabTitleFrameFingerprint.m in Sources */ = {isa = PBXBuildFile; fileRef = 492BD49DF191574CBABE660D /* iTermTabTitleFrameFingerprint.m */; };
 		D364886B87EB8B81EB2FCEA3 /* StableSessionID.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4CF48AED76F97C523B1A9E6 /* StableSessionID.swift */; };
+		D3BCFD44EDD5D29A47EBB177 /* repl_banner-es.txt in Resources */ = {isa = PBXBuildFile; fileRef = DE91DA5FD52DB461DF902B9A /* repl_banner-es.txt */; };
 		D3C3D7DE7E900CCF5BA700F0 /* ChildReaper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 322466D9BE92E249E2878D66 /* ChildReaper.swift */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		D3D470D34777DFA2474E14DC /* iTermSessionTabStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */; };
@@ -9045,6 +9047,7 @@
 		DDF0FD64062916F70080EF74 /* iTermApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplication.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		DE33CBB56EA96FD0239D8CED /* OrchestratorError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorError.swift; sourceTree = "<group>"; };
 		DE7B0AE10E1598EDE1E01795 /* iTermEventTriggerParameterView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermEventTriggerParameterView.swift; sourceTree = "<group>"; };
+		DE91DA5FD52DB461DF902B9A /* repl_banner-es.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-es.txt"; path = "sources/repl_banner-es.txt"; sourceTree = "<group>"; };
 		DF18C01510605DB0C639038F /* ai-models.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = "ai-models.json"; path = "OtherResources/ai-models.json"; sourceTree = "<group>"; };
 		DF2961C37EC2E8B987F3D400 /* iTermAPICreateTabFocusDeferral.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermAPICreateTabFocusDeferral.h; sourceTree = "<group>"; };
 		DF53E3C0036CD76566117D88 /* iTermRowOutputCache.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRowOutputCache.h; sourceTree = "<group>"; };
@@ -9572,6 +9575,7 @@
 				53FF9823209283D2008688D7 /* template_pyenv_daemon.py */,
 				530AB7BB20A641E000D2AA08 /* repl_banner.txt */,
 				618643F126AA9B1E7BC5FC39 /* repl_banner-pt-BR.txt */,
+				DE91DA5FD52DB461DF902B9A /* repl_banner-es.txt */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -17185,6 +17189,7 @@
 				ja,
 				ru,
 				ko,
+				es,
 				en,
 				Base,
 			);
@@ -17818,6 +17823,7 @@
 				718A1744F0690B2555C115C8 /* challenge-frame-detection.js in Resources */,
 				66ACA31A7AD33D24EE498F7C /* ai-models.json in Resources */,
 				3EB88252C886C05D366D3A5A /* repl_banner-pt-BR.txt in Resources */,
+				922305886078B0369CEB6655 /* repl_banner-es.txt in Resources */,
 				65B1B9DF105B29AAF3D6D77F /* companion-browser-editing.js in Resources */,
 				640AE7AAB1BDCC09B531A3AC /* it2.py in Resources */,
 				923F4778B3116EBDC9D56980 /* it2_git_state.py in Resources */,
@@ -18518,6 +18524,7 @@
 				BCED56C0C7BC4730A6B05159 /* Localizable.xcstrings in Resources */,
 				E0674A4A31C8440A9DF370CD /* InfoPlist.xcstrings in Resources */,
 				498710E58A37DCA1EC3BB12C /* repl_banner-pt-BR.txt in Resources */,
+				D3BCFD44EDD5D29A47EBB177 /* repl_banner-es.txt in Resources */,
 				D40FA74614B9343BFA69E64D /* companion-browser-editing.js in Resources */,
 				1CFBC8DDC0F47C682E8BA689 /* it2.py in Resources */,
 				72386C923E6555FC1BEE219E /* it2_git_state.py in Resources */,

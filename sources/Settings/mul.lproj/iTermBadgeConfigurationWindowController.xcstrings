@@ -17,6 +17,12 @@
             "value" : "%"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62,6 +68,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "pt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "pt"
           }
         },
@@ -113,6 +125,12 @@
             "value" : "Maximum Width:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancho máximo:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Top Margin:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Margen superior:"
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Right Margin:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Margen derecho:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -254,6 +284,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "%"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%"
           }
         },
@@ -305,6 +341,12 @@
             "value" : "OK"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -350,6 +392,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "pt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "pt"
           }
         },
@@ -401,6 +449,12 @@
             "value" : "Maximum Height:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura máxima:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -447,6 +501,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Cancel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         },
         "ja" : {

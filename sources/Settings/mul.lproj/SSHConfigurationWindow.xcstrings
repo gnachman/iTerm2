@@ -17,6 +17,12 @@
             "value" : "Path to SSH:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta de SSH:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Files to Copy to Remote Host:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivos que copiar al host remoto:"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Destination"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Destino"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -161,6 +179,12 @@
             "value" : "OK"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -206,6 +230,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "/usr/bin/ssh"
           }
         },
@@ -257,6 +287,12 @@
             "value" : "Browse"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examinar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +339,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Cancel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         },
         "ja" : {
@@ -353,6 +395,12 @@
             "value" : "File or Folder"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivo o carpeta"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -401,6 +449,12 @@
             "value" : "SSH Integration"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integración con SSH"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -447,6 +501,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Environment Variables to Copy to Remote Host:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variables de entorno que copiar al host remoto:"
           }
         },
         "ja" : {

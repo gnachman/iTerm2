@@ -17,6 +17,12 @@
             "value" : "HEADER CELL"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CELDA DE ENCABEZADO"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Find Globally"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar globalmente"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Substring — Case Sensitive"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena: distingue mayúsculas y minúsculas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Substring — Automatic"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena: automático"
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Regex — Case Insensitive"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex: no distingue mayúsculas y minúsculas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Find"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar"
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Regex — Case Sensitive"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex: distingue mayúsculas y minúsculas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351,6 +393,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Substring — Case Insensitive"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena: no distingue mayúsculas y minúsculas"
           }
         },
         "ja" : {

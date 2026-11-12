@@ -42,7 +42,7 @@ final class ChatFindBarModeWidthTests: XCTestCase {
     }
 
     func testModeWidthFitsEveryLanguage() {
-        for language in ["de", "ja", "pt-BR", "ru", "zh-Hans"] {
+        for language in ["de", "es", "ja", "pt-BR", "ru", "zh-Hans"] {
             let titles = titles(language)
             XCTAssertEqual(titles.count, keys.count, language)
             let width = ChatFindBarView.modeWidth(forTitles: titles)

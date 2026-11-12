@@ -17,6 +17,12 @@
             "value": "Enter the value for "
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce el valor de "
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "new",
             "value": "OK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aceptar"
           }
         },
         "ja": {
@@ -113,6 +125,12 @@
             "value": "Session Parameter"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parámetro de la sesión"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -161,6 +179,12 @@
             "value": "Cancel"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -207,6 +231,12 @@
           "stringUnit": {
             "state": "new",
             "value": "Name"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre"
           }
         },
         "ja": {

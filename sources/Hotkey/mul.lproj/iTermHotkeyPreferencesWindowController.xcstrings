@@ -17,6 +17,12 @@
             "value" : "⌥ Option"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Opción"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Pin hotkey window (stays open on loss of keyboard focus)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fijar ventana de tecla rápida (permanece abierta al perder el foco del teclado)"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Hotkey:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tecla rápida:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Note: the window is reopened only if it was closed because another app became active."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota: la ventana solo se vuelve a abrir si se cerró porque otra app pasó a estar activa."
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Additional Hotkeys"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclas rápidas adicionales"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "When you press the hotkey bound to this profile a dedicated window will show or hide. Each profile with a hotkey controls its own Hotkey Window."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al pulsar la tecla rápida asignada a este perfil, se mostrará u ocultará una ventana dedicada. Cada perfil con una tecla rápida controla su propia ventana de tecla rápida."
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Don’t do anything special"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hacer nada especial"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -350,6 +392,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "⚠️"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "⚠️"
           }
         },
@@ -401,6 +449,12 @@
             "value" : "Show this Hotkey Window"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar esta ventana de tecla rápida"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -447,6 +501,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "HotKey Window Preferences"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de la ventana de tecla rápida"
           }
         },
         "ja" : {
@@ -497,6 +557,12 @@
             "value" : "⌘ Command"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Comando"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -543,6 +609,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "⚠️ Another profile uses this shortcut"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Otro perfil usa este atajo"
           }
         },
         "ja" : {
@@ -593,6 +665,12 @@
             "value" : "⇧ Shift"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Mayúsculas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -639,6 +717,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Double-tap key:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tecla de doble toque:"
           }
         },
         "ja" : {
@@ -689,6 +773,12 @@
             "value" : "Automatically reopen on app reactivation"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reabrir automáticamente al reactivar la app"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +825,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "⚠️ Another profile uses this double-tap"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Otro perfil usa este doble toque"
           }
         },
         "ja" : {
@@ -785,6 +881,12 @@
             "value" : "Show this Hotkey Window if no other window is open"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar esta ventana de tecla rápida si no hay otra ventana abierta"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -831,6 +933,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Floating windows overlap other windows and the dock, and other apps’ Full Screen windows (if the Hotkey Window’s Space is set to All Spaces)."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las ventanas flotantes se superponen a otras ventanas, al Dock y a las ventanas en pantalla completa de otras apps (si el espacio de la ventana de tecla rápida está configurado como Todos los espacios)."
           }
         },
         "ja" : {
@@ -881,6 +989,12 @@
             "value" : "Cancel"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -927,6 +1041,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "On Dock icon click:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al hacer clic en el icono del Dock:"
           }
         },
         "ja" : {
@@ -977,6 +1097,12 @@
             "value" : "Animate showing and hiding"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animar al mostrar y ocultar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1149,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "OK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
           }
         },
         "ja" : {
@@ -1073,6 +1205,12 @@
             "value" : "OK"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1119,6 +1257,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Floating window"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventana flotante"
           }
         },
         "ja" : {
@@ -1169,6 +1313,12 @@
             "value" : "^ Control"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1365,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Additional Hotkeys…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teclas rápidas adicionales…"
           }
         },
         "ja" : {

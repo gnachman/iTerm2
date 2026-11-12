@@ -17,6 +17,12 @@
             "value" : "Reuse previous session's directory"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reutilizar el directorio de la sesión anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Home directory"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio de inicio"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Working Directory for New Tabs"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio de trabajo para pestañas nuevas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -158,6 +176,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Radio"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Radio"
           }
         },
@@ -209,6 +233,12 @@
             "value" : "Working Directory for New Windows"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio de trabajo para ventanas nuevas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257,6 +287,12 @@
             "value" : "Reuse previous session's directory"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reutilizar el directorio de la sesión anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -302,6 +338,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Radio"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Radio"
           }
         },
@@ -353,6 +395,12 @@
             "value" : "Reuse previous session's directory"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reutilizar el directorio de la sesión anterior"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +447,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Directory:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio:"
           }
         },
         "ja" : {
@@ -449,6 +503,12 @@
             "value" : "Working Directory for New Split Panes"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio de trabajo para paneles divididos nuevos"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +555,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Advanced Working Directory Settings"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes avanzados del directorio de trabajo"
           }
         },
         "ja" : {
@@ -545,6 +611,12 @@
             "value" : "Directory:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +665,12 @@
             "value" : "Directory:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -638,6 +716,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Radio"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Radio"
           }
         },
@@ -689,6 +773,12 @@
             "value" : "Home directory"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio de inicio"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -737,6 +827,12 @@
             "value" : "Home directory"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio de inicio"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -783,6 +879,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "OK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
           }
         },
         "ja" : {

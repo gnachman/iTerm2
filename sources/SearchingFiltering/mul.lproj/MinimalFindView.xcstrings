@@ -17,6 +17,12 @@
             "value" : "Filter"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Case-Insensitive Substring"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que no distingue mayúsculas y minúsculas"
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Smart Case Substring"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena con mayúsculas inteligentes"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Case-Sensitive Substring"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que distingue mayúsculas y minúsculas"
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Case-Insensitive Regex"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que no distingue mayúsculas y minúsculas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Erase Search History"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar historial de búsqueda"
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Searching only selected command"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando solo en el comando seleccionado"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -351,6 +393,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Case-Insensitive Regex"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que no distingue mayúsculas y minúsculas"
           }
         },
         "ja" : {
@@ -401,6 +449,12 @@
             "value" : "Filter"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -447,6 +501,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Case-Sensitive Substring"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que distingue mayúsculas y minúsculas"
           }
         },
         "ja" : {
@@ -497,6 +557,12 @@
             "value" : "Case-Sensitive Regex"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que distingue mayúsculas y minúsculas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -543,6 +609,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Smart Case Substring"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena con mayúsculas inteligentes"
           }
         },
         "ja" : {
@@ -593,6 +665,12 @@
             "value" : "Case-Insensitive Substring"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcadena que no distingue mayúsculas y minúsculas"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -639,6 +717,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Case-Sensitive Regex"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex que distingue mayúsculas y minúsculas"
           }
         },
         "ja" : {

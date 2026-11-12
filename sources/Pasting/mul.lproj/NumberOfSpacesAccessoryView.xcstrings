@@ -17,6 +17,12 @@
             "value": "Tab size in spaces:"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamaño del tabulador en espacios:"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -62,6 +68,12 @@
         "en": {
           "stringUnit": {
             "state": "new",
+            "value": "100"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
             "value": "100"
           }
         },

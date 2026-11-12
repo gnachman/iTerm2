@@ -17,6 +17,12 @@
             "value": "Export…"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar…"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -63,6 +69,12 @@
           "stringUnit": {
             "state": "new",
             "value": "Now"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora"
           }
         },
         "ja": {
@@ -113,6 +125,12 @@
             "value": "Instant Replay Control"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control de repetición instantánea"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -159,6 +177,12 @@
           "stringUnit": {
             "state": "new",
             "value": "Cancel"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
           }
         },
         "ja": {
@@ -209,6 +233,12 @@
             "value": "Live View"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista en vivo"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",
@@ -255,6 +285,12 @@
           "stringUnit": {
             "state": "new",
             "value": "Time"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora"
           }
         },
         "ja": {

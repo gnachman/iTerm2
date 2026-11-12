@@ -17,6 +17,12 @@
             "value": "Black and white"
           }
         },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blanco y negro"
+          }
+        },
         "ja": {
           "stringUnit": {
             "state": "translated",

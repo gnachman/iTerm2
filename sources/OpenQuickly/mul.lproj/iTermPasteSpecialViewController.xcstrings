@@ -17,6 +17,12 @@
             "value" : "Requires Shell Integration for prompt detection"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requiere la integración con el shell para detectar el prompt"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +69,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "This is enabled when the running app has sent an escape code to turn on “bracketed paste mode.” The pasted string will be “bracketed” by escape codes indicating the text within is from a paste operation."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se activa cuando la app en ejecución ha enviado un código de escape para activar el “modo de pegado entre delimitadores”. El texto pegado quedará “delimitado” por códigos de escape que indican que el contenido procede de una operación de pegado."
           }
         },
         "ja" : {
@@ -113,6 +125,12 @@
             "value" : "Escape tabs with ^V"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapar tabuladores con ^V"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +177,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Paste with tabs"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegar con tabuladores"
           }
         },
         "ja" : {
@@ -209,6 +233,12 @@
             "value" : "Replace"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reemplazar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +285,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Convert Unicode punctuation"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir puntuación Unicode"
           }
         },
         "ja" : {
@@ -305,6 +341,12 @@
             "value" : "Respects vim escape sequences"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respeta las secuencias de escape de vim"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -350,6 +392,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1 ms"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1 ms"
           }
         },
@@ -401,6 +449,12 @@
             "value" : "Converts various forms of quotation marks and dashes to their ASCII equivalents."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convierte varias formas de comillas y guiones a sus equivalentes ASCII."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -447,6 +501,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Convert tabs to spaces:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir tabuladores en espacios:"
           }
         },
         "ja" : {
@@ -497,6 +557,12 @@
             "value" : "Both DOS and UNIX newlines are generally not used as input. CR is standard."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los saltos de línea de DOS y UNIX no suelen usarse como entrada. CR es el estándar."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -543,6 +609,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Escape shell characters with \\"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapar caracteres del shell con \\"
           }
         },
         "ja" : {
@@ -593,6 +665,12 @@
             "value" : "Chunk Size:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño del bloque:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -639,6 +717,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Substitution"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sustitución"
           }
         },
         "ja" : {
@@ -689,6 +773,12 @@
             "value" : "Both DOS and UNIX newlines are generally not used as input. CR is standard."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los saltos de línea de DOS y UNIX no suelen usarse como entrada. CR es el estándar."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +825,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Tab, line feed, form feed, and carriage return are the only “safe” control codes."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabulador, avance de línea, avance de página y retorno de carro son los únicos códigos de control “seguros”."
           }
         },
         "ja" : {
@@ -785,6 +881,12 @@
             "value" : "Transforms"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformaciones"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -833,6 +935,12 @@
             "value" : "ICU regular expression syntax"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sintaxis de expresiones regulares de ICU"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -878,6 +986,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "100 ms"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "100 ms"
           }
         },
@@ -929,6 +1043,12 @@
             "value" : "1 kB"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1095,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "with"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "con"
           }
         },
         "ja" : {
@@ -1025,6 +1151,12 @@
             "value" : "Speed"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocidad"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1071,6 +1203,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Remove unsafe control codes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar códigos de control no seguros"
           }
         },
         "ja" : {
@@ -1121,6 +1259,12 @@
             "value" : "Wait for shell prompt before pasting each line"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperar el prompt del shell antes de pegar cada línea"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1169,6 +1313,12 @@
             "value" : "Interchunk Delay:"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa entre bloques:"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1214,6 +1364,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1 byte"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1 byte"
           }
         },
@@ -1265,6 +1421,12 @@
             "value" : "Regular Expression"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expresión regular"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1313,6 +1475,12 @@
             "value" : "1.2 kB"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1358,6 +1526,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "150 ms"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "150 ms"
           }
         },
@@ -1409,6 +1583,12 @@
             "value" : "100"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1454,6 +1634,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Radio"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Radio"
           }
         },
@@ -1505,6 +1691,12 @@
             "value" : "Remove newlines"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar saltos de línea"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1551,6 +1743,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Use $1, $2, etc. for capture groups"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa $1, $2, etc. para grupos de captura"
           }
         },
         "ja" : {
@@ -1601,6 +1799,12 @@
             "value" : "Bracketed paste mode"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo de pegado entre delimitadores"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1646,6 +1850,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "1 MB"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "1 MB"
           }
         },
@@ -1697,6 +1907,12 @@
             "value" : "Convert CRLF and LF to CR"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir CRLF y LF en CR"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1745,6 +1961,12 @@
             "value" : "Base-64 encode"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codificar en Base 64"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1791,6 +2013,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "10 sec"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 s"
           }
         },
         "ja" : {

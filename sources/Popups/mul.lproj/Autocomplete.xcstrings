@@ -17,6 +17,12 @@
             "value" : "Autocomplete"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autocompletar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",

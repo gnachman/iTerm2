@@ -17,6 +17,12 @@
             "value" : "Use iTerm2 while you are apart from your Mac. You can control it via AI chat, view session content, and receive push notifications. End-to-end encryption keeps your data safe. <a href=\"iterm2whatsnew:companion\">Try it now!</a>"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa iTerm2 aunque estés lejos de tu Mac. Puedes controlarlo mediante el chat de IA, ver el contenido de las sesiones y recibir notificaciones push. El cifrado de extremo a extremo mantiene tus datos seguros. <a href=\"iterm2whatsnew:companion\">¡Pruébalo ahora!</a>"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -62,6 +68,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "●"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "●"
           }
         },
@@ -113,6 +125,12 @@
             "value" : "A new AI chat mode, Orchestration, lets AI run the show for you. It can create windows, wait for tasks to complete (even in interactive apps), and the new automatic safety checker relieves you of having to respond to almost all permission prompts. <a href=\"iterm2whatsnew:orchestration\">Try it now!</a>"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un nuevo modo de chat de IA, Orquestación, deja que la IA se encargue de todo por ti. Puede crear ventanas, esperar a que se completen tareas (incluso en apps interactivas) y el nuevo verificador de seguridad automático te evita tener que responder a casi todas las solicitudes de permiso. <a href=\"iterm2whatsnew:orchestration\">¡Pruébalo ahora!</a>"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -158,6 +176,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "●"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "●"
           }
         },
@@ -209,6 +233,12 @@
             "value" : "The new Screenshots feature simplifies creating a PNG of your terminal content. It supports redactions and highlights. Use <a href=\"iterm2whatsnew:screenshot\">Session > Make Screenshot</a> to activate it."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La nueva función Capturas de pantalla simplifica la creación de un PNG del contenido de tu terminal. Admite censuras y resaltados. Usa <a href=\"iterm2whatsnew:screenshot\">Sesión > Hacer captura de pantalla</a> para activarla."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -257,6 +287,12 @@
             "value" : "What’s New in Version 3.7"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novedades de la versión 3.7"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -302,6 +338,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : ">"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : ">"
           }
         },
@@ -353,6 +395,12 @@
             "value" : "●"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +447,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Claude Code Integration"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integración con Claude Code"
           }
         },
         "ja" : {
@@ -449,6 +503,12 @@
             "value" : "To help manage a large number of tabs, you can now combine tabs into collapsible groups. The tab bar now scrolls instead of showing an overflow menu, too."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para ayudarte a gestionar un gran número de pestañas, ahora puedes combinarlas en grupos plegables. Además, la barra de pestañas ahora se desplaza en lugar de mostrar un menú de desbordamiento."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -494,6 +554,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "●"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "●"
           }
         },
@@ -545,6 +611,12 @@
             "value" : "The Claude Code integration organizes multiple related sessions—such as code review and reading diffs—into a customizable UI. It also exposes Claude’s status so you can easily find instances that are blocked on your attention. <a href=\"iterm2whatsnew:claudecode\">Try it now!</a>"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La integración con Claude Code organiza varias sesiones relacionadas (como la revisión de código y la lectura de diffs) en una interfaz personalizable. También muestra el estado de Claude para que encuentres fácilmente las instancias que necesitan tu atención. <a href=\"iterm2whatsnew:claudecode\">¡Pruébalo ahora!</a>"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +665,12 @@
             "value" : "Companion iPhone App"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App complementaria para iPhone"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -638,6 +716,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "●"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "●"
           }
         },
@@ -689,6 +773,12 @@
             "value" : "Orchestration"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orquestación"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +825,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Tab Groups"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupos de pestañas"
           }
         },
         "ja" : {
@@ -785,6 +881,12 @@
             "value" : "Screenshots"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas de pantalla"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -830,6 +932,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "<"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "<"
           }
         },

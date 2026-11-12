@@ -17,6 +17,12 @@
             "value" : "Install Nerd Font Bundle…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalar paquete Nerd Font…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65,6 +71,12 @@
             "value" : "Edit Special Exception"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar excepción especial"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -110,6 +122,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "U+xxx"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "U+xxx"
           }
         },
@@ -161,6 +179,12 @@
             "value" : "Special Exceptions override fonts for specific Unicode ranges or scripts."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las excepciones especiales reemplazan los tipos de letra para intervalos o escrituras Unicode concretos."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -206,6 +230,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "U+xxx"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "U+xxx"
           }
         },
@@ -257,6 +287,12 @@
             "value" : "OK"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +339,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Of Font:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Del tipo de letra:"
           }
         },
         "ja" : {
@@ -353,6 +395,12 @@
             "value" : "For characters starting at"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para los caracteres desde"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +447,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Add Preset…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir preajuste…"
           }
         },
         "ja" : {
@@ -449,6 +503,12 @@
             "value" : "Cancel"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +555,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "to"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta"
           }
         },
         "ja" : {
@@ -545,6 +611,12 @@
             "value" : "Manage Special Exceptions"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionar excepciones especiales"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +663,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "OK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
           }
         },
         "ja" : {
@@ -641,6 +719,12 @@
             "value" : "Use Code Points"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar puntos de código"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -689,6 +773,12 @@
             "value" : "Cancel"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -734,6 +824,12 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "U+xxx"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "U+xxx"
           }
         },

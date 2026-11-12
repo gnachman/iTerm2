@@ -17,6 +17,12 @@
             "value" : "Hang tight! Installing a new Python environment…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Un momento! Instalando un nuevo entorno de Python…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",

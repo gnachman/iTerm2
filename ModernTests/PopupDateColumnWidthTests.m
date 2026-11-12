@@ -73,7 +73,7 @@
 }
 
 - (void)testDateColumnFitsEveryLanguage {
-    for (NSString *language in @[ @"de", @"ja", @"pt-BR", @"ru", @"zh-Hans" ]) {
+    for (NSString *language in @[ @"de", @"es", @"ja", @"pt-BR", @"ru", @"zh-Hans" ]) {
         PopupDateColumnWidthTestPopup *popup = [[PopupDateColumnWidthTestPopup alloc] initForAutoComplete:NO];
         popup.dates = [self relativeDatesForLanguage:language];
         NSTableView *table = [self tableOf:popup];

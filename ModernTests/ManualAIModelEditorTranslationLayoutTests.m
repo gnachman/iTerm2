@@ -102,7 +102,7 @@
 }
 
 - (void)testTranslatedTitlesFit {
-    for (NSString *language in @[ @"de", @"ja", @"pt-BR", @"ru", @"zh-Hans" ]) {
+    for (NSString *language in @[ @"de", @"es", @"ja", @"pt-BR", @"ru", @"zh-Hans" ]) {
         NSDictionary<NSString *, NSString *> *strings = [self stringsForLanguage:language];
         id<ManualAIModelEditorTranslationLayoutForTesting> editor = [self newEditor];
         NSView *content = editor.window.contentView;
