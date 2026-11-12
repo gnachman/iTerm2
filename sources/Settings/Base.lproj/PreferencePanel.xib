@@ -896,7 +896,7 @@ DQ
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uKX-eX-rFi">
                                 <rect key="frame" x="-2" y="201" width="120" height="16"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <textFieldCell key="cell" lineBreakMode="wordWrapping" alignment="right" title="Regular expression" id="yyK-z1-ogF">
+                                <textFieldCell key="cell" alignment="right" title="Regular expression" id="yyK-z1-ogF">
                                     <font key="font" usesAppearanceFont="YES"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -946,15 +946,15 @@ DQ
                                 <rect key="frame" x="124" y="79" width="258" height="135"/>
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
-                                    <rect key="frame" x="1" y="1" width="256" height="133"/>
+                                    <rect key="frame" x="1" y="1" width="239" height="133"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
-                                            <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="239" height="133"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                            <size key="minSize" width="256" height="133"/>
+                                            <size key="minSize" width="239" height="133"/>
                                             <size key="maxSize" width="258" height="10000000"/>
                                             <connections>
                                                 <outlet property="delegate" destination="5863" id="Fo0-Ps-Gpj"/>
@@ -1001,15 +1001,15 @@ DQ
                         <rect key="frame" x="403" y="76" width="381" height="85"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
-                            <rect key="frame" x="1" y="1" width="379" height="83"/>
+                            <rect key="frame" x="1" y="1" width="362" height="83"/>
                             <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
-                                    <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="362" height="83"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="379" height="83"/>
+                                    <size key="minSize" width="362" height="83"/>
                                     <size key="maxSize" width="381" height="10000000"/>
                                 </textView>
                             </subviews>
@@ -5983,17 +5983,17 @@ CA
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tabView identifier="KeysTabView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gvH-pp-196">
-                    <rect key="frame" x="0.0" y="-16" width="849" height="506"/>
+                    <rect key="frame" x="0.0" y="0.0" width="849" height="490"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="General" identifier="General" id="Aba-Zo-uvC">
                             <view key="view" identifier="GeneralTabView" id="KEo-nn-2KS">
-                                <rect key="frame" x="10" y="33" width="829" height="460"/>
+                                <rect key="frame" x="10" y="33" width="829" height="444"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView identifier="GeneralTabViewWrapper" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="J6r-KD-bxU">
-                                        <rect key="frame" x="-3" y="52" width="835" height="404"/>
+                                        <rect key="frame" x="-3" y="36" width="835" height="404"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UjW-nQ-Q9Q" customClass="iTermTerminalModeEnclosure">
@@ -6410,7 +6410,7 @@ Refer to the manuals for individual applications to see if they support these mo
                                         </subviews>
                                     </customView>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wIT-ZI-N5h" customClass="iTermTerminalModeEnclosure">
-                                        <rect key="frame" x="133" y="17" width="638" height="27"/>
+                                        <rect key="frame" x="133" y="1" width="638" height="27"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fRb-hJ-joB">
@@ -6443,15 +6443,15 @@ Refer to the manuals for individual applications to see if they support these mo
                         </tabViewItem>
                         <tabViewItem label="Key Bindings" identifier="KeyMappings" id="Vbb-kB-WbF">
                             <view key="view" identifier="KeyMappingsTab" id="h4S-Z8-t3R">
-                                <rect key="frame" x="10" y="33" width="829" height="460"/>
+                                <rect key="frame" x="10" y="33" width="829" height="444"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView identifier="KeyMappingsViewWrapper" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4TC-Ri-lNP">
-                                        <rect key="frame" x="0.0" y="-14" width="820" height="420"/>
+                                        <rect key="frame" x="-3" y="10" width="820" height="414"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                         <subviews>
                                             <customView identifier="ExternalView" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6sa-Ma-Wvi">
-                                                <rect key="frame" x="0.0" y="44" width="820" height="376"/>
+                                                <rect key="frame" x="20" y="0.0" width="800" height="414"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                             </customView>
                                         </subviews>
@@ -6567,7 +6567,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <clipView key="contentView" id="FMp-vf-IvG">
                                 <rect key="frame" x="1" y="1" width="551" height="76"/>
-                                <autoresizingMask key="autoresizingMask"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                         <rect key="frame" x="0.0" y="0.0" width="551" height="76"/>
@@ -6814,7 +6814,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="La3-md-S0L" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="35" y="377" width="761" height="143"/>
+                                        <rect key="frame" x="34" y="377" width="761" height="143"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cZL-gb-ECo">
@@ -7503,7 +7503,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="csg-IK-alh">
                                                                     <rect key="frame" x="104" y="56" width="685" height="34"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                                    <textFieldCell key="cell" lineBreakMode="wordWrapping" truncatesLastVisibleLine="YES" title="Runs on-device; no API key is used" id="DKf-8f-UUu">
+                                                                    <textFieldCell key="cell" truncatesLastVisibleLine="YES" title="Runs on-device; no API key is used" id="DKf-8f-UUu">
                                                                         <font key="font" metaFont="system"/>
                                                                         <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -7648,15 +7648,15 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             <rect key="frame" x="20" y="25" width="735" height="376"/>
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <clipView key="contentView" drawsBackground="NO" id="6XT-bG-foe">
-                                                                                <rect key="frame" x="0.0" y="0.0" width="735" height="376"/>
+                                                                                <rect key="frame" x="0.0" y="0.0" width="718" height="376"/>
                                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                                 <subviews>
                                                                                     <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" spellingCorrection="YES" smartInsertDelete="YES" id="pSg-z3-7LN">
-                                                                                        <rect key="frame" x="0.0" y="0.0" width="735" height="376"/>
+                                                                                        <rect key="frame" x="0.0" y="0.0" width="718" height="376"/>
                                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                                        <size key="minSize" width="735" height="376"/>
+                                                                                        <size key="minSize" width="718" height="376"/>
                                                                                         <size key="maxSize" width="735" height="10000000"/>
                                                                                         <connections>
                                                                                             <outlet property="delegate" destination="9Se-ld-UJa" id="udT-Fb-yHi"/>
@@ -8812,10 +8812,9 @@ You can choose to define the characters considered part of a word with a regular
                                         <rect key="frame" x="116" y="425" width="592" height="95"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
-                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dt4-v9-hNo">
+                                            <button toolTip="Displays Arabic, Hebrew, and other right-to-left scripts in their correct visual order." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dt4-v9-hNo">
                                                 <rect key="frame" x="153" y="59" width="419" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <string key="toolTip">Displays Arabic, Hebrew, and other right-to-left scripts in their correct visual order.</string>
                                                 <buttonCell key="cell" type="check" title="Enable support for right-to-left scripts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ax2-RO-lUC">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
