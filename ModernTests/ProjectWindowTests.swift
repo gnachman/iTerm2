@@ -248,10 +248,13 @@ final class ProjectWindowTests: XCTestCase {
         window.workingDirectory = root.path
         let coordinator = iTermProjectWindowController(catalog: catalog)
         coordinator.delegate = window
+        let associated = expectation(description: "cwd directory associated")
+        var fulfilled = false
+        window.stateChanged = {
+            if !fulfilled && coordinator.selectedProjectIdentifier != nil { fulfilled = true; associated.fulfill() }
+        }
         coordinator.activeTabDidChange()
-        let drained = expectation(description: "cwd directory added")
-        catalog.addDirectory(atPath: root.path) { _, _ in drained.fulfill() }
-        wait(for: [drained], timeout: 5)
+        wait(for: [associated], timeout: 5)
         let project = try XCTUnwrap(catalog.projects.first)
         XCTAssertEqual(coordinator.selectedProjectIdentifier, project.identifier)
         XCTAssertEqual(window.projectTabAssociations["opened"], project.identifier)

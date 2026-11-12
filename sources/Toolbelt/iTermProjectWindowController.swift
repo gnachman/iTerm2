@@ -10,6 +10,7 @@ import Foundation
     func projectStateDidChange()
     @objc(projectWorkingDirectoryWithCompletion:)
     optional func projectWorkingDirectory(completion: @escaping (String?) -> Void)
+    @objc optional func projectReportError(_ error: NSError)
 }
 
 @objcMembers final class iTermProjectWindowController: NSObject {
@@ -21,6 +22,11 @@ import Foundation
     private var pendingWorkingDirectories = [String: (identifier: UUID, generation: UInt64)]()
     private var completedWorkingDirectories = Set<String>()
     private var currentDirectoryActionGeneration: UInt64?
+    private var rememberedWorktreeTabs = [String: String]()
+    private var tabVisits = [String: UInt64]()
+    private var visitGeneration: UInt64 = 0
+    private var worktreeIntent: iTermGitWorktree?
+    private var pendingWorktrees = [String: (identifier: UUID, generation: UInt64)]()
     private(set) var selectionGeneration: UInt64 = 0
     private(set) var selectedProjectIdentifier: String?
     var sidebarVisible = false
@@ -29,6 +35,12 @@ import Foundation
     }
     var selectedProject: iTermProjectDirectory? {
         selectedProjectIdentifier.flatMap { catalog.project(withIdentifier: $0) }
+    }
+    var selectedWorktreeIdentifier: String? {
+        worktreeIntent?.identifier ?? selectedProjectIdentifier.flatMap { catalog.worktree(forProjectIdentifier: $0)?.identifier }
+    }
+    var selectedRootDirectory: String? {
+        worktreeIntent?.rootDirectory ?? selectedProjectIdentifier.flatMap { catalog.worktree(forProjectIdentifier: $0)?.rootDirectory } ?? selectedProject?.rootDirectory
     }
 
     override convenience init() { self.init(catalog: .shared) }
@@ -51,12 +63,17 @@ import Foundation
         rememberedTabs = rememberedTabs.filter { associations[$0.value] == $0.key }
         completedWorkingDirectories = completedWorkingDirectories.filter { associations[$0] != nil }
         pendingWorkingDirectories = pendingWorkingDirectories.filter { associations[$0.key] != nil }
+        tabVisits = tabVisits.filter { associations[$0.key] != nil }
+        rememberedWorktreeTabs = rememberedWorktreeTabs.filter { worktree, tab in
+            associations[tab].flatMap { catalog.worktree(forProjectIdentifier: $0)?.identifier } == worktree
+        }
     }
 
     func activeTabDidChange() {
         guard let delegate = delegate else { return }
         selectionGeneration &+= 1
         currentDirectoryActionGeneration = nil
+        worktreeIntent = nil
         tabsDidChange()
         let associations = delegate.projectTabAssociations
         selectedProjectIdentifier = delegate.projectActiveTabIdentifier.flatMap { associations[$0] }
@@ -64,6 +81,11 @@ import Foundation
         if let project = selectedProjectIdentifier, let tab = delegate.projectActiveTabIdentifier {
             rememberedTabs[project] = tab
             completedWorkingDirectories.insert(tab)
+        }
+        if let tab = delegate.projectActiveTabIdentifier {
+            visitGeneration &+= 1
+            tabVisits[tab] = visitGeneration
+            if let worktree = selectedWorktreeIdentifier { rememberedWorktreeTabs[worktree] = tab }
         }
         delegate.projectStateDidChange()
         selectInitialWorkingDirectoryIfNeeded()
@@ -83,7 +105,7 @@ import Foundation
                 self.pendingWorkingDirectories.removeValue(forKey: tab)
                 return
             }
-            self.catalog.addDirectoryIfCurrent(atPath: path, reuseContainingProject: true, shouldAdd: { [weak self] in
+            self.catalog.addWorkingDirectory(atPath: path, shouldAdd: { [weak self] in
                     self?.isCurrentWorkingDirectoryRequest(tab, request: request, generation: generation) == true
                 }) { [weak self] project, _ in
                     guard let self else { return }
@@ -122,6 +144,8 @@ import Foundation
             return
         }
         // Explicitly associate the current tab, superseding pending automatic selection or launches.
+        worktreeIntent = nil
+        selectedProjectIdentifier = delegate.projectTabAssociations[tab].flatMap { catalog.project(withIdentifier: $0)?.identifier }
         selectionGeneration &+= 1
         let generation = selectionGeneration
         currentDirectoryActionGeneration = generation
@@ -158,8 +182,37 @@ import Foundation
         if currentDirectoryActionGeneration == generation { currentDirectoryActionGeneration = nil }
     }
 
+    @objc(addDirectoryAtPath:completion:)
+    func addDirectory(atPath path: String, completion: @escaping (iTermProjectDirectory?, NSError?) -> Void) {
+        guard let delegate else { completion(nil, nil); return }
+        let tab = delegate.projectActiveTabIdentifier
+        worktreeIntent = nil
+        selectionGeneration &+= 1
+        let generation = selectionGeneration
+        currentDirectoryActionGeneration = generation
+        let isCurrent: () -> Bool = { [weak self] in
+            self?.currentDirectoryActionGeneration == generation && self?.selectionGeneration == generation &&
+                self?.delegate?.projectActiveTabIdentifier == tab
+        }
+        catalog.addDirectoryIfCurrent(atPath: path, shouldAdd: isCurrent) { [weak self] project, error in
+            guard let self, isCurrent() else { completion(nil, nil); return }
+            guard let project else {
+                self.finishCurrentDirectoryAction(generation: generation)
+                completion(nil, error); return
+            }
+            self.catalog.refreshProject(withIdentifier: project.identifier) { [weak self] _ in
+                guard let self, isCurrent(), self.catalog.project(withIdentifier: project.identifier) != nil else { completion(nil, nil); return }
+                self.finishCurrentDirectoryAction(generation: generation)
+                self.selectProject(project)
+                completion(project, nil)
+            }
+        }
+    }
+
     func selectProject(_ project: iTermProjectDirectory) {
         guard catalog.project(withIdentifier: project.identifier) != nil, let delegate = delegate else { return }
+        if let worktree = catalog.worktree(forProjectIdentifier: project.identifier) { selectWorktree(worktree); return }
+        worktreeIntent = nil
         if selectedProjectIdentifier != project.identifier || currentDirectoryActionGeneration != nil { selectionGeneration &+= 1 }
         currentDirectoryActionGeneration = nil
         selectedProjectIdentifier = project.identifier
@@ -186,6 +239,66 @@ import Foundation
         }
     }
 
+    func selectWorktree(_ worktree: iTermGitWorktree) {
+        guard let current = catalog.worktree(withIdentifier: worktree.identifier), let delegate else { return }
+        if selectedWorktreeIdentifier != current.identifier || currentDirectoryActionGeneration != nil { selectionGeneration &+= 1 }
+        currentDirectoryActionGeneration = nil
+        let associations = delegate.projectTabAssociations
+        let tabs = associations.keys.filter { tab in
+            associations[tab].flatMap { catalog.worktree(forProjectIdentifier: $0)?.identifier } == current.identifier
+        }
+        let remembered = rememberedWorktreeTabs[current.identifier].flatMap { tabs.contains($0) ? $0 : nil }
+        let persisted = rememberedTabs.values.filter { tabs.contains($0) }.sorted().first
+        let recent = tabs.sorted().max { (tabVisits[$0] ?? 0) < (tabVisits[$1] ?? 0) }
+        if let tab = remembered ?? recent ?? persisted {
+            worktreeIntent = nil
+            selectedProjectIdentifier = associations[tab]
+            rememberedWorktreeTabs[current.identifier] = tab
+            delegate.projectStateDidChange()
+            delegate.projectSelectTab(tab)
+            return
+        }
+        guard current.available else {
+            activeTabDidChange()
+            delegate.projectReportError?(NSError(domain: NSCocoaErrorDomain, code: NSFileReadNoSuchFileError,
+                userInfo: [NSLocalizedDescriptionKey: String(localized: "Projects.WorktreeUnavailable", defaultValue: "The worktree directory is unavailable. Refresh the list or choose another worktree.", comment: "Error when opening a terminal in a missing worktree")]))
+            return
+        }
+        worktreeIntent = current
+        selectedProjectIdentifier = catalog.projects.first { $0.rootDirectory == current.rootDirectory }?.identifier
+        delegate.projectStateDidChange()
+        let generation = selectionGeneration
+        guard pendingWorktrees[current.identifier]?.generation != generation else { return }
+        let request = UUID()
+        pendingWorktrees[current.identifier] = (request, generation)
+        catalog.ensureWorktreeProject(current, shouldAdd: { [weak self] in
+            self?.isCurrentWorktreeRequest(current.identifier, request: request, generation: generation) == true
+        }) { [weak self] project, error in
+            guard let self, self.isCurrentWorktreeRequest(current.identifier, request: request, generation: generation) else { return }
+            guard let project else {
+                self.pendingWorktrees.removeValue(forKey: current.identifier)
+                self.activeTabDidChange()
+                if let error, error.code != NSUserCancelledError { self.delegate?.projectReportError?(error) }
+                return
+            }
+            self.selectedProjectIdentifier = project.identifier
+            self.delegate?.projectStateDidChange()
+            self.delegate?.projectLaunch(project, directory: current.rootDirectory) { [weak self] tab in
+                guard let self, self.pendingWorktrees[current.identifier]?.identifier == request else { return }
+                self.pendingWorktrees.removeValue(forKey: current.identifier)
+                guard generation == self.selectionGeneration, self.selectedWorktreeIdentifier == current.identifier, let tab else { return }
+                self.rememberedWorktreeTabs[current.identifier] = tab
+                self.rememberedTabs[project.identifier] = tab
+                self.delegate?.projectSelectTab(tab)
+            }
+        }
+    }
+
+    private func isCurrentWorktreeRequest(_ worktree: String, request: UUID, generation: UInt64) -> Bool {
+        pendingWorktrees[worktree]?.identifier == request && generation == selectionGeneration &&
+            worktreeIntent?.identifier == worktree && catalog.worktree(withIdentifier: worktree)?.available == true
+    }
+
     func openTerminal(inDirectory directory: String) {
         guard let project = selectedProject else { return }
         let generation = selectionGeneration
@@ -202,14 +315,24 @@ import Foundation
             delegate.projectAssign(nil, toTab: tab)
             removedAssociation = true
         }
-        if removedAssociation || (selectedProjectIdentifier != nil && selectedProject == nil) { activeTabDidChange() }
-        else { delegate.projectStateDidChange() }
+        let unavailableIntent = worktreeIntent.map { catalog.worktree(withIdentifier: $0.identifier)?.available != true } ?? false
+        if removedAssociation || (selectedProjectIdentifier != nil && selectedProject == nil) || unavailableIntent { activeTabDidChange() }
+        else {
+            if worktreeIntent == nil, let worktree = selectedWorktreeIdentifier, let tab = delegate.projectActiveTabIdentifier {
+                rememberedWorktreeTabs[worktree] = tab
+            }
+            delegate.projectStateDidChange()
+        }
     }
 
     // Localization unneeded: arrangement field names.
     func restorableState() -> [String: Any] {
         var state: [String: Any] = ["visible": sidebarVisible, "width": sidebarWidth, "remembered": rememberedTabs]
         if let selected = selectedProjectIdentifier { state["selected"] = selected }
+        // Persist only opaque project and tab IDs, never filesystem-path dictionary keys.
+        state["worktreeRemembered"] = rememberedWorktreeTabs.reduce(into: [String: String]()) { result, entry in
+            if let project = catalog.projects.first(where: { $0.gitWorktreeDirectory == entry.key }) { result[project.identifier] = entry.value }
+        }
         return state
     }
 
@@ -220,5 +343,9 @@ import Foundation
         sidebarWidth = (state["width"] as? NSNumber)?.doubleValue ?? 220
         selectedProjectIdentifier = (state["selected"] as? String).flatMap { catalog.project(withIdentifier: $0)?.identifier }
         rememberedTabs = state["remembered"] as? [String: String] ?? [:]
+        rememberedWorktreeTabs.removeAll()
+        for (project, tab) in state["worktreeRemembered"] as? [String: String] ?? [:] {
+            if let worktree = catalog.worktree(forProjectIdentifier: project) { rememberedWorktreeTabs[worktree.identifier] = tab }
+        }
     }
 }

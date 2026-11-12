@@ -56,7 +56,7 @@ TOP-LEVEL keys
   NoSyncWorkgroupGitBaseRecents .......... git base/ref recents
   NoSyncWorkgroupCodeReviewModelRecents .. code review model name recents
   WorkgroupCodeReviewDefaultModel ........ default code review model name
-  NoSyncProjectDirectories ............... local project roots (removed)
+  NoSyncProjectDirectories ............... local roots and Git common/worktree metadata (removed)
   ProjectFileTreeRoot .................... toolbelt restoration root path
   ProjectFileTreeExpandedPaths ........... expansion paths keyed by project root (removed)
   NoSyncRecentArchives ................... archive file paths

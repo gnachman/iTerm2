@@ -5125,13 +5125,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)projectStateDidChange {
-    _contentView.projectSidebar.projects = [iTermProjectCatalog shared].projects;
+    _contentView.projectSidebar.tree = [[[iTermProjectSidebarTree alloc] initWithCatalog:[iTermProjectCatalog shared]] autorelease];
     _contentView.projectSidebar.selectedProjectIdentifier = _projectController.selectedProjectIdentifier;
+    _contentView.projectSidebar.selectedWorktreeIdentifier = _projectController.selectedWorktreeIdentifier;
     // Availability depends on the session, not a synchronous working-directory poll.
     PTYSession *session = self.currentSession;
     _contentView.projectSidebar.canAddCurrentDirectory =
         session && !session.exited && !session.isBrowserSession && !session.sshIdentity;
-    NSString *rootDirectory = _projectController.selectedProject.rootDirectory;
+    NSString *rootDirectory = _projectController.selectedRootDirectory;
     if (![_contentView.toolbelt.projectRootDirectory isEqualToString:rootDirectory]) {
         _contentView.toolbelt.projectRootDirectory = rootDirectory;
     }
@@ -5174,6 +5175,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     DLog(@"Select project %@ in window %@", project.identifier, self.terminalGuid);
     [[self projectController] selectProject:project];
     [self prepareProjectFileTree];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectWorktree:(iTermGitWorktree *)worktree {
+    [[self projectController] selectWorktree:worktree];
+    [self prepareProjectFileTree];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar refreshRepositories:(NSArray<NSString *> *)identifiers {
+    [[iTermProjectCatalog shared] refreshRepositories:identifiers];
+}
+
+- (void)projectSidebar:(iTermProjectSidebarView *)sidebar removeRepository:(iTermGitRepositorySnapshot *)repository {
+    [[iTermProjectCatalog shared] removeRepositoryWithIdentifier:repository.identifier];
+}
+
+- (void)projectReportError:(NSError *)error {
+    [self showProjectError:error.localizedDescription];
 }
 
 - (void)prepareProjectFileTree {
@@ -5227,14 +5245,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)addProjectDirectory:(NSString *)directory {
     __weak __typeof(self) weakSelf = self;
-    [[iTermProjectCatalog shared] addDirectoryAtPath:directory completion:^(iTermProjectDirectory *project, NSError *error) {
-        if (error) {
-            [weakSelf showProjectError:error.localizedDescription];
+    [[self projectController] addDirectoryAtPath:directory completion:^(iTermProjectDirectory *project, NSError *error) {
+        PseudoTerminal *term = [[weakSelf retain] autorelease];
+        if (!term || term->_closing || term->_deallocing) { return; }
+        if (error && error.code != NSUserCancelledError) {
+            [term showProjectError:error.localizedDescription];
         } else if (project) {
-            PseudoTerminal *term = [[weakSelf retain] autorelease];
-            if (term && !term->_closing) {
-                [term projectSidebar:term->_contentView.projectSidebar didSelectProject:project];
-            }
+            [term prepareProjectFileTree];
         }
     }];
 }
