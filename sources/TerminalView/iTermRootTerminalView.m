@@ -133,6 +133,8 @@ typedef struct {
 @property(nonatomic, strong) iTermToolbeltView *toolbelt;
 @property(nonatomic, strong) iTermProjectSidebarView *projectSidebar;
 @property(nonatomic, strong) iTermDragHandleView *projectSidebarDragHandle;
+@property(nonatomic, strong) iTermSidebarToggleButton *leftSidebarToggleButton;
+@property(nonatomic, strong) iTermSidebarToggleButton *rightSidebarToggleButton;
 @property(nonatomic, strong) iTermDragHandleView *verticalTabBarDragHandle;
 // How far the stoplight hotbox and everything that moves with it is slid left.
 // A single property drives all the views so a slide always starts from where
@@ -388,6 +390,16 @@ typedef struct {
         _notchMask = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) color:[NSColor blackColor]];
         _notchMask.hidden = YES;
         [self addSubview:_notchMask];
+        self.leftSidebarToggleButton = [[iTermSidebarToggleButton alloc] initWithLeftSidebar:YES];
+        self.leftSidebarToggleButton.target = self;
+        self.leftSidebarToggleButton.action = @selector(toggleProjectSidebar:);
+        self.leftSidebarToggleButton.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+        [self addSubview:self.leftSidebarToggleButton];
+        self.rightSidebarToggleButton = [[iTermSidebarToggleButton alloc] initWithLeftSidebar:NO];
+        self.rightSidebarToggleButton.target = self;
+        self.rightSidebarToggleButton.action = @selector(toggleFileTree:);
+        self.rightSidebarToggleButton.autoresizingMask = NSViewMinXMargin | NSViewMinYMargin;
+        [self addSubview:self.rightSidebarToggleButton];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(advancedSettingsDidChange:)
                                                      name:iTermAdvancedSettingsDidChange
@@ -800,7 +812,10 @@ typedef struct {
     const CGFloat toolbeltWidth = ([self shouldShowToolbelt]
                                    ? floor([self maximumToolbeltWidthForViewWidth:NSWidth(self.frame)])
                                    : 0);
-    const CGFloat stripWidth = NSWidth(self.frame) - toolbeltWidth - self.effectiveProjectSidebarWidth;
+    const CGFloat projectWidth = self.effectiveProjectSidebarWidth;
+    const CGFloat trailingControls = self.sidebarControlsShareTopBar && !self.shouldShowToolbelt ? 36 : 0;
+    const CGFloat leadingControls = self.sidebarControlsShareTopBar && projectWidth == 0 ? 36 : 0;
+    const CGFloat stripWidth = NSWidth(self.frame) - toolbeltWidth - projectWidth - trailingControls;
     // -tabBarInsetsForCompactWindow reserves this after the name, so it is space
     // the tabs never get either. Ignoring it let a large setting crowd the tabs,
     // which is the one thing this allowance exists to prevent.
@@ -809,7 +824,7 @@ typedef struct {
     return (maximumInset -
             [self leadingEdgeForWindowNameBesideTabs] -
             iTermWindowNameBesideTabsRightMargin -
-            extraSpace);
+            extraSpace - leadingControls);
 }
 
 // The width the name wants: what the label needs to draw the whole string, not
@@ -1726,7 +1741,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
     // Use calculator for toolbelt frame calculation
     iTermLayoutInputs inputs = [self layoutInputsForWindow:thisWindow];
-    return [iTermLayoutCalculator toolbeltFrameWithInputs:inputs];
+    return [iTermLayoutCalculator calculateLayoutWithInputs:inputs].toolbeltFrame;
 }
 
 - (void)setShouldShowToolbelt:(BOOL)shouldShowToolbelt {
@@ -1896,6 +1911,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
     inputs.shouldShowProjectSidebar = self.shouldShowProjectSidebar;
     inputs.projectSidebarWidth = self.projectSidebarWidth;
+    inputs.sidebarControlsVisible = ![self sidebarControlsInBorrowedTabBar];
     inputs.minimumTerminalWidth = [self.delegate rootTerminalViewMinimumTerminalWidth];
     if ((_standardWindowButtonsView && !_standardWindowButtonsView.hidden) || [self.delegate enableStoplightHotbox]) {
         inputs.projectSidebarTopInset = MAX(_tabBarControl.height, iTermStoplightHotboxHeight);
@@ -2012,8 +2028,14 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
         // has no margin. See -spanHiddenSubviewsAlongFlexibleAxes.
         frame = NSMakeRect(NSMinX(self.bounds), NSMaxY(self.bounds), NSWidth(self.bounds), 0);
     }
-    _tabBarBacking.frame = frame;
-    self.tabBarControl.frame = _tabBarBacking.bounds;
+    const CGFloat trailingControls = (!NSIsEmptyRect(frame) && self.sidebarControlsShareTopBar &&
+                                     !self.shouldShowToolbelt) ? 36 : 0;
+    NSRect backingFrame = frame;
+    backingFrame.size.width += trailingControls;
+    _tabBarBacking.frame = backingFrame;
+    NSRect controlFrame = _tabBarBacking.bounds;
+    controlFrame.size.width = NSWidth(frame);
+    self.tabBarControl.frame = controlFrame;
 }
 
 - (void)layoutSubviewsWithVisibleBottomTabBarForWindow:(NSWindow *)thisWindow {
@@ -2294,13 +2316,16 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     } else {
         [self layoutSubviewsWithVisibleTabBarForWindow:thisWindow inlineToolbelt:showToolbeltInline];
     }
-    const iTermLayoutOutputs projectLayout = [iTermLayoutCalculator calculateLayoutWithInputs:[self layoutInputsForWindow:thisWindow]];
+    iTermLayoutInputs projectInputs = [self layoutInputsForWindow:thisWindow];
+    projectInputs.sidebarControlsLeadingInset = [self leadingInsetForSidebarControls];
+    const iTermLayoutOutputs projectLayout = [iTermLayoutCalculator calculateLayoutWithInputs:projectInputs];
     const NSRect projectFrame = projectLayout.projectSidebarFrame;
     self.projectSidebar.hidden = NSIsEmptyRect(projectFrame);
     self.projectSidebar.frame = projectFrame;
     self.projectSidebarDragHandle.hidden = self.projectSidebar.hidden;
     self.projectSidebarDragHandle.frame = self.projectSidebar.hidden ? NSZeroRect :
         NSMakeRect(NSMaxX(projectFrame) - 3, NSMinY(projectFrame), 3, NSHeight(projectFrame));
+    [self layoutSidebarControls:projectLayout];
     const CGFloat notchHeight = [self notchInset];
     _notchMask.hidden = (notchHeight == 0);
     _notchMask.frame = NSMakeRect(0, NSHeight(self.bounds) - notchHeight, NSWidth(self.bounds), notchHeight);
@@ -2323,6 +2348,95 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 #endif
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewDidLayoutSubviews];
+}
+
+- (BOOL)sidebarControlsShareTopBar {
+    return [self sidebarControlsInBorrowedTabBar] || (!_tabBarControlOnLoan && !_tabBarControl.flashing &&
+        ((self.tabBarShouldBeVisible && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) ||
+         [self.delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar]));
+}
+
+- (BOOL)sidebarControlsInBorrowedTabBar {
+    return _tabBarControlOnLoan && [self tabBarShouldBeVisibleEvenWhenOnLoan] && !_tabBarControl.hidden &&
+        _tabBarControl.window == self.window && [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab;
+}
+
+- (CGFloat)sidebarControlsAdditionalHeight {
+    return [iTermLayoutCalculator calculateLayoutWithInputs:[self layoutInputsForWindow:self.window]].sidebarControlsAdditionalHeight;
+}
+
+- (CGFloat)leadingInsetForSidebarControls {
+    CGFloat inset = 8;
+    for (id candidate in @[(id)_standardWindowButtonsView ?: [NSNull null],
+                          (id)_compactProxyIconView ?: [NSNull null], _windowNumberLabel]) {
+        if (![candidate isKindOfClass:[NSView class]]) { continue; }
+        NSView *view = candidate;
+        if (view.hidden || NSMinX(view.frame) > NSWidth(self.bounds) / 2) { continue; }
+        if (NSMaxY(view.frame) > NSHeight(self.bounds) - 40) {
+            inset = MAX(inset, NSMaxX(view.frame) + 6);
+        }
+    }
+    return inset;
+}
+
+- (void)layoutSidebarControls:(iTermLayoutOutputs)layout {
+    NSView *container = self;
+    if ([self sidebarControlsInBorrowedTabBar]) {
+        container = _tabBarControl.superview;
+        iTermLayoutInputs inputs = {0};
+        inputs.sidebarControlsVisible = YES;
+        inputs.contentViewWidth = NSWidth(container.bounds);
+        inputs.contentViewHeight = NSHeight(container.bounds);
+        inputs.tabBarHeight = NSHeight(container.bounds);
+        inputs.tabBarVisible = YES;
+        inputs.tabPosition = kLayoutTabPositionTop;
+        layout = [iTermLayoutCalculator calculateLayoutWithInputs:inputs];
+        NSRect tabBarFrame = container.bounds;
+        tabBarFrame.size.width = NSWidth(layout.tabBarFrame);
+        if (!NSEqualRects(_tabBarControl.frame, tabBarFrame)) { _tabBarControl.frame = tabBarFrame; }
+    }
+    if (self.leftSidebarToggleButton.superview != container) { [container addSubview:self.leftSidebarToggleButton]; }
+    if (self.rightSidebarToggleButton.superview != container) { [container addSubview:self.rightSidebarToggleButton]; }
+    if (!NSEqualRects(self.leftSidebarToggleButton.frame, layout.leftSidebarButtonFrame)) {
+        self.leftSidebarToggleButton.frame = layout.leftSidebarButtonFrame;
+    }
+    if (!NSEqualRects(self.rightSidebarToggleButton.frame, layout.rightSidebarButtonFrame)) {
+        self.rightSidebarToggleButton.frame = layout.rightSidebarButtonFrame;
+    }
+    NSColor *const textColor = [self.delegate rootTerminalViewTabBarTextColorForTitle] ?: [NSColor labelColor];
+    self.leftSidebarToggleButton.foregroundColor = textColor;
+    self.rightSidebarToggleButton.foregroundColor = textColor;
+    [self.leftSidebarToggleButton setExpanded:!self.projectSidebar.hidden];
+    [self.rightSidebarToggleButton setExpanded:self.shouldShowToolbelt];
+    if (container != self) { return; }
+    if (!_windowNameBesideTabsLabel.hidden && NSMinX(_windowNameBesideTabsLabel.frame) < NSWidth(self.bounds) / 2) {
+        _windowNameBesideTabsLabel.frame = NSOffsetRect(_windowNameBesideTabsLabel.frame, 36, 0);
+    }
+    for (NSTextField *label in @[_windowTitleLabel, _windowNameBesideTabsLabel]) {
+        if (label.hidden) { continue; }
+        NSRect frame = label.frame;
+        if (NSIntersectsRect(frame, layout.leftSidebarButtonFrame)) {
+            if (label == _windowTitleLabel) {
+                const CGFloat right = NSMaxX(frame);
+                frame.origin.x = NSMaxX(layout.leftSidebarButtonFrame) + 6;
+                frame.size.width = MAX(0, right - NSMinX(frame));
+            } else {
+                frame.size.width = MAX(0, NSMinX(layout.leftSidebarButtonFrame) - 6 - NSMinX(frame));
+            }
+        }
+        if (NSIntersectsRect(frame, layout.rightSidebarButtonFrame)) {
+            frame.size.width = MAX(0, NSMinX(layout.rightSidebarButtonFrame) - 6 - NSMinX(frame));
+        }
+        if (!NSEqualRects(label.frame, frame)) { label.frame = frame; }
+    }
+}
+
+- (void)toggleProjectSidebar:(id)sender {
+    [self.delegate rootTerminalViewToggleProjectSidebar];
+}
+
+- (void)toggleFileTree:(id)sender {
+    [self.delegate rootTerminalViewToggleFileTree];
 }
 
 // The passes above only lay out views that are showing, so a hidden view keeps

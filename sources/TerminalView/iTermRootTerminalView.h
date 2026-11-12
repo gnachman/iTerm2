@@ -26,6 +26,8 @@
 @protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate, iTermSwipeHandler>
 - (void)repositionWidgets;
 - (void)rootTerminalViewDidResizeContentArea;
+- (void)rootTerminalViewToggleProjectSidebar;
+- (void)rootTerminalViewToggleFileTree;
 - (CGFloat)rootTerminalViewMinimumTerminalWidth;
 - (BOOL)haveTopBorder;
 - (BOOL)haveBottomBorder;
@@ -112,6 +114,8 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic) BOOL shouldShowProjectSidebar;
 @property(nonatomic) CGFloat projectSidebarWidth;
 @property(nonatomic, readonly) CGFloat effectiveProjectSidebarWidth;
+@property(nonatomic, readonly) BOOL sidebarControlsShareTopBar;
+@property(nonatomic, readonly) CGFloat sidebarControlsAdditionalHeight;
 - (CGFloat)effectiveProjectSidebarWidthForContentWidth:(CGFloat)width;
 
 // Toolbelt view. Goes on the right side of the terminal window, if visible.

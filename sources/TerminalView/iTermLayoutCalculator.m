@@ -72,6 +72,45 @@ const int kLayoutTabPositionRight = 3;
 #pragma mark - Main Entry Point
 
 + (iTermLayoutOutputs)calculateLayoutWithInputs:(iTermLayoutInputs)inputs {
+    if (inputs.sidebarControlsVisible) {
+        const BOOL sharedTopBar = !inputs.tabBarOnLoan && !inputs.tabBarFlashing &&
+            ((inputs.tabBarVisible && inputs.tabPosition == kLayoutTabPositionTop) ||
+             inputs.drawWindowTitleInPlaceOfTabBar);
+        const CGFloat stripHeight = sharedTopBar ? inputs.tabBarHeight : 32;
+        const CGFloat extraHeight = sharedTopBar ? 0 : stripHeight;
+        const CGRect fullFrame = CGRectMake(0, 0, inputs.contentViewWidth, inputs.contentViewHeight);
+        const CGRect belowAccessory = [self tabViewFrameByShrinkingForFullScreenTabBar:fullFrame withInputs:inputs];
+        const CGFloat accessoryHeight = inputs.shouldLeaveEmptyAreaAtTop ? inputs.tabBarHeight :
+            CGRectGetHeight(fullFrame) - CGRectGetHeight(belowAccessory);
+
+        iTermLayoutInputs content = inputs;
+        content.sidebarControlsVisible = NO;
+        content.contentViewHeight = MAX(0, inputs.contentViewHeight - extraHeight);
+        content.projectSidebarTopInset = MAX(0, inputs.projectSidebarTopInset - extraHeight);
+        if (sharedTopBar) {
+            content.projectSidebarTopInset = MAX(content.projectSidebarTopInset, stripHeight);
+        }
+        iTermLayoutOutputs outputs = [self calculateLayoutWithInputs:content];
+        if (sharedTopBar && !inputs.shouldShowToolbelt && !CGRectIsEmpty(outputs.tabBarFrame)) {
+            outputs.tabBarFrame.size.width = MAX(0, outputs.tabBarFrame.size.width - 36);
+        }
+        if (sharedTopBar && !CGRectIsEmpty(outputs.toolbeltFrame)) {
+            outputs.toolbeltFrame.size.height = MAX(0, outputs.toolbeltFrame.size.height - stripHeight);
+        }
+
+        const CGFloat buttonWidth = MIN(28, MAX(0, (inputs.contentViewWidth - 24) / 2));
+        const CGFloat buttonHeight = MIN(28, MAX(0, stripHeight - 4));
+        const CGFloat right = MAX(8, inputs.contentViewWidth - 8 - buttonWidth);
+        const CGFloat preferredLeft = isfinite(inputs.sidebarControlsLeadingInset) ? inputs.sidebarControlsLeadingInset : 8;
+        const CGFloat left = MAX(8, MIN(MAX(8, preferredLeft), right - buttonWidth - 8));
+        const CGFloat y = MAX(0, inputs.contentViewHeight - inputs.notchInset - accessoryHeight - stripHeight +
+                              (stripHeight - buttonHeight) / 2);
+        outputs.leftSidebarButtonFrame = CGRectMake(left, y, buttonWidth, buttonHeight);
+        outputs.rightSidebarButtonFrame = CGRectMake(right, y, buttonWidth, buttonHeight);
+        outputs.sidebarControlsAdditionalHeight = extraHeight;
+        return outputs;
+    }
+
     if (!inputs.tabBarVisible) {
         return [self calculateLayoutWithHiddenTabBarInputs:inputs];
     }

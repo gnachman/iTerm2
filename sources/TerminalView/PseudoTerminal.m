@@ -1318,6 +1318,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [self fitTabsToWindow];
 }
 
+- (void)rootTerminalViewToggleProjectSidebar {
+    [self toggleProjectSidebar:nil];
+}
+
+- (void)rootTerminalViewToggleFileTree {
+    if (!_contentView.shouldShowToolbelt) { [self prepareProjectFileTree]; }
+    hidingToolbeltShouldResizeWindow_ = NO;
+    _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
+    [self repositionWidgets];
+    [self fitTabsToWindow];
+    [self notifyTmuxOfWindowResize];
+    [self invalidateRestorableState];
+}
+
 - (void)toggleBroadcastingToCurrentSession:(id)sender {
     [_broadcastInputHelper toggleSession:self.currentSession.guid];
 }
@@ -4462,7 +4476,7 @@ typedef NS_ENUM(NSInteger, iTermCloseSubject) {
     [_locationLockController loadArrangement:arrangement];
     self.scope.windowTitleOverrideFormat = arrangement[TERMINAL_ARRANGEMENT_TITLE_OVERRIDE];
 
-    _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
+    _contentView.shouldShowToolbelt = NO;
     [_contentView constrainToolbeltWidth];
     [_contentView setToolbeltProportions:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT_PROPORTIONS]];
     [_contentView.toolbelt restoreFromState:arrangement[TERMINAL_ARRANGEMENT_TOOLBELT]];
@@ -5153,20 +5167,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     _contentView.shouldShowProjectSidebar = controller.sidebarVisible;
     [self repositionWidgets];
     [self fitTabsToWindow];
+    [self invalidateRestorableState];
 }
 
 - (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectProject:(iTermProjectDirectory *)project {
     DLog(@"Select project %@ in window %@", project.identifier, self.terminalGuid);
     [[self projectController] selectProject:project];
-    [self showProjectFileTree];
+    [self prepareProjectFileTree];
 }
 
-- (void)showProjectFileTree {
+- (void)prepareProjectFileTree {
     if (![[iTermToolbeltView configuredTools] containsObject:kFileTreeToolName]) {
         [iTermToolbeltView toggleShouldShowTool:kFileTreeToolName];
-    }
-    if (!_contentView.shouldShowToolbelt) {
-        [self toggleToolbeltVisibility:self];
     }
     [_contentView.toolbelt refreshTools];
     [self projectStateDidChange];
@@ -5193,7 +5205,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         if (error) {
             [term showProjectError:error.localizedDescription];
         } else if (project) {
-            [term showProjectFileTree];
+            [term prepareProjectFileTree];
         }
     }];
 }
@@ -6151,6 +6163,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSEdgeInsets)tabBarInsets {
+    NSEdgeInsets insets = [self tabBarInsetsWithoutSidebarControls];
+    if (_contentView.sidebarControlsShareTopBar) {
+        if (_contentView.tabBarControlOnLoan || _contentView.effectiveProjectSidebarWidth == 0) { insets.left += 36; }
+    }
+    return insets;
+}
+
+- (NSEdgeInsets)tabBarInsetsWithoutSidebarControls {
     iTermWindowType effectiveWindowType = self.windowType;
     if (exitingLionFullscreen_) {
         effectiveWindowType = self.savedWindowType;
@@ -8805,16 +8825,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self updateToolbeltAppearance];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self updateTouchBarIfNeeded:NO];
-
-    if (_contentView.tabView.numberOfTabViewItems == 1 &&
-        _previousNumberOfTabs == 0 &&
-        [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile] &&
-        !_contentView.shouldShowToolbelt) {
-        // This is the first tab of a new window. Open the toolbelt if that's what the profile
-        // wants. You can't open the toolbelt until there is at least one session, so that's why
-        // it's done here instead of in finishInitializationWithSmartLayout.
-        [self toggleToolbeltVisibility:self];
-    }
 
     _previousNumberOfTabs = _contentView.tabView.numberOfTabViewItems;
 
@@ -14586,7 +14596,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 // Returns the size of the stuff outside the tabview.
 - (NSSize)windowDecorationSize {
-    NSSize decorationSize = NSMakeSize(_contentView.effectiveProjectSidebarWidth, 0);
+    NSSize decorationSize = NSMakeSize(_contentView.effectiveProjectSidebarWidth, _contentView.sidebarControlsAdditionalHeight);
 
     if (!_contentView.tabBarControl.flashing &&
         [self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {

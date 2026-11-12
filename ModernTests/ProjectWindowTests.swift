@@ -512,13 +512,13 @@ final class ProjectWindowTests: XCTestCase {
         XCTAssertFalse(coordinator.sidebarVisible)
         XCTAssertEqual(coordinator.sidebarWidth, 220)
         coordinator.restore(from: ["visible": true, "width": 999, "selected": "missing"])
-        XCTAssertTrue(coordinator.sidebarVisible)
+        XCTAssertFalse(coordinator.sidebarVisible)
         XCTAssertEqual(coordinator.sidebarWidth, 360)
         XCTAssertNil(coordinator.selectedProject)
         let restored = iTermProjectWindowController(catalog: catalog)
         restored.restore(from: coordinator.restorableState())
         XCTAssertEqual(restored.sidebarWidth, 360)
-        XCTAssertTrue(restored.sidebarVisible)
+        XCTAssertFalse(restored.sidebarVisible)
     }
 
     private func makeCatalog() -> (iTermProjectCatalog, UserDefaults) {

@@ -73,6 +73,103 @@ final class iTermLayoutCalculatorTest: XCTestCase {
         }
     }
 
+    func testSidebarButtonsStayAtWindowCornersWhenPanelsToggle() {
+        var input = makeDefaultInputs()
+        input.sidebarControlsVisible = true
+        input.sidebarControlsLeadingInset = 104
+        let collapsed = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(collapsed.leftSidebarButtonFrame, CGRect(x: 104, y: 574, width: 28, height: 24))
+        XCTAssertEqual(collapsed.rightSidebarButtonFrame, CGRect(x: 764, y: 574, width: 28, height: 24))
+        for left in [false, true] {
+            for right in [false, true] {
+                input.shouldShowProjectSidebar = left ? true : false
+                input.shouldShowToolbelt = right ? true : false
+                let expanded = iTermLayoutCalculator.calculateLayout(with: input)
+                XCTAssertEqual(expanded.leftSidebarButtonFrame, collapsed.leftSidebarButtonFrame)
+                XCTAssertEqual(expanded.rightSidebarButtonFrame, collapsed.rightSidebarButtonFrame)
+            }
+        }
+    }
+
+    func testSidebarControlsReuseTopTabStripAndKeepPanelsBelowButtons() {
+        var input = makeDefaultInputs()
+        input.shouldShowProjectSidebar = true
+        input.shouldShowToolbelt = true
+        let baseline = iTermLayoutCalculator.calculateLayout(with: input)
+        input.sidebarControlsVisible = true
+        let result = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(result.tabViewFrame, baseline.tabViewFrame)
+        XCTAssertEqual(result.projectSidebarFrame.maxY, 572)
+        XCTAssertEqual(result.sidebarControlsAdditionalHeight, 0)
+        XCTAssertEqual(result.toolbeltFrame.maxY, 572)
+        XCTAssertFalse(result.projectSidebarFrame.intersects(result.leftSidebarButtonFrame))
+        XCTAssertFalse(result.toolbeltFrame.intersects(result.rightSidebarButtonFrame))
+    }
+
+    func testSidebarControlsReserveHeaderWhenTabsAreHiddenOrVertical() {
+        for position in [kLayoutTabPositionTop, kLayoutTabPositionBottom, kLayoutTabPositionLeft, kLayoutTabPositionRight] {
+            for visible in [false, true] where !visible || position != kLayoutTabPositionTop {
+                var input = makeDefaultInputs()
+                input.tabPosition = position
+                input.tabBarVisible = visible ? true : false
+                input.shouldShowProjectSidebar = true
+                input.shouldShowToolbelt = true
+                let baseline = iTermLayoutCalculator.calculateLayout(with: input)
+                input.sidebarControlsVisible = true
+                let result = iTermLayoutCalculator.calculateLayout(with: input)
+                XCTAssertEqual(result.tabViewFrame.height, baseline.tabViewFrame.height - 32)
+                XCTAssertEqual(result.sidebarControlsAdditionalHeight, 32)
+                XCTAssertEqual(result.projectSidebarFrame.maxY, 568)
+                XCTAssertEqual(result.toolbeltFrame.maxY, 568)
+                XCTAssertEqual(result.leftSidebarButtonFrame.maxY, 598)
+                XCTAssertEqual(result.rightSidebarButtonFrame.maxY, 598)
+                XCTAssertFalse(result.tabViewFrame.intersects(result.leftSidebarButtonFrame))
+                XCTAssertFalse(result.tabViewFrame.intersects(result.rightSidebarButtonFrame))
+            }
+        }
+    }
+
+    func testSidebarControlsClearFullscreenAccessoryAndNotch() {
+        var input = makeDefaultInputs()
+        input.inFullscreen = true
+        input.notchInset = 32
+        input.tabBarOnLoan = true
+        input.tabBarShouldBeAccessory = true
+        input.tabBarAccessoryOverlapsContent = true
+        input.sidebarControlsVisible = true
+        input.shouldShowProjectSidebar = true
+        input.shouldShowToolbelt = true
+        let result = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(result.leftSidebarButtonFrame.maxY, 538)
+        XCTAssertEqual(result.rightSidebarButtonFrame.maxY, 538)
+        XCTAssertFalse(result.tabViewFrame.intersects(result.leftSidebarButtonFrame))
+        XCTAssertFalse(result.projectSidebarFrame.intersects(result.leftSidebarButtonFrame))
+        XCTAssertFalse(result.toolbeltFrame.intersects(result.rightSidebarButtonFrame))
+    }
+
+    func testSidebarButtonsDoNotOverlapInNarrowWindow() {
+        var input = makeDefaultInputs()
+        input.contentViewWidth = 100
+        input.sidebarControlsLeadingInset = 150
+        input.sidebarControlsVisible = true
+        let result = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertGreaterThanOrEqual(result.leftSidebarButtonFrame.minX, 8)
+        XCTAssertLessThanOrEqual(result.rightSidebarButtonFrame.maxX, 92)
+        XCTAssertFalse(result.leftSidebarButtonFrame.intersects(result.rightSidebarButtonFrame))
+    }
+
+    func testRightSidebarButtonReservesSpaceOutsideTabBarAccessories() {
+        var input = makeDefaultInputs()
+        input.sidebarControlsVisible = true
+        let collapsed = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(collapsed.tabBarFrame.maxX, 764)
+        XCTAssertEqual(collapsed.tabBarFrame.maxX, collapsed.rightSidebarButtonFrame.minX)
+        input.shouldShowToolbelt = true
+        let expanded = iTermLayoutCalculator.calculateLayout(with: input)
+        XCTAssertEqual(expanded.tabBarFrame.maxX, 600)
+        XCTAssertEqual(expanded.rightSidebarButtonFrame.minX, 764)
+    }
+
     func testProjectSidebarClearsCompactWindowControls() {
         var input = makeDefaultInputs()
         input.shouldShowProjectSidebar = true

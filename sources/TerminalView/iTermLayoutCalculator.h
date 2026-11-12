@@ -35,6 +35,10 @@ typedef struct {
     CGFloat minimumTerminalWidth;
     CGFloat projectSidebarTopInset; // Room for compact-window controls.
 
+    /// Persistent corner buttons; their leading inset clears the window controls.
+    BOOL sidebarControlsVisible;
+    CGFloat sidebarControlsLeadingInset;
+
     /// Status bar
     CGFloat statusBarHeight;
     BOOL hasStatusBar;
@@ -70,6 +74,9 @@ typedef struct {
 
 /// Output frame rects from layout calculation.
 typedef struct {
+    CGRect leftSidebarButtonFrame;
+    CGRect rightSidebarButtonFrame;
+    CGFloat sidebarControlsAdditionalHeight;
     CGRect projectSidebarFrame;
 
     /// Frame for the tab view (main content area)

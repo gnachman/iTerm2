@@ -215,7 +215,8 @@ import Foundation
 
     @objc(restoreFromState:)
     func restore(from state: [String: Any]) {
-        sidebarVisible = state["visible"] as? Bool ?? false
+        // A newly opened window starts with its panels collapsed, retaining width and tab associations.
+        sidebarVisible = false
         sidebarWidth = (state["width"] as? NSNumber)?.doubleValue ?? 220
         selectedProjectIdentifier = (state["selected"] as? String).flatMap { catalog.project(withIdentifier: $0)?.identifier }
         rememberedTabs = state["remembered"] as? [String: String] ?? [:]
