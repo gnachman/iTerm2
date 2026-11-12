@@ -32,12 +32,13 @@ class AIModelListDiscovery: NSObject {
         }
     }
 
-    // The path of the listing for an endpoint path. A recognized suffix is
-    // swapped for /models, and a path that already is the listing (“/v1/models”,
-    // pasted from server docs) is kept. Otherwise the path is taken as the base
-    // (so “/v1/” gives “/v1/models”), and a bare host gets the conventional /v1.
-    private static func modelsPath(fromURLPath rawPath: String) -> String {
-        var path = rawPath
+    // The path of the listing for an endpoint path. A base URL is first
+    // completed to the endpoint chat would post to (LLMProvider's rule, so the
+    // two agree), and then a recognized suffix is swapped for /models. A path
+    // that already is the listing (“/v1/models”, pasted from server docs) is
+    // kept. Any other path is taken as a base the listing lives under.
+    private static func modelsPath(fromURLPath rawPath: String, api: iTermAIAPI) -> String {
+        var path = LLMProvider.endpointPath(forBasePath: rawPath, api: api) ?? rawPath
         while path.hasSuffix("/") {
             path.removeLast()
         }
@@ -48,20 +49,18 @@ class AIModelListDiscovery: NSObject {
         for suffix in endpointSuffixes where path.hasSuffix(suffix) {
             return String(path.dropLast(suffix.count)) + "/models"
         }
-        if path.isEmpty {
-            return "/v1/models"
-        }
         return path + "/models"
     }
 
     // nil for an endpoint that can't be parsed, and for one with the model in its
     // path, which names a single model rather than a server we can list.
-    static func modelsURL(fromEndpoint endpoint: String) -> URL? {
+    static func modelsURL(fromEndpoint endpoint: String, api: iTermAIAPI) -> URL? {
         if endpoint.contains("{{MODEL}}") {
             return nil
         }
-        return OllamaModelDiscovery.discoveryURL(fromEndpoint: endpoint,
-                                                 transformPath: modelsPath(fromURLPath:))
+        return OllamaModelDiscovery.discoveryURL(fromEndpoint: endpoint) {
+            modelsPath(fromURLPath: $0, api: api)
+        }
     }
 
     private struct ModelsResponse: Decodable {
@@ -118,7 +117,7 @@ class AIModelListDiscovery: NSObject {
                               apiKey: String?,
                               headers: [[String: String]],
                               timeout: TimeInterval) -> URLRequest? {
-        guard let url = modelsURL(fromEndpoint: endpoint).flatMap({ listingURL($0, api: api) }) else {
+        guard let url = modelsURL(fromEndpoint: endpoint, api: api).flatMap({ listingURL($0, api: api) }) else {
             return nil
         }
         var request = URLRequest(url: url)

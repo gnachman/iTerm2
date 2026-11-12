@@ -12,7 +12,20 @@ struct LLMProvider {
     // this, so the request URL and the vendor host checks below can never be
     // parsed two different ways.
     private var parsedModelURL: URL? {
-        return URL(string: model.url)
+        return Self.parseModelURL(model.url)
+    }
+
+    // Parse a configured model URL. A scheme-less “host:port[/path]” parses with
+    // the host as its scheme and no host (or not at all, for an IP address), so
+    // text with no “://” and no host is taken as http://. Shared with model
+    // discovery (OllamaModelDiscovery.discoveryURL), so the server Fetch Models
+    // lists is the one chat posts to.
+    static func parseModelURL(_ string: String) -> URL? {
+        let url = URL(string: string)
+        if url?.host == nil, !string.contains("://") {
+            return URL(string: "http://" + string)
+        }
+        return url
     }
 
     func url(apiKey: String, streaming: Bool) -> URL {
@@ -34,8 +47,103 @@ struct LLMProvider {
             }
             return components.url ?? URL(string: "about:empty")!
         default:
-            return parsedModelURL ?? URL(string: "about:empty")!
+            guard let url = parsedModelURL else {
+                return URL(string: "about:empty")!
+            }
+            return Self.endpoint(forBaseURL: url, rawURL: model.url, api: model.api) ?? url
         }
+    }
+
+    // The standard endpoint path each API posts to, appended to a base URL.
+    private static func endpointPath(for api: iTermAIAPI) -> String? {
+        switch api {
+        case .chatCompletions, .earlyO1, .deepSeek:
+            return "/chat/completions"
+        case .completions:
+            return "/completions"
+        case .responses:
+            return "/responses"
+        case .anthropic:
+            return "/messages"
+        case .llama:
+            return "/api/chat"
+        case .gemini, .appleIntelligence:
+            return nil
+        @unknown default:
+            return nil
+        }
+    }
+
+    // The last path segment of the base URL that gateways publish for each API
+    // family, and what the vendor's SDK appends to it before the endpoint path.
+    // Anthropic-compatible gateways document an ANTHROPIC_BASE_URL ending in
+    // /anthropic (https://api.z.ai/api/anthropic), to which the Anthropic SDK
+    // appends /v1/messages. OpenAI-compatible ones may end in /openai (Gemini's
+    // https://generativelanguage.googleapis.com/v1beta/openai/), which already
+    // includes the version.
+    private static func gatewayBase(for api: iTermAIAPI) -> (segment: String, prefix: String)? {
+        switch api {
+        case .chatCompletions, .completions, .responses, .earlyO1, .deepSeek:
+            return ("openai", "")
+        case .anthropic:
+            return ("anthropic", "/v1")
+        case .llama, .gemini, .appleIntelligence:
+            return nil
+        @unknown default:
+            return nil
+        }
+    }
+
+    // “v1”, “v4”, and prerelease versions like “v1beta”, “v2alpha”, “v1beta2”.
+    private static func isVersionSegment(_ segment: Substring) -> Bool {
+        return segment.range(of: #"^v[0-9]+((alpha|beta)[0-9]*)?$"#, options: .regularExpression) != nil
+    }
+
+    // A manual model's URL may be a base URL instead of the full endpoint. When
+    // its path is empty, ends in a version segment (“/v1”, “/api/paas/v4/”,
+    // “/v1beta”), or ends in the API family's gateway base (“/anthropic”,
+    // “/openai”), return the path with the API's endpoint path appended; a bare
+    // host gets the conventional /v1 first. Returns nil for every other path,
+    // which is sent exactly as typed, so an endpoint with a path we don't
+    // recognize (MiniMax's /v1/text/chatcompletion_v2, an Azure deployment, a
+    // proxy) is never touched. Ollama's native API lives at the server root and
+    // its /v1 is the OpenAI-compatible shim, so only a bare Ollama host is
+    // completed. The one definition of a base URL: Fetch Models
+    // (AIModelListDiscovery) uses it too, so it lists beside the endpoint chat
+    // posts to.
+    static func endpointPath(forBasePath rawPath: String, api: iTermAIAPI) -> String? {
+        guard let endpointPath = endpointPath(for: api) else {
+            return nil
+        }
+        var path = rawPath
+        while path.hasSuffix("/") {
+            path.removeLast()
+        }
+        if path.isEmpty {
+            return (api == .llama ? "" : "/v1") + endpointPath
+        }
+        guard api != .llama, let last = path.split(separator: "/").last else {
+            return nil
+        }
+        if isVersionSegment(last) {
+            return path + endpointPath
+        }
+        if let gateway = gatewayBase(for: api), last == gateway.segment {
+            return path + gateway.prefix + endpointPath
+        }
+        return nil
+    }
+
+    // The request URL for a base URL (see endpointPath(forBasePath:api:)), or nil
+    // to send the URL as typed. A {{MODEL}} template is always sent as typed.
+    static func endpoint(forBaseURL url: URL, rawURL: String, api: iTermAIAPI) -> URL? {
+        guard !rawURL.contains("{{MODEL}}"),
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let path = endpointPath(forBasePath: components.percentEncodedPath, api: api) else {
+            return nil
+        }
+        components.percentEncodedPath = path
+        return components.url
     }
 
     func createVectorStoreURL(apiKey: String) -> URL? {

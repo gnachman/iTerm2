@@ -39,6 +39,15 @@ Improvements:
   lists the models on OpenAI- and
   Anthropic-compatible servers such as vLLM, LM
   Studio, and llama.cpp, not just Ollama.
+- A manual AI model’s URL can now be a base URL
+  such as http://localhost:8000/v1, or a
+  gateway’s Anthropic-compatible base URL such
+  as https://api.z.ai/api/anthropic. iTerm2 adds
+  the endpoint for the chosen API (for example
+  /chat/completions or /messages). This applies
+  to existing models too: a URL with no path, or
+  one ending in a version like /v1, /anthropic,
+  or /openai, now gets the endpoint added.
 - Tab groups of tmux Integration tabs are now
   remembered by the tmux session, so they come
   back with their names and colors when you

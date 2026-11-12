@@ -40,13 +40,9 @@ class OllamaModelDiscovery: NSObject {
     // keeping scheme/host/port/userinfo/query verbatim. Shared with
     // AIModelListDiscovery, which derives /models the same way.
     static func discoveryURL(fromEndpoint endpoint: String, transformPath: (String) -> String) -> URL? {
-        var url = URL(string: endpoint)
-        // A scheme-less "host:port[/path]" parses with scheme="host" and host=nil
-        // (e.g. "localhost:11434"), which would fail discovery permanently. Default
-        // a missing scheme to http:// so a bare host:port endpoint is usable.
-        if url?.host == nil, !endpoint.contains("://") {
-            url = URL(string: "http://" + endpoint)
-        }
+        // A scheme-less "host:port[/path]" (e.g. "localhost:11434") is taken as
+        // http://, the same way the chat request parses it.
+        let url = LLMProvider.parseModelURL(endpoint)
         // Edit only the path on the parsed components, keeping scheme/host/port and
         // basic-auth userinfo VERBATIM. Reconstructing components field-by-field from
         // url.host drops the brackets of an IPv6 literal (url.host returns "::1", but

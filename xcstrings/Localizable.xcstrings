@@ -4734,6 +4734,150 @@
         }
       }
     },
+    "AIModelEditor.URLPlaceholder" : {
+      "comment" : "Placeholder in the AI model editor’s URL field. The URL is an example and should not be translated.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endpunkt oder Basis-URL, z. B. http://localhost:8000/v1"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Endpoint or base URL, like http://localhost:8000/v1"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エンドポイントまたはベースURL（例: http://localhost:8000/v1）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "엔드포인트 또는 기본 URL(예: http://localhost:8000/v1)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endpoint ou URL base, como http://localhost:8000/v1"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Конечная точка или базовый URL, например http://localhost:8000/v1"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "端点或基础 URL，例如 http://localhost:8000/v1"
+          }
+        }
+      }
+    },
+    "AIModelEditor.URLPlaceholder.EndpointOnly" : {
+      "comment" : "Placeholder in the AI model editor’s URL field for an API whose full endpoint URL must be entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endpunkt-URL"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Endpoint URL"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エンドポイントURL"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "엔드포인트 URL"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL do endpoint"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL конечной точки"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "端点 URL"
+          }
+        }
+      }
+    },
+    "AIModelEditor.URLPlaceholder.Ollama" : {
+      "comment" : "Placeholder in the AI model editor’s URL field when the Ollama API is selected. The URL is an example and should not be translated.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endpunkt oder Server-URL, z. B. http://localhost:11434"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Endpoint or server URL, like http://localhost:11434"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エンドポイントまたはサーバーURL（例: http://localhost:11434）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "엔드포인트 또는 서버 URL(예: http://localhost:11434)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endpoint ou URL do servidor, como http://localhost:11434"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Конечная точка или URL сервера, например http://localhost:11434"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "端点或服务器 URL，例如 http://localhost:11434"
+          }
+        }
+      }
+    },
     "AIModelEditor.URLRequired" : {
       "comment" : "Validation error when the URL is empty",
       "extractionState" : "extracted_with_value",

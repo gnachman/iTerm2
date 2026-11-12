@@ -1383,7 +1383,33 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)apiKeyHintInputDidChange:(id)sender {
     [self updateEditorAPIKeyHint];
+    [self updateAPIDependentControls];
+}
+
+// Everything besides the key hint that depends on the selected API.
+- (void)updateAPIDependentControls {
     [self updateFetchModelsButton];
+    [self updateURLPlaceholder];
+}
+
+// LLMProvider.endpoint(forBaseURL:...) appends the API's endpoint to a base URL
+// at request time, so the placeholder shows the base form that works for the
+// selected API. Ollama's native API is completed only from a bare server URL
+// (its /v1 is the OpenAI-compatible shim), and Gemini's URL is never completed.
+- (void)updateURLPlaceholder {
+    const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
+    switch (api) {
+        case iTermAIAPILlama:
+            _urlField.placeholderString = NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLPlaceholder.Ollama", nil, [NSBundle mainBundle], @"Endpoint or server URL, like http://localhost:11434", @"Placeholder in the AI model editor’s URL field when the Ollama API is selected. The URL is an example and should not be translated.");
+            break;
+        case iTermAIAPIGemini:
+        case iTermAIAPIAppleIntelligence:
+            _urlField.placeholderString = NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLPlaceholder.EndpointOnly", nil, [NSBundle mainBundle], @"Endpoint URL", @"Placeholder in the AI model editor’s URL field for an API whose full endpoint URL must be entered");
+            break;
+        default:
+            _urlField.placeholderString = NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLPlaceholder", nil, [NSBundle mainBundle], @"Endpoint or base URL, like http://localhost:8000/v1", @"Placeholder in the AI model editor’s URL field. The URL is an example and should not be translated.");
+            break;
+    }
 }
 
 // The one place the Fetch Models button's title and enabled state are set, so a
@@ -1763,7 +1789,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     _credentialPopup.enabled = !dynamic;
     [self updateEditorAPIKeyHint];
-    [self updateFetchModelsButton];
+    [self updateAPIDependentControls];
 }
 
 - (void)fetchModels:(id)sender {

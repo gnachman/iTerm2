@@ -12,8 +12,8 @@ import XCTest
 
 final class AIModelListDiscoveryTests: XCTestCase {
 
-    private func modelsURL(_ endpoint: String) -> String? {
-        return AIModelListDiscovery.modelsURL(fromEndpoint: endpoint)?.absoluteString
+    private func modelsURL(_ endpoint: String, api: iTermAIAPI = .chatCompletions) -> String? {
+        return AIModelListDiscovery.modelsURL(fromEndpoint: endpoint, api: api)?.absoluteString
     }
 
     // MARK: - URL derivation
@@ -70,6 +70,33 @@ final class AIModelListDiscoveryTests: XCTestCase {
                        "https://api.z.ai/api/paas/v4/models")
         XCTAssertEqual(modelsURL("https://api.deepseek.com/chat/completions"),
                        "https://api.deepseek.com/models")
+    }
+
+    // An Anthropic-compatible gateway base (ANTHROPIC_BASE_URL) is listed where
+    // the Anthropic SDK lists it, under /v1, matching where chat posts.
+    func test_modelsURL_fromAnthropicGatewayBase() {
+        XCTAssertEqual(modelsURL("https://api.z.ai/api/anthropic", api: .anthropic),
+                       "https://api.z.ai/api/anthropic/v1/models")
+        XCTAssertEqual(modelsURL("https://api.moonshot.ai/anthropic/", api: .anthropic),
+                       "https://api.moonshot.ai/anthropic/v1/models")
+    }
+
+    // For another API, /anthropic is not a base, so chat posts to it as typed
+    // and the listing is guessed beside it, with no /v1.
+    func test_modelsURL_anthropicSuffixForChatCompletionsUnchanged() {
+        XCTAssertEqual(modelsURL("https://host/anthropic", api: .chatCompletions),
+                       "https://host/anthropic/models")
+    }
+
+    // Prerelease version bases list under the version, like chat.
+    func test_modelsURL_fromPrereleaseVersionBase() {
+        XCTAssertEqual(modelsURL("https://host/v1beta"), "https://host/v1beta/models")
+    }
+
+    // Gemini's OpenAI-compatible base already includes its version.
+    func test_modelsURL_fromOpenAIGatewayBase() {
+        XCTAssertEqual(modelsURL("https://generativelanguage.googleapis.com/v1beta/openai/"),
+                       "https://generativelanguage.googleapis.com/v1beta/openai/models")
     }
 
     func test_modelsURL_preservesUserinfoAndIPv6() {

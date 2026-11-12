@@ -94,14 +94,16 @@ extension AILiveHarness {
     }
 
     private func ollamaModel(contextWindow: Int = 262_144,
-                             maxResponse: Int = 8_192) throws -> AIMetadata.Model {
+                             maxResponse: Int = 8_192,
+                             url: String? = nil,
+                             api: iTermAIAPI = .llama) throws -> AIMetadata.Model {
         guard var model = AIMetadata.instance.models.first else {
             throw XCTSkip("empty AIMetadata catalog")
         }
         model.name = ollamaModelName
-        model.api = .llama
+        model.api = api
         model.vendor = .llama
-        model.url = "\(AILiveHarness.ollamaBaseURL)/api/chat"
+        model.url = url ?? "\(AILiveHarness.ollamaBaseURL)/api/chat"
         model.contextWindowTokens = contextWindow
         model.maxResponseTokens = maxResponse
         model.features = [.streaming, .functionCalling, .configurableThinking]
@@ -115,9 +117,11 @@ extension AILiveHarness {
                            function: AILiveFunctionSpec<EmptyArgs>? = nil,
                            contextWindow: Int = 262_144,
                            timeout: TimeInterval = 240,
+                           url: String? = nil,
+                           api: iTermAIAPI = .llama,
                            scenario: String) throws -> AILiveRunResult {
         let apiKey = try ollamaKeyOrSkip()
-        let model = try ollamaModel(contextWindow: contextWindow)
+        let model = try ollamaModel(contextWindow: contextWindow, url: url, api: api)
         try requireReachableOllama(model: model.name)
         return try AILiveDriver.run(model: model,
                                     apiKey: apiKey,
@@ -557,6 +561,31 @@ extension AILiveHarness {
         let result = try runOllama(thinking: false,
                                    messages: [LLM.Message(role: .user, content: "Reply with exactly: pong")],
                                    streaming: true, timeout: 120, scenario: "smokeStreaming")
+        XCTAssertTrue(result.finalText.lowercased().contains("pong"),
+                      "expected pong, got: \(result.finalText)")
+    }
+
+    // A bare host is a base URL for the native API: LLMProvider appends
+    // /api/chat (issue 11509).
+    func test_ollama_baseURL_smoke() throws {
+        let result = try runOllama(thinking: false,
+                                   messages: [LLM.Message(role: .user, content: "Reply with exactly: pong")],
+                                   streaming: true, timeout: 120,
+                                   url: AILiveHarness.ollamaBaseURL,
+                                   scenario: "baseURLSmoke")
+        XCTAssertTrue(result.finalText.lowercased().contains("pong"),
+                      "expected pong, got: \(result.finalText)")
+    }
+
+    // Ollama's OpenAI-compatible shim configured by its base URL, as LM Studio
+    // and vLLM users do: LLMProvider appends /chat/completions to /v1.
+    func test_ollama_openAIShim_baseURL_smoke() throws {
+        let result = try runOllama(thinking: nil,
+                                   messages: [LLM.Message(role: .user, content: "Reply with exactly: pong")],
+                                   streaming: true, timeout: 120,
+                                   url: "\(AILiveHarness.ollamaBaseURL)/v1",
+                                   api: .chatCompletions,
+                                   scenario: "openAIShimBaseURLSmoke")
         XCTAssertTrue(result.finalText.lowercased().contains("pong"),
                       "expected pong, got: \(result.finalText)")
     }
