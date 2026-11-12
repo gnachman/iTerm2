@@ -62,10 +62,10 @@ final class iTermProjectCatalog: NSObject {
         ioQueue.async {
             let result = Self.canonicalDirectory(path)
             var matchedProjects = [(identifier: String, depth: Int)]()
-            if reuseContainingProject, case .success(let canonical) = result {
+            if case .success(let canonical) = result {
                 for project in existingProjects {
                     guard case .success(let root) = Self.canonicalDirectory(project.rootDirectory),
-                          canonical == root || canonical.hasPrefix(root == "/" ? "/" : root + "/") else { continue }
+                          canonical == root || (reuseContainingProject && canonical.hasPrefix(root == "/" ? "/" : root + "/")) else { continue }
                     matchedProjects.append((project.identifier, root.count))
                 }
             }

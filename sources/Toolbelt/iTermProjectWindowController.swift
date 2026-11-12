@@ -20,6 +20,7 @@ import Foundation
     private var pending = [String: (identifier: UUID, generation: UInt64)]()
     private var pendingWorkingDirectories = [String: (identifier: UUID, generation: UInt64)]()
     private var completedWorkingDirectories = Set<String>()
+    private var currentDirectoryActionGeneration: UInt64?
     private(set) var selectionGeneration: UInt64 = 0
     private(set) var selectedProjectIdentifier: String?
     var sidebarVisible = false
@@ -55,6 +56,7 @@ import Foundation
     func activeTabDidChange() {
         guard let delegate = delegate else { return }
         selectionGeneration &+= 1
+        currentDirectoryActionGeneration = nil
         tabsDidChange()
         let associations = delegate.projectTabAssociations
         selectedProjectIdentifier = delegate.projectActiveTabIdentifier.flatMap { associations[$0] }
@@ -111,9 +113,55 @@ import Foundation
         delegate?.projectStateDidChange()
     }
 
+    @objc(addCurrentDirectoryWithCompletion:)
+    func addCurrentDirectory(completion: @escaping (iTermProjectDirectory?, NSError?) -> Void) {
+        guard let delegate, let tab = delegate.projectActiveTabIdentifier,
+              delegate.projectTabAssociations[tab] != nil,
+              let readDirectory = delegate.projectWorkingDirectory else {
+            completion(nil, nil)
+            return
+        }
+        // Explicitly associate the current tab, superseding pending automatic selection or launches.
+        selectionGeneration &+= 1
+        let generation = selectionGeneration
+        currentDirectoryActionGeneration = generation
+        readDirectory { [weak self] path in
+            guard let self, self.isCurrentDirectoryAction(tab, generation: generation), let path else {
+                self?.finishCurrentDirectoryAction(generation: generation)
+                completion(nil, nil)
+                return
+            }
+            self.catalog.addDirectoryIfCurrent(atPath: path, shouldAdd: { [weak self] in
+                self?.isCurrentDirectoryAction(tab, generation: generation) == true
+            }) { [weak self] project, error in
+                guard let self, self.isCurrentDirectoryAction(tab, generation: generation) else {
+                    self?.finishCurrentDirectoryAction(generation: generation)
+                    completion(nil, nil)
+                    return
+                }
+                self.finishCurrentDirectoryAction(generation: generation)
+                if let project {
+                    self.delegate?.projectAssign(project.identifier, toTab: tab)
+                    self.activeTabDidChange()
+                }
+                completion(project, error)
+            }
+        }
+    }
+
+    private func isCurrentDirectoryAction(_ tab: String, generation: UInt64) -> Bool {
+        currentDirectoryActionGeneration == generation && generation == selectionGeneration && delegate?.projectActiveTabIdentifier == tab &&
+            delegate?.projectTabAssociations[tab] != nil
+    }
+
+    private func finishCurrentDirectoryAction(generation: UInt64) {
+        if currentDirectoryActionGeneration == generation { currentDirectoryActionGeneration = nil }
+    }
+
     func selectProject(_ project: iTermProjectDirectory) {
         guard catalog.project(withIdentifier: project.identifier) != nil, let delegate = delegate else { return }
-        if selectedProjectIdentifier != project.identifier { selectionGeneration &+= 1 }
+        if selectedProjectIdentifier != project.identifier || currentDirectoryActionGeneration != nil { selectionGeneration &+= 1 }
+        currentDirectoryActionGeneration = nil
         selectedProjectIdentifier = project.identifier
         delegate.projectStateDidChange()
         let associations = delegate.projectTabAssociations

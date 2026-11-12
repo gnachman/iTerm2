@@ -6,6 +6,7 @@ final class ProjectWindowTests: XCTestCase {
         var projectTabAssociations: [String: String] = [:]
         var projectActiveTabIdentifier: String?
         var launches = 0
+        var selectedTabs = [String]()
         var directories = [String]()
         var completion: ((String?) -> Void)?
         var completions = [(String?) -> Void]()
@@ -15,7 +16,7 @@ final class ProjectWindowTests: XCTestCase {
         var directoryCompletions = [(String?) -> Void]()
         var delaysDirectoryRead = false
         var stateChanged: (() -> Void)?
-        func projectSelectTab(_ identifier: String) { projectActiveTabIdentifier = identifier }
+        func projectSelectTab(_ identifier: String) { selectedTabs.append(identifier); projectActiveTabIdentifier = identifier }
         func projectAssign(_ project: String?, toTab identifier: String) { projectTabAssociations[identifier] = project ?? "" }
         func projectLaunch(_ project: iTermProjectDirectory, directory: String, completion: @escaping (String?) -> Void) {
             launches += 1
@@ -53,6 +54,108 @@ final class ProjectWindowTests: XCTestCase {
         XCTAssertEqual(window.projectTabAssociations["a"], catalog.projects[0].identifier)
         XCTAssertEqual(window.projectTabAssociations["b"], "")
         XCTAssertEqual(window.projectActiveTabIdentifier, "a")
+    }
+
+    func testAddCurrentDirectoryAssociatesCurrentTabInsteadOfSelectingAnotherProjectTab() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["current": catalog.projects[0].identifier,
+                                         "other": catalog.projects[1].identifier]
+        window.projectActiveTabIdentifier = "current"
+        window.workingDirectory = "/var"
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        let done = expectation(description: "current directory associated")
+        coordinator.addCurrentDirectory { project, error in
+            XCTAssertNil(error)
+            XCTAssertEqual(project?.identifier, catalog.projects[1].identifier)
+            done.fulfill()
+        }
+        wait(for: [done], timeout: 5)
+        XCTAssertEqual(window.projectActiveTabIdentifier, "current")
+        XCTAssertEqual(window.projectTabAssociations["current"], catalog.projects[1].identifier)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, catalog.projects[1].identifier)
+        XCTAssertTrue(window.selectedTabs.isEmpty)
+        XCTAssertEqual(window.launches, 0)
+        XCTAssertEqual(catalog.projects.count, 2)
+    }
+
+    func testAddUnknownCurrentDirectoryAddsAndAssociatesWithoutLaunchingTerminal() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["current": catalog.projects[0].identifier]
+        window.projectActiveTabIdentifier = "current"
+        window.workingDirectory = root.path
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        let done = expectation(description: "unknown directory associated")
+        coordinator.addCurrentDirectory { project, error in
+            XCTAssertNil(error)
+            XCTAssertNotNil(project)
+            XCTAssertEqual(window.projectTabAssociations["current"], project?.identifier)
+            XCTAssertEqual(coordinator.selectedProjectIdentifier, project?.identifier)
+            done.fulfill()
+        }
+        wait(for: [done], timeout: 5)
+        XCTAssertEqual(catalog.projects.count, 3)
+        XCTAssertEqual(window.projectActiveTabIdentifier, "current")
+        XCTAssertTrue(window.selectedTabs.isEmpty)
+        XCTAssertEqual(window.launches, 0)
+    }
+
+    func testLateAddCurrentDirectoryCannotOverrideLaterProjectSelection() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["current": catalog.projects[0].identifier,
+                                         "other": catalog.projects[1].identifier]
+        window.projectActiveTabIdentifier = "current"
+        window.delaysDirectoryRead = true
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        let done = expectation(description: "obsolete directory action discarded")
+        coordinator.addCurrentDirectory { project, error in
+            XCTAssertNil(project)
+            XCTAssertNil(error)
+            done.fulfill()
+        }
+        coordinator.selectProject(catalog.projects[1])
+        window.directoryCompletion?("/tmp")
+        wait(for: [done], timeout: 5)
+        XCTAssertEqual(window.projectActiveTabIdentifier, "other")
+        XCTAssertEqual(window.projectTabAssociations["current"], catalog.projects[0].identifier)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, catalog.projects[1].identifier)
+        XCTAssertEqual(window.launches, 0)
+        XCTAssertEqual(catalog.projects.count, 2)
+    }
+
+    func testReSelectingSameProjectSupersedesPendingAddCurrentDirectory() {
+        let (catalog, _) = makeCatalog()
+        let window = Window()
+        window.projectTabAssociations = ["current": catalog.projects[0].identifier]
+        window.projectActiveTabIdentifier = "current"
+        window.delaysDirectoryRead = true
+        let coordinator = iTermProjectWindowController(catalog: catalog)
+        coordinator.delegate = window
+        coordinator.activeTabDidChange()
+        let done = expectation(description: "same-project click supersedes add")
+        coordinator.addCurrentDirectory { project, error in
+            XCTAssertNil(project)
+            XCTAssertNil(error)
+            done.fulfill()
+        }
+        coordinator.selectProject(catalog.projects[0])
+        window.directoryCompletion?("/var")
+        wait(for: [done], timeout: 5)
+        XCTAssertEqual(window.projectTabAssociations["current"], catalog.projects[0].identifier)
+        XCTAssertEqual(coordinator.selectedProjectIdentifier, catalog.projects[0].identifier)
+        XCTAssertEqual(window.projectActiveTabIdentifier, "current")
+        XCTAssertEqual(window.launches, 0)
     }
 
     func testSymlinkSpelledWorkingDirectoryReusesCanonicalParentProject() throws {

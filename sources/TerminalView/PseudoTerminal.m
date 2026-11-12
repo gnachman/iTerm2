@@ -5158,6 +5158,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)projectSidebar:(iTermProjectSidebarView *)sidebar didSelectProject:(iTermProjectDirectory *)project {
     DLog(@"Select project %@ in window %@", project.identifier, self.terminalGuid);
     [[self projectController] selectProject:project];
+    [self showProjectFileTree];
+}
+
+- (void)showProjectFileTree {
     if (![[iTermToolbeltView configuredTools] containsObject:kFileTreeToolName]) {
         [iTermToolbeltView toggleShouldShowTool:kFileTreeToolName];
     }
@@ -5182,18 +5186,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)projectSidebarAddCurrentDirectory:(iTermProjectSidebarView *)sidebar {
-    PTYSession *session = self.currentSession;
-    if (_closing || _deallocing || !session || session.exited || session.isBrowserSession || session.sshIdentity) { return; }
     __weak __typeof(self) weakSelf = self;
-    __weak PTYSession *weakSession = session;
-    [session asyncCurrentLocalWorkingDirectory:^(NSString *directory) {
+    [[self projectController] addCurrentDirectoryWithCompletion:^(iTermProjectDirectory *project, NSError *error) {
         PseudoTerminal *term = [[weakSelf retain] autorelease];
-        PTYSession *originalSession = [[weakSession retain] autorelease];
-        // A tab may close, move to another window, or enter SSH while the poll runs.
-        if (!term || term->_closing || term->_deallocing || !originalSession ||
-            originalSession.exited || originalSession.isBrowserSession || originalSession.sshIdentity ||
-            ![term.allSessions containsObject:originalSession] || !directory.length) { return; }
-        [term addProjectDirectory:directory];
+        if (!term || term->_closing || term->_deallocing) { return; }
+        if (error) {
+            [term showProjectError:error.localizedDescription];
+        } else if (project) {
+            [term showProjectFileTree];
+        }
     }];
 }
 
