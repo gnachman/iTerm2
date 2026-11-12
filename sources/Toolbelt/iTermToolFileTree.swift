@@ -16,7 +16,12 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     private let scroll = NSScrollView()
     private let header = NSTextField(labelWithString: "")
     private let status = NSTextField(wrappingLabelWithString: "")
-    private let hiddenButton = NSButton(checkboxWithTitle: String(localized: "FileTree.ShowHidden", defaultValue: "Show Hidden Files", comment: "Toggle visibility of hidden files"), target: nil, action: nil)
+    private let options = NSButton()
+    private let folderIcon = NSImageView()
+    private let spinner = NSProgressIndicator()
+    private let folderImage = NSImage(systemSymbolName: SFSymbol.folder.rawValue, accessibilityDescription: nil)
+    private let documentImage = NSImage(systemSymbolName: SFSymbol.docText.rawValue, accessibilityDescription: nil)
+    private var hiddenItem: NSMenuItem!
     private let refresh = NSButton(title: String(localized: "FileTree.Refresh", defaultValue: "Refresh", comment: "Refresh the loaded file tree"), target: nil, action: nil)
     private let retry = NSButton(title: String(localized: "FileTree.Retry", defaultValue: "Retry", comment: "Retry a failed directory read"), target: nil, action: nil)
     private var entries = [String: iTermFileTreeEntry]()
@@ -31,6 +36,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     private var selectedPath: String?
     private var retryPath: String?
     private var readErrors = [String: String]()
+    private var openError: String?
     private let watcher = SCEvents()
     private var refreshWork: DispatchWorkItem?
     private var changedPaths = Set<String>()
@@ -38,6 +44,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     private var stopped = false
     private var visible = false
     private var restoring = false
+    private var pendingResults = [String: iTermFileTreeDataSource.Listing]()
+    private var publicationWork: DispatchWorkItem?
+    private var refreshOnResume = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -45,6 +54,14 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         outline.addTableColumn(column)
         outline.outlineTableColumn = column
         outline.headerView = nil
+        column.minWidth = 40
+        outline.rowHeight = 24
+        outline.intercellSpacing = .zero
+        outline.indentationPerLevel = 14
+        outline.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
+        outline.autoresizesOutlineColumn = false
+        outline.style = .sourceList
+        outline.focusRingType = .none
         outline.dataSource = self
         outline.delegate = self
         outline.target = self
@@ -55,16 +72,31 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         scroll.hasVerticalScroller = true
         addSubview(scroll)
         header.lineBreakMode = .byTruncatingMiddle
+        header.font = .systemFont(ofSize: 12, weight: .semibold)
+        status.font = .systemFont(ofSize: 11)
         status.textColor = .secondaryLabelColor
-        for view in [header, status, hiddenButton, refresh, retry] { addSubview(view) }
-        hiddenButton.target = self
-        hiddenButton.action = #selector(toggleHidden(_:))
-        refresh.target = self
-        refresh.action = #selector(refreshAll(_:))
+        status.isHidden = true
+        folderIcon.image = folderImage
+        folderIcon.contentTintColor = .controlAccentColor
+        folderIcon.imageScaling = .scaleProportionallyDown
+        spinner.style = .spinning
+        spinner.controlSize = .small
+        spinner.isDisplayedWhenStopped = false
+        for view in [folderIcon, header, status, spinner, options, refresh, retry] { addSubview(view) }
+        configureIconButton(refresh, symbol: .arrowClockwise, action: #selector(refreshAll(_:)))
+        configureIconButton(options, symbol: .ellipsis, action: #selector(showOptions(_:)))
+        options.toolTip = String(localized: "FileTree.Options", defaultValue: "File Tree Options", comment: "Tooltip for the file tree options menu")
+        options.setAccessibilityLabel(options.toolTip)
+        let menu = NSMenu()
+        hiddenItem = NSMenuItem(title: String(localized: "FileTree.ShowHidden", defaultValue: "Show Hidden Files", comment: "Toggle visibility of hidden files"), action: #selector(toggleHidden(_:)), keyEquivalent: "")
+        hiddenItem.target = self
+        menu.addItem(hiddenItem)
+        options.menu = menu
         retry.target = self
         retry.action = #selector(retryRead(_:))
-        for button in [hiddenButton, refresh, retry] { button.setAccessibilityLabel(button.title) }
+        retry.controlSize = .small
         retry.isHidden = true
+        retry.setAccessibilityLabel(retry.title)
         watcher._delegate = self
         watcher._notificationLatency = 0.5
         outline.menu = makeMenu()
@@ -76,17 +108,43 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         self.init(frame: frame)
     }
     static var supportedProfileTypes: ProfileType { .terminal }
-    func minimumHeight() -> CGFloat { 150 }
+    func minimumHeight() -> CGFloat { 100 }
     override var isFlipped: Bool { true }
+    private func configureIconButton(_ button: NSButton, symbol: SFSymbol, action: Selector) {
+        let label = button.title
+        button.image = NSImage(systemSymbolName: symbol.rawValue, accessibilityDescription: nil)
+        button.title = ""
+        button.toolTip = label
+        button.setAccessibilityLabel(label)
+        button.imagePosition = .imageOnly
+        button.isBordered = false
+        button.controlSize = .small
+        button.target = self
+        button.action = action
+    }
     override func layout() {
         super.layout()
-        let width = max(0, bounds.width - 12)
-        header.frame = NSRect(x: 6, y: 6, width: width, height: 22)
-        hiddenButton.frame = NSRect(x: 6, y: 32, width: max(0, width - 72), height: 24)
-        refresh.frame = NSRect(x: max(6, bounds.width - 78), y: 32, width: 72, height: 24)
-        status.frame = NSRect(x: 6, y: max(60, bounds.height - 62), width: width, height: 34)
-        retry.frame = NSRect(x: 6, y: max(94, bounds.height - 28), width: 70, height: 24)
-        scroll.frame = NSRect(x: 0, y: 60, width: bounds.width, height: max(0, bounds.height - 124))
+        folderIcon.frame = NSRect(x: 10, y: 10, width: 16, height: 16)
+        header.frame = NSRect(x: 33, y: 9, width: max(0, bounds.width - 112), height: 18)
+        spinner.frame = NSRect(x: max(36, bounds.width - 76), y: 10, width: 16, height: 16)
+        refresh.frame = NSRect(x: max(36, bounds.width - 57), y: 5, width: 24, height: 24)
+        options.frame = NSRect(x: max(60, bounds.width - 31), y: 5, width: 24, height: 24)
+        let footerHeight: CGFloat = (!readErrors.isEmpty || openError != nil) && !entries.isEmpty ? 38 : 0
+        scroll.frame = NSRect(x: 0, y: 35, width: bounds.width, height: max(0, bounds.height - 35 - footerHeight))
+        if let column = outline.outlineTableColumn, scroll.contentSize.width > 0 {
+            column.width = max(40, scroll.contentSize.width)
+        }
+        if footerHeight > 0 {
+            status.alignment = .left
+            status.frame = NSRect(x: 10, y: max(35, bounds.height - 35), width: max(0, bounds.width - (retry.isHidden ? 20 : 82)), height: 30)
+            retry.frame = NSRect(x: max(10, bounds.width - 68), y: max(35, bounds.height - 31), width: 58, height: 23)
+        } else {
+            status.alignment = .center
+            let retryY = max(35, min(100, bounds.height - 28))
+            let statusHeight = retry.isHidden ? 48 : max(0, min(48, retryY - 42))
+            status.frame = NSRect(x: 18, y: retry.isHidden ? 48 : 38, width: max(0, bounds.width - 36), height: statusHeight)
+            retry.frame = NSRect(x: max(10, (bounds.width - 58) / 2), y: retryY, width: 58, height: 23)
+        }
     }
     func relayout() { needsLayout = true }
     override func viewDidMoveToWindow() {
@@ -109,13 +167,16 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         stopWatching()
         selectedPath = nil
         readErrors.removeAll()
-        entries.removeAll()
-        treeState.clearPublishedTree()
-        outline.reloadData()
+        openError = nil
+        publicationWork?.cancel()
+        publicationWork = nil
+        pendingResults.removeAll()
+        entries = treeState.preparePublishedTreeFromCache()
+        refreshOnResume = source.cachedListing(atPath: rootDirectory ?? "") != nil
+        restoreOutline()
         header.stringValue = rootDirectory.map { URL(fileURLWithPath: $0).lastPathComponent } ?? String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree header when no project is selected")
         header.toolTip = rootDirectory
-        status.stringValue = ""
-        retry.isHidden = true
+        updateStatus()
         updateVisibility()
     }
 
@@ -125,13 +186,28 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
             stopWatching()
             if visible {
                 loading.removeAll()
-                source.reset(rootPath: rootDirectory)
+                source.cancelPendingRequests()
+                publicationWork?.cancel()
+                publicationWork = nil
+                pendingResults.removeAll()
+                refreshOnResume = true
             }
-        } else if let rootDirectory {
+        }
+        let wasVisible = visible
+        visible = nowVisible
+        if nowVisible, let rootDirectory {
+            if !wasVisible {
+                entries = treeState.preparePublishedTreeFromCache()
+                restoreOutline()
+            }
             if !watcher.isWatchingPaths { watcher.startWatchingPaths([rootDirectory]) }
             request(rootDirectory)
+            if refreshOnResume {
+                refreshOnResume = false
+                refreshAll(nil)
+            }
         }
-        visible = nowVisible
+        updateStatus()
     }
     private func stopWatching() {
         watcher.stopWatchingPaths()
@@ -141,6 +217,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     }
     func shutdown() {
         stopped = true
+        publicationWork?.cancel()
+        publicationWork = nil
+        pendingResults.removeAll()
         stopWatching()
         loading.removeAll()
         source.reset(rootPath: nil)
@@ -151,6 +230,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         watcher.stopWatchingPaths()
         watcher._delegate = nil
         refreshWork?.cancel()
+        publicationWork?.cancel()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
     private func children(_ item: Any?) -> [iTermFileTreeEntry] {
@@ -161,10 +241,11 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool { (item as? iTermFileTreeEntry)?.isExpandable == true }
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
         guard let entry = item as? iTermFileTreeEntry else { return nil }
-        let label = NSTextField(labelWithString: entry.name)
-        label.lineBreakMode = .byTruncatingTail
-        label.toolTip = entry.path
-        return label
+        let identifier = NSUserInterfaceItemIdentifier("FileTreeCell") // Localization unneeded: reuse identifier.
+        let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? iTermSidebarCellView ?? iTermSidebarCellView(frame: .zero)
+        cell.identifier = identifier
+        cell.configure(name: entry.name, path: entry.path, image: entry.isDirectory ? folderImage : documentImage, folder: entry.isDirectory)
+        return cell
     }
     func outlineViewItemWillExpand(_ notification: Notification) {
         guard let entry = notification.userInfo?["NSObject"] as? iTermFileTreeEntry else { return }
@@ -180,51 +261,98 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         selectedPath = (outline.item(atRow: outline.selectedRow) as? iTermFileTreeEntry)?.path
     }
     private func request(_ path: String) {
-        guard !stopped, (path == rootDirectory || entries[path]?.isExpandable == true), !loading.contains(path), source.cachedListing(atPath: path) == nil else { return }
+        guard visible, !stopped, (path == rootDirectory || entries[path]?.isExpandable == true), !loading.contains(path), source.cachedListing(atPath: path) == nil else { return }
         treeState.loadDirectory(atPath: path) { [weak self] result in
-            guard let self else { return }
-            guard path == self.rootDirectory || self.entries[path]?.isExpandable == true else { return }
+            guard let self, !self.stopped else { return }
+            self.pendingResults[path] = result
+            self.schedulePublication()
+        }
+        updateStatus()
+    }
+    private func schedulePublication() {
+        guard publicationWork == nil else { return }
+        let work = DispatchWorkItem { [weak self] in self?.publishPendingResults() }
+        publicationWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.016, execute: work)
+    }
+    private func publishPendingResults() {
+        publicationWork = nil
+        guard !stopped, visible else { pendingResults.removeAll(); return }
+        let results = pendingResults
+        pendingResults.removeAll()
+        var publications = [String: [iTermFileTreeEntry]]()
+        var changed = Set<String>()
+        for path in results.keys.sorted(by: { $0.count < $1.count }) {
+            guard path == rootDirectory || entries[path]?.isExpandable == true, let result = results[path] else { continue }
             switch result {
             case .success(let children):
-                let childPaths = Set(children.map(\.path))
                 let expandablePaths = Set(children.filter(\.isExpandable).map(\.path))
-                let removedPaths = self.entries.keys.filter {
-                    URL(fileURLWithPath: $0).deletingLastPathComponent().path == path && (!childPaths.contains($0) || (self.entries[$0]?.isExpandable == true && !expandablePaths.contains($0)))
+                let childPaths = Set(children.map(\.path))
+                let parent = path == rootDirectory ? nil : entries[path]
+                let removed = treeState.publishedChildren(of: parent).filter {
+                    !childPaths.contains($0.path) || ($0.isExpandable && !expandablePaths.contains($0.path))
                 }
-                for removed in removedPaths {
-                    let descendants = self.entries.keys.filter { $0 == removed || $0.hasPrefix(removed + "/") }
-                    for descendant in descendants { self.entries.removeValue(forKey: descendant) }
-                    let obsolete = Set(self.readErrors.keys).union(self.loading).union(self.expandedPaths).filter {
-                        $0 == removed || $0.hasPrefix(removed + "/")
-                    }
-                    for descendant in obsolete { self.readErrors.removeValue(forKey: descendant) }
-                    self.loading.subtract(obsolete)
-                    self.expandedPaths.subtract(obsolete)
-                    if let selected = self.selectedPath, selected == removed || selected.hasPrefix(removed + "/") { self.selectedPath = nil }
+                for item in removed {
+                    let prefix = item.path + "/"
+                    for descendant in Array(entries.keys) where descendant == item.path || descendant.hasPrefix(prefix) { entries.removeValue(forKey: descendant) }
+                    let obsolete = Set(readErrors.keys).union(loading).union(expandedPaths).filter { $0 == item.path || $0.hasPrefix(prefix) }
+                    for descendant in obsolete { readErrors.removeValue(forKey: descendant) }
+                    loading.subtract(obsolete)
+                    expandedPaths.subtract(obsolete)
+                    if let selectedPath, selectedPath == item.path || selectedPath.hasPrefix(prefix) { self.selectedPath = nil }
                 }
                 for entry in children {
-                    if let existing = self.entries[entry.path], existing.isExpandable == entry.isExpandable { continue }
-                    self.entries[entry.path] = entry
+                    if let existing = entries[entry.path], existing.isExpandable == entry.isExpandable, existing.isDirectory == entry.isDirectory { continue }
+                    entries[entry.path] = entry
                 }
-                self.readErrors.removeValue(forKey: path)
-                self.status.stringValue = children.isEmpty && path == self.rootDirectory ? String(localized: "FileTree.Empty", defaultValue: "This folder is empty.", comment: "Empty project root folder") : ""
+                publications[path] = children.map { entries[$0.path] ?? $0 }
+                readErrors.removeValue(forKey: path)
+                changed.insert(path)
             case .failure(let error):
-                if (error as NSError).code == NSUserCancelledError { return }
-                self.readErrors[path] = String(localized: "FileTree.ReadError", defaultValue: "Couldn’t read folder: \(error.localizedDescription)", comment: "Directory read failed; placeholder is system error description")
+                if (error as NSError).code != NSUserCancelledError {
+                    readErrors[path] = String(localized: "FileTree.ReadError", defaultValue: "Couldn’t read folder: \(error.localizedDescription)", comment: "Directory read failed; placeholder is system error description")
+                }
             }
-            self.retryPath = self.readErrors.keys.sorted().first
-            self.retry.isHidden = self.retryPath == nil
-            if let failedPath = self.retryPath { self.status.stringValue = self.readErrors[failedPath] ?? "" }
-            if case .success(let children) = result {
-                self.treeState.publishDirectory(children.map { self.entries[$0.path] ?? $0 }, atPath: path)
-            }
-            self.restoreOutline()
         }
+        updateStatus()
+        // Publish immediately before outline invalidation, so old row counts never see IO cache changes.
+        for path in publications.keys.sorted(by: { $0.count < $1.count }) {
+            treeState.publishDirectory(publications[path] ?? [], atPath: path)
+        }
+        if !changed.isEmpty { restoreOutline(reloading: changed) }
     }
-    private func restoreOutline() {
+    private func updateStatus() {
+        retryPath = readErrors.keys.sorted().first
+        retry.isHidden = retryPath == nil
+        if let openError {
+            status.stringValue = openError
+            status.isHidden = false
+        } else if let retryPath {
+            status.stringValue = readErrors[retryPath] ?? ""
+            status.isHidden = false
+        } else if rootDirectory == nil {
+            status.stringValue = String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree prompt when no project is selected")
+            status.isHidden = false
+        } else if entries.isEmpty, loading.isEmpty, case .success(let children)? = source.cachedListing(atPath: rootDirectory ?? ""), children.isEmpty {
+            status.stringValue = String(localized: "FileTree.Empty", defaultValue: "This folder is empty.", comment: "Empty project root folder")
+            status.isHidden = false
+        } else {
+            status.isHidden = true
+        }
+        if loading.isEmpty { spinner.stopAnimation(nil) } else { spinner.startAnimation(nil) }
+        needsLayout = true
+    }
+    private func restoreOutline(reloading paths: Set<String>? = nil) {
         restoring = true
-        outline.reloadData()
-        for path in expandedPaths.sorted(by: { $0.count < $1.count }) {
+        let fullReload = paths == nil || paths?.contains(rootDirectory ?? "") == true
+        if fullReload { outline.reloadData() }
+        else if let paths {
+            for path in paths.sorted(by: { $0.count < $1.count }) {
+                if let entry = entries[path] { outline.reloadItem(entry, reloadChildren: true) }
+            }
+        }
+        let expansions = expandedPaths.filter { path in fullReload || paths?.contains(where: { path == $0 || path.hasPrefix($0 + "/") }) == true }
+        for path in expansions.sorted(by: { $0.count < $1.count }) {
             if let entry = entries[path], outline.row(forItem: entry) >= 0 { outline.expandItem(entry) }
         }
         if let selectedPath, let entry = entries[selectedPath] {
@@ -236,17 +364,23 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         // Drive visible remembered expansions from current listings instead.
         for path in treeState.directoriesNeedingLoad() { request(path) }
     }
+    @objc private func showOptions(_ sender: Any?) {
+        hiddenItem.state = source.showsHiddenFiles ? .on : .off
+        options.menu?.popUp(positioning: nil, at: NSPoint(x: options.frame.minX, y: options.frame.maxY), in: self)
+    }
     @objc private func toggleHidden(_ sender: Any?) {
+        publicationWork?.cancel()
+        publicationWork = nil
+        pendingResults.removeAll()
         loading.removeAll()
         readErrors.removeAll()
-        source.showsHiddenFiles = hiddenButton.state == .on
-        outline.reloadData()
+        source.showsHiddenFiles.toggle()
+        hiddenItem.state = source.showsHiddenFiles ? .on : .off
         if let rootDirectory { request(rootDirectory) }
     }
     @objc private func refreshAll(_ sender: Any?) {
-        var paths = Set(source.loadedDirectoryPaths)
-        if let rootDirectory { paths.insert(rootDirectory) }
-        refreshDirectories(paths)
+        openError = nil
+        for path in treeState.refreshVisibleDirectories() { request(path) }
     }
     private func refreshDirectories(_ paths: Set<String>) {
         DLog("Refreshing \(paths.count) loaded file tree directories")
@@ -295,6 +429,8 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     }
     @objc private func openSelection(_ sender: Any?) {
         guard let entry = outline.item(atRow: outline.clickedRow) as? iTermFileTreeEntry else { return }
+        openError = nil
+        updateStatus()
         if entry.isExpandable {
             if outline.isItemExpanded(entry) { outline.collapseItem(entry) } else { outline.expandItem(entry) }
         } else {
@@ -303,7 +439,8 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
                 if let error {
                     DispatchQueue.main.async {
                         guard let self, self.source.generation == generation else { return }
-                        self.status.stringValue = String(localized: "FileTree.OpenError", defaultValue: "Couldn’t open file: \(error.localizedDescription)", comment: "Default application could not open a file; placeholder is error description")
+                        self.openError = String(localized: "FileTree.OpenError", defaultValue: "Couldn’t open file: \(error.localizedDescription)", comment: "Default application could not open a file; placeholder is error description")
+                        self.updateStatus()
                     }
                 }
             }
@@ -325,7 +462,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     func restore(fromState state: [AnyHashable: Any]) {
         let previousRoot = rootDirectory
         treeState.restore(from: state)
-        hiddenButton.state = source.showsHiddenFiles ? .on : .off
+        hiddenItem.state = source.showsHiddenFiles ? .on : .off
         rootDirectory = treeState.rootDirectory
         if previousRoot == rootDirectory { resetViewForRoot() }
         if visible { restoreOutline() }

@@ -2,6 +2,30 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class FileTreeRestorationTests: XCTestCase {
+    func testRefreshInvalidatesCollapsedCacheAndReloadsItOnlyWhenExpanded() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let folder = root.appendingPathComponent("folder")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data().write(to: folder.appendingPathComponent("old"))
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let state = iTermFileTreeState()
+        state.setRoot(root.path)
+        publishDirectory(state, path: root.path)
+        publishDirectory(state, path: folder.path)
+        let item = try XCTUnwrap(state.publishedChildren(of: nil).first)
+        try FileManager.default.removeItem(at: folder.appendingPathComponent("old"))
+        try Data().write(to: folder.appendingPathComponent("new"))
+        XCTAssertEqual(state.refreshVisibleDirectories(), [root.path])
+        XCTAssertNil(state.source.cachedListing(atPath: folder.path))
+        XCTAssertEqual(state.publishedChildren(of: item).map(\.name), ["old"])
+        publishDirectory(state, path: root.path)
+        XCTAssertEqual(state.directoriesNeedingLoad(), [])
+        state.expandedPaths.insert(folder.path)
+        XCTAssertEqual(state.directoriesNeedingLoad(), [folder.path])
+        publishDirectory(state, path: folder.path)
+        XCTAssertEqual(state.publishedChildren(of: item).map(\.name), ["new"])
+    }
+
     func testReturningToRecentRootReusesCompletedListingsAndEntryIdentity() throws {
         let roots = try makeRoots(names: ["a", "b"])
         let folder = roots[0].appendingPathComponent("folder")

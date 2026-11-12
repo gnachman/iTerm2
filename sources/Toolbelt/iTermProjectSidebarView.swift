@@ -10,14 +10,21 @@ import AppKit
 @objcMembers
 final class iTermProjectSidebarView: NSView, NSTableViewDataSource, NSTableViewDelegate {
     weak var delegate: iTermProjectSidebarDelegate?
-    var projects = [iTermProjectDirectory]() { didSet { reloadProjects() } }
-    var selectedProjectIdentifier: String? { didSet { updateSelection() } }
+    var projects = [iTermProjectDirectory]() {
+        didSet {
+            guard !oldValue.elementsEqual(projects, by: { $0.identifier == $1.identifier && $0.rootDirectory == $1.rootDirectory }) else { return }
+            reloadProjects()
+        }
+    }
+    var selectedProjectIdentifier: String? { didSet { if oldValue != selectedProjectIdentifier { updateSelection() } } }
     var canAddCurrentDirectory = false { didSet { currentButton.isEnabled = canAddCurrentDirectory } }
     private let table = NSTableView()
     private let scroll = NSScrollView()
     private let addButton = NSButton()
     private let currentButton = NSButton()
     private let removeButton = NSButton()
+    private let title = NSTextField(labelWithString: String(localized: "ProjectSidebar.Projects", defaultValue: "Projects", comment: "Project sidebar heading"))
+    private let folderImage = NSImage(systemSymbolName: SFSymbol.folder.rawValue, accessibilityDescription: nil)
     private var updatingSelection = false
     private let emptyLabel = NSTextField(wrappingLabelWithString: String(localized: "ProjectSidebar.Empty", defaultValue: "Add a folder to get started.", comment: "Empty state in the project sidebar"))
 
@@ -25,6 +32,11 @@ final class iTermProjectSidebarView: NSView, NSTableViewDataSource, NSTableViewD
         super.init(frame: frameRect)
         table.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Project"))) // Localization unneeded: cell identifier.
         table.headerView = nil
+        table.rowHeight = 26
+        table.intercellSpacing = .zero
+        table.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
+        table.style = .sourceList
+        table.focusRingType = .none
         table.delegate = self
         table.dataSource = self
         table.backgroundColor = .controlBackgroundColor
@@ -32,11 +44,17 @@ final class iTermProjectSidebarView: NSView, NSTableViewDataSource, NSTableViewD
         scroll.documentView = table
         scroll.hasVerticalScroller = true
         addSubview(scroll)
+        title.font = .systemFont(ofSize: 11, weight: .semibold)
+        title.textColor = .secondaryLabelColor
+        addSubview(title)
         emptyLabel.textColor = .secondaryLabelColor
         addSubview(emptyLabel)
         configure(addButton, title: String(localized: "ProjectSidebar.AddFolder", defaultValue: "Add Folder…", comment: "Choose a folder to add as a project"), action: #selector(addFolder(_:)))
         configure(currentButton, title: String(localized: "ProjectSidebar.AddCurrent", defaultValue: "Add Current Directory", comment: "Add current terminal directory as a project"), action: #selector(addCurrent(_:)))
         configure(removeButton, title: String(localized: "ProjectSidebar.Remove", defaultValue: "Remove Project", comment: "Remove selected project from the list"), action: #selector(remove(_:)))
+        addButton.image = NSImage(systemSymbolName: SFSymbol.plus.rawValue, accessibilityDescription: nil)
+        currentButton.image = NSImage(systemSymbolName: SFSymbol.folderBadgePlus.rawValue, accessibilityDescription: nil)
+        removeButton.image = NSImage(systemSymbolName: SFSymbol.minus.rawValue, accessibilityDescription: nil)
         currentButton.isEnabled = false
         reloadProjects()
     }
@@ -44,23 +62,25 @@ final class iTermProjectSidebarView: NSView, NSTableViewDataSource, NSTableViewD
     required init?(coder: NSCoder) { it_fatalError("init(coder:) has not been implemented") }
     override var isFlipped: Bool { true }
     private func configure(_ button: NSButton, title: String, action: Selector) {
-        button.title = title
+        button.title = ""
+        button.imagePosition = .imageOnly
         button.toolTip = title
         button.setAccessibilityLabel(title)
-        button.bezelStyle = .rounded
+        button.isBordered = false
+        button.controlSize = .small
         button.target = self
         button.action = action
         addSubview(button)
     }
     override func layout() {
         super.layout()
-        let margin: CGFloat = 6
-        let height: CGFloat = 26
+        let margin: CGFloat = 8
+        title.frame = NSRect(x: 10, y: 9, width: max(0, bounds.width - 96), height: 18)
         for (index, button) in [addButton, currentButton, removeButton].enumerated() {
-            button.frame = NSRect(x: margin, y: bounds.height - CGFloat(3 - index) * (height + margin), width: max(0, bounds.width - 2 * margin), height: height)
+            button.frame = NSRect(x: bounds.width - margin - CGFloat(3 - index) * 25, y: 5, width: 24, height: 24)
         }
-        scroll.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(0, bounds.height - 3 * (height + margin) - margin))
-        emptyLabel.frame = NSRect(x: margin + 4, y: 20, width: max(0, bounds.width - 2 * margin - 8), height: 60)
+        scroll.frame = NSRect(x: 0, y: 34, width: bounds.width, height: max(0, bounds.height - 34))
+        emptyLabel.frame = NSRect(x: margin + 4, y: 48, width: max(0, bounds.width - 2 * margin - 8), height: 60)
     }
     private func reloadProjects() {
         updatingSelection = true
@@ -80,12 +100,12 @@ final class iTermProjectSidebarView: NSView, NSTableViewDataSource, NSTableViewD
     func numberOfRows(in tableView: NSTableView) -> Int { projects.count }
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         guard projects.indices.contains(row) else { return nil }
-        let text = NSTextField(labelWithString: projects[row].name)
-        text.lineBreakMode = .byTruncatingTail
-        text.toolTip = projects[row].rootDirectory
-        text.setAccessibilityLabel(projects[row].name)
-        text.setAccessibilityHelp(projects[row].rootDirectory)
-        return text
+        let identifier = NSUserInterfaceItemIdentifier("ProjectSidebarCell") // Localization unneeded: reuse identifier.
+        let cell = tableView.makeView(withIdentifier: identifier, owner: self) as? iTermSidebarCellView ?? iTermSidebarCellView(frame: .zero)
+        cell.identifier = identifier
+        let project = projects[row]
+        cell.configure(name: project.name, path: project.rootDirectory, image: folderImage, folder: true)
+        return cell
     }
     func tableViewSelectionDidChange(_ notification: Notification) {
         guard !updatingSelection else { return }

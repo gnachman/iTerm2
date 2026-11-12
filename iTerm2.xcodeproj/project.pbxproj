@@ -36,6 +36,7 @@
 		084F626684E68821BAEC7D9B /* iTermNonTextPasteHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED49EE365D629DAE80503BFD /* iTermNonTextPasteHelper.swift */; };
 		085811A24FA45202DB18846B /* iTermStatusBarProxyIconImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5192F2D65DCCD7256632E6C0 /* iTermStatusBarProxyIconImageView.swift */; };
 		08AF9D7B30CEB8C39C52880B /* iTermSuppressedAlertsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCBB83E64BDE6C3824D5CEF6 /* iTermSuppressedAlertsWindowController.swift */; };
+		093B5519D92944F137A02D49 /* iTermSidebarCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EB808CF1CD7C3A093E05F4 /* iTermSidebarCellView.swift */; };
 		0945FFDCA6294F6128D05ACC /* WorkgroupCodeReviewModelSelectorItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77BC307D285E491B575D1E1 /* WorkgroupCodeReviewModelSelectorItem.swift */; };
 		096EE94A89ADAAA4B4A2ACF9 /* ChatIconGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95E27DEB0B9DD8AE0960FAE5 /* ChatIconGenerator.swift */; };
 		097F9F1FF36AF5BDBA750845 /* iTermSuiteDockTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8B537066646E118AD6D9D0 /* iTermSuiteDockTileView.swift */; };
@@ -5192,6 +5193,7 @@
 		06E0C88D1DF9695400AA061B /* iTermServiceProvider.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermServiceProvider.m; sourceTree = "<group>"; };
 		0771D91B8732E76BA461C031 /* iTermRequiredDirectory.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRequiredDirectory.h; sourceTree = "<group>"; };
 		07A8A9A5AE787B6797A610B2 /* CompanionBrowserFrameSource.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionBrowserFrameSource.swift; sourceTree = "<group>"; };
+		07EB808CF1CD7C3A093E05F4 /* iTermSidebarCellView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermSidebarCellView.swift; sourceTree = "<group>"; };
 		08C19577D9B6A8202A0A8E07 /* MentionPlainTextRenderer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MentionPlainTextRenderer.swift; sourceTree = "<group>"; };
 		08E1B973FF717824BE54F906 /* FloatingPaneBuiltInFunctions.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FloatingPaneBuiltInFunctions.swift; sourceTree = "<group>"; };
 		099C8A86522346410F6224B1 /* ChatManualStackView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatManualStackView.swift; sourceTree = "<group>"; };
@@ -12308,6 +12310,7 @@
 				B2414BB4315A7AE7539A824B /* iTermToolFileTree.swift */,
 				7849CABC92F458456EBAA49C /* iTermProjectWindowController.swift */,
 				A14E61F7CEF81A1EAA7C9B5C /* iTermFileTreeState.swift */,
+				07EB808CF1CD7C3A093E05F4 /* iTermSidebarCellView.swift */,
 			);
 			path = Toolbelt;
 			sourceTree = "<group>";
@@ -20577,6 +20580,7 @@
 				808B145AC6927BB02F390943 /* iTermToolFileTree.swift in Sources */,
 				64092936C7FB00C18AE12255 /* iTermProjectWindowController.swift in Sources */,
 				95CE5807A5237FB9DE221F86 /* iTermFileTreeState.swift in Sources */,
+				093B5519D92944F137A02D49 /* iTermSidebarCellView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

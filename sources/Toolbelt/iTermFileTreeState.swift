@@ -70,6 +70,17 @@ final class iTermFileTreeState {
         source.directoriesNeedingLoad(expandedPaths: expandedPaths)
     }
 
+    /// Refresh visible branches now; collapsed branches reload lazily when expanded again.
+    func refreshVisibleDirectories() -> [String] {
+        let tracked = Set(source.loadedDirectoryPaths).union(loadingPaths)
+        var visible = expandedPaths.intersection(tracked)
+        if let rootDirectory { visible.insert(rootDirectory) }
+        let invalidated = tracked.union(visible)
+        source.invalidate(directoryPaths: invalidated)
+        loadingPaths.subtract(invalidated)
+        return visible.sorted()
+    }
+
     /// Outline row counts and child lookups use the last published listing, not the IO cache.
     func publishedChildren(of entry: iTermFileTreeEntry?) -> [iTermFileTreeEntry] {
         guard let path = entry?.path ?? publishedRootDirectory else { return [] }
