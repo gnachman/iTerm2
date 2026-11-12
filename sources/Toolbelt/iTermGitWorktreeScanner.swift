@@ -206,6 +206,11 @@ private final class iTermGitWorktreeCapabilities {
 
 final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
     private typealias Completion = (iTermGitRepositorySnapshot?, NSError?) -> Void
+    private struct MainCheckout {
+        let directory: String
+        let available: Bool
+    }
+
     private final class Job {
         let directory: String
         let deadline = ProcessInfo.processInfo.systemUptime + 5
@@ -214,6 +219,9 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
         var common: String?
         var followers = [Job]()
         var finished = false
+        var pendingLocations = 0
+        var mainCheckout: MainCheckout?
+        var pendingSnapshot: iTermGitRepositorySnapshot?
         init(directory: String, completion: @escaping Completion) {
             self.directory = directory
             completions = [completion]
@@ -230,7 +238,7 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
         queue.qualityOfService = .utility
         return queue
     }()
-    // All mutable flight/capability state is confined to `state`. Workers never
+    // Mutable flight state is confined to `state`. Workers never
     // wait for another scan; a joined scan gives its worker slot back immediately.
     private var paths = [String: Job]()
     private var repositories = [String: Job]()
@@ -260,6 +268,7 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
     private func finish(_ job: Job, snapshot: iTermGitRepositorySnapshot?, error: NSError?) {
         guard !job.finished else { return }
         job.finished = true
+        job.pendingSnapshot = nil
         for path in job.paths where paths[path] === job { paths.removeValue(forKey: path) }
         if let common = job.common, repositories[common] === job { repositories.removeValue(forKey: common) }
         let completions = job.completions
@@ -272,6 +281,46 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
 
     private func join(_ job: Job, to owner: Job) {
         owner.followers.append(job)
+    }
+
+    // Caller metadata is independent of the shared listing. An owner can finish
+    // its worker operation while a joining caller resolves a main checkout; the
+    // state queue publishes once those reads settle, without a worker wait.
+    private func resolveLocation(_ job: Job, owner: Job, mainCheckout: MainCheckout?, error: NSError? = nil) {
+        guard !owner.finished else { return }
+        owner.pendingLocations -= 1
+        if !job.finished, let mainCheckout { owner.mainCheckout = mainCheckout }
+        if let error {
+            finish(job, snapshot: nil, error: error)
+        }
+        publishRepositoryIfReady(owner)
+    }
+
+    private func publishRepositoryIfReady(_ owner: Job) {
+        guard !owner.finished, owner.pendingLocations == 0, let snapshot = owner.pendingSnapshot else { return }
+        var result = snapshot
+        if let main = owner.mainCheckout, let first = snapshot.worktrees.first,
+           first.isMain, first.rootDirectory == snapshot.commonDirectory {
+            let replacement = iTermGitWorktree(rootDirectory: main.directory, branch: first.branch,
+                                               head: first.head, isMain: true, locked: first.locked,
+                                               prunable: first.prunable, available: main.available)
+            result = iTermGitRepositorySnapshot(commonDirectory: snapshot.commonDirectory,
+                                                rootDirectory: main.directory,
+                                                worktrees: [replacement] + snapshot.worktrees.dropFirst())
+        }
+        finish(owner, snapshot: result, error: nil)
+    }
+
+    private func mainCheckout(directory: String, common: String, gitDirectory: String, job: Job) throws -> MainCheckout? {
+        guard gitDirectory == common else { return nil }
+        let bare = try command(["rev-parse", "--is-bare-repository"], directory: directory, job: job)
+        guard bare.status == 0 else { throw Self.commandError(bare.status) }
+        if bare.output == Data("true\n".utf8) { return nil }
+        guard bare.output == Data("false\n".utf8) else { throw Self.commandError(bare.status) }
+        let root = try gitPath("--show-toplevel", directory: directory, job: job)
+        var isDirectory: ObjCBool = false
+        let available = FileManager.default.fileExists(atPath: root, isDirectory: &isDirectory) && isDirectory.boolValue
+        return MainCheckout(directory: root, available: available)
     }
 
     private func remaining(_ job: Job) throws -> TimeInterval {
@@ -306,6 +355,8 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
     }
 
     private func perform(_ job: Job) {
+        var repositoryOwner: Job?
+        var locationResolved = false
         do {
             _ = try remaining(job)
             let directory = Self.normalizedPath(job.directory)
@@ -332,18 +383,27 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
                 return
             }
             let common = try gitPath("--git-common-dir", directory: directory, job: job)
-            let ownsRepository = state.sync { () -> Bool in
-                guard !job.finished else { return false }
+            let owner = state.sync { () -> Job? in
+                guard !job.finished else { return nil }
+                let owner: Job
                 if let other = repositories[common], other !== job {
                     join(job, to: other)
-                    return false
+                    owner = other
+                } else {
+                    repositories[common] = job
+                    job.common = common
+                    owner = job
                 }
-                repositories[common] = job
-                job.common = common
-                return true
+                owner.pendingLocations += 1
+                return owner
             }
-            guard ownsRepository else { return }
+            guard let owner else { return }
+            repositoryOwner = owner
             let gitDirectory = try gitPath("--absolute-git-dir", directory: directory, job: job)
+            let main = try mainCheckout(directory: directory, common: common, gitDirectory: gitDirectory, job: job)
+            state.sync { resolveLocation(job, owner: owner, mainCheckout: main) }
+            locationResolved = true
+            guard owner === job else { return }
             var nul = capabilities.supportsNul
             var arguments = ["worktree", "list", "--porcelain"]
             if nul { arguments.append("-z") }
@@ -360,14 +420,10 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
             for index in records.indices {
                 records[index].path = Self.normalizedPath(records[index].path, relativeTo: directory)
             }
-            // Git sometimes emits the separate admin directory for the main row.
-            // A main caller can resolve it safely; a linked caller's toplevel is
-            // its own checkout and must never overwrite the real main root.
-            if let first = records.first, !first.bare, first.path == common, gitDirectory == common {
-                records[0].path = try gitPath("--show-toplevel", directory: directory, job: job)
-            } else if let first = records.first, !first.bare, first.path == common {
-                // core.worktree is available in some separate-git-dir setups even
-                // when discovering from a linked checkout.
+            // A main caller's location is merged on the state queue before
+            // publication. A linked owner can also recover core.worktree where
+            // configured, but its own toplevel must not replace the main row.
+            if let first = records.first, !first.bare, first.path == common, gitDirectory != common {
                 let config = try command(["config", "--path", "--get", "core.worktree"], directory: common, job: job)
                 if config.status == 0, var path = String(data: config.output, encoding: .utf8), path.hasSuffix("\n") {
                     path.removeLast()
@@ -384,7 +440,7 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
             }
             let worktrees = records.filter { !$0.bare }.map { record -> iTermGitWorktree in
                 var directoryFlag: ObjCBool = false
-                let unresolvedMain = record.isMain && record.path == common && gitDirectory != common
+                let unresolvedMain = record.isMain && record.path == common
                 let available = !unresolvedMain && FileManager.default.fileExists(atPath: record.path, isDirectory: &directoryFlag) && directoryFlag.boolValue
                 return iTermGitWorktree(rootDirectory: record.path, branch: record.branch, head: record.head,
                                         isMain: record.isMain, locked: record.locked, prunable: record.prunable,
@@ -398,9 +454,18 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
             }
             _ = try remaining(job)
             let snapshot = iTermGitRepositorySnapshot(commonDirectory: common, rootDirectory: root, worktrees: worktrees)
-            state.async { self.finish(job, snapshot: snapshot, error: nil) }
+            state.async {
+                guard !job.finished else { return }
+                job.pendingSnapshot = snapshot
+                self.publishRepositoryIfReady(job)
+            }
         } catch {
-            state.async { self.finish(job, snapshot: nil, error: error as NSError) }
+            let failure = error as NSError
+            if let owner = repositoryOwner, !locationResolved {
+                state.async { self.resolveLocation(job, owner: owner, mainCheckout: nil, error: failure) }
+            } else {
+                state.async { self.finish(job, snapshot: nil, error: failure) }
+            }
         }
     }
 
@@ -423,7 +488,7 @@ final class iTermGitWorktreeScanner: NSObject, iTermGitWorktreeScanning {
             // Listing also reports permissions errors. fileExists alone returns
             // false for unreadable metadata and would incorrectly clear old data.
             let names = try FileManager.default.contentsOfDirectory(atPath: path)
-            if names.contains(".git") || (names.contains("HEAD") && names.contains("objects") && names.contains("config")) {
+            if names.contains(".git") || (names.contains("HEAD") && names.contains("objects") && names.contains("refs")) {
                 return true
             }
             let parent = (path as NSString).deletingLastPathComponent

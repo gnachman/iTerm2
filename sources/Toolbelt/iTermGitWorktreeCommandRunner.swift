@@ -34,7 +34,7 @@ private final class iTermGitWorktreeCommandRunner: iTermGitWorktreeCommandExecut
 }
 
 extension iTermGitWorktreeScanner {
-    @nonobjc convenience override init() {
-        self.init(executor: iTermGitWorktreeCommandRunner(searchPath: iTermAdvancedSettingsModel.gitSearchPath()))
+    static func makeDefault() -> iTermGitWorktreeScanner {
+        iTermGitWorktreeScanner(executor: iTermGitWorktreeCommandRunner(searchPath: iTermAdvancedSettingsModel.gitSearchPath()))
     }
 }

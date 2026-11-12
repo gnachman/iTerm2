@@ -245,6 +245,71 @@ final class GitWorktreeScannerTests: XCTestCase {
         XCTAssertTrue(result.0?.worktrees.last?.available == true)
     }
 
+    func testSeparateGitLinkedOwnerSharesMainCallerRootEnrichment() throws {
+        let fixture = try GitFixture(separate: true)
+        defer { fixture.remove() }
+        let independent = try GitFixture()
+        defer { independent.remove() }
+        let linked = fixture.base + "/side"
+        try fixture.git(["worktree", "add", "-b", "side", linked])
+        let listing = expectation(description: "Linked caller owns listing")
+        let mainLocated = expectation(description: "Main caller resolved its own toplevel")
+        let completed = expectation(description: "Both callers received enriched snapshot")
+        completed.expectedFulfillmentCount = 2
+        let executor = MainEnrichmentGitExecutor(mainRoot: fixture.root, linkedRoot: linked,
+                                                onList: { listing.fulfill() },
+                                                onMainRoot: { mainLocated.fulfill() })
+        let scanner = iTermGitWorktreeScanner(executor: executor)
+        var snapshots = [iTermGitRepositorySnapshot]()
+        let completion: (iTermGitRepositorySnapshot?, NSError?) -> Void = { snapshot, error in
+            XCTAssertTrue(Thread.isMainThread)
+            XCTAssertNil(error)
+            XCTAssertEqual(snapshot?.rootDirectory, fixture.root)
+            XCTAssertEqual(snapshot?.worktrees.first?.rootDirectory, fixture.root)
+            XCTAssertTrue(snapshot?.worktrees.first?.available == true)
+            if let snapshot { snapshots.append(snapshot) }
+            completed.fulfill()
+        }
+        scanner.scan(directory: linked, completion: completion)
+        wait(for: [listing], timeout: 10)
+        scanner.scan(directory: fixture.root, completion: completion)
+        // The native metadata event orders the regression without sleeps or a
+        // main-callback/state-queue race. Listing must stay shared while the
+        // follower finishes interpreting its toplevel response on the worker.
+        wait(for: [mainLocated], timeout: 10)
+        executor.release.signal()
+        // The joined main worker is still gated. The owner's completed listing
+        // must release its worker slot so an unrelated repository can scan.
+        let other = scan(scanner, directory: independent.root)
+        XCTAssertNil(other.1)
+        XCTAssertEqual(other.0?.rootDirectory, independent.root)
+        executor.mainMetadataRelease.signal()
+        wait(for: [completed], timeout: 10)
+        XCTAssertEqual(executor.listCalls, 2)
+        XCTAssertEqual(snapshots.count, 2)
+        if snapshots.count == 2 { XCTAssertTrue(snapshots[0] === snapshots[1]) }
+    }
+
+    func testBareRepositoryWithoutOptionalConfigKeepsLinkedCheckout() throws {
+        let fixture = try GitFixture()
+        defer { fixture.remove() }
+        let bare = fixture.base + "/bare"
+        let linked = fixture.base + "/bare-side"
+        try fixture.git(["clone", "--bare", fixture.root, bare])
+        let git = ProcessGitExecutor()
+        let added = git.run(arguments: ["worktree", "add", "-b", "bare-side", linked], directory: bare, timeout: 10)
+        XCTAssertEqual(added.status, 0)
+        try FileManager.default.removeItem(atPath: bare + "/config")
+        let result = scan(iTermGitWorktreeScanner(executor: git), directory: bare)
+        XCTAssertNil(result.1)
+        XCTAssertEqual(result.0?.commonDirectory, bare)
+        XCTAssertEqual(result.0?.rootDirectory, bare)
+        XCTAssertEqual(result.0?.worktrees.count, 1)
+        XCTAssertEqual(result.0?.worktrees.first?.rootDirectory, linked)
+        XCTAssertFalse(result.0?.worktrees.first?.isMain ?? true)
+        XCTAssertTrue(result.0?.worktrees.first?.available == true)
+    }
+
     func testMalformedParserOutputFailsInsteadOfReturningPartialData() {
         for data in [Data(), Data([0xff]), Data("worktree /root\0\0".utf8),
                      Data("worktree \"/bad\\777\"\nHEAD abc\n\n".utf8)] {
@@ -411,6 +476,39 @@ private final class FirstGatedGitExecutor: ProcessGitExecutor {
         if gated {
             DispatchQueue.main.async(execute: onStart)
             release.wait()
+        }
+        return result
+    }
+}
+
+private final class MainEnrichmentGitExecutor: ProcessGitExecutor {
+    let release = DispatchSemaphore(value: 0)
+    let mainMetadataRelease = DispatchSemaphore(value: 0)
+    let mainRoot: String
+    let linkedRoot: String
+    let onList: () -> Void
+    let onMainRoot: () -> Void
+    let lock = NSLock()
+    private(set) var listCalls = 0
+    init(mainRoot: String, linkedRoot: String, onList: @escaping () -> Void, onMainRoot: @escaping () -> Void) {
+        self.mainRoot = mainRoot
+        self.linkedRoot = linkedRoot
+        self.onList = onList
+        self.onMainRoot = onMainRoot
+    }
+    override func run(arguments: [String], directory: String, timeout: TimeInterval) -> iTermGitWorktreeCommandResult {
+        let result = super.run(arguments: arguments, directory: directory, timeout: timeout)
+        if arguments.first == "worktree" {
+            lock.lock()
+            listCalls += 1
+            lock.unlock()
+            if directory == linkedRoot {
+                DispatchQueue.main.async(execute: onList)
+                release.wait()
+            }
+        } else if directory == mainRoot && arguments == ["rev-parse", "--show-toplevel"] {
+            DispatchQueue.main.async(execute: onMainRoot)
+            mainMetadataRelease.wait()
         }
         return result
     }
