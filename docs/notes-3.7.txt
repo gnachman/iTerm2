@@ -161,6 +161,9 @@ Improvements:
   showing and hiding the chat list is now in the
   toolbar with the model picker instead of
   floating over the conversation.
+- Remapped modifier keys now apply in a
+  floating hotkey window and in Open Quickly
+  while another app is active.
 
 Bug Fixes:
 - The tooltip for “Enable support for
@@ -463,3 +466,6 @@ Bug Fixes:
 - Fixed a crash when quitting iTerm2, including
   to install an update, while Claude Code was
   running in a session.
+- When iTerm2 was busy, typing could lag in
+  other apps, especially with modifier
+  remapping or a hotkey set. Issue 12645.
