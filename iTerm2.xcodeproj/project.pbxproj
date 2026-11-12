@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		26A182B539D3130D9CAB8E8B /* iTermProjectSidebarTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D62222F2B6B2D847665FA46 /* iTermProjectSidebarTree.swift */; };
 		CBC96459BD6FC8896785A3D9 /* TmuxWorkgroupPeerCreation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA61C02D50EE6E66768FE0C /* TmuxWorkgroupPeerCreation.swift */; };
 		3EF33423CA26E1A5D858D1C9 /* TmuxWorkgroupAdoption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD54BF2A45695A8C76271D5 /* TmuxWorkgroupAdoption.swift */; };
 		40063C16D73D3B917B920C9B /* FramerPaneStrandedFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 704E93B8A70AA0106E558871 /* FramerPaneStrandedFinder.swift */; };
@@ -721,7 +722,6 @@
 		2621488B01FD8224242400F6 /* CompanionTouchMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7FA7091BC6651354944E64 /* CompanionTouchMapper.swift */; };
 		265B5BEC383FF5AB85971F30 /* iTermAutoresizingFloorAuditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 549AB34D98B0F7595015C26B /* iTermAutoresizingFloorAuditor.swift */; };
 		267AE2EAC26A34BB9D592311 /* Conductor+Flow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDD9EA5DA3BD3298CBEDAE2 /* Conductor+Flow.swift */; };
-		26A182B539D3130D9CAB8E8B /* iTermProjectSidebarTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D62222F2B6B2D847665FA46 /* iTermProjectSidebarTree.swift */; };
 		26BD366BD1D02047E84E5F8D /* iTermWorkgroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13A6B1D037AF894E662A0EFC /* iTermWorkgroup.swift */; };
 		26EB541CEAA6EC4E871C9D9B /* AgentStatusBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE64337652D1144ADAE8301 /* AgentStatusBackend.swift */; };
 		27CC50C21AA3ACC846338DE3 /* iTermFileTreeDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124169DC1658C5EE9AF9CD26 /* iTermFileTreeDataSource.swift */; };
@@ -18878,6 +18878,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				936933B20C8B0F3579CABEA5 /* iTermProjectDirectory.swift in Sources */,
+				52C8BD1DD57BE8398F2B9560 /* iTermProjectSidebarView.swift in Sources */,
+				27CC50C21AA3ACC846338DE3 /* iTermFileTreeDataSource.swift in Sources */,
+				808B145AC6927BB02F390943 /* iTermToolFileTree.swift in Sources */,
+				64092936C7FB00C18AE12255 /* iTermProjectWindowController.swift in Sources */,
+				95CE5807A5237FB9DE221F86 /* iTermFileTreeState.swift in Sources */,
+				093B5519D92944F137A02D49 /* iTermSidebarCellView.swift in Sources */,
+				F2864F8165F7C6E5821F2BC6 /* iTermFileTreeWatcher.swift in Sources */,
+				A6DF3B58BF92EFE0F657FCF0 /* iTermSidebarToggleButton.swift in Sources */,
+				19593BE9433D01E9CD71CD19 /* iTermGitWorktreeScanner.swift in Sources */,
+				71D931259AA97CABB8B6D73A /* iTermGitWorktreeCommandRunner.swift in Sources */,
+				26A182B539D3130D9CAB8E8B /* iTermProjectSidebarTree.swift in Sources */,
+				9BB0A5D7EBD9755A76861ED7 /* iTermProjectSessionContext.swift in Sources */,
+				6B8D707F5E29B12661218411 /* iTermProjectTerminalMenu.swift in Sources */,
 				C7D353B754D8B784AA580E5C /* IT2HostGrants.swift in Sources */,
 				E7C62A122214F1586F8C2EED /* iTermRemoteIt2.swift in Sources */,
 				AA98CC958BF6A53E358DCDA3 /* iTermBundledIt2.swift in Sources */,
@@ -20595,20 +20609,6 @@
 				B391478CA638949AAEEB1327 /* DeleteClippingBuiltInFunction.swift in Sources */,
 				6328383D184EEC502DE25B1D /* AboutBackersColumnsView.swift in Sources */,
 				D7BEED2BBCFDBE57CF0A6022 /* AIModelListDiscovery.swift in Sources */,
-				936933B20C8B0F3579CABEA5 /* iTermProjectDirectory.swift in Sources */,
-				52C8BD1DD57BE8398F2B9560 /* iTermProjectSidebarView.swift in Sources */,
-				27CC50C21AA3ACC846338DE3 /* iTermFileTreeDataSource.swift in Sources */,
-				808B145AC6927BB02F390943 /* iTermToolFileTree.swift in Sources */,
-				64092936C7FB00C18AE12255 /* iTermProjectWindowController.swift in Sources */,
-				95CE5807A5237FB9DE221F86 /* iTermFileTreeState.swift in Sources */,
-				093B5519D92944F137A02D49 /* iTermSidebarCellView.swift in Sources */,
-				F2864F8165F7C6E5821F2BC6 /* iTermFileTreeWatcher.swift in Sources */,
-				A6DF3B58BF92EFE0F657FCF0 /* iTermSidebarToggleButton.swift in Sources */,
-				19593BE9433D01E9CD71CD19 /* iTermGitWorktreeScanner.swift in Sources */,
-				71D931259AA97CABB8B6D73A /* iTermGitWorktreeCommandRunner.swift in Sources */,
-				26A182B539D3130D9CAB8E8B /* iTermProjectSidebarTree.swift in Sources */,
-				9BB0A5D7EBD9755A76861ED7 /* iTermProjectSessionContext.swift in Sources */,
-				6B8D707F5E29B12661218411 /* iTermProjectTerminalMenu.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
