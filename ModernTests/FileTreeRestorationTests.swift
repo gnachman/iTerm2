@@ -2,6 +2,85 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class FileTreeRestorationTests: XCTestCase {
+    func testPublishedChildrenRemainAvailableDuringRefreshAndVisibilityReset() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        for name in ["file1", "file2"] { try Data().write(to: root.appendingPathComponent(name)) }
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let queue = DispatchQueue(label: "FileTreeRestorationTests.presentation")
+        let state = iTermFileTreeState(source: iTermFileTreeDataSource(ioQueue: queue))
+        state.setRoot(root.path)
+        state.clearPublishedTree()
+        publishDirectory(state, path: root.path)
+        let displayed = state.publishedChildren(of: nil)
+        XCTAssertEqual(displayed.map(\.name), ["file1", "file2"])
+
+        // AppKit may request the old rows again while a refresh or window zoom resets IO.
+        state.source.invalidate(directoryPaths: [root.path])
+        XCTAssertNil(state.source.cachedListing(atPath: root.path))
+        XCTAssertEqual(state.publishedChildren(of: nil).map(\.name), ["file1", "file2"])
+        XCTAssertTrue(state.publishedChildren(of: nil).first === displayed.first)
+        state.source.reset(rootPath: root.path)
+        XCTAssertEqual(state.publishedChildren(of: nil).map(\.name), ["file1", "file2"])
+
+        queue.suspend()
+        try FileManager.default.removeItem(at: root.appendingPathComponent("file2"))
+        let refreshed = expectation(description: "refreshed directory published")
+        state.loadDirectory(atPath: root.path) { result in
+            guard case .success(let children) = result else { XCTFail("Refresh failed"); refreshed.fulfill(); return }
+            state.publishDirectory(children, atPath: root.path)
+            refreshed.fulfill()
+        }
+        XCTAssertEqual(state.publishedChildren(of: nil).count, displayed.count)
+        XCTAssertEqual(state.publishedChildren(of: nil).map(\.name), ["file1", "file2"])
+        queue.resume()
+        wait(for: [refreshed], timeout: 5)
+        XCTAssertEqual(state.publishedChildren(of: nil).map(\.name), ["file1"])
+    }
+
+    func testPublishedNestedChildrenSurviveParentRefreshUntilNewListingIsPublished() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let folder = root.appendingPathComponent("folder")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data().write(to: folder.appendingPathComponent("child"))
+        addTeardownBlock { try FileManager.default.removeItem(at: root) }
+        let state = iTermFileTreeState()
+        state.setRoot(root.path)
+        state.clearPublishedTree()
+        publishDirectory(state, path: root.path)
+        let item = try XCTUnwrap(state.publishedChildren(of: nil).first)
+        publishDirectory(state, path: folder.path)
+        state.source.invalidate(directoryPaths: [root.path, folder.path])
+        XCTAssertEqual(state.publishedChildren(of: item).map(\.name), ["child"])
+        state.publishDirectory([], atPath: root.path)
+        XCTAssertTrue(state.publishedChildren(of: nil).isEmpty)
+        XCTAssertTrue(state.publishedChildren(of: item).isEmpty)
+    }
+
+    func testRootChangeKeepsPublishedRowsUntilOutlineReloadClearsThem() throws {
+        let state = iTermFileTreeState()
+        state.setRoot("/tmp/old")
+        state.clearPublishedTree()
+        let entry = iTermFileTreeEntry(path: "/tmp/old/file", name: "file", isDirectory: false, isExpandable: false)
+        state.publishDirectory([entry], atPath: "/tmp/old")
+        state.setRoot("/tmp/new")
+        XCTAssertEqual(state.publishedChildren(of: nil).map(\.path), ["/tmp/old/file"])
+        state.clearPublishedTree()
+        XCTAssertTrue(state.publishedChildren(of: nil).isEmpty)
+        state.publishDirectory([entry], atPath: "/tmp/old")
+        XCTAssertTrue(state.publishedChildren(of: nil).isEmpty)
+    }
+
+    private func publishDirectory(_ state: iTermFileTreeState, path: String) {
+        let published = expectation(description: "directory published")
+        state.loadDirectory(atPath: path) { result in
+            guard case .success(let children) = result else { XCTFail("Read failed"); published.fulfill(); return }
+            state.publishDirectory(children, atPath: path)
+            published.fulfill()
+        }
+        wait(for: [published], timeout: 5)
+    }
+
     func testMatchingRootRestoreReloadsNestedExpansionAndRoundTripsAfterCancellation() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let folder = root.appendingPathComponent("folder")

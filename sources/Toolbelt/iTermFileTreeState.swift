@@ -7,6 +7,8 @@ final class iTermFileTreeState {
     var expandedPaths = Set<String>()
     var loadingPaths = Set<String>()
     private var expansionByRoot = [String: Set<String>]()
+    private var publishedRootDirectory: String?
+    private var publishedDirectories = [String: [iTermFileTreeEntry]]()
 
     init(source: iTermFileTreeDataSource = iTermFileTreeDataSource()) {
         self.source = source
@@ -33,6 +35,31 @@ final class iTermFileTreeState {
 
     func directoriesNeedingLoad() -> [String] {
         source.directoriesNeedingLoad(expandedPaths: expandedPaths)
+    }
+
+    /// Outline row counts and child lookups use the last published listing, not the IO cache.
+    func publishedChildren(of entry: iTermFileTreeEntry?) -> [iTermFileTreeEntry] {
+        guard let path = entry?.path ?? publishedRootDirectory else { return [] }
+        return publishedDirectories[path] ?? []
+    }
+
+    /// Clear immediately before reloading the outline when switching roots or restoring state.
+    func clearPublishedTree() {
+        publishedRootDirectory = rootDirectory
+        publishedDirectories.removeAll()
+    }
+
+    func publishDirectory(_ children: [iTermFileTreeEntry], atPath path: String) {
+        guard let rootDirectory,
+              path == rootDirectory || path.hasPrefix(rootDirectory == "/" ? "/" : rootDirectory + "/") else { return }
+        if publishedRootDirectory != rootDirectory { clearPublishedTree() }
+        let childPaths = Set(children.filter(\.isExpandable).map(\.path))
+        let prefix = path == "/" ? "/" : path + "/"
+        for descendant in Array(publishedDirectories.keys) where descendant != path && descendant.hasPrefix(prefix) {
+            let name = descendant.dropFirst(prefix.count).split(separator: "/").first.map(String.init) ?? ""
+            if !childPaths.contains(prefix + name) { publishedDirectories.removeValue(forKey: descendant) }
+        }
+        publishedDirectories[path] = children
     }
 
     func restorableState() -> [AnyHashable: Any] {

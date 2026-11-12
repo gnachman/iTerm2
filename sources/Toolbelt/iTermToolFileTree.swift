@@ -110,11 +110,12 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         selectedPath = nil
         readErrors.removeAll()
         entries.removeAll()
+        treeState.clearPublishedTree()
+        outline.reloadData()
         header.stringValue = rootDirectory.map { URL(fileURLWithPath: $0).lastPathComponent } ?? String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree header when no project is selected")
         header.toolTip = rootDirectory
         status.stringValue = ""
         retry.isHidden = true
-        outline.reloadData()
         updateVisibility()
     }
 
@@ -153,9 +154,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
     private func children(_ item: Any?) -> [iTermFileTreeEntry] {
-        guard let path = (item as? iTermFileTreeEntry)?.path ?? rootDirectory,
-              case .success(let children)? = source.cachedListing(atPath: path) else { return [] }
-        return children.compactMap { entries[$0.path] }
+        treeState.publishedChildren(of: item as? iTermFileTreeEntry)
     }
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int { children(item).count }
     func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any { children(item)[index] }
@@ -216,6 +215,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
             self.retryPath = self.readErrors.keys.sorted().first
             self.retry.isHidden = self.retryPath == nil
             if let failedPath = self.retryPath { self.status.stringValue = self.readErrors[failedPath] ?? "" }
+            if case .success(let children) = result {
+                self.treeState.publishDirectory(children.map { self.entries[$0.path] ?? $0 }, atPath: path)
+            }
             self.restoreOutline()
         }
     }
