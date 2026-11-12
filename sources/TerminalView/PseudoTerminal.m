@@ -5113,9 +5113,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)projectStateDidChange {
     _contentView.projectSidebar.projects = [iTermProjectCatalog shared].projects;
     _contentView.projectSidebar.selectedProjectIdentifier = _projectController.selectedProjectIdentifier;
+    // Availability depends on the session, not a synchronous working-directory poll.
+    PTYSession *session = self.currentSession;
     _contentView.projectSidebar.canAddCurrentDirectory =
-        self.currentSession.currentLocalWorkingDirectory.length > 0 && !self.currentSession.sshIdentity;
-    _contentView.toolbelt.projectRootDirectory = _projectController.selectedProject.rootDirectory;
+        session && !session.exited && !session.isBrowserSession && !session.sshIdentity;
+    NSString *rootDirectory = _projectController.selectedProject.rootDirectory;
+    if (![_contentView.toolbelt.projectRootDirectory isEqualToString:rootDirectory]) {
+        _contentView.toolbelt.projectRootDirectory = rootDirectory;
+    }
     __weak __typeof(self) weakSelf = self;
     _contentView.toolbelt.projectOpenTerminal = ^(NSString *directory) {
         [[weakSelf projectController] openTerminalInDirectory:directory];
@@ -5157,9 +5162,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)projectSidebarAddCurrentDirectory:(iTermProjectSidebarView *)sidebar {
-    if (!self.currentSession.sshIdentity && self.currentSession.currentLocalWorkingDirectory.length) {
-        [self addProjectDirectory:self.currentSession.currentLocalWorkingDirectory];
-    }
+    PTYSession *session = self.currentSession;
+    if (_closing || _deallocing || !session || session.exited || session.isBrowserSession || session.sshIdentity) { return; }
+    __weak __typeof(self) weakSelf = self;
+    __weak PTYSession *weakSession = session;
+    [session asyncCurrentLocalWorkingDirectory:^(NSString *directory) {
+        PseudoTerminal *term = [[weakSelf retain] autorelease];
+        PTYSession *originalSession = [[weakSession retain] autorelease];
+        // A tab may close, move to another window, or enter SSH while the poll runs.
+        if (!term || term->_closing || term->_deallocing || !originalSession ||
+            originalSession.exited || originalSession.isBrowserSession || originalSession.sshIdentity ||
+            ![term.allSessions containsObject:originalSession] || !directory.length) { return; }
+        [term addProjectDirectory:directory];
+    }];
 }
 
 - (void)projectSidebar:(iTermProjectSidebarView *)sidebar removeProject:(iTermProjectDirectory *)project {

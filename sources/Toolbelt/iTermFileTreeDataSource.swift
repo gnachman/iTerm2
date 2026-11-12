@@ -20,11 +20,12 @@ final class iTermFileTreeDataSource {
     private(set) var rootPath: String?
     private(set) var generation = 0
     private var cache = [String: Listing]()
-    private var requests = [String: (UUID, [(Listing) -> Void])]()
+    private var requests = [String: (UUID, [(Listing) -> Void], DispatchWorkItem)]()
     var showsHiddenFiles = false {
         didSet { if oldValue != showsHiddenFiles { reset(rootPath: rootPath) } }
     }
     var loadedDirectoryPaths: [String] { cache.keys.sorted() }
+    var cachedListings: [String: Listing] { cache }
 
     init(ioQueue: DispatchQueue = DispatchQueue(label: "com.iterm2.file-tree", qos: .utility)) {
         self.ioQueue = ioQueue
@@ -49,19 +50,54 @@ final class iTermFileTreeDataSource {
     }
 
     func reset(rootPath: String?) {
-        generation += 1
         self.rootPath = rootPath
         cache.removeAll()
-        let pending = requests.values.flatMap { $0.1 }
+        cancelPendingRequests()
+    }
+
+    /// Obsolete reads cannot publish, but completed listings survive transient hiding.
+    func cancelPendingRequests() {
+        generation += 1
+        let pending = Array(requests.values)
         requests.removeAll()
+        for request in pending { request.2.cancel() }
         let cancellation = NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError)
-        for completion in pending { completion(.failure(cancellation)) }
+        for request in pending { request.1.forEach { $0(.failure(cancellation)) } }
+    }
+
+    /// Restore only canonical paths reachable through expandable cached parents.
+    /// The caller supplies a snapshot made with the current hidden-file mode after resetting.
+    func restoreCachedListings(_ listings: [String: Listing]) {
+        cache.removeAll()
+        guard let rootPath, NSString(string: rootPath).isAbsolutePath, !rootPath.contains("\0"),
+              URL(fileURLWithPath: rootPath).standardizedFileURL.path == rootPath else { return }
+        func restore(_ path: String) {
+            guard let listing = listings[path] else { return }
+            switch listing {
+            case .failure:
+                cache[path] = listing
+            case .success(let children):
+                guard Set(children.map(\.path)).count == children.count,
+                      children.allSatisfy({ child in
+                    !child.path.contains("\0") && !child.name.isEmpty &&
+                        (child.path as NSString).deletingLastPathComponent == path &&
+                        (child.path as NSString).lastPathComponent == child.name &&
+                        URL(fileURLWithPath: child.path).standardizedFileURL.path == child.path &&
+                        (!child.isExpandable || child.isDirectory) &&
+                        (showsHiddenFiles || !child.name.hasPrefix("."))
+                }) else { return }
+                cache[path] = listing
+                for child in children where child.isExpandable { restore(child.path) }
+            }
+        }
+        restore(rootPath)
     }
 
     func invalidate(directoryPaths paths: Set<String>) {
         for path in paths {
             cache.removeValue(forKey: path)
             if let request = requests.removeValue(forKey: path) {
+                request.2.cancel()
                 let error = NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError)
                 request.1.forEach { $0(.failure(error)) }
             }
@@ -79,8 +115,7 @@ final class iTermFileTreeDataSource {
         let token = UUID()
         let generation = self.generation
         let hidden = showsHiddenFiles
-        requests[path] = (token, [completion])
-        ioQueue.async {
+        let work = DispatchWorkItem { [weak self] in
             let result = Self.list(path: path, showsHiddenFiles: hidden)
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.generation == generation, self.requests[path]?.0 == token,
@@ -90,6 +125,8 @@ final class iTermFileTreeDataSource {
                 pending.1.forEach { $0(result) }
             }
         }
+        requests[path] = (token, [completion], work)
+        ioQueue.async(execute: work)
     }
 
     /// A successful parent listing is authoritative, including when a child failed before it.

@@ -9,6 +9,14 @@ final class iTermFileTreeState {
     private var expansionByRoot = [String: Set<String>]()
     private var publishedRootDirectory: String?
     private var publishedDirectories = [String: [iTermFileTreeEntry]]()
+    private struct CachedRoot {
+        let showsHiddenFiles: Bool
+        let listings: [String: iTermFileTreeDataSource.Listing]
+    }
+    // Memory only: retain at most four archived roots in addition to the active IO cache.
+    // Large trees remain usable but are omitted from recent-root retention.
+    private var cachedRoots = [String: CachedRoot]()
+    private var recentRoots = [String]()
 
     init(source: iTermFileTreeDataSource = iTermFileTreeDataSource()) {
         self.source = source
@@ -16,11 +24,36 @@ final class iTermFileTreeState {
 
     func setRoot(_ root: String?) {
         guard root != rootDirectory else { return }
-        if let rootDirectory { expansionByRoot[rootDirectory] = expandedPaths }
+        let incomingCache = root.flatMap { cachedRoots[$0] }
+        if let rootDirectory {
+            expansionByRoot[rootDirectory] = expandedPaths
+            rememberCache(forRoot: rootDirectory)
+        }
         rootDirectory = root
         expandedPaths = root.flatMap { expansionByRoot[$0] } ?? []
         loadingPaths.removeAll()
         source.reset(rootPath: root)
+        if let incomingCache, incomingCache.showsHiddenFiles == source.showsHiddenFiles {
+            source.restoreCachedListings(incomingCache.listings)
+        }
+    }
+
+    private func rememberCache(forRoot root: String) {
+        cachedRoots.removeValue(forKey: root)
+        recentRoots.removeAll { $0 == root }
+        let listings = source.cachedListings
+        guard listings.count <= 20_000 else { return }
+        var entryCount = 0
+        for listing in listings.values {
+            if case .success(let children) = listing { entryCount += children.count }
+            if entryCount > 20_000 { return }
+        }
+        guard !listings.isEmpty else { return }
+        cachedRoots[root] = CachedRoot(showsHiddenFiles: source.showsHiddenFiles, listings: listings)
+        recentRoots.append(root)
+        while recentRoots.count > 4 {
+            cachedRoots.removeValue(forKey: recentRoots.removeFirst())
+        }
     }
 
     func loadDirectory(atPath path: String, completion: @escaping (iTermFileTreeDataSource.Listing) -> Void) {
@@ -49,6 +82,26 @@ final class iTermFileTreeState {
         publishedDirectories.removeAll()
     }
 
+    /// Hydrate the next outline snapshot without IO, preserving cached entry identities.
+    /// The caller reloads AppKit immediately after installing these canonical entries.
+    func preparePublishedTreeFromCache() -> [String: iTermFileTreeEntry] {
+        clearPublishedTree()
+        guard let rootDirectory else { return [:] }
+        let listings = source.cachedListings
+        var entries = [String: iTermFileTreeEntry]()
+        func publish(_ path: String) {
+            guard case .success(let children)? = listings[path] else { return }
+            // This is a fresh snapshot: no previous descendants need reconciliation.
+            publishedDirectories[path] = children
+            for child in children {
+                entries[child.path] = child
+                if child.isExpandable { publish(child.path) }
+            }
+        }
+        publish(rootDirectory)
+        return entries
+    }
+
     func publishDirectory(_ children: [iTermFileTreeEntry], atPath path: String) {
         guard let rootDirectory,
               path == rootDirectory || path.hasPrefix(rootDirectory == "/" ? "/" : rootDirectory + "/") else { return }
@@ -72,6 +125,8 @@ final class iTermFileTreeState {
     }
 
     func restore(from state: [AnyHashable: Any]) {
+        cachedRoots.removeAll()
+        recentRoots.removeAll()
         let remembered = state["ProjectFileTreeExpandedPaths"] as? [String: [String]] ?? [:]
         expansionByRoot = remembered.reduce(into: [:]) { output, record in
             guard NSString(string: record.key).isAbsolutePath, !record.key.contains("\0"), URL(fileURLWithPath: record.key).standardizedFileURL.path == record.key else { return }

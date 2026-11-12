@@ -639,6 +639,7 @@ static NSString *const kDynamicToolURL = @"URL";
 }
 
 - (void)setProjectRootDirectory:(NSString *)directory {
+    if (_projectRootDirectory == directory || [_projectRootDirectory isEqualToString:directory]) { return; }
     _projectRootDirectory = [directory copy];
     self.fileTreeView.rootDirectory = directory;
 }
