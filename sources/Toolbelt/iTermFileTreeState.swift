@@ -9,13 +9,16 @@ final class iTermFileTreeState {
     private var expansionByRoot = [String: Set<String>]()
     private var publishedRootDirectory: String?
     private var publishedDirectories = [String: [iTermFileTreeEntry]]()
-    private struct CachedRoot {
-        let showsHiddenFiles: Bool
-        let listings: [String: iTermFileTreeDataSource.Listing]
+    private struct PreparedTree {
+        let snapshot: iTermFileTreeDataSource.CacheSnapshot
+        let directories: [String: [iTermFileTreeEntry]]
+        let entries: [String: iTermFileTreeEntry]
     }
+    private var preparedTree: PreparedTree?
+    private var preparedRevision = -1
     // Memory only: retain at most four archived roots in addition to the active IO cache.
     // Large trees remain usable but are omitted from recent-root retention.
-    private var cachedRoots = [String: CachedRoot]()
+    private var cachedRoots = [String: PreparedTree]()
     private var recentRoots = [String]()
 
     init(source: iTermFileTreeDataSource = iTermFileTreeDataSource()) {
@@ -33,23 +36,21 @@ final class iTermFileTreeState {
         expandedPaths = root.flatMap { expansionByRoot[$0] } ?? []
         loadingPaths.removeAll()
         source.reset(rootPath: root)
-        if let incomingCache, incomingCache.showsHiddenFiles == source.showsHiddenFiles {
-            source.restoreCachedListings(incomingCache.listings)
+        preparedTree = nil
+        if let incomingCache, incomingCache.snapshot.showsHiddenFiles == source.showsHiddenFiles {
+            source.restoreCacheSnapshot(incomingCache.snapshot)
+            preparedTree = incomingCache
+            preparedRevision = source.cacheRevision
         }
     }
 
     private func rememberCache(forRoot root: String) {
         cachedRoots.removeValue(forKey: root)
         recentRoots.removeAll { $0 == root }
-        let listings = source.cachedListings
-        guard listings.count <= 20_000 else { return }
-        var entryCount = 0
-        for listing in listings.values {
-            if case .success(let children) = listing { entryCount += children.count }
-            if entryCount > 20_000 { return }
-        }
-        guard !listings.isEmpty else { return }
-        cachedRoots[root] = CachedRoot(showsHiddenFiles: source.showsHiddenFiles, listings: listings)
+        guard let snapshot = source.cacheSnapshot(), snapshot.rootPath == root,
+              snapshot.listings.count <= 20_000, snapshot.entryCount <= 20_000,
+              !snapshot.listings.isEmpty, let prepared = prepareTree(snapshot: snapshot) else { return }
+        cachedRoots[root] = prepared
         recentRoots.append(root)
         while recentRoots.count > 4 {
             cachedRoots.removeValue(forKey: recentRoots.removeFirst())
@@ -96,31 +97,74 @@ final class iTermFileTreeState {
     /// Hydrate the next outline snapshot without IO, preserving cached entry identities.
     /// The caller reloads AppKit immediately after installing these canonical entries.
     func preparePublishedTreeFromCache() -> [String: iTermFileTreeEntry] {
-        clearPublishedTree()
-        guard let rootDirectory else { return [:] }
-        let listings = source.cachedListings
+        guard let snapshot = source.cacheSnapshot(), let prepared = prepareTree(snapshot: snapshot) else {
+            clearPublishedTree()
+            return [:]
+        }
+        publishedRootDirectory = rootDirectory
+        publishedDirectories = prepared.directories
+        return prepared.entries
+    }
+
+    /// Called once after the view publishes an IO batch. Share its complete canonical map so
+    /// the next root switch does not build another dictionary for the same displayed entries.
+    func cachePublishedTree(canonicalEntries: [String: iTermFileTreeEntry]) {
+        guard publishedRootDirectory == rootDirectory, let snapshot = source.cacheSnapshot() else { return }
+        var directoryCount = 0
+        let matches = snapshot.listings.allSatisfy { path, listing in
+            guard case .success(let children) = listing else { return true }
+            directoryCount += 1
+            guard let published = publishedDirectories[path], children.count == published.count else { return false }
+            return zip(children, published).allSatisfy { child, existing in
+                child.path == existing.path && child.name == existing.name &&
+                    child.isDirectory == existing.isDirectory && child.isExpandable == existing.isExpandable &&
+                    canonicalEntries[existing.path] === existing
+            }
+        }
+        if matches, directoryCount == publishedDirectories.count, canonicalEntries.count == snapshot.entryCount {
+            preparedTree = PreparedTree(snapshot: snapshot, directories: publishedDirectories, entries: canonicalEntries)
+            preparedRevision = source.cacheRevision
+        } else {
+            // Invalidated collapsed branches or partial publications cannot seed the fast path.
+            _ = prepareTree(snapshot: snapshot)
+        }
+    }
+
+    private func prepareTree(snapshot: iTermFileTreeDataSource.CacheSnapshot) -> PreparedTree? {
+        guard snapshot.rootPath == rootDirectory else { return nil }
+        if let preparedTree, preparedRevision == source.cacheRevision { return preparedTree }
+        let listings = snapshot.listings
+        var directories = [String: [iTermFileTreeEntry]]()
         var entries = [String: iTermFileTreeEntry]()
-        entries.reserveCapacity(listings.values.reduce(0) { total, listing in
-            if case .success(let children) = listing { return total + children.count }
-            return total
-        })
+        entries.reserveCapacity(snapshot.entryCount)
         func publish(_ path: String) {
             guard case .success(let children)? = listings[path] else { return }
-            // This is a fresh snapshot: no previous descendants need reconciliation.
-            publishedDirectories[path] = children
-            for child in children {
+            // Preserve the outline's canonical identities after an unchanged IO refresh.
+            let previous = publishedRootDirectory == rootDirectory ? publishedDirectories[path] : nil
+            let previousEntries = previous.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.path, $0) }) } ?? [:]
+            let canonical = children.map { child -> iTermFileTreeEntry in
+                guard let existing = previousEntries[child.path], existing.name == child.name,
+                      existing.isDirectory == child.isDirectory, existing.isExpandable == child.isExpandable else { return child }
+                return existing
+            }
+            directories[path] = canonical
+            for child in canonical {
                 entries[child.path] = child
                 if child.isExpandable { publish(child.path) }
             }
         }
-        publish(rootDirectory)
-        return entries
+        publish(snapshot.rootPath)
+        let result = PreparedTree(snapshot: snapshot, directories: directories, entries: entries)
+        preparedTree = result
+        preparedRevision = source.cacheRevision
+        return result
     }
 
     func publishDirectory(_ children: [iTermFileTreeEntry], atPath path: String) {
         guard let rootDirectory,
               path == rootDirectory || path.hasPrefix(rootDirectory == "/" ? "/" : rootDirectory + "/") else { return }
         if publishedRootDirectory != rootDirectory { clearPublishedTree() }
+        preparedTree = nil
         let childPaths = Set(children.filter(\.isExpandable).map(\.path))
         let prefix = path == "/" ? "/" : path + "/"
         for descendant in Array(publishedDirectories.keys) where descendant != path && descendant.hasPrefix(prefix) {
@@ -142,6 +186,7 @@ final class iTermFileTreeState {
     func restore(from state: [AnyHashable: Any]) {
         cachedRoots.removeAll()
         recentRoots.removeAll()
+        preparedTree = nil
         let remembered = state["ProjectFileTreeExpandedPaths"] as? [String: [String]] ?? [:]
         expansionByRoot = remembered.reduce(into: [:]) { output, record in
             guard NSString(string: record.key).isAbsolutePath, !record.key.contains("\0"), URL(fileURLWithPath: record.key).standardizedFileURL.path == record.key else { return }

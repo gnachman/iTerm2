@@ -47,6 +47,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     private var pendingResults = [String: iTermFileTreeDataSource.Listing]()
     private var publicationWork: DispatchWorkItem?
     private var refreshOnResume = false
+    private var resumeRefreshWork: DispatchWorkItem?
+    private var statusLayout: (hasFooter: Bool, hasRetry: Bool)?
+    private var spinnerIsRunning = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -124,28 +127,33 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
     }
     override func layout() {
         super.layout()
-        folderIcon.frame = NSRect(x: 10, y: 10, width: 16, height: 16)
-        header.frame = NSRect(x: 33, y: 9, width: max(0, bounds.width - 112), height: 18)
-        spinner.frame = NSRect(x: max(36, bounds.width - 76), y: 10, width: 16, height: 16)
-        refresh.frame = NSRect(x: max(36, bounds.width - 57), y: 5, width: 24, height: 24)
-        options.frame = NSRect(x: max(60, bounds.width - 31), y: 5, width: 24, height: 24)
-        let footerHeight: CGFloat = (!readErrors.isEmpty || openError != nil) && !entries.isEmpty ? 38 : 0
-        scroll.frame = NSRect(x: 0, y: 35, width: bounds.width, height: max(0, bounds.height - 35 - footerHeight))
+        setFrame(NSRect(x: 10, y: 10, width: 16, height: 16), for: folderIcon)
+        setFrame(NSRect(x: 33, y: 9, width: max(0, bounds.width - 112), height: 18), for: header)
+        setFrame(NSRect(x: max(36, bounds.width - 76), y: 10, width: 16, height: 16), for: spinner)
+        setFrame(NSRect(x: max(36, bounds.width - 57), y: 5, width: 24, height: 24), for: refresh)
+        setFrame(NSRect(x: max(60, bounds.width - 31), y: 5, width: 24, height: 24), for: options)
+        let footerHeight: CGFloat = hasStatusFooter ? 38 : 0
+        setFrame(NSRect(x: 0, y: 35, width: bounds.width, height: max(0, bounds.height - 35 - footerHeight)), for: scroll)
         if let column = outline.outlineTableColumn, scroll.contentSize.width > 0 {
-            column.width = max(40, scroll.contentSize.width)
+            let width = max(40, scroll.contentSize.width)
+            if column.width != width { column.width = width }
         }
         if footerHeight > 0 {
-            status.alignment = .left
-            status.frame = NSRect(x: 10, y: max(35, bounds.height - 35), width: max(0, bounds.width - (retry.isHidden ? 20 : 82)), height: 30)
-            retry.frame = NSRect(x: max(10, bounds.width - 68), y: max(35, bounds.height - 31), width: 58, height: 23)
+            if status.alignment != .left { status.alignment = .left }
+            setFrame(NSRect(x: 10, y: max(35, bounds.height - 35), width: max(0, bounds.width - (retry.isHidden ? 20 : 82)), height: 30), for: status)
+            setFrame(NSRect(x: max(10, bounds.width - 68), y: max(35, bounds.height - 31), width: 58, height: 23), for: retry)
         } else {
-            status.alignment = .center
+            if status.alignment != .center { status.alignment = .center }
             let retryY = max(35, min(100, bounds.height - 28))
             let statusHeight = retry.isHidden ? 48 : max(0, min(48, retryY - 42))
-            status.frame = NSRect(x: 18, y: retry.isHidden ? 48 : 38, width: max(0, bounds.width - 36), height: statusHeight)
-            retry.frame = NSRect(x: max(10, (bounds.width - 58) / 2), y: retryY, width: 58, height: 23)
+            setFrame(NSRect(x: 18, y: retry.isHidden ? 48 : 38, width: max(0, bounds.width - 36), height: statusHeight), for: status)
+            setFrame(NSRect(x: max(10, (bounds.width - 58) / 2), y: retryY, width: 58, height: 23), for: retry)
         }
     }
+    private func setFrame(_ frame: NSRect, for view: NSView) {
+        if view.frame != frame { view.frame = frame }
+    }
+    private var hasStatusFooter: Bool { (!readErrors.isEmpty || openError != nil) && !entries.isEmpty }
     func relayout() { needsLayout = true }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -177,10 +185,10 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         header.stringValue = rootDirectory.map { URL(fileURLWithPath: $0).lastPathComponent } ?? String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree header when no project is selected")
         header.toolTip = rootDirectory
         updateStatus()
-        updateVisibility()
+        updateVisibility(preparedForRoot: true)
     }
 
-    private func updateVisibility() {
+    private func updateVisibility(preparedForRoot: Bool = false) {
         let nowVisible = !stopped && !isHiddenOrHasHiddenAncestor && window?.isVisible == true && window?.isMiniaturized == false && window?.occlusionState.contains(.visible) == true
         if !nowVisible {
             stopWatching()
@@ -196,21 +204,34 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         let wasVisible = visible
         visible = nowVisible
         if nowVisible, let rootDirectory {
-            if !wasVisible {
+            if !wasVisible && !preparedForRoot {
                 entries = treeState.preparePublishedTreeFromCache()
                 restoreOutline()
             }
             if !watcher.isWatchingPaths { watcher.startWatchingPaths([rootDirectory]) }
             request(rootDirectory)
             if refreshOnResume {
-                refreshOnResume = false
-                refreshAll(nil)
+                scheduleResumeRefresh()
             }
         }
         updateStatus()
     }
+    private func scheduleResumeRefresh() {
+        guard resumeRefreshWork == nil else { return }
+        let generation = source.generation
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.visible, !self.stopped, self.source.generation == generation else { return }
+            self.resumeRefreshWork = nil
+            self.refreshAll(nil)
+        }
+        resumeRefreshWork = work
+        // Present retained rows first and coalesce rapid tab/project switches before refreshing.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+    }
     private func stopWatching() {
         watcher.stopWatchingPaths()
+        resumeRefreshWork?.cancel()
+        resumeRefreshWork = nil
         refreshWork?.cancel()
         refreshWork = nil
         changedPaths.removeAll()
@@ -230,6 +251,7 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         watcher.stopWatchingPaths()
         watcher._delegate = nil
         refreshWork?.cancel()
+        resumeRefreshWork?.cancel()
         publicationWork?.cancel()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
@@ -319,28 +341,37 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         for path in publications.keys.sorted(by: { $0.count < $1.count }) {
             treeState.publishDirectory(publications[path] ?? [], atPath: path)
         }
+        if !changed.isEmpty { treeState.cachePublishedTree(canonicalEntries: entries) }
         if !changed.isEmpty { restoreOutline(reloading: changed) }
     }
     private func updateStatus() {
         retryPath = readErrors.keys.sorted().first
-        retry.isHidden = retryPath == nil
+        let retryHidden = retryPath == nil
+        if retry.isHidden != retryHidden { retry.isHidden = retryHidden }
+        let text: String?
         if let openError {
-            status.stringValue = openError
-            status.isHidden = false
+            text = openError
         } else if let retryPath {
-            status.stringValue = readErrors[retryPath] ?? ""
-            status.isHidden = false
+            text = readErrors[retryPath] ?? ""
         } else if rootDirectory == nil {
-            status.stringValue = String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree prompt when no project is selected")
-            status.isHidden = false
+            text = String(localized: "FileTree.NoProject", defaultValue: "Select a Project", comment: "File tree prompt when no project is selected")
         } else if entries.isEmpty, loading.isEmpty, case .success(let children)? = source.cachedListing(atPath: rootDirectory ?? ""), children.isEmpty {
-            status.stringValue = String(localized: "FileTree.Empty", defaultValue: "This folder is empty.", comment: "Empty project root folder")
-            status.isHidden = false
+            text = String(localized: "FileTree.Empty", defaultValue: "This folder is empty.", comment: "Empty project root folder")
         } else {
-            status.isHidden = true
+            text = nil
         }
-        if loading.isEmpty { spinner.stopAnimation(nil) } else { spinner.startAnimation(nil) }
-        needsLayout = true
+        if let text, status.stringValue != text { status.stringValue = text }
+        if status.isHidden != (text == nil) { status.isHidden = text == nil }
+        let running = !loading.isEmpty
+        if spinnerIsRunning != running {
+            spinnerIsRunning = running
+            if running { spinner.startAnimation(nil) } else { spinner.stopAnimation(nil) }
+        }
+        let layout = (hasFooter: hasStatusFooter, hasRetry: !retryHidden)
+        if statusLayout?.hasFooter != layout.hasFooter || statusLayout?.hasRetry != layout.hasRetry {
+            statusLayout = layout
+            needsLayout = true
+        }
     }
     private func restoreOutline(reloading paths: Set<String>? = nil) {
         restoring = true
@@ -369,6 +400,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         options.menu?.popUp(positioning: nil, at: NSPoint(x: options.frame.minX, y: options.frame.maxY), in: self)
     }
     @objc private func toggleHidden(_ sender: Any?) {
+        resumeRefreshWork?.cancel()
+        resumeRefreshWork = nil
+        refreshOnResume = false
         publicationWork?.cancel()
         publicationWork = nil
         pendingResults.removeAll()
@@ -379,6 +413,9 @@ final class iTermToolFileTree: NSView, ToolbeltTool, NSOutlineViewDataSource, NS
         if let rootDirectory { request(rootDirectory) }
     }
     @objc private func refreshAll(_ sender: Any?) {
+        resumeRefreshWork?.cancel()
+        resumeRefreshWork = nil
+        refreshOnResume = false
         openError = nil
         for path in treeState.refreshVisibleDirectories() { request(path) }
     }

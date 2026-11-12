@@ -16,10 +16,26 @@ final class iTermFileTreeEntry: NSObject {
 /// Main-thread lazy cache. Only the IO queue performs filesystem operations.
 final class iTermFileTreeDataSource {
     typealias Listing = Result<[iTermFileTreeEntry], Error>
+    /// Only this source can create snapshots. Entries come from IO or the validating restore API.
+    final class CacheSnapshot {
+        let rootPath: String
+        let showsHiddenFiles: Bool
+        let listings: [String: Listing]
+        let entryCount: Int
+
+        fileprivate init(rootPath: String, showsHiddenFiles: Bool, listings: [String: Listing], entryCount: Int) {
+            self.rootPath = rootPath
+            self.showsHiddenFiles = showsHiddenFiles
+            self.listings = listings
+            self.entryCount = entryCount
+        }
+    }
     private let ioQueue: DispatchQueue
     private(set) var rootPath: String?
     private(set) var generation = 0
+    private(set) var cacheRevision = 0
     private var cache = [String: Listing]()
+    private var snapshot: CacheSnapshot?
     private var requests = [String: (UUID, [(Listing) -> Void], DispatchWorkItem)]()
     var showsHiddenFiles = false {
         didSet { if oldValue != showsHiddenFiles { reset(rootPath: rootPath) } }
@@ -52,7 +68,43 @@ final class iTermFileTreeDataSource {
     func reset(rootPath: String?) {
         self.rootPath = rootPath
         cache.removeAll()
+        cacheDidChange()
         cancelPendingRequests()
+    }
+
+    private func cacheDidChange() {
+        cacheRevision += 1
+        snapshot = nil
+    }
+
+    /// Prune unreachable listings once, then share this immutable snapshot across root switches.
+    func cacheSnapshot() -> CacheSnapshot? {
+        if let snapshot { return snapshot }
+        guard let rootPath, NSString(string: rootPath).isAbsolutePath, !rootPath.contains("\0"),
+              URL(fileURLWithPath: rootPath).standardizedFileURL.path == rootPath else { return nil }
+        var listings = [String: Listing]()
+        var entryCount = 0
+        func visit(_ path: String) {
+            guard let listing = cache[path] else { return }
+            listings[path] = listing
+            if case .success(let children) = listing {
+                entryCount += children.count
+                for child in children where child.isExpandable { visit(child.path) }
+            }
+        }
+        visit(rootPath)
+        let result = CacheSnapshot(rootPath: rootPath, showsHiddenFiles: showsHiddenFiles,
+                                   listings: listings, entryCount: entryCount)
+        snapshot = result
+        return result
+    }
+
+    /// This fast path accepts only an opaque source-created snapshot, never caller-built listings.
+    func restoreCacheSnapshot(_ snapshot: CacheSnapshot) {
+        guard snapshot.rootPath == rootPath, snapshot.showsHiddenFiles == showsHiddenFiles else { return }
+        cache = snapshot.listings
+        cacheDidChange()
+        self.snapshot = snapshot
     }
 
     /// Obsolete reads cannot publish, but completed listings survive transient hiding.
@@ -69,6 +121,7 @@ final class iTermFileTreeDataSource {
     /// The caller supplies a snapshot made with the current hidden-file mode after resetting.
     func restoreCachedListings(_ listings: [String: Listing]) {
         cache.removeAll()
+        cacheDidChange()
         guard let rootPath, NSString(string: rootPath).isAbsolutePath, !rootPath.contains("\0"),
               URL(fileURLWithPath: rootPath).standardizedFileURL.path == rootPath else { return }
         func restore(_ path: String) {
@@ -95,7 +148,7 @@ final class iTermFileTreeDataSource {
 
     func invalidate(directoryPaths paths: Set<String>) {
         for path in paths {
-            cache.removeValue(forKey: path)
+            if cache.removeValue(forKey: path) != nil { cacheDidChange() }
             if let request = requests.removeValue(forKey: path) {
                 request.2.cancel()
                 let error = NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError)
@@ -121,6 +174,7 @@ final class iTermFileTreeDataSource {
                 guard let self, self.generation == generation, self.requests[path]?.0 == token,
                       let pending = self.requests.removeValue(forKey: path) else { return }
                 self.cache[path] = result
+                self.cacheDidChange()
                 if case .success(let children) = result { self.reconcileDescendants(of: path, children: children) }
                 pending.1.forEach { $0(result) }
             }

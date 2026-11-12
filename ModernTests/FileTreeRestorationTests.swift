@@ -221,6 +221,140 @@ final class FileTreeRestorationTests: XCTestCase {
         XCTAssertNil(state.source.cachedListing(atPath: folder.path))
     }
 
+    func testCachedRootRetainsCanonicalPublishedIdentityAfterUnchangedRefresh() throws {
+        let roots = try makeRoots(names: ["a", "b"])
+        let state = iTermFileTreeState()
+        state.setRoot(roots[0].path)
+        publishDirectory(state, path: roots[0].path)
+        let original = try XCTUnwrap(state.publishedChildren(of: nil).first)
+        _ = state.preparePublishedTreeFromCache()
+        state.source.invalidate(directoryPaths: [roots[0].path])
+        let refreshed = expectation(description: "unchanged root refresh")
+        state.loadDirectory(atPath: roots[0].path) { result in
+            guard case .success(let children) = result else { XCTFail("Refresh failed"); refreshed.fulfill(); return }
+            XCTAssertFalse(children.first === original)
+            // The outline canonicalizes unchanged metadata to the item it already displays.
+            state.publishDirectory([original], atPath: roots[0].path)
+            state.cachePublishedTree(canonicalEntries: [original.path: original])
+            refreshed.fulfill()
+        }
+        wait(for: [refreshed], timeout: 5)
+        state.setRoot(roots[1].path)
+        _ = state.preparePublishedTreeFromCache()
+        state.setRoot(roots[0].path)
+        let canonical = state.preparePublishedTreeFromCache()
+        XCTAssertTrue(canonical[original.path] === original)
+        XCTAssertTrue(state.publishedChildren(of: nil).first === original)
+        // Repeated presentation must continue to use the same outline identities.
+        XCTAssertTrue(state.preparePublishedTreeFromCache()[original.path] === original)
+    }
+
+    func testChangedMetadataReplacesCanonicalItemAfterCachedRootSwitch() throws {
+        let roots = try makeRoots(names: ["a", "b"])
+        let state = iTermFileTreeState()
+        state.setRoot(roots[0].path)
+        publishDirectory(state, path: roots[0].path)
+        let oldFile = try XCTUnwrap(state.publishedChildren(of: nil).first)
+        _ = state.preparePublishedTreeFromCache()
+        try FileManager.default.removeItem(atPath: oldFile.path)
+        try FileManager.default.createDirectory(atPath: oldFile.path, withIntermediateDirectories: true)
+        state.source.invalidate(directoryPaths: [roots[0].path])
+        publishDirectory(state, path: roots[0].path)
+        // A stale view map must not replace the newly published directory metadata.
+        state.cachePublishedTree(canonicalEntries: [oldFile.path: oldFile])
+        state.setRoot(roots[1].path)
+        state.setRoot(roots[0].path)
+        let folder = try XCTUnwrap(state.preparePublishedTreeFromCache()[oldFile.path])
+        XCTAssertFalse(folder === oldFile)
+        XCTAssertTrue(folder.isDirectory)
+        XCTAssertTrue(folder.isExpandable)
+    }
+
+    func testCachedRootOmitsInvalidatedCollapsedBranchUntilExpandedAgain() throws {
+        let roots = try makeRoots(names: ["a", "b"])
+        let folder = roots[0].appendingPathComponent("folder")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data().write(to: folder.appendingPathComponent("old"))
+        let state = iTermFileTreeState()
+        state.setRoot(roots[0].path)
+        publishDirectory(state, path: roots[0].path)
+        publishDirectory(state, path: folder.path)
+        let item = try XCTUnwrap(state.publishedChildren(of: nil).first { $0.name == "folder" })
+        let oldCanonical = state.preparePublishedTreeFromCache()
+        state.source.invalidate(directoryPaths: [folder.path])
+        state.cachePublishedTree(canonicalEntries: oldCanonical)
+        XCTAssertEqual(state.publishedChildren(of: item).map(\.name), ["old"])
+        state.setRoot(roots[1].path)
+        state.setRoot(roots[0].path)
+        let canonical = state.preparePublishedTreeFromCache()
+        XCTAssertTrue(state.publishedChildren(of: item).isEmpty)
+        XCTAssertNil(canonical[folder.path + "/old"])
+        XCTAssertNil(state.source.cachedListing(atPath: folder.path))
+        XCTAssertTrue(state.directoriesNeedingLoad().isEmpty)
+        state.expandedPaths.insert(folder.path)
+        XCTAssertEqual(state.directoriesNeedingLoad(), [folder.path])
+    }
+
+    func testUntrustedCacheRejectsMalformedChildrenAndUnreachableDescendants() {
+        let root = "/tmp/archive-validation"
+        func entry(_ path: String, _ name: String, directory: Bool = false, expandable: Bool = false) -> iTermFileTreeEntry {
+            iTermFileTreeEntry(path: path, name: name, isDirectory: directory, isExpandable: expandable)
+        }
+        let valid = entry(root + "/folder", "folder", directory: true, expandable: true)
+        let malformed: [[iTermFileTreeEntry]] = [
+            [entry(root + "/../outside", "../outside")],
+            [entry(root + "/folder/child", "child")],
+            [entry(root + "/.", ".")],
+            [entry(root + "/nul\0", "nul\0")],
+            [entry(root + "/.hidden", ".hidden")],
+            [entry(root + "/leaf", "leaf", expandable: true)],
+            [valid, valid]
+        ]
+        for children in malformed {
+            let state = iTermFileTreeState()
+            state.setRoot(root)
+            state.source.restoreCachedListings([
+                root: .success(children),
+                root + "/folder": .success([entry(root + "/folder/child", "child")])
+            ])
+            state.setRoot("/tmp/another-archive")
+            state.setRoot(root)
+            XCTAssertTrue(state.preparePublishedTreeFromCache().isEmpty)
+            XCTAssertTrue(state.source.cachedListings.isEmpty)
+        }
+        for badRoot in ["relative", root + "/../invalid", root + "\0"] {
+            let state = iTermFileTreeState()
+            state.setRoot(badRoot)
+            state.source.restoreCachedListings([badRoot: .success([])])
+            XCTAssertTrue(state.source.cachedListings.isEmpty)
+        }
+    }
+
+    func testSourceSnapshotRejectsDifferentRootAndHiddenModeWithoutReplacingCurrentCache() throws {
+        let roots = try makeRoots(names: ["a", "b"])
+        try Data().write(to: roots[0].appendingPathComponent(".hidden"))
+        for hidden in [false, true] {
+            let state = iTermFileTreeState()
+            state.source.showsHiddenFiles = hidden
+            state.setRoot(roots[0].path)
+            publishDirectory(state, path: roots[0].path)
+            let snapshot = try XCTUnwrap(state.source.cacheSnapshot())
+            state.setRoot(roots[1].path)
+            publishDirectory(state, path: roots[1].path)
+            let current = try XCTUnwrap(state.publishedChildren(of: nil).first)
+            state.source.restoreCacheSnapshot(snapshot)
+            XCTAssertEqual(state.source.loadedDirectoryPaths, [roots[1].path])
+            XCTAssertTrue(try state.source.cachedListing(atPath: roots[1].path)?.get().first === current)
+            state.source.showsHiddenFiles = !hidden
+            state.setRoot(roots[0].path)
+            state.source.restoreCacheSnapshot(snapshot)
+            XCTAssertTrue(state.source.cachedListings.isEmpty)
+            XCTAssertTrue(state.preparePublishedTreeFromCache().isEmpty)
+            publishDirectory(state, path: roots[0].path)
+            XCTAssertEqual(state.publishedChildren(of: nil).map(\.name), hidden ? ["a-file"] : [".hidden", "a-file"])
+        }
+    }
+
     private func makeRoots(names: [String]) throws -> [URL] {
         let parent = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let roots = names.map { parent.appendingPathComponent($0) }
