@@ -406,17 +406,30 @@ class CommandURLHandler: NSObject {
     @objc
     func show(completion: ((CommandURLHandler) -> ())?) {
         if _action == .runSilently {
-            var parts = [String(localized: "CommandURL.RunCommandPrefix", defaultValue: "Run command", comment: "Leading fragment of the silent-run confirmation prompt"), String(localized: "CommandURL.OpenQuote", defaultValue: "“", comment: "Opening quotation mark placed before the command") + self.command + String(localized: "CommandURL.CloseQuote", defaultValue: "”", comment: "Closing quotation mark placed after the command")]
+            let command = self.command
+            var lines = [String(localized: "CommandURL.SilentConfirmMessage",
+                                defaultValue: "Run the command “\(command)”?\nIt will run silently in the background.",
+                                comment: "Body of the silent-run confirmation alert. %@ is the command line. Lines naming the user, host, and directory may follow.")]
+            var details = [String]()
             if let username {
-                parts.append(String(localized: "CommandURL.AsUser", defaultValue: "as \(username)", comment: "Fragment: run the command as a user"))
+                details.append(String(localized: "CommandURL.SilentConfirmUser",
+                                      defaultValue: "User: \(username)",
+                                      comment: "A line in the silent-run confirmation alert. %@ is the user name the command will run as."))
             }
             if let hostname, !hostname.isEmpty {
-                parts.append(String(localized: "CommandURL.OnHost", defaultValue: "on \(hostname)", comment: "Fragment: run the command on a host"))
+                details.append(String(localized: "CommandURL.SilentConfirmHost",
+                                      defaultValue: "Host: \(hostname)",
+                                      comment: "A line in the silent-run confirmation alert. %@ is the host the command will run on."))
             }
             if let directory {
-                parts.append(String(localized: "CommandURL.InDirectory", defaultValue: "in \(directory)", comment: "Fragment: run the command in a directory"))
+                details.append(String(localized: "CommandURL.SilentConfirmDirectory",
+                                      defaultValue: "Directory: \(directory)",
+                                      comment: "A line in the silent-run confirmation alert. %@ is the directory the command will run in."))
             }
-            let selection = iTermWarning.show(withTitle: parts.joined(separator: " ") + String(localized: "CommandURL.SilentConfirmSuffix", defaultValue: "?\nIt will run silently in the background.", comment: "Suffix appended to the silent-run confirmation prompt"),
+            if !details.isEmpty {
+                lines.append(details.joined(separator: "\n"))
+            }
+            let selection = iTermWarning.show(withTitle: lines.joined(separator: "\n\n"),
                                               actions: [ iTermLocalizedOK(), iTermLocalizedCancel()],
                                               accessory: nil,
                                               identifier: "NoSyncRunCommand_\(self.command)",

@@ -82179,7 +82179,7 @@
     },
     "CommandURL.AsUser" : {
       "comment" : "Fragment: run the command as a user",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -82233,7 +82233,7 @@
     },
     "CommandURL.CloseQuote" : {
       "comment" : "Closing quotation mark placed after the command",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -82449,7 +82449,7 @@
     },
     "CommandURL.InDirectory" : {
       "comment" : "Fragment: run the command in a directory",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -82503,7 +82503,7 @@
     },
     "CommandURL.OnHost" : {
       "comment" : "Fragment: run the command on a host",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -82611,7 +82611,7 @@
     },
     "CommandURL.OpenQuote" : {
       "comment" : "Opening quotation mark placed before the command",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -82773,7 +82773,7 @@
     },
     "CommandURL.RunCommandPrefix" : {
       "comment" : "Leading fragment of the silent-run confirmation prompt",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -83149,9 +83149,171 @@
         }
       }
     },
+    "CommandURL.SilentConfirmDirectory" : {
+      "comment" : "A line in the silent-run confirmation alert. %@ is the directory the command will run in.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzeichnis: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Directory: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directorio: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ディレクトリ: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "디렉토리: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diretório: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каталог: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目录：%@"
+          }
+        }
+      }
+    },
+    "CommandURL.SilentConfirmHost" : {
+      "comment" : "A line in the silent-run confirmation alert. %@ is the host the command will run on.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Host: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ホスト: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "호스트: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хост: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主机：%@"
+          }
+        }
+      }
+    },
+    "CommandURL.SilentConfirmMessage" : {
+      "comment" : "Body of the silent-run confirmation alert. %@ is the command line. Lines naming the user, host, and directory may follow.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den Befehl „%@“ ausführen?\nEr wird lautlos im Hintergrund ausgeführt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Run the command “%@”?\nIt will run silently in the background."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Ejecutar el comando “%@”?\nSe ejecutará en segundo plano sin avisar."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コマンド「%@」を実行しますか？\nバックグラウンドでサイレントに実行されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” 명령을 실행하겠습니까?\n백그라운드에서 조용히 실행됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executar o comando “%@”?\nEle será executado silenciosamente em segundo plano."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Запустить команду «%@»?\nОна будет выполнена в фоновом режиме без вывода."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "运行命令“%@”？\n它将在后台静默运行。"
+          }
+        }
+      }
+    },
     "CommandURL.SilentConfirmSuffix" : {
       "comment" : "Suffix appended to the silent-run confirmation prompt",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -83199,6 +83361,60 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "?\n它将在后台静默运行。"
+          }
+        }
+      }
+    },
+    "CommandURL.SilentConfirmUser" : {
+      "comment" : "A line in the silent-run confirmation alert. %@ is the user name the command will run as.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzer: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "User: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuario: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ユーザー: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용자: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuário: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пользователь: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户：%@"
           }
         }
       }
@@ -124142,6 +124358,60 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Indicator.PinnedHotkeyWindow" : {
+      "comment" : "Help text, interpreted as markdown, for the indicator shown in a pinned Hotkey Window. Unpin is a link that unpins the window. %@ is the link’s URL and must stay inside the parentheses.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Hotkey-Fenster ist angeheftet. [Lösen](%@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This Hotkey Window is pinned. [Unpin](%@)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta ventana de tecla rápida está fijada. [Dejar de fijar](%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このホットキーウィンドウはピン留めされています。[ピン留めを解除](%@)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 단축키 윈도우는 고정되어 있습니다. [고정 해제](%@)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta Hotkey Window está fixada. [Desafixar](%@)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это окно быстрого вызова закреплено. [Открепить](%@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此Hotkey窗口已固定。[取消固定](%@)"
           }
         }
       }
