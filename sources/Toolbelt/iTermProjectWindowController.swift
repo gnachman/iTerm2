@@ -490,6 +490,14 @@ import Foundation
                     resultIdentifier: result?.sessionIdentifier, projectIdentifier: project.identifier) else {
                     completion(nil); return
                 }
+                if style != .window, let contexts = self.sessionContexts, let result {
+                    guard let context = contexts.first(where: { $0.sessionIdentifier == result.sessionIdentifier }),
+                          context.tabIdentifier == result.tabIdentifier,
+                          self.targetAssociations[context.sessionIdentifier] == project.identifier else {
+                        completion(nil)
+                        return
+                    }
+                }
                 completion(result?.sessionIdentifier)
             }
         } else {

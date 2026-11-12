@@ -444,6 +444,36 @@ final class ProjectPaneTests: XCTestCase {
         XCTAssertTrue(window.requests.isEmpty)
     }
 
+    func testInvalidNonWindowResultCannotStealSelectionWhileSourceRemainsActive() {
+        for style in [iTermOpenStyle.tab, .verticalSplit, .horizontalSplit] {
+            for invalidResult in ["missing", "exited", "moved-tab", "wrong-owner"] {
+                let (catalog, window, controller) = setup()
+                let source = catalog.projects[0].identifier
+                let requested = catalog.projects[1].identifier
+                controller.openProject(catalog.projects[1], style: style)
+                switch invalidResult {
+                case "exited": window.projectSessionContexts.append(context("created", requested, tab: "new", exited: true))
+                case "moved-tab": window.projectSessionContexts.append(context("created", requested, tab: "moved"))
+                case "wrong-owner": window.projectSessionContexts.append(context("created", source, tab: "new"))
+                default: break
+                }
+                window.requests[0].completion(.init(sessionIdentifier: "created", tabIdentifier: "new", windowIdentifier: "w"))
+                XCTAssertTrue(window.selected.isEmpty, "\(style): \(invalidResult)")
+                XCTAssertEqual(controller.selectedProjectIdentifier, source, "\(style): \(invalidResult)")
+                XCTAssertEqual(window.projectActiveSessionIdentifier, "a")
+                XCTAssertNil((controller.restorableState()["sessionRemembered"] as? [String: String])?[requested])
+            }
+        }
+    }
+    func testWindowResultOutsideSourceContextsStillLeavesSourceSelectionUntouched() {
+        let (catalog, window, controller) = setup()
+        controller.openProject(catalog.projects[1], style: .window)
+        window.requests[0].completion(.init(sessionIdentifier: "outside", tabIdentifier: "outside-tab", windowIdentifier: "outside-window"))
+        XCTAssertTrue(window.selected.isEmpty)
+        XCTAssertEqual(window.projectActiveSessionIdentifier, "a")
+        XCTAssertEqual(controller.selectedProjectIdentifier, catalog.projects[0].identifier)
+    }
+
     func testOwnershipCodecPreservesLegacyInheritanceAndExplicitEmptyOverride() {
         XCTAssertNil(iTermProjectSessionOwnership.identifier(fromArrangement: [:]))
         XCTAssertNil(iTermProjectSessionOwnership.identifier(fromArrangement: ["Session Project Identifier": 3]))
