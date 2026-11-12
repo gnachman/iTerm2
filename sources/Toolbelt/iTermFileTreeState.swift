@@ -100,6 +100,10 @@ final class iTermFileTreeState {
         guard let rootDirectory else { return [:] }
         let listings = source.cachedListings
         var entries = [String: iTermFileTreeEntry]()
+        entries.reserveCapacity(listings.values.reduce(0) { total, listing in
+            if case .success(let children) = listing { return total + children.count }
+            return total
+        })
         func publish(_ path: String) {
             guard case .success(let children)? = listings[path] else { return }
             // This is a fresh snapshot: no previous descendants need reconciliation.

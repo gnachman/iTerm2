@@ -77,12 +77,12 @@ final class iTermFileTreeDataSource {
             case .failure:
                 cache[path] = listing
             case .success(let children):
+                let prefix = path == "/" ? "/" : path + "/"
                 guard Set(children.map(\.path)).count == children.count,
                       children.allSatisfy({ child in
-                    !child.path.contains("\0") && !child.name.isEmpty &&
-                        (child.path as NSString).deletingLastPathComponent == path &&
-                        (child.path as NSString).lastPathComponent == child.name &&
-                        URL(fileURLWithPath: child.path).standardizedFileURL.path == child.path &&
+                    !child.name.isEmpty && child.name != "." && child.name != ".." &&
+                        !child.name.contains("/") && !child.name.contains("\0") &&
+                        child.path == prefix + child.name &&
                         (!child.isExpandable || child.isDirectory) &&
                         (showsHiddenFiles || !child.name.hasPrefix("."))
                 }) else { return }
