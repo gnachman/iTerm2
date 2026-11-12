@@ -63,6 +63,7 @@
 #import "PTYWindow.h"
 
 unsigned short iTermBogusVirtualKeyCode = 0xffff;
+NSString *const iTermApplicationActiveStateDidChangeNotification = @"iTermApplicationActiveStateDidChangeNotification";
 NSString *const iTermApplicationCharacterPaletteWillOpen = @"iTermApplicationCharacterPaletteWillOpen";
 NSString *const iTermApplicationCharacterPaletteDidClose = @"iTermApplicationCharacterPaletteDidClose";
 
@@ -120,6 +121,7 @@ static void iTermInstallCrashOnExceptionHook(void) {
 
 @interface iTermApplication()
 @property(nonatomic, strong, readwrite) NSWindow *it_windowBecomingKey;
+@property(atomic, readwrite) BOOL it_isActiveThreadSafe;
 @end
 
 @implementation iTermApplication {
@@ -128,7 +130,6 @@ static void iTermInstallCrashOnExceptionHook(void) {
     // Are we within one spin of didBecomeActive?
     BOOL _it_justBecameActive;
     // Have we received didBecomeActive without a subsequent didResignActive?
-    BOOL _it_active;
     BOOL _it_restorableStateInvalid;
     BOOL _leader;
     BOOL _activated;
@@ -202,12 +203,16 @@ static void iTermInstallCrashOnExceptionHook(void) {
     if (_leader) {
         [self toggleLeader];
     }
-    _it_active = NO;
+    self.it_isActiveThreadSafe = NO;
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationActiveStateDidChangeNotification
+                                                        object:nil];
 }
 
 - (void)it_applicationDidBecomeActive:(NSNotification *)notification {
-    _it_active = YES;
     _it_justBecameActive = YES;
+    self.it_isActiveThreadSafe = YES;
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationActiveStateDidChangeNotification
+                                                        object:nil];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf it_resetJustBecameActive];
@@ -215,7 +220,7 @@ static void iTermInstallCrashOnExceptionHook(void) {
 }
 
 - (BOOL)it_justBecameActive {
-    return _it_justBecameActive || (self.isActive && !_it_active);
+    return _it_justBecameActive || (self.isActive && !self.it_isActiveThreadSafe);
 }
 
 - (void)it_resetJustBecameActive {
@@ -293,12 +298,22 @@ static void iTermInstallCrashOnExceptionHook(void) {
 
 - (NSEvent *)eventByRemappingForSecureInput:(NSEvent *)event {
     const BOOL secureInput = IsSecureEventInputEnabled();
-    const BOOL remapping = [[iTermModifierRemapper sharedInstance] isRemappingModifiers];
+    iTermModifierRemapper *remapper = [iTermModifierRemapper sharedInstance];
+    const BOOL remapping = [remapper isRemappingModifiers];
     if (secureInput || !remapping) {
-        // The event tap is not working, but we can still remap modifiers for non-system
+        // The event tap is not running, but we can still remap modifiers for non-system
         // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
-        // the event tap performs the remapping.
+        // the event tap performs the remapping. Besides secure input, a missing permission,
+        // or remapping not being global, the taps are intentionally off while iTerm2 is
+        // inactive. Keys still arrive here then when a nonactivating panel, such as a
+        // floating hotkey window or Open Quickly, is key, and remapping them is intended.
         RLog(@"May need remapping because secure input is on or event tap not running");
+        return [self eventByRemappingEvent:event];
+    }
+    if ([remapper eventTapMissedEvent:event]) {
+        // The taps are installed on activation, so a key typed while iTerm2 was becoming active
+        // can arrive after they exist without having passed through them.
+        RLog(@"Remapping because the event predates the event tap");
         return [self eventByRemappingEvent:event];
     }
     return event;

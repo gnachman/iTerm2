@@ -13,10 +13,93 @@
 
 NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappedNotification";
 
+iTermEventTapMode iTermEventTapModeFor(BOOL allowed,
+                                       BOOL delegateModifiesEvents,
+                                       BOOL hasObservers,
+                                       BOOL appActive) {
+    if (!allowed) {
+        return iTermEventTapModeOff;
+    }
+    if (delegateModifiesEvents) {
+        return iTermEventTapModeFilter;
+    }
+    if (!hasObservers) {
+        return iTermEventTapModeOff;
+    }
+    // While active, observers must hear about an event before the app receives it.
+    // iTermFlagsChangedEventTap relies on that ordering to decide whether to inject events it
+    // didn't see, and a listen-only tap doesn't guarantee it. The keystrokes are going to iTerm2
+    // anyway, so filtering then delays no other app.
+    return appActive ? iTermEventTapModeFilter : iTermEventTapModeListenOnly;
+}
+
+BOOL iTermEventTapInstallsListenOnly(iTermEventTapMode mode, BOOL hasListenEventAccess) {
+    return mode == iTermEventTapModeListenOnly && hasListenEventAccess;
+}
+
+// Filtering taps run on this thread rather than the main thread. The system holds every matching
+// event until the callback returns, so a busy main thread would otherwise stall typing in every
+// app. See issue 12645.
+static CFRunLoopRef iTermEventTapFilterRunLoop(void) {
+    static CFRunLoopRef runLoop;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+        NSThread *thread = [[NSThread alloc] initWithBlock:^{
+            runLoop = (CFRunLoopRef)CFRetain(CFRunLoopGetCurrent());
+            // A run loop with no sources returns immediately, so give it a port that never fires.
+            [[NSRunLoop currentRunLoop] addPort:[NSMachPort port] forMode:NSDefaultRunLoopMode];
+            dispatch_semaphore_signal(sema);
+            while (YES) {
+                @autoreleasepool {
+                    CFRunLoopRun();
+                }
+            }
+        }];
+        thread.name = @"com.googlecode.iterm2.event-tap";
+        thread.qualityOfService = NSQualityOfServiceUserInteractive;
+        [thread start];
+        dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+    });
+    return runLoop;
+}
+
+// Runs the block on the main thread without waiting. It uses the same run loop modes the tap's
+// source used when it lived on the main thread, so the block runs whenever a main-thread tap
+// callback would have. Everything the filter thread hands to the main thread must go through
+// here: the main run loop runs its perform blocks in FIFO order, but makes no ordering promise
+// between them and the main dispatch queue, and observers must see events in the order typed.
+static void iTermEventTapPerformOnMainThread(void (^block)(void)) {
+    CFRunLoopRef mainRunLoop = CFRunLoopGetMain();
+    CFRunLoopPerformBlock(mainRunLoop, kCFRunLoopCommonModes, block);
+    CFRunLoopWakeUp(mainRunLoop);
+}
+
+// Like iTermEventTapPerformOnMainThread, but waits for the block to finish.
+static void iTermEventTapPerformOnMainThreadAndWait(void (^block)(void)) {
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    iTermEventTapPerformOnMainThread(^{
+        block();
+        dispatch_semaphore_signal(sema);
+    });
+    dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+}
+
+@interface iTermEventTap ()
+- (BOOL)startEventTapListenOnly:(BOOL)listenOnly;
+- (void)filterThreadWillDeferDelivery;
+- (void)notifyObserversOfEventFromInactiveApp:(CGEventRef)event type:(CGEventType)type;
+@end
+
 @implementation iTermEventTap {
     // When using an event tap, these will be non-NULL.
     CFMachPortRef _machPort;
     CFRunLoopSourceRef _eventSource;
+    // The run loop _eventSource was added to.
+    CFRunLoopRef _runLoop;
+    // Whether the installed tap is listen-only (on the main thread) rather than filtering (on the
+    // filter thread). Only meaningful while enabled.
+    BOOL _installedListenOnly;
     CGEventMask _types;
     NSMutableArray<iTermWeakBox<id<iTermEventTapObserver>> *> *_weakObservers;
 }
@@ -30,20 +113,35 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
                                                  selector:@selector(secureInputDidChange:)
                                                      name:iTermDidToggleSecureInputNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationActiveDidChange:)
+                                                     name:iTermApplicationActiveStateDidChangeNotification
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
-    CFRelease(_eventSource);
+    if (self.isEnabled) {
+        [self stopEventTap];
+    }
 }
 
 - (void)secureInputDidChange:(NSNotification *)notification {
     // Avoid trying to enable it if the process is not trusted because this gets called when the
     // app is activated/deactivated
-    const BOOL shouldBeEnabled = self.shouldBeEnabled;
-    if (!shouldBeEnabled || [[iTermPermissionsHelper accessibility] status]) {
-        [self setEnabled:shouldBeEnabled];
+    const iTermEventTapMode mode = self.desiredMode;
+    if (mode == iTermEventTapModeOff || [[iTermPermissionsHelper accessibility] status]) {
+        [self setMode:mode];
+    }
+}
+
+- (void)applicationActiveDidChange:(NSNotification *)notification {
+    // Only switch between modes of an existing tap. Creating one is up to the delegate and
+    // observers, and this avoids attempting it (and the permission request that follows a failure)
+    // on every activation.
+    if (self.isEnabled) {
+        [self setMode:self.desiredMode];
     }
 }
 
@@ -51,7 +149,7 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 
 - (void)setRemappingDelegate:(id<iTermEventTapRemappingDelegate>)remappingDelegate {
     _remappingDelegate = remappingDelegate;
-    [self setEnabled:[self shouldBeEnabled]];
+    [self setMode:self.desiredMode];
 }
 
 - (NSEvent *)runEventTapHandler:(NSEvent *)event {
@@ -66,23 +164,28 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 - (void)addObserver:(id<iTermEventTapObserver>)observer {
     RLog(@"Add observer %@", observer);
     [_weakObservers addObject:[iTermWeakBox boxFor:observer]];
-    [self setEnabled:[self shouldBeEnabled]];
+    [self setMode:self.desiredMode];
 }
 
 - (void)removeObserver:(id<iTermEventTapObserver>)observer {
     RLog(@"Remove observer %@", observer);
     [_weakObservers removeWeakBoxedObject:observer];
-    [self setEnabled:[self shouldBeEnabled]];
+    [self setMode:self.desiredMode];
 }
 
 #pragma mark - Accessors
 
-- (void)setEnabled:(BOOL)enabled {
-    DLog(@"iTermEventTap setEnabled:%@\n%@", @(enabled), [NSThread callStackSymbols]);
-    if (enabled && !self.isEnabled) {
-        [self startEventTap];
-    } else if (!enabled && self.isEnabled) {
+- (void)setMode:(iTermEventTapMode)mode {
+    DLog(@"iTermEventTap setMode:%@ (currently enabled=%@ mode=%@)\n%@",
+         @(mode), @(self.isEnabled), @(_installedListenOnly), [NSThread callStackSymbols]);
+    const BOOL listenOnly = iTermEventTapInstallsListenOnly(mode, CGPreflightListenEventAccess());
+    // Keep a tap that is already the right kind. Rebuilding it leaves a gap where events are
+    // missed, and without Input Monitoring both modes get the same filtering tap.
+    if (self.isEnabled && (mode == iTermEventTapModeOff || listenOnly != _installedListenOnly)) {
         [self stopEventTap];
+    }
+    if (mode != iTermEventTapModeOff && !self.isEnabled) {
+        [self startEventTapListenOnly:listenOnly];
     }
 }
 
@@ -92,15 +195,23 @@ NSString *const iTermEventTapEventTappedNotification = @"iTermEventTapEventTappe
 
 #pragma mark - Private
 
-- (BOOL)shouldBeEnabled {
+- (iTermEventTapMode)desiredMode {
     DLog(@"Before pruning observers are %@", self.weakObservers);
     [self pruneReleasedObservers];
     DLog(@"%@ remappingDelegate=%@ observers=%@", self, self.remappingDelegate, self.weakObservers);
-    if (![self allowedByEventTap]) {
+    const BOOL allowed = [self allowedByEventTap];
+    if (!allowed) {
         RLog(@"Event tap %@ not allowed by secure input", self.class);
-        return NO;
     }
-    return (self.remappingDelegate != nil) || (self.weakObservers.count > 0);
+    return iTermEventTapModeFor(allowed,
+                                self.remappingDelegateModifiesEvents,
+                                self.weakObservers.count > 0,
+                                [(iTermApplication *)NSApp it_isActiveThreadSafe]);
+}
+
+// Subclasses that install themselves as a pass-through remapping delegate override this.
+- (BOOL)remappingDelegateModifiesEvents {
+    return self.remappingDelegate != nil;
 }
 
 - (BOOL)allowedByEventTap {
@@ -131,7 +242,52 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
             DLog(@"Exception while trying to log event");
         }
     }
-    return [eventTap eventTapCallbackWithProxy:proxy type:type event:event];
+    if ([NSThread isMainThread]) {
+        return [eventTap eventTapCallbackWithProxy:proxy type:type event:event];
+    }
+    return [eventTap filterThreadEventTapCallbackWithProxy:proxy type:type event:event];
+}
+
+// Runs on the filter thread. Avoids touching the main thread at all while iTerm2 is inactive so
+// other apps never wait for it.
+- (CGEventRef)filterThreadEventTapCallbackWithProxy:(CGEventTapProxy)proxy
+                                               type:(CGEventType)type
+                                              event:(CGEventRef)event {
+    if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
+        __weak __typeof(self) weakSelf = self;
+        iTermEventTapPerformOnMainThread(^{
+            [weakSelf eventTapCallbackWithProxy:proxy type:type event:NULL];
+        });
+        return event;
+    }
+    if (![(iTermApplication *)NSApp it_isActiveThreadSafe]) {
+        // Remapping only happens while iTerm2 is active. Observers still need to hear about the
+        // event but they can do so later.
+        [self filterThreadWillDeferDelivery];
+        CGEventRef copy = CGEventCreateCopy(event);
+        __weak __typeof(self) weakSelf = self;
+        iTermEventTapPerformOnMainThread(^{
+            [weakSelf notifyObserversOfEventFromInactiveApp:copy type:type];
+            CFRelease(copy);
+        });
+        return event;
+    }
+    __block CGEventRef result = NULL;
+    iTermEventTapPerformOnMainThreadAndWait(^{
+        result = [self eventTapCallbackWithProxy:proxy type:type event:event];
+    });
+    return result;
+}
+
+// Called on the filter thread before deferring delivery to observers to the main thread.
+- (void)filterThreadWillDeferDelivery {
+}
+
+- (void)notifyObserversOfEventFromInactiveApp:(CGEventRef)event type:(CGEventType)type {
+    if (![self shouldHandleEvents]) {
+        return;
+    }
+    [self postEventToObservers:event type:type];
 }
 
 - (CGEventRef)eventTapCallbackWithProxy:(CGEventTapProxy)proxy
@@ -146,19 +302,25 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
         }
         return NULL;
     }
-    if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
-        DLog(@"Workspace session not active");
-        return event;
-    }
-
-    if (![self userIsActive]) {
-        DLog(@"User not active");
-        // Fast user switching has switched to another user, don't do any remapping.
-        DLog(@"** not doing any remapping for event %@", [NSEvent eventWithCGEvent:event]);
+    if (![self shouldHandleEvents]) {
         return event;
     }
 
     return [self handleEvent:event ofType:type];
+}
+
+- (BOOL)shouldHandleEvents {
+    if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
+        DLog(@"Workspace session not active");
+        return NO;
+    }
+
+    if (![self userIsActive]) {
+        // Fast user switching has switched to another user, don't do any remapping.
+        DLog(@"User not active");
+        return NO;
+    }
+    return YES;
 }
 
 - (CGEventRef)handleEvent:(CGEventRef)originalEvent ofType:(CGEventType)type {
@@ -211,11 +373,12 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 - (void)stopEventTap {
     DLog(@"Stop event tap %@", [NSThread callStackSymbols]);
     assert(self.isEnabled);
-    CFRunLoopRemoveSource(CFRunLoopGetCurrent(),
+    CFRunLoopRemoveSource(_runLoop,
                           _eventSource,
                           kCFRunLoopCommonModes);
     CFRelease(_eventSource);
     _eventSource = NULL;
+    _runLoop = NULL;
 
     // Switch off the event taps.
     CFMachPortInvalidate(_machPort);
@@ -223,14 +386,18 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     _machPort = NULL;
 }
 
-- (BOOL)startEventTap {
-    RLog(@"Start event tap");
+// A listen-only keyboard tap needs Input Monitoring permission, while a filtering tap needs
+// Accessibility, which is what users have historically granted. Callers don't ask for listen-only
+// without Input Monitoring, to avoid a new permission prompt; they get a filtering tap on the filter
+// thread instead, which passes events straight through while iTerm2 is inactive.
+- (BOOL)startEventTapListenOnly:(BOOL)listenOnly {
+    RLog(@"Start event tap listenOnly=%@", @(listenOnly));
     assert(!self.isEnabled);
-
-    AppendPinnedDebugLogMessage(@"EventTap", @"Register event tap.");
+    AppendPinnedDebugLogMessage(@"EventTap",
+                                listenOnly ? @"Register listen-only event tap." : @"Register filtering event tap.");
     _machPort = CGEventTapCreate(kCGHIDEventTap,
                                  kCGTailAppendEventTap,
-                                 kCGEventTapOptionDefault,
+                                 listenOnly ? kCGEventTapOptionListenOnly : kCGEventTapOptionDefault,
                                  _types,
                                  (CGEventTapCallBack)iTermEventTapCallback,
                                  (__bridge void *)self);
@@ -252,8 +419,10 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 
     DLog(@"Adding run loop source.");
     AppendPinnedDebugLogMessage(@"EventTap", @"Adding run loop source");
-    // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event source
-    CFRunLoopAddSource(CFRunLoopGetCurrent(),
+    // A listen-only tap can't delay anyone, so its observers run on the main thread as before.
+    _runLoop = listenOnly ? CFRunLoopGetMain() : iTermEventTapFilterRunLoop();
+    _installedListenOnly = listenOnly;
+    CFRunLoopAddSource(_runLoop,
                        _eventSource,
                        kCFRunLoopCommonModes);
 
@@ -278,7 +447,9 @@ error:
 @interface iTermFlagsChangedEventTap()<iTermEventTapRemappingDelegate>
 @end
 
-@implementation iTermFlagsChangedEventTap
+@implementation iTermFlagsChangedEventTap {
+    iTermFlagsChangedLedger *_ledger;
+}
 
 + (instancetype)sharedInstanceCreatingIfNeeded:(BOOL)createIfNeeded {
     ITAssertWithMessage([NSThread isMainThread], @"Don't call this off the main thread because it's not thread-safe");
@@ -300,6 +471,7 @@ error:
 - (instancetype)initPrivate {
     self = [super initWithEventTypes:CGEventMaskBit(kCGEventFlagsChanged)];
     if (self) {
+        _ledger = [[iTermFlagsChangedLedger alloc] init];
         self.remappingDelegate = self;
         __weak __typeof(self) weakSelf = self;
         [iTermFlagsChangedNotification subscribe:self block:^(iTermFlagsChangedNotification * _Nonnull notification) {
@@ -318,28 +490,52 @@ error:
 }
 
 - (void)flagsDidChange:(iTermFlagsChangedNotification *)notification {
-    if (_count == 0) {
-        DLog(@"Injecting flagsChanged event %@ because count is 0", notification.event);
-        [self handleEvent:notification.event.CGEvent ofType:kCGEventFlagsChanged];
+    const NSInteger count = _ledger.deliveryCount;
+    if ([_ledger appReceivedEventShouldInject]) {
+        DLog(@"Injecting flagsChanged event %@ because the tap didn't report it", notification.event);
+        [super handleEvent:notification.event.CGEvent ofType:kCGEventFlagsChanged];
     } else {
-        DLog(@"NOT injecting flagsChanged event because count is %@", @(_count));
+        DLog(@"NOT injecting flagsChanged event. count was %@", @(count));
     }
-    [self resetCount];
 }
 
 - (CGEventRef)handleEvent:(CGEventRef)originalEvent ofType:(CGEventType)type {
-    _count++;
-    DLog(@"Incr count to %@", @(_count));
+    [_ledger eventTapDidDeliverEvent];
+    DLog(@"Incr count to %@", @(_ledger.deliveryCount));
     return [super handleEvent:originalEvent ofType:type];
+}
+
+- (void)filterThreadWillDeferDelivery {
+    [_ledger eventTapWillDeliverEventLater];
+}
+
+- (void)notifyObserversOfEventFromInactiveApp:(CGEventRef)event type:(CGEventType)type {
+    [_ledger eventTapDidDeliverDeferredEvent];
+    [super notifyObserversOfEventFromInactiveApp:event type:type];
+}
+
+- (NSInteger)count {
+    return _ledger.deliveryCount;
 }
 
 - (void)resetCount {
     DLog(@"Reset count");
-    _count = 0;
+    [_ledger reset];
+}
+
+- (BOOL)startEventTapListenOnly:(BOOL)listenOnly {
+    // A count left over from the previous tap would keep -flagsDidChange: from injecting an event
+    // the new tap missed while it was being built.
+    [self resetCount];
+    return [super startEventTapListenOnly:listenOnly];
 }
 
 - (BOOL)allowedByEventTap {
     return YES;
+}
+
+- (BOOL)remappingDelegateModifiesEvents {
+    return self.remappingDelegate != nil && self.remappingDelegate != self;
 }
 
 #pragma mark - iTermEventTapRemappingDelegate
@@ -380,6 +576,10 @@ error:
         self.remappingDelegate = self;
     }
     return self;
+}
+
+- (BOOL)remappingDelegateModifiesEvents {
+    return self.remappingDelegate != nil && self.remappingDelegate != self;
 }
 
 #pragma mark - iTermEventTapRemappingDelegate

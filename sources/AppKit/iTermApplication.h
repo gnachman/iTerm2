@@ -34,6 +34,9 @@
 // Used for keys you can press on the touch bar that have no equivalent on physical keyboards that Apple recognizes
 extern unsigned short iTermBogusVirtualKeyCode;
 
+// Posted on the main thread after it_isActiveThreadSafe changes.
+extern NSString *const iTermApplicationActiveStateDidChangeNotification;
+
 // Notifications posted when the character panel opens/closes. A pile of hacks.
 extern NSString *const iTermApplicationCharacterPaletteWillOpen;
 extern NSString *const iTermApplicationCharacterPaletteDidClose;
@@ -71,6 +74,9 @@ extern NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDid
 @property(nonatomic, readonly) BOOL it_imeOpen;
 @property(nonatomic, readonly) NSWindow *it_windowBecomingKey;
 @property(nonatomic, readonly) BOOL it_justBecameActive;
+// Mirrors isActive, tracked from the did-become/resign-active notifications. Unlike isActive it may
+// be read from any thread.
+@property(atomic, readonly) BOOL it_isActiveThreadSafe;
 @property(nonatomic) BOOL it_restorableStateInvalid;
 @property(nonatomic, readonly) NSEventModifierFlags it_modifierFlags;
 @property(nonatomic, readonly) BOOL it_accentMenuOpen;

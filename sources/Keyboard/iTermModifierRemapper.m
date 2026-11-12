@@ -49,6 +49,62 @@
     iTermEventTap *_keyUp;
     BOOL _remapped;
     CGEventFlags _flags;
+    // Set by -setRemapModifiers:. The taps are installed only while this is set and the app is
+    // active.
+    BOOL _wantsRemapping;
+    // System uptime just after the taps most recently started remapping.
+    NSTimeInterval _tapsInstalledTime;
+    // Whether the taps are remapping. Set only by begin/stop so it doesn't depend on when the
+    // taps' setters start them.
+    BOOL _tapsRemapping;
+    // Events the taps handled while iTerm2 was active.
+    iTermRecentEventLog *_handledEvents;
+}
+
++ (NSTimeInterval)tapsInstalledTimeAfterPreviousTime:(NSTimeInterval)previous
+                                        wasRemapping:(BOOL)wasRemapping
+                                         isRemapping:(BOOL)isRemapping
+                                                 now:(NSTimeInterval)now {
+    if (isRemapping && !wasRemapping) {
+        return now;
+    }
+    return previous;
+}
+
++ (BOOL)shouldInstallEventTapsWhenWantingRemapping:(BOOL)wantsRemapping appActive:(BOOL)appActive {
+    return wantsRemapping && appActive;
+}
+
++ (BOOL)eventTapMissedEventWithTimestamp:(NSTimeInterval)timestamp
+                       tapsInstalledTime:(NSTimeInterval)tapsInstalledTime
+                            handledByTap:(BOOL)handledByTap {
+    if (handledByTap) {
+        // Already remapped. Remapping again would undo a swap.
+        return NO;
+    }
+    return timestamp < tapsInstalledTime;
+}
+
+- (BOOL)eventTapMissedEvent:(NSEvent *)event {
+    if (event.timestamp >= _tapsInstalledTime) {
+        // Skip the lookup in the common case.
+        return NO;
+    }
+    CGEventRef cgEvent;
+    @try {
+        cgEvent = event.CGEvent;
+    } @catch (NSException *exception) {
+        return NO;
+    }
+    if (!cgEvent) {
+        return NO;
+    }
+    const BOOL missed = [self.class eventTapMissedEventWithTimestamp:event.timestamp
+                                                   tapsInstalledTime:_tapsInstalledTime
+                                                        handledByTap:[_handledEvents containsEvent:cgEvent]];
+    DLog(@"eventTapMissedEvent: timestamp=%@ tapsInstalledTime=%@ missed=%@",
+         @(event.timestamp), @(_tapsInstalledTime), @(missed));
+    return missed;
 }
 
 + (NSInteger)_cgMaskForMod:(int)mod {
@@ -471,6 +527,8 @@
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [_handledEvents release];
     [_keyDown release];
     [_keyUp release];
     [super dealloc];
@@ -479,11 +537,42 @@
 #pragma mark - APIs
 
 - (void)setRemapModifiers:(BOOL)remapModifiers {
-  if (remapModifiers) {
-      [self beginRemappingModifiers];
-  } else {
-      [self stopRemappingModifiers];
-  }
+    _wantsRemapping = remapModifiers;
+    if (remapModifiers &&
+        ![(iTermApplication *)NSApp it_isActiveThreadSafe] &&
+        ![[iTermPermissionsHelper accessibility] status]) {
+        // The taps won't be created until the app is active, so ask now rather than on every
+        // activation.
+        [self requestAccessibilityPermission];
+    }
+    [self updateEventTapsRequestingPermission:YES];
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        // Only events from just before the taps were installed are looked up, so this needs to
+        // cover a burst of typing during activation.
+        _handledEvents = [[iTermRecentEventLog alloc] initWithCapacity:64];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationActiveDidChange:)
+                                                     name:iTermApplicationActiveStateDidChangeNotification
+                                                   object:nil];
+    }
+    return self;
+}
+
+- (void)applicationActiveDidChange:(NSNotification *)notification {
+    [self updateEventTapsRequestingPermission:NO];
+}
+
+- (void)updateEventTapsRequestingPermission:(BOOL)requestPermission {
+    if ([self.class shouldInstallEventTapsWhenWantingRemapping:_wantsRemapping
+                                                     appActive:[(iTermApplication *)NSApp it_isActiveThreadSafe]]) {
+        [self beginRemappingModifiersRequestingPermission:requestPermission];
+    } else {
+        [self stopRemappingModifiers];
+    }
 }
 
 - (BOOL)isRemappingModifiers {
@@ -551,7 +640,7 @@
     return _keyUp;
 }
 
-- (void)beginRemappingModifiers {
+- (void)beginRemappingModifiersRequestingPermission:(BOOL)requestPermission {
     RLog(@"Begin remapping modifiers");
     [self.keyDown setRemappingDelegate:self];
     [self.keyUp setRemappingDelegate:self];
@@ -561,13 +650,29 @@
 
     [[iTermFlagsChangedEventTap sharedInstance] setRemappingDelegate:self];
 
-    if (![_keyDown isEnabled]) {
+    const BOOL isRemapping = [_keyDown isEnabled];
+    if (!isRemapping) {
         RLog(@"The event tap is NOT enabled");
-        [self requestAccessibilityPermission];
+        if (requestPermission) {
+            [self requestAccessibilityPermission];
+        }
     }
+    // Taken after the taps have their delegate and the app's thread-safe active flag is set (this
+    // runs from its change notification), so any event that occurred later was remapped and
+    // marked. Earlier ones may have passed through unmarked, including through a flags tap that
+    // was kept from before activation.
+    _tapsInstalledTime = [self.class tapsInstalledTimeAfterPreviousTime:_tapsInstalledTime
+                                                           wasRemapping:_tapsRemapping
+                                                            isRemapping:isRemapping
+                                                                    now:[[NSProcessInfo processInfo] systemUptime]];
+    _tapsRemapping = isRemapping;
 }
 
 - (void)stopRemappingModifiers {
+    // Without the flags-changed tap, nothing tracks the Fn key while another app is active, so
+    // don't let a stale value reverse Fn translation after reactivation.
+    self.physicalFnKeyDown = NO;
+    _tapsRemapping = NO;
     [_keyDown setRemappingDelegate:nil];
     [_keyUp setRemappingDelegate:nil];
     [[iTermFlagsChangedEventTap sharedInstanceCreatingIfNeeded:NO] setRemappingDelegate:nil];
@@ -602,6 +707,10 @@
     }
     if ([NSApp isActive]) {
         DLog(@"App is active, performing remapping");
+        // Lets the app tell this event from one that reached it before the taps were installed.
+        // Recorded rather than marked on the event: other tools tag their synthetic events in
+        // kCGEventSourceUserData and rely on the tag surviving.
+        [_handledEvents recordEvent:event];
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
         const BOOL hadRemapped = _remapped;

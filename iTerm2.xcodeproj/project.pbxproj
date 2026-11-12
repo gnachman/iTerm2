@@ -4770,6 +4770,7 @@
 		D86A2063A6E9013EBC797392 /* iTermProfileReadRecorder.h in Sources */ = {isa = PBXBuildFile; fileRef = 1DA2DE947A7ECC3BAB298DBA /* iTermProfileReadRecorder.h */; };
 		D91F883FD3D1E555EF9CFC86 /* VT100ScreenMutableState+RCDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 5B686BCDF76FA9118F116990 /* VT100ScreenMutableState+RCDataSource.m */; };
 		D9A2368683D7DDB73A826821 /* iTermStreamingPNGWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = 11C735CA9A1AF5E864EC718E /* iTermStreamingPNGWriter.m */; };
+		DA15C6ED3B5E1F6F74357D16 /* iTermEventTapBookkeeping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A08915C92A37F857E391027 /* iTermEventTapBookkeeping.swift */; };
 		DA92E7010063E8CD7DDDEE3B /* JSONArraySplice.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD71DB091B2D8353FCFAE0DD /* JSONArraySplice.swift */; };
 		DADD9F9FCAC79239898CA963 /* AgentHookAddress.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE75D56A9127A8D669FBC208 /* AgentHookAddress.swift */; };
 		DB42A165C1B25A2BD5FC2BB8 /* iterm2-test-adapter in CopyFiles */ = {isa = PBXBuildFile; fileRef = 91FA576A88BCF13676249576 /* iterm2-test-adapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -5654,6 +5655,7 @@
 		288808F99DB33274E4751B98 /* CompanionPluginClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPluginClient.swift; sourceTree = "<group>"; };
 		28AF992AB875E6786421227B /* iTermScreenshotOnDemandPreview.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermScreenshotOnDemandPreview.swift; sourceTree = "<group>"; };
 		28D5075BE24C51CC802DB7EC /* iTermBrowserPageColorTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBrowserPageColorTracker.swift; sourceTree = "<group>"; };
+		2A08915C92A37F857E391027 /* iTermEventTapBookkeeping.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermEventTapBookkeeping.swift; sourceTree = "<group>"; };
 		2A2A4F72E8C0C105D051F037 /* CompanionAgentActivityNotifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionAgentActivityNotifier.swift; sourceTree = "<group>"; };
 		2AB82BF69BB74214B99FB3C3 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarKnobFontViewController.xcstrings; sourceTree = "<group>"; };
 		2AEB275FE345E8480B41FAEF /* iTermImageComparison.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermImageComparison.m; sourceTree = "<group>"; };
@@ -11165,6 +11167,7 @@
 				A6EFF23E1D21949D00806EEF /* iTermShortcut.m */,
 				A6AE58CA2E83463300762C1D /* iTermSymbolicHotkeys.swift */,
 				F629D4C69CD80D78E2E014C6 /* iTermOpenQuicklyHotKeyProvider.swift */,
+				2A08915C92A37F857E391027 /* iTermEventTapBookkeeping.swift */,
 			);
 			path = Hotkey;
 			sourceTree = "<group>";
@@ -20546,6 +20549,7 @@
 				B391478CA638949AAEEB1327 /* DeleteClippingBuiltInFunction.swift in Sources */,
 				6328383D184EEC502DE25B1D /* AboutBackersColumnsView.swift in Sources */,
 				D7BEED2BBCFDBE57CF0A6022 /* AIModelListDiscovery.swift in Sources */,
+				DA15C6ED3B5E1F6F74357D16 /* iTermEventTapBookkeeping.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
