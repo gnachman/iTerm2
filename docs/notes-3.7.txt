@@ -58,6 +58,11 @@ New Features:
   “HDR text in focused pane” in Settings >
   Profiles > Colors. It only applies over a
   dark background.
+- Shift-click a tab to select it and every tab
+  between it and the current one, as in Chrome.
+  Right-click one of the selected tabs and choose
+  Add Tabs to Group to put them all in a new or
+  existing tab group.
 
 Improvements:
 - Saving a window arrangement can remember
