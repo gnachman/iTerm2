@@ -215,6 +215,9 @@ Improvements:
   files shown inline (for example with imgcat)
   to pick up fixes for patterns that could make
   iTerm2 hang.
+- Updated reader mode in the built-in browser to
+  pick up fixes for pages that could make it
+  hang.
 
 Bug Fixes:
 - A sixel image with very large dimensions
