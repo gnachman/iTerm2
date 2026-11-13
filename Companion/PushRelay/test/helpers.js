@@ -1,7 +1,73 @@
 // Test helpers for the push relay: typed request drivers and the APNs stub.
 
-import { SELF, fetchMock } from "cloudflare:test";
-import { beforeAll, afterEach } from "vitest";
+import { SELF } from "cloudflare:test";
+import { beforeAll, afterEach, vi } from "vitest";
+
+// A small stand-in for the Miniflare fetchMock, which @cloudflare/vitest-plugin no longer
+// provides. It implements just the subset these tests use. The worker runs in the same isolate
+// as the tests and calls the global fetch, so replacing globalThis.fetch intercepts its APNs
+// requests.
+const interceptors = [];
+let netDisabled = false;
+let realFetch = null;
+
+function headersMatch(expected, actual) {
+  if (!expected) {
+    return true;
+  }
+  return Object.entries(expected).every(([name, value]) => actual.get(name) === value);
+}
+
+async function stubbedFetch(input, init = {}) {
+  const request = new Request(input, init);
+  const url = new URL(request.url);
+  const body = typeof init.body === "string" ? init.body : await request.clone().text();
+  const index = interceptors.findIndex((candidate) =>
+    candidate.origin === url.origin &&
+    candidate.path === url.pathname + url.search &&
+    (candidate.method || "GET").toUpperCase() === request.method &&
+    headersMatch(candidate.headers, request.headers) &&
+    (candidate.body === undefined ||
+     (typeof candidate.body === "function" ? candidate.body(body) : candidate.body === body)));
+  if (index >= 0) {
+    const [match] = interceptors.splice(index, 1);
+    return new Response(match.responseBody, { status: match.status });
+  }
+  if (netDisabled) {
+    throw new Error(`Unmatched ${request.method} ${request.url} with network access disabled`);
+  }
+  return realFetch(input, init);
+}
+
+export const fetchMock = {
+  activate() {
+    if (!realFetch) {
+      realFetch = globalThis.fetch;
+      vi.spyOn(globalThis, "fetch").mockImplementation(stubbedFetch);
+    }
+  },
+  disableNetConnect() {
+    netDisabled = true;
+  },
+  get(origin) {
+    return {
+      intercept(spec) {
+        return {
+          reply(status, responseBody = "") {
+            interceptors.push({ origin, ...spec, status, responseBody });
+          },
+        };
+      },
+    };
+  },
+  assertNoPendingInterceptors() {
+    const pending = interceptors.splice(0);
+    if (pending.length > 0) {
+      throw new Error(`${pending.length} expected request(s) never arrived: ` +
+        pending.map((p) => `${p.method || "GET"} ${p.origin}${p.path}`).join(", "));
+    }
+  },
+};
 
 export const ORIGIN = "https://push.example";
 
@@ -36,7 +102,7 @@ export async function post(path, body, headers = {}) {
   return { status: res.status, body: json };
 }
 
-/// Arm the Miniflare fetchMock so no real network escapes during a test file.
+/// Arm the fetch stub so no real network escapes during a test file.
 export function useApnsStub() {
   beforeAll(() => {
     fetchMock.activate();

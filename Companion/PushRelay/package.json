@@ -15,8 +15,8 @@
     "better-sqlite3": "^12.11.1"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.71",
-    "vitest": "^3.2.4",
-    "wrangler": "^4.0.0"
+    "@cloudflare/vitest-plugin": "^1.8.1",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.161.0"
   }
 }

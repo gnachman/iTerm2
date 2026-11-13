@@ -4,8 +4,7 @@
 // and NO sound (the NSE adds it). The legacy /push payload is unaffected.
 
 import { describe, it, expect } from "vitest";
-import { fetchMock } from "cloudflare:test";
-import { post, freshToken, makeSecret, useApnsStub } from "./helpers.js";
+import { fetchMock, post, freshToken, makeSecret, useApnsStub } from "./helpers.js";
 
 useApnsStub();
 

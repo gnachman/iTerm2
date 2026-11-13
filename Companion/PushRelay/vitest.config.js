@@ -1,7 +1,8 @@
-import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
+import { defineConfig } from "vitest/config";
+import { cloudflareTest } from "@cloudflare/vitest-plugin";
 
 // Runs the push relay inside workerd (real KV, real WebCrypto for the APNs JWT),
-// with Apple's push endpoint stubbed via the Miniflare fetchMock (see helpers.js).
+// with Apple's push endpoint stubbed by replacing the global fetch (see helpers.js).
 // Bindings are declared inline rather than read from wrangler.toml so the test
 // env stays independent of the production config (and does not need the Rate
 // Limiting binding, which the worker treats as optional and which Miniflare does
@@ -18,33 +19,33 @@ const TEST_APNS_P8 = [
   "-----END PRIVATE KEY-----",
 ].join("\n");
 
-export default defineWorkersConfig({
+export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      main: "./src/worker.js",
+      miniflare: {
+        // The installed workerd caps here; the deployed worker runs the
+        // wrangler.toml date. Pinned to the supported date to keep test output
+        // clean (the worker uses only stable APIs, so the date is immaterial).
+        compatibilityDate: "2025-09-06",
+        kvNamespaces: ["PUSH_KV"],
+        bindings: {
+          APNS_TOPIC: "com.googlecode.iterm2.companion",
+          APNS_TEAM_ID: "TEAMID1234",
+          APNS_KEY_ID: "KEYID56789",
+          APNS_P8: TEST_APNS_P8,
+          // Short, explicit TTL so the registration test can assert the
+          // self-expiry window precisely instead of probing a 90-day default.
+          REGISTRATION_TTL_SECONDS: "3600",
+        },
+      },
+    }),
+  ],
   test: {
     name: "push-relay",
     // The *.host.test.js suite exercises the self-hosted Node shim (better-sqlite3,
     // node:http2) and must run under plain vitest, not workerd. See
     // vitest.host.config.js.
     exclude: ["**/node_modules/**", "**/*.host.test.js"],
-    poolOptions: {
-      workers: {
-        main: "./src/worker.js",
-        miniflare: {
-          // The installed workerd caps here; the deployed worker runs the
-          // wrangler.toml date. Pinned to the supported date to keep test output
-          // clean (the worker uses only stable APIs, so the date is immaterial).
-          compatibilityDate: "2025-09-06",
-          kvNamespaces: ["PUSH_KV"],
-          bindings: {
-            APNS_TOPIC: "com.googlecode.iterm2.companion",
-            APNS_TEAM_ID: "TEAMID1234",
-            APNS_KEY_ID: "KEYID56789",
-            APNS_P8: TEST_APNS_P8,
-            // Short, explicit TTL so the registration test can assert the
-            // self-expiry window precisely instead of probing a 90-day default.
-            REGISTRATION_TTL_SECONDS: "3600",
-          },
-        },
-      },
-    },
   },
 });
