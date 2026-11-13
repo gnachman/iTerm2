@@ -509,3 +509,9 @@ Bug Fixes:
   text as the explanation, or crash, depending
   on how the AI’s reply was laid out. Thanks
   to Kim Dong Han (@ehdgks0627) for the fix.
+- Fixed a crash when splitting a pane or closing
+  a session or tab, if the profile had an event
+  trigger, such as Variable Changed, whose
+  parameter used an interpolated string
+  referring to a session variable, as in
+  \(tab.id).

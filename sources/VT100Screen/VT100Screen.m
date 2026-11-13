@@ -2297,6 +2297,14 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     DLog(@"[%@] fireEventTrigger: %@ capturedStrings=%@ useInterpolation=%@",
          self.delegate, trigger.action, capturedStrings, @(useInterpolation));
 
+    // Every action an event trigger can take goes through the delegate, and so does the variable
+    // scope that an interpolated parameter is evaluated in. A session has no delegate until it is
+    // set up (a new split pane) and none after it terminates.
+    if (!self.delegate) {
+        DLog(@"Not firing event trigger %@ because the screen has no delegate", trigger.action);
+        return;
+    }
+
     // Use values from _state (immutable, safe to read from main thread)
     long long absoluteLineNumber = _state.numberOfScrollbackLines +
                                    _state.cursorY - 1 +
