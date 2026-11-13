@@ -115483,6 +115483,18 @@
             "value" : "Set Character Encoding…"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Establecer codificación de caracteres…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir l’encodage des caractères…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -119609,6 +119621,18 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Unavailable Encoding"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codificación no disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encodage indisponible"
           }
         },
         "ja" : {
@@ -146078,6 +146102,18 @@
             "value" : "Set Character Encoding to “%@”"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Establecer la codificación de caracteres en “%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir l’encodage des caractères sur « %@ »"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -146126,6 +146162,18 @@
             "value" : "Character encoding set to %@"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codificación de caracteres establecida en %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encodage des caractères défini sur %@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -146172,6 +146220,18 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Set Character Encoding to unavailable encoding"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Establecer la codificación de caracteres en una codificación no disponible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir l’encodage des caractères sur un encodage indisponible"
           }
         },
         "ja" : {
