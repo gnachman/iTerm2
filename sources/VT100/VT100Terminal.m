@@ -120,7 +120,8 @@ NSString *const kTerminalStateURLParams_DEPRECATED = @"URL Params";
 NSString *const kTerminalStateReportKeyUp = @"Report Key Up";
 NSString *const kTerminalStateMetaSendsEscape = @"Meta Sends Escape";
 NSString *const kTerminalStateSendModifiers = @"Send Modifiers";
-NSString *const kTerminalStateKeyReportingFlags = @"Key Reporting Flags";
+NSString *const kTerminalStateKeyReportingFlags = @"Key Reporting Flags";  // Main screen
+NSString *const kTerminalStateAlternateKeyReportingFlags = @"Alternate Key Reporting Flags";
 NSString *const kTerminalStateKeyReportingModeStack_Deprecated = @"Key Reporting Mode Stack";  // deprecated
 NSString *const kTerminalStateKeyReportingModeStack_Main = @"Main Key Reporting Mode Stack";
 NSString *const kTerminalStateKeyReportingModeStack_Alternate = @"Alternate Key Reporting Mode Stack";
@@ -234,7 +235,10 @@ typedef struct {
 
     NSNumber *_currentLiteral;
     iTermEmulationLevel _vtLevel;
-    VT100TerminalKeyReportingFlags _keyReportingFlags;
+    // Each screen's flags when its key reporting mode stack is empty. The kitty keyboard
+    // protocol requires the main and alternate screens to have independent state. Issue 13204.
+    VT100TerminalKeyReportingFlags _mainKeyReportingFlags;
+    VT100TerminalKeyReportingFlags _alternateKeyReportingFlags;
 
     // Connections whose framer output must not start recovery because they were
     // abandoned (F-354, F-459).
@@ -277,7 +281,8 @@ static const int kMaxScreenRows = 4096;
         _allowKeypadMode = YES;
         self.allowPasteBracketing = YES;
         _sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
-        _keyReportingFlags = 0;
+        _mainKeyReportingFlags = 0;
+        _alternateKeyReportingFlags = 0;
         _mainKeyReportingModeStack = [[NSMutableArray alloc] init];
         _alternateKeyReportingModeStack = [[NSMutableArray alloc] init];
         numLock_ = YES;
@@ -446,7 +451,8 @@ static const int kMaxScreenRows = 4096;
     [self resetSavedCursorPositions];
     [_delegate terminalShowPrimaryBuffer];
     self.softAlternateScreenMode = NO;
-    _keyReportingFlags = 0;
+    _mainKeyReportingFlags = 0;
+    _alternateKeyReportingFlags = 0;
     [self resetSendModifiersAndKeyReportingFlags];
     [self.delegate terminalDidChangeSendModifiers];
     [self.delegate terminalDidReset];
@@ -466,7 +472,8 @@ static const int kMaxScreenRows = 4096;
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
-    _keyReportingFlags = 0;
+    _mainKeyReportingFlags = 0;
+    _alternateKeyReportingFlags = 0;
     self.dirty = YES;
     [_mainKeyReportingModeStack removeAllObjects];
     [_alternateKeyReportingModeStack removeAllObjects];
@@ -723,13 +730,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)toggleKeyReportingFlag:(VT100TerminalKeyReportingFlags)flag {
-    if (self.currentKeyReportingModeStack.count) {
-        const int value = self.currentKeyReportingModeStack.lastObject.intValue;
-        [self.currentKeyReportingModeStack removeLastObject];
-        [self.currentKeyReportingModeStack addObject:@(value ^ flag)];
-    } else {
-        _keyReportingFlags ^= flag;
-    }
+    [self setCurrentScreenKeyReportingFlags:self.currentScreenKeyReportingFlags ^ flag];
     [self.delegate terminalKeyReportingFlagsDidChange:NO];
 }
 
@@ -752,10 +753,33 @@ static const int kMaxScreenRows = 4096;
         // turned on. Issue 13076.
         return 0;
     }
-    if (self.currentKeyReportingModeStack.count) {
-        return self.currentKeyReportingModeStack.lastObject.intValue;
+    return self.currentScreenKeyReportingFlags;
+}
+
+// The active screen's flags: the top of its stack, or its base value if the stack is empty.
+// Unlike keyReportingFlags, this does not account for tmux mode.
+- (VT100TerminalKeyReportingFlags)currentScreenKeyReportingFlags {
+    NSMutableArray<NSNumber *> *stack = self.currentKeyReportingModeStack;
+    if (stack.count) {
+        return stack.lastObject.intValue;
     }
-    return _keyReportingFlags;
+    if ([self.delegate terminalIsInAlternateScreenMode]) {
+        return _alternateKeyReportingFlags;
+    }
+    return _mainKeyReportingFlags;
+}
+
+// Replaces the top of the active screen's stack, or its base value if the stack is empty.
+- (void)setCurrentScreenKeyReportingFlags:(VT100TerminalKeyReportingFlags)flags {
+    NSMutableArray<NSNumber *> *stack = self.currentKeyReportingModeStack;
+    if (stack.count) {
+        [stack removeLastObject];
+        [stack addObject:@(flags)];
+    } else if ([self.delegate terminalIsInAlternateScreenMode]) {
+        _alternateKeyReportingFlags = flags;
+    } else {
+        _mainKeyReportingFlags = flags;
+    }
 }
 
 - (NSMutableArray<NSNumber *> *)currentKeyReportingModeStack {
@@ -2665,12 +2689,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             self.dirty = YES;
             {
-                VT100TerminalKeyReportingFlags effective;
-                if (self.currentKeyReportingModeStack.count) {
-                    effective = self.currentKeyReportingModeStack.lastObject.intValue;
-                } else {
-                    effective = _keyReportingFlags;
-                }
+                VT100TerminalKeyReportingFlags effective = self.currentScreenKeyReportingFlags;
                 switch (token.csi->p[1]) {
                     case 1:  // all set bits are set and all unset bits are reset
                         effective = token.csi->p[0];
@@ -2682,12 +2701,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                         effective &= ~token.csi->p[0];
                         break;
                 }
-                if (self.currentKeyReportingModeStack.count) {
-                    [self.currentKeyReportingModeStack removeLastObject];
-                    [self.currentKeyReportingModeStack addObject:@(effective)];
-                } else {
-                    _keyReportingFlags = effective;
-                }
+                [self setCurrentScreenKeyReportingFlags:effective];
                 // Mode 1 assigns the whole value; 2 and 3 only set or clear the named bits.
                 [delegate terminalKeyReportingFlagsDidChange:(token.csi->p[1] == 1)];
             }
@@ -2711,13 +2725,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_QUERY_KEY_REPORTING_MODE:
             if ([delegate terminalShouldSendReport:NO]) {
-                VT100TerminalKeyReportingFlags flags;
-                if (self.currentKeyReportingModeStack.count) {
-                    flags = self.currentKeyReportingModeStack.lastObject.unsignedIntegerValue;
-                } else {
-                    flags = _keyReportingFlags;
-                }
-                [delegate terminalSendReport:[_output reportKeyReportingMode:flags]];
+                [delegate terminalSendReport:[_output reportKeyReportingMode:self.currentScreenKeyReportingFlags]];
             }
             break;
 
@@ -6256,7 +6264,8 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
            kTerminalStateSGRStack: [self sgrStack],
            kTerminalStateDECSACE: @(_decsaceRectangleMode),
            kTerminalStateSendModifiers: _sendModifiers ?: @[],
-           kTerminalStateKeyReportingFlags: @(_keyReportingFlags),
+           kTerminalStateKeyReportingFlags: @(_mainKeyReportingFlags),
+           kTerminalStateAlternateKeyReportingFlags: @(_alternateKeyReportingFlags),
            kTerminalStateKeyReportingModeStack_Main: _mainKeyReportingModeStack.copy,
            kTerminalStateKeyReportingModeStack_Alternate: _alternateKeyReportingModeStack.copy,
            kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
@@ -6361,10 +6370,13 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     }
     NSNumber *krf = dict[kTerminalStateKeyReportingFlags];
     if (!krf) {
-        _keyReportingFlags = [self.sendModifiers[4] unsignedIntegerValue];
+        _mainKeyReportingFlags = [self.sendModifiers[4] unsignedIntegerValue];
     } else {
-        _keyReportingFlags = krf.unsignedIntegerValue;
+        _mainKeyReportingFlags = krf.unsignedIntegerValue;
     }
+    NSNumber *alternateKRF = [NSNumber castFrom:dict[kTerminalStateAlternateKeyReportingFlags]];
+    // State saved before the screens had separate base values had one value shared by both.
+    _alternateKeyReportingFlags = alternateKRF ? alternateKRF.unsignedIntegerValue : _mainKeyReportingFlags;
     if ([dict[kTerminalStateKeyReportingModeStack_Deprecated] isKindOfClass:[NSArray class]]) {
         // Migration code path for deprecated key.
         _mainKeyReportingModeStack = [dict[kTerminalStateKeyReportingModeStack_Deprecated] mutableCopy];

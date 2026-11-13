@@ -144,7 +144,11 @@ class VT100ScreenTests: XCTestCase {
         feed(screen, "\u{1b}[?1049l")
         XCTAssertTrue(session.keyReportingFlagsAtChange.isEmpty)
 
+        // Each screen has its own flags, so give both the same value.
         feed(screen, "\u{1b}[=1;1u")
+        feed(screen, "\u{1b}[?1049h")
+        feed(screen, "\u{1b}[=1;1u")
+        feed(screen, "\u{1b}[?1049l")
         session.keyReportingFlagsAtChange.removeAll()
         feed(screen, "\u{1b}[?1049h")
         feed(screen, "\u{1b}[?1049l")

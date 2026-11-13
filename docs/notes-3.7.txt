@@ -493,3 +493,10 @@ Bug Fixes:
 - When iTerm2 was busy, typing could lag in
   other apps, especially with modifier
   remapping or a hotkey set. Issue 12645.
+- A program that turned on the Kitty keyboard
+  protocol in the alternate screen, such as
+  Junie CLI, could leave it on for the shell
+  after exiting, so keystrokes showed up as
+  codes like “99;;99u” and Return did nothing.
+  The main and alternate screens now keep
+  separate keyboard modes. Issue 13204.
