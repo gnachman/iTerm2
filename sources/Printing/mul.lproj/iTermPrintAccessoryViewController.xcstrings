@@ -58,6 +58,12 @@
             "state": "translated",
             "value": "黑白"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "黑白"
+          }
         }
       }
     }

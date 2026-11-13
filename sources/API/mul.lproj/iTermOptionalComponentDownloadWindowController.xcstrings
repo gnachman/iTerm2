@@ -58,6 +58,12 @@
             "state": "translated",
             "value": "Python 运行时安装程序"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Python 執行環境安裝程式"
+          }
         }
       }
     },
@@ -114,6 +120,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "取消"
@@ -177,6 +189,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在下载可选组件…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在下載選用元件…"
           }
         }
       }

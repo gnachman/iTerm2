@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "全部"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在运行"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "執行中"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "已启动"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已開始"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新时滚动到底部"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新時捲動到底部"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "调用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "呼叫"
+          }
         }
       }
     },
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "脚本控制台"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腳本主控台"
           }
         }
       }
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "筛选"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "篩選"
+          }
         }
       }
     },
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "名称"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名稱"
+          }
         }
       }
     },
@@ -537,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "日志"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記錄"
           }
         }
       }

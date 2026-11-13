@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "好"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "低功耗模式下停用 GPU 渲染器"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "低耗電模式下停用 GPU 繪製器"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "优先使用集成 GPU 而非独立 GPU"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "優先使用內建 GPU 而非獨立 GPU"
+          }
         }
       }
     },
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "拔掉电源时停用 GPU 渲染器"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中斷電源連接時停用 GPU 繪製器"
+          }
         }
       }
     },
@@ -294,6 +318,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"

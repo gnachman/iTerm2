@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "静默忽略此命令的错误"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "靜默忽略此指令的錯誤"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "要运行的协同进程命令："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要執行的協同程序指令："
+          }
         }
       }
     },
@@ -174,6 +186,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "取消"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
         }
       }
     },
@@ -297,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输入命令"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入指令"
           }
         }
       }

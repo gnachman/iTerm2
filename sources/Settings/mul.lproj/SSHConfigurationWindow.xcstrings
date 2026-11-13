@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "SSH 路径："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH 路徑："
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要拷贝到远程主机的文件："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要拷貝到遠端主機的檔案："
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "目标"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目的地"
+          }
         }
       }
     },
@@ -234,6 +252,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "/usr/bin/ssh"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
         }
       }
     },
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "浏览"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "瀏覽"
+          }
         }
       }
     },
@@ -414,6 +450,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "文件或文件夹"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檔案或檔案夾"
+          }
         }
       }
     },
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "SSH 集成"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH 整合"
+          }
         }
       }
     },
@@ -597,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要拷贝到远程主机的环境变量："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要拷貝到遠端主機的環境變數："
           }
         }
       }

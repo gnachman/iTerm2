@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "自动补全"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動完成"
+          }
         }
       }
     }

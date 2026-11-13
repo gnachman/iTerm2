@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "Item 1"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 1"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 2"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "Item 3"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 3"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "命令"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指令"
           }
         }
       }

@@ -58,6 +58,12 @@
             "state": "translated",
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shell 集成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell 整合"
           }
         }
       }

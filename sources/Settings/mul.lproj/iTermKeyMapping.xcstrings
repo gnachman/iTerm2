@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "预设…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預設集…"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加 Touch Bar 项目"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入 Touch Bar 項目"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "操作"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動作"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar 缓解措施"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar 緩解措施"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "视觉 Esc 键指示器"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視覺化 Esc 鍵指示器"
+          }
         }
       }
     },
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按键组合"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按鍵組合"
           }
         }
       }
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "按下 Esc 时触觉反馈"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下 Esc 時觸覺回饋"
+          }
         }
       }
     },
@@ -474,6 +516,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -537,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc 键的按键声"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc 鍵的按鍵聲"
           }
         }
       }

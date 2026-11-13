@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "拆分当前窗格 XXXally"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XXX 分割目前窗格"
+          }
         }
       }
     },
@@ -114,6 +120,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -177,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拆分"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分割"
           }
         }
       }

@@ -58,6 +58,12 @@
             "state": "translated",
             "value": "检查"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "勾選"
+          }
         }
       }
     }

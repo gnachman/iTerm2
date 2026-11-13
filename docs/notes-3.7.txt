@@ -15,10 +15,10 @@ New Features:
   modifier to switch. Turn it on in Settings >
   Appearance > Tabs. Based on a contribution by
   Oleh (kopyl).
-- iTerm2 is now translated into Spanish and
-  French. They are used when one of them is
-  your preferred language in System Settings >
-  General > Language & Region.
+- iTerm2 is now translated into Spanish,
+  French, and Traditional Chinese. They are used
+  when one of them is your preferred language in
+  System Settings > General > Language & Region.
 - iTerm2 > Suppressed Alerts lists most alerts
   and announcements at the top of a session that
   are no longer shown because you chose “Never,”

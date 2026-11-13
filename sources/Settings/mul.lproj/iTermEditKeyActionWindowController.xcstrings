@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "按标记移动"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依標記移動"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "设置键盘快捷键"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定鍵盤快速鍵"
+          }
         }
       }
     },
@@ -174,6 +186,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "颜色预设："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顏色預設集："
+          }
         }
       }
     },
@@ -297,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "操作："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動作："
           }
         }
       }
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "要在 Touch Bar 中显示的标签"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要在 Touch Bar 中顯示的標籤"
+          }
         }
       }
     },
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "按字符移动"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依字元移動"
+          }
         }
       }
     },
@@ -474,6 +516,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "例如：0x7f"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "例如：0x7f"
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "配置文件："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述檔："
+          }
         }
       }
     },
@@ -597,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按单词移动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依單字移動"
           }
         }
       }
@@ -658,6 +718,12 @@
             "state" : "translated",
             "value" : "Error message goes here"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "錯誤訊息置於此處"
+          }
         }
       }
     },
@@ -718,6 +784,12 @@
             "state" : "translated",
             "value" : "操作："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動作："
+          }
         }
       }
     },
@@ -774,6 +846,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -838,6 +916,12 @@
             "state" : "translated",
             "value" : "键盘快捷键："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鍵盤快速鍵："
+          }
         }
       }
     },
@@ -898,6 +982,12 @@
             "state" : "translated",
             "value" : "按行移动"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依行移動"
+          }
         }
       }
     },
@@ -954,6 +1044,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"

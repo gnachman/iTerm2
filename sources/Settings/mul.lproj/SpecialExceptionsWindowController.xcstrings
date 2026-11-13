@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "安装 Nerd Font 字体包…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝 Nerd Font 字體包…"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "编辑特殊例外"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯特殊例外"
+          }
         }
       }
     },
@@ -174,6 +186,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "特殊例外会覆盖特定 Unicode 范围或文字的字体。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特殊例外會覆寫特定 Unicode 範圍或文字系統的字體。"
+          }
         }
       }
     },
@@ -294,6 +318,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "好"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
         }
       }
     },
@@ -417,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "字体："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用字體："
           }
         }
       }
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "对于从以下位置开始的字符"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對於從以下位置開始的字元"
+          }
         }
       }
     },
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "添加预设…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入預設集…"
+          }
         }
       }
     },
@@ -594,6 +648,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -658,6 +718,12 @@
             "state" : "translated",
             "value" : "到"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "到"
+          }
         }
       }
     },
@@ -714,6 +780,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理特殊例外"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "管理特殊例外"
@@ -778,6 +850,12 @@
             "state" : "translated",
             "value" : "好"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
         }
       }
     },
@@ -837,6 +915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用码点"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用碼位"
           }
         }
       }
@@ -898,6 +982,12 @@
             "state" : "translated",
             "value" : "取消"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
         }
       }
     },
@@ -954,6 +1044,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

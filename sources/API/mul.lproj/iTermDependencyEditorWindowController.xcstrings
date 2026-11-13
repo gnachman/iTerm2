@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "Item 2"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 2"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "此脚本必须升级为“完整环境”才能添加依赖。升级会拷贝一份 Python 运行时，但不会占用额外磁盘空间。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必須將此腳本升級為「完整環境」才能加入相依項目。升級會複製一份 Python 執行環境，但不會佔用額外的磁碟空間。"
+          }
         }
       }
     },
@@ -174,6 +186,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python 版本："
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python 版本："
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "移除"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
+          }
         }
       }
     },
@@ -297,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 3"
           }
         }
       }
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "升级"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升級"
+          }
         }
       }
     },
@@ -417,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "脚本："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腳本："
           }
         }
       }
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "脚本依赖编辑器"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腳本相依項目編輯器"
+          }
         }
       }
     },
@@ -537,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 1"
           }
         }
       }
@@ -598,6 +652,12 @@
             "state" : "translated",
             "value" : "软件包名称"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "套件名稱"
+          }
         }
       }
     },
@@ -657,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 2"
           }
         }
       }
@@ -718,6 +784,12 @@
             "state" : "translated",
             "value" : "Item 3"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 3"
+          }
         }
       }
     },
@@ -777,6 +849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查更新"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查更新"
           }
         }
       }
@@ -838,6 +916,12 @@
             "state" : "translated",
             "value" : "已安装版本"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已安裝的版本"
+          }
         }
       }
     },
@@ -898,6 +982,12 @@
             "state" : "translated",
             "value" : "Item 1"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 1"
+          }
         }
       }
     },
@@ -954,6 +1044,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -1017,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入"
           }
         }
       }

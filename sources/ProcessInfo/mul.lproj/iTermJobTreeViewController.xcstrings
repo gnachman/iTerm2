@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "pid"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "任务"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "程序"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "拷贝进程 ID"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝程序 ID"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 1"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "Item 2"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 2"
+          }
         }
       }
     },
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "項目 3"
           }
         }
       }
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "终止时通知"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束時通知"
+          }
         }
       }
     },
@@ -477,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝命令"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝指令"
           }
         }
       }

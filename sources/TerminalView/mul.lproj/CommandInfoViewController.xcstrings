@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "/directory"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝目录"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝目錄"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "12 bytes"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 位元組"
+          }
         }
       }
     },
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "选择命令的输出"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選取指令的輸出"
+          }
         }
       }
     },
@@ -294,6 +318,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1h 35m"
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "输出："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸出："
+          }
         }
       }
     },
@@ -417,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已拷贝"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已拷貝"
           }
         }
       }
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "将命令拷贝到剪贴板"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將指令拷貝到剪貼簿"
+          }
         }
       }
     },
@@ -537,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "于 %@ 启动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "於 %@ 開始"
           }
         }
       }
@@ -598,6 +652,12 @@
             "state" : "translated",
             "value" : "在 Composer 中打开命令"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在編寫器中打開指令"
+          }
         }
       }
     },
@@ -657,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可拖移文件夹"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可拖移的檔案夾"
           }
         }
       }
@@ -718,6 +784,12 @@
             "state" : "translated",
             "value" : "命令"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指令"
+          }
         }
       }
     },
@@ -777,6 +849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将命令写入终端"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將指令寫入終端機"
           }
         }
       }
@@ -838,6 +916,12 @@
             "state" : "translated",
             "value" : "目录："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目錄："
+          }
         }
       }
     },
@@ -897,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回代码："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束代碼："
           }
         }
       }
@@ -958,6 +1048,12 @@
             "state" : "translated",
             "value" : "将目录写入终端"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將目錄寫入終端機"
+          }
         }
       }
     },
@@ -1017,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行时间："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "執行時間："
           }
         }
       }
@@ -1078,6 +1180,12 @@
             "state" : "translated",
             "value" : "拷贝命令的输出"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝指令的輸出"
+          }
         }
       }
     },
@@ -1137,6 +1245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "共享命令…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享指令…"
           }
         }
       }
@@ -1198,6 +1312,12 @@
             "state" : "translated",
             "value" : "命令："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指令："
+          }
         }
       }
     },
@@ -1254,6 +1374,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -1317,6 +1443,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭屏外命令的显示"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用顯示螢幕外的指令"
           }
         }
       }

@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "状态"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "狀態"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "正在导入…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在匯入…"
+          }
         }
       }
     },
@@ -177,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在导入设置和数据…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在匯入設定和資料…"
           }
         }
       }

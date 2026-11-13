@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "筛选"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "篩選"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不区分大小写的子字符串"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不區分大小寫的子字串"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "智能大小写子字符串"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智慧大小寫子字串"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "区分大小写的子字符串"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "區分大小寫的子字串"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "不区分大小写的正则表达式"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不區分大小寫的正規表示式"
+          }
         }
       }
     },
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除搜索历史"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除搜尋歷史記錄"
           }
         }
       }
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "仅搜索选定的命令"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅搜尋選取的指令"
+          }
         }
       }
     },
@@ -477,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不区分大小写的正则表达式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不區分大小寫的正規表示式"
           }
         }
       }
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "筛选"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "篩選"
+          }
         }
       }
     },
@@ -597,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "区分大小写的子字符串"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "區分大小寫的子字串"
           }
         }
       }
@@ -658,6 +718,12 @@
             "state" : "translated",
             "value" : "区分大小写的正则表达式"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "區分大小寫的正規表示式"
+          }
         }
       }
     },
@@ -717,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "智能大小写子字符串"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智慧大小寫子字串"
           }
         }
       }
@@ -778,6 +850,12 @@
             "state" : "translated",
             "value" : "不区分大小写的子字符串"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不區分大小寫的子字串"
+          }
         }
       }
     },
@@ -837,6 +915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "区分大小写的正则表达式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "區分大小寫的正規表示式"
           }
         }
       }

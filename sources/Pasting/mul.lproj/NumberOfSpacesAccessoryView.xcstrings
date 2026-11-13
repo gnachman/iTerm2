@@ -58,6 +58,12 @@
             "state": "translated",
             "value": "制表符大小："
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab 的空格數："
+          }
         }
       }
     },
@@ -114,6 +120,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "为参数使用内插字符串"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對參數使用插值字串"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝到配置文件"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝到描述檔"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "关闭"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "触发器"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "觸發器"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "正则表达式"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正規表示式"
+          }
         }
       }
     },
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择一个触发器以查看或编辑"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選取一個觸發器以檢視或編輯"
           }
         }
       }

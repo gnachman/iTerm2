@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "一个除了 iterm2 库外不依赖任何其他内容的简单脚本。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除了 iterm2 程式庫外，不依賴任何其他項目的簡單腳本。"
+          }
         }
       }
     },
@@ -114,6 +120,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "基本"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基本"
+          }
         }
       }
     },
@@ -234,6 +252,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "长期运行的守护进程"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "長時間執行的常駐程式"
+          }
         }
       }
     },
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "简单"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "簡單"
+          }
         }
       }
     },
@@ -414,6 +450,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "选择此模板可创建执行操作后结束的简单脚本。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇此範本可建立執行動作後即結束的簡單腳本。"
+          }
         }
       }
     },
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "一个依赖 iterm2 库之外的其他 PyPI 软件包的脚本。将为此脚本创建专用的 pyenv。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依賴 iterm2 程式庫以外其他 PyPI 套件的腳本。會為此腳本建立專用的 pyenv。"
+          }
         }
       }
     },
@@ -594,6 +648,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -658,6 +718,12 @@
             "state" : "translated",
             "value" : "选择脚本模板："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇腳本範本："
+          }
         }
       }
     },
@@ -717,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完整环境"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完整環境"
           }
         }
       }
@@ -778,6 +850,12 @@
             "state" : "translated",
             "value" : "选择此模板可创建持续运行并响应通知的脚本。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇此範本可建立持續執行並回應通知的腳本。"
+          }
         }
       }
     },
@@ -834,6 +912,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -897,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择 Python 环境："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇 Python 環境："
           }
         }
       }

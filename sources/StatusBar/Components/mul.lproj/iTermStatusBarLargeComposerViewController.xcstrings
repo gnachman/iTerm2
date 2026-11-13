@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "AI 补全已启用：所有文本都会发送给 AI"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 補全已啟用：所有文字都會傳送給 AI"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "说明如何使用 Composer。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說明如何使用編寫器。"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "按 ⇧↩ 发送。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按 ⇧↩ 傳送。"
+          }
         }
       }
     },
@@ -234,6 +252,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

@@ -58,6 +58,12 @@
             "state": "translated",
             "value": "iTerm2"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "由 George Nachman 和贡献者制作"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作者：George Nachman 與貢獻者"
           }
         }
       }

@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "即使不在 Mac 旁边，你也可以使用 iTerm2。你可以通过 AI 聊天控制它、查看会话内容并接收推送通知。端到端加密保护你的数据安全。<a href=\"iterm2whatsnew:companion\">立即试用！</a>"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不在 Mac 旁時也能使用 iTerm2。你可以透過 AI 聊天控制它、查看工作階段內容並接收推播通知。端對端加密確保你的資料安全。<a href=\"iterm2whatsnew:companion\">立即試用！</a>"
+          }
         }
       }
     },
@@ -114,6 +120,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "新的 AI 聊天模式 Orchestration 让 AI 为你掌控全局。它可以创建窗口、等待任务完成（即使在交互式应用中），新的自动安全检查器让你几乎无需响应权限提示。<a href=\"iterm2whatsnew:orchestration\">立即试用！</a>"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全新的 AI 聊天模式「協作調度」讓 AI 為你掌控全局。它可以建立視窗、等待工作完成（即使在互動式 App 中也行），而新的自動安全檢查器讓你幾乎不必回應任何權限提示。<a href=\"iterm2whatsnew:orchestration\">立即試用！</a>"
+          }
         }
       }
     },
@@ -234,6 +252,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "新的“截屏”功能简化了将终端内容保存为 PNG 的操作。它支持遮盖和高亮。使用<a href=\"iterm2whatsnew:screenshot\">会话 > 截屏</a>来激活它。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全新的「螢幕截圖」功能簡化了將終端機內容製作成 PNG 的流程。它支援遮蔽和醒目標示。使用<a href=\"iterm2whatsnew:screenshot\">工作階段 > 製作螢幕截圖</a>來啟用它。"
+          }
         }
       }
     },
@@ -354,6 +384,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3.7 版的新功能"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "3.7 版的新功能"
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : ">"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
         }
       }
     },
@@ -474,6 +516,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "Claude Code Integration"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 整合"
+          }
         }
       }
     },
@@ -598,6 +652,12 @@
             "state" : "translated",
             "value" : "为了便于管理大量标签页，现在可以将标签页合并为可折叠的标签页组。标签页栏也会自动滚动，而不是显示溢出菜单。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為了方便管理大量標籤頁，現在可以將標籤頁合併成可摺疊的群組。標籤頁列現在也會捲動，而不是顯示溢位選單。"
+          }
         }
       }
     },
@@ -654,6 +714,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -718,6 +784,12 @@
             "state" : "translated",
             "value" : "Claude Code 集成将多个相关会话（如代码审查和阅读差异）组织到可自定义的界面中。它还会显示 Claude 的状态，让你轻松找到需要你处理的实例。<a href=\"iterm2whatsnew:claudecode\">立即试用！</a>"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code 整合會將多個相關的工作階段（例如程式碼審查和閱讀差異）整理到可自訂的介面中。它也會顯示 Claude 的狀態，讓你輕鬆找到正在等待你處理的執行個體。<a href=\"iterm2whatsnew:claudecode\">立即試用！</a>"
+          }
         }
       }
     },
@@ -778,6 +850,12 @@
             "state" : "translated",
             "value" : "Companion iPhone App"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搭配 iPhone App"
+          }
         }
       }
     },
@@ -834,6 +912,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -898,6 +982,12 @@
             "state" : "translated",
             "value" : "Orchestration"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "協作調度"
+          }
         }
       }
     },
@@ -957,6 +1047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "标签页组"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "標籤頁群組"
           }
         }
       }
@@ -1018,6 +1114,12 @@
             "state" : "translated",
             "value" : "截屏"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "螢幕截圖"
+          }
         }
       }
     },
@@ -1074,6 +1176,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

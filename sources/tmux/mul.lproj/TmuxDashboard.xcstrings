@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "tmux 仪表盘"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux 儀表板"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "会话"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作階段"
+          }
         }
       }
     },
@@ -174,6 +186,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "附加"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "附加"
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "搜索窗口"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋視窗"
+          }
         }
       }
     },
@@ -297,6 +321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "窗口"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗"
           }
         }
       }
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "在多个窗口中打开"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在多個視窗中打開"
+          }
         }
       }
     },
@@ -417,6 +453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隐藏"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏"
           }
         }
       }
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "在多个窗口中打开"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在多個視窗中打開"
+          }
         }
       }
     },
@@ -537,6 +585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在标签页中打开"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在標籤頁中打開"
           }
         }
       }
@@ -598,6 +652,12 @@
             "state" : "translated",
             "value" : "分离"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分離"
+          }
         }
       }
     },
@@ -658,6 +718,12 @@
             "state" : "translated",
             "value" : "有隐藏窗口时，附加时打开仪表盘"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有隱藏的視窗時，附加時打開儀表板"
+          }
         }
       }
     },
@@ -717,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "附加时若已有至少以下数量的窗口，则不打开新窗口："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若至少有這麼多個視窗，附加時不打開視窗："
           }
         }
       }

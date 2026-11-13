@@ -1,0 +1,11 @@
+[1m歡迎使用 iTerm2 Python REPL！[m
+
+這是一個互動式 Python 直譯器，可以用來試驗腳本。與標準 Python 直譯器不同，
+你可以在非同步函式之外使用「await」。試試看這個範例腳本：
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+await iterm2.Window.async_create(connection)
+
+]8;;https://iterm2.com/python-api按住 ⌘ 並按一下這裡，查看 iTerm2 Python API 說明文件]8;;
+

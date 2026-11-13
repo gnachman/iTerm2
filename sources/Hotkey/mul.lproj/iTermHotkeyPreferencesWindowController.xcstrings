@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "⌥ Option"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "固定热键窗口（失去键盘焦点时保持打开）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "釘選全域快速鍵視窗（失去鍵盤焦點時保持打開）"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "热键："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全域快速鍵："
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "注意：仅当窗口因其他应用变为活动而关闭时，才会重新打开。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注意：只有在視窗是因為其他 App 變成使用中而關閉時，才會重新打開。"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "其他热键"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他全域快速鍵"
+          }
         }
       }
     },
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按下此配置文件绑定的热键时，专用窗口将显示或隐藏。每个带热键的配置文件都控制自己的热键窗口。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下與此描述檔綁定的全域快速鍵時，專用視窗會顯示或隱藏。每個設有全域快速鍵的描述檔都控制各自的全域快速鍵視窗。"
           }
         }
       }
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "不做任何特殊处理"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不做任何特殊處理"
+          }
         }
       }
     },
@@ -474,6 +516,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "显示此热键窗口"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示此全域快速鍵視窗"
+          }
         }
       }
     },
@@ -598,6 +652,12 @@
             "state" : "translated",
             "value" : "热键窗口设置"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全域快速鍵視窗設定"
+          }
         }
       }
     },
@@ -654,6 +714,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -718,6 +784,12 @@
             "state" : "translated",
             "value" : "⚠️ 另一个配置文件使用了此快捷键"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 另一個描述檔使用了此快速鍵"
+          }
         }
       }
     },
@@ -774,6 +846,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -838,6 +916,12 @@
             "state" : "translated",
             "value" : "连按两次的按键："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連按兩下的按鍵："
+          }
         }
       }
     },
@@ -897,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "应用重新激活时自动重新打开"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 重新啟用時自動重新打開"
           }
         }
       }
@@ -958,6 +1048,12 @@
             "state" : "translated",
             "value" : "⚠️ 另一个配置文件使用了此连按"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ 另一個描述檔使用了此連按兩下"
+          }
         }
       }
     },
@@ -1017,6 +1113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如果没有其他窗口打开，则显示此热键窗口"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有其他視窗打開時，顯示此全域快速鍵視窗"
           }
         }
       }
@@ -1078,6 +1180,12 @@
             "state" : "translated",
             "value" : "浮动窗口会与其他窗口和 Dock 以及其他应用的“全屏幕”窗口重叠（如果热键窗口的空间设置为“所有空间”）。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮動視窗會與其他視窗、Dock 以及其他 App 的全螢幕視窗重疊（如果全域快速鍵視窗的空間設為「所有空間」）。"
+          }
         }
       }
     },
@@ -1134,6 +1242,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -1198,6 +1312,12 @@
             "state" : "translated",
             "value" : "点按 Dock 图标时："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下 Dock 圖像時："
+          }
         }
       }
     },
@@ -1258,6 +1378,12 @@
             "state" : "translated",
             "value" : "显示和隐藏时使用动画"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示和隱藏時使用動畫"
+          }
         }
       }
     },
@@ -1314,6 +1440,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -1378,6 +1510,12 @@
             "state" : "translated",
             "value" : "好"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
         }
       }
     },
@@ -1438,6 +1576,12 @@
             "state" : "translated",
             "value" : "浮动窗口"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浮動視窗"
+          }
         }
       }
     },
@@ -1494,6 +1638,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -1557,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他热键…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他全域快速鍵…"
           }
         }
       }

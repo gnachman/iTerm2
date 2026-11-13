@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "路径"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "路徑"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "签名"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "簽章"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "脚本检查器"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腳本檢查器"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "会话、标签页和窗口"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作階段、標籤頁和視窗"
+          }
         }
       }
     },
@@ -358,6 +388,12 @@
             "state" : "translated",
             "value" : "变量"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "變數"
+          }
         }
       }
     },
@@ -414,6 +450,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "角色"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "角色"
@@ -478,6 +520,12 @@
             "state" : "translated",
             "value" : "拷贝路径"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝路徑"
+          }
         }
       }
     },
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "已注册函数"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已註冊的函式"
+          }
         }
       }
     },
@@ -594,6 +648,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "值"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "值"
@@ -658,6 +718,12 @@
             "state" : "translated",
             "value" : "拷贝 ID"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝 ID"
+          }
         }
       }
     },
@@ -718,6 +784,12 @@
             "state" : "translated",
             "value" : "对象名称 (ID)"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "物件名稱（ID）"
+          }
         }
       }
     },
@@ -774,6 +846,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -838,6 +916,12 @@
             "state" : "translated",
             "value" : "脚本"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腳本"
+          }
         }
       }
     },
@@ -897,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝值"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝值"
           }
         }
       }

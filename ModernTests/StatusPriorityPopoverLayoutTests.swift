@@ -12,7 +12,7 @@ import XCTest
 @testable import iTerm2SharedARC
 
 final class StatusPriorityPopoverLayoutTests: XCTestCase {
-    private let languages = ["en", "de", "es", "fr", "ja", "pt-BR", "ru", "zh-Hans"]
+    private let languages = ["en", "de", "es", "fr", "ja", "pt-BR", "ru", "zh-Hans", "zh-Hant"]
 
     private struct Titles {
         var notify: String

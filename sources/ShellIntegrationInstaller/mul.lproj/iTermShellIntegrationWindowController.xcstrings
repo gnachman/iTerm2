@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "下载最新版本。运行 curl | bash"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下載最新版本。執行 curl | bash"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "继续"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續"
+          }
         }
       }
     },
@@ -174,6 +186,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -238,6 +256,12 @@
             "state" : "translated",
             "value" : "取消"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
         }
       }
     },
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "1. 确定你使用的 Shell。\n2. 在主目录下添加脚本文件。\n3. 安装实用工具脚本。\n4. 修改你的 Shell 启动脚本。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 確認你使用的 shell。\n2. 在個人專屬目錄下加入腳本檔案。\n3. 安裝公用腳本。\n4. 修改你的 shell 啟動腳本。"
+          }
         }
       }
     },
@@ -354,6 +384,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "实用工具包括用于下载文件、内联显示图像等的脚本。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公用程式包含用於下載檔案、內嵌顯示圖片等的腳本。 "
+          }
         }
       }
     },
@@ -474,6 +516,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
@@ -538,6 +586,12 @@
             "state" : "translated",
             "value" : "继续"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續"
+          }
         }
       }
     },
@@ -594,6 +648,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -658,6 +718,12 @@
             "state" : "translated",
             "value" : "跳过"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "略過"
+          }
         }
       }
     },
@@ -714,6 +780,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
@@ -778,6 +850,12 @@
             "state" : "translated",
             "value" : "预览命令"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預覽指令"
+          }
         }
       }
     },
@@ -837,6 +915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "离线安装"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "離線安裝"
           }
         }
       }
@@ -898,6 +982,12 @@
             "state" : "translated",
             "value" : "下载并运行安装程序"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下載並執行安裝程式"
+          }
         }
       }
     },
@@ -957,6 +1047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "同时安装 iTerm2 工具"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同時安裝 iTerm2 公用程式"
           }
         }
       }
@@ -1018,6 +1114,12 @@
             "state" : "translated",
             "value" : "引导式手动安装。无需下载。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "引導式手動安裝。無需下載。"
+          }
         }
       }
     },
@@ -1077,6 +1179,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "预览命令"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預覽指令"
           }
         }
       }
@@ -1138,6 +1246,12 @@
             "state" : "translated",
             "value" : "继续"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續"
+          }
         }
       }
     },
@@ -1194,6 +1308,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -1258,6 +1378,12 @@
             "state" : "translated",
             "value" : "预览命令"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預覽指令"
+          }
         }
       }
     },
@@ -1314,6 +1440,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
@@ -1378,6 +1510,12 @@
             "state" : "translated",
             "value" : "你想如何安装 Shell 集成？\n\n在此过程中，你的 Shell 启动脚本将被修改。此安装程序会为你将命令输入到终端窗口中。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你想如何安裝 Shell 整合？\n\n在此過程中，你的 shell 啟動腳本將會被修改。此安裝程式會為你在終端機視窗中輸入指令。"
+          }
         }
       }
     },
@@ -1437,6 +1575,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "预览命令"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預覽指令"
           }
         }
       }
@@ -1498,6 +1642,12 @@
             "state" : "translated",
             "value" : "安装完成！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝完成！"
+          }
         }
       }
     },
@@ -1557,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这将运行以下命令：\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這將執行以下指令：\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         }
       }
@@ -1618,6 +1774,12 @@
             "state" : "translated",
             "value" : "新建一个标签页试用。\n\n为获得最佳效果，请在你要 ssh 登录的所有主机上安装 Shell 集成。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增一個標籤頁來試用。\n\n為獲得最佳效果，請在你以 ssh 登入的所有主機上安裝 Shell 整合。"
+          }
         }
       }
     },
@@ -1677,6 +1839,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell 集成包含帮助你的 Shell 与 iTerm2 通信的脚本，使其能够跟踪你正在运行的命令、当前目录以及其他状态。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell 整合包含協助你的 shell 與 iTerm2 通訊的腳本，使其能夠追蹤你正在執行的指令、目前的目錄以及其他狀態。 "
           }
         }
       }
@@ -1738,6 +1906,12 @@
             "state" : "translated",
             "value" : "安装 Shell 集成"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安裝 Shell 整合"
+          }
         }
       }
     },
@@ -1794,6 +1968,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"

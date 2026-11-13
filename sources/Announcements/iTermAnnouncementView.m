@@ -227,7 +227,15 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
         return original;
     } else {
         NSString *shortcut = [NSString stringWithLongCharacter:[original characterAtIndex:index + 1]];
-        NSString *modifiedOriginal = [original stringByReplacingCharactersInRange:NSMakeRange(index, 1) withString:@""];
+        // CJK translations name the shortcut as a parenthesized letter after the text, as in
+        // “常に(_A)” or “一律（_A）”. The shortcut is appended below, so drop the group
+        // instead of showing the letter twice.
+        NSRegularExpression *group = [NSRegularExpression regularExpressionWithPattern:@"\\s*[(（]_.[)）]\\s*$"
+                                                                               options:0
+                                                                                 error:nil];
+        NSTextCheckingResult *match = [group firstMatchInString:original options:0 range:NSMakeRange(0, original.length)];
+        NSString *modifiedOriginal = match ? [original stringByReplacingCharactersInRange:match.range withString:@""] :
+            [original stringByReplacingCharactersInRange:NSMakeRange(index, 1) withString:@""];
         return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Announcement.ActionWithShortcut", nil, [NSBundle mainBundle], @"%1$@ (⌥%2$@)", @"Action button title with its keyboard shortcut; first placeholder is the action name, second is the shortcut key"), modifiedOriginal, shortcut];
     }
 }

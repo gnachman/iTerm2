@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "请稍候！正在安装新的 Python 环境…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請稍候！正在安裝新的 Python 環境…"
+          }
         }
       }
     }

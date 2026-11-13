@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "快速打开"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速打開"
+          }
         }
       }
     },
@@ -118,6 +124,12 @@
             "state" : "translated",
             "value" : "详细信息"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "詳細資訊"
+          }
         }
       }
     },
@@ -177,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索会话、配置文件或窗口布局"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋工作階段、描述檔或排列"
           }
         }
       }

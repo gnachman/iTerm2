@@ -58,6 +58,12 @@
             "state" : "translated",
             "value" : "描述"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "描述"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "崩溃日志"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當機記錄"
           }
         }
       }
@@ -178,6 +190,12 @@
             "state" : "translated",
             "value" : "崩溃报告器"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當機回報程式"
+          }
         }
       }
     },
@@ -237,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "{APPNAME} 上次使用时似乎发生了崩溃。是否要将崩溃日志发送给开发者？\n\nApple 的崩溃日志不会发送给其他开发者，因此这是 {APPNAME} 的开发者了解并修复此崩溃的唯一途径。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{APPNAME} 上次使用時似乎發生了當機。要將當機記錄傳送給開發人員嗎？\n\nApple 的當機記錄不會傳送給其他開發人員，因此這是 {APPNAME} 開發人員得知並修正此當機問題的唯一方式。"
           }
         }
       }
@@ -298,6 +322,12 @@
             "state" : "translated",
             "value" : "您可以删除任何不想发送的信息，但这会使排查错误更加困难。默认情况下，将发送崩溃日志、您使用的 Mac 型号以及您的设置。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你可以刪除任何不想傳送的資訊，但這會讓偵測錯誤更加困難。依預設，會傳送當機記錄、你使用的 Mac 機型以及你的設定。"
+          }
         }
       }
     },
@@ -357,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发送"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "傳送"
           }
         }
       }
@@ -418,6 +454,12 @@
             "state" : "translated",
             "value" : "稍后提醒我"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稍後提醒我"
+          }
         }
       }
     },
@@ -477,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "丢弃"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "捨棄"
           }
         }
       }

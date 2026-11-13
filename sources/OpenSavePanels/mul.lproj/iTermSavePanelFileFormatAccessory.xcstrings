@@ -58,6 +58,12 @@
             "state": "translated",
             "value": "包含时间戳"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "包含時間戳記"
+          }
         }
       }
     },
@@ -117,6 +123,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "文件格式："
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檔案格式："
           }
         }
       }
