@@ -47,6 +47,12 @@
             "value" : "⌥ Option"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단축키 윈도우 고정(키보드 포커스를 잃어도 열린 상태 유지)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przypnij okno klawisza skrótu (pozostaje otwarte po utracie fokusu klawiatury)"
           }
         },
         "pt-BR" : {
@@ -203,6 +215,12 @@
             "value" : "단축키:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klawisz skrótu:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -279,6 +297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "참고: 다른 앱이 활성화되어 윈도우가 닫힌 경우에만 윈도우가 다시 열립니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uwaga: okno jest ponownie otwierane tylko wtedy, gdy zostało zamknięte, ponieważ aktywna stała się inna aplikacja."
           }
         },
         "pt-BR" : {
@@ -359,6 +383,12 @@
             "value" : "추가 단축키"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodatkowe klawisze skrótu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 프로파일에 지정된 단축키를 누르면 전용 윈도우가 보이거나 가려집니다. 단축키가 있는 각 프로파일은 자체 단축키 윈도우를 제어합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po naciśnięciu klawisza skrótu przypisanego do tego profilu dedykowane okno zostanie pokazane lub ukryte. Każdy profil z klawiszem skrótu steruje własnym oknem klawisza skrótu."
           }
         },
         "pt-BR" : {
@@ -515,6 +551,12 @@
             "value" : "특별한 동작 안 함"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie rób nic szczególnego"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -588,6 +630,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -671,6 +719,12 @@
             "value" : "이 단축키 윈도우 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż to okno klawisza skrótu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -749,6 +803,12 @@
             "value" : "단축키 윈도우 설정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia okna klawisza skrótu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -822,6 +882,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -905,6 +971,12 @@
             "value" : "⚠️ 다른 프로파일에서 이 단축키를 사용합니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Inny profil używa tego skrótu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -978,6 +1050,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -1061,6 +1139,12 @@
             "value" : "이중 탭 키:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klawisz dwukrotnego naciśnięcia:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1137,6 +1221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "앱이 다시 활성화될 때 자동으로 다시 열기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwieraj automatycznie po ponownej aktywacji aplikacji"
           }
         },
         "pt-BR" : {
@@ -1217,6 +1307,12 @@
             "value" : "⚠️ 다른 프로파일에서 이 이중 탭을 사용합니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Inny profil używa tego dwukrotnego naciśnięcia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1293,6 +1389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "열려 있는 다른 윈도우가 없으면 이 단축키 윈도우 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż to okno klawisza skrótu, jeśli nie jest otwarte żadne inne okno"
           }
         },
         "pt-BR" : {
@@ -1373,6 +1475,12 @@
             "value" : "플로팅 윈도우는 다른 윈도우와 Dock, 그리고 다른 앱의 전체 화면 윈도우 위에 겹쳐 표시됩니다(단축키 윈도우의 데스크탑이 모든 데스크탑으로 설정된 경우)."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okna pływające nakładają się na inne okna, Dock oraz okna pełnoekranowe innych aplikacji (jeśli biurko okna klawisza skrótu jest ustawione na Wszystkie biurka)."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1557,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
           }
         },
         "pt-BR" : {
@@ -1529,6 +1643,12 @@
             "value" : "Dock 아이콘 클릭 시:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po kliknięciu ikony w Docku:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1605,6 +1725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기 및 가리기에 애니메이션 적용"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animuj pokazywanie i ukrywanie"
           }
         },
         "pt-BR" : {
@@ -1685,6 +1811,12 @@
             "value" : "확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1761,6 +1893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "pt-BR" : {
@@ -1841,6 +1979,12 @@
             "value" : "플로팅 윈도우"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno pływające"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1914,6 +2058,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -1995,6 +2145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "추가 단축키…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodatkowe klawisze skrótu…"
           }
         },
         "pt-BR" : {

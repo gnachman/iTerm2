@@ -47,6 +47,12 @@
             "value" : "항목 2"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 2"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "종속성을 추가하려면 이 스크립트를 “전체 환경“으로 업그레이드해야 합니다. 업그레이드하면 Python 런타임의 복사본이 만들어지지만 추가 디스크 공간은 사용하지 않습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aby dodać zależności, ten skrypt trzeba uaktualnić do „pełnego środowiska”. Spowoduje to utworzenie kopii środowiska uruchomieniowego Pythona, ale nie zajmie dodatkowego miejsca na dysku."
           }
         },
         "pt-BR" : {
@@ -203,6 +215,12 @@
             "value" : "Python 버전:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wersja Pythona:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -279,6 +297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "제거"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń"
           }
         },
         "pt-BR" : {
@@ -359,6 +383,12 @@
             "value" : "항목 3"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 3"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "업그레이드"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uaktualnij"
           }
         },
         "pt-BR" : {
@@ -515,6 +551,12 @@
             "value" : "스크립트:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrypt:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립트 종속성 편집기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytor zależności skryptu"
           }
         },
         "pt-BR" : {
@@ -671,6 +719,12 @@
             "value" : "항목 1"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 1"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -747,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패키지 이름"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nazwa pakietu"
           }
         },
         "pt-BR" : {
@@ -827,6 +887,12 @@
             "value" : "항목 2"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 2"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 3"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 3"
           }
         },
         "pt-BR" : {
@@ -983,6 +1055,12 @@
             "value" : "업데이트 확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprawdź uaktualnienia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "설치된 버전"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstalowana wersja"
           }
         },
         "pt-BR" : {
@@ -1139,6 +1223,12 @@
             "value" : "항목 1"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 1"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1217,6 +1307,12 @@
             "value" : "확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1293,6 +1389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "추가"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj"
           }
         },
         "pt-BR" : {

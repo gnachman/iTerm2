@@ -47,6 +47,12 @@
             "value" : "iterm2 라이브러리 외에는 종속성이 없는 간단한 스크립트입니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prosty skrypt, który nie ma żadnych zależności poza biblioteką iterm2."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -120,6 +126,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -203,6 +215,12 @@
             "value" : "기본"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podstawowy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,6 +294,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -359,6 +383,12 @@
             "value" : "장기 실행 데몬"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Długo działający demon"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단순"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prosty"
           }
         },
         "pt-BR" : {
@@ -515,6 +551,12 @@
             "value" : "취소"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "동작을 수행하고 종료하는 간단한 스크립트에는 이 템플릿을 선택하십시오."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz ten szablon dla prostego skryptu, który wykonuje akcje i kończy działanie."
           }
         },
         "pt-BR" : {
@@ -671,6 +719,12 @@
             "value" : "iterm2 라이브러리 이외의 PyPI 패키지에 의존하는 스크립트입니다. 이 스크립트 전용 pyenv가 생성됩니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrypt zależny od pakietów PyPI innych niż biblioteka iterm2. Dla tego skryptu zostanie utworzony prywatny pyenv."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -744,6 +798,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -827,6 +887,12 @@
             "value" : "스크립트 템플릿 선택:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz szablon skryptu:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 환경"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pełne środowisko"
           }
         },
         "pt-BR" : {
@@ -983,6 +1055,12 @@
             "value" : "계속 실행되면서 알림에 응답하는 스크립트에는 이 템플릿을 선택하십시오."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz ten szablon dla skryptu, który pozostaje uruchomiony i reaguje na powiadomienia."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1056,6 +1134,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -1137,6 +1221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python 환경 선택:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz środowisko Pythona:"
           }
         },
         "pt-BR" : {

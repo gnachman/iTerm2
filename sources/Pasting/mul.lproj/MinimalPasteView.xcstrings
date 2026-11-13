@@ -47,6 +47,12 @@
             "value": "붙여넣는 중…"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wklejanie…"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",

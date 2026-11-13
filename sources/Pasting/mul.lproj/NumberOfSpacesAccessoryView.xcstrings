@@ -47,6 +47,12 @@
             "value": "탭 크기(공백 수):"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rozmiar tabulatora w spacjach:"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -120,6 +126,12 @@
           }
         },
         "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "pl": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

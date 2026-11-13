@@ -47,6 +47,12 @@
             "value": "내보내기…"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksportuj…"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -123,6 +129,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "현재"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teraz"
           }
         },
         "pt-BR": {
@@ -203,6 +215,12 @@
             "value": "즉시 재생 제어"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sterowanie natychmiastową powtórką"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -279,6 +297,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "취소"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anuluj"
           }
         },
         "pt-BR": {
@@ -359,6 +383,12 @@
             "value": "실시간 보기"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widok na żywo"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -435,6 +465,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "시간"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Czas"
           }
         },
         "pt-BR": {

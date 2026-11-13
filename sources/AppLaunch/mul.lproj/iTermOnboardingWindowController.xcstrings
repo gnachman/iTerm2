@@ -47,6 +47,12 @@
             "value" : "Mac에서 떨어져 있을 때도 iTerm2를 사용하십시오. AI 채팅으로 제어하고, 세션 내용을 보고, 푸시 알림을 받을 수 있습니다. 종단 간 암호화로 데이터를 안전하게 보호합니다. <a href=\"iterm2whatsnew:companion\">지금 사용해 보기!</a>"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Używaj iTerm2, gdy jesteś z dala od komputera Mac. Możesz sterować nim przez czat AI, przeglądać zawartość sesji i otrzymywać powiadomienia push. Szyfrowanie end-to-end chroni twoje dane. <a href=\"iterm2whatsnew:companion\">Wypróbuj teraz!</a>"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -120,6 +126,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -203,6 +215,12 @@
             "value" : "새로운 AI 채팅 모드인 오케스트레이션을 사용하면 AI가 작업을 주도합니다. 윈도우를 만들고 (대화형 앱에서도) 작업이 완료될 때까지 기다릴 수 있으며, 새로운 자동 안전 검사기 덕분에 거의 모든 권한 요청에 일일이 응답할 필요가 없습니다. <a href=\"iterm2whatsnew:orchestration\">지금 사용해 보기!</a>"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowy tryb czatu AI, orkiestracja, pozwala AI przejąć stery. Może tworzyć okna, czekać na zakończenie zadań (nawet w aplikacjach interaktywnych), a nowy automatyczny weryfikator bezpieczeństwa uwalnia cię od odpowiadania na prawie wszystkie prośby o uprawnienia. <a href=\"iterm2whatsnew:orchestration\">Wypróbuj teraz!</a>"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,6 +294,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -359,6 +383,12 @@
             "value" : "새로운 스크린샷 기능으로 터미널 내용을 PNG로 쉽게 만들 수 있습니다. 가리기 및 강조 표시를 지원합니다. 사용하려면 <a href=\"iterm2whatsnew:screenshot\">세션 > 스크린샷 찍기</a>를 선택하십시오."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowa funkcja Zrzuty ekranu upraszcza tworzenie pliku PNG z zawartości terminala. Obsługuje zaczernienia i wyróżnienia. Użyj <a href=\"iterm2whatsnew:screenshot\">Sesja > Zrób zrzut ekranu</a>, aby ją włączyć."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -437,6 +467,12 @@
             "value" : "버전 3.7의 새로운 기능"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowości w wersji 3.7"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -510,6 +546,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -593,6 +635,12 @@
             "value" : "●"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -669,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracja z Claude Code"
           }
         },
         "pt-BR" : {
@@ -749,6 +803,12 @@
             "value" : "많은 탭을 관리하기 쉽도록 이제 탭을 접을 수 있는 그룹으로 묶을 수 있습니다. 또한 탭 막대는 이제 오버플로 메뉴를 표시하는 대신 스크롤됩니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aby łatwiej zarządzać dużą liczbą kart, możesz teraz łączyć karty w zwijane grupy. Pasek kart przewija się teraz zamiast pokazywać menu przepełnienia."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -822,6 +882,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -905,6 +971,12 @@
             "value" : "Claude Code 통합은 코드 리뷰, diff 읽기 등 서로 관련된 여러 세션을 사용자 지정 가능한 UI로 정리합니다. 또한 Claude의 상태를 보여 주므로 사용자의 응답을 기다리며 멈춰 있는 인스턴스를 쉽게 찾을 수 있습니다. <a href=\"iterm2whatsnew:claudecode\">지금 사용해 보기!</a>"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracja z Claude Code porządkuje wiele powiązanych sesji, takich jak przegląd kodu i czytanie diffów, w konfigurowalnym interfejsie. Udostępnia też stan Claude, dzięki czemu łatwo znajdziesz instancje, które czekają na twoją uwagę. <a href=\"iterm2whatsnew:claudecode\">Wypróbuj teraz!</a>"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -983,6 +1055,12 @@
             "value" : "iPhone 보조 앱"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja towarzysząca na iPhone’a"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1056,6 +1134,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1139,6 +1223,12 @@
             "value" : "오케스트레이션"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkiestracja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭 그룹"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupy kart"
           }
         },
         "pt-BR" : {
@@ -1295,6 +1391,12 @@
             "value" : "스크린샷"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrzuty ekranu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1368,6 +1470,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

@@ -47,6 +47,12 @@
             "value" : "메뉴에서 구성요소를 활성 구성요소로 드래그하여 상태 막대에 추가하십시오."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przeciągnij składnik z menu do sekcji Aktywne składniki, aby dodać go do paska stanu."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "안정적인 위치보다 빽빽한 배치 우선"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferuj ścisłe upakowanie zamiast stabilnego położenia"
           }
         },
         "pt-BR" : {
@@ -203,6 +215,12 @@
             "value" : "확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -279,6 +297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "활성 구성요소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktywne składniki"
           }
         },
         "pt-BR" : {
@@ -359,6 +383,12 @@
             "value" : "꺼짐"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłączony"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "값이 비어 있는 구성요소 제거"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń składniki z pustymi wartościami"
           }
         },
         "pt-BR" : {
@@ -515,6 +551,12 @@
             "value" : "상태 막대와 터미널 사이에 구분선 그리기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rysuj separator między paskiem stanu a terminalem"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatyczny"
           }
         },
         "pt-BR" : {
@@ -671,6 +719,12 @@
             "value" : "상태 막대 구성요소 메뉴"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu składników paska stanu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -747,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "고급…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaawansowane…"
           }
         },
         "pt-BR" : {
@@ -827,6 +887,12 @@
             "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algorytm ścisłego upakowania pozwala pokazać jednocześnie więcej składników paska stanu, ale częściej zmieniają one położenie."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 자동 무지개:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Automatyczna tęcza:"
           }
         },
         "pt-BR" : {
@@ -983,6 +1055,12 @@
             "value" : "서체 이름이 여기에 표시됩니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu znajdzie się nazwa czcionki"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "어두운 색상"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ciemne kolory"
           }
         },
         "pt-BR" : {
@@ -1139,6 +1223,12 @@
             "value" : "변경"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 텍스트 색상:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domyślny kolor tekstu:"
           }
         },
         "pt-BR" : {
@@ -1295,6 +1391,12 @@
             "value" : "구성요소 구성"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfiguruj składnik"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,6 +1473,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algorytm ścisłego upakowania pozwala pokazać jednocześnie więcej składników paska stanu, ale częściej zmieniają one położenie."
           }
         },
         "pt-BR" : {
@@ -1451,6 +1559,12 @@
             "value" : "구분선 색상:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kolor separatora:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1527,6 +1641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
           }
         },
         "pt-BR" : {
@@ -1607,6 +1727,12 @@
             "value" : "밝은 색상"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jasne kolory"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1683,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서체:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czcionka:"
           }
         },
         "pt-BR" : {
@@ -1763,6 +1895,12 @@
             "value" : "배경 색상:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kolor tła:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1841,6 +1979,12 @@
             "value" : "확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1917,6 +2061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "상태 막대와 터미널 내용 사이에 가는 선을 그립니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rysuje cienką linię między paskiem stanu a zawartością terminala."
           }
         },
         "pt-BR" : {

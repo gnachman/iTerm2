@@ -60,6 +60,12 @@
             "value" : "iTerm2"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -136,6 +142,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 안의 응용 프로그램이 AppleScript를 사용하려고 합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć AppleScript."
           }
         },
         "pt-BR" : {
@@ -216,6 +228,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 Bluetooth를 사용하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć Bluetooth."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -292,6 +310,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 안의 응용 프로그램이 캘린더 데이터를 사용하려고 합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć danych z Kalendarza."
           }
         },
         "pt-BR" : {
@@ -372,6 +396,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 카메라를 사용하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć kamery."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -450,6 +480,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 사용자의 연락처를 사용하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć twoich kontaktów."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -523,6 +559,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -606,6 +648,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 로컬 네트워크에 접근하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce uzyskać dostęp do sieci lokalnej."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -682,6 +730,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 안의 응용 프로그램이 백그라운드에서도 사용자의 위치 정보를 사용하려고 합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce używać informacji o twojej lokalizacji, także w tle."
           }
         },
         "pt-BR" : {
@@ -762,6 +816,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 사용자의 위치 정보를 사용하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć informacji o twojej lokalizacji."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -838,6 +898,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 안의 응용 프로그램이 활성 상태일 때 사용자의 위치 정보를 사용하려고 합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć informacji o twojej lokalizacji, gdy jest aktywna."
           }
         },
         "pt-BR" : {
@@ -918,6 +984,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 마이크를 사용하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć twojego mikrofonu."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -994,6 +1066,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 안의 응용 프로그램이 사진 보관함을 사용하려고 합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć biblioteki zdjęć."
           }
         },
         "pt-BR" : {
@@ -1074,6 +1152,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 사용자의 미리 알림을 사용하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć twoich przypomnień."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1152,6 +1236,12 @@
             "value" : "iTerm2 안의 응용 프로그램이 음성 인식을 사용하려고 합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacja w iTerm2 chce użyć rozpoznawania mowy."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1228,6 +1318,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 안의 프로그램이 수행하는 작업에 더 높은 권한이 필요합니다."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operacja wykonywana przez program w iTerm2 wymaga podwyższonych uprawnień."
           }
         },
         "pt-BR" : {

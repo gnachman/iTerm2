@@ -47,6 +47,12 @@
             "value" : "이전 세션의 디렉토리 재사용"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użyj ponownie katalogu poprzedniej sesji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "홈 디렉토리"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog domowy"
           }
         },
         "pt-BR" : {
@@ -203,6 +215,12 @@
             "value" : "새로운 탭의 작업 디렉토리"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog roboczy dla nowych kart"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -279,6 +297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "라디오"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przycisk opcji"
           }
         },
         "pt-BR" : {
@@ -359,6 +383,12 @@
             "value" : "새로운 윈도우의 작업 디렉토리"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog roboczy dla nowych okien"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 세션의 디렉토리 재사용"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użyj ponownie katalogu poprzedniej sesji"
           }
         },
         "pt-BR" : {
@@ -515,6 +551,12 @@
             "value" : "라디오"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przycisk opcji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 세션의 디렉토리 재사용"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użyj ponownie katalogu poprzedniej sesji"
           }
         },
         "pt-BR" : {
@@ -671,6 +719,12 @@
             "value" : "디렉토리:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -747,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 분할 패널의 작업 디렉토리"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog roboczy dla nowych paneli podzielonych"
           }
         },
         "pt-BR" : {
@@ -827,6 +887,12 @@
             "value" : "고급 작업 디렉토리 설정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaawansowane ustawienia katalogu roboczego"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog:"
           }
         },
         "pt-BR" : {
@@ -983,6 +1055,12 @@
             "value" : "디렉토리:"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog:"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "라디오"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przycisk opcji"
           }
         },
         "pt-BR" : {
@@ -1139,6 +1223,12 @@
             "value" : "홈 디렉토리"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog domowy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1217,6 +1307,12 @@
             "value" : "홈 디렉토리"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog domowy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1293,6 +1389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "pt-BR" : {

@@ -47,6 +47,12 @@
             "value" : "축소"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomniejsz"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python 런타임 설치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstaluj środowisko uruchomieniowe Pythona"
           }
         },
         "pt-BR" : {
@@ -203,6 +215,12 @@
             "value" : "탭 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś kartę"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -279,6 +297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 복제"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikuj sesję"
           }
         },
         "pt-BR" : {
@@ -359,6 +383,12 @@
             "value" : "위치 열기…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz lokalizację…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높이 늘리기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwiększ wysokość"
           }
         },
         "pt-BR" : {
@@ -515,6 +551,12 @@
             "value" : "탭 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś kartę"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "포커스 리포팅"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportowanie fokusu"
           }
         },
         "pt-BR" : {
@@ -671,6 +719,12 @@
             "value" : "보통"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normalny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -747,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 위로 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przesuń separator w górę"
           }
         },
         "pt-BR" : {
@@ -827,6 +887,12 @@
             "value" : "Base64로 디코딩된 값으로 대치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastąp wartością zdekodowaną z Base64"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesja"
           }
         },
         "pt-BR" : {
@@ -983,6 +1055,12 @@
             "value" : "세션을 분할 패널로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś sesję do panelu podzielonego"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 관리자"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menedżer haseł"
           }
         },
         "pt-BR" : {
@@ -1139,6 +1223,12 @@
             "value" : "항목 1"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 1"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가운데"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyśrodkowane"
           }
         },
         "pt-BR" : {
@@ -1295,6 +1391,12 @@
             "value" : "선택 영역 대치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastąp zaznaczenie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,6 +1473,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 왼쪽"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po lewej stronie ekranu"
           }
         },
         "pt-BR" : {
@@ -1451,6 +1559,12 @@
             "value" : "애플리케이션 커서"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kursor aplikacji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1527,6 +1641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "배치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Układy"
           }
         },
         "pt-BR" : {
@@ -1607,6 +1727,12 @@
             "value" : "선택한 줄 접기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwiń zaznaczone wiersze"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1683,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최근 디렉토리 열기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz ostatnie katalogi…"
           }
         },
         "pt-BR" : {
@@ -1763,6 +1895,12 @@
             "value" : "전체 화면"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pełny ekran"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1839,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이름 있는 마크 설정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustaw nazwany znacznik"
           }
         },
         "pt-BR" : {
@@ -1919,6 +2063,12 @@
             "value" : "동작"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akcje"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1995,6 +2145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU 프레임 캡처"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przechwyć klatkę GPU"
           }
         },
         "pt-BR" : {
@@ -2075,6 +2231,12 @@
             "value" : "마크 및 주석"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znaczniki i adnotacje"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2151,6 +2313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 왼쪽 전체 높이"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pełna wysokość po lewej stronie ekranu"
           }
         },
         "pt-BR" : {
@@ -2231,6 +2399,12 @@
             "value" : "윈도우 복제"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikuj okno"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2307,6 +2481,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 자동 완성"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatyczne uzupełnianie poleceń"
           }
         },
         "pt-BR" : {
@@ -2387,6 +2567,12 @@
             "value" : "윈도우 스타일"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Styl okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2463,6 +2649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU 렌더러 사용 가능 여부"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostępność mechanizmu renderowania GPU"
           }
         },
         "pt-BR" : {
@@ -2543,6 +2735,12 @@
             "value" : "윈도우"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2619,6 +2817,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최소화"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimalizuj"
           }
         },
         "pt-BR" : {
@@ -2699,6 +2903,12 @@
             "value" : "윈도우"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2772,6 +2982,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -2855,6 +3071,12 @@
             "value" : "iTerm2"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2931,6 +3153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치의 프로파일 변경…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień profil w układzie…"
           }
         },
         "pt-BR" : {
@@ -3011,6 +3239,12 @@
             "value" : "셸"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powłoka"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3087,6 +3321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 너비 설정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustaw domyślną szerokość"
           }
         },
         "pt-BR" : {
@@ -3167,6 +3407,12 @@
             "value" : "셸"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powłoka"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3243,6 +3489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도움말"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoc"
           }
         },
         "pt-BR" : {
@@ -3323,6 +3575,12 @@
             "value" : "도움말"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoc"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3399,6 +3657,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 도움말"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoc iTerm2"
           }
         },
         "pt-BR" : {
@@ -3479,6 +3743,12 @@
             "value" : "환경설정…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3555,6 +3825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서비스"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usługi"
           }
         },
         "pt-BR" : {
@@ -3635,6 +3911,12 @@
             "value" : "서비스"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usługi"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3711,6 +3993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 가리기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukryj iTerm2"
           }
         },
         "pt-BR" : {
@@ -3791,6 +4079,12 @@
             "value" : "iTerm2 종료"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakończ iTerm2"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3867,6 +4161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기타 가리기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukryj pozostałe"
           }
         },
         "pt-BR" : {
@@ -3947,6 +4247,12 @@
             "value" : "모두 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż wszystkie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4023,6 +4329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오려두기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wytnij"
           }
         },
         "pt-BR" : {
@@ -4103,6 +4415,12 @@
             "value" : "편집"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edycja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4179,6 +4497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "편집"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edycja"
           }
         },
         "pt-BR" : {
@@ -4259,6 +4583,12 @@
             "value" : "모두 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaznacz wszystko"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4335,6 +4665,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "붙여넣기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklej"
           }
         },
         "pt-BR" : {
@@ -4415,6 +4751,12 @@
             "value" : "버퍼 지우기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść bufor"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4491,6 +4833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dziennik"
           }
         },
         "pt-BR" : {
@@ -4571,6 +4919,12 @@
             "value" : "로그"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dziennik"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4647,6 +5001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2에 관하여"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O programie iTerm2"
           }
         },
         "pt-BR" : {
@@ -4727,6 +5087,12 @@
             "value" : "프로파일"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4803,6 +5169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile"
           }
         },
         "pt-BR" : {
@@ -4883,6 +5255,12 @@
             "value" : "터미널 윈도우 닫기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknij okno Terminala"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4959,6 +5337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭의 모든 패널 닫기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknij wszystkie panele w karcie"
           }
         },
         "pt-BR" : {
@@ -5039,6 +5423,12 @@
             "value" : "페이지 설정…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia strony…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5115,6 +5505,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택한 텍스트 저장…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachowaj zaznaczony tekst…"
           }
         },
         "pt-BR" : {
@@ -5195,6 +5591,12 @@
             "value" : "스크롤백 버퍼 지우기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść bufor przewijania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5271,6 +5673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 항목으로 찾기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użyj zaznaczenia do wyszukiwania"
           }
         },
         "pt-BR" : {
@@ -5351,6 +5759,12 @@
             "value" : "찾기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5427,6 +5841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź"
           }
         },
         "pt-BR" : {
@@ -5507,6 +5927,12 @@
             "value" : "다음 찾기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź następne"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5583,6 +6009,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 찾기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź poprzednie"
           }
         },
         "pt-BR" : {
@@ -5663,6 +6095,12 @@
             "value" : "선택 항목으로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przejdź do zaznaczenia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5739,6 +6177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widok"
           }
         },
         "pt-BR" : {
@@ -5819,6 +6263,12 @@
             "value" : "보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widok"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5895,6 +6345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트 크게"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powiększ tekst"
           }
         },
         "pt-BR" : {
@@ -5975,6 +6431,12 @@
             "value" : "텍스트 작게"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmniejsz tekst"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6051,6 +6513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프린트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drukuj"
           }
         },
         "pt-BR" : {
@@ -6131,6 +6599,12 @@
             "value" : "화면"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekran"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6207,6 +6681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프린트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drukuj"
           }
         },
         "pt-BR" : {
@@ -6287,6 +6767,12 @@
             "value" : "선택 영역"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaznaczenie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6363,6 +6849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "버퍼"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bufor"
           }
         },
         "pt-BR" : {
@@ -6443,6 +6935,12 @@
             "value" : "이전 탭 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz poprzednią kartę"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6519,6 +7017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 탭 선택"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz następną kartę"
           }
         },
         "pt-BR" : {
@@ -6599,6 +7103,12 @@
             "value" : "탭 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz kartę"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6675,6 +7185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭 선택"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz kartę"
           }
         },
         "pt-BR" : {
@@ -6755,6 +7271,12 @@
             "value" : "새로운 탭"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowa karta"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6831,6 +7353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowe okno"
           }
         },
         "pt-BR" : {
@@ -6911,6 +7439,12 @@
             "value" : "Option 키를 누르면 새로운 윈도우"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naciśnij Option, aby otworzyć nowe okno"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6987,6 +7521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우에서 열기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz w nowym oknie"
           }
         },
         "pt-BR" : {
@@ -7067,6 +7607,12 @@
             "value" : "업데이트 확인…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprawdź uaktualnienia…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7143,6 +7689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확대/축소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień rozmiar"
           }
         },
         "pt-BR" : {
@@ -7223,6 +7775,12 @@
             "value" : "재설정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetuj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7299,6 +7857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 화면 전환"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz/wyłącz pełny ekran"
           }
         },
         "pt-BR" : {
@@ -7379,6 +7943,12 @@
             "value" : "디버그 로깅 전환"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz/wyłącz dziennik debugowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7455,6 +8025,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일 열기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz profile…"
           }
         },
         "pt-BR" : {
@@ -7535,6 +8111,12 @@
             "value" : "세션 편집…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj sesję…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7611,6 +8193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "즉시 재생 시작"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozpocznij natychmiastową powtórkę"
           }
         },
         "pt-BR" : {
@@ -7691,6 +8279,12 @@
             "value" : "실행 취소"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cofnij"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7767,6 +8361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "실행 복귀"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powtórz"
           }
         },
         "pt-BR" : {
@@ -7847,6 +8447,12 @@
             "value" : "붙여넣기 기록 열기…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz historię wklejania…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7923,6 +8529,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자동 완성 열기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz autouzupełnianie…"
           }
         },
         "pt-BR" : {
@@ -8003,6 +8615,12 @@
             "value" : "특수 붙여넣기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklej specjalnie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8079,6 +8697,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "특수 붙여넣기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklej specjalnie"
           }
         },
         "pt-BR" : {
@@ -8159,6 +8783,12 @@
             "value" : "선택 영역 붙여넣기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklej zaznaczenie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8235,6 +8865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "천천히 붙여넣기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklej powoli"
           }
         },
         "pt-BR" : {
@@ -8315,6 +8951,12 @@
             "value" : "보안 키보드 입력"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezpieczne wprowadzanie z klawiatury"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8391,6 +9033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우를 가로로 정렬"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozmieść okna poziomo"
           }
         },
         "pt-BR" : {
@@ -8471,6 +9119,12 @@
             "value" : "닫기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknij"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8547,6 +9201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 프로파일로 세로로 분할"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podziel pionowo z bieżącym profilem"
           }
         },
         "pt-BR" : {
@@ -8627,6 +9287,12 @@
             "value" : "현재 프로파일로 가로로 분할"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podziel poziomo z bieżącym profilem"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8703,6 +9369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치 저장"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachowaj układ okien"
           }
         },
         "pt-BR" : {
@@ -8783,6 +9455,12 @@
             "value" : "분할 패널 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz panel podzielony"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8859,6 +9537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 선택"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz panel podzielony"
           }
         },
         "pt-BR" : {
@@ -8939,6 +9623,12 @@
             "value" : "위쪽 패널 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz panel powyżej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9015,6 +9705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아래쪽 패널 선택"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz panel poniżej"
           }
         },
         "pt-BR" : {
@@ -9095,6 +9791,12 @@
             "value" : "왼쪽 패널 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz panel po lewej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9171,6 +9873,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오른쪽 패널 선택"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz panel po prawej"
           }
         },
         "pt-BR" : {
@@ -9251,6 +9959,12 @@
             "value" : "투명도 사용"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Użyj przezroczystości"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9327,6 +10041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "활성 패널 최대화"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maksymalizuj aktywny panel"
           }
         },
         "pt-BR" : {
@@ -9407,6 +10127,12 @@
             "value" : "항목 3"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 3"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9483,6 +10209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 2"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 2"
           }
         },
         "pt-BR" : {
@@ -9563,6 +10295,12 @@
             "value" : "항목 1"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 1"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9639,6 +10377,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "마크 설정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustaw znacznik"
           }
         },
         "pt-BR" : {
@@ -9719,6 +10463,12 @@
             "value" : "마크로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przejdź do znacznika"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9795,6 +10545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 패널"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Następny panel"
           }
         },
         "pt-BR" : {
@@ -9875,6 +10631,12 @@
             "value" : "이전 패널"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poprzedni panel"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9951,6 +10713,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 화면에서 탭 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż karty w trybie pełnoekranowym"
           }
         },
         "pt-BR" : {
@@ -10031,6 +10799,12 @@
             "value" : "입력 브로드캐스트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozgłaszanie wejścia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10107,6 +10881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "입력 브로드캐스트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozgłaszanie wejścia"
           }
         },
         "pt-BR" : {
@@ -10187,6 +10967,12 @@
             "value" : "모든 탭의 모든 패널에 입력 브로드캐스트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozgłaszaj wejście do wszystkich paneli we wszystkich kartach"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10263,6 +11049,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 탭의 모든 패널에 입력 브로드캐스트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozgłaszaj wejście do wszystkich paneli w bieżącej karcie"
           }
         },
         "pt-BR" : {
@@ -10343,6 +11135,12 @@
             "value" : "현재 세션에만 입력 보내기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wysyłaj wejście tylko do bieżącej sesji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10419,6 +11217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치 복원"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywróć układ okien"
           }
         },
         "pt-BR" : {
@@ -10499,6 +11303,12 @@
             "value" : "윈도우 배치 복원"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywróć układ okien"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10575,6 +11385,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "커서 찾기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź kursor"
           }
         },
         "pt-BR" : {
@@ -10655,6 +11471,12 @@
             "value" : "가로로 분할…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podziel poziomo…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10731,6 +11553,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세로로 분할…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podziel pionowo…"
           }
         },
         "pt-BR" : {
@@ -10811,6 +11639,12 @@
             "value" : "도구 벨트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas narzędzi"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10887,6 +11721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도구 벨트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas narzędzi"
           }
         },
         "pt-BR" : {
@@ -10967,6 +11807,12 @@
             "value" : "도구 벨트 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż pas narzędzi"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11043,6 +11889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 프로파일로 새로운 탭"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowa karta z bieżącym profilem"
           }
         },
         "pt-BR" : {
@@ -11123,6 +11975,12 @@
             "value" : "코프로세스 실행…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uruchom koproces…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11199,6 +12057,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "코프로세스 중단"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatrzymaj koproces"
           }
         },
         "pt-BR" : {
@@ -11279,6 +12143,12 @@
             "value" : "복사"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11355,6 +12225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭을 새로운 윈도우로 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś kartę do nowego okna"
           }
         },
         "pt-BR" : {
@@ -11435,6 +12311,12 @@
             "value" : "탭을 오른쪽으로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przesuń kartę w prawo"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11513,6 +12395,12 @@
             "value" : "배경 패턴 표시기 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż wskaźnik wzoru tła"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11586,6 +12474,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -11669,6 +12563,12 @@
             "value" : "tmux"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11745,6 +12645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 tmux 탭"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowa karta tmux"
           }
         },
         "pt-BR" : {
@@ -11825,6 +12731,12 @@
             "value" : "새로운 tmux 윈도우"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowe okno tmux"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11901,6 +12813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분리"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odłącz"
           }
         },
         "pt-BR" : {
@@ -11981,6 +12899,12 @@
             "value" : "대시보드"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel sterowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12057,6 +12981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트 기본 크기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normalny rozmiar tekstu"
           }
         },
         "pt-BR" : {
@@ -12137,6 +13067,12 @@
             "value" : "텍스트 및 세션 크기 복원"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywróć rozmiar tekstu i sesji"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12213,6 +13149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2를 기본 터미널로 설정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustaw iTerm2 jako domyślny terminal"
           }
         },
         "pt-BR" : {
@@ -12293,6 +13235,12 @@
             "value" : "터미널 앱을 기본 터미널로 설정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustaw Terminal jako domyślny terminal"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12369,6 +13317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션으로 입력 브로드캐스트 전환"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz/wyłącz rozgłaszanie wejścia do bieżącej sesji"
           }
         },
         "pt-BR" : {
@@ -12449,6 +13403,12 @@
             "value" : "더 빠르게 붙여넣기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklejaj szybciej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12525,6 +13485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "더 느리게 붙여넣기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklejaj wolniej"
           }
         },
         "pt-BR" : {
@@ -12605,6 +13571,12 @@
             "value" : "천천히 붙여넣기 더 빠르게"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklejanie powolne: szybciej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12681,6 +13653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "천천히 붙여넣기 더 느리게"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklejanie powolne: wolniej"
           }
         },
         "pt-BR" : {
@@ -12761,6 +13739,12 @@
             "value" : "문자 세트 재설정"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetuj zestaw znaków"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12839,6 +13823,12 @@
             "value" : "아카이브"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archiwa"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12912,6 +13902,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -12995,6 +13991,12 @@
             "value" : "선택 영역에 주석 달기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj adnotację do zaznaczenia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13071,6 +14073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 확대"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przybliż zaznaczenie"
           }
         },
         "pt-BR" : {
@@ -13151,6 +14159,12 @@
             "value" : "구분선을 왼쪽으로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przesuń separator w lewo"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13227,6 +14241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 끄기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłącz wszystko"
           }
         },
         "pt-BR" : {
@@ -13307,6 +14327,12 @@
             "value" : "세션 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś sesję"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13383,6 +14409,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż edytor poleceń"
           }
         },
         "pt-BR" : {
@@ -13463,6 +14495,12 @@
             "value" : "강제 분리"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wymuś odłączenie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13539,6 +14577,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이름 있는 마크"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nazwane znaczniki"
           }
         },
         "pt-BR" : {
@@ -13619,6 +14663,12 @@
             "value" : "찾기…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13695,6 +14745,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "녹화 내보내기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksportuj nagranie"
           }
         },
         "pt-BR" : {
@@ -13775,6 +14831,12 @@
             "value" : "제목 막대 없음"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez paska tytułu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13848,6 +14910,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -13931,6 +14999,12 @@
             "value" : "클리핑 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż wycinki"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14007,6 +15081,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴패니언 기기 설정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ustawienia urządzenia towarzyszącego"
           }
         },
         "pt-BR" : {
@@ -14087,6 +15167,12 @@
             "value" : "복사 모드"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryb kopiowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14163,6 +15249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś sesję"
           }
         },
         "pt-BR" : {
@@ -14243,6 +15335,12 @@
             "value" : "탭"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karta"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14319,6 +15417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 시작까지 지우기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść do początku zaznaczenia"
           }
         },
         "pt-BR" : {
@@ -14399,6 +15503,12 @@
             "value" : "성능 통계 복사"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj statystyki wydajności"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14475,6 +15585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrypty"
           }
         },
         "pt-BR" : {
@@ -14555,6 +15671,12 @@
             "value" : "현재 윈도우를 윈도우 배치로 저장"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachowaj bieżące okno jako układ"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14631,6 +15753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "트리거"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyzwalacze"
           }
         },
         "pt-BR" : {
@@ -14711,6 +15839,12 @@
             "value" : "커서 가이드 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż prowadnicę kursora"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14787,6 +15921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크기 잠금"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zablokuj rozmiar"
           }
         },
         "pt-BR" : {
@@ -14867,6 +16007,12 @@
             "value" : "파일에 기록"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisuj do pliku"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14943,6 +16089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "내보내기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksportuj…"
           }
         },
         "pt-BR" : {
@@ -15023,6 +16175,12 @@
             "value" : "웹"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15099,6 +16257,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연관된 텍스트 리포팅"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportuj powiązany tekst"
           }
         },
         "pt-BR" : {
@@ -15179,6 +16343,12 @@
             "value" : "새로운 Python 스크립트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowy skrypt Pythona"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15255,6 +16425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오픈 소스 라이선스"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licencje open source"
           }
         },
         "pt-BR" : {
@@ -15335,6 +16511,12 @@
             "value" : "즉시 재생 지우기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść natychmiastową powtórkę"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15411,6 +16593,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높이 줄이기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmniejsz wysokość"
           }
         },
         "pt-BR" : {
@@ -15491,6 +16679,12 @@
             "value" : "스크립트"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrypty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15567,6 +16761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Finder에서 스크립트 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż skrypty w Finderze"
           }
         },
         "pt-BR" : {
@@ -15647,6 +16847,12 @@
             "value" : "내용 저장…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachowaj zawartość…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15723,6 +16929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 앞으로 가져오기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umieść wszystko na wierzchu"
           }
         },
         "pt-BR" : {
@@ -15803,6 +17015,12 @@
             "value" : "모두 접기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwiń wszystko"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15879,6 +17097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아카이브"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archiwa"
           }
         },
         "pt-BR" : {
@@ -15959,6 +17183,12 @@
             "value" : "윈도우 배치를 탭으로 복원"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywróć układ okien jako karty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16035,6 +17265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "커서 위치에 주석 추가"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj adnotację przy kursorze"
           }
         },
         "pt-BR" : {
@@ -16115,6 +17351,12 @@
             "value" : "활성 윈도우의 투명도 끄기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłącz przezroczystość dla aktywnego okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16191,6 +17433,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "브래킷 붙여넣기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklejanie w nawiasach"
           }
         },
         "pt-BR" : {
@@ -16271,6 +17519,12 @@
             "value" : "보기 좋게 정리된 JSON으로 대치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastąp sformatowanym JSON"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16347,6 +17601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "맨 앞으로 가져오기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś na wierzch"
           }
         },
         "pt-BR" : {
@@ -16427,6 +17687,12 @@
             "value" : "플로팅 패널 도킹"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zadokuj panel pływający"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16503,6 +17769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널 가리기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukryj panele pływające"
           }
         },
         "pt-BR" : {
@@ -16583,6 +17855,12 @@
             "value" : "플로팅 패널을 아래로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś panel pływający w dół"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16659,6 +17937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널을 왼쪽으로 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś panel pływający w lewo"
           }
         },
         "pt-BR" : {
@@ -16739,6 +18023,12 @@
             "value" : "플로팅 패널을 오른쪽으로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś panel pływający w prawo"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16815,6 +18105,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널을 위로 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś panel pływający w górę"
           }
         },
         "pt-BR" : {
@@ -16895,6 +18191,12 @@
             "value" : "현재 프로파일로 새로운 플로팅 패널"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowy panel pływający z bieżącym profilem"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16971,6 +18273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panele pływające"
           }
         },
         "pt-BR" : {
@@ -17051,6 +18359,12 @@
             "value" : "플로팅 패널"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panele pływające"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17127,6 +18441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "맨 뒤로 보내기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś na spód"
           }
         },
         "pt-BR" : {
@@ -17207,6 +18527,12 @@
             "value" : "오늘의 팁 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż wskazówkę dnia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17283,6 +18609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 주석"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Następna adnotacja"
           }
         },
         "pt-BR" : {
@@ -17363,6 +18695,12 @@
             "value" : "콕핏"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17439,6 +18777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션을 탭으로 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś sesję do karty"
           }
         },
         "pt-BR" : {
@@ -17519,6 +18863,12 @@
             "value" : "화면 하단"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na dole"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17595,6 +18945,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "붙여넣을 때 탭을 공백으로 변환할지 묻기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pytaj o zamianę tabulatorów na spacje przy wklejaniu"
           }
         },
         "pt-BR" : {
@@ -17675,6 +19031,12 @@
             "value" : "경고"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17751,6 +19113,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "제어 시퀀스와 함께 복사"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj z sekwencjami sterującymi"
           }
         },
         "pt-BR" : {
@@ -17831,6 +19199,12 @@
             "value" : "윈도우 크기 조절"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień rozmiar okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17907,6 +19281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "재설정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetuj"
           }
         },
         "pt-BR" : {
@@ -17987,6 +19367,12 @@
             "value" : "탭 복제"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikuj kartę"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18063,6 +19449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "페이지 다시 로드"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wczytaj stronę ponownie"
           }
         },
         "pt-BR" : {
@@ -18143,6 +19535,12 @@
             "value" : "세션을 윈도우로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przenieś sesję do okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18219,6 +19617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모든 키를 이스케이프 코드로 리포팅"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportuj wszystkie klawisze jako sekwencje ucieczki"
           }
         },
         "pt-BR" : {
@@ -18299,6 +19703,12 @@
             "value" : "원시 키 리포팅 모드"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryb raportowania nieprzetworzonych klawiszy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18375,6 +19785,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가져오기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importuj…"
           }
         },
         "pt-BR" : {
@@ -18455,6 +19871,12 @@
             "value" : "여러 줄 붙여넣기 전에 경고"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostrzegaj przed wklejeniem wielu wierszy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18531,6 +19953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인라인 채팅 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż czat wbudowany"
           }
         },
         "pt-BR" : {
@@ -18611,6 +20039,12 @@
             "value" : "버퍼 입력 전환"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz/wyłącz wejście do bufora"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18687,6 +20121,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트가 iTerm2를 제어할 수 있음"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdalny host może sterować iTerm2"
           }
         },
         "pt-BR" : {
@@ -18767,6 +20207,12 @@
             "value" : "설정 컨트롤 잘림 확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprawdź obcinanie kontrolek ustawień"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18843,6 +20289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "트리거"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyzwalacze"
           }
         },
         "pt-BR" : {
@@ -18923,6 +20375,12 @@
             "value" : "선택 영역이 소프트 경계를 따름"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaznaczenie respektuje miękkie granice"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18999,6 +20457,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "워크그룹 나가기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opuść grupę roboczą"
           }
         },
         "pt-BR" : {
@@ -19079,6 +20543,12 @@
             "value" : "마지막 명령의 출력 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaznacz wyjście ostatniego polecenia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19155,6 +20625,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 재시작"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uruchom sesję ponownie"
           }
         },
         "pt-BR" : {
@@ -19235,6 +20711,12 @@
             "value" : "Python REPL 열기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz REPL Pythona"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19311,6 +20793,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 상단"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na górze"
           }
         },
         "pt-BR" : {
@@ -19391,6 +20879,12 @@
             "value" : "모든 윈도우 병합"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scal wszystkie okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19467,6 +20961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단축키 윈도우 고정"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przypnij okno klawisza skrótu"
           }
         },
         "pt-BR" : {
@@ -19547,6 +21047,12 @@
             "value" : "modifyOtherKeys 모드 2"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, tryb 2"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19623,6 +21129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빠르게 열기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szybkie otwieranie"
           }
         },
         "pt-BR" : {
@@ -19703,6 +21215,12 @@
             "value" : "관리"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zarządzaj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19779,6 +21297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이스케이프 구분"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozróżniaj Esc"
           }
         },
         "pt-BR" : {
@@ -19859,6 +21383,12 @@
             "value" : "열 결과 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz wynik do otwarcia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19935,6 +21465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "여러 줄 붙여넣기 경고를 셸 프롬프트로 제한"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogranicz ostrzeżenie o wklejaniu wielu wierszy do znaku zachęty powłoki"
           }
         },
         "pt-BR" : {
@@ -20015,6 +21551,12 @@
             "value" : "대화형 앱에서 트리거 활성화"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz wyzwalacze w aplikacjach interaktywnych"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20091,6 +21633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 2"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 2"
           }
         },
         "pt-BR" : {
@@ -20171,6 +21719,12 @@
             "value" : "마우스 리포팅"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportowanie myszy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20247,6 +21801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "마크 및 주석"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znaczniki i adnotacje"
           }
         },
         "pt-BR" : {
@@ -20327,6 +21887,12 @@
             "value" : "레이아웃 잠금"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zablokuj układ"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20403,6 +21969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "위치 잠금"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zablokuj położenie"
           }
         },
         "pt-BR" : {
@@ -20483,6 +22055,12 @@
             "value" : "현재 프로파일로 새로운 윈도우"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowe okno z bieżącym profilem"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20559,6 +22137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 숨겨두기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakop sesję"
           }
         },
         "pt-BR" : {
@@ -20639,6 +22223,12 @@
             "value" : "모달 경고 상자 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż modalne okno alertu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20715,6 +22305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 켜기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz wszystko"
           }
         },
         "pt-BR" : {
@@ -20795,6 +22391,12 @@
             "value" : "다음 마크"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Następny znacznik"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20871,6 +22473,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 정렬"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozmieść okna"
           }
         },
         "pt-BR" : {
@@ -20951,6 +22559,12 @@
             "value" : "모든 스마트 선택 일치 항목 찾기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź wszystkie dopasowania inteligentnego zaznaczania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21027,6 +22641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사운드 재생"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odtwórz dźwięk"
           }
         },
         "pt-BR" : {
@@ -21107,6 +22727,12 @@
             "value" : "명령 기록 열기…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz historię poleceń…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21183,6 +22809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스타일과 함께 복사"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiuj ze stylami"
           }
         },
         "pt-BR" : {
@@ -21263,6 +22895,12 @@
             "value" : "대체 화면"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekran alternatywny"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21341,6 +22979,12 @@
             "value" : "화면 오른쪽 전체 높이"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pełna wysokość po prawej stronie ekranu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21414,6 +23058,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -21497,6 +23147,12 @@
             "value" : "표준 키 리포팅 모드"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardowy tryb raportowania klawiszy"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21573,6 +23229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 크기 조절"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień rozmiar panelu podzielonego"
           }
         },
         "pt-BR" : {
@@ -21653,6 +23315,12 @@
             "value" : "경고"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21729,6 +23397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "상태 변경 시 알림"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powiadom o zmianie stanu"
           }
         },
         "pt-BR" : {
@@ -21809,6 +23483,12 @@
             "value" : "다음 탭 그룹 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz następną grupę kart"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21885,6 +23565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 제거"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odinstaluj integrację z Claude Code"
           }
         },
         "pt-BR" : {
@@ -21965,6 +23651,12 @@
             "value" : "탭 제목 편집"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj tytuł karty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22041,6 +23733,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "배치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Układy"
           }
         },
         "pt-BR" : {
@@ -22121,6 +23819,12 @@
             "value" : "이전 피어"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poprzedni członek"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22197,6 +23901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대체 키 리포팅"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportuj klawisze alternatywne"
           }
         },
         "pt-BR" : {
@@ -22277,6 +23987,12 @@
             "value" : "패널 분할"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel podzielony"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22353,6 +24069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "터미널 상태"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stan terminala"
           }
         },
         "pt-BR" : {
@@ -22433,6 +24155,12 @@
             "value" : "닫기 실행 취소"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cofnij zamknięcie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22509,6 +24237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 채팅"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Czaty AI"
           }
         },
         "pt-BR" : {
@@ -22589,6 +24323,12 @@
             "value" : "앞으로"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dalej"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22665,6 +24405,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 너비 잠금"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zablokuj szerokość panelu podzielonego"
           }
         },
         "pt-BR" : {
@@ -22745,6 +24491,12 @@
             "value" : "워크그룹"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupy robocze"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22821,6 +24573,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션의 아카이브 저장…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachowaj archiwum bieżącej sesji…"
           }
         },
         "pt-BR" : {
@@ -22901,6 +24659,12 @@
             "value" : "선택 영역 대치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastąp zaznaczenie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22974,6 +24738,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -23057,6 +24827,12 @@
             "value" : "주석 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż adnotacje"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23130,6 +24906,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -23213,6 +24995,12 @@
             "value" : "관리"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zarządzaj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23289,6 +25077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 3"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 3"
           }
         },
         "pt-BR" : {
@@ -23369,6 +25163,12 @@
             "value" : "이전 탭 그룹 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz poprzednią grupę kart"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23445,6 +25245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "숨겨둔 세션"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakopane sesje"
           }
         },
         "pt-BR" : {
@@ -23525,6 +25331,12 @@
             "value" : "이전 주석"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poprzednia adnotacja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23601,6 +25413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 밖 세션의 마크에서 경고"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alert o znacznikach w sesjach poza ekranem"
           }
         },
         "pt-BR" : {
@@ -23681,6 +25499,12 @@
             "value" : "가운데, 제목 막대 없음"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyśrodkowane, bez paska tytułu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23757,6 +25581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 설치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstaluj integrację z Claude Code"
           }
         },
         "pt-BR" : {
@@ -23837,6 +25667,12 @@
             "value" : "알림 게시"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyślij powiadomienie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23913,6 +25749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션이 브로드캐스트 소스"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bieżąca sesja jest źródłem rozgłaszania"
           }
         },
         "pt-BR" : {
@@ -23993,6 +25835,12 @@
             "value" : "다음 마크에서 경고"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alert przy następnym znaczniku"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24069,6 +25917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "너비 늘리기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwiększ szerokość"
           }
         },
         "pt-BR" : {
@@ -24149,6 +26003,12 @@
             "value" : "CSI u 모드"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryb CSI u"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24225,6 +26085,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 아래로 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przesuń separator w dół"
           }
         },
         "pt-BR" : {
@@ -24305,6 +26171,12 @@
             "value" : "분할 패널 크기 조절"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień rozmiar panelu podzielonego"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24381,6 +26253,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 재설치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstaluj ponownie integrację z Claude Code"
           }
         },
         "pt-BR" : {
@@ -24461,6 +26339,12 @@
             "value" : "셸 통합 설치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstaluj integrację z powłoką"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24537,6 +26421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "필터"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtruj"
           }
         },
         "pt-BR" : {
@@ -24617,6 +26507,12 @@
             "value" : "트리거 편집"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj wyzwalacze"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24693,6 +26589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패널 일시 정지"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstrzymaj panel"
           }
         },
         "pt-BR" : {
@@ -24773,6 +26675,12 @@
             "value" : "소급 디버그 로그 저장"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachowaj retrospektywne dzienniki debugowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24849,6 +26757,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스니펫"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmenty kodu"
           }
         },
         "pt-BR" : {
@@ -24929,6 +26843,12 @@
             "value" : "현재 명령 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaznacz bieżące polecenie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25005,6 +26925,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크린샷 찍기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrób zrzut ekranu…"
           }
         },
         "pt-BR" : {
@@ -25085,6 +27011,12 @@
             "value" : "선택 영역을 네이티브로 렌더링"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderuj zaznaczenie natywnie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25161,6 +27093,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 메모 보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż notatkę sesji"
           }
         },
         "pt-BR" : {
@@ -25241,6 +27179,12 @@
             "value" : "스니펫"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmenty kodu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25317,6 +27261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 제목 편집"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edytuj tytuł okna"
           }
         },
         "pt-BR" : {
@@ -25397,6 +27347,12 @@
             "value" : "숨긴 경고…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyciszone alerty…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25473,6 +27429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 마크"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poprzedni znacznik"
           }
         },
         "pt-BR" : {
@@ -25553,6 +27515,12 @@
             "value" : "이미 다운로드한 Python 런타임 설치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstaluj już pobrane środowisko uruchomieniowe Pythona"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25629,6 +27597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 오른쪽으로 이동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przesuń separator w prawo"
           }
         },
         "pt-BR" : {
@@ -25709,6 +27683,12 @@
             "value" : "탭"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karta"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25785,6 +27765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "파일 다운로드…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pobierz pliki…"
           }
         },
         "pt-BR" : {
@@ -25865,6 +27851,12 @@
             "value" : "탭을 왼쪽으로 이동"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przesuń kartę w lewo"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25941,6 +27933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 그룹에 탭 추가…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj kartę do nowej grupy…"
           }
         },
         "pt-BR" : {
@@ -26021,6 +28019,12 @@
             "value" : "도구 막대 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż pasek narzędzi"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26097,6 +28101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "그룹에서 탭 제거"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń kartę z grupy"
           }
         },
         "pt-BR" : {
@@ -26177,6 +28187,12 @@
             "value" : "자동 컴포저"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatyczny edytor poleceń"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26253,6 +28269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 채팅 열기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz czat AI…"
           }
         },
         "pt-BR" : {
@@ -26333,6 +28355,12 @@
             "value" : "타임스탬프 보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokaż znaczniki czasu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26409,6 +28437,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "고급 붙여넣기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaawansowane wklejanie…"
           }
         },
         "pt-BR" : {
@@ -26489,6 +28523,12 @@
             "value" : "윈도우 정렬"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozmieść okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26565,6 +28605,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "에뮬레이션 수준"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poziom emulacji"
           }
         },
         "pt-BR" : {
@@ -26645,6 +28691,12 @@
             "value" : "일치 항목 선택"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaznacz dopasowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26721,6 +28773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 열기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz zaznaczenie"
           }
         },
         "pt-BR" : {
@@ -26801,6 +28859,12 @@
             "value" : "기록"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26877,6 +28941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아카이브 복원…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywróć archiwum…"
           }
         },
         "pt-BR" : {
@@ -26957,6 +29027,12 @@
             "value" : "윈도우 스타일"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Styl okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27033,6 +29109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 아래쪽 전체 너비"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pełna szerokość u dołu ekranu"
           }
         },
         "pt-BR" : {
@@ -27113,6 +29195,12 @@
             "value" : "리터럴 제어 문자"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosłowne znaki sterujące"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27189,6 +29277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기 지우기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść wyszukiwanie"
           }
         },
         "pt-BR" : {
@@ -27269,6 +29363,12 @@
             "value" : "AI로 출력 설명"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyjaśnij wyjście za pomocą AI"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27345,6 +29445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "에뮬레이션 수준"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poziom emulacji"
           }
         },
         "pt-BR" : {
@@ -27425,6 +29531,12 @@
             "value" : "URL 찾기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź adresy URL"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27501,6 +29613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기 좋게 정리된 JSON으로 대치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastąp sformatowanym JSON"
           }
         },
         "pt-BR" : {
@@ -27581,6 +29699,12 @@
             "value" : "동작"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akcje"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27657,6 +29781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크기 변경 시 프로파일 업데이트"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmiany rozmiaru uaktualniają profil"
           }
         },
         "pt-BR" : {
@@ -27737,6 +29867,12 @@
             "value" : "Dock 메뉴에서 최근 프로파일 제거"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usuń ostatnie profile z menu Docka"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27813,6 +29949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "숨겨둔 세션"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakopane sesje"
           }
         },
         "pt-BR" : {
@@ -27893,6 +30035,12 @@
             "value" : "의존성 관리…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zarządzaj zależnościami…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27969,6 +30117,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "뒤로"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstecz"
           }
         },
         "pt-BR" : {
@@ -28049,6 +30203,12 @@
             "value" : "워크그룹"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupy robocze"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28125,6 +30285,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "파일에서 윈도우 배치 불러오기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wczytaj układ z pliku…"
           }
         },
         "pt-BR" : {
@@ -28205,6 +30371,12 @@
             "value" : "복사 모드 단축키"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skróty trybu kopiowania"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28281,6 +30453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패널 분할"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel podzielony"
           }
         },
         "pt-BR" : {
@@ -28361,6 +30539,12 @@
             "value" : "윈도우 크기 조절"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień rozmiar okna"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28437,6 +30621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모든 이벤트 유형 리포팅"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportuj wszystkie typy zdarzeń"
           }
         },
         "pt-BR" : {
@@ -28517,6 +30707,12 @@
             "value" : "트리거 추가…"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj wyzwalacz…"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28593,6 +30789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "웹"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
           }
         },
         "pt-BR" : {
@@ -28673,6 +30875,12 @@
             "value" : "modifyOtherKeys 모드 1"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, tryb 1"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28749,6 +30957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "너비 줄이기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmniejsz szerokość"
           }
         },
         "pt-BR" : {
@@ -28829,6 +31043,12 @@
             "value" : "화면 오른쪽"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po prawej stronie ekranu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28905,6 +31125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Base64로 인코딩된 파일 붙여넣기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wklej plik zakodowany w Base64"
           }
         },
         "pt-BR" : {
@@ -28985,6 +31211,12 @@
             "value" : "마지막 마크까지 지우기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyczyść do ostatniego znacznika"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29061,6 +31293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 균등하게 정렬"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozmieść panele podzielone równomiernie"
           }
         },
         "pt-BR" : {
@@ -29141,6 +31379,12 @@
             "value" : "녹화 가져오기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importuj nagranie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29217,6 +31461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "응용 프로그램 키패드"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klawiatura numeryczna aplikacji"
           }
         },
         "pt-BR" : {
@@ -29297,6 +31547,12 @@
             "value" : "화면 위쪽 전체 너비"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pełna szerokość u góry ekranu"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29370,6 +31626,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -29453,6 +31715,12 @@
             "value" : "VT200"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29529,6 +31797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연결 해제"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozłącz"
           }
         },
         "pt-BR" : {
@@ -29609,6 +31883,12 @@
             "value" : "셸 프롬프트에서 줄바꿈으로 끝나는 한 줄을 붙여넣기 전에 경고"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ostrzegaj przed wklejeniem jednego wiersza zakończonego znakiem nowego wiersza przy znaku zachęty powłoki"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29685,6 +31965,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체에서 찾기…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znajdź globalnie…"
           }
         },
         "pt-BR" : {
@@ -29765,6 +32051,12 @@
             "value" : "최대화됨"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmaksymalizowane"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29841,6 +32133,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "콘솔"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konsola"
           }
         },
         "pt-BR" : {
@@ -29921,6 +32219,12 @@
             "value" : "현재 탭 옆에 새로운 탭"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nowa karta obok bieżącej karty"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29997,6 +32301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치를 탭으로 복원"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przywróć układ okien jako karty"
           }
         },
         "pt-BR" : {
@@ -30077,6 +32387,12 @@
             "value" : "Base64로 인코딩된 값으로 대치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastąp wartością zakodowaną w Base64"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30153,6 +32469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인공지능 가동"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz sztuczną inteligencję"
           }
         },
         "pt-BR" : {
@@ -30233,6 +32555,12 @@
             "value" : "세션"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesja"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30311,6 +32639,12 @@
             "value" : "이름 있는 마크"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nazwane znaczniki"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30387,6 +32721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 피어"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Następny członek"
           }
         },
         "pt-BR" : {

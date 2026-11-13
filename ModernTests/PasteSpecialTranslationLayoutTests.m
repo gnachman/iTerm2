@@ -53,7 +53,7 @@
 }
 
 + (NSArray<NSString *> *)languages {
-    return @[ @"de", @"es", @"fr", @"it", @"ja", @"pt-BR", @"ru", @"tr", @"zh-Hans", @"zh-Hant" ];
+    return @[ @"de", @"es", @"fr", @"it", @"ja", @"pl", @"pt-BR", @"ru", @"tr", @"zh-Hans", @"zh-Hant" ];
 }
 
 - (NSString *)stringForKey:(NSString *)key table:(NSString *)table language:(NSString *)language {

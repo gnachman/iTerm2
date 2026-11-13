@@ -47,6 +47,12 @@
             "value" : "자동 완성"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autouzupełnianie"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",

@@ -47,6 +47,12 @@
             "value": "타임스탬프 포함"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dołącz znaczniki czasu"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -123,6 +129,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "파일 형식:"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format pliku:"
           }
         },
         "pt-BR": {

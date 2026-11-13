@@ -47,6 +47,12 @@
             "value": "스마트 대소문자 부분 문자열"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podciąg (inteligentna wielkość liter)"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -123,6 +129,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "검색 기록 지우기"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyczyść historię wyszukiwania"
           }
         },
         "pt-BR": {
@@ -203,6 +215,12 @@
             "value": "대소문자 무시 부분 문자열"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podciąg (ignoruje wielkość liter)"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -279,6 +297,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "대소문자 무시 정규 표현식"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyrażenie regularne (ignoruje wielkość liter)"
           }
         },
         "pt-BR": {
@@ -359,6 +383,12 @@
             "value": "대소문자 구분 부분 문자열"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podciąg (uwzględnia wielkość liter)"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -435,6 +465,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "대소문자 구분 정규 표현식"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyrażenie regularne (uwzględnia wielkość liter)"
           }
         },
         "pt-BR": {

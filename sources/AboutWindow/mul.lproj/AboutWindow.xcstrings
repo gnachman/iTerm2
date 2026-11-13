@@ -47,6 +47,12 @@
             "value": "iTerm2"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -123,6 +129,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "제작: George Nachman 및 기여자"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autor: George Nachman i współtwórcy"
           }
         },
         "pt-BR": {

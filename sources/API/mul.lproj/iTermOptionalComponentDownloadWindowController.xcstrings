@@ -47,6 +47,12 @@
             "value": "Python 런타임 설치 프로그램"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalator środowiska uruchomieniowego Pythona"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -125,6 +131,12 @@
             "value": "취소"
           }
         },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anuluj"
+          }
+        },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
@@ -201,6 +213,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "선택적 구성요소 다운로드 중…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pobieranie składników opcjonalnych…"
           }
         },
         "pt-BR": {

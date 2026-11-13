@@ -47,6 +47,12 @@
             "value" : "최신 버전을 다운로드합니다. curl | bash를 실행합니다"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pobiera najnowszą wersję. Uruchamia curl | bash"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "계속"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontynuuj"
           }
         },
         "pt-BR" : {
@@ -203,6 +215,12 @@
             "value" : "확인"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -279,6 +297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
           }
         },
         "pt-BR" : {
@@ -359,6 +383,12 @@
             "value" : "1. 사용 중인 셸을 확인합니다.\n2. 홈 디렉토리에 스크립트 파일을 추가합니다.\n3. 유틸리티 스크립트를 설치합니다.\n4. 셸의 시동 스크립트를 수정합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Rozpoznanie używanej powłoki.\n2. Dodanie plików skryptów w katalogu domowym.\n3. Instalacja skryptów narzędziowych.\n4. Modyfikacja skryptów startowych powłoki."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "뒤로"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstecz"
           }
         },
         "pt-BR" : {
@@ -515,6 +551,12 @@
             "value" : "유틸리티에는 파일 다운로드, 인라인 이미지 표시 등을 위한 스크립트가 포함되어 있습니다. "
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Narzędzia obejmują skrypty do pobierania plików, wyświetlania obrazów w wierszu i nie tylko. "
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "뒤로"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstecz"
           }
         },
         "pt-BR" : {
@@ -671,6 +719,12 @@
             "value" : "계속"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontynuuj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -747,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
           }
         },
         "pt-BR" : {
@@ -827,6 +887,12 @@
             "value" : "건너뛰기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomiń"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -903,6 +969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
           }
         },
         "pt-BR" : {
@@ -983,6 +1055,12 @@
             "value" : "명령 미리보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podgląd polecenia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1059,6 +1137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인터넷 없이 설치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalacja bez internetu"
           }
         },
         "pt-BR" : {
@@ -1139,6 +1223,12 @@
             "value" : "설치 프로그램 다운로드 및 실행"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pobierz i uruchom instalator"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 유틸리티도 설치"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstaluj też narzędzia iTerm2"
           }
         },
         "pt-BR" : {
@@ -1295,6 +1391,12 @@
             "value" : "안내에 따른 수동 설치. 다운로드가 필요하지 않습니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalacja ręczna z instrukcjami. Bez pobierania."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,6 +1473,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 미리보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podgląd polecenia"
           }
         },
         "pt-BR" : {
@@ -1451,6 +1559,12 @@
             "value" : "계속"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontynuuj"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1524,6 +1638,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -1607,6 +1727,12 @@
             "value" : "명령 미리보기"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podgląd polecenia"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1683,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "뒤로"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstecz"
           }
         },
         "pt-BR" : {
@@ -1763,6 +1895,12 @@
             "value" : "셸 통합을 어떻게 설치하겠습니까?\n\n이 과정에서 셸의 시동 스크립트가 수정됩니다. 이 설치 프로그램이 터미널 윈도우에 명령을 대신 입력합니다."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jak chcesz zainstalować integrację z powłoką?\n\nW trakcie tego procesu zostaną zmodyfikowane skrypty startowe Twojej powłoki. Instalator wpisze za Ciebie polecenia w oknie terminala."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1839,6 +1977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 미리보기"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podgląd polecenia"
           }
         },
         "pt-BR" : {
@@ -1919,6 +2063,12 @@
             "value" : "설치가 완료되었습니다!"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalacja zakończona!"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1995,6 +2145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 명령을 실행합니다:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zostanie uruchomione następujące polecenie:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "pt-BR" : {
@@ -2075,6 +2231,12 @@
             "value" : "새로운 탭을 만들어 사용해 보십시오.\n\n최상의 결과를 얻으려면 ssh로 접속하는 모든 호스트에 셸 통합을 설치하십시오."
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utwórz nową kartę, aby to wypróbować.\n\nAby uzyskać najlepsze rezultaty, zainstaluj integrację z powłoką na wszystkich hostach, z którymi łączysz się przez ssh."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2151,6 +2313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "셸 통합은 셸이 iTerm2와 통신하도록 돕는 스크립트로 구성되어 있어, 실행 중인 명령, 현재 디렉토리 및 기타 상태를 추적할 수 있습니다. "
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracja z powłoką to skrypty, które pomagają powłoce komunikować się z iTerm2, dzięki czemu może śledzić uruchamiane polecenia, bieżący katalog i inny stan. "
           }
         },
         "pt-BR" : {
@@ -2231,6 +2399,12 @@
             "value" : "셸 통합 설치"
           }
         },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zainstaluj integrację z powłoką"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2307,6 +2481,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anuluj"
           }
         },
         "pt-BR" : {
