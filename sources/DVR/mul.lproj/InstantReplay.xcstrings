@@ -53,6 +53,12 @@
             "value": "내보내기…"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksporter…"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -159,6 +165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "현재"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nå"
           }
         },
         "nl": {
@@ -269,6 +281,12 @@
             "value": "즉시 재생 제어"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontroll for øyeblikkelig avspilling"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -375,6 +393,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "취소"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
           }
         },
         "nl": {
@@ -485,6 +509,12 @@
             "value": "실시간 보기"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direktevisning"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -591,6 +621,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "시간"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tid"
           }
         },
         "nl": {

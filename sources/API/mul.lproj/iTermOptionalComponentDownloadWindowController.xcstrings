@@ -53,6 +53,12 @@
             "value": "Python 런타임 설치 프로그램"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installasjon av Python-kjøremiljø"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -161,6 +167,12 @@
             "value": "취소"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -267,6 +279,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "선택적 구성요소 다운로드 중…"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laster ned valgfrie komponenter…"
           }
         },
         "nl": {

@@ -53,6 +53,12 @@
             "value" : "설명"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beskrivelse"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "충돌 로그"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Krasjlogg"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "충돌 리포터"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Krasjrapportering"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "{APPNAME}이(가) 지난번 사용할 때 충돌한 것 같습니다. 개발자에게 충돌 로그를 보내겠습니까?\n\nApple의 충돌 로그는 다른 개발자에게 전송되지 않으므로, 이것이 {APPNAME} 개발자가 이 충돌에 대해 알고 수정할 수 있는 유일한 방법입니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det ser ut til at {APPNAME} krasjet sist det ble brukt. Vil du sende en krasjlogg til utviklerne?\n\nKrasjlogger fra Apple sendes ikke til andre utviklere, så dette er den eneste måten utviklerne av {APPNAME} kan få vite om og rette denne krasjen."
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "전송하고 싶지 않은 정보는 삭제할 수 있지만, 그렇게 하면 버그를 찾기가 더 어려워집니다. 기본적으로 충돌 로그와 함께 사용 중인 Mac 기종 및 설정이 전송됩니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kan slette informasjon du ikke vil sende, men det gjør det vanskeligere å finne feilen. Som standard sendes krasjloggen, hvilken Mac du bruker og innstillingene dine."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보내기"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
           }
         },
         "nl" : {
@@ -701,6 +737,12 @@
             "value" : "나중에 알림"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minn meg på det senere"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -807,6 +849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "버리기"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forkast"
           }
         },
         "nl" : {

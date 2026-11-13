@@ -53,6 +53,12 @@
             "value" : "AI 완성 켜짐: 모든 텍스트가 AI로 전송됨"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI-fullføring aktivert: all tekst sendes til KI"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저 사용 방법을 설명합니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beskriver hvordan du bruker kommandoskriveren."
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "보내려면 ⇧↩를 누르십시오."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trykk ⇧↩ for å sende."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KI"
           }
         },
         "nl" : {

@@ -53,6 +53,12 @@
             "value": "레이블"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etikett"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",

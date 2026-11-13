@@ -53,6 +53,12 @@
             "value" : "현재 패널을 XXX로 분할"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Del gjeldende rute XXX"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -161,6 +167,12 @@
             "value" : "취소"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -267,6 +279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Del"
           }
         },
         "nl" : {

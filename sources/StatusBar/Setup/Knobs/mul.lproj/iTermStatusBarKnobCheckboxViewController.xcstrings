@@ -53,6 +53,12 @@
             "value": "체크"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merk av"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",

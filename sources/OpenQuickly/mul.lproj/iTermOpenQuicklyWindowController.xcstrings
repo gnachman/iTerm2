@@ -53,6 +53,12 @@
             "value" : "빠르게 열기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne hurtig"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -161,6 +167,12 @@
             "value" : "세부사항"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detaljer"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -267,6 +279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션, 프로파일 또는 윈도우 배치 검색"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Søk etter økter, profiler eller oppsett"
           }
         },
         "nl" : {

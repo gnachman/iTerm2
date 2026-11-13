@@ -53,6 +53,12 @@
             "value" : "프로파일"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiler"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일 편집…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rediger profiler…"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "새로운 탭"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny fane"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nytt vindu"
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "프로파일을 연 후 이 윈도우 닫기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lukk dette vinduet etter at en profil er åpnet."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우에 새로운 탭으로"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nye faner i nytt vindu"
           }
         },
         "nl" : {
@@ -785,6 +821,12 @@
             "value" : "태그 >"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tagg >"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ny flydende rude"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny flytende rute"
           }
         }
       }

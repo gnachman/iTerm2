@@ -53,6 +53,12 @@
             "value" : "마크 단위로 이동"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytt etter merke"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키보드 단축키 설정"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angi tastatursnarvei"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "취소"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "색상 사전 설정:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fargeforhåndsinnstilling:"
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "동작:"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handling:"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar에 표시할 레이블"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etikett som vises i Touch Bar"
           }
         },
         "nl" : {
@@ -701,6 +737,12 @@
             "value" : "문자 단위로 이동"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytt etter tegn"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -807,6 +849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "예: 0x7f"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "f.eks.: 0x7f"
           }
         },
         "nl" : {
@@ -917,6 +965,12 @@
             "value" : "프로파일:"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단어 단위로 이동"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytt etter ord"
           }
         },
         "nl" : {
@@ -1133,6 +1193,12 @@
             "value" : "오류 메시지가 여기에 표시됩니다"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feilmeldingen kommer her"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1241,6 +1307,12 @@
             "value" : "동작:"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handling:"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1344,6 +1416,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -1457,6 +1535,12 @@
             "value" : "키보드 단축키:"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tastatursnarvei:"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1649,12 @@
             "value" : "줄 단위로 이동"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytt etter linje"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "nl" : {

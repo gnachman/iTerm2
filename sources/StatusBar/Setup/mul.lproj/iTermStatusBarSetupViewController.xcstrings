@@ -53,6 +53,12 @@
             "value" : "메뉴에서 구성요소를 활성 구성요소로 드래그하여 상태 막대에 추가하십시오."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dra en komponent fra menyen til Aktive komponenter for å legge den til i statuslinjen."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "안정적인 위치보다 빽빽한 배치 우선"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foretrekk tett pakking framfor stabil plassering"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "확인"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "활성 구성요소"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktive komponenter"
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "꺼짐"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deaktivert"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "값이 비어 있는 구성요소 제거"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjern komponenter med tomme verdier"
           }
         },
         "nl" : {
@@ -701,6 +737,12 @@
             "value" : "상태 막대와 터미널 사이에 구분선 그리기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tegn skillelinje mellom statuslinjen og terminalen"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -807,6 +849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자동"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisk"
           }
         },
         "nl" : {
@@ -917,6 +965,12 @@
             "value" : "상태 막대 구성요소 메뉴"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meny for statuslinjekomponenter"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "고급…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avansert…"
           }
         },
         "nl" : {
@@ -1133,6 +1193,12 @@
             "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmen for tett pakking gjør at flere statuslinjekomponenter kan være synlige samtidig, men de har en tendens til å hoppe mer rundt."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 자동 무지개:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Auto-regnbue:"
           }
         },
         "nl" : {
@@ -1349,6 +1421,12 @@
             "value" : "서체 이름이 여기에 표시됩니다"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fontnavnet kommer her"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,6 +1533,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "어두운 색상"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mørke farger"
           }
         },
         "nl" : {
@@ -1565,6 +1649,12 @@
             "value" : "변경"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endre"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 텍스트 색상:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard tekstfarge:"
           }
         },
         "nl" : {
@@ -1781,6 +1877,12 @@
             "value" : "구성요소 구성"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurer komponent"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1887,6 +1989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빽빽한 배치 알고리즘을 사용하면 한 번에 더 많은 상태 막대 구성요소를 표시할 수 있지만, 구성요소의 위치가 더 자주 바뀌는 경향이 있습니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmen for tett pakking gjør at flere statuslinjekomponenter kan være synlige samtidig, men de har en tendens til å hoppe mer rundt."
           }
         },
         "nl" : {
@@ -1997,6 +2105,12 @@
             "value" : "구분선 색상:"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skillefarge:"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2103,6 +2217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
         "nl" : {
@@ -2213,6 +2333,12 @@
             "value" : "밝은 색상"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lyse farger"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2319,6 +2445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서체:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font:"
           }
         },
         "nl" : {
@@ -2429,6 +2561,12 @@
             "value" : "배경 색상:"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bakgrunnsfarge:"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2537,6 +2675,12 @@
             "value" : "확인"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2643,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "상태 막대와 터미널 내용 사이에 가는 선을 그립니다."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tegner en tynn linje mellom statuslinjen og terminalinnholdet."
           }
         },
         "nl" : {

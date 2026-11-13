@@ -53,6 +53,12 @@
             "value" : "SSH 경로:"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bane til SSH:"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트에 복사할 파일:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filer som skal kopieres til ekstern vert:"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "대상"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mål"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -377,6 +395,12 @@
             "value" : "확인"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +504,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -593,6 +623,12 @@
             "value" : "찾아보기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velg"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -699,6 +735,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
         "nl" : {
@@ -809,6 +851,12 @@
             "value" : "파일 또는 폴더"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fil eller mappe"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -917,6 +965,12 @@
             "value" : "SSH 통합"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH-integrering"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트에 복사할 환경 변수:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miljøvariabler som skal kopieres til ekstern vert:"
           }
         },
         "nl" : {

@@ -53,6 +53,12 @@
             "value" : "자동 완성"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autofullfør"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",

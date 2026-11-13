@@ -53,6 +53,12 @@
             "value": "iTerm2"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -159,6 +165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "제작: George Nachman 및 기여자"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Av George Nachman og bidragsytere"
           }
         },
         "nl": {

@@ -89,7 +89,7 @@
     NSArray<NSString *> *keys = @[ @"AIModelEditor.AutomaticNoKeyLocal",
                                    @"AIModelEditor.AutomaticNoKeyUnrecognizedHost",
                                    @"AIModelEditor.AutomaticNoKey" ];
-    for (NSString *language in @[ @"da", @"de", @"es", @"fr", @"it", @"ja", @"nl", @"pl", @"pt-BR", @"ru", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"da", @"de", @"es", @"fr", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ru", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
         NSString *path = [[NSBundle mainBundle] pathForResource:@"Localizable"
                                                          ofType:@"strings"
                                                     inDirectory:nil

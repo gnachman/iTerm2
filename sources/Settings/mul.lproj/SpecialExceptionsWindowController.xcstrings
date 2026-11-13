@@ -53,6 +53,12 @@
             "value" : "Nerd Font 번들 설치…"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer Nerd Font-pakke…"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -161,6 +167,12 @@
             "value" : "특별 예외 편집"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rediger spesielt unntak"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -264,6 +276,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -377,6 +395,12 @@
             "value" : "특별 예외는 특정 유니코드 범위나 문자 체계에 대해 서체를 재정의합니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spesielle unntak overstyrer fonter for bestemte Unicode-områder eller skriftsystemer."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +504,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -593,6 +623,12 @@
             "value" : "확인"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -699,6 +735,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서체:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av fonten:"
           }
         },
         "nl" : {
@@ -809,6 +851,12 @@
             "value" : "다음에서 시작하는 문자"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For tegn fra og med"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -915,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사전 설정 추가…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legg til forhåndsinnstilling…"
           }
         },
         "nl" : {
@@ -1025,6 +1079,12 @@
             "value" : "취소"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1131,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "~"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "til"
           }
         },
         "nl" : {
@@ -1241,6 +1307,12 @@
             "value" : "특별 예외 관리"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administrer spesielle unntak"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "nl" : {
@@ -1457,6 +1535,12 @@
             "value" : "코드 포인트 사용"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bruk kodepunkter"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1649,12 @@
             "value" : "취소"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1668,6 +1758,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

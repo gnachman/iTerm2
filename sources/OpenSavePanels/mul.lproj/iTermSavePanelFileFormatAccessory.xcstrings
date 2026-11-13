@@ -53,6 +53,12 @@
             "value": "타임스탬프 포함"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta med tidsstempler"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -159,6 +165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "파일 형식:"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filformat:"
           }
         },
         "nl": {

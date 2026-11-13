@@ -53,6 +53,12 @@
             "value" : "tmux 대시보드"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux-kontrollpanel"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Økt"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "연결"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koble til"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 검색"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Søk i vinduer"
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "윈도우"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vindu"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우로 열기"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne i vinduer"
           }
         },
         "nl" : {
@@ -701,6 +737,12 @@
             "value" : "가리기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skjul"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -807,6 +849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우로 열기"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne i vinduer"
           }
         },
         "nl" : {
@@ -917,6 +965,12 @@
             "value" : "탭으로 열기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne i faner"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분리"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koble fra"
           }
         },
         "nl" : {
@@ -1133,6 +1193,12 @@
             "value" : "숨겨진 윈도우가 있으면 연결할 때 대시보드 열기"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne kontrollpanelet ved tilkobling hvis det finnes skjulte vinduer"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1239,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우가 이 개수 이상이면 연결할 때 윈도우를 열지 않음:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikke åpne vinduer ved tilkobling hvis det finnes minst så mange vinduer:"
           }
         },
         "nl" : {

@@ -53,6 +53,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -159,6 +165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "셸 통합"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skallintegrering"
           }
         },
         "nl": {

@@ -106,6 +106,12 @@
             "state" : "translated",
             "value" : "Status"
           }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
         }
       }
     },
@@ -210,6 +216,12 @@
           }
         },
         "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importerer…"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importerer…"
@@ -321,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importerer indstillinger og data…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importerer innstillinger og data…"
           }
         }
       }

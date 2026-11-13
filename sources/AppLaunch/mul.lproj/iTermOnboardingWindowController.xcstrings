@@ -53,6 +53,12 @@
             "value" : "Mac에서 떨어져 있을 때도 iTerm2를 사용하십시오. AI 채팅으로 제어하고, 세션 내용을 보고, 푸시 알림을 받을 수 있습니다. 종단 간 암호화로 데이터를 안전하게 보호합니다. <a href=\"iterm2whatsnew:companion\">지금 사용해 보기!</a>"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bruk iTerm2 når du er borte fra Macen. Du kan styre den via KI-chat, se øktinnhold og motta push-varsler. Ende-til-ende-kryptering holder dataene dine trygge. <a href=\"iterm2whatsnew:companion\">Prøv det nå!</a>"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -156,6 +162,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -269,6 +281,12 @@
             "value" : "새로운 AI 채팅 모드인 오케스트레이션을 사용하면 AI가 작업을 주도합니다. 윈도우를 만들고 (대화형 앱에서도) 작업이 완료될 때까지 기다릴 수 있으며, 새로운 자동 안전 검사기 덕분에 거의 모든 권한 요청에 일일이 응답할 필요가 없습니다. <a href=\"iterm2whatsnew:orchestration\">지금 사용해 보기!</a>"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En ny KI-chatmodus, Orkestrering, lar KI styre det hele for deg. Den kan opprette vinduer, vente på at oppgaver blir ferdige (også i interaktive apper), og den nye automatiske sikkerhetskontrollen sparer deg for å svare på nesten alle tillatelsesforespørsler. <a href=\"iterm2whatsnew:orchestration\">Prøv det nå!</a>"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -372,6 +390,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -485,6 +509,12 @@
             "value" : "새로운 스크린샷 기능으로 터미널 내용을 PNG로 쉽게 만들 수 있습니다. 가리기 및 강조 표시를 지원합니다. 사용하려면 <a href=\"iterm2whatsnew:screenshot\">세션 > 스크린샷 찍기</a>를 선택하십시오."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Den nye skjermbildefunksjonen gjør det enkelt å lage en PNG av terminalinnholdet. Den støtter sladding og utheving. Bruk <a href=\"iterm2whatsnew:screenshot\">«Økt > Ta skjermbilde…»</a> for å aktivere den."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +623,12 @@
             "value" : "버전 3.7의 새로운 기능"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nytt i versjon 3.7"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -696,6 +732,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -809,6 +851,12 @@
             "value" : "●"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -915,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integrering"
           }
         },
         "nl" : {
@@ -1025,6 +1079,12 @@
             "value" : "많은 탭을 관리하기 쉽도록 이제 탭을 접을 수 있는 그룹으로 묶을 수 있습니다. 또한 탭 막대는 이제 오버플로 메뉴를 표시하는 대신 스크롤됩니다."
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For å hjelpe deg med å holde orden på mange faner kan du nå slå faner sammen i sammenleggbare grupper. Fanelinjen ruller nå også i stedet for å vise en overflytsmeny."
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1128,6 +1188,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1241,6 +1307,12 @@
             "value" : "Claude Code 통합은 코드 리뷰, diff 읽기 등 서로 관련된 여러 세션을 사용자 지정 가능한 UI로 정리합니다. 또한 Claude의 상태를 보여 주므로 사용자의 응답을 기다리며 멈춰 있는 인스턴스를 쉽게 찾을 수 있습니다. <a href=\"iterm2whatsnew:claudecode\">지금 사용해 보기!</a>"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code-integreringen organiserer flere beslektede økter, for eksempel kodegjennomgang og lesing av differ, i et tilpassbart grensesnitt. Den viser også Claudes status, så du lett finner instanser som venter på oppmerksomhet fra deg. <a href=\"iterm2whatsnew:claudecode\">Prøv det nå!</a>"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1349,6 +1421,12 @@
             "value" : "iPhone 보조 앱"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Følgeapp for iPhone"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1452,6 +1530,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1565,6 +1649,12 @@
             "value" : "오케스트레이션"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkestrering"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1671,6 +1761,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭 그룹"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fanegrupper"
           }
         },
         "nl" : {
@@ -1781,6 +1877,12 @@
             "value" : "스크린샷"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skjermbilder"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1884,6 +1986,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

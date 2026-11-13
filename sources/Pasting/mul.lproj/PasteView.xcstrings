@@ -53,6 +53,12 @@
             "value": "붙여넣는 중…"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limer inn…"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -159,6 +165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "취소"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
           }
         },
         "nl": {

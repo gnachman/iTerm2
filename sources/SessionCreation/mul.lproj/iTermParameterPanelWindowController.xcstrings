@@ -53,6 +53,12 @@
             "value": "다음 매개변수의 값 입력: "
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angi verdien for "
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -159,6 +165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "확인"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
         "nl": {
@@ -269,6 +281,12 @@
             "value": "세션 매개변수"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Øktparameter"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -377,6 +395,12 @@
             "value": "취소"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -483,6 +507,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "이름"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navn"
           }
         },
         "nl": {

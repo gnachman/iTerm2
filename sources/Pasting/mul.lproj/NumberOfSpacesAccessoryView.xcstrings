@@ -53,6 +53,12 @@
             "value": "탭 크기(공백 수):"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tabulatorstørrelse i mellomrom:"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",
@@ -156,6 +162,12 @@
           }
         },
         "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "nb": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

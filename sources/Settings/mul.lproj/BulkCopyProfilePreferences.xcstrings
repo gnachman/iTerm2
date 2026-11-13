@@ -53,6 +53,12 @@
             "value" : "색상"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farger"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "웹"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Økt"
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "고급"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avansert"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -593,6 +623,12 @@
             "value" : "윈도우"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vindu"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -696,6 +732,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx"
+          }
+        },
+        "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx"
@@ -809,6 +851,12 @@
             "value" : "터미널"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminal"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -915,6 +963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대상 프로파일:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Til disse profilene:"
           }
         },
         "nl" : {
@@ -1025,6 +1079,12 @@
             "value" : "취소"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1131,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "북마크 설정 복사"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopier profilinnstillinger"
           }
         },
         "nl" : {
@@ -1241,6 +1307,12 @@
             "value" : "키"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taster"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1347,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "복사"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopier"
           }
         },
         "nl" : {

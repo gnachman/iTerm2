@@ -53,6 +53,12 @@
             "value": "흑백"
           }
         },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Svart-hvitt"
+          }
+        },
         "nl": {
           "stringUnit": {
             "state": "translated",

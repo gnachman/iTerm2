@@ -53,6 +53,12 @@
             "value" : "헤더 셀"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OVERSKRIFTSCELLE"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전역 찾기"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finn globalt"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "부분 문자열(대소문자 구분)"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng, skiller mellom store og små bokstaver"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "부분 문자열(자동)"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng, automatisk"
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "정규 표현식(대소문자 구분 안 함)"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulært uttrykk, skiller ikke mellom store og små bokstaver"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finn"
           }
         },
         "nl" : {
@@ -701,6 +737,12 @@
             "value" : "정규 표현식(대소문자 구분)"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulært uttrykk, skiller mellom store og små bokstaver"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -807,6 +849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "부분 문자열(대소문자 구분 안 함)"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng, skiller ikke mellom store og små bokstaver"
           }
         },
         "nl" : {

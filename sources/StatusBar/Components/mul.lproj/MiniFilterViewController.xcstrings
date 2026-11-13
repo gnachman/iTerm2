@@ -53,6 +53,12 @@
             "value" : "대소문자 구분 부분 문자열"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng, skiller mellom store og små bokstaver"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -159,6 +165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스마트 대소문자 부분 문자열"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng, smart store/små bokstaver"
           }
         },
         "nl" : {
@@ -269,6 +281,12 @@
             "value" : "대소문자 구분 정규 표현식"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulært uttrykk, skiller mellom store og små bokstaver"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대소문자 무시 정규 표현식"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulært uttrykk, skiller ikke mellom store og små bokstaver"
           }
         },
         "nl" : {
@@ -485,6 +509,12 @@
             "value" : "대소문자 무시 부분 문자열"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstreng, skiller ikke mellom store og små bokstaver"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -591,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "필터"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer"
           }
         },
         "nl" : {
