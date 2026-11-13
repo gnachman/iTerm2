@@ -686,6 +686,9 @@ paranoid-CoreParse: force
 paranoid-SwiftyMarkdown: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" SwiftyMarkdown
 
+paranoid-Highlightr: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" Highlightr
+
 paranoid-deps: force
 	tools/check-submodule-cleanliness
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" deps

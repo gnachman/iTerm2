@@ -211,6 +211,10 @@ Improvements:
   earlier) can no longer be used with RSA keys.
 - Updated the library used to show git status
   to pick up security fixes.
+- Updated the syntax highlighter used for text
+  files shown inline (for example with imgcat)
+  to pick up fixes for patterns that could make
+  iTerm2 hang.
 
 Bug Fixes:
 - A sixel image with very large dimensions
