@@ -35,7 +35,8 @@ setup(
     author_email="gnachman@gmail.com",
     license="GPLv2",
     packages=["iterm2"],
-    install_requires=["protobuf", "websockets"],
+    # protobuf 5.29.6 fixes CVE-2025-4565 and CVE-2026-0994; websockets 9.1 fixes CVE-2021-33880.
+    install_requires=["protobuf>=5.29.6", "websockets>=9.1"],
     extras_require={"full": ["pyobjc"]},
     include_package_data=True,
     zip_safe=False,
