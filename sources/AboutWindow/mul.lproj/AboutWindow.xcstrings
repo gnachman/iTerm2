@@ -47,6 +47,12 @@
             "value": "iTerm2"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -135,6 +141,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "제작: George Nachman 및 기여자"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Door George Nachman en medewerkers"
           }
         },
         "pl": {

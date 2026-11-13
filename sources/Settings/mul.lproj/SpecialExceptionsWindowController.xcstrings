@@ -47,6 +47,12 @@
             "value" : "Nerd Font 번들 설치…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installeer Nerd Font-bundel…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -137,6 +143,12 @@
             "value" : "특별 예외 편집"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig speciale uitzondering"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -222,6 +234,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -317,6 +335,12 @@
             "value" : "특별 예외는 특정 유니코드 범위나 문자 체계에 대해 서체를 재정의합니다."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speciale uitzonderingen vervangen lettertypen voor specifieke Unicode-bereiken of -schriften."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -402,6 +426,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -497,6 +527,12 @@
             "value" : "확인"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -585,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서체:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Van lettertype:"
           }
         },
         "pl" : {
@@ -677,6 +719,12 @@
             "value" : "다음에서 시작하는 문자"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voor tekens vanaf"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -765,6 +813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사전 설정 추가…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg voorinstelling toe…"
           }
         },
         "pl" : {
@@ -857,6 +911,12 @@
             "value" : "취소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -945,6 +1005,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "~"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tot"
           }
         },
         "pl" : {
@@ -1037,6 +1103,12 @@
             "value" : "특별 예외 관리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beheer speciale uitzonderingen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "pl" : {
@@ -1217,6 +1295,12 @@
             "value" : "코드 포인트 사용"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik codepunten"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1307,6 +1391,12 @@
             "value" : "취소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1392,6 +1482,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

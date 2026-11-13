@@ -47,6 +47,12 @@
             "value" : "필터"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대소문자 무시 부분 문자열"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet hoofdlettergevoelige subreeks"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "스마트 대소문자 부분 문자열"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subreeks met slimme hoofdlettergevoeligheid"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대소문자 구분 부분 문자열"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoofdlettergevoelige subreeks"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "대소문자 무시 정규 표현식"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet hoofdlettergevoelige regex"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "검색 기록 지우기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis zoekgeschiedenis"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "선택한 명령에서만 검색 중"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alleen in geselecteerd commando zoeken"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대소문자 무시 정규 표현식"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet hoofdlettergevoelige regex"
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "필터"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대소문자 구분 부분 문자열"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoofdlettergevoelige subreeks"
           }
         },
         "pl" : {
@@ -947,6 +1007,12 @@
             "value" : "대소문자 구분 정규 표현식"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoofdlettergevoelige regex"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1035,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스마트 대소문자 부분 문자열"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subreeks met slimme hoofdlettergevoeligheid"
           }
         },
         "pl" : {
@@ -1127,6 +1199,12 @@
             "value" : "대소문자 무시 부분 문자열"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niet hoofdlettergevoelige subreeks"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대소문자 구분 정규 표현식"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoofdlettergevoelige regex"
           }
         },
         "pl" : {

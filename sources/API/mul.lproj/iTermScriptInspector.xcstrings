@@ -47,6 +47,12 @@
             "value" : "경로"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "시그니처"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signatuur"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립팅 검사기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scriptinspector"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "세션, 탭 및 윈도우"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessies, tabbladen en vensters"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "변수"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variabelen"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "역할"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rol"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "경로 복사"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer pad"
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "등록된 함수"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geregistreerde functies"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "값"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarde"
           }
         },
         "pl" : {
@@ -947,6 +1007,12 @@
             "value" : "ID 복사"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer ID"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1037,6 +1103,12 @@
             "value" : "객체 이름(ID)"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectnaam (ID)"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1122,6 +1194,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1217,6 +1295,12 @@
             "value" : "스크립트"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "값 복사"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer waarde"
           }
         },
         "pl" : {

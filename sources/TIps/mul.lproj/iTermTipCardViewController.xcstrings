@@ -47,6 +47,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -135,6 +141,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "셸 통합"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell-integratie"
           }
         },
         "pl": {

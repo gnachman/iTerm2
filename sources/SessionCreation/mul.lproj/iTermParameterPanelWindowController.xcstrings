@@ -47,6 +47,12 @@
             "value": "다음 매개변수의 값 입력: "
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voer de waarde in voor "
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -135,6 +141,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "확인"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
         "pl": {
@@ -227,6 +239,12 @@
             "value": "세션 매개변수"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessieparameter"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -317,6 +335,12 @@
             "value": "취소"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuleer"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -405,6 +429,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "이름"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naam"
           }
         },
         "pl": {

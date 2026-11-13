@@ -47,6 +47,12 @@
             "value" : "사전 설정…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voorinstellingen…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar 항목 추가"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg Touch Bar-onderdeel toe"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "동작"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar 문제 완화"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar-maatregelen"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "Esc 키 시각적 표시기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visuele indicator voor de esc-toets"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키 조합"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toetscombinatie"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "Esc 키를 누를 때 햅틱 피드백"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptische feedback bij indrukken van esc"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -677,6 +719,12 @@
             "value" : "확인"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -765,6 +813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc 키 클릭음"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toetsklik voor de esc-toets"
           }
         },
         "pl" : {

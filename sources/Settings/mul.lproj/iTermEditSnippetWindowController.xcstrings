@@ -47,6 +47,12 @@
             "value" : "값:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarde:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스니펫 편집"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig fragment"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "제목:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이스케이프하지 않은 리터럴 텍스트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letterlijke tekst zonder escapes"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "태그 이름에 /를 사용하면 편집 > 스니펫 메뉴에 폴더가 만들어집니다"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik / in tagnamen om mappen te maken in het menu Wijzig > Fragmenten"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "확인"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "하위 호환 이스케이프"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapen voor achterwaartse compatibiliteit"
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "태그:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "C 스타일 백슬래시 이스케이프"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapen met backslash in C-stijl"
           }
         },
         "pl" : {

@@ -47,6 +47,12 @@
             "value" : "/directory"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리 복사"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer map"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "12바이트"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bytes"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 출력 선택"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer de uitvoer van het commando"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "1시간 35분"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "출력:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uitvoer:"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "복사됨"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gekopieerd"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령을 클립보드에 복사"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer commando naar klembord"
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "%@에 시작됨"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestart om %@"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저에서 명령 열기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open commando in Opsteller"
           }
         },
         "pl" : {
@@ -947,6 +1007,12 @@
             "value" : "드래그 가능한 폴더"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versleepbare map"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1035,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "commando"
           }
         },
         "pl" : {
@@ -1127,6 +1199,12 @@
             "value" : "명령을 터미널에 쓰기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrijf commando naar terminal"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map:"
           }
         },
         "pl" : {
@@ -1307,6 +1391,12 @@
             "value" : "반환 코드:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retourcode:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1395,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리를 터미널에 쓰기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrijf map naar terminal"
           }
         },
         "pl" : {
@@ -1487,6 +1583,12 @@
             "value" : "실행 시간:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uitvoeringstijd:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 출력 복사"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer de uitvoer van het commando"
           }
         },
         "pl" : {
@@ -1667,6 +1775,12 @@
             "value" : "명령 공유…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deel commando…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1757,6 +1871,12 @@
             "value" : "명령:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commando:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1842,6 +1962,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -1935,6 +2061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 밖 명령 보기 끄기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel het tonen van commando’s buiten beeld uit"
           }
         },
         "pl" : {

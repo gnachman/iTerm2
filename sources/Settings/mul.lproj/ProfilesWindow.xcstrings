@@ -47,6 +47,12 @@
             "value" : "프로파일"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profielen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일 편집…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig profielen…"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "새로운 탭"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw venster"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "프로파일을 연 후 이 윈도우 닫기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluit dit venster nadat een profiel is geopend."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우에 새로운 탭으로"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabbladen in nieuw venster"
           }
         },
         "pl" : {
@@ -671,6 +707,12 @@
             "value" : "태그 >"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags >"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 플로팅 패널"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw zwevend paneel"
           }
         },
         "pl" : {

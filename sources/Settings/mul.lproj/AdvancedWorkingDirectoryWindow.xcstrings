@@ -47,6 +47,12 @@
             "value" : "이전 세션의 디렉토리 재사용"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hergebruik map van vorige sessie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "홈 디렉토리"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thuismap"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "새로운 탭의 작업 디렉토리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkmap voor nieuwe tabbladen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "라디오"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "새로운 윈도우의 작업 디렉토리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkmap voor nieuwe vensters"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 세션의 디렉토리 재사용"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hergebruik map van vorige sessie"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "라디오"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 세션의 디렉토리 재사용"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hergebruik map van vorige sessie"
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "디렉토리:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 분할 패널의 작업 디렉토리"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkmap voor nieuwe gesplitste panelen"
           }
         },
         "pl" : {
@@ -947,6 +1007,12 @@
             "value" : "고급 작업 디렉토리 설정"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geavanceerde instellingen voor werkmap"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1035,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "디렉토리:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map:"
           }
         },
         "pl" : {
@@ -1127,6 +1199,12 @@
             "value" : "디렉토리:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "라디오"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
           }
         },
         "pl" : {
@@ -1307,6 +1391,12 @@
             "value" : "홈 디렉토리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thuismap"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1397,6 +1487,12 @@
             "value" : "홈 디렉토리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thuismap"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1485,6 +1581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "pl" : {

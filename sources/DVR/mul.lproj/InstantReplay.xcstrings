@@ -47,6 +47,12 @@
             "value": "내보내기…"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporteer…"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -135,6 +141,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "현재"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nu"
           }
         },
         "pl": {
@@ -227,6 +239,12 @@
             "value": "즉시 재생 제어"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bediening directe herhaling"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -315,6 +333,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "취소"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuleer"
           }
         },
         "pl": {
@@ -407,6 +431,12 @@
             "value": "실시간 보기"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live weergave"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -495,6 +525,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "시간"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tijd"
           }
         },
         "pl": {

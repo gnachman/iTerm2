@@ -47,6 +47,12 @@
             "value" : "편집"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -137,6 +143,12 @@
             "value" : "제목"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
           }
         },
         "pl" : {

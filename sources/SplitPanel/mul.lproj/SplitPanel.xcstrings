@@ -47,6 +47,12 @@
             "value" : "현재 패널을 XXX로 분할"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splits het huidige paneel XXX"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -137,6 +143,12 @@
             "value" : "취소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splits"
           }
         },
         "pl" : {

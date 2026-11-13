@@ -47,6 +47,12 @@
             "value" : "mm:ss"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx줄, xxx바이트."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx regels, xxx bytes."
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "붙여넣기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -317,6 +335,12 @@
             "value" : "취소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -405,6 +429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최소 지속 시간:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimale duur:"
           }
         },
         "pl" : {

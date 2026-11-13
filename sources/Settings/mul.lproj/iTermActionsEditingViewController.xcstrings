@@ -47,6 +47,12 @@
             "value" : "동작"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -177,6 +183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "제목"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel"
           }
         },
         "pl" : {

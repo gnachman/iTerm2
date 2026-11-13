@@ -47,6 +47,12 @@
             "value": "타임스탬프 포함"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neem tijdstempels op"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -135,6 +141,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "파일 형식:"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestandsformaat:"
           }
         },
         "pl": {

@@ -47,6 +47,12 @@
             "value" : "SSH 경로:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pad naar SSH:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트에 복사할 파일:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestanden om naar de externe host te kopiëren:"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "대상"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestemming"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -317,6 +335,12 @@
             "value" : "확인"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -402,6 +426,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -497,6 +527,12 @@
             "value" : "찾아보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -585,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
           }
         },
         "pl" : {
@@ -677,6 +719,12 @@
             "value" : "파일 또는 폴더"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestand of map"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -767,6 +815,12 @@
             "value" : "SSH 통합"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH-integratie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트에 복사할 환경 변수:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omgevingsvariabelen om naar de externe host te kopiëren:"
           }
         },
         "pl" : {

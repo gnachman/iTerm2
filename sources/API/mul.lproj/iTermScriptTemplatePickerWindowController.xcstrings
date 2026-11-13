@@ -47,6 +47,12 @@
             "value" : "iterm2 라이브러리 외에는 종속성이 없는 간단한 스크립트입니다."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Een eenvoudig script zonder andere afhankelijkheden dan de iterm2-bibliotheek."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -132,6 +138,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -227,6 +239,12 @@
             "value" : "기본"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basis"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +330,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -407,6 +431,12 @@
             "value" : "장기 실행 데몬"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langlopende daemon"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단순"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eenvoudig"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "취소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "동작을 수행하고 종료하는 간단한 스크립트에는 이 템플릿을 선택하십시오."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies dit sjabloon voor een eenvoudig script dat acties uitvoert en dan stopt."
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "iterm2 라이브러리 이외의 PyPI 패키지에 의존하는 스크립트입니다. 이 스크립트 전용 pyenv가 생성됩니다."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Een script dat afhankelijk is van PyPI-pakketten naast de iterm2-bibliotheek. Voor dit script wordt een privé-pyenv gemaakt."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -852,6 +906,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -947,6 +1007,12 @@
             "value" : "스크립트 템플릿 선택:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies een scriptsjabloon:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1035,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 환경"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volledige omgeving"
           }
         },
         "pl" : {
@@ -1127,6 +1199,12 @@
             "value" : "계속 실행되면서 알림에 응답하는 스크립트에는 이 템플릿을 선택하십시오."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies dit sjabloon voor een script dat blijft draaien en op meldingen reageert."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1212,6 +1290,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -1305,6 +1389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python 환경 선택:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies een Python-omgeving:"
           }
         },
         "pl" : {

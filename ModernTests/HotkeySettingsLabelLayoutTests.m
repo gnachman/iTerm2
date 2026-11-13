@@ -64,7 +64,7 @@
         @"5106": @"5113",
         @"v4W-f1-neV": @"BAw-ed-Of1",
     };
-    for (NSString *language in @[ @"de", @"es", @"fr", @"it", @"ja", @"pl", @"pt-BR", @"ru", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"de", @"es", @"fr", @"it", @"ja", @"nl", @"pl", @"pt-BR", @"ru", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
         NSString *path = [[NSBundle mainBundle] pathForResource:@"PreferencePanel"
                                                          ofType:@"strings"
                                                     inDirectory:nil

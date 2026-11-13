@@ -47,6 +47,12 @@
             "value": "Python 런타임 설치 프로그램"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installatieprogramma voor Python-runtime"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -137,6 +143,12 @@
             "value": "취소"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annuleer"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -225,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "선택적 구성요소 다운로드 중…"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optionele componenten downloaden…"
           }
         },
         "pl": {

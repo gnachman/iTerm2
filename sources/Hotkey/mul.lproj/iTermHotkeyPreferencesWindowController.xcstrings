@@ -47,6 +47,12 @@
             "value" : "⌥ Option"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단축키 윈도우 고정(키보드 포커스를 잃어도 열린 상태 유지)"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak sneltoetsvenster vast (blijft open als het toetsenbordfocus verliest)"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "단축키:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sneltoets:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "참고: 다른 앱이 활성화되어 윈도우가 닫힌 경우에만 윈도우가 다시 열립니다."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opmerking: het venster wordt alleen opnieuw geopend als het is gesloten doordat een andere app actief werd."
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "추가 단축키"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extra sneltoetsen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 프로파일에 지정된 단축키를 누르면 전용 윈도우가 보이거나 가려집니다. 단축키가 있는 각 프로파일은 자체 단축키 윈도우를 제어합니다."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wanneer je de sneltoets voor dit profiel indrukt, wordt een apart venster getoond of verborgen. Elk profiel met een sneltoets bedient zijn eigen sneltoetsvenster."
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "특별한 동작 안 함"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doe niets bijzonders"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -672,6 +714,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -767,6 +815,12 @@
             "value" : "이 단축키 윈도우 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon dit sneltoetsvenster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -857,6 +911,12 @@
             "value" : "단축키 윈도우 설정"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen voor sneltoetsvenster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -942,6 +1002,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -1037,6 +1103,12 @@
             "value" : "⚠️ 다른 프로파일에서 이 단축키를 사용합니다"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Een ander profiel gebruikt deze toetscombinatie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1122,6 +1194,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -1217,6 +1295,12 @@
             "value" : "이중 탭 키:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toets voor dubbeltik:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1305,6 +1389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "앱이 다시 활성화될 때 자동으로 다시 열기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open automatisch opnieuw bij heractivering van de app"
           }
         },
         "pl" : {
@@ -1397,6 +1487,12 @@
             "value" : "⚠️ 다른 프로파일에서 이 이중 탭을 사용합니다"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Een ander profiel gebruikt deze dubbeltik"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1485,6 +1581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "열려 있는 다른 윈도우가 없으면 이 단축키 윈도우 보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon dit sneltoetsvenster als er geen ander venster open is"
           }
         },
         "pl" : {
@@ -1577,6 +1679,12 @@
             "value" : "플로팅 윈도우는 다른 윈도우와 Dock, 그리고 다른 앱의 전체 화면 윈도우 위에 겹쳐 표시됩니다(단축키 윈도우의 데스크탑이 모든 데스크탑으로 설정된 경우)."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwevende vensters overlappen andere vensters, het Dock en schermvullende vensters van andere apps (als de Space van het sneltoetsvenster is ingesteld op Alle Spaces)."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1665,6 +1773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "취소"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuleer"
           }
         },
         "pl" : {
@@ -1757,6 +1871,12 @@
             "value" : "Dock 아이콘 클릭 시:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bij klik op het Dock-symbool:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1845,6 +1965,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기 및 가리기에 애니메이션 적용"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animeer tonen en verbergen"
           }
         },
         "pl" : {
@@ -1937,6 +2063,12 @@
             "value" : "확인"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2025,6 +2157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확인"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "pl" : {
@@ -2117,6 +2255,12 @@
             "value" : "플로팅 윈도우"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwevend venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2202,6 +2346,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -2295,6 +2445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "추가 단축키…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extra sneltoetsen…"
           }
         },
         "pl" : {

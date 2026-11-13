@@ -47,6 +47,12 @@
             "value" : "프롬프트를 감지하려면 셸 통합이 필요함"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vereist shell-integratie voor promptdetectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "실행 중인 앱이 “브래킷 붙여넣기 모드”를 켜는 이스케이프 코드를 보낸 경우 켜집니다. 붙여넣은 문자열은 그 안의 텍스트가 붙여넣기 작업에서 왔음을 나타내는 이스케이프 코드로 “감싸집니다.”"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dit is ingeschakeld wanneer de actieve app een escapecode heeft verstuurd om de ‘modus voor geaccoladeerd plakken’ in te schakelen. De geplakte tekst wordt ‘omgeven’ door escapecodes die aangeven dat de tekst afkomstig is van een plakactie."
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "^V로 탭 이스케이프"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape tabtekens met ^V"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭을 포함하여 붙여넣기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak met tabtekens"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "대치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "유니코드 구두점 변환"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet Unicode-leestekens om"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "vim 이스케이프 시퀀스 준수"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respecteert vim-escapereeksen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1ms"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "다양한 형태의 따옴표와 대시를 해당하는 ASCII 문자로 변환합니다."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet verschillende vormen van aanhalingstekens en streepjes om naar hun ASCII-equivalent."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭을 공백으로 변환:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet tabtekens om in spaties:"
           }
         },
         "pl" : {
@@ -947,6 +1007,12 @@
             "value" : "DOS 및 UNIX 줄바꿈은 일반적으로 입력으로 사용되지 않습니다. CR이 표준입니다."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS- en UNIX-regeleindes worden doorgaans niet als invoer gebruikt. CR is de standaard."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1035,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "셸 문자를 \\로 이스케이프"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape shelltekens met \\"
           }
         },
         "pl" : {
@@ -1127,6 +1199,12 @@
             "value" : "청크 크기:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmentgrootte:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대치 문자열"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervanging"
           }
         },
         "pl" : {
@@ -1307,6 +1391,12 @@
             "value" : "DOS 및 UNIX 줄바꿈은 일반적으로 입력으로 사용되지 않습니다. CR이 표준입니다."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS- en UNIX-regeleindes worden doorgaans niet als invoer gebruikt. CR is de standaard."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1395,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭, 줄바꿈(LF), 폼 피드, 캐리지 리턴만 “안전한” 제어 코드입니다."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab, regelinvoer, paginadoorvoer en regelterugloop zijn de enige ‘veilige’ besturingscodes."
           }
         },
         "pl" : {
@@ -1487,6 +1583,12 @@
             "value" : "변환"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformaties"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ICU 정규 표현식 구문"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICU-syntaxis voor reguliere expressies"
           }
         },
         "pl" : {
@@ -1667,6 +1775,12 @@
             "value" : "100ms"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1752,6 +1866,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 kB"
@@ -1847,6 +1967,12 @@
             "value" : "→"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "door"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1935,6 +2061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "속도"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snelheid"
           }
         },
         "pl" : {
@@ -2027,6 +2159,12 @@
             "value" : "안전하지 않은 제어 코드 제거"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder onveilige besturingscodes"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2115,6 +2253,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "각 줄을 붙여넣기 전에 셸 프롬프트 기다리기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wacht op shell-prompt voordat elke regel wordt geplakt"
           }
         },
         "pl" : {
@@ -2207,6 +2351,12 @@
             "value" : "청크 간 지연:"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vertraging:"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2295,6 +2445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1바이트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 byte"
           }
         },
         "pl" : {
@@ -2387,6 +2543,12 @@
             "value" : "정규 표현식"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reguliere expressie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2475,6 +2637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1.2 kB"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
           }
         },
         "pl" : {
@@ -2567,6 +2735,12 @@
             "value" : "150ms"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2652,6 +2826,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -2747,6 +2927,12 @@
             "value" : "라디오"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2835,6 +3021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "줄바꿈 제거"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder regeleindes"
           }
         },
         "pl" : {
@@ -2927,6 +3119,12 @@
             "value" : "캡처 그룹에는 $1, $2 등을 사용하십시오"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik $1, $2 enz. voor groepen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3017,6 +3215,12 @@
             "value" : "브래킷 붙여넣기 모드"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modus voor geaccoladeerd plakken"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3102,6 +3306,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
@@ -3197,6 +3407,12 @@
             "value" : "CRLF 및 LF를 CR로 변환"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet CRLF en LF om in CR"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3287,6 +3503,12 @@
             "value" : "Base-64 인코딩"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codeer als Base64"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3375,6 +3597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10초"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 sec"
           }
         },
         "pl" : {

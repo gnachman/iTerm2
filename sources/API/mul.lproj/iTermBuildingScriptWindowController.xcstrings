@@ -47,6 +47,12 @@
             "value" : "잠시만 기다려 주십시오! 새로운 Python 환경을 설치하는 중…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Even geduld! Een nieuwe Python-omgeving wordt geïnstalleerd…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",

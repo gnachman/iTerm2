@@ -47,6 +47,12 @@
             "value" : "축소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom uit"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python 런타임 설치"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installeer Python-runtime"
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "탭 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -315,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 복제"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliceer sessie"
           }
         },
         "pl" : {
@@ -407,6 +431,12 @@
             "value" : "위치 열기…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open locatie…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높이 늘리기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergroot hoogte"
           }
         },
         "pl" : {
@@ -587,6 +623,12 @@
             "value" : "탭 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,6 +717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "포커스 리포팅"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focusrapportage"
           }
         },
         "pl" : {
@@ -767,6 +815,12 @@
             "value" : "보통"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normaal"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 위로 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats scheidingslijn omhoog"
           }
         },
         "pl" : {
@@ -947,6 +1007,12 @@
             "value" : "Base64로 디코딩된 값으로 대치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang door met Base64 gedecodeerde waarde"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1035,6 +1101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessie"
           }
         },
         "pl" : {
@@ -1127,6 +1199,12 @@
             "value" : "세션을 분할 패널로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats sessie naar gesplitst paneel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1215,6 +1293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "암호 관리자"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wachtwoordbeheerder"
           }
         },
         "pl" : {
@@ -1307,6 +1391,12 @@
             "value" : "항목 1"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdeel 1"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1395,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가운데"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gecentreerd"
           }
         },
         "pl" : {
@@ -1487,6 +1583,12 @@
             "value" : "선택 영역 대치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang selectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1575,6 +1677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 왼쪽"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linkerkant van het scherm"
           }
         },
         "pl" : {
@@ -1667,6 +1775,12 @@
             "value" : "애플리케이션 커서"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Applicatiecursor"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1755,6 +1869,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "배치"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indelingen"
           }
         },
         "pl" : {
@@ -1847,6 +1967,12 @@
             "value" : "선택한 줄 접기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vouw geselecteerde regels samen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1935,6 +2061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최근 디렉토리 열기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open recente mappen…"
           }
         },
         "pl" : {
@@ -2027,6 +2159,12 @@
             "value" : "전체 화면"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schermvullend"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2115,6 +2253,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이름 있는 마크 설정"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stel benoemde markering in"
           }
         },
         "pl" : {
@@ -2207,6 +2351,12 @@
             "value" : "동작"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acties"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2295,6 +2445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU 프레임 캡처"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leg GPU-frame vast"
           }
         },
         "pl" : {
@@ -2387,6 +2543,12 @@
             "value" : "마크 및 주석"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markeringen en annotaties"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2475,6 +2637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 왼쪽 전체 높이"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volledige hoogte links op het scherm"
           }
         },
         "pl" : {
@@ -2567,6 +2735,12 @@
             "value" : "윈도우 복제"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliceer venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2655,6 +2829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "명령 자동 완성"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltooi commando’s automatisch"
           }
         },
         "pl" : {
@@ -2747,6 +2927,12 @@
             "value" : "윈도우 스타일"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vensterstijl"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2835,6 +3021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU 렌더러 사용 가능 여부"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschikbaarheid van GPU-weergavemodule"
           }
         },
         "pl" : {
@@ -2927,6 +3119,12 @@
             "value" : "윈도우"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3015,6 +3213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "최소화"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimaliseer"
           }
         },
         "pl" : {
@@ -3107,6 +3311,12 @@
             "value" : "윈도우"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3192,6 +3402,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -3287,6 +3503,12 @@
             "value" : "iTerm2"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3375,6 +3597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치의 프로파일 변경…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig profiel in indeling…"
           }
         },
         "pl" : {
@@ -3467,6 +3695,12 @@
             "value" : "셸"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3555,6 +3789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기본 너비 설정"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stel standaardbreedte in"
           }
         },
         "pl" : {
@@ -3647,6 +3887,12 @@
             "value" : "셸"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3735,6 +3981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도움말"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Help"
           }
         },
         "pl" : {
@@ -3827,6 +4079,12 @@
             "value" : "도움말"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Help"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3915,6 +4173,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 도움말"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2-help"
           }
         },
         "pl" : {
@@ -4007,6 +4271,12 @@
             "value" : "환경설정…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4095,6 +4365,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서비스"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voorzieningen"
           }
         },
         "pl" : {
@@ -4187,6 +4463,12 @@
             "value" : "서비스"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voorzieningen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4275,6 +4557,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 가리기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verberg iTerm2"
           }
         },
         "pl" : {
@@ -4367,6 +4655,12 @@
             "value" : "iTerm2 종료"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop iTerm2"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4455,6 +4749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "기타 가리기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verberg andere"
           }
         },
         "pl" : {
@@ -4547,6 +4847,12 @@
             "value" : "모두 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon alle"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4635,6 +4941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오려두기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Knip"
           }
         },
         "pl" : {
@@ -4727,6 +5039,12 @@
             "value" : "편집"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4815,6 +5133,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "편집"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig"
           }
         },
         "pl" : {
@@ -4907,6 +5231,12 @@
             "value" : "모두 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer alles"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4995,6 +5325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "붙여넣기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak"
           }
         },
         "pl" : {
@@ -5087,6 +5423,12 @@
             "value" : "버퍼 지우기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis buffer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5175,6 +5517,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
           }
         },
         "pl" : {
@@ -5267,6 +5615,12 @@
             "value" : "로그"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5355,6 +5709,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2에 관하여"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Over iTerm2"
           }
         },
         "pl" : {
@@ -5447,6 +5807,12 @@
             "value" : "프로파일"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profielen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5535,6 +5901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profielen"
           }
         },
         "pl" : {
@@ -5627,6 +5999,12 @@
             "value" : "터미널 윈도우 닫기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluit Terminal-venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5715,6 +6093,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭의 모든 패널 닫기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluit alle panelen in tabblad"
           }
         },
         "pl" : {
@@ -5807,6 +6191,12 @@
             "value" : "페이지 설정…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pagina-instelling…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5895,6 +6285,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택한 텍스트 저장…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar geselecteerde tekst…"
           }
         },
         "pl" : {
@@ -5987,6 +6383,12 @@
             "value" : "스크롤백 버퍼 지우기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis scrollbackbuffer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6075,6 +6477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 항목으로 찾기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik selectie om te zoeken"
           }
         },
         "pl" : {
@@ -6167,6 +6575,12 @@
             "value" : "찾기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6255,6 +6669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek"
           }
         },
         "pl" : {
@@ -6347,6 +6767,12 @@
             "value" : "다음 찾기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek volgende"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6435,6 +6861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 찾기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek vorige"
           }
         },
         "pl" : {
@@ -6527,6 +6959,12 @@
             "value" : "선택 항목으로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ga naar selectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6615,6 +7053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weergave"
           }
         },
         "pl" : {
@@ -6707,6 +7151,12 @@
             "value" : "보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weergave"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6795,6 +7245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트 크게"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak tekst groter"
           }
         },
         "pl" : {
@@ -6887,6 +7343,12 @@
             "value" : "텍스트 작게"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak tekst kleiner"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6975,6 +7437,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프린트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Druk af"
           }
         },
         "pl" : {
@@ -7067,6 +7535,12 @@
             "value" : "화면"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scherm"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7155,6 +7629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프린트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Druk af"
           }
         },
         "pl" : {
@@ -7247,6 +7727,12 @@
             "value" : "선택 영역"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7335,6 +7821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "버퍼"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffer"
           }
         },
         "pl" : {
@@ -7427,6 +7919,12 @@
             "value" : "이전 탭 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer vorig tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7515,6 +8013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 탭 선택"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer volgend tabblad"
           }
         },
         "pl" : {
@@ -7607,6 +8111,12 @@
             "value" : "탭 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7695,6 +8205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭 선택"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer tabblad"
           }
         },
         "pl" : {
@@ -7787,6 +8303,12 @@
             "value" : "새로운 탭"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7875,6 +8397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw venster"
           }
         },
         "pl" : {
@@ -7967,6 +8495,12 @@
             "value" : "Option 키를 누르면 새로운 윈도우"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Houd Option ingedrukt voor nieuw venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8055,6 +8589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 윈도우에서 열기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in nieuw venster"
           }
         },
         "pl" : {
@@ -8147,6 +8687,12 @@
             "value" : "업데이트 확인…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek naar updates…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8235,6 +8781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "확대/축소"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergroot/verklein"
           }
         },
         "pl" : {
@@ -8327,6 +8879,12 @@
             "value" : "재설정"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stel opnieuw in"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8415,6 +8973,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 화면 전환"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel schermvullende weergave in/uit"
           }
         },
         "pl" : {
@@ -8507,6 +9071,12 @@
             "value" : "디버그 로깅 전환"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel debuglogging in/uit"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8595,6 +9165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "프로파일 열기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open profielen…"
           }
         },
         "pl" : {
@@ -8687,6 +9263,12 @@
             "value" : "세션 편집…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig sessie…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8775,6 +9357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "즉시 재생 시작"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start directe herhaling"
           }
         },
         "pl" : {
@@ -8867,6 +9455,12 @@
             "value" : "실행 취소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8955,6 +9549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "실행 복귀"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opnieuw"
           }
         },
         "pl" : {
@@ -9047,6 +9647,12 @@
             "value" : "붙여넣기 기록 열기…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open plakgeschiedenis…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9135,6 +9741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "자동 완성 열기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open automatisch aanvullen…"
           }
         },
         "pl" : {
@@ -9227,6 +9839,12 @@
             "value" : "특수 붙여넣기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak speciaal"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9315,6 +9933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "특수 붙여넣기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak speciaal"
           }
         },
         "pl" : {
@@ -9407,6 +10031,12 @@
             "value" : "선택 영역 붙여넣기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak selectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9495,6 +10125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "천천히 붙여넣기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak langzaam"
           }
         },
         "pl" : {
@@ -9587,6 +10223,12 @@
             "value" : "보안 키보드 입력"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beveiligde toetsenbordinvoer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9675,6 +10317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우를 가로로 정렬"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rangschik vensters horizontaal"
           }
         },
         "pl" : {
@@ -9767,6 +10415,12 @@
             "value" : "닫기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluit"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9855,6 +10509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 프로파일로 세로로 분할"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splits verticaal met huidig profiel"
           }
         },
         "pl" : {
@@ -9947,6 +10607,12 @@
             "value" : "현재 프로파일로 가로로 분할"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splits horizontaal met huidig profiel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10035,6 +10701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치 저장"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar vensterindeling"
           }
         },
         "pl" : {
@@ -10127,6 +10799,12 @@
             "value" : "분할 패널 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer gesplitst paneel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10215,6 +10893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 선택"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer gesplitst paneel"
           }
         },
         "pl" : {
@@ -10307,6 +10991,12 @@
             "value" : "위쪽 패널 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer paneel erboven"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10395,6 +11085,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아래쪽 패널 선택"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer paneel eronder"
           }
         },
         "pl" : {
@@ -10487,6 +11183,12 @@
             "value" : "왼쪽 패널 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer paneel links"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10575,6 +11277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오른쪽 패널 선택"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer paneel rechts"
           }
         },
         "pl" : {
@@ -10667,6 +11375,12 @@
             "value" : "투명도 사용"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik transparantie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10755,6 +11469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "활성 패널 최대화"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximaliseer actief paneel"
           }
         },
         "pl" : {
@@ -10847,6 +11567,12 @@
             "value" : "항목 3"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdeel 3"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10935,6 +11661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 2"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdeel 2"
           }
         },
         "pl" : {
@@ -11027,6 +11759,12 @@
             "value" : "항목 1"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdeel 1"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11115,6 +11853,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "마크 설정"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stel markering in"
           }
         },
         "pl" : {
@@ -11207,6 +11951,12 @@
             "value" : "마크로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ga naar markering"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11295,6 +12045,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 패널"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volgend paneel"
           }
         },
         "pl" : {
@@ -11387,6 +12143,12 @@
             "value" : "이전 패널"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorig paneel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11475,6 +12237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 화면에서 탭 보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon tabbladen in schermvullende weergave"
           }
         },
         "pl" : {
@@ -11567,6 +12335,12 @@
             "value" : "입력 브로드캐스트"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invoer uitzenden"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11655,6 +12429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "입력 브로드캐스트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invoer uitzenden"
           }
         },
         "pl" : {
@@ -11747,6 +12527,12 @@
             "value" : "모든 탭의 모든 패널에 입력 브로드캐스트"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zend invoer uit naar alle panelen in alle tabbladen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11835,6 +12621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 탭의 모든 패널에 입력 브로드캐스트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zend invoer uit naar alle panelen in huidig tabblad"
           }
         },
         "pl" : {
@@ -11927,6 +12719,12 @@
             "value" : "현재 세션에만 입력 보내기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verstuur invoer alleen naar huidige sessie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12015,6 +12813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치 복원"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet vensterindeling terug"
           }
         },
         "pl" : {
@@ -12107,6 +12911,12 @@
             "value" : "윈도우 배치 복원"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet vensterindeling terug"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12195,6 +13005,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "커서 찾기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek cursor"
           }
         },
         "pl" : {
@@ -12287,6 +13103,12 @@
             "value" : "가로로 분할…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splits horizontaal…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12375,6 +13197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세로로 분할…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splits verticaal…"
           }
         },
         "pl" : {
@@ -12467,6 +13295,12 @@
             "value" : "도구 벨트"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gereedschapsriem"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12555,6 +13389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도구 벨트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gereedschapsriem"
           }
         },
         "pl" : {
@@ -12647,6 +13487,12 @@
             "value" : "도구 벨트 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon gereedschapsriem"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12735,6 +13581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 프로파일로 새로운 탭"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw tabblad met huidig profiel"
           }
         },
         "pl" : {
@@ -12827,6 +13679,12 @@
             "value" : "코프로세스 실행…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voer coproces uit…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12915,6 +13773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "코프로세스 중단"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop coproces"
           }
         },
         "pl" : {
@@ -13007,6 +13871,12 @@
             "value" : "복사"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13095,6 +13965,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탭을 새로운 윈도우로 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats tabblad naar nieuw venster"
           }
         },
         "pl" : {
@@ -13187,6 +14063,12 @@
             "value" : "탭을 오른쪽으로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats tabblad naar rechts"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13277,6 +14159,12 @@
             "value" : "배경 패턴 표시기 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon indicator voor achtergrondpatroon"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13362,6 +14250,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -13457,6 +14351,12 @@
             "value" : "tmux"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13545,6 +14445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 tmux 탭"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw tmux-tabblad"
           }
         },
         "pl" : {
@@ -13637,6 +14543,12 @@
             "value" : "새로운 tmux 윈도우"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw tmux-venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13725,6 +14637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분리"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontkoppel"
           }
         },
         "pl" : {
@@ -13817,6 +14735,12 @@
             "value" : "대시보드"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dashboard"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13905,6 +14829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "텍스트 기본 크기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet tekst op normale grootte"
           }
         },
         "pl" : {
@@ -13997,6 +14927,12 @@
             "value" : "텍스트 및 세션 크기 복원"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet tekst- en sessiegrootte terug"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14085,6 +15021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2를 기본 터미널로 설정"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak iTerm2 de standaardterminal"
           }
         },
         "pl" : {
@@ -14177,6 +15119,12 @@
             "value" : "터미널 앱을 기본 터미널로 설정"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak Terminal de standaardterminal"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14265,6 +15213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션으로 입력 브로드캐스트 전환"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel invoer uitzenden naar huidige sessie in/uit"
           }
         },
         "pl" : {
@@ -14357,6 +15311,12 @@
             "value" : "더 빠르게 붙여넣기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak sneller"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14445,6 +15405,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "더 느리게 붙여넣기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak langzamer"
           }
         },
         "pl" : {
@@ -14537,6 +15503,12 @@
             "value" : "천천히 붙여넣기 더 빠르게"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak langzaam sneller"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14625,6 +15597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "천천히 붙여넣기 더 느리게"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak langzaam langzamer"
           }
         },
         "pl" : {
@@ -14717,6 +15695,12 @@
             "value" : "문자 세트 재설정"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stel tekenset opnieuw in"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14807,6 +15791,12 @@
             "value" : "아카이브"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archieven"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14892,6 +15882,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -14987,6 +15983,12 @@
             "value" : "선택 영역에 주석 달기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annoteer selectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15075,6 +16077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 확대"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom in op selectie"
           }
         },
         "pl" : {
@@ -15167,6 +16175,12 @@
             "value" : "구분선을 왼쪽으로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats scheidingslijn naar links"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15255,6 +16269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 끄기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel alle uit"
           }
         },
         "pl" : {
@@ -15347,6 +16367,12 @@
             "value" : "세션 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats sessie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15435,6 +16461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저 보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon opsteller"
           }
         },
         "pl" : {
@@ -15527,6 +16559,12 @@
             "value" : "강제 분리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forceer ontkoppelen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15615,6 +16653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이름 있는 마크"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benoemde markeringen"
           }
         },
         "pl" : {
@@ -15707,6 +16751,12 @@
             "value" : "찾기…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15795,6 +16845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "녹화 내보내기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporteer opname"
           }
         },
         "pl" : {
@@ -15887,6 +16943,12 @@
             "value" : "제목 막대 없음"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geen titelbalk"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15972,6 +17034,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -16067,6 +17135,12 @@
             "value" : "클리핑 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon knipsels"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16155,6 +17229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴패니언 기기 설정"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellingen voor begeleidend apparaat"
           }
         },
         "pl" : {
@@ -16247,6 +17327,12 @@
             "value" : "복사 모드"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieermodus"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16335,6 +17421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats sessie"
           }
         },
         "pl" : {
@@ -16427,6 +17519,12 @@
             "value" : "탭"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16515,6 +17613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 시작까지 지우기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis tot begin van selectie"
           }
         },
         "pl" : {
@@ -16607,6 +17711,12 @@
             "value" : "성능 통계 복사"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer prestatiestatistieken"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16695,6 +17805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크립트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts"
           }
         },
         "pl" : {
@@ -16787,6 +17903,12 @@
             "value" : "현재 윈도우를 윈도우 배치로 저장"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar huidig venster als indeling"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16875,6 +17997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "트리거"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triggers"
           }
         },
         "pl" : {
@@ -16967,6 +18095,12 @@
             "value" : "커서 가이드 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon cursorhulplijn"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17055,6 +18189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크기 잠금"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergrendel grootte"
           }
         },
         "pl" : {
@@ -17147,6 +18287,12 @@
             "value" : "파일에 기록"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log naar bestand"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17235,6 +18381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "내보내기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporteer…"
           }
         },
         "pl" : {
@@ -17327,6 +18479,12 @@
             "value" : "웹"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17415,6 +18573,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연관된 텍스트 리포팅"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapporteer bijbehorende tekst"
           }
         },
         "pl" : {
@@ -17507,6 +18671,12 @@
             "value" : "새로운 Python 스크립트"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw Python-script"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17595,6 +18765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오픈 소스 라이선스"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open-sourcelicenties"
           }
         },
         "pl" : {
@@ -17687,6 +18863,12 @@
             "value" : "즉시 재생 지우기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis directe herhaling"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17775,6 +18957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "높이 줄이기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verklein hoogte"
           }
         },
         "pl" : {
@@ -17867,6 +19055,12 @@
             "value" : "스크립트"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17955,6 +19149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Finder에서 스크립트 보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon scripts in Finder"
           }
         },
         "pl" : {
@@ -18047,6 +19247,12 @@
             "value" : "내용 저장…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar inhoud…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18135,6 +19341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 앞으로 가져오기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles op voorgrond"
           }
         },
         "pl" : {
@@ -18227,6 +19439,12 @@
             "value" : "모두 접기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vouw alles samen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18315,6 +19533,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아카이브"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archieven"
           }
         },
         "pl" : {
@@ -18407,6 +19631,12 @@
             "value" : "윈도우 배치를 탭으로 복원"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet vensterindeling terug als tabbladen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18495,6 +19725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "커서 위치에 주석 추가"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg annotatie toe bij cursor"
           }
         },
         "pl" : {
@@ -18587,6 +19823,12 @@
             "value" : "활성 윈도우의 투명도 끄기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel transparantie uit voor actief venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18675,6 +19917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "브래킷 붙여넣기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geaccoladeerd plakken"
           }
         },
         "pl" : {
@@ -18767,6 +20015,12 @@
             "value" : "보기 좋게 정리된 JSON으로 대치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang door opgemaakte JSON"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18855,6 +20109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "맨 앞으로 가져오기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breng naar voorgrond"
           }
         },
         "pl" : {
@@ -18947,6 +20207,12 @@
             "value" : "플로팅 패널 도킹"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koppel zwevend paneel vast"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19035,6 +20301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널 가리기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verberg zwevende panelen"
           }
         },
         "pl" : {
@@ -19127,6 +20399,12 @@
             "value" : "플로팅 패널을 아래로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats zwevend paneel omlaag"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19215,6 +20493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널을 왼쪽으로 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats zwevend paneel naar links"
           }
         },
         "pl" : {
@@ -19307,6 +20591,12 @@
             "value" : "플로팅 패널을 오른쪽으로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats zwevend paneel naar rechts"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19395,6 +20685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널을 위로 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats zwevend paneel omhoog"
           }
         },
         "pl" : {
@@ -19487,6 +20783,12 @@
             "value" : "현재 프로파일로 새로운 플로팅 패널"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw zwevend paneel met huidig profiel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19575,6 +20877,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "플로팅 패널"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwevende panelen"
           }
         },
         "pl" : {
@@ -19667,6 +20975,12 @@
             "value" : "플로팅 패널"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwevende panelen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19755,6 +21069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "맨 뒤로 보내기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breng naar achtergrond"
           }
         },
         "pl" : {
@@ -19847,6 +21167,12 @@
             "value" : "오늘의 팁 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon tip van de dag"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19935,6 +21261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 주석"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volgende annotatie"
           }
         },
         "pl" : {
@@ -20027,6 +21359,12 @@
             "value" : "콕핏"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20115,6 +21453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션을 탭으로 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats sessie naar tabblad"
           }
         },
         "pl" : {
@@ -20207,6 +21551,12 @@
             "value" : "화면 하단"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderkant van het scherm"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20295,6 +21645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "붙여넣을 때 탭을 공백으로 변환할지 묻기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vraag om tabtekens naar spaties om te zetten bij plakken"
           }
         },
         "pl" : {
@@ -20387,6 +21743,12 @@
             "value" : "경고"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarschuwingen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20475,6 +21837,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "제어 시퀀스와 함께 복사"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer met besturingsreeksen"
           }
         },
         "pl" : {
@@ -20567,6 +21935,12 @@
             "value" : "윈도우 크기 조절"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig venstergrootte"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20655,6 +22029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "재설정"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stel opnieuw in"
           }
         },
         "pl" : {
@@ -20747,6 +22127,12 @@
             "value" : "탭 복제"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliceer tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20835,6 +22221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "페이지 다시 로드"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laad pagina opnieuw"
           }
         },
         "pl" : {
@@ -20927,6 +22319,12 @@
             "value" : "세션을 윈도우로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats sessie naar venster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21015,6 +22413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모든 키를 이스케이프 코드로 리포팅"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapporteer alle toetsen als escapecodes"
           }
         },
         "pl" : {
@@ -21107,6 +22511,12 @@
             "value" : "원시 키 리포팅 모드"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modus voor onbewerkte toetsrapportage"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21195,6 +22605,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가져오기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importeer…"
           }
         },
         "pl" : {
@@ -21287,6 +22703,12 @@
             "value" : "여러 줄 붙여넣기 전에 경고"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarschuw vóór plakken van meerdere regels"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21375,6 +22797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인라인 채팅 보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon inline chat"
           }
         },
         "pl" : {
@@ -21467,6 +22895,12 @@
             "value" : "버퍼 입력 전환"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel bufferinvoer in/uit"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21555,6 +22989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "원격 호스트가 iTerm2를 제어할 수 있음"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Externe host kan iTerm2 besturen"
           }
         },
         "pl" : {
@@ -21647,6 +23087,12 @@
             "value" : "설정 컨트롤 잘림 확인"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controleer afkapping van instellingenbesturing"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21735,6 +23181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "트리거"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triggers"
           }
         },
         "pl" : {
@@ -21827,6 +23279,12 @@
             "value" : "선택 영역이 소프트 경계를 따름"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectie respecteert zachte grenzen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21915,6 +23373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "워크그룹 나가기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlaat werkgroep"
           }
         },
         "pl" : {
@@ -22007,6 +23471,12 @@
             "value" : "마지막 명령의 출력 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer uitvoer van laatste commando"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22095,6 +23565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 재시작"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstart sessie"
           }
         },
         "pl" : {
@@ -22187,6 +23663,12 @@
             "value" : "Python REPL 열기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Python-REPL"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22275,6 +23757,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 상단"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bovenkant van het scherm"
           }
         },
         "pl" : {
@@ -22367,6 +23855,12 @@
             "value" : "모든 윈도우 병합"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg alle vensters samen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22455,6 +23949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "단축키 윈도우 고정"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak sneltoetsvenster vast"
           }
         },
         "pl" : {
@@ -22547,6 +24047,12 @@
             "value" : "modifyOtherKeys 모드 2"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys-modus 2"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22635,6 +24141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "빠르게 열기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open snel"
           }
         },
         "pl" : {
@@ -22727,6 +24239,12 @@
             "value" : "관리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beheer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22815,6 +24333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이스케이프 구분"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak Esc ondubbelzinnig"
           }
         },
         "pl" : {
@@ -22907,6 +24431,12 @@
             "value" : "열 결과 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies resultaat om te openen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22995,6 +24525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "여러 줄 붙여넣기 경고를 셸 프롬프트로 제한"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beperk waarschuwing voor plakken van meerdere regels tot shell-prompt"
           }
         },
         "pl" : {
@@ -23087,6 +24623,12 @@
             "value" : "대화형 앱에서 트리거 활성화"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel triggers in interactieve apps in"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23175,6 +24717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 2"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdeel 2"
           }
         },
         "pl" : {
@@ -23267,6 +24815,12 @@
             "value" : "마우스 리포팅"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muisrapportage"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23355,6 +24909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "마크 및 주석"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markeringen en annotaties"
           }
         },
         "pl" : {
@@ -23447,6 +25007,12 @@
             "value" : "레이아웃 잠금"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergrendel lay-out"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23535,6 +25101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "위치 잠금"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergrendel locatie"
           }
         },
         "pl" : {
@@ -23627,6 +25199,12 @@
             "value" : "현재 프로파일로 새로운 윈도우"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw venster met huidig profiel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23715,6 +25293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 숨겨두기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begraaf sessie"
           }
         },
         "pl" : {
@@ -23807,6 +25391,12 @@
             "value" : "모달 경고 상자 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon modaal waarschuwingsvenster"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23895,6 +25485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모두 켜기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel alle in"
           }
         },
         "pl" : {
@@ -23987,6 +25583,12 @@
             "value" : "다음 마크"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volgende markering"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24075,6 +25677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 정렬"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rangschik vensters"
           }
         },
         "pl" : {
@@ -24167,6 +25775,12 @@
             "value" : "모든 스마트 선택 일치 항목 찾기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek alle overeenkomsten met slimme selectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24255,6 +25869,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사운드 재생"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speel een geluid af"
           }
         },
         "pl" : {
@@ -24347,6 +25967,12 @@
             "value" : "명령 기록 열기…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open commandogeschiedenis…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24435,6 +26061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스타일과 함께 복사"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieer met stijlen"
           }
         },
         "pl" : {
@@ -24527,6 +26159,12 @@
             "value" : "대체 화면"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternatief scherm"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24617,6 +26255,12 @@
             "value" : "화면 오른쪽 전체 높이"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volledige hoogte rechts op het scherm"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24702,6 +26346,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -24797,6 +26447,12 @@
             "value" : "표준 키 리포팅 모드"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standaardmodus voor toetsrapportage"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24885,6 +26541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 크기 조절"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig grootte van gesplitst paneel"
           }
         },
         "pl" : {
@@ -24977,6 +26639,12 @@
             "value" : "경고"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarschuwingen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25065,6 +26733,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "상태 변경 시 알림"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meld bij statuswijziging"
           }
         },
         "pl" : {
@@ -25157,6 +26831,12 @@
             "value" : "다음 탭 그룹 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer volgende tabbladgroep"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25245,6 +26925,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 제거"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder installatie van Claude Code-integratie"
           }
         },
         "pl" : {
@@ -25337,6 +27023,12 @@
             "value" : "탭 제목 편집"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig tabbladtitel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25425,6 +27117,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "배치"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indelingen"
           }
         },
         "pl" : {
@@ -25517,6 +27215,12 @@
             "value" : "이전 피어"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorig lid"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25605,6 +27309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "대체 키 리포팅"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapporteer alternatieve toetsen"
           }
         },
         "pl" : {
@@ -25697,6 +27407,12 @@
             "value" : "패널 분할"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesplitst paneel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25785,6 +27501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "터미널 상태"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminalstatus"
           }
         },
         "pl" : {
@@ -25877,6 +27599,12 @@
             "value" : "닫기 실행 취소"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstel sluiten"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25965,6 +27693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 채팅"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-chats"
           }
         },
         "pl" : {
@@ -26057,6 +27791,12 @@
             "value" : "앞으로"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volgende"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26145,6 +27885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 너비 잠금"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergrendel breedte van gesplitst paneel"
           }
         },
         "pl" : {
@@ -26237,6 +27983,12 @@
             "value" : "워크그룹"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkgroepen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26325,6 +28077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션의 아카이브 저장…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar archief van huidige sessie…"
           }
         },
         "pl" : {
@@ -26417,6 +28175,12 @@
             "value" : "선택 영역 대치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang selectie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26502,6 +28266,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -26597,6 +28367,12 @@
             "value" : "주석 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon annotaties"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26682,6 +28458,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -26777,6 +28559,12 @@
             "value" : "관리"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beheer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26865,6 +28653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "항목 3"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdeel 3"
           }
         },
         "pl" : {
@@ -26957,6 +28751,12 @@
             "value" : "이전 탭 그룹 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer vorige tabbladgroep"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27045,6 +28845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "숨겨둔 세션"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begraven sessies"
           }
         },
         "pl" : {
@@ -27137,6 +28943,12 @@
             "value" : "이전 주석"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorige annotatie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27225,6 +29037,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 밖 세션의 마크에서 경고"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarschuw bij markeringen in sessies buiten beeld"
           }
         },
         "pl" : {
@@ -27317,6 +29135,12 @@
             "value" : "가운데, 제목 막대 없음"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gecentreerd, geen titelbalk"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27405,6 +29229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 설치"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installeer Claude Code-integratie"
           }
         },
         "pl" : {
@@ -27497,6 +29327,12 @@
             "value" : "알림 게시"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plaats melding"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27585,6 +29421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "현재 세션이 브로드캐스트 소스"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Huidige sessie is bron van uitzending"
           }
         },
         "pl" : {
@@ -27677,6 +29519,12 @@
             "value" : "다음 마크에서 경고"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarschuw bij volgende markering"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27765,6 +29613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "너비 늘리기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergroot breedte"
           }
         },
         "pl" : {
@@ -27857,6 +29711,12 @@
             "value" : "CSI u 모드"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSI u-modus"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27945,6 +29805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 아래로 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats scheidingslijn omlaag"
           }
         },
         "pl" : {
@@ -28037,6 +29903,12 @@
             "value" : "분할 패널 크기 조절"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig grootte van gesplitst paneel"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28125,6 +29997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code 통합 재설치"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installeer Claude Code-integratie opnieuw"
           }
         },
         "pl" : {
@@ -28217,6 +30095,12 @@
             "value" : "셸 통합 설치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installeer shell-integratie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28305,6 +30189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "필터"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
           }
         },
         "pl" : {
@@ -28397,6 +30287,12 @@
             "value" : "트리거 편집"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig triggers"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28485,6 +30381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패널 일시 정지"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderbreek paneel"
           }
         },
         "pl" : {
@@ -28577,6 +30479,12 @@
             "value" : "소급 디버그 로그 저장"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar retrospectieve debuglogs"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28665,6 +30573,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스니펫"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmenten"
           }
         },
         "pl" : {
@@ -28757,6 +30671,12 @@
             "value" : "현재 명령 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer huidig commando"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28845,6 +30765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "스크린샷 찍기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak schermafbeelding…"
           }
         },
         "pl" : {
@@ -28937,6 +30863,12 @@
             "value" : "선택 영역을 네이티브로 렌더링"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geef selectie native weer"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29025,6 +30957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "세션 메모 보기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon sessienotitie"
           }
         },
         "pl" : {
@@ -29117,6 +31055,12 @@
             "value" : "스니펫"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmenten"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29205,6 +31149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 제목 편집"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig venstertitel"
           }
         },
         "pl" : {
@@ -29297,6 +31247,12 @@
             "value" : "숨긴 경고…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onderdrukte waarschuwingen…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29385,6 +31341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이전 마크"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorige markering"
           }
         },
         "pl" : {
@@ -29477,6 +31439,12 @@
             "value" : "이미 다운로드한 Python 런타임 설치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installeer reeds gedownloade Python-runtime"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29565,6 +31533,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구분선을 오른쪽으로 이동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats scheidingslijn naar rechts"
           }
         },
         "pl" : {
@@ -29657,6 +31631,12 @@
             "value" : "탭"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29745,6 +31725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "파일 다운로드…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download bestanden…"
           }
         },
         "pl" : {
@@ -29837,6 +31823,12 @@
             "value" : "탭을 왼쪽으로 이동"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verplaats tabblad naar links"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29925,6 +31917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새로운 그룹에 탭 추가…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg tabblad toe aan nieuwe groep…"
           }
         },
         "pl" : {
@@ -30017,6 +32015,12 @@
             "value" : "도구 막대 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon knoppenbalk"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30105,6 +32109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "그룹에서 탭 제거"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder tabblad uit groep"
           }
         },
         "pl" : {
@@ -30197,6 +32207,12 @@
             "value" : "자동 컴포저"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische opsteller"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30285,6 +32301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 채팅 열기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open AI-chat…"
           }
         },
         "pl" : {
@@ -30377,6 +32399,12 @@
             "value" : "타임스탬프 보기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon tijdstempels"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30465,6 +32493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "고급 붙여넣기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geavanceerd plakken…"
           }
         },
         "pl" : {
@@ -30557,6 +32591,12 @@
             "value" : "윈도우 정렬"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rangschik vensters"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30645,6 +32685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "에뮬레이션 수준"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emulatieniveau"
           }
         },
         "pl" : {
@@ -30737,6 +32783,12 @@
             "value" : "일치 항목 선택"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecteer overeenkomsten"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30825,6 +32877,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "선택 영역 열기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open selectie"
           }
         },
         "pl" : {
@@ -30917,6 +32975,12 @@
             "value" : "기록"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschiedenis"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31005,6 +33069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "아카이브 복원…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet archief terug…"
           }
         },
         "pl" : {
@@ -31097,6 +33167,12 @@
             "value" : "윈도우 스타일"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vensterstijl"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31185,6 +33261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "화면 아래쪽 전체 너비"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volledige breedte onderaan het scherm"
           }
         },
         "pl" : {
@@ -31277,6 +33359,12 @@
             "value" : "리터럴 제어 문자"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letterlijke besturingstekens"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31365,6 +33453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찾기 지우기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis zoekopdracht"
           }
         },
         "pl" : {
@@ -31457,6 +33551,12 @@
             "value" : "AI로 출력 설명"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leg uitvoer uit met AI"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31545,6 +33645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "에뮬레이션 수준"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emulatieniveau"
           }
         },
         "pl" : {
@@ -31637,6 +33743,12 @@
             "value" : "URL 찾기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek URL’s"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31725,6 +33837,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "보기 좋게 정리된 JSON으로 대치"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang door opgemaakte JSON"
           }
         },
         "pl" : {
@@ -31817,6 +33935,12 @@
             "value" : "동작"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acties"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31905,6 +34029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "크기 변경 시 프로파일 업데이트"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groottewijzigingen werken profiel bij"
           }
         },
         "pl" : {
@@ -31997,6 +34127,12 @@
             "value" : "Dock 메뉴에서 최근 프로파일 제거"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwijder recente profielen uit Dock-menu"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32085,6 +34221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "숨겨둔 세션"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begraven sessies"
           }
         },
         "pl" : {
@@ -32177,6 +34319,12 @@
             "value" : "의존성 관리…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beheer afhankelijkheden…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32265,6 +34413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "뒤로"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorige"
           }
         },
         "pl" : {
@@ -32357,6 +34511,12 @@
             "value" : "워크그룹"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkgroepen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32445,6 +34605,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "파일에서 윈도우 배치 불러오기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laad indeling uit bestand…"
           }
         },
         "pl" : {
@@ -32537,6 +34703,12 @@
             "value" : "복사 모드 단축키"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toetscombinaties voor kopieermodus"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32625,6 +34797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "패널 분할"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesplitst paneel"
           }
         },
         "pl" : {
@@ -32717,6 +34895,12 @@
             "value" : "윈도우 크기 조절"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig venstergrootte"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32805,6 +34989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "모든 이벤트 유형 리포팅"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapporteer alle gebeurtenistypen"
           }
         },
         "pl" : {
@@ -32897,6 +35087,12 @@
             "value" : "트리거 추가…"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg trigger toe…"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32985,6 +35181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "웹"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
           }
         },
         "pl" : {
@@ -33077,6 +35279,12 @@
             "value" : "modifyOtherKeys 모드 1"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys-modus 1"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33165,6 +35373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "너비 줄이기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verklein breedte"
           }
         },
         "pl" : {
@@ -33257,6 +35471,12 @@
             "value" : "화면 오른쪽"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechterkant van het scherm"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33345,6 +35565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Base64로 인코딩된 파일 붙여넣기"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plak bestand als Base64-gecodeerd"
           }
         },
         "pl" : {
@@ -33437,6 +35663,12 @@
             "value" : "마지막 마크까지 지우기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis tot laatste markering"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33525,6 +35757,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "분할 패널 균등하게 정렬"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verdeel gesplitste panelen gelijkmatig"
           }
         },
         "pl" : {
@@ -33617,6 +35855,12 @@
             "value" : "녹화 가져오기"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importeer opname"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33705,6 +35949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "응용 프로그램 키패드"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Applicatietoetsenblok"
           }
         },
         "pl" : {
@@ -33797,6 +36047,12 @@
             "value" : "화면 위쪽 전체 너비"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volledige breedte bovenaan het scherm"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33882,6 +36138,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -33977,6 +36239,12 @@
             "value" : "VT200"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34065,6 +36333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "연결 해제"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbreek verbinding"
           }
         },
         "pl" : {
@@ -34157,6 +36431,12 @@
             "value" : "셸 프롬프트에서 줄바꿈으로 끝나는 한 줄을 붙여넣기 전에 경고"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waarschuw vóór plakken van één regel die eindigt op een nieuwe regel bij shell-prompt"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34245,6 +36525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체에서 찾기…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek overal…"
           }
         },
         "pl" : {
@@ -34337,6 +36623,12 @@
             "value" : "최대화됨"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemaximaliseerd"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34425,6 +36717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "콘솔"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Console"
           }
         },
         "pl" : {
@@ -34517,6 +36815,12 @@
             "value" : "현재 탭 옆에 새로운 탭"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuw tabblad naast huidig tabblad"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34605,6 +36909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "윈도우 배치를 탭으로 복원"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet vensterindeling terug als tabbladen"
           }
         },
         "pl" : {
@@ -34697,6 +37007,12 @@
             "value" : "Base64로 인코딩된 값으로 대치"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vervang door Base64-gecodeerde waarde"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34785,6 +37101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "인공지능 가동"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activeer kunstmatige intelligentie"
           }
         },
         "pl" : {
@@ -34877,6 +37199,12 @@
             "value" : "세션"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessie"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34967,6 +37295,12 @@
             "value" : "이름 있는 마크"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benoemde markeringen"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35055,6 +37389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "다음 피어"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volgend lid"
           }
         },
         "pl" : {

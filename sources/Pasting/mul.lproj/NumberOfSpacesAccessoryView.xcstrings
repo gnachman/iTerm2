@@ -47,6 +47,12 @@
             "value": "탭 크기(공백 수):"
           }
         },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tabgrootte in spaties:"
+          }
+        },
         "pl": {
           "stringUnit": {
             "state": "translated",
@@ -132,6 +138,12 @@
           }
         },
         "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "nl": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

@@ -47,6 +47,12 @@
             "value" : "AI 완성 켜짐: 모든 텍스트가 AI로 전송됨"
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-aanvulling ingeschakeld: alle tekst wordt naar de AI gestuurd"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -135,6 +141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "컴포저 사용 방법을 설명합니다."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschrijft hoe je de opsteller gebruikt."
           }
         },
         "pl" : {
@@ -227,6 +239,12 @@
             "value" : "보내려면 ⇧↩를 누르십시오."
           }
         },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Druk op ⇧↩ om te versturen."
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -312,6 +330,12 @@
           }
         },
         "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "nl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"
