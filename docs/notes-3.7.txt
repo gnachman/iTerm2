@@ -197,6 +197,11 @@ Improvements:
   Profiles > Text now works with the box cursor
   when GPU rendering is on. Thanks to Brian
   Taylor (@pilotboy72) for the change.
+- When a program is reporting mouse clicks,
+  holding Option now switches the pointer to a
+  plain I-beam right away, showing that clicks
+  will select text instead of being reported.
+  Issue 13208.
 
 Bug Fixes:
 - The tooltip for “Enable support for

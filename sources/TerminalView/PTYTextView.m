@@ -682,6 +682,14 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
           !!(theEvent.it_modifierFlags & NSEventModifierFlagControl));
     [_delegate textViewDidReceiveFlagsChangedEvent:theEvent];
     [self updateUnderlinedURLs:theEvent];
+    if (!(theEvent.it_modifierFlags & NSEventModifierFlagCommand)) {
+        // With Cmd down, updateUnderlinedURLs takes care of the pointer. Otherwise it may
+        // return early, so update the pointer here. This makes Option (which bypasses mouse
+        // reporting) swap the reporting pointer for a plain I-beam right away.
+        if ([self updateCursor:theEvent action:nil]) {
+            [self requestDelegateRedraw];
+        }
+    }
     NSString *string = [_keyboardHandler.keyMapper keyMapperStringForPreCocoaEvent:theEvent];
     if (string) {
         [_delegate insertText:string];
