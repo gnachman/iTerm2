@@ -952,6 +952,9 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
         case NMSSHSessionHashSHA1:
             hashName = @"SHA1";
             break;
+        case NMSSHSessionHashSHA256:
+            hashName = @"SHA256";
+            break;
     }
     [self performOnMainThread:^{
         _okToAdd = NO;

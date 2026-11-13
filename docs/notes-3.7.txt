@@ -202,6 +202,13 @@ Improvements:
   plain I-beam right away, showing that clicks
   will select text instead of being reported.
   Issue 13208.
+- Updated the SSH and TLS libraries used for
+  downloading and uploading files with scp to
+  pick up security fixes. Host key prompts now
+  show SHA256 fingerprints, the same form ssh
+  prints. Servers too old to support RSA
+  signatures with SHA-2 (roughly 2016 and
+  earlier) can no longer be used with RSA keys.
 
 Bug Fixes:
 - The tooltip for “Enable support for

@@ -7,7 +7,9 @@ extern void (^ _Nullable gNMSSHTraceCallback)(NSData * _Nonnull);
 
 typedef NS_ENUM(NSInteger, NMSSHSessionHash) {
     NMSSHSessionHashMD5,
-    NMSSHSessionHashSHA1
+    NMSSHSessionHashSHA1,
+    // Formatted like OpenSSH: "SHA256:" followed by unpadded base64.
+    NMSSHSessionHashSHA256
 };
 
 typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
@@ -155,7 +157,7 @@ typedef NS_ENUM(NSInteger, NMSSHKnownHostStatus) {
 /** Last session error. */
 @property (nonatomic, nullable, readonly) NSError *lastError;
 
-/** The hash algorithm to use to encode the fingerprint during connection, default value is NMSSHSessionHashMD5. */
+/** The hash algorithm to use to encode the fingerprint during connection, default value is NMSSHSessionHashSHA256. libssh2 no longer computes MD5 host key hashes by default, so MD5 yields nil. */
 @property (nonatomic, assign) NMSSHSessionHash fingerprintHash;
 
 /** The banner that will be sent to the remote host when the SSH session is started. */

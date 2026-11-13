@@ -548,7 +548,7 @@ fatopenssl: force
 	cd submodules/openssl/ && lipo -create -output libssl.a build-x86/libssl.a build-arm/libssl.a
 	cd submodules/openssl; rm -rf build-fat; mkdir build-fat; mkdir build-fat/lib; cp -R include/ build-fat/include/
 	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib
-	cp submodules/openssl/*a submodules/openssl/build-fat/lib
+	cp submodules/openssl/*.a submodules/openssl/build-fat/lib
 else
 fatopenssl: force
 	echo Begin building openssl for $(NATIVE_ARCH)
