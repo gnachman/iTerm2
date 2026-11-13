@@ -101,6 +101,12 @@
             "value" : "Použiť interpolované reťazce pre parametre"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uporabi interpolirane nize za parametre"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopírovať do profilu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj v profil"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Zatvoriť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapri"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spúšťače"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprožilci"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Regulárny výraz"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vyberte jeden spúšťač na zobrazenie alebo úpravu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izberite en sprožilec za ogled ali urejanje"
           }
         },
         "sv" : {

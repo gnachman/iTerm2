@@ -101,6 +101,12 @@
             "value" : "Znovu použiť adresár predošlej relácie"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znova uporabi imenik prejšnje seje"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Domovský priečinok"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domači imenik"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Pracovný adresár pre nové taby"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delovni imenik za nove zavihke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prepínač"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbirni gumb"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Pracovný adresár pre nové okná"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delovni imenik za nova okna"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Znovu použiť adresár predošlej relácie"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znova uporabi imenik prejšnje seje"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Prepínač"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbirni gumb"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Znovu použiť adresár predošlej relácie"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znova uporabi imenik prejšnje seje"
           }
         },
         "sv" : {
@@ -1157,6 +1205,12 @@
             "value" : "Adresár:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imenik:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pracovný adresár pre nové rozdelené panely"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delovni imenik za nova razdeljena podokna"
           }
         },
         "sv" : {
@@ -1421,6 +1481,12 @@
             "value" : "Rozšírené nastavenia pracovného adresára"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napredne nastavitve delovnega imenika"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1551,6 +1617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adresár:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imenik:"
           }
         },
         "sv" : {
@@ -1685,6 +1757,12 @@
             "value" : "Adresár:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imenik:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1815,6 +1893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prepínač"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbirni gumb"
           }
         },
         "sv" : {
@@ -1949,6 +2033,12 @@
             "value" : "Domovský priečinok"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domači imenik"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2081,6 +2171,12 @@
             "value" : "Domovský priečinok"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domači imenik"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
           }
         },
         "sv" : {

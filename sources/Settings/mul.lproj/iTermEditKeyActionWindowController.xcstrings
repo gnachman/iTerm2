@@ -101,6 +101,12 @@
             "value" : "Presunúť po značkách"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premakni po označbah"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nastaviť klávesovú skratku"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavi bližnjico na tipkovnici"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Zrušiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Predvoľba farieb:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barvna prednastavitev:"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Akcia:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejanje:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Popis zobrazený na Touch Bar"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznaka za prikaz v Touch Bar"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Presunúť po znakoch"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premakni po znakih"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1067,12 @@
             "value" : "napr.: 0x7f"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "npr.: 0x7f"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1152,6 +1200,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profil:"
@@ -1289,6 +1343,12 @@
             "value" : "Presunúť po slovách"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premakni po besedah"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1419,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tu sa zobrazí chybové hlásenie"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sporočilo o napaki je tukaj"
           }
         },
         "sv" : {
@@ -1553,6 +1619,12 @@
             "value" : "Akcia:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejanje:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1680,6 +1752,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -1817,6 +1895,12 @@
             "value" : "Klávesová skratka:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bližnjica na tipkovnici:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1949,6 +2033,12 @@
             "value" : "Presunúť po riadkoch"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premakni po vrsticah"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2079,6 +2169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
           }
         },
         "sv" : {

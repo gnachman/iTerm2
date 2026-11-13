@@ -101,6 +101,12 @@
             "value": "Exportovať…"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Izvozi …"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Teraz"
+          }
+        },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zdaj"
           }
         },
         "sv": {
@@ -365,6 +377,12 @@
             "value": "Ovládanie okamžitého prehratia"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nadzor takojšnjega predvajanja"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -495,6 +513,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zrušiť"
+          }
+        },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prekliči"
           }
         },
         "sv": {
@@ -629,6 +653,12 @@
             "value": "Živé zobrazenie"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pogled v živo"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -756,6 +786,12 @@
           }
         },
         "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Čas"
+          }
+        },
+        "sl": {
           "stringUnit": {
             "state": "translated",
             "value": "Čas"

@@ -101,6 +101,12 @@
             "value" : "Používajte iTerm2, aj keď ste mimo svojho Macu. Môžete ho ovládať cez chat s AI, zobrazovať obsah relácií a dostávať push upozornenia. Koncové šifrovanie chráni vaše dáta. <a href=\"iterm2whatsnew:companion\">Vyskúšajte to hneď!</a>"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uporabljajte iTerm2, tudi ko niste ob svojem računalniku Mac. Upravljate ga lahko prek klepeta z AI, si ogledujete vsebino sej in prejemate potisna obvestila. Celovito šifriranje varuje vaše podatke. <a href=\"iterm2whatsnew:companion\">Preskusite zdaj!</a>"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,6 +234,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -365,6 +377,12 @@
             "value" : "Nový režim chatu s AI, Orchestrácia, nechá AI viesť celé dianie za vás. Dokáže vytvárať okná, čakať na dokončenie úloh (aj v interaktívnych apkách) a nový automatický kontrolór bezpečnosti vás zbaví nutnosti odpovedať na takmer všetky žiadosti o povolenie. <a href=\"iterm2whatsnew:orchestration\">Vyskúšajte to hneď!</a>"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nov način klepeta z AI, Orkestracija, omogoča, da AI vodi delo namesto vas. Lahko ustvarja okna, počaka na dokončanje opravil (tudi v interaktivnih aplikacijah), novi samodejni varnostni preverjevalnik pa vas razbremeni odgovarjanja na skoraj vse zahteve za dovoljenje. <a href=\"iterm2whatsnew:orchestration\">Preskusite zdaj!</a>"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -492,6 +510,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -629,6 +653,12 @@
             "value" : "Nová funkcia Snímky obrazovky zjednodušuje vytvorenie PNG z obsahu terminálu. Podporuje redigovanie a zvýraznenie. Aktivujete ju cez <a href=\"iterm2whatsnew:screenshot\">Relácia > Vytvoriť snímku obrazovky</a>."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova funkcija Posnetki zaslona poenostavi ustvarjanje slike PNG z vsebino terminala. Podpira zakritja in označbe. Aktivirate jo z <a href=\"iterm2whatsnew:screenshot\">Seja > Naredi posnetek zaslona</a>."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -761,6 +791,12 @@
             "value" : "Novinky vo verzii 3.7"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novosti v različici 3.7"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -888,6 +924,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1025,6 +1067,12 @@
             "value" : "●"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integrácia Claude Code"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracija s Claude Code"
           }
         },
         "sv" : {
@@ -1289,6 +1343,12 @@
             "value" : "Na lepšiu správu veľkého počtu tabov môžete taby teraz spájať do zbaliteľných skupín. Lišta s tabmi sa tiež rolovaním posúva, namiesto zobrazenia menu s prebytočnými tabmi."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za lažje upravljanje velikega števila zavihkov jih zdaj lahko združite v zložljive skupine. Vrstica z zavihki se zdaj tudi pomika, namesto da bi prikazovala meni s preostalimi zavihki."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1416,6 +1476,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1553,6 +1619,12 @@
             "value" : "Integrácia Claude Code usporiada viacero súvisiacich relácií (napríklad revíziu kódu a čítanie diffov) do prispôsobiteľného rozhrania. Zobrazuje aj stav Claude, takže ľahko nájdete inštancie, ktoré čakajú na vašu pozornosť. <a href=\"iterm2whatsnew:claudecode\">Vyskúšajte to hneď!</a>"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracija s Claude Code organizira več povezanih sej, na primer pregled kode in branje razlik, v prilagodljiv vmesnik. Prikazuje tudi stanje Claude, tako da zlahka najdete primerke, ki čakajo na vašo pozornost. <a href=\"iterm2whatsnew:claudecode\">Preskusite zdaj!</a>"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1685,6 +1757,12 @@
             "value" : "Sprievodná apka pre iPhone"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremljevalna aplikacija za iPhone"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1812,6 +1890,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1949,6 +2033,12 @@
             "value" : "Orchestrácia"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkestracija"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2079,6 +2169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skupiny tabov"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skupine zavihkov"
           }
         },
         "sv" : {
@@ -2213,6 +2309,12 @@
             "value" : "Snímky obrazovky"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posnetki zaslona"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2340,6 +2442,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

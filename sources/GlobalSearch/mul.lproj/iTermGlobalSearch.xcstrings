@@ -101,6 +101,12 @@
             "value" : "HLAVIČKA"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CELICA ZAGLAVJA"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nájsť globálne"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poišči globalno"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Podreťazec, rozlišuje veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, razlikuje velike/male črke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podreťazec, automaticky"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, samodejno"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Regulárny výraz, ignoruje veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz, ne razlikuje velikih/malih črk"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nájsť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poišči"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Regulárny výraz, rozlišuje veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz, razlikuje velike/male črke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podreťazec, ignoruje veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, ne razlikuje velikih/malih črk"
           }
         },
         "sv" : {

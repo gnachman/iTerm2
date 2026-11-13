@@ -101,6 +101,12 @@
             "value" : "Potichu ignorovať chyby tohto príkazu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiho prezri napake tega ukaza"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Príkaz koprocesu na spustenie:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukaz soprocesa za zagon:"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "OK"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -497,6 +515,12 @@
             "value" : "Zrušiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zadajte príkaz"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vnesite ukaz"
           }
         },
         "sv" : {

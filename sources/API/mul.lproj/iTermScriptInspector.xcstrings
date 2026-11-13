@@ -101,6 +101,12 @@
             "value" : "Cesta"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pot"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Zobraziť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -360,6 +372,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podpis"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podpis"
@@ -497,6 +515,12 @@
             "value" : "Inšpektor skriptov"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregledovalnik skriptiranja"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relácie, taby a okná"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seje, zavihki in okna"
           }
         },
         "sv" : {
@@ -761,6 +791,12 @@
             "value" : "Premenné"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremenljivke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -891,6 +927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rola"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vloga"
           }
         },
         "sv" : {
@@ -1025,6 +1067,12 @@
             "value" : "Kopírovať cestu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj pot"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registrované funkcie"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrirane funkcije"
           }
         },
         "sv" : {
@@ -1289,6 +1343,12 @@
             "value" : "Hodnota"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vrednost"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1419,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopírovať ID"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj ID"
           }
         },
         "sv" : {
@@ -1553,6 +1619,12 @@
             "value" : "Názov objektu (ID)"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ime predmeta (ID)"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1680,6 +1752,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1817,6 +1895,12 @@
             "value" : "Skript"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skript"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1947,6 +2031,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopírovať hodnotu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj vrednost"
           }
         },
         "sv" : {

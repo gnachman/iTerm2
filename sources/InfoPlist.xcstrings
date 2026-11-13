@@ -114,6 +114,12 @@
             "value" : "iTerm2"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -244,6 +250,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aplikácia v iTerm2 chce používať AppleScript."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati AppleScript."
           }
         },
         "sv" : {
@@ -378,6 +390,12 @@
             "value" : "Aplikácia v iTerm2 chce používať Bluetooth."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati Bluetooth."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -508,6 +526,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aplikácia v iTerm2 chce používať údaje Kalendára."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati podatke aplikacije Koledar."
           }
         },
         "sv" : {
@@ -642,6 +666,12 @@
             "value" : "Aplikácia v iTerm2 chce používať kameru."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati kamero."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -774,6 +804,12 @@
             "value" : "Aplikácia v iTerm2 chce používať vaše kontakty."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati vaše stike."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -901,6 +937,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1038,6 +1080,12 @@
             "value" : "Aplikácia v iTerm2 chce pristupovať k lokálnej sieti."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi dostopati do lokalnega omrežja."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1168,6 +1216,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aplikácia v iTerm2 chce používať informácie o vašej polohe, aj na pozadí."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati podatke o vaši lokaciji, tudi v ozadju."
           }
         },
         "sv" : {
@@ -1302,6 +1356,12 @@
             "value" : "Aplikácia v iTerm2 chce používať informácie o vašej polohe."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati podatke o vaši lokaciji."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1432,6 +1492,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aplikácia v iTerm2 chce používať informácie o vašej polohe, keď je aktívna."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati podatke o vaši lokaciji, ko je aktivna."
           }
         },
         "sv" : {
@@ -1566,6 +1632,12 @@
             "value" : "Aplikácia v iTerm2 chce používať váš mikrofón."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati vaš mikrofon."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1696,6 +1768,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aplikácia v iTerm2 chce používať knižnicu fotografií."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati fotoknjižnico."
           }
         },
         "sv" : {
@@ -1830,6 +1908,12 @@
             "value" : "Aplikácia v iTerm2 chce používať vaše pripomienky."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati vaše opomnike."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1962,6 +2046,12 @@
             "value" : "Aplikácia v iTerm2 chce používať rozpoznávanie reči."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikacija v iTerm2 želi uporabljati prepoznavanje govora."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2092,6 +2182,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Operácia vykonávaná programom v iTerm2 vyžaduje zvýšené oprávnenia."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operacija, ki jo izvaja program v iTerm2, zahteva povišano dovoljenje."
           }
         },
         "sv" : {

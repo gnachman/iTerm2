@@ -101,6 +101,12 @@
             "value" : "pid"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,6 +234,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proces"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Proces"
@@ -365,6 +377,12 @@
             "value" : "Kopírovať ID procesu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj ID procesa"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Položka 1"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 1"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Položka 2"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 2"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Položka 3"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 3"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Upozorniť po ukončení"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obvesti ob zaključku"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopírovať príkaz"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj ukaz"
           }
         },
         "sv" : {

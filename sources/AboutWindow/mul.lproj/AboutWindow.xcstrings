@@ -101,6 +101,12 @@
             "value": "iTerm2"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autor: George Nachman a prispievatelia"
+          }
+        },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avtor George Nachman in sodelavci"
           }
         },
         "sv": {

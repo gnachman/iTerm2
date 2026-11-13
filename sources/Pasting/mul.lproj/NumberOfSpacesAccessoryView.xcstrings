@@ -101,6 +101,12 @@
             "value": "Veľkosť tabulátora v medzerách:"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velikost tabulatorja v presledkih:"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -228,6 +234,12 @@
           }
         },
         "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "sl": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

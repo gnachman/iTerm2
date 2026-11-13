@@ -101,6 +101,12 @@
             "value": "Zahrnúť časové pečiatky"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vključi časovne žige"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Formát súboru:"
+          }
+        },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oblika datoteke:"
           }
         },
         "sv": {

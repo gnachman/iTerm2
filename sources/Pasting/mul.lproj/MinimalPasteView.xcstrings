@@ -101,6 +101,12 @@
             "value": "Vkladá sa…"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lepljenje …"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

@@ -101,6 +101,12 @@
             "value" : "Ovládací panel tmux"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadzorna plošča tmux"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relácia"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seja"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Pripojiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priklopi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -497,6 +515,12 @@
             "value" : "Vyhľadať okná"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Išči po oknih"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -624,6 +648,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Okno"
@@ -761,6 +791,12 @@
             "value" : "Otvoriť v oknách"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri v oknih"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -891,6 +927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skryť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skrij"
           }
         },
         "sv" : {
@@ -1025,6 +1067,12 @@
             "value" : "Otvoriť v oknách"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri v oknih"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otvoriť v taboch"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri v zavihkih"
           }
         },
         "sv" : {
@@ -1289,6 +1343,12 @@
             "value" : "Odpojiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odklopi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1421,6 +1481,12 @@
             "value" : "Pri pripojení otvoriť ovládací panel, ak existujú skryté okná"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri nadzorno ploščo ob priklopu, če obstajajo skrita okna"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1551,6 +1617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neotvárať okná pri pripojení, ak existuje aspoň tento počet okien:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne odpiraj oken ob priklopu, če je oken vsaj toliko:"
           }
         },
         "sv" : {

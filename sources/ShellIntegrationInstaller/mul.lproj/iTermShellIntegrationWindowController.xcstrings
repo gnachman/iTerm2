@@ -101,6 +101,12 @@
             "value" : "Stiahne najnovšiu verziu. Spustí curl | bash"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prenese najnovejšo različico. Zažene curl | bash"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pokračovať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadaljuj"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "OK"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zrušiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "1. Zistí sa, ktorý shell používate.\n2. Pridajú sa súbory skriptov do vášho domovského priečinka.\n3. Nainštalujú sa pomocné skripty.\n4. Upravia sa spúšťacie skripty vášho shellu."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Ugotovitev, katero lupino uporabljate.\n2. Dodajanje skriptnih datotek v vaš domači imenik.\n3. Namestitev pomožnih skriptov.\n4. Sprememba zagonskih skriptov vaše lupine."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Späť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nazaj"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Pomocné nástroje zahŕňajú skripty na sťahovanie súborov, zobrazovanie obrázkov priamo v termináli a ďalšie. "
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pripomočki vključujejo skripte za prenos datotek, prikaz slik v vrstici in drugo. "
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Späť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nazaj"
           }
         },
         "sv" : {
@@ -1157,6 +1205,12 @@
             "value" : "Pokračovať"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadaljuj"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zrušiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
           }
         },
         "sv" : {
@@ -1421,6 +1481,12 @@
             "value" : "Preskočiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preskoči"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1551,6 +1617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zrušiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
           }
         },
         "sv" : {
@@ -1685,6 +1757,12 @@
             "value" : "Náhľad príkazu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predogled ukaza"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1815,6 +1893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inštalácia bez internetu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namestitev brez interneta"
           }
         },
         "sv" : {
@@ -1949,6 +2033,12 @@
             "value" : "Stiahnuť a spustiť inštalátor"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prenesi in zaženi namestitveni program"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2079,6 +2169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nainštalovať aj pomocné nástroje iTerm2"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namesti tudi pripomočke iTerm2"
           }
         },
         "sv" : {
@@ -2213,6 +2309,12 @@
             "value" : "Sprevádzaná ručná inštalácia. Nevyžaduje sa sťahovanie."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vodena ročna namestitev. Prenos ni potreben."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2343,6 +2445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Náhľad príkazu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predogled ukaza"
           }
         },
         "sv" : {
@@ -2477,6 +2585,12 @@
             "value" : "Pokračovať"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadaljuj"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2604,6 +2718,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -2741,6 +2861,12 @@
             "value" : "Náhľad príkazu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predogled ukaza"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2871,6 +2997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Späť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nazaj"
           }
         },
         "sv" : {
@@ -3005,6 +3137,12 @@
             "value" : "Ako chcete nainštalovať integráciu shellu?\n\nPočas tohto procesu sa upravia spúšťacie skripty vášho shellu. Inštalátor zadá príkazy do okna terminálu za vás."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kako želite namestiti integracijo lupine?\n\nPri tem bodo spremenjeni zagonski skripti vaše lupine. Namestitveni program bo namesto vas vnesel ukaze v okno terminala."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3135,6 +3273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Náhľad príkazu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predogled ukaza"
           }
         },
         "sv" : {
@@ -3269,6 +3413,12 @@
             "value" : "Inštalácia je dokončená!"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namestitev je končana!"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3399,6 +3549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spustí sa nasledujúci príkaz:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izveden bo naslednji ukaz:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "sv" : {
@@ -3533,6 +3689,12 @@
             "value" : "Na vyskúšanie vytvorte nový tab.\n\nNa dosiahnutie najlepších výsledkov nainštalujte integráciu shellu na všetkých hostiteľoch, na ktoré sa pripájate cez ssh."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za preizkus ustvarite nov zavihek.\n\nZa najboljše rezultate namestite integracijo lupine v vse gostitelje, na katere se povezujete prek ssh."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3663,6 +3825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integrácia shellu pozostáva zo skriptov, ktoré pomáhajú vášmu shellu komunikovať s iTerm2, aby mohol sledovať príkazy, ktoré spúšťate, váš aktuálny adresár a ďalší stav. "
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracija lupine je sestavljena iz skriptov, ki lupini pomagajo komunicirati z aplikacijo iTerm2, da lahko spremlja ukaze, ki jih izvajate, vaš trenutni imenik in druga stanja. "
           }
         },
         "sv" : {
@@ -3797,6 +3965,12 @@
             "value" : "Inštalovať integráciu shellu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namesti integracijo lupine"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3927,6 +4101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zrušiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
           }
         },
         "sv" : {

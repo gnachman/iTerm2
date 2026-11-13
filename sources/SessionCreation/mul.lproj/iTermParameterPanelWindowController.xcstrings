@@ -101,6 +101,12 @@
             "value": "Zadajte hodnotu pre "
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vnesite vrednost za "
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "V redu"
           }
         },
         "sv": {
@@ -365,6 +377,12 @@
             "value": "Parameter relácie"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parameter seje"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -497,6 +515,12 @@
             "value": "Zrušiť"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prekliči"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -627,6 +651,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Názov"
+          }
+        },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ime"
           }
         },
         "sv": {

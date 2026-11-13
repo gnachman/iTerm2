@@ -101,6 +101,12 @@
             "value": "Označiť"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Označi"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

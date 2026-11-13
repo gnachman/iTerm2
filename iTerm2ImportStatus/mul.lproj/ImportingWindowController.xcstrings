@@ -130,6 +130,12 @@
             "state" : "translated",
             "value" : "Stav"
           }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stanje"
+          }
         }
       }
     },
@@ -262,6 +268,12 @@
             "state" : "translated",
             "value" : "Importuje sa…"
           }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uvažanje …"
+          }
         }
       }
     },
@@ -393,6 +405,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importujú sa nastavenia a dáta…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uvažanje nastavitev in podatkov …"
           }
         }
       }

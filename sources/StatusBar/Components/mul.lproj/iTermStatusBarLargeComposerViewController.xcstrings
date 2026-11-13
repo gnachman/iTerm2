@@ -101,6 +101,12 @@
             "value" : "Dopĺňanie pomocou AI zapnuté: všetok text sa odosiela do AI"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dopolnjevanje z AI omogočeno: vse besedilo je poslano AI"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Popisuje, ako používať editor príkazov."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opisuje, kako uporabljati urejevalnik ukazov."
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Odošlete stlačením ⇧↩."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pritisnite ⇧↩ za pošiljanje."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -492,6 +510,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI"

@@ -101,6 +101,12 @@
             "value" : "Upraviť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Názov"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naslov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -363,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Text"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Besedilo"
           }
         },
         "sv" : {

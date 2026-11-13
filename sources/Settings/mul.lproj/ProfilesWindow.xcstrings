@@ -101,6 +101,12 @@
             "value" : "Profily"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profili"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upraviť profily…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi profile …"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Nový tab"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nov zavihek"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nové okno"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo okno"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Po otvorení profilu zatvoriť toto okno."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po odprtju profila zapri to okno."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nové taby v novom okne"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novi zavihki v novem oknu"
           }
         },
         "sv" : {
@@ -977,6 +1013,12 @@
             "value" : "Tagy >"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ozn. ›"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1137,6 +1179,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nový plávajúci panel"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo plavajoče podokno"
           }
         }
       }

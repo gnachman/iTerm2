@@ -101,6 +101,12 @@
             "value" : "Automatické dopĺňanie"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samodejno dopolnjevanje"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",

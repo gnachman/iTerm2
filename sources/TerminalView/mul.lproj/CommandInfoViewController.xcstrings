@@ -101,6 +101,12 @@
             "value" : "/directory"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Kopírovať adresár"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj imenik"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -360,6 +372,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bajtov"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "12 bajtov"
@@ -497,6 +515,12 @@
             "value" : "Vybrať výstup príkazu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izberi izhod ukaza"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1h 35m"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 h 35 min"
           }
         },
         "sv" : {
@@ -761,6 +791,12 @@
             "value" : "Výstup:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izhod:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -891,6 +927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skopírované"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopirano"
           }
         },
         "sv" : {
@@ -1025,6 +1067,12 @@
             "value" : "Skopírovať príkaz do schránky"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj ukaz v odložišče"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spustené: %@"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Začetek: %@"
           }
         },
         "sv" : {
@@ -1289,6 +1343,12 @@
             "value" : "Otvoriť príkaz v editore príkazov"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri ukaz v urejevalniku ukazov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1419,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Priečinok, ktorý sa dá potiahnuť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mapa, ki jo je mogoče povleči"
           }
         },
         "sv" : {
@@ -1553,6 +1619,12 @@
             "value" : "príkaz"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ukaz"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1683,6 +1755,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zapísať príkaz do terminálu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapiši ukaz v terminal"
           }
         },
         "sv" : {
@@ -1817,6 +1895,12 @@
             "value" : "Adresár:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imenik:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1947,6 +2031,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Návratový kód:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povratna koda:"
           }
         },
         "sv" : {
@@ -2081,6 +2171,12 @@
             "value" : "Zapísať adresár do terminálu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapiši imenik v terminal"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Čas behu:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Čas izvajanja:"
           }
         },
         "sv" : {
@@ -2345,6 +2447,12 @@
             "value" : "Skopírovať výstup príkazu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj izhod ukaza"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2475,6 +2583,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zdieľať príkaz…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deli ukaz …"
           }
         },
         "sv" : {
@@ -2609,6 +2723,12 @@
             "value" : "Príkaz:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukaz:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2736,6 +2856,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -2871,6 +2997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vypnúť zobrazovanie príkazu mimo obrazovky"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onemogoči prikaz ukaza zunaj zaslona"
           }
         },
         "sv" : {

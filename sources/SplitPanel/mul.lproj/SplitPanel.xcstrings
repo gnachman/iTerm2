@@ -101,6 +101,12 @@
             "value" : "Rozdeliť aktuálny panel XXX"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdeli trenutno podokno XXX"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +239,12 @@
             "value" : "Zrušiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -363,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rozdeliť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdeli"
           }
         },
         "sv" : {

@@ -101,6 +101,12 @@
             "value" : "Nastavenie umelej inteligencie"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavitev umetne inteligence"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Váš poskytovateľ AI vám môže účtovať poplatok za každý odoslaný alebo prijatý token."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaš ponudnik AI vam lahko zaračuna vsak poslani ali prejeti žeton."
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Sem zadajte API kľúč"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem vnesite ključ API"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -497,6 +515,12 @@
             "value" : "Zrušiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -627,6 +651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
           }
         },
         "sv" : {

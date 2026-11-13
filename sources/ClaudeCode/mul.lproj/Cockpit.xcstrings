@@ -101,6 +101,12 @@
             "value" : "Nastavenia"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavitve"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nastavenia"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavitve"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Zoskupiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Združi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoskupiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Združi"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Upozorniť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obvesti"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -761,6 +791,12 @@
             "value" : "Upozorniť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obvesti"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -888,6 +924,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -1025,6 +1067,12 @@
             "value" : "Vyhľadať"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iskanje"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vyhľadať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iskanje"
           }
         },
         "sv" : {

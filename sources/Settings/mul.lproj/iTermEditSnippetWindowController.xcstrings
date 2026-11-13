@@ -101,6 +101,12 @@
             "value" : "Hodnota:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vrednost:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Upraviť úryvok"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi izrezek"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Názov:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naslov:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Doslovný text bez escapovania"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dobesedno besedilo brez ubežnih znakov"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Použite / v názvoch tagov na vytvorenie priečinkov v menu „Upraviť > Úryvky“"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uporabite / v imenih oznak za ustvarjanje map v meniju Uredi > Izrezki"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zrušiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "OK"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escapovanie pre spätnú kompatibilitu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubežni znaki za povratno združljivost"
           }
         },
         "sv" : {
@@ -1157,6 +1205,12 @@
             "value" : "Tagy:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznake:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escapovanie spätnou lomkou v štýle C"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubežni znaki z obratno poševnico v slogu C"
           }
         },
         "sv" : {

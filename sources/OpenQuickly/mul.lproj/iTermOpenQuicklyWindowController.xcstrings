@@ -101,6 +101,12 @@
             "value" : "Rýchlo otvoriť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hitro odpri"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,6 +234,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podrobnosti"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podrobnosti"
@@ -363,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hľadať relácie, profily alebo usporiadania"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iskanje sej, profilov ali razporeditev"
           }
         },
         "sv" : {

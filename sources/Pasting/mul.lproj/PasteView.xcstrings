@@ -101,6 +101,12 @@
             "value": "Vkladá sa…"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lepljenje …"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -231,6 +237,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zrušiť"
+          }
+        },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prekliči"
           }
         },
         "sv": {

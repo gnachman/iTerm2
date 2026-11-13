@@ -101,6 +101,12 @@
             "value" : "Chvíľu strpenia! Inštaluje sa nové prostredie Python…"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samo trenutek! Nameščanje novega okolja Python …"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",

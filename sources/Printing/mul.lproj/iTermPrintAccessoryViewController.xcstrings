@@ -101,6 +101,12 @@
             "value": "Čiernobielo"
           }
         },
+        "sl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Črno-belo"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

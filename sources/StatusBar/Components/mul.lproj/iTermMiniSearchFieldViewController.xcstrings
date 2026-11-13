@@ -101,6 +101,12 @@
             "value" : "Vymazať históriu vyhľadávania"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbriši zgodovino iskanja"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podreťazec rozlišujúci veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, razlikuje velike/male črke"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Podreťazec ignorujúci veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, ne razlikuje velikih/malih črk"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vyhľadať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iskanje"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Regex rozlišujúci veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, razlikuje velike/male črke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -761,6 +791,12 @@
             "value" : "Podreťazec s inteligentnou veľkosťou písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, pametno razlikovanje velikih/malih črk"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -891,6 +927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex ignorujúci veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ne razlikuje velikih/malih črk"
           }
         },
         "sv" : {

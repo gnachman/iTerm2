@@ -101,6 +101,12 @@
             "value" : "Popis"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opis"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Záznam o páde"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dnevnik zrušitve"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Hlásenie o páde"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poročanje o zrušitvah"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zdá sa, že pri poslednom použití aplikácie {APPNAME} došlo k pádu. Chcete vývojárom odoslať záznam o páde?\n\nZáznamy o páde od Applu sa ostatným vývojárom neposielajú, takže toto je jediný spôsob, ako sa vývojári aplikácie {APPNAME} o tomto páde dozvedia a môžu ho opraviť."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Videti je, da se je {APPNAME} ob zadnji uporabi zrušil. Ali želite razvijalcem poslati dnevnik zrušitve?\n\nApple dnevnikov zrušitev ne pošilja drugim razvijalcem, zato je to edini način, na katerega lahko razvijalci aplikacije {APPNAME} izvedo za to zrušitev in jo odpravijo."
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Môžete odstrániť akékoľvek informácie, ktoré nechcete odoslať, ale sťažíte tým nájdenie chyby. Predvolene sa odosiela záznam o páde, model vášho Macu a vaše nastavenia."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbrišete lahko vse podatke, ki jih ne želite poslati, vendar bo zaradi tega napako težje odkriti. Privzeto se pošljejo dnevnik zrušitve, podatek o tem, kateri Mac uporabljate, in vaše nastavitve."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odoslať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pošlji"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Pripomenúť neskôr"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opomni me pozneje"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zahodiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zavrži"
           }
         },
         "sv" : {

@@ -101,6 +101,12 @@
             "value" : "⌥ Option"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pripnúť okno aktivačnej skratky (zostane otvorené po strate fokusu klávesnice)"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pripni okno hitre tipke (ostane odprto ob izgubi fokusa tipkovnice)"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Aktivačná skratka:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hitra tipka:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Poznámka: okno sa znova otvorí, len ak bolo zatvorené preto, že sa aktivovala iná apka."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opomba: okno se znova odpre le, če je bilo zaprto zato, ker je postala aktivna druga aplikacija."
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Ďalšie aktivačné skratky"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodatne hitre tipke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Po stlačení aktivačnej skratky priradenej tomuto profilu sa zobrazí alebo skryje vyhradené okno. Každý profil s aktivačnou skratkou ovláda vlastné okno aktivačnej skratky."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ko pritisnete hitro tipko, dodeljeno temu profilu, se namensko okno prikaže ali skrije. Vsak profil s hitro tipko upravlja svoje okno hitre tipke."
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Nerobiť nič zvláštne"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne naredi nič posebnega"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1020,6 +1062,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1157,6 +1205,12 @@
             "value" : "Zobraziť toto okno aktivačnej skratky"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži to okno hitre tipke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1289,6 +1343,12 @@
             "value" : "Nastavenia okna aktivačnej skratky"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavitve okna hitre tipke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1416,6 +1476,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -1553,6 +1619,12 @@
             "value" : "⚠️ Túto skratku používa iný profil"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ To bližnjico uporablja drug profil"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1680,6 +1752,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -1817,6 +1895,12 @@
             "value" : "Kláves pre dvojité stlačenie:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipka za dvojni pritisk:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1947,6 +2031,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Automaticky znovu otvoriť pri opätovnej aktivácii apky"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samodejno znova odpri ob ponovni aktivaciji aplikacije"
           }
         },
         "sv" : {
@@ -2081,6 +2171,12 @@
             "value" : "⚠️ Toto dvojité stlačenie používa iný profil"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Ta dvojni pritisk uporablja drug profil"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zobraziť toto okno aktivačnej skratky, ak nie je otvorené žiadne iné okno"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži to okno hitre tipke, če ni odprto nobeno drugo okno"
           }
         },
         "sv" : {
@@ -2345,6 +2447,12 @@
             "value" : "Plávajúce okná sa prekrývajú s inými oknami, Dockom a oknami iných apiek na celej obrazovke (ak je plocha okna aktivačnej skratky nastavená na Všetky plochy)."
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plavajoča okna prekrivajo druga okna, Dock in celozaslonska okna drugih aplikacij (če je namizje okna hitre tipke nastavljeno na vsa namizja)."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2475,6 +2583,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zrušiť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekliči"
           }
         },
         "sv" : {
@@ -2609,6 +2723,12 @@
             "value" : "Po kliknutí na ikonu v Docku:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ob kliku ikone v Docku:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2739,6 +2859,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Animovať zobrazenie a skrytie"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animiraj prikaz in skrivanje"
           }
         },
         "sv" : {
@@ -2873,6 +2999,12 @@
             "value" : "OK"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3003,6 +3135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
           }
         },
         "sv" : {
@@ -3137,6 +3275,12 @@
             "value" : "Plávajúce okno"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plavajoče okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3264,6 +3408,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -3399,6 +3549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ďalšie aktivačné skratky…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodatne hitre tipke …"
           }
         },
         "sv" : {

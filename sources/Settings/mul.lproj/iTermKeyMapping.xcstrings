@@ -101,6 +101,12 @@
             "value" : "Predvoľby…"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prednastavitve …"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pridať položku Touch Bar"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj element Touch Bar"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Akcia"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejanje"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Úpravy pre Touch Bar"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omilitve za Touch Bar"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Vizuálny indikátor klávesu esc"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vizualni indikator tipke esc"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kombinácia klávesov"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kombinacija tipk"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Haptická odozva pri stlačení esc"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptični odziv ob pritisku tipke esc"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1025,6 +1067,12 @@
             "value" : "OK"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zvuk kliknutia pre kláves esc"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zvok klika za tipko esc"
           }
         },
         "sv" : {

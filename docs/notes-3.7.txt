@@ -18,9 +18,9 @@ New Features:
 - iTerm2 is now translated into Spanish, French,
   Traditional Chinese, Italian, Turkish, Polish,
   Vietnamese, Dutch, Swedish, Danish, Norwegian
-  Bokmål, Finnish, Czech, and Slovak. They are
-  used when one of them is your preferred language
-  in System Settings > General >
+  Bokmål, Finnish, Czech, Slovak, and Slovenian.
+  They are used when one of them is your preferred
+  language in System Settings > General >
   Language & Region.
 - iTerm2 > Suppressed Alerts lists most alerts
   and announcements at the top of a session that

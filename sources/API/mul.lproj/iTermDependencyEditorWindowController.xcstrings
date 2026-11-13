@@ -101,6 +101,12 @@
             "value" : "Položka 2"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 2"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aby bolo možné pridať závislosti, tento skript sa musí povýšiť na „plné prostredie“. Vytvorí sa tým kópia behového prostredia Python, ale nezaberie sa žiadne ďalšie miesto na disku."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta skript je treba nadgraditi v »polno okolje«, da lahko dodate odvisnosti. S tem se ustvari kopija izvajalnega okolja Python, vendar ne bo porabljen dodaten prostor na disku."
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Verzia Python:"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Različica Pythona:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odstrániť"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrani"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Položka 3"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 3"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -761,6 +791,12 @@
             "value" : "Povýšiť"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadgradi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -888,6 +924,12 @@
           }
         },
         "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skript:"
+          }
+        },
+        "sl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skript:"
@@ -1025,6 +1067,12 @@
             "value" : "Editor závislostí skriptu"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Urejevalnik odvisnosti skripta"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1155,6 +1203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Položka 1"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 1"
           }
         },
         "sv" : {
@@ -1289,6 +1343,12 @@
             "value" : "Názov balíka"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ime paketa"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1419,6 +1479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Položka 2"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 2"
           }
         },
         "sv" : {
@@ -1553,6 +1619,12 @@
             "value" : "Položka 3"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 3"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1683,6 +1755,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Skontrolovať aktualizáciu"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preveri posodobitev"
           }
         },
         "sv" : {
@@ -1817,6 +1895,12 @@
             "value" : "Nainštalovaná verzia"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nameščena različica"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1947,6 +2031,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Položka 1"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element 1"
           }
         },
         "sv" : {
@@ -2081,6 +2171,12 @@
             "value" : "OK"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "V redu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2211,6 +2307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pridať"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj"
           }
         },
         "sv" : {

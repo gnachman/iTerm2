@@ -101,6 +101,12 @@
             "value" : "Filtrovať"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtriraj"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podreťazec, ignoruje veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, ki ne razlikuje velikih/malih črk"
           }
         },
         "sv" : {
@@ -365,6 +377,12 @@
             "value" : "Podreťazec s inteligentnou veľkosťou písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz s pametnim razlikovanjem velikih/malih črk"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -495,6 +513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podreťazec, rozlišuje veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, ki razlikuje velike/male črke"
           }
         },
         "sv" : {
@@ -629,6 +653,12 @@
             "value" : "Regex, ignoruje veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz, ki ne razlikuje velikih/malih črk"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vymazať históriu vyhľadávania"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbriši zgodovino iskanja"
           }
         },
         "sv" : {
@@ -893,6 +929,12 @@
             "value" : "Hľadá sa iba vo vybranom príkaze"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iskanje samo v izbranem ukazu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1023,6 +1065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex, ignoruje veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz, ki ne razlikuje velikih/malih črk"
           }
         },
         "sv" : {
@@ -1157,6 +1205,12 @@
             "value" : "Filtrovať"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtriraj"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podreťazec, rozlišuje veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, ki razlikuje velike/male črke"
           }
         },
         "sv" : {
@@ -1421,6 +1481,12 @@
             "value" : "Regex, rozlišuje veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz, ki razlikuje velike/male črke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1551,6 +1617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Podreťazec s inteligentnou veľkosťou písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz s pametnim razlikovanjem velikih/malih črk"
           }
         },
         "sv" : {
@@ -1685,6 +1757,12 @@
             "value" : "Podreťazec, ignoruje veľkosť písmen"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz, ki ne razlikuje velikih/malih črk"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1815,6 +1893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex, rozlišuje veľkosť písmen"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz, ki razlikuje velike/male črke"
           }
         },
         "sv" : {

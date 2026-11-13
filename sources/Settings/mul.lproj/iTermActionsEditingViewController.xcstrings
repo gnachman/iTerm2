@@ -101,6 +101,12 @@
             "value" : "Akcia"
           }
         },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejanje"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Názov"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naslov"
           }
         },
         "sv" : {
