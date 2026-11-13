@@ -233,8 +233,9 @@ extension AgentHookRunner {
     /// caller. What each event costs, in it2 round trips:
     ///   • One, for most events: the turn flag, the count and the display travel in one
     ///     set-status.
-    ///   • Claude: the idle nudge, and a Stop or StopFailure without background_tasks, read first
-    ///     and then write. A sub-agent's tool call reads the status, and writes only when the
+    ///   • Claude: the idle nudge, and a StopFailure without background_tasks, read first and
+    ///     then write (a Stop without the field is from a Claude Code too old to send it, and
+    ///     counts nothing). A sub-agent's tool call reads the status, and writes only when the
     ///     display has to change, which during a long wait it usually does not. A SubagentStop
     ///     that leaves work running stores the count (its answer stands in for the read), then
     ///     writes the display.

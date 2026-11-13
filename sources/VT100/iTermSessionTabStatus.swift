@@ -105,6 +105,21 @@ class VT100TabStatusUpdate: NSObject {
     @objc var requiredTurnOpen: NSNumber? = nil
     @objc var requiredBackgroundTasks: NSNumber? = nil
 
+    /// What this update parks without displaying: the background-task count
+    /// and the turn flag, under the same preconditions. Everything it would
+    /// show, its expiration and its ring are left out.
+    var bookkeepingOnly: VT100TabStatusUpdate {
+        let update = VT100TabStatusUpdate()
+        update.backgroundTasksPresence = backgroundTasksPresence
+        update.backgroundTasks = backgroundTasks
+        update.backgroundTasksDelta = backgroundTasksDelta
+        update.turnOpenPresence = turnOpenPresence
+        update.turnOpen = turnOpen
+        update.requiredTurnOpen = requiredTurnOpen
+        update.requiredBackgroundTasks = requiredBackgroundTasks
+        return update
+    }
+
     override var description: String {
         var parts = [String]()
         switch indicatorPresence {
@@ -422,6 +437,13 @@ class iTermSessionTabStatus: NSObject {
         backgroundTasks = 0
         turnOpen = nil
         notify()
+    }
+
+    /// Forgets the count and the turn flag without touching what is
+    /// displayed. They never count as a visible change, so nothing is posted.
+    func forgetBookkeeping() {
+        backgroundTasks = 0
+        turnOpen = nil
     }
 
     @objc static let didChangeNotificationName = NSNotification.Name("iTermSessionTabStatusDidChange")

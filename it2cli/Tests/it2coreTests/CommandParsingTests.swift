@@ -61,6 +61,17 @@ final class CommandParsingTests: XCTestCase {
         XCTAssertNil(try Session.SetStatus.parse(["-s", "session-id"]).options.turnOpen)
     }
 
+    // The agent hook names itself so iTerm2 can tell its writes from anyone else's.
+    func testSetStatusPassesTheAgentThrough() throws {
+        let marked = try SetStatusShortcut.parse(["-s", "session-id", "--status", "working", "--agent", "claude"])
+        XCTAssertEqual(marked.options.agent, "claude")
+        XCTAssertTrue(marked.options.invocationArguments.contains("agent: \"claude\""),
+                      "\(marked.options.invocationArguments)")
+        let unmarked = try Session.SetStatus.parse(["-s", "session-id", "--status", "working"])
+        XCTAssertNil(unmarked.options.agent)
+        XCTAssertFalse(unmarked.options.invocationArguments.contains { $0.hasPrefix("agent:") })
+    }
+
     func testSetStatusParsesJSON() throws {
         XCTAssertTrue(try Session.SetStatus.parse(["-s", "session-id", "--json"]).options.json)
         XCTAssertTrue(try SetStatusShortcut.parse(["-s", "session-id", "--json"]).options.json)

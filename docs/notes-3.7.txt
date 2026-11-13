@@ -122,6 +122,13 @@ Improvements:
   background now shows “background” in purple
   instead of “working”, so you can tell at a
   glance that it is ready for input. Issue 13080.
+- Recent versions of Claude Code report their
+  own status to iTerm2 through the Program Status
+  Protocol. The tab now follows those reports,
+  and the Claude Code Integration adds what they
+  leave out: the “background” status and Claude’s
+  last message when a turn is done. Before, the
+  two took turns overwriting the tab’s status.
 - zsh, fish, and tcsh Shell Integration now mark
   the right-hand prompt, so Select Current Command
   and saved commands leave it out. In tcsh this

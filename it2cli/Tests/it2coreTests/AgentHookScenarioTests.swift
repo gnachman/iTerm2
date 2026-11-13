@@ -51,6 +51,9 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
     /// Stands in for the hook being killed on its timeout: once this many calls have been logged,
     /// the handler dies where it stands.
     var killAfter: Int? = nil
+    /// Stands in for an iTerm2 from before set-status took --agent: a write carrying it fails the
+    /// way an unknown argument does, and changes nothing.
+    var refusesAgentFlag = false
 
     func resetCalls() {
         calls = []
@@ -63,6 +66,12 @@ final class FakeAgentStatusBackend: AgentStatusBackend {
         }
         switch (argv.first, argv.dropFirst().first) {
         case ("set-status", _):
+            if refusesAgentFlag, argv.contains(where: { $0.hasPrefix("--agent=") }) {
+                return AgentHookCommandResult(
+                    status: 1,
+                    stdout: "",
+                    stderr: "Error: Failed to set status: Undeclared identifier iterm2.set_session_status(agent,session_id,status)\n")
+            }
             return setStatus(Array(argv.dropFirst()))
         case ("session", "get-background-tasks"):
             return AgentHookCommandResult(status: 0, stdout: "\(backgroundTasks)", stderr: "")
@@ -234,6 +243,7 @@ final class AgentHookScenarioTests: XCTestCase {
         static let killAfterOne = Flags(rawValue: 4)
         static let promptAfterStatusRead = Flags(rawValue: 8)
         static let stopAfterStatusRead = Flags(rawValue: 16)
+        static let refusesAgentFlag = Flags(rawValue: 32)
     }
 
     private enum Step {
@@ -278,6 +288,7 @@ final class AgentHookScenarioTests: XCTestCase {
                 backend.promptAfterJSON = flags.contains(.promptAfterJSON)
                 backend.promptAfterStatusRead = flags.contains(.promptAfterStatusRead)
                 backend.stopAfterStatusRead = flags.contains(.stopAfterStatusRead)
+                backend.refusesAgentFlag = flags.contains(.refusesAgentFlag)
                 backend.killAfter = flags.contains(.killAfterOne) ? 1 : nil
                 let agent: AgentKind = fixture.hasPrefix("codex/") ? .codex : .claude
                 var stderr: [String] = []
@@ -292,7 +303,18 @@ final class AgentHookScenarioTests: XCTestCase {
                     killed = true
                 }
                 XCTAssertEqual(killed, flags.contains(.killAfterOne), "\(name): \(fixture) killed", file: file, line: line)
-                XCTAssertEqual(backend.calls, expected, "\(name): \(fixture) it2 calls", file: file, line: line)
+                // Every write names the agent whose hook made it, last. Checked here and taken
+                // off, so the scenarios read as what each write says. The scenarios about the
+                // flag itself compare the raw calls.
+                var calls = backend.calls
+                if !flags.contains(.refusesAgentFlag) {
+                    for (i, call) in calls.enumerated() where call.first == "set-status" {
+                        XCTAssertEqual(call.last, "--agent=\(agent.rawValue)",
+                                       "\(name): \(fixture) names its agent", file: file, line: line)
+                        calls[i] = Array(call.dropLast())
+                    }
+                }
+                XCTAssertEqual(calls, expected, "\(name): \(fixture) it2 calls", file: file, line: line)
                 if !killed {
                     XCTAssertEqual(stderr, [], "\(name): \(fixture) stderr", file: file, line: line)
                 }
@@ -916,6 +938,22 @@ final class AgentHookScenarioTests: XCTestCase {
         ])
     }
 
+    // An iTerm2 from before set-status took --agent refuses the whole call. The hook says it
+    // again without the flag, and does not offer it again for the rest of the event.
+    func testAnOlderITerm2RefusesTheAgentFlag() throws {
+        let stop = Self.setStatus(Self.BACKGROUND, Self.detail("2 background tasks running"),
+                                  ["--background-tasks=2"], Self.TURN_CLOSED)
+        let store = ["set-status"] + Self.ADDRESS + ["--background-tasks=1", "--json"] + Self.QUIET
+        let display = Self.setStatus(Self.BACKGROUND, Self.detail("1 background task running"), Self.IF_TURN_CLOSED)
+        try run("claude: an older iTerm2 refuses the agent flag", [
+            .hook("claude/Stop-bg2", [stop + ["--agent=claude"], stop], [.refusesAgentFlag]),
+            .expectStatus("background"),
+            .hook("claude/SubagentStop-first", [store + ["--agent=claude"], store, display], [.refusesAgentFlag]),
+            .expectStatus("background"),
+            .expectBackgroundTasks(1),
+        ])
+    }
+
     func testClaudePayloadsWithoutBackgroundTasks() throws {
         try run("claude: payloads without background_tasks (before 2.1.198)", [
             .hook("claude/Stop-legacy", [Self.setStatus(Self.DONE, Self.detail("HELLO"), Self.TURN_CLOSED)]),
@@ -946,7 +984,8 @@ final class AgentHookScenarioTests: XCTestCase {
                                     backend: backend,
                                     report: { _ in })
         XCTAssertEqual(backend.calls, [["set-status", "--tmux=/private/tmp/tmux-501/default,52533,0", "--tmux-pane=%3"]
-                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES])
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES
+                                       + ["--agent=claude"]])
     }
 
     // Inside tmux with an address that does not parse, nothing is reported: falling back to
@@ -1012,7 +1051,8 @@ final class AgentHookScenarioTests: XCTestCase {
                                     backend: backend,
                                     report: { _ in })
         XCTAssertEqual(backend.calls, [["set-status", "--session=ORIGIN-GUID"]
-                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES])
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES
+                                       + ["--agent=claude"]])
     }
 
     // In a remote tmux pane the pane address still wins: the origin is the session showing the
@@ -1026,7 +1066,8 @@ final class AgentHookScenarioTests: XCTestCase {
                                     backend: backend,
                                     report: { _ in })
         XCTAssertEqual(backend.calls, [["set-status", "--tmux=/tmp/tmux-1000/default,77,2", "--tmux-pane=%4"]
-                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES])
+                                       + Self.QUIET + Self.WORKING + Self.detail("") + Self.TURN_OPEN + Self.EXPIRES
+                                       + ["--agent=claude"]])
     }
 
     // A remote hook in a tmux pane on a tmux integration connection: iTerm2 withholds the origin

@@ -1,0 +1,9 @@
+#!/bin/sh
+# A Claude Code hook command that appends each event's payload, with a millisecond timestamp,
+# to hooks.log in $CC_CAPTURE_DIR (default ~/cc-status-capture). See README.md.
+#
+# The line is built first and appended in one write, so hooks running at the same moment cannot
+# interleave.
+stamp=$(perl -MTime::HiRes=time -MPOSIX=strftime -e '$t=time; printf "%s.%03d", strftime("%H:%M:%S", localtime $t), ($t-int $t)*1000')
+payload=$(cat)
+printf '%s %s\n' "$stamp" "$payload" >> "${CC_CAPTURE_DIR:-$HOME/cc-status-capture}/hooks.log"

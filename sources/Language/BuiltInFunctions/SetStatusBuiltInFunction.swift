@@ -27,7 +27,11 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
     private static let thenTextColorArg = "then_text_color"
     private static let thenDotColorArg = "then_dot_color"
     private static let thenDetailArg = "then_detail"
+    private static let agentArg = "agent"
     private static let sessionIDArg = "session_id"
+
+    /// What the Claude Code hook passes as `agent`.
+    private static let claudeAgent = "claude"
 
     private static let socketPathArg = "socket_path"
     private static let serverPIDArg = "server_pid"
@@ -292,14 +296,37 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
     // queue, so nothing can have altered the status between the update and the read. An update
     // whose preconditions failed was dropped, and the status that comes back is what it was
     // dropped against.
-    private static func apply(_ parameters: [AnyHashable: Any],
-                              to session: PTYSession,
-                              completion: (Any?, Error?) -> Void) {
+    //
+    // While Claude Code is reporting its own status in the session through OSC 7501, a write
+    // from its hook (agent: "claude") does not change what is displayed: the reports are the base
+    // and the hook contributes facts (see ClaudeCodeStatusOverlay). Its count and turn flag are
+    // parked as usual, under its preconditions, and the rest (status, colors, detail, expiration,
+    // ring) is left out. The answer is still the status as displayed, which is what the hook
+    // reads back. Writes from anything else, the Codex hook included, apply in full, and so do
+    // the Claude Code hook's own when Claude Code is not reporting.
+    // internal (not private) for unit testing via @testable import.
+    static func apply(_ parameters: [AnyHashable: Any],
+                      to session: PTYSession,
+                      completion: (Any?, Error?) -> Void) {
         let update: VT100TabStatusUpdate
         do {
             update = try self.update(from: parameters)
         } catch {
             completion(nil, error)
+            return
+        }
+        if parameters[agentArg] as? String == claudeAgent,
+           let controller = session.programStatusControllerIfPresent,
+           controller.claudeCodeIsReporting {
+            DLog("Keeping only the facts of the Claude Code hook's \(update) because Claude Code reports its own status in \(session)")
+            // Judged before the facts are stored, since storing them may change the answer.
+            let preconditionsHold = session.tabStatus?.preconditionsHold(for: update)
+                ?? (update.requiredTurnOpen == nil && (update.requiredBackgroundTasks?.intValue ?? 0) == 0)
+            session.screenSetTabStatus(update.bookkeepingOnly)
+            if preconditionsHold {
+                controller.claudeCodeHookDidWrite(update)
+            }
+            completion(statusDictionary(for: session.tabStatus), nil)
             return
         }
         session.screenSetTabStatus(update)
@@ -347,7 +374,8 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                 thenStatusArg: NSString.self,
                 thenTextColorArg: NSString.self,
                 thenDotColorArg: NSString.self,
-                thenDetailArg: NSString.self]
+                thenDetailArg: NSString.self,
+                agentArg: NSString.self]
     }
 
     private static var optionalStatusArguments: Set<String> {

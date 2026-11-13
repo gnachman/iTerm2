@@ -28169,6 +28169,9 @@ static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
             } recordDidChangeState:^(iTermProgramStatusDisplayRecord *record) {
                 [weakSelf programStatusRecordDidChangeState:record];
             }];
+        _programStatusController.hookTabStatus = ^iTermSessionTabStatus * {
+            return weakSelf.tabStatus;
+        };
     }
     return _programStatusController;
 }

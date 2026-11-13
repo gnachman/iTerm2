@@ -1208,9 +1208,15 @@ struct SetStatusOptions: ParsableArguments {
     @Option(name: .long, help: "Detail text to leave behind when the status expires. Empty clears it.")
     var thenDetail: String?
 
+    @Option(name: .long, help: ArgumentHelp("Which agent's hook is writing this status (claude or codex). Set by handle-agent-hook.", visibility: .hidden))
+    var agent: String?
+
     /// The keyword arguments for iterm2.set_session_status, minus session_id.
     var invocationArguments: [String] {
         var args: [String] = []
+        if let agent {
+            args.append("agent: \(jsonString(agent))")
+        }
         if let status {
             args.append("status: \(jsonString(status))")
         }

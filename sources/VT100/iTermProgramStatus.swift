@@ -506,6 +506,86 @@ final class ProgramStatusController: NSObject {
     /// not report (a prompt, a keypress) must not overwrite it.
     @objc private(set) var isShowingStatus = false
 
+    /// The app name Claude Code gives in its reports.
+    static let claudeCodeApp = "claude-code"
+
+    /// Whether Claude Code is reporting its own status in this session. While
+    /// it is, its hook's status writes do not change what is displayed: they
+    /// are kept as facts (see SetStatusBuiltInFunction) and combined with the
+    /// records by ClaudeCodeStatusOverlay, since two writers would take turns
+    /// overwriting the tab status. It starts with the first report that names
+    /// Claude Code and lasts until Claude Code is gone: it cleared its own
+    /// record (which it does as it exits), the program exited, a later shell
+    /// prompt began, or the terminal was reset. Outside it the hook drives
+    /// the status by itself, as it does in tmux, where Claude Code does not
+    /// report.
+    @objc private(set) var claudeCodeIsReporting = false {
+        didSet {
+            if !claudeCodeIsReporting {
+                claudeCodeHookLastMessage = nil
+            }
+        }
+    }
+
+    /// The serial of the last record write as of Claude Code's most recent
+    /// report, so a prompt that began before it does not end the above.
+    private var claudeCodeReportSerial = 0
+
+    /// The session's tab status, where the hook's count and turn flag are
+    /// parked. Read when rendering, not copied, so facts the hook stored
+    /// before Claude Code's first report count too.
+    @objc var hookTabStatus: (() -> iTermSessionTabStatus?)?
+
+    /// The last message of the most recent turn the hook saw end, until the
+    /// hook opens the next one.
+    private var claudeCodeHookLastMessage: String?
+
+    private var claudeCodeHookFacts: ClaudeCodeHookFacts {
+        guard claudeCodeIsReporting, let status = hookTabStatus?() else {
+            return .none
+        }
+        return ClaudeCodeHookFacts(turnOpen: status.turnOpen,
+                                   backgroundTasks: status.backgroundTasks,
+                                   lastMessage: claudeCodeHookLastMessage)
+    }
+
+    /// The Claude Code hook wrote `update` while Claude Code is reporting,
+    /// and its count and turn flag have been stored. Takes the turn's last
+    /// message from it, and shows what the records and the facts now add up
+    /// to.
+    func claudeCodeHookDidWrite(_ update: VT100TabStatusUpdate) {
+        if update.turnOpenPresence == .set && update.turnOpen {
+            claudeCodeHookLastMessage = nil
+        }
+        // The hook says done only for a turn that ended with nothing left
+        // running, and its detail then is that turn's last message. Any
+        // other status it would have shown (a session boundary's idle,
+        // background, waiting) is one for which it would have replaced that
+        // detail had it been driving alone.
+        if update.statusPresence == .set {
+            if update.status == Self.doneStatusText {
+                claudeCodeHookLastMessage = update.detailPresence == .set ? update.detail : nil
+            } else {
+                claudeCodeHookLastMessage = nil
+            }
+        }
+        claudeCodeHookFactsDidChange()
+    }
+
+    /// The facts as of the last time the records were shown, so a hook write
+    /// that changes none of them (every tool call sends one) redraws nothing.
+    private var shownClaudeCodeHookFacts = ClaudeCodeHookFacts.none
+
+    /// Shows the records again after a fact changed, unless something else
+    /// has written the status since they last did.
+    private func claudeCodeHookFactsDidChange() {
+        guard claudeCodeHookFacts != shownClaudeCodeHookFacts else {
+            return
+        }
+        recordsDidChange()
+        refresh(showingStatus: isShowingStatus)
+    }
+
     /// The progress a record last put on the bar, or nil when the bar is not
     /// the records' to change. A bar from OSC 9;4 is left alone by records
     /// that do not themselves carry progress. Remembered rather than read back
@@ -611,6 +691,7 @@ final class ProgramStatusController: NSObject {
                 records.apply(report)
             }
         }
+        noteClaudeCodeReports(reports, rootStateBefore: before[""]?.state)
         let clearOrder = ClearOrder(reports)
         for key in reportedKeys {
             // A later report in the batch may have removed the record.
@@ -622,6 +703,47 @@ final class ProgramStatusController: NSObject {
             }
         }
         render()
+    }
+
+    /// Keeps track of whether Claude Code is reporting, and of a turn it
+    /// started without the hook saying so.
+    private func noteClaudeCodeReports(_ reports: [ProgramStatusReport],
+                                       rootStateBefore: ProgramStatusReport.State?) {
+        let wasReporting = claudeCodeIsReporting
+        for report in reports {
+            if report.state == .clear && report.id.isEmpty {
+                // Claude Code clears everything as it exits, whether or not
+                // the clear names it. Its SessionEnd hook lands a moment
+                // later, with the hook by itself again.
+                claudeCodeIsReporting = false
+            } else if report.app == Self.claudeCodeApp {
+                claudeCodeIsReporting = true
+                claudeCodeReportSerial = records.serial
+            }
+        }
+        if claudeCodeIsReporting != wasReporting {
+            DLog("Claude Code \(claudeCodeIsReporting ? "is" : "is no longer") reporting its own status")
+        }
+        // Claude Code going back to working after the hook closed the turn
+        // means a new turn began. The hook's own word for that
+        // (UserPromptSubmit) usually arrives too, but background must not
+        // outlast the turn if it does not. The turn flag becomes unknown,
+        // which is never treated as closed; the count is left to the hook.
+        // With background agents Claude Code never leaves working, so only
+        // a record that said the turn was over counts. Coming back from
+        // blocked is a permission prompt answered during the wait, not a
+        // new turn.
+        if claudeCodeIsReporting,
+           let rootStateBefore, rootStateBefore == .done || rootStateBefore == .idle,
+           records.records[""]?.state == .working,
+           records.effectiveApp(for: records.records[""]!) == Self.claudeCodeApp,
+           hookTabStatus?()?.turnOpen == false {
+            DLog("Claude Code began a turn the hook has not reported")
+            claudeCodeHookLastMessage = nil
+            let forget = VT100TabStatusUpdate()
+            forget.turnOpenPresence = .cleared
+            applyStatus(forget)
+        }
     }
 
     /// Tells which records were written after a clear of themselves or an
@@ -673,7 +795,20 @@ final class ProgramStatusController: NSObject {
         let update = VT100TabStatusUpdate()
         Self.setStatusAndColors(for: record.state, on: update)
         let label = record.id.isEmpty ? records.effectiveApp(for: record) : records.pathLabel(for: record)
-        let detail = record.msg.map(Self.sanitized) ?? Self.kindDescription(record.kind)
+        var detail = record.msg.map(Self.sanitized) ?? Self.kindDescription(record.kind)
+        // Claude Code's own row says what the tab says. Its agents' rows are
+        // theirs.
+        if record.id.isEmpty {
+            switch claudeCodeResolution(for: record) {
+            case .asReported:
+                break
+            case .background(let count):
+                Self.setBackgroundStatusAndColors(on: update)
+                detail = ClaudeCodeStatusOverlay.backgroundDetail(count: count)
+            case .detail(let message):
+                detail = message
+            }
+        }
         return ProgramStatusDisplayRecord(key: record.id.joined(separator: "/"),
                                           isRoot: record.id.isEmpty,
                                           label: label,
@@ -703,6 +838,9 @@ final class ProgramStatusController: NSObject {
     /// record written after the prompt (by a background job, say) is spared.
     @objc(commandDidEndThroughSerial:)
     func commandDidEnd(through serial: Int) {
+        if claudeCodeReportSerial <= serial {
+            claudeCodeIsReporting = false
+        }
         mutatingRecords {
             records.remove(states: Self.transientStates, writtenThrough: serial)
         }
@@ -737,6 +875,7 @@ final class ProgramStatusController: NSObject {
     /// A full reset (RIS, or a reset the user asked for) removes every record.
     @objc
     func removeAllRecords() {
+        claudeCodeIsReporting = false
         mutatingRecords {
             records.removeAll()
         }
@@ -782,9 +921,10 @@ final class ProgramStatusController: NSObject {
     ///   own it, if known better than currentProgress() can say.
     private func refresh(showingStatus: Bool, screenProgress: VT100ScreenProgress? = nil) {
         let record = records.mostUrgent
+        shownClaudeCodeHookFacts = claudeCodeHookFacts
         if showingStatus {
             if let record {
-                applyStatus(Self.statusUpdate(for: record))
+                applyStatus(statusUpdateCombiningHookFacts(for: record))
                 isShowingStatus = true
             } else if isShowingStatus {
                 applyStatus(VT100TabStatusUpdate.clear)
@@ -796,6 +936,34 @@ final class ProgramStatusController: NSObject {
         } else {
             releaseProgressBar()
         }
+    }
+
+    /// What the hook's facts make of a record, when the record is Claude
+    /// Code's and Claude Code is reporting. Anything else is as reported.
+    private func claudeCodeResolution(for record: ProgramStatusRecords.Record) -> ClaudeCodeStatusOverlay.Resolution {
+        guard claudeCodeIsReporting, records.effectiveApp(for: record) == Self.claudeCodeApp else {
+            return .asReported
+        }
+        return ClaudeCodeStatusOverlay.resolve(state: record.state,
+                                               isRoot: record.id.isEmpty,
+                                               hasMessage: !(record.msg ?? "").isEmpty,
+                                               facts: claudeCodeHookFacts)
+    }
+
+    private func statusUpdateCombiningHookFacts(for record: ProgramStatusRecords.Record) -> VT100TabStatusUpdate {
+        let update = Self.statusUpdate(for: record)
+        switch claudeCodeResolution(for: record) {
+        case .asReported:
+            break
+        case .background(let count):
+            Self.setBackgroundStatusAndColors(on: update)
+            update.detailPresence = .set
+            update.detail = ClaudeCodeStatusOverlay.backgroundDetail(count: count)
+        case .detail(let message):
+            update.detailPresence = .set
+            update.detail = message
+        }
+        return update
     }
 
     private func updateProgressBar(for record: ProgramStatusRecords.Record,
@@ -904,6 +1072,20 @@ final class ProgramStatusController: NSObject {
         return iTermSRGBColor(r: Double((hex >> 16) & 0xff) / 255.0,
                               g: Double((hex >> 8) & 0xff) / 255.0,
                               b: Double(hex & 0xff) / 255.0)
+    }
+
+    /// The status text the hook and the records both use for a finished turn.
+    static let doneStatusText = "done"
+
+    /// The same text and colors the hook writes for a session whose turn is
+    /// over while work it started keeps running (AgentHookPalette).
+    static func setBackgroundStatusAndColors(on update: VT100TabStatusUpdate) {
+        update.statusPresence = .set
+        update.status = "background"
+        update.indicatorPresence = .set
+        update.indicator = color(0xaf5fff)
+        update.statusColorPresence = .set
+        update.statusColor = color(0xaf5fff)
     }
 
     /// Sets the status text and both colors for a state. The same text and

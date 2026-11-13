@@ -101,6 +101,9 @@ final class AgentHookRunner {
     // available.
     private let isSessionBoundary: Bool
     private let quietArgs: [String]
+    // Set once iTerm2 has refused a write for carrying --agent, which one from before the flag
+    // existed does. The rest of this event's writes go without it.
+    private var agentFlagRefused = false
 
     init(address: AgentHookAddress,
          eventName: String,
@@ -238,7 +241,8 @@ final class AgentHookRunner {
     }
 
     private func writeCountReturningStatus(_ countArgs: [String]) throws -> CurrentAgentStatus? {
-        guard let output = try quietOutput(["set-status"] + address.args + countArgs + ["--json"]) else {
+        guard let output = try quietOutput(["set-status"] + address.args + countArgs + ["--json"],
+                                           isStatusWrite: true) else {
             return nil
         }
         return CurrentAgentStatus(json: output)
@@ -246,11 +250,32 @@ final class AgentHookRunner {
 
     /// Trimmed stdout of an it2 subcommand, or nil if it failed. Always quiet: these reads happen
     /// mid-turn and a failure is not worth a word; each caller has a safe default instead.
-    private func quietOutput(_ arguments: [String]) throws -> String? {
-        guard let result = try backend.run(arguments + ["--quiet-if-unresolved"]), result.status == 0 else {
+    private func quietOutput(_ arguments: [String], isStatusWrite: Bool = false) throws -> String? {
+        let argv = arguments + ["--quiet-if-unresolved"]
+        guard let result = try isStatusWrite ? runStatusWrite(argv) : backend.run(argv), result.status == 0 else {
             return nil
         }
         return result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Runs a set-status, naming the agent whose hook this is so iTerm2 can tell the write from
+    /// anyone else's: it ignores Claude Code's hook in a session where Claude Code reports its own
+    /// status.
+    ///
+    /// The it2 beside a hook is the newest installed, and the iTerm2 it reaches may be older and
+    /// refuse a function call with an argument it does not know, changing nothing. That refusal
+    /// names the call, arguments in order, so the flag's own name right after the function's is
+    /// the mark of it. The write is then made again without the flag.
+    private func runStatusWrite(_ argv: [String]) throws -> AgentHookCommandResult? {
+        if agentFlagRefused {
+            return try backend.run(argv)
+        }
+        let result = try backend.run(argv + shortcutOptionArgs("--agent", agent.rawValue))
+        guard let result, result.status != 0, result.stderr.contains("set_session_status(agent") else {
+            return result
+        }
+        agentFlagRefused = true
+        return try backend.run(argv)
     }
 
     /// Run it2 and wait. Returns its trimmed stdout, or nil when it failed. Failures are reported on
@@ -263,7 +288,7 @@ final class AgentHookRunner {
     /// boundaries do not pass it, so an unresolved pane is reported there too -- deliberately, so a
     /// persistent problem is discoverable once at each end of the session rather than never.
     private func run(_ arguments: [String]) throws -> String? {
-        guard let result = try backend.run(arguments) else {
+        guard let result = try runStatusWrite(arguments) else {
             report("handle-agent-hook: could not run it2")
             return nil
         }
