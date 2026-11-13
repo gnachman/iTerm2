@@ -50,6 +50,20 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL shouldDrawText;
 @property (nonatomic) vector_float4 textColor;
 
+// Set when the per-frame state recolored the columns under a filled box
+// cursor. The text renderer then draws glyphs in those columns in their normal
+// colors (see recordNormalTextColor:forColumn:) and draws the pixels inside
+// the cursor box in `boxTextColor`, so a glyph that extends past its cell (like
+// a ligature) takes the cursor color only inside the box. Issue 13203.
+@property (nonatomic) BOOL recolorsText;
+// Text color inside the cursor box, crossfaded for smooth blink.
+@property (nonatomic) vector_float4 boxTextColor;
+// The first column whose normal color was recorded, and how many contiguous
+// columns were recorded (at most iTermBoxCursorMaxColumns).
+@property (nonatomic, readonly) int normalTextColorsFirstColumn;
+@property (nonatomic, readonly) int normalTextColorsCount;
+@property (nonatomic, readonly) const vector_float4 *normalTextColors;
+
 // This is a "frame" cursor, as seen when the view does not have focus.
 @property (nonatomic) BOOL frameOnly;
 @property (nonatomic) BOOL copyMode;
@@ -70,6 +84,11 @@ NS_ASSUME_NONNULL_BEGIN
 // coord.x with coverage 1.
 - (void)enumerateBoxCoverageInRowOfWidth:(int)width
                                    block:(void (^ NS_NOESCAPE)(int x, CGFloat coverage))block;
+
+// Records the text color of column `x` before the box cursor recolored it.
+// Columns must be recorded left to right and contiguously, as
+// enumerateBoxCoverageInRowOfWidth:block: visits them.
+- (void)recordNormalTextColor:(vector_float4)color forColumn:(int)x;
 @end
 
 @interface iTermMetalIMEInfo : NSObject

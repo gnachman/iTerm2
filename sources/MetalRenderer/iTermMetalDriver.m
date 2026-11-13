@@ -55,7 +55,26 @@
 @end
 
 
-@implementation iTermMetalCursorInfo
+@implementation iTermMetalCursorInfo {
+    vector_float4 _normalTextColors[iTermBoxCursorMaxColumns];
+}
+
+- (const vector_float4 *)normalTextColors {
+    return _normalTextColors;
+}
+
+- (void)recordNormalTextColor:(vector_float4)color forColumn:(int)x {
+    if (_normalTextColorsCount == 0) {
+        _normalTextColorsFirstColumn = x;
+    }
+    if (_normalTextColorsCount >= iTermBoxCursorMaxColumns ||
+        x != _normalTextColorsFirstColumn + _normalTextColorsCount) {
+        ITConservativeBetaAssert(NO, @"Unexpected column %d after %d columns starting at %d",
+                     x, _normalTextColorsCount, _normalTextColorsFirstColumn);
+        return;
+    }
+    _normalTextColors[_normalTextColorsCount++] = color;
+}
 
 - (void)enumerateBoxCoverageInRowOfWidth:(int)width
                                    block:(void (^ NS_NOESCAPE)(int x, CGFloat coverage))block {
@@ -1594,6 +1613,47 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     tState.destinationRect = frameData.perFrameState.badgeDestinationRect;
 }
 
+// Tells the text renderer where a filled box cursor is. Glyphs in the columns
+// it covers keep their normal colors, and the fragment shader draws pixels
+// inside the cursor box in the cursor text color. Coloring by pixel keeps a
+// glyph that spans cells, such as a ligature, from taking the cursor color
+// outside the cursor, and follows the box exactly while it slides.
+// Must run after the per-frame state has built the cursor row. Issue 13203.
+- (void)configureCursorTextForTextState:(iTermTextRendererTransientState *)textState
+                              frameData:(iTermMetalFrameData *)frameData
+               drawOffscreenCommandLine:(BOOL)drawOffscreenCommandLine {
+    iTermTextCursorInfo info;
+    memset(&info, 0, sizeof(info));
+    iTermMetalCursorInfo *cursorInfo = [frameData.perFrameState metalDriverCursorInfo];
+    const VT100GridCoord coord = cursorInfo.coord;
+    const BOOL enabled = (!drawOffscreenCommandLine &&
+                          cursorInfo.recolorsText &&
+                          coord.y >= 0 &&
+                          coord.y < (int)frameData.rows.count);
+    if (enabled) {
+        // Use the box cursor's own geometry and slide offset, which can differ
+        // from the cell (line spacing, the fullHeightCursor setting, smooth
+        // typing). The block cursor renderer gets the same pixelOffset in
+        // populateCursorRendererTransientStateWithFrameData:.
+        const CGRect frame = iTermBlockCursorFrame(textState.cellConfiguration,
+                                                   coord,
+                                                   cursorInfo.doubleWidth,
+                                                   cursorInfo.pixelOffset);
+        info.rect = simd_make_float4(CGRectGetMinX(frame),
+                                     CGRectGetMinY(frame),
+                                     CGRectGetMaxX(frame),
+                                     CGRectGetMaxY(frame));
+        info.color = cursorInfo.boxTextColor;
+        info.color.w = 1;
+        info.enabled = 1;
+    }
+    textState.cursorTextInfo = info;
+    [textState setCursorRow:coord.y
+                firstColumn:cursorInfo.normalTextColorsFirstColumn
+                      count:enabled ? cursorInfo.normalTextColorsCount : 0
+           normalTextColors:cursorInfo.normalTextColors];
+}
+
 // The meaning of drawOffscreenCommandLine is:
 //   nil - just draw
 //   @YES - draw only first line
@@ -1630,6 +1690,9 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 
     iTermMetalIMEInfo *imeInfo = frameData.perFrameState.imeInfo;
 
+    [self configureCursorTextForTextState:textState
+                                frameData:frameData
+                 drawOffscreenCommandLine:drawOffscreenCommandLine.boolValue];
     textState.suppressedTopHeight = suppressedTopHeight;
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         NSRange markedRangeOnLine = NSMakeRange(NSNotFound, 0);

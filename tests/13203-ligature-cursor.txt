@@ -1,0 +1,7 @@
+Issue 13203: a block cursor on the second half of a ligature hides the first half.
+Needs Fira Code with ligatures on and the Metal renderer.
+In Fira Code, != draws as one wide not-equal sign that belongs to the = cell.
+Expected: a full not-equal sign below, with the cursor on its right half.
+Bug: the left half of the sign disappears.
+
+[2 qfoo!=bar[4C

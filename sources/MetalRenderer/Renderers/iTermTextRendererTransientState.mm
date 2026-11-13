@@ -46,6 +46,16 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
 
     // Set per-row to suppress underlines on DECDHL top-half lines.
     BOOL _suppressUnderlineForDHL;
+
+    // Columns covered by a filled box cursor, and their normal text colors.
+    int _cursorRow;
+    int _cursorFirstColumn;
+    int _cursorColumnCount;
+    vector_float4 _cursorNormalTextColors[iTermBoxCursorMaxColumns];
+
+    // Set per-row to the number of covered columns on the row being added (0
+    // when the cursor is not on it).
+    int _cursorColumnCountOnRow;
 }
 
 // Carrier struct for moving PIUArrays to background deallocation queue.
@@ -419,6 +429,35 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     return underlineBit | emojiBit;
 }
 
+// The color a glyph's PIU is drawn in. A glyph in a column under a filled box
+// cursor gets the column's normal color; the fragment shader switches to the
+// cursor text color only inside the cursor (see cursorTextInfo). Underline
+// colors still come from the attributes, which hold the cursor text color.
+// A C function rather than a method because it runs for every glyph.
+static inline vector_float4 iTermPIUTextColor(int visualColumn,
+                                              int cursorFirstColumn,
+                                              int cursorColumnCount,
+                                              const vector_float4 *cursorNormalTextColors,
+                                              const iTermMetalGlyphAttributes *attributes) {
+    const int i = visualColumn - cursorFirstColumn;
+    if (i >= 0 && i < cursorColumnCount) {
+        return cursorNormalTextColors[i];
+    }
+    return attributes[visualColumn].foregroundColor;
+}
+
+- (void)setCursorRow:(int)row
+         firstColumn:(int)firstColumn
+               count:(int)count
+    normalTextColors:(const vector_float4 *)colors {
+    _cursorRow = row;
+    _cursorFirstColumn = firstColumn;
+    _cursorColumnCount = MAX(0, MIN(count, iTermBoxCursorMaxColumns));
+    for (int i = 0; i < _cursorColumnCount; i++) {
+        _cursorNormalTextColors[i] = colors[i];
+    }
+}
+
 - (void)addASCIICellToPIUsForCode:(char)code
                      logicalIndex:(int)logicalIndex
                      visualColumn:(int)visualColumn
@@ -455,7 +494,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
     }
 
     iTermMetalGlyphAttributesUnderline underlineStyle = suppressUnderlines ? iTermMetalGlyphAttributesUnderlineNone : attributes[visualColumn].underlineStyle;
-    vector_float4 textColor = attributes[visualColumn].foregroundColor;
+    const vector_float4 textColor = iTermPIUTextColor(visualColumn, _cursorFirstColumn, _cursorColumnCountOnRow, _cursorNormalTextColors, attributes);
     if (!suppressUnderlines && inMarkedRange) {
         // Marked range gets a yellow underline.
         underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
@@ -520,7 +559,7 @@ static inline int iTermOuterPIUIndex(const bool &annotation, const bool &underli
                                                     visualColumn + 1,
                                                     asciiOffset,
                                                     iTermASCIITextureOffsetRight,
-                                                    attributes[visualColumn].foregroundColor,
+                                                    textColor,
                                                     iTermMetalGlyphAttributesUnderlineNone,
                                                     underlineColor);
     }
@@ -590,6 +629,7 @@ typedef struct {
     // on the bottom half, below the text).
     _suppressUnderlineForDHL = (glyphKeyCount > 0 &&
                                 glyphKeys[0].lineAttribute == iTermLineAttributeDoubleHeightTop);
+    _cursorColumnCountOnRow = (_cursorTextInfo.enabled && row == _cursorRow) ? _cursorColumnCount : 0;
     int previousLogicalIndex = -1;
     for (state.i = 0; state.i < glyphKeyCount; state.i++) {
         const int logicalIndex = glyphKeys[state.i].logicalIndex;
@@ -685,7 +725,7 @@ typedef struct {
         vector_float2 reciprocal_atlas_size = entry->_page->get_reciprocal_atlas_size();
         piu->textureOffset = simd_make_float2(origin.x * reciprocal_atlas_size.x,
                                               origin.y * reciprocal_atlas_size.y);
-        piu->textColor = attributes[visualIndex].foregroundColor;
+        piu->textColor = iTermPIUTextColor(visualIndex, _cursorFirstColumn, _cursorColumnCountOnRow, _cursorNormalTextColors, attributes);
         if (suppressUnderlines) {
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineNone;
             piu->underlineColor = simd_make_float4(0, 0, 0, 0);
@@ -694,13 +734,13 @@ typedef struct {
             piu->underlineColor = iTermAnnotationUnderlineColor;
         } else if (state->inMarkedRange) {
             piu->underlineStyle = iTermMetalGlyphAttributesUnderlineSingle;
-            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+            piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : attributes[visualIndex].foregroundColor;
         } else {
             piu->underlineStyle = attributes[visualIndex].underlineStyle;
             if (attributes[visualIndex].hasUnderlineColor) {
                 piu->underlineColor = attributes[visualIndex].underlineColor;
             } else {
-                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : piu->textColor;
+                piu->underlineColor = _nonAsciiUnderlineDescriptor.color.w > 0 ? _nonAsciiUnderlineDescriptor.color : attributes[visualIndex].foregroundColor;
             }
         }
         if (part != iTermTextureMapMiddleCharacterPart &&

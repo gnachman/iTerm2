@@ -26,6 +26,23 @@ NS_ASSUME_NONNULL_BEGIN
 // When YES, underline styles in PIUs are forced to None (for multi-pass underline rendering).
 @property (nonatomic) BOOL suppressUnderlines;
 
+// Text under a filled box cursor. When cursorTextInfo.enabled is set, glyphs in
+// the columns the cursor covers are given those columns' normal colors (see
+// -setCursorRow:...) and the fragment shader draws the pixels inside the
+// cursor box, cursorTextInfo.rect, in cursorTextInfo.color. That way a glyph
+// that extends past its cell, like a ligature whose glyph sits in the cursor
+// cell but draws over the previous cell, only takes the cursor color inside
+// the cursor. Must be set before rows are added. Issue 13203.
+@property (nonatomic) iTermTextCursorInfo cursorTextInfo;
+
+// `count` contiguous visual columns starting at `firstColumn` on `row` are
+// covered by the box cursor. `colors` gives their normal text colors. `count`
+// is clamped to iTermBoxCursorMaxColumns.
+- (void)setCursorRow:(int)row
+         firstColumn:(int)firstColumn
+               count:(int)count
+    normalTextColors:(const vector_float4 *)colors;
+
 // Compute underline/strikethrough spans from the attributes array and append to the given data objects.
 // inverseLUT maps visual column -> logical index (from BidiDisplayInfoObjc.inverseLUT).
 // Used to determine ASCII vs non-ASCII per column for descriptor color selection.

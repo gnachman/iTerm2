@@ -28,6 +28,7 @@ typedef struct {
     bool predecessorWasUnderlined;
     bool successorWillBeUnderlined;
     float verticalOffset;  // Used by offscreen command line to shift text so it is not grid-aligned.
+    float2 gridPosition;  // Position in grid pixel coordinates (see iTermTextCursorInfo).
 } iTermTextVertexFunctionOutput;
 
 typedef struct {
@@ -47,6 +48,7 @@ typedef struct {
     float2 textureCoordinate;
     float4 textColor;
     float4 alphaVector;
+    float2 gridPosition;  // Position in grid pixel coordinates (see iTermTextCursorInfo).
 } iTermTextVertexFunctionOutputMonochrome;
 
 // Returns the weight in [0, 1] of underline for a pixel at `clipSpacePosition`.

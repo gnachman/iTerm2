@@ -22,6 +22,16 @@ static float4 iTermAlphaVectorForTextColor(float4 textColor) {
     }
 }
 
+// Is a fragment at `gridPosition` inside the cell under a filled box cursor?
+static bool iTermTextIsUnderCursor(float2 gridPosition,
+                                   constant iTermTextCursorInfo *cursorInfo) {
+    return (cursorInfo->enabled != 0 &&
+            gridPosition.x >= cursorInfo->rect.x &&
+            gridPosition.x < cursorInfo->rect.z &&
+            gridPosition.y >= cursorInfo->rect.y &&
+            gridPosition.y < cursorInfo->rect.w);
+}
+
 // Slow path: taken for all underlined code paths and all solid background code paths (because they aren't used
 // and I don't want to spend time testing dead code right now).
 vertex iTermTextVertexFunctionOutput
@@ -50,6 +60,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.viewportSize = viewportSize;
 
     out.cellOffset = perInstanceUniforms[iid].offset.xy + offset[0];
+    out.gridPosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy;
     out.underlineStyle = perInstanceUniforms[iid].underlineStyle;
     out.underlineColor = perInstanceUniforms[iid].underlineColor;
     out.alphaVector = iTermAlphaVectorForTextColor(out.textColor);
@@ -140,6 +151,7 @@ iTermTextVertexShaderMonochrome(uint vertexID [[ vertex_id ]],
     out.textureCoordinate = vertexArray[vertexID].textureCoordinate + perInstanceUniforms[iid].textureOffset;
     out.textColor = perInstanceUniforms[iid].textColor;
     out.alphaVector = iTermAlphaVectorForTextColor(out.textColor);
+    out.gridPosition = vertexArray[vertexID].position.xy + perInstanceUniforms[iid].offset.xy;
 
     return out;
 }
@@ -312,13 +324,19 @@ fragment float4
 iTermTextFragmentShaderMonochrome(iTermTextVertexFunctionOutputMonochrome in [[stage_in]],
                                   texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                   texture2d<float> drawable [[ texture(iTermTextureIndexBackground) ]],
-                                  constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
+                                  constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
+                                  constant iTermTextCursorInfo *cursorInfo [[ buffer(iTermFragmentInputIndexTextCursor) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
     float4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
     float4 result = in.textColor;
-    result.w = dot(textureColor, in.alphaVector);
+    float4 alphaVector = in.alphaVector;
+    if (iTermTextIsUnderCursor(in.gridPosition, cursorInfo)) {
+        result = cursorInfo->color;
+        alphaVector = iTermAlphaVectorForTextColor(result);
+    }
+    result.w = dot(textureColor, alphaVector);
     result.xyz *= result.w;
     return result;
 }
@@ -387,7 +405,8 @@ fragment float4
 iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[stage_in]],
                                             texture2d<float> texture [[ texture(iTermTextureIndexPrimary) ]],
                                             texture2d<float> drawable [[ texture(iTermTextureIndexBackground) ]],
-                                            constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]]) {
+                                            constant iTermTextureDimensions *dimensions  [[ buffer(iTermFragmentInputIndexTextureDimensions) ]],
+                                            constant iTermTextCursorInfo *cursorInfo [[ buffer(iTermFragmentInputIndexTextCursor) ]]) {
     constexpr sampler textureSampler(mag_filter::linear,
                                      min_filter::linear);
 
@@ -435,7 +454,12 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
                                                                   in.successorWillBeUnderlined);
 
     float4 recoloredTextColor = in.textColor;
-    recoloredTextColor.w = dot(textureColor, in.alphaVector);
+    float4 alphaVector = in.alphaVector;
+    if (iTermTextIsUnderCursor(in.gridPosition, cursorInfo)) {
+        recoloredTextColor = cursorInfo->color;
+        alphaVector = iTermAlphaVectorForTextColor(recoloredTextColor);
+    }
+    recoloredTextColor.w = dot(textureColor, alphaVector);
 
     float4 result = mix(recoloredTextColor,
                        in.underlineColor,

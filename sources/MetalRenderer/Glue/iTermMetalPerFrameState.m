@@ -2185,13 +2185,34 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     // cursorTextColor in proportion to its coverage (scaled by the smooth
     // blink fade). At rest this is coord.x with full coverage, which reduces
     // to a flat assignment. The driver crossfades the backgrounds to match.
+    //
+    // Each covered column's normal color is also recorded. The text renderer
+    // draws glyphs in these columns in their normal color and recolors only
+    // the pixels inside the cursor box, so a glyph that extends past its cell
+    // (like a ligature) takes the cursor color only inside the box. The
+    // attributes still get the crossfaded color because underlines and
+    // antialiasing backgrounds use it. Issue 13203.
     const CGFloat fade = _cursorInfo.fadeAlpha;
+    __block CGFloat bestCoverage = 0;
+    __block vector_float4 boxNormalTextColor = cursorTextColor;
     [_cursorInfo enumerateBoxCoverageInRowOfWidth:width block:^(int x, CGFloat coverage) {
         const CGFloat t = coverage * fade;
         vector_float4 normal = attributes[x].foregroundColor;
         normal.w = 1;
+        [self->_cursorInfo recordNormalTextColor:normal forColumn:x];
+        if (coverage > bestCoverage) {
+            bestCoverage = coverage;
+            boxNormalTextColor = normal;
+        }
         attributes[x].foregroundColor = simd_mix(normal, cursorTextColor, simd_make_float4(t, t, t, t));
     }];
+    if (bestCoverage > 0) {
+        // Inside the box, text is crossfaded only by the blink fade. While
+        // sliding over columns with different colors, the most-covered
+        // column's normal color stands in for all of them.
+        _cursorInfo.boxTextColor = simd_mix(boxNormalTextColor, cursorTextColor, simd_make_float4(fade, fade, fade, fade));
+        _cursorInfo.recolorsText = YES;
+    }
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {

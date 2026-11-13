@@ -78,6 +78,7 @@ static BOOL gMonochromeText;
     iTermMetalBufferPool *_verticesPool;
     iTermMetalBufferPool *_dimensionsPool;
     iTermMetalBufferPool *_textInfoPool;
+    iTermMetalBufferPool *_cursorInfoPool;
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
@@ -196,6 +197,7 @@ static BOOL gMonochromeText;
         _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6];
         _dimensionsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextureDimensions)];
         _textInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertexTextInfoStruct)];
+        _cursorInfoPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermTextCursorInfo)];
 
         // Allow the pool to reserve up to this many bytes. Work backward to find the largest number
         // of buffers we are OK with keeping permanently allocated. By having enough characters on
@@ -427,6 +429,13 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     __block iTermTextureDimensions previousTextureDimensions;
     __block id<MTLBuffer> previousTextureDimensionsBuffer = nil;
 
+    // Bound for every draw because the monochrome text fragment shaders always read it.
+    const iTermTextCursorInfo cursorInfo = tState.cursorTextInfo;
+    id<MTLBuffer> cursorInfoBuffer = [_cursorInfoPool requestBufferFromContext:tState.poolContext
+                                                                     withBytes:&cursorInfo
+                                                                checkIfChanged:YES];
+    cursorInfoBuffer.label = @"Text cursor info";
+
     [tState enumerateDraws:^(const iTermTextPIU *pius,
                              NSInteger instances,
                              id<MTLTexture> texture,
@@ -502,7 +511,8 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
             self->_cellRenderer.vertexFunctionName = VertexFunctionName(underlined, emoji);
             tState.pipelineState = [self->_cellRenderer pipelineState];
             NSDictionary *fragmentBuffers;
-            fragmentBuffers = @{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer };
+            fragmentBuffers = @{ @(iTermFragmentInputIndexTextureDimensions): textureDimensionsBuffer,
+                                 @(iTermFragmentInputIndexTextCursor): cursorInfoBuffer };
             [self->_cellRenderer drawWithTransientState:tState
                                           renderEncoder:frameData.renderEncoder
                                        numberOfVertices:6

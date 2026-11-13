@@ -31,7 +31,8 @@ typedef enum {
     iTermFragmentBufferIndexFullScreenFlashColor = 4, // Points at a float4
     iTermFragmentInputIndexAlpha = 5,  // float4 pointer. Used by transparent windows on 10.14
     iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
-    iTermFragmentBufferIndexScale = 7  // backing scale factor float
+    iTermFragmentBufferIndexScale = 7,  // backing scale factor float
+    iTermFragmentInputIndexTextCursor = 8  // Points at iTermTextCursorInfo
 } iTermFragmentBufferIndex;
 
 // AND with mask to remove strikethrough bit
@@ -149,6 +150,25 @@ typedef struct {
     float strikethroughThickness;
     float scale;  // 2 for retina, 1 for non retina
 } iTermTextureDimensions;
+
+// Describes a filled box cursor so the text fragment shader can draw the
+// pixels inside it in the cursor text color. Coloring by pixel rather
+// than by glyph matters for a glyph that spans cells, such as a ligature: only
+// the part inside the cursor takes the cursor color. Issue 13203.
+typedef struct {
+    // The cursor box (see iTermBlockCursorFrame) as minX, minY, maxX, maxY in
+    // grid pixel coordinates: the space of a glyph quad's vertex position plus
+    // its PIU offset, before the viewport offset.
+    vector_float4 rect;
+    // Text color inside `rect`, already crossfaded for smooth blink.
+    vector_float4 color;
+    // Nonzero when `rect` and `color` are valid.
+    int enabled;
+} iTermTextCursorInfo;
+
+// A box cursor is at most two cells wide, so while sliding it overlaps at most
+// three columns.
+#define iTermBoxCursorMaxColumns 3
 
 #define iTermTextVertexInfoFlagsSolidUnderlines 1
 typedef struct {

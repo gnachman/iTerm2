@@ -61,14 +61,48 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (CGFloat)cursorHeight {
-    if ([iTermAdvancedSettingsModel fullHeightCursor]) {
-        return MAX(self.cellConfiguration.cellSize.height, self.cellConfiguration.cellSizeWithoutSpacing.height);
-    } else {
-        return MIN(self.cellConfiguration.cellSize.height, self.cellConfiguration.cellSizeWithoutSpacing.height);
-    }
+    return iTermCursorHeightForCellConfiguration(self.cellConfiguration);
 }
 
 @end
+
+CGFloat iTermCursorHeightForCellConfiguration(iTermCellRenderConfiguration *cellConfiguration) {
+    if ([iTermAdvancedSettingsModel fullHeightCursor]) {
+        return MAX(cellConfiguration.cellSize.height, cellConfiguration.cellSizeWithoutSpacing.height);
+    } else {
+        return MIN(cellConfiguration.cellSize.height, cellConfiguration.cellSizeWithoutSpacing.height);
+    }
+}
+
+CGPoint iTermCursorOriginForCellConfiguration(iTermCellRenderConfiguration *cellConfiguration,
+                                              VT100GridCoord coord,
+                                              CGPoint pixelOffset,
+                                              CGFloat cursorHeight) {
+    const CGFloat rowNumber = (cellConfiguration.gridSize.height - coord.y - 1);
+    const CGSize cellSize = cellConfiguration.cellSize;
+    const CGSize cellSizeWithoutSpacing = cellConfiguration.cellSizeWithoutSpacing;
+    CGFloat y = rowNumber * cellSize.height;
+    if ([iTermAdvancedSettingsModel fullHeightCursor]) {
+        y += MIN(0, cellSize.height - cellSizeWithoutSpacing.height);
+    } else {
+        const CGFloat scale = cellConfiguration.scale;
+        y += cellSize.height - MAX(0, round(((cellSize.height - cellSizeWithoutSpacing.height) / 2) / scale) * scale) - cursorHeight;
+    }
+    return CGPointMake(cellSize.width * coord.x + pixelOffset.x,
+                       y - pixelOffset.y);  // Y is flipped in Metal coordinate system
+}
+
+CGRect iTermBlockCursorFrame(iTermCellRenderConfiguration *cellConfiguration,
+                             VT100GridCoord coord,
+                             BOOL doubleWidth,
+                             CGPoint pixelOffset) {
+    const CGFloat height = iTermCursorHeightForCellConfiguration(cellConfiguration);
+    const CGPoint origin = iTermCursorOriginForCellConfiguration(cellConfiguration, coord, pixelOffset, height);
+    const int d = doubleWidth ? 2 : 1;
+    const CGFloat width = MIN(cellConfiguration.cellSize.width,
+                              cellConfiguration.cellSizeWithoutSpacing.width);
+    return CGRectMake(origin.x, origin.y, width * d, height);
+}
 
 @interface iTermCopyModeCursorRendererTransientState()
 @property (nullable, nonatomic, strong) id<MTLTexture> texture;
@@ -330,24 +364,18 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (iTermCursorDescription)cursorDescriptionWithTransientState:(iTermCursorRendererTransientState *)tState {
-    const CGFloat rowNumber = (tState.cellConfiguration.gridSize.height - tState.coord.y - 1);
-    const CGSize cellSize = tState.cellConfiguration.cellSize;
-    const CGSize cellSizeWithoutSpacing = tState.cellConfiguration.cellSizeWithoutSpacing;
-    CGFloat y = rowNumber * cellSize.height;
-    if ([iTermAdvancedSettingsModel fullHeightCursor]) {
-        y += MIN(0, cellSize.height - cellSizeWithoutSpacing.height);
-    } else {
-        const CGFloat scale = tState.configuration.scale;
-        y += cellSize.height - MAX(0, round(((cellSize.height - cellSizeWithoutSpacing.height) / 2) / scale) * scale) - tState.cursorHeight;
-    }
+    const CGPoint origin = iTermCursorOriginForCellConfiguration(tState.cellConfiguration,
+                                                                 tState.coord,
+                                                                 tState.pixelOffset,
+                                                                 tState.cursorHeight);
     // Convert color to the target color space before extracting components.
     // This ensures the filled cursor matches the frame cursor, which goes through
     // AppKit's color space conversion when drawing into an NSImage.
     NSColor *color = [tState.color colorUsingColorSpace:tState.configuration.colorSpace];
     iTermCursorDescription description = {
         .origin = {
-            tState.cellConfiguration.cellSize.width * tState.coord.x + tState.pixelOffset.x,
-            y - tState.pixelOffset.y  // Y is flipped in Metal coordinate system
+            origin.x,
+            origin.y
         },
         .color = {
             color.redComponent,
@@ -530,13 +558,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRendererTransientState *tState,
                                                              iTermMetalCellRenderer *cellRenderer) {
-    int d = tState.doubleWidth ? 2 : 1;
-    const CGFloat width = MIN(tState.cellConfiguration.cellSize.width,
-                              tState.cellConfiguration.cellSizeWithoutSpacing.width);
+    const CGRect frame = iTermBlockCursorFrame(tState.cellConfiguration,
+                                               tState.coord,
+                                               tState.doubleWidth,
+                                               tState.pixelOffset);
     return [cellRenderer newQuadWithFrame:CGRectMake(0,
                                                      0,
-                                                     width * d,
-                                                     tState.cursorHeight)
+                                                     frame.size.width,
+                                                     frame.size.height)
                              textureFrame:CGRectMake(0, 0, 1, 1)
                               poolContext:tState.poolContext];
 }
