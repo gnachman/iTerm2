@@ -59,6 +59,12 @@
             "value" : "Подождите! Устанавливается новое окружение Python…"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lütfen bekleyin! Yeni bir Python ortamı yükleniyor…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",

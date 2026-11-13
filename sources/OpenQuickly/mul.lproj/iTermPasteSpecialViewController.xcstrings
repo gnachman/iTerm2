@@ -59,6 +59,12 @@
             "value" : "Для определения приглашения требуется интеграция с оболочкой"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İstem algılama için Kabuk Entegrasyonu gerekir"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Эта функция включается, когда запущенное приложение отправило escape-код для включения режима «вставки в скобках». Вставляемая строка будет «обёрнута» escape-кодами, указывающими, что этот текст получен в результате операции вставки."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu seçenek, çalışan uygulama “ayraçlı yapıştırma modunu” açan bir kaçış kodu gönderdiğinde etkinleşir. Yapıştırılan dize, içindeki metnin bir yapıştırma işleminden geldiğini belirten kaçış kodlarıyla “ayraçlanır”."
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Экранировать табуляции с помощью ^V"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekmeleri ^V ile kaçır"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставлять с табуляциями"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekmelerle yapıştır"
           }
         },
         "zh-Hans" : {
@@ -347,6 +371,12 @@
             "value" : "Заменить"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Değiştir"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать пунктуацию Unicode"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unicode noktalama işaretlerini dönüştür"
           }
         },
         "zh-Hans" : {
@@ -491,6 +527,12 @@
             "value" : "Учитывает escape-коды vim"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vim kaçış dizilerine uyar"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 мс"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
           }
         },
         "zh-Hans" : {
@@ -635,6 +683,12 @@
             "value" : "Преобразует различные виды кавычек и тире в их эквиваленты ASCII."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çeşitli tırnak işareti ve tire biçimlerini ASCII karşılıklarına dönüştürür."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -705,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать табуляции в пробелы:"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekmeleri boşluğa dönüştür:"
           }
         },
         "zh-Hans" : {
@@ -779,6 +839,12 @@
             "value" : "Как правило, ни DOS-, ни UNIX-переводы строк не используются в качестве ввода. Стандартом является CR."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS ve UNIX satır sonları genellikle girdi olarak kullanılmaz. Standart olan CR’dir."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экранировать символы оболочки с помощью \\"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kabuk karakterlerini \\ ile kaçır"
           }
         },
         "zh-Hans" : {
@@ -923,6 +995,12 @@
             "value" : "Размер фрагмента:"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parça boyutu:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстановка"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerine konacak"
           }
         },
         "zh-Hans" : {
@@ -1067,6 +1151,12 @@
             "value" : "Как правило, ни DOS-, ни UNIX-переводы строк не используются в качестве ввода. Стандартом является CR."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS ve UNIX satır sonları genellikle girdi olarak kullanılmaz. Standart olan CR’dir."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1137,6 +1227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Единственные «безопасные» управляющие коды: табуляция, перевод строки, перевод страницы и возврат каретки."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekme, satır besleme, sayfa besleme ve satır başı yalnızca “güvenli” denetim kodlarıdır."
           }
         },
         "zh-Hans" : {
@@ -1211,6 +1307,12 @@
             "value" : "Преобразования"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dönüşümler"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1383,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Синтаксис регулярных выражений ICU"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICU düzenli ifade sözdizimi"
           }
         },
         "zh-Hans" : {
@@ -1355,6 +1463,12 @@
             "value" : "100 мс"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 КБ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
           }
         },
         "zh-Hans" : {
@@ -1499,6 +1619,12 @@
             "value" : "на"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ile"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1569,6 +1695,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скорость"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hız"
           }
         },
         "zh-Hans" : {
@@ -1643,6 +1775,12 @@
             "value" : "Удалять небезопасные управляющие коды"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güvenli olmayan denetim kodlarını kaldır"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1713,6 +1851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ожидать приглашение оболочки перед вставкой каждой строки"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her satırı yapıştırmadan önce kabuk istemini bekle"
           }
         },
         "zh-Hans" : {
@@ -1787,6 +1931,12 @@
             "value" : "Межблочная пауза:"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parça gecikmesi:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1857,6 +2007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 байт"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 bayt"
           }
         },
         "zh-Hans" : {
@@ -1931,6 +2087,12 @@
             "value" : "Рег. выражение"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düzenli ifade"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2163,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 КБ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
           }
         },
         "zh-Hans" : {
@@ -2075,6 +2243,12 @@
             "value" : "150 мс"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2142,6 +2316,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -2219,6 +2399,12 @@
             "value" : "Радио"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radyo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2289,6 +2475,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалять переводы строк"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satır sonlarını kaldır"
           }
         },
         "zh-Hans" : {
@@ -2363,6 +2555,12 @@
             "value" : "$1, $2 и т. д. для групп захвата"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yakalama grupları için $1, $2 vb. kullanın"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2433,6 +2631,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Режим вставки в скобках"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayraçlı yapıştırma modu"
           }
         },
         "zh-Hans" : {
@@ -2507,6 +2711,12 @@
             "value" : "1 МБ"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2577,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать CRLF и LF в CR"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CRLF ve LF’yi CR’ye dönüştür"
           }
         },
         "zh-Hans" : {
@@ -2651,6 +2867,12 @@
             "value" : "Кодировать в Base64"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base 64 olarak kodla"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2721,6 +2943,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 с"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 sn"
           }
         },
         "zh-Hans" : {

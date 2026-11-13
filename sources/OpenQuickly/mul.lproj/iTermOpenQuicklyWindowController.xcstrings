@@ -59,6 +59,12 @@
             "value" : "Быстрое открытие"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hızlı Aç"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -131,6 +137,12 @@
             "value" : "Подробности"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayrıntı"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -201,6 +213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поиск сессий, профилей или расстановок окон"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oturumlarda, profillerde veya düzenlerde ara"
           }
         },
         "zh-Hans" : {

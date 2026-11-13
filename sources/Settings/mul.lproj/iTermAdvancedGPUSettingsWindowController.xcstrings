@@ -59,6 +59,12 @@
             "value" : "ОК"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключать GPU-рендерер в режиме низкого энергопотребления"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düşük güç modunda GPU işleyiciyi devre dışı bırak"
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Предпочитать встроенный GPU дискретному"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayrık GPU yerine tümleşik GPU’yu tercih et"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -275,6 +293,12 @@
             "value" : "Отключать GPU-рендерер при отключении от питания"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güç bağlantısı kesildiğinde GPU işleyiciyi devre dışı bırak"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -345,6 +369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         },
         "zh-Hans" : {

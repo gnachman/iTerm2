@@ -59,6 +59,12 @@
             "value": "Чёрно-белый"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siyah beyaz"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

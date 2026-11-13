@@ -59,6 +59,12 @@
             "value": "Экспорт…"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dışa Aktar…"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -129,6 +135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сейчас"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şimdi"
           }
         },
         "zh-Hans": {
@@ -203,6 +215,12 @@
             "value": "Управление мгновенным повтором"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anında Tekrar Denetimi"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -273,6 +291,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отмена"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vazgeç"
           }
         },
         "zh-Hans": {
@@ -347,6 +371,12 @@
             "value": "Живой просмотр"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canlı Görünüm"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -417,6 +447,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Время"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zaman"
           }
         },
         "zh-Hans": {

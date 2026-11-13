@@ -72,6 +72,12 @@
             "value" : "iTerm2"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -142,6 +148,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать AppleScript."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama AppleScript’i kullanmak istiyor."
           }
         },
         "zh-Hans" : {
@@ -216,6 +228,12 @@
             "value" : "Приложение в iTerm2 хочет использовать Bluetooth."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama Bluetooth’u kullanmak istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -286,6 +304,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать данные календаря."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama Takvim verilerini kullanmak istiyor."
           }
         },
         "zh-Hans" : {
@@ -360,6 +384,12 @@
             "value" : "Приложение в iTerm2 хочет использовать камеру."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama kamerayı kullanmak istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -432,6 +462,12 @@
             "value" : "Приложение в iTerm2 хочет использовать ваши контакты."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama kişilerinizi kullanmak istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -499,6 +535,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -576,6 +618,12 @@
             "value" : "Приложение в iTerm2 хочет получить доступ к локальной сети."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama yerel ağa erişmek istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -646,6 +694,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать данные о вашем местоположении, даже в фоновом режиме."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama, arka planda bile konum bilgilerinizi kullanmak istiyor."
           }
         },
         "zh-Hans" : {
@@ -720,6 +774,12 @@
             "value" : "Приложение в iTerm2 хочет использовать данные о вашем местоположении."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama konum bilgilerinizi kullanmak istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -790,6 +850,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать данные о вашем местоположении, пока оно активно."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama, etkinken konum bilgilerinizi kullanmak istiyor."
           }
         },
         "zh-Hans" : {
@@ -864,6 +930,12 @@
             "value" : "Приложение в iTerm2 хочет использовать ваш микрофон."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama mikrofonunuzu kullanmak istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -934,6 +1006,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать фотобиблиотеку."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama Fotoğraflar kitaplığını kullanmak istiyor."
           }
         },
         "zh-Hans" : {
@@ -1008,6 +1086,12 @@
             "value" : "Приложение в iTerm2 хочет использовать ваши напоминания."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama anımsatıcılarınızı kullanmak istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1080,6 +1164,12 @@
             "value" : "Приложение в iTerm2 хочет использовать распознавание речи."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir uygulama konuşma tanımayı kullanmak istiyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1150,6 +1240,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Операция, выполняемая программой в iTerm2, требует повышенных прав."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2’deki bir programın yaptığı işlem yükseltilmiş izin gerektiriyor."
           }
         },
         "zh-Hans" : {

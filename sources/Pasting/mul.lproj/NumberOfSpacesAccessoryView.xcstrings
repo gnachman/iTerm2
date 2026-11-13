@@ -59,6 +59,12 @@
             "value": "Размер табуляции в пробелах:"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sekme boyutu (boşluk sayısı):"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -126,6 +132,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "tr": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

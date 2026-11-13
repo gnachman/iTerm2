@@ -59,6 +59,12 @@
             "value" : "Простой скрипт, у которого нет других зависимостей, кроме библиотеки iterm2."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iterm2 kitaplığı dışında hiçbir bağımlılığı olmayan basit bir betik."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -126,6 +132,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -203,6 +215,12 @@
             "value" : "Базовый"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temel"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -270,6 +288,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -347,6 +371,12 @@
             "value" : "Демон длительного выполнения"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uzun Süre Çalışan Arka Plan Hizmeti"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Простой"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basit"
           }
         },
         "zh-Hans" : {
@@ -491,6 +527,12 @@
             "value" : "Отмена"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите этот шаблон для простого скрипта, который выполняет действия и завершает работу."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eylemleri gerçekleştirip sonlanan basit bir betik için bu şablonu seçin."
           }
         },
         "zh-Hans" : {
@@ -635,6 +683,12 @@
             "value" : "Скрипт, который зависит от пакетов PyPI, помимо библиотеки iterm2. Для этого скрипта будет создано отдельное окружение pyenv."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iterm2 kitaplığı dışında PyPI paketlerine bağımlı bir betik. Bu betik için özel bir pyenv oluşturulur."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -702,6 +756,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -779,6 +839,12 @@
             "value" : "Выберите шаблон скрипта:"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir betik şablonu seçin:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Полное окружение"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tam Ortam"
           }
         },
         "zh-Hans" : {
@@ -923,6 +995,12 @@
             "value" : "Выберите этот шаблон для скрипта, который остаётся запущенным и реагирует на уведомления."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çalışmaya devam eden ve bildirimlere yanıt veren bir betik için bu şablonu seçin."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -990,6 +1068,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -1065,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите окружение Python:"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir Python ortamı seçin:"
           }
         },
         "zh-Hans" : {

@@ -1179,6 +1179,7 @@
 		9EF0BE79D0A18F6B6433E07F /* repl_banner-fr.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4D1526B5EEFF52435633BD72 /* repl_banner-fr.txt */; };
 		B44D0D7352607791E4D1D141 /* repl_banner-zh-Hant.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0E76A3A866085A1F919D6219 /* repl_banner-zh-Hant.txt */; };
 		0CCB6CA85B2F71B032F49D68 /* repl_banner-it.txt in Resources */ = {isa = PBXBuildFile; fileRef = 558E4A7A09D1C7875371E58C /* repl_banner-it.txt */; };
+		9C5EF877A91BD339866A092E /* repl_banner-tr.txt in Resources */ = {isa = PBXBuildFile; fileRef = 349F14A036B697A98BF7DE19 /* repl_banner-tr.txt */; };
 		92A29632EF0D9D0E455E2AA6 /* UserVariableAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467CB6090319516B1F45E9FD /* UserVariableAssignment.swift */; };
 		93192814C6B3391E62C3E35F /* FloatingPaneGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BF7D3BA2F495FEEAF1F1C9 /* FloatingPaneGeometry.swift */; };
 		9459958EBE38B60F9848F811 /* NSFont+BijectionIdentifiable.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB51348EA9D7FCF98DED3D17 /* NSFont+BijectionIdentifiable.swift */; };
@@ -4761,6 +4762,7 @@
 		87E6D376E84D876F7489A18E /* repl_banner-fr.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4D1526B5EEFF52435633BD72 /* repl_banner-fr.txt */; };
 		CE7CC731CB8B32F4A1D41DC9 /* repl_banner-zh-Hant.txt in Resources */ = {isa = PBXBuildFile; fileRef = 0E76A3A866085A1F919D6219 /* repl_banner-zh-Hant.txt */; };
 		2877EF037945DD91E2FA6876 /* repl_banner-it.txt in Resources */ = {isa = PBXBuildFile; fileRef = 558E4A7A09D1C7875371E58C /* repl_banner-it.txt */; };
+		71EBDA870F768D613C38493D /* repl_banner-tr.txt in Resources */ = {isa = PBXBuildFile; fileRef = 349F14A036B697A98BF7DE19 /* repl_banner-tr.txt */; };
 		D3C3D7DE7E900CCF5BA700F0 /* ChildReaper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 322466D9BE92E249E2878D66 /* ChildReaper.swift */; };
 		D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = D3CE2D4C1A00936F0098ED99 /* PSMDarkTabStyle.h */; };
 		D3D470D34777DFA2474E14DC /* iTermSessionTabStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1C7B91071000DE37B9DA33 /* iTermSessionTabStatus.swift */; };
@@ -9058,6 +9060,7 @@
 		4D1526B5EEFF52435633BD72 /* repl_banner-fr.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-fr.txt"; path = "sources/repl_banner-fr.txt"; sourceTree = "<group>"; };
 		0E76A3A866085A1F919D6219 /* repl_banner-zh-Hant.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-zh-Hant.txt"; path = "sources/repl_banner-zh-Hant.txt"; sourceTree = "<group>"; };
 		558E4A7A09D1C7875371E58C /* repl_banner-it.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-it.txt"; path = "sources/repl_banner-it.txt"; sourceTree = "<group>"; };
+		349F14A036B697A98BF7DE19 /* repl_banner-tr.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = "repl_banner-tr.txt"; path = "sources/repl_banner-tr.txt"; sourceTree = "<group>"; };
 		DF18C01510605DB0C639038F /* ai-models.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = "ai-models.json"; path = "OtherResources/ai-models.json"; sourceTree = "<group>"; };
 		DF2961C37EC2E8B987F3D400 /* iTermAPICreateTabFocusDeferral.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermAPICreateTabFocusDeferral.h; sourceTree = "<group>"; };
 		DF53E3C0036CD76566117D88 /* iTermRowOutputCache.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRowOutputCache.h; sourceTree = "<group>"; };
@@ -9590,6 +9593,7 @@
 				4D1526B5EEFF52435633BD72 /* repl_banner-fr.txt */,
 				0E76A3A866085A1F919D6219 /* repl_banner-zh-Hant.txt */,
 				558E4A7A09D1C7875371E58C /* repl_banner-it.txt */,
+				349F14A036B697A98BF7DE19 /* repl_banner-tr.txt */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -17208,6 +17212,7 @@
 				es,
 				fr,
 				it,
+				tr,
 				en,
 				Base,
 			);
@@ -17845,6 +17850,7 @@
 				9EF0BE79D0A18F6B6433E07F /* repl_banner-fr.txt in Resources */,
 				B44D0D7352607791E4D1D141 /* repl_banner-zh-Hant.txt in Resources */,
 				0CCB6CA85B2F71B032F49D68 /* repl_banner-it.txt in Resources */,
+				9C5EF877A91BD339866A092E /* repl_banner-tr.txt in Resources */,
 				65B1B9DF105B29AAF3D6D77F /* companion-browser-editing.js in Resources */,
 				640AE7AAB1BDCC09B531A3AC /* it2.py in Resources */,
 				923F4778B3116EBDC9D56980 /* it2_git_state.py in Resources */,
@@ -18549,6 +18555,7 @@
 				87E6D376E84D876F7489A18E /* repl_banner-fr.txt in Resources */,
 				CE7CC731CB8B32F4A1D41DC9 /* repl_banner-zh-Hant.txt in Resources */,
 				2877EF037945DD91E2FA6876 /* repl_banner-it.txt in Resources */,
+				71EBDA870F768D613C38493D /* repl_banner-tr.txt in Resources */,
 				D40FA74614B9343BFA69E64D /* companion-browser-editing.js in Resources */,
 				1CFBC8DDC0F47C682E8BA689 /* it2.py in Resources */,
 				72386C923E6555FC1BEE219E /* it2_git_state.py in Resources */,

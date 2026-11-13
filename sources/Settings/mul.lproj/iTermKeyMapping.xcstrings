@@ -59,6 +59,12 @@
             "value" : "Предустановки…"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazır Ayarlar…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить элемент Touch Bar"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar Öğesi Ekle"
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Действие"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eylem"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Обходные решения Touch Bar"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar Hafifletmeleri"
           }
         },
         "zh-Hans" : {
@@ -347,6 +371,12 @@
             "value" : "Визуальный индикатор клавиши Esc"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Görsel esc tuşu göstergesi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сочетание клавиш"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuş Kombinasyonu"
           }
         },
         "zh-Hans" : {
@@ -491,6 +527,12 @@
             "value" : "Тактильная отдача при нажатии Esc"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esc tuşuna basarken dokunsal geri bildirim"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -563,6 +605,12 @@
             "value" : "ОК"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -633,6 +681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Звук нажатия клавиши Esc"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "esc tuşu için tuş tıklama sesi"
           }
         },
         "zh-Hans" : {

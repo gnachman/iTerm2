@@ -59,6 +59,12 @@
             "value": "Установщик среды выполнения Python"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Python Çalışma Zamanı Yükleyicisi"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -131,6 +137,12 @@
             "value": "Отмена"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vazgeç"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -201,6 +213,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Загрузка дополнительных компонентов…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İsteğe bağlı bileşenler indiriliyor…"
           }
         },
         "zh-Hans": {

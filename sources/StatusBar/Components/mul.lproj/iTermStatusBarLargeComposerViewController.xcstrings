@@ -59,6 +59,12 @@
             "value" : "Автодополнение ИИ включено: весь текст отправляется в ИИ"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YZ tamamlama etkin: tüm metin YZ’ye gönderilir"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Описывает, как использовать Композитор."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oluşturucunun nasıl kullanılacağını açıklar."
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Нажмите ⇧↩ для отправки."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Göndermek için ⇧↩ tuşlarına basın."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ИИ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YZ"
           }
         },
         "zh-Hans" : {

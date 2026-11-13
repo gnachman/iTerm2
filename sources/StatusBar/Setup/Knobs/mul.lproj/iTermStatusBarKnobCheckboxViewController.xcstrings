@@ -59,6 +59,12 @@
             "value": "Флажок"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İşaretle"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

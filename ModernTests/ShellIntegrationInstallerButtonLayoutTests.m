@@ -126,7 +126,7 @@ static NSString *ControlText(NSView *view) {
 }
 
 - (NSArray<NSString *> *)languages {
-    return @[ @"de", @"es", @"fr", @"it", @"ja", @"pt-BR", @"ru", @"zh-Hans", @"zh-Hant" ];
+    return @[ @"de", @"es", @"fr", @"it", @"ja", @"pt-BR", @"ru", @"tr", @"zh-Hans", @"zh-Hant" ];
 }
 
 - (void)testSecondPageChoiceButtonsFit {

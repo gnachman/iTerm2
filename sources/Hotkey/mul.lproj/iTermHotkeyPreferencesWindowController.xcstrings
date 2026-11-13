@@ -59,6 +59,12 @@
             "value" : "⌥ Option"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрепить окно горячей клавиши (остаётся открытым при потере фокуса клавиатуры)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kısayol tuşu penceresini sabitle (klavye odağı kaybolunca açık kalır)"
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Горячая клавиша:"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kısayol tuşu:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Примечание: окно открывается повторно, только если оно было закрыто из-за активации другого приложения."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not: Pencere yalnızca başka bir uygulama etkin hale geldiği için kapatıldıysa yeniden açılır."
           }
         },
         "zh-Hans" : {
@@ -347,6 +371,12 @@
             "value" : "Дополнительные горячие клавиши"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ek Kısayol Tuşları"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "При нажатии горячей клавиши, привязанной к этому профилю, отдельное окно будет показано или скрыто. Каждый профиль с горячей клавишей управляет своим собственным окном горячей клавиши."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu profile atanan kısayol tuşuna bastığınızda ayrılmış bir pencere görünür veya gizlenir. Kısayol tuşu olan her profil kendi Kısayol Tuşu Penceresini denetler."
           }
         },
         "zh-Hans" : {
@@ -491,6 +527,12 @@
             "value" : "Не делать ничего особенного"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Özel bir şey yapma"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -558,6 +600,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -635,6 +683,12 @@
             "value" : "Показывать это окно горячей клавиши"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu Kısayol Tuşu Penceresini Göster"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -707,6 +761,12 @@
             "value" : "Настройки окна горячей клавиши"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kısayol Tuşu Penceresi Ayarları"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -774,6 +834,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -851,6 +917,12 @@
             "value" : "⚠️ Это сочетание клавиш уже используется другим профилем"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Başka bir profil bu kısayolu kullanıyor"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -918,6 +990,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -995,6 +1073,12 @@
             "value" : "Клавиша двойного нажатия:"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çift dokunma tuşu:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1065,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Автоматически открывать повторно при активации приложения"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulama yeniden etkinleşince otomatik olarak yeniden aç"
           }
         },
         "zh-Hans" : {
@@ -1139,6 +1229,12 @@
             "value" : "⚠️ Это двойное нажатие уже используется другим профилем"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Başka bir profil bu çift dokunmayı kullanıyor"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1209,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать это окно горячей клавиши, если не открыто ни одно другое окно"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başka pencere açık değilse bu Kısayol Tuşu Penceresini göster"
           }
         },
         "zh-Hans" : {
@@ -1283,6 +1385,12 @@
             "value" : "Плавающие окна перекрывают другие окна и Dock, а также полноэкранные окна других приложений (если пространству окна горячей клавиши назначены все пространства)."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yüzen pencereler diğer pencerelerin, Dock’un ve (Kısayol Tuşu Penceresinin alanı Tüm Alanlar olarak ayarlıysa) diğer uygulamaların Tam Ekran pencerelerinin üzerinde görünür."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1353,6 +1461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         },
         "zh-Hans" : {
@@ -1427,6 +1541,12 @@
             "value" : "При щелчке по значку в Dock:"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock simgesi tıklandığında:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1497,6 +1617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Анимировать показ и скрытие"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gösterirken ve gizlerken canlandır"
           }
         },
         "zh-Hans" : {
@@ -1571,6 +1697,12 @@
             "value" : "ОК"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1641,6 +1773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
           }
         },
         "zh-Hans" : {
@@ -1715,6 +1853,12 @@
             "value" : "Плавающее окно"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yüzen pencere"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1782,6 +1926,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -1857,6 +2007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дополнительные горячие клавиши…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ek Kısayol Tuşları…"
           }
         },
         "zh-Hans" : {

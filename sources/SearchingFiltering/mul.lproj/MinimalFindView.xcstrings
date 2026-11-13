@@ -59,6 +59,12 @@
             "value" : "Фильтр"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtre"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока без учёта регистра"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarsız Alt Dize"
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Подстрока (умный регистр)"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akıllı Büyük/Küçük Harf Alt Dize"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (с учётом регистра)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarlı Alt Dize"
           }
         },
         "zh-Hans" : {
@@ -347,6 +371,12 @@
             "value" : "Регулярное выражение (без учёта регистра)"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarsız Düzenli İfade"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Очистить историю поиска"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arama Geçmişini Sil"
           }
         },
         "zh-Hans" : {
@@ -491,6 +527,12 @@
             "value" : "Поиск только по выбранной команде"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yalnızca seçili komutta aranıyor"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение (без учёта регистра)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarsız Düzenli İfade"
           }
         },
         "zh-Hans" : {
@@ -635,6 +683,12 @@
             "value" : "Фильтр"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrele"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -705,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (с учётом регистра)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarlı Alt Dize"
           }
         },
         "zh-Hans" : {
@@ -779,6 +839,12 @@
             "value" : "Регулярное выражение (с учётом регистра)"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarlı Düzenli İfade"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (умный регистр)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akıllı Büyük/Küçük Harf Alt Dize"
           }
         },
         "zh-Hans" : {
@@ -923,6 +995,12 @@
             "value" : "Подстрока (без учёта регистра)"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarsız Alt Dize"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение (с учётом регистра)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarlı Düzenli İfade"
           }
         },
         "zh-Hans" : {

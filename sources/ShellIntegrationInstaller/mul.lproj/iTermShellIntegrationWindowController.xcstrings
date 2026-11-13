@@ -59,6 +59,12 @@
             "value" : "Загружает последнюю версию. Выполняет curl | bash"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En son sürümü indirir. curl | bash çalıştırır"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Продолжить"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devam Et"
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "ОК"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         },
         "zh-Hans" : {
@@ -347,6 +371,12 @@
             "value" : "1. Определяет, какой shell вы используете.\n2. Добавляет файлы скриптов в вашем домашнем каталоге.\n3. Устанавливает служебные скрипты.\n4. Изменяет стартовые скрипты вашего shell."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Hangi kabuğu kullandığınızı bulma.\n2. Ana dizininize betik dosyaları ekleme.\n3. Yardımcı betikleri yükleme.\n4. Kabuğunuzun başlangıç betiklerini değiştirme."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geri Dön"
           }
         },
         "zh-Hans" : {
@@ -491,6 +527,12 @@
             "value" : "Утилиты включают скрипты для загрузки файлов, встроенного отображения изображений и не только. "
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yardımcı araçlar arasında dosya indirme, resimleri satır içinde gösterme ve daha fazlası için betikler bulunur. "
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geri Dön"
           }
         },
         "zh-Hans" : {
@@ -635,6 +683,12 @@
             "value" : "Продолжить"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devam Et"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -705,6 +759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         },
         "zh-Hans" : {
@@ -779,6 +839,12 @@
             "value" : "Пропустить"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atla"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         },
         "zh-Hans" : {
@@ -923,6 +995,12 @@
             "value" : "Просмотреть команду"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komutu Önizle"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установка без интернета"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İnternetsiz Yükleme"
           }
         },
         "zh-Hans" : {
@@ -1067,6 +1151,12 @@
             "value" : "Загрузить и запустить установщик"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yükleyiciyi İndir ve Çalıştır"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1137,6 +1227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Также установить утилиты iTerm2"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2 yardımcı araçlarını da yükle"
           }
         },
         "zh-Hans" : {
@@ -1211,6 +1307,12 @@
             "value" : "Пошаговая ручная установка. Загрузка не требуется."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adım adım kılavuzlu elle yükleme. İndirme gerekmez."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1383,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Просмотреть команду"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komutu Önizle"
           }
         },
         "zh-Hans" : {
@@ -1355,6 +1463,12 @@
             "value" : "Продолжить"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devam Et"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1422,6 +1536,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -1499,6 +1619,12 @@
             "value" : "Просмотреть команду"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komutu Önizle"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1569,6 +1695,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geri Dön"
           }
         },
         "zh-Hans" : {
@@ -1643,6 +1775,12 @@
             "value" : "Как вы хотите установить Shell-интеграцию?\n\nВ ходе этого процесса будут изменены стартовые скрипты вашего shell. Этот установщик будет вводить команды в окне терминала за вас."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kabuk Entegrasyonunu nasıl yüklemek istersiniz?\n\nBu işlemde kabuğunuzun başlangıç betikleri değiştirilecektir. Bu yükleyici komutları sizin yerinize terminal penceresine girecektir."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1713,6 +1851,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Просмотреть команду"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komutu Önizle"
           }
         },
         "zh-Hans" : {
@@ -1787,6 +1931,12 @@
             "value" : "Установка завершена!"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yükleme tamamlandı!"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1857,6 +2007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Будет выполнена следующая команда:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu, şu komutu çalıştıracak:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "zh-Hans" : {
@@ -1931,6 +2087,12 @@
             "value" : "Создайте новую вкладку, чтобы опробовать это.\n\nДля лучшего результата установите shell-интеграцию на всех хостах, к которым вы подключаетесь по ssh."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Denemek için yeni bir sekme oluşturun.\n\nEn iyi sonuç için kabuk entegrasyonunu ssh ile bağlandığınız tüm ana makinelere yükleyin."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2163,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell-интеграция состоит из скриптов, которые помогают вашему shell взаимодействовать с iTerm2, чтобы отслеживать выполняемые вами команды, текущий каталог и другое состояние. "
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kabuk Entegrasyonu, kabuğunuzun iTerm2 ile iletişim kurmasına yardımcı olan betiklerden oluşur; böylece iTerm2 çalıştırdığınız komutları, geçerli dizininizi ve diğer durumları izleyebilir. "
           }
         },
         "zh-Hans" : {
@@ -2075,6 +2243,12 @@
             "value" : "Установить Shell-интеграцию"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kabuk Entegrasyonunu Yükle"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2145,6 +2319,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         },
         "zh-Hans" : {

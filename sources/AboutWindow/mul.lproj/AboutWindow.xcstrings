@@ -59,6 +59,12 @@
             "value": "iTerm2"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -129,6 +135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Автор: Джордж Нахман и соавторы"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "George Nachman ve Katkıda Bulunanlar"
           }
         },
         "zh-Hans": {

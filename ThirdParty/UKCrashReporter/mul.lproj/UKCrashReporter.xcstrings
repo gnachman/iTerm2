@@ -59,6 +59,12 @@
             "value" : "Описание"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Açıklama"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Журнал сбоя"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çökme Günlüğü"
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Отчёт о сбое"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çökme Raporlayıcı"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Похоже, что {APPNAME} завершилось сбоем при последнем использовании. Хотите отправить журнал сбоя разработчикам?\n\nЖурналы сбоев от Apple не отправляются другим разработчикам, поэтому это единственный способ, с помощью которого разработчики {APPNAME} могут узнать об этом сбое и исправить его."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "{APPNAME} uygulamasının en son kullanıldığında çöktüğü anlaşılıyor. Geliştiricilere bir çökme günlüğü göndermek ister misiniz?\n\nApple’ın çökme günlükleri diğer geliştiricilere gönderilmez; bu nedenle {APPNAME} geliştiricilerinin bu çökmeden haberdar olmasının ve düzeltmesinin tek yolu budur."
           }
         },
         "zh-Hans" : {
@@ -347,6 +371,12 @@
             "value" : "Вы можете удалить любую информацию, которую не хотите передавать, но это усложнит обнаружение ошибки. По умолчанию передаются журнал сбоя, а также сведения о вашем Mac и ваших настройках."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İletilmesini istemediğiniz bilgileri silebilirsiniz, ancak bu hatanın bulunmasını zorlaştırır. Varsayılan olarak çökme günlüğü, kullandığınız Mac modeli ve ayarlarınız iletilir."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -417,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gönder"
           }
         },
         "zh-Hans" : {
@@ -491,6 +527,12 @@
             "value" : "Напомнить позже"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daha Sonra Hatırlat"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -561,6 +603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отклонить"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yok Say"
           }
         },
         "zh-Hans" : {

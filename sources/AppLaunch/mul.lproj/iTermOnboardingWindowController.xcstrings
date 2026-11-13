@@ -59,6 +59,12 @@
             "value" : "Используйте iTerm2, даже когда вы не рядом со своим Mac. Вы можете управлять им через чат с ИИ, просматривать содержимое сеанса и получать push-уведомления. Сквозное шифрование защищает ваши данные. <a href=\"iterm2whatsnew:companion\">Попробуйте прямо сейчас!</a>"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac’inizden uzakta olduğunuzda da iTerm2’yi kullanın. Onu YZ sohbeti üzerinden kontrol edebilir, oturum içeriğini görüntüleyebilir ve anlık bildirimler alabilirsiniz. Uçtan uca şifreleme verilerinizi güvende tutar. <a href=\"iterm2whatsnew:companion\">Hemen deneyin!</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -126,6 +132,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -203,6 +215,12 @@
             "value" : "Новый режим чата с ИИ, Оркестрация, позволяет ИИ взять управление на себя. Он может создавать окна, дожидаться завершения задач (даже в интерактивных приложениях), а новый автоматический проверщик безопасности избавляет вас от необходимости отвечать почти на все запросы разрешений. <a href=\"iterm2whatsnew:orchestration\">Попробуйте прямо сейчас!</a>"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni bir YZ sohbet modu olan Orkestrasyon, işi sizin yerinize YZ’nin yönetmesini sağlar. Pencere oluşturabilir, görevlerin tamamlanmasını bekleyebilir (etkileşimli uygulamalarda bile) ve yeni otomatik güvenlik denetleyicisi sayesinde neredeyse tüm izin istemlerini yanıtlamanız gerekmez. <a href=\"iterm2whatsnew:orchestration\">Hemen deneyin!</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -270,6 +288,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -347,6 +371,12 @@
             "value" : "Новая функция «Снимки экрана» упрощает создание PNG-файла с содержимым терминала. Она поддерживает скрытие данных и выделения. Используйте <a href=\"iterm2whatsnew:screenshot\">Сеанс > Сделать снимок экрана</a>, чтобы активировать её."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni Ekran Görüntüleri özelliği, terminal içeriğinizin PNG’sini oluşturmayı kolaylaştırır. Karartma ve vurgulamayı destekler. Etkinleştirmek için <a href=\"iterm2whatsnew:screenshot\">Oturum > Ekran Görüntüsü Oluştur</a> komutunu kullanın."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -419,6 +449,12 @@
             "value" : "Что нового в версии 3.7"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sürüm 3.7’deki Yenilikler"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -486,6 +522,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -563,6 +605,12 @@
             "value" : "●"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -633,6 +681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Интеграция с Claude Code"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code Entegrasyonu"
           }
         },
         "zh-Hans" : {
@@ -707,6 +761,12 @@
             "value" : "Чтобы упростить работу с большим количеством вкладок, теперь их можно объединять в сворачиваемые группы. Кроме того, панель вкладок теперь прокручивается, а не показывает меню переполнения."
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çok sayıda sekmeyi yönetmenize yardımcı olmak için artık sekmeleri daraltılabilir gruplar halinde birleştirebilirsiniz. Ayrıca sekme çubuğu artık taşma menüsü göstermek yerine kayıyor."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -774,6 +834,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -851,6 +917,12 @@
             "value" : "Интеграция с Claude Code объединяет несколько связанных сеансов (например, просмотр кода и чтение различий) в единый настраиваемый интерфейс. Она также показывает статус Claude, чтобы вам было проще найти экземпляры, ожидающие вашего внимания. <a href=\"iterm2whatsnew:claudecode\">Попробуйте прямо сейчас!</a>"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code entegrasyonu, kod incelemesi ve diff okuma gibi birbiriyle ilişkili birden fazla oturumu özelleştirilebilir bir arayüzde düzenler. Ayrıca Claude’un durumunu göstererek dikkatinizi bekleyen örnekleri kolayca bulmanızı sağlar. <a href=\"iterm2whatsnew:claudecode\">Hemen deneyin!</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -923,6 +995,12 @@
             "value" : "Приложение Companion для iPhone"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone Eşlik Eden Uygulaması"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -990,6 +1068,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1067,6 +1151,12 @@
             "value" : "Оркестрация"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkestrasyon"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1137,6 +1227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Группы вкладок"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekme Grupları"
           }
         },
         "zh-Hans" : {
@@ -1211,6 +1307,12 @@
             "value" : "Снимки экрана"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekran Görüntüleri"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1278,6 +1380,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

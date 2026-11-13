@@ -59,6 +59,12 @@
             "value" : "Очистить историю поиска"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arama Geçmişini Sil"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -129,6 +135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока с учётом регистра"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarlı Alt Dize"
           }
         },
         "zh-Hans" : {
@@ -203,6 +215,12 @@
             "value" : "Подстрока без учёта регистра"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarsız Alt Dize"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поиск"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ara"
           }
         },
         "zh-Hans" : {
@@ -347,6 +371,12 @@
             "value" : "Регулярное выражение с учётом регистра"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarlı Düzenli İfade"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -419,6 +449,12 @@
             "value" : "Подстрока с умным учётом регистра"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akıllı Büyük/Küçük Harf Alt Dize"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение без учёта регистра"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyük/Küçük Harfe Duyarsız Düzenli İfade"
           }
         },
         "zh-Hans" : {

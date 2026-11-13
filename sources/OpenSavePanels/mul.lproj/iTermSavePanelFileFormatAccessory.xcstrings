@@ -59,6 +59,12 @@
             "value": "Включать метки времени"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zaman damgalarını ekle"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -129,6 +135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Формат файла:"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosya biçimi:"
           }
         },
         "zh-Hans": {

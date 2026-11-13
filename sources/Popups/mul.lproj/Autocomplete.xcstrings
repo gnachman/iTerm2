@@ -59,6 +59,12 @@
             "value" : "Автозаполнение"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otomatik Tamamlama"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",

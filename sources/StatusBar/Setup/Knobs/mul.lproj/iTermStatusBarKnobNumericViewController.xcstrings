@@ -59,6 +59,12 @@
             "value": "Подпись"
           }
         },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etiket"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
