@@ -21719,7 +21719,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/sources",
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 			};
 			name = Beta;
@@ -21752,7 +21751,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/sources",
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 			};
 			name = Nightly;
@@ -23164,7 +23162,6 @@
 				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -23250,7 +23247,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -23599,7 +23595,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -23680,7 +23675,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -23763,7 +23757,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -24842,7 +24835,6 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/include",
 				);
 			};
@@ -24929,7 +24921,6 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/include",
 				);
 			};
@@ -25016,7 +25007,6 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/include",
 				);
 			};
@@ -25103,7 +25093,6 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/iTerm2";
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 					"$(PROJECT_DIR)/ThirdParty/libgit2/include",
 				);
 			};
@@ -25173,7 +25162,6 @@
 				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -25239,7 +25227,6 @@
 				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -25305,7 +25292,6 @@
 				SWIFT_VERSION = 6.0;
 				USER_HEADER_SEARCH_PATHS = (
 					"$(CONFIGURATION_TEMP_DIR)/iTerm2SharedARC.build/DerivedSources",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -25700,7 +25686,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/sources",
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 			};
 			name = Development;
@@ -25733,7 +25718,6 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/sources",
 					"$(SRCROOT)/ThirdParty",
-					"$(PROJECT_DIR)/ThirdParty/adblock-rust/include",
 				);
 			};
 			name = Deployment;

@@ -110,7 +110,7 @@ Not bumped, and why:
 
 - openssl (gnachman fork) builds via the Makefile `DEPLOYMENT_TARGET`,
   no pbxproj target to touch.
-- adblock-rust, railroad_dsl (Rust) and iTerm2-shell-integration (shell)
+- railroad_dsl (Rust) and iTerm2-shell-integration (shell)
   have no Apple deployment target and emit no Apple deprecation warnings.
 - SFSymbolEnum is a codegen package (its output compiles under the app's
   target), so its own platform is irrelevant.
