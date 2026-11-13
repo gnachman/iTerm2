@@ -213,6 +213,10 @@ Improvements:
   to pick up security fixes.
 
 Bug Fixes:
+- A sixel image with very large dimensions
+  could crash iTerm2’s image decoder or use
+  gigabytes of memory. Images with more pixels
+  than 8192×8192 are now rejected.
 - The tooltip for “Enable support for
   right-to-left scripts” in Settings > General >
   Experimental described a tmux setting instead.

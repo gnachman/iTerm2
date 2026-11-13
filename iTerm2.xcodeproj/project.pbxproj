@@ -5733,6 +5733,7 @@
 		427970C67603E484CBA62CED /* CompanionMessageSubstance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionMessageSubstance.swift; sourceTree = "<group>"; };
 		434641A807C0B3035264BEF2 /* iTermSessionPreviewPanel.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermSessionPreviewPanel.m; sourceTree = "<group>"; };
 		43834CBF2E72D7D09EF83805 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/ImportingWindowController.xcstrings; sourceTree = "<group>"; };
+		449EDDC10CA5DD519CEC7DEC /* iTermSixelSize.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermSixelSize.h; sourceTree = "<group>"; };
 		44CB910BF4A14464953BB8DE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermParameterPanelWindowController.xib; sourceTree = "<group>"; };
 		455A915DA551BA62B103AE45 /* ClaudeCodeRemoteConnectionFacts.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeRemoteConnectionFacts.swift; sourceTree = "<group>"; };
 		457E888882A6E3DD414DA970 /* CompanionHostBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionHostBridge.swift; sourceTree = "<group>"; };
@@ -10421,6 +10422,7 @@
 				759637A22593AE0700E278CC /* Info.plist */,
 				A60D20C82597F496004AC979 /* iTermImage+ImageWithData.m */,
 				A60383162943AF1500FE11C2 /* iTerm2SandboxedWorker-Bridging-Header.h */,
+				449EDDC10CA5DD519CEC7DEC /* iTermSixelSize.h */,
 			);
 			path = iTerm2SandboxedWorker;
 			sourceTree = "<group>";

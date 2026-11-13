@@ -8,6 +8,7 @@
 #import "iTermImage+Sixel.h"
 #import "iTermImage+Private.h"
 #include "sixel.h"
+#import "iTermSixelSize.h"
 
 @implementation NSImage(ImageDecoder)
 
@@ -41,7 +42,7 @@
 
 @end
 
-static NSImage *DecodeSixelData(sixel_decoder_t *decoder, NSData *data) {
+static NSImage *DecodeSixelData(NSData *data) {
     unsigned char *pixels = NULL;
     int width = 0;
     int height = 0;
@@ -58,15 +59,25 @@ static NSImage *DecodeSixelData(sixel_decoder_t *decoder, NSData *data) {
                                           &palette,
                                           &ncolors,
                                           NULL);
-    if (status != SIXEL_OK || ncolors <= 0) {
+    size_t pixelCount = 0;
+    size_t byteCount = 0;
+    if (status != SIXEL_OK || ncolors <= 0 || !iTermSixelRGBASize(width, height, &pixelCount, &byteCount)) {
+        // Computing width * height * 4 in int could overflow and undersize the buffer below.
+        free(palette);
+        free(pixels);
         return nil;
     }
-    
+
     const int limit = ncolors - 1;
-    NSMutableData *rgbaData = [NSMutableData dataWithLength:width * height * 4];
+    NSMutableData *rgbaData = [NSMutableData dataWithLength:byteCount];
+    if (!rgbaData) {
+        free(palette);
+        free(pixels);
+        return nil;
+    }
     unsigned char *rgba = rgbaData.mutableBytes;
     const int stride = 3;
-    for (int i = 0; i < width * height; i++) {
+    for (size_t i = 0; i < pixelCount; i++) {
         const unsigned char index = MAX(0, MIN(pixels[i], limit));
         rgba[i * 4 + 0] = palette[index * stride + 0];
         rgba[i * 4 + 1] = palette[index * stride + 1];
@@ -97,22 +108,10 @@ static NSImage *ImageFromSixelData(NSData *data) {
     if (!paramString) {
         return nil;
     }
-    sixel_decoder_t *decoder;
-    SIXELSTATUS status = sixel_decoder_new(&decoder, NULL);
-    if (status != SIXEL_OK) {
-        return nil;
-    }
-    NSArray<NSString *> *paramParts = [paramString componentsSeparatedByString:@";"];
-    [paramParts enumerateObjectsUsingBlock:^(NSString * _Nonnull value, NSUInteger index, BOOL * _Nonnull stop) {
-        sixel_decoder_setopt(decoder,
-                             (int)index,
-                             value.UTF8String);
-    }];
-    
-    NSImage *image = DecodeSixelData(decoder, payload);
-    sixel_decoder_unref(decoder);
-    
-    return image;
+    // The DCS parameters used to be passed to sixel_decoder_setopt() with each parameter's
+    // position as the option letter, which made no sense, and sixel_decode_raw() never consults a
+    // decoder anyway.
+    return DecodeSixelData(payload);
 }
 
 @implementation iTermImage(Sixel)
