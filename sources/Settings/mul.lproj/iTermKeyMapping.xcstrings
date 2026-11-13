@@ -71,6 +71,12 @@
             "value" : "Предустановки…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Förinställningar…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить элемент Touch Bar"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg till Touch Bar-objekt"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Действие"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åtgärd"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Обходные решения Touch Bar"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch Bar-lösningar"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Визуальный индикатор клавиши Esc"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visuell indikator för esc-tangenten"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сочетание клавиш"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tangentkombination"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Тактильная отдача при нажатии Esc"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptisk respons vid tryck på esc"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -743,6 +785,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -837,6 +885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Звук нажатия клавиши Esc"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klickljud för esc-tangenten"
           }
         },
         "tr" : {

@@ -71,6 +71,12 @@
             "value" : "Использовать интерполированные строки для параметров"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd interpolerade strängar för parametrar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать в профиль"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera till profil"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Закрыть"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stäng"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Триггеры"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utlösare"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Регулярное выражение"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reguljärt uttryck"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите один триггер для просмотра или изменения"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markera en utlösare för att visa eller redigera den"
           }
         },
         "tr" : {

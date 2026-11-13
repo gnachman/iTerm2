@@ -71,6 +71,12 @@
             "value" : "Автодополнение ИИ включено: весь текст отправляется в ИИ"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-komplettering aktiverad: all text skickas till AI"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Описывает, как использовать Композитор."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beskriver hur du använder kommandoredigeraren."
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Нажмите ⇧↩ для отправки."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryck på ⇧↩ för att skicka."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ИИ"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "tr" : {

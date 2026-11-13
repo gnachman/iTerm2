@@ -71,6 +71,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключать GPU-рендерер в режиме низкого энергопотребления"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaktivera GPU-renderaren i lågeffektläge"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Предпочитать встроенный GPU дискретному"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Föredra integrerad framför separat GPU"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -359,6 +377,12 @@
             "value" : "Отключать GPU-рендерер при отключении от питания"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaktivera GPU-renderaren när strömmen kopplas från"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -453,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
         "tr" : {

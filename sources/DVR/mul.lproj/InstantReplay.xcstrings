@@ -71,6 +71,12 @@
             "value": "Экспорт…"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportera…"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -165,6 +171,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сейчас"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nu"
           }
         },
         "tr": {
@@ -263,6 +275,12 @@
             "value": "Управление мгновенным повтором"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontroll för direktuppspelning"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -357,6 +375,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отмена"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
           }
         },
         "tr": {
@@ -455,6 +479,12 @@
             "value": "Живой просмотр"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direktvy"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -549,6 +579,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Время"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tid"
           }
         },
         "tr": {

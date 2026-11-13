@@ -71,6 +71,12 @@
             "value": "Размер табуляции в пробелах:"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tabbstorlek i mellanslag:"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -162,6 +168,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "sv": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

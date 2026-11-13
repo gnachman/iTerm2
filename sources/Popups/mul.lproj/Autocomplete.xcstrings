@@ -71,6 +71,12 @@
             "value" : "Автозаполнение"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autokomplettering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",

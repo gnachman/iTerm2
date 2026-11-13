@@ -71,6 +71,12 @@
             "value" : "Молча игнорировать ошибки этой команды"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorera fel från det här kommandot tyst"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Команда для запуска сопроцесса:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samprocesskommando att köra:"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -359,6 +377,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -453,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Введите команду"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ange kommando"
           }
         },
         "tr" : {

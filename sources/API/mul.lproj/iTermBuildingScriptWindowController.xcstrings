@@ -71,6 +71,12 @@
             "value" : "Подождите! Устанавливается новое окружение Python…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vänta lite! Installerar en ny Python-miljö…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",

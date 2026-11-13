@@ -71,6 +71,12 @@
             "value" : "Описание"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beskrivning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Журнал сбоя"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kraschlogg"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Отчёт о сбое"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kraschrapportering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Похоже, что {APPNAME} завершилось сбоем при последнем использовании. Хотите отправить журнал сбоя разработчикам?\n\nЖурналы сбоев от Apple не отправляются другим разработчикам, поэтому это единственный способ, с помощью которого разработчики {APPNAME} могут узнать об этом сбое и исправить его."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det verkar som att {APPNAME} kraschade förra gången det användes. Vill du skicka en kraschlogg till utvecklarna?\n\nKraschloggar från Apple skickas inte till andra utvecklare, så det här är det enda sättet för utvecklarna av {APPNAME} att få veta om och åtgärda kraschen."
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Вы можете удалить любую информацию, которую не хотите передавать, но это усложнит обнаружение ошибки. По умолчанию передаются журнал сбоя, а также сведения о вашем Mac и ваших настройках."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du kan ta bort information du inte vill skicka, men det gör det svårare att hitta felet. Som förval skickas kraschloggen samt vilken Mac du använder och dina inställningar."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skicka"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Напомнить позже"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Påminn mig senare"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отклонить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Förkasta"
           }
         },
         "tr" : {

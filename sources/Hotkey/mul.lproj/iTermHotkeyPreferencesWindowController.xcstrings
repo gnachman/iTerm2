@@ -71,6 +71,12 @@
             "value" : "⌥ Option"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Alternativ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрепить окно горячей клавиши (остаётся открытым при потере фокуса клавиатуры)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fäst snabbtangentsfönster (förblir öppet när tangentbordsfokus förloras)"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Горячая клавиша:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snabbtangent:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Примечание: окно открывается повторно, только если оно было закрыто из-за активации другого приложения."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obs! Fönstret öppnas igen endast om det stängdes för att ett annat program blev aktivt."
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Дополнительные горячие клавиши"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ytterligare snabbtangenter"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "При нажатии горячей клавиши, привязанной к этому профилю, отдельное окно будет показано или скрыто. Каждый профиль с горячей клавишей управляет своим собственным окном горячей клавиши."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "När du trycker på snabbtangenten som är kopplad till den här profilen visas eller göms ett dedikerat fönster. Varje profil med en snabbtangent styr sitt eget snabbtangentsfönster."
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Не делать ничего особенного"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gör ingenting särskilt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -738,6 +780,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -839,6 +887,12 @@
             "value" : "Показывать это окно горячей клавиши"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa det här snabbtangentsfönstret"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Настройки окна горячей клавиши"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inställningar för snabbtangentsfönster"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "⌘ Command"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Kommando"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Это сочетание клавиш уже используется другим профилем"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ En annan profil använder det här kortkommandot"
           }
         },
         "tr" : {
@@ -1223,6 +1295,12 @@
             "value" : "⇧ Shift"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Skift"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Клавиша двойного нажатия:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tangent för dubbeltryck:"
           }
         },
         "tr" : {
@@ -1415,6 +1499,12 @@
             "value" : "Автоматически открывать повторно при активации приложения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna igen automatiskt när programmet återaktiveras"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Это двойное нажатие уже используется другим профилем"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ En annan profil använder det här dubbeltrycket"
           }
         },
         "tr" : {
@@ -1607,6 +1703,12 @@
             "value" : "Показывать это окно горячей клавиши, если не открыто ни одно другое окно"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa det här snabbtangentsfönstret om inget annat fönster är öppet"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1701,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Плавающие окна перекрывают другие окна и Dock, а также полноэкранные окна других приложений (если пространству окна горячей клавиши назначены все пространства)."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytande fönster ligger över andra fönster, Dock och andra programs helskärmsfönster (om snabbtangentsfönstrets Space är inställt på Alla Spaces)."
           }
         },
         "tr" : {
@@ -1799,6 +1907,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1893,6 +2007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "При щелчке по значку в Dock:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vid klick på Dock-symbolen:"
           }
         },
         "tr" : {
@@ -1991,6 +2111,12 @@
             "value" : "Анимировать показ и скрытие"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animera visning och döljning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "tr" : {
@@ -2183,6 +2315,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2277,6 +2415,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Плавающее окно"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytande fönster"
           }
         },
         "tr" : {
@@ -2375,6 +2519,12 @@
             "value" : "^ Control"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Kontroll"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2469,6 +2619,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дополнительные горячие клавиши…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ytterligare snabbtangenter…"
           }
         },
         "tr" : {

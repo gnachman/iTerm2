@@ -71,6 +71,12 @@
             "value" : "Панель tmux"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux-översikt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сессия"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Присоединиться"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koppla till"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поиск окон"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök fönster"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Окно"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть в окнах"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna i fönster"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Скрыть"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Göm"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть в окнах"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna i fönster"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Открыть во вкладках"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna i flikar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отсоединиться"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koppla från"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Открывать панель при присоединении, если есть скрытые окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna översikten vid anslutning om det finns dolda fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не открывать окна при присоединении, если их количество не меньше:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna inte fönster vid anslutning om det finns minst så här många fönster:"
           }
         },
         "tr" : {

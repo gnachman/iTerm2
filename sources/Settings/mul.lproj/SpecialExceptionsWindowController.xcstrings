@@ -71,6 +71,12 @@
             "value" : "Установить пакет Nerd Font…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installera Nerd Font-paket…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -167,6 +173,12 @@
             "value" : "Изменить специальное исключение"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera specialundantag"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -258,6 +270,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -359,6 +377,12 @@
             "value" : "Специальные исключения переопределяют шрифты для определённых диапазонов Unicode или письменностей."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Specialundantag åsidosätter typsnitt för specifika Unicode-intervall eller skriftsystem."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -450,6 +474,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -551,6 +581,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -645,6 +681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Шрифта:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Av typsnittet:"
           }
         },
         "tr" : {
@@ -743,6 +785,12 @@
             "value" : "Для символов, начиная с"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "För tecken från och med"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -837,6 +885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить пресет…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg till förinställning…"
           }
         },
         "tr" : {
@@ -935,6 +989,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1029,6 +1089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "до"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "till"
           }
         },
         "tr" : {
@@ -1127,6 +1193,12 @@
             "value" : "Управление специальными исключениями"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantera specialundantag"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1221,6 +1293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "tr" : {
@@ -1319,6 +1397,12 @@
             "value" : "Использовать кодовые точки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd kodpunkter"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1415,6 +1499,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1506,6 +1596,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

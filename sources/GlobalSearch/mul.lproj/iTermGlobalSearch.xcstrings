@@ -71,6 +71,12 @@
             "value" : "ЯЧЕЙКА ЗАГОЛОВКА"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RUBRIKCELL"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти везде"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök globalt"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Подстрока (с учётом регистра)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, skiftlägeskänslig"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (автоматически)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, automatiskt"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Регулярное выражение (без учёта регистра)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ignorera skiftläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Регулярное выражение (с учётом регистра)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, skiftlägeskänslig"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (без учёта регистра)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, ignorera skiftläge"
           }
         },
         "tr" : {

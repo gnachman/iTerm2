@@ -71,6 +71,12 @@
             "value" : "Действие"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åtgärd"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -207,6 +213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Название"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel"
           }
         },
         "tr" : {

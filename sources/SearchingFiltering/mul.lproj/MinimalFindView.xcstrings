@@ -71,6 +71,12 @@
             "value" : "Фильтр"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока без учёта регистра"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, ignorera skiftläge"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Подстрока (умный регистр)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, smart skiftläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (с учётом регистра)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, skiftlägeskänslig"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Регулярное выражение (без учёта регистра)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ignorera skiftläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Очистить историю поиска"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radera sökhistorik"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Поиск только по выбранной команде"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Söker endast i markerat kommando"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение (без учёта регистра)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ignorera skiftläge"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Фильтр"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (с учётом регистра)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, skiftlägeskänslig"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Регулярное выражение (с учётом регистра)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, skiftlägeskänslig"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (умный регистр)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, smart skiftläge"
           }
         },
         "tr" : {
@@ -1223,6 +1295,12 @@
             "value" : "Подстрока (без учёта регистра)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, ignorera skiftläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение (с учётом регистра)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, skiftlägeskänslig"
           }
         },
         "tr" : {

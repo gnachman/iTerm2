@@ -71,6 +71,12 @@
             "value": "Чёрно-белый"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Svartvitt"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",

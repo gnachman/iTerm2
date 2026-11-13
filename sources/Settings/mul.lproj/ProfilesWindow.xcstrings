@@ -71,6 +71,12 @@
             "value" : "Профили"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiler"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить профили…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera profiler…"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Новая вкладка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новое окно"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nytt fönster"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Закрывать это окно после открытия профиля."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stäng det här fönstret efter att en profil har öppnats."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новые вкладки в новом окне"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nya flikar i nytt fönster"
           }
         },
         "tr" : {
@@ -731,6 +767,12 @@
             "value" : "Теги >"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tagg >"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новая плавающая панель"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny flytande panel"
           }
         },
         "tr" : {

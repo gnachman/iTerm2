@@ -71,6 +71,12 @@
             "value": "iTerm2"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -165,6 +171,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Автор: Джордж Нахман и соавторы"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Av George Nachman och medarbetare"
           }
         },
         "tr": {

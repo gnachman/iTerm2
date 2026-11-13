@@ -71,6 +71,12 @@
             "value" : "Очистить историю поиска"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radera sökhistorik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока с учётом регистра"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, skiftlägeskänslig"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Подстрока без учёта регистра"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, ignorera skiftläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поиск"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Регулярное выражение с учётом регистра"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, skiftlägeskänslig"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -551,6 +581,12 @@
             "value" : "Подстрока с умным учётом регистра"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, smart skiftläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -645,6 +681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение без учёта регистра"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ignorera skiftläge"
           }
         },
         "tr" : {

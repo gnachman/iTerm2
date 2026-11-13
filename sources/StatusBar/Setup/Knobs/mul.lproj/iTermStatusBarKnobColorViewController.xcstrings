@@ -71,6 +71,12 @@
             "value": "Подпись"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etikett"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",

@@ -71,6 +71,12 @@
             "value" : "Переместить по метке"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta per märke"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить сочетание клавиш"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ange kortkommando"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Предустановка цвета:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Färgförinställning:"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Действие:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åtgärd:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подпись для Touch Bar"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etikett som visas i Touch Bar"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Переместить по символу"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta per tecken"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "напр.: 0x7f"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "t.ex. 0x7f"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Профиль:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить по слову"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta per ord"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Здесь появится сообщение об ошибке"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Felmeddelandet visas här"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
             "value" : "Действие:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åtgärd:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1218,6 +1290,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -1319,6 +1397,12 @@
             "value" : "Сочетание клавиш:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kortkommando:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1415,6 +1499,12 @@
             "value" : "Переместить по строке"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta per rad"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "tr" : {

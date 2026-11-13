@@ -71,6 +71,12 @@
             "value": "Вставка…"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klistrar in…"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",

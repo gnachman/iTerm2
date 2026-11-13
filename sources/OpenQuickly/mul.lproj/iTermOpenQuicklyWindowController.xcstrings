@@ -71,6 +71,12 @@
             "value" : "Быстрое открытие"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna snabbt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -167,6 +173,12 @@
             "value" : "Подробности"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detaljer"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поиск сессий, профилей или расстановок окон"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök efter sessioner, profiler eller arrangemang"
           }
         },
         "tr" : {

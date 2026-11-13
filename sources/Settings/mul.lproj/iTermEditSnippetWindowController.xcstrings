@@ -71,6 +71,12 @@
             "value" : "Значение:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Värde:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Редактировать сниппет"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera textsnutt"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Заголовок:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Неэкранированный буквальный текст"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bokstavlig text utan skyddstecken"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Используйте «/» в именах тегов для создания папок в меню «Правка» > «Сниппеты»"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd / i taggnamn för att skapa mappar i menyn Redigera > Textsnuttar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экранирование для обратной совместимости"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bakåtkompatibelt skydd av tecken"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Теги:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taggar:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экранирование обратным слэшем в стиле C"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skydd av tecken med omvänt snedstreck i C-stil"
           }
         },
         "tr" : {

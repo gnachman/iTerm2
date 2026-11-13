@@ -71,6 +71,12 @@
             "value" : "Уменьшить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zooma ut"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить среду выполнения Python"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installera Python-körmiljö"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Переместить вкладку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дублировать сеанс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicera session"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Открыть адрес…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna plats…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить высоту"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öka höjd"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Переместить вкладку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Оповещение о фокусе"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokusrapportering"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Обычный"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить разделитель вверх"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta avdelare uppåt"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Заменить декодированным из Base64 значением"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersätt med Base64-avkodat värde"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сеанс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
           }
         },
         "tr" : {
@@ -1223,6 +1295,12 @@
             "value" : "Переместить сеанс в панель разделения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta session till delad panel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Менеджер паролей"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lösenordshanterare"
           }
         },
         "tr" : {
@@ -1415,6 +1499,12 @@
             "value" : "Пункт 1"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objekt 1"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "По центру"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrerad"
           }
         },
         "tr" : {
@@ -1607,6 +1703,12 @@
             "value" : "Заменить выделенное"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersätt markering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1701,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Слева от экрана"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skärmens vänstra sida"
           }
         },
         "tr" : {
@@ -1799,6 +1907,12 @@
             "value" : "Курсор приложения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programmarkör"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1893,6 +2007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположения"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrangemang"
           }
         },
         "tr" : {
@@ -1991,6 +2111,12 @@
             "value" : "Свернуть выбранные строки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fäll ihop markerade rader"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть недавние каталоги…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna senaste kataloger…"
           }
         },
         "tr" : {
@@ -2183,6 +2315,12 @@
             "value" : "Во весь экран"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Helskärmsläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2277,6 +2415,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить именованную метку"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sätt namngivet märke"
           }
         },
         "tr" : {
@@ -2375,6 +2519,12 @@
             "value" : "Действия"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åtgärder"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2469,6 +2619,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Захватить кадр GPU"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fånga GPU-bildruta"
           }
         },
         "tr" : {
@@ -2567,6 +2723,12 @@
             "value" : "Метки и аннотации"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Märken och anteckningar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2661,6 +2823,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Слева от экрана на всю высоту"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full höjd, skärmens vänstra sida"
           }
         },
         "tr" : {
@@ -2759,6 +2927,12 @@
             "value" : "Дублировать окно"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicera fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2853,6 +3027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Автозавершение команд"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisk komplettering av kommandon"
           }
         },
         "tr" : {
@@ -2951,6 +3131,12 @@
             "value" : "Стиль окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fönsterstil"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3045,6 +3231,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Доступность GPU-рендерера"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tillgänglighet för GPU-renderare"
           }
         },
         "tr" : {
@@ -3143,6 +3335,12 @@
             "value" : "Окно"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3237,6 +3435,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Свернуть"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimera"
           }
         },
         "tr" : {
@@ -3335,6 +3539,12 @@
             "value" : "Окно"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3426,6 +3636,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -3527,6 +3743,12 @@
             "value" : "iTerm2"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3621,6 +3843,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить профиль в расположении…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändra profil i arrangemang…"
           }
         },
         "tr" : {
@@ -3719,6 +3947,12 @@
             "value" : "Оболочка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skal"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3813,6 +4047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить ширину по умолчанию"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ange förvald bredd"
           }
         },
         "tr" : {
@@ -3911,6 +4151,12 @@
             "value" : "Оболочка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skal"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4005,6 +4251,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Справка"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjälp"
           }
         },
         "tr" : {
@@ -4103,6 +4355,12 @@
             "value" : "Справка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjälp"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4197,6 +4455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Справка по iTerm2"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2-hjälp"
           }
         },
         "tr" : {
@@ -4295,6 +4559,12 @@
             "value" : "Настройки…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inställningar…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4389,6 +4659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Службы"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tjänster"
           }
         },
         "tr" : {
@@ -4487,6 +4763,12 @@
             "value" : "Службы"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tjänster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4581,6 +4863,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть iTerm2"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Göm iTerm2"
           }
         },
         "tr" : {
@@ -4679,6 +4967,12 @@
             "value" : "Завершить iTerm2"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avsluta iTerm2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4773,6 +5067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть остальные"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Göm övriga"
           }
         },
         "tr" : {
@@ -4871,6 +5171,12 @@
             "value" : "Показать все"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa alla"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4965,6 +5271,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вырезать"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klipp ut"
           }
         },
         "tr" : {
@@ -5063,6 +5375,12 @@
             "value" : "Правка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5157,6 +5475,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Правка"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera"
           }
         },
         "tr" : {
@@ -5255,6 +5579,12 @@
             "value" : "Выделить всё"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markera alla"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5349,6 +5679,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in"
           }
         },
         "tr" : {
@@ -5447,6 +5783,12 @@
             "value" : "Очистить буфер"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rensa buffert"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5541,6 +5883,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Журнал"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logg"
           }
         },
         "tr" : {
@@ -5639,6 +5987,12 @@
             "value" : "Журнал"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logg"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5733,6 +6087,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "О программе iTerm2"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Om iTerm2"
           }
         },
         "tr" : {
@@ -5831,6 +6191,12 @@
             "value" : "Профили"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiler"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5925,6 +6291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Профили"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiler"
           }
         },
         "tr" : {
@@ -6023,6 +6395,12 @@
             "value" : "Закрыть окно терминала"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stäng terminalfönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6117,6 +6495,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрыть все панели во вкладке"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stäng alla paneler i fliken"
           }
         },
         "tr" : {
@@ -6215,6 +6599,12 @@
             "value" : "Параметры страницы…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utskriftsformat…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6309,6 +6699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить выделенный текст…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spara markerad text…"
           }
         },
         "tr" : {
@@ -6407,6 +6803,12 @@
             "value" : "Очистить буфер прокрутки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rensa rullningshistoriken"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6501,6 +6903,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти выделенное"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd markering för sökning"
           }
         },
         "tr" : {
@@ -6599,6 +7007,12 @@
             "value" : "Найти"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6693,6 +7107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök"
           }
         },
         "tr" : {
@@ -6791,6 +7211,12 @@
             "value" : "Найти следующее"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök nästa"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6885,6 +7311,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти предыдущее"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök föregående"
           }
         },
         "tr" : {
@@ -6983,6 +7415,12 @@
             "value" : "Перейти к выделенному"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoppa till markering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7077,6 +7515,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вид"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Innehåll"
           }
         },
         "tr" : {
@@ -7175,6 +7619,12 @@
             "value" : "Вид"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Innehåll"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7269,6 +7719,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить текст"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öka textstorleken"
           }
         },
         "tr" : {
@@ -7367,6 +7823,12 @@
             "value" : "Уменьшить текст"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minska textstorleken"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7461,6 +7923,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Печать"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriv ut"
           }
         },
         "tr" : {
@@ -7559,6 +8027,12 @@
             "value" : "Экран"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skärm"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7653,6 +8127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Печать"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriv ut"
           }
         },
         "tr" : {
@@ -7751,6 +8231,12 @@
             "value" : "Выделение"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7845,6 +8331,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Буфер"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffert"
           }
         },
         "tr" : {
@@ -7943,6 +8435,12 @@
             "value" : "Выбрать предыдущую вкладку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj föregående flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8037,6 +8535,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать следующую вкладку"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj nästa flik"
           }
         },
         "tr" : {
@@ -8135,6 +8639,12 @@
             "value" : "Выбрать вкладку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8229,6 +8739,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать вкладку"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj flik"
           }
         },
         "tr" : {
@@ -8327,6 +8843,12 @@
             "value" : "Новая вкладка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8421,6 +8943,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новое окно"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nytt fönster"
           }
         },
         "tr" : {
@@ -8519,6 +9047,12 @@
             "value" : "Нажмите Option для нового окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tryck på alternativtangenten för nytt fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8613,6 +9147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть в новом окне"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna i nytt fönster"
           }
         },
         "tr" : {
@@ -8711,6 +9251,12 @@
             "value" : "Проверить обновления…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök efter uppdateringar…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8805,6 +9351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zooma"
           }
         },
         "tr" : {
@@ -8903,6 +9455,12 @@
             "value" : "Сброс"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nollställ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8997,6 +9555,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переключить полноэкранный режим"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå på/av helskärmsläge"
           }
         },
         "tr" : {
@@ -9095,6 +9659,12 @@
             "value" : "Переключить отладочное журналирование"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå på/av felsökningslogg"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9189,6 +9759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть профили…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna profiler…"
           }
         },
         "tr" : {
@@ -9287,6 +9863,12 @@
             "value" : "Изменить сеанс…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera session…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9381,6 +9963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Начать мгновенный повтор"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starta direktuppspelning"
           }
         },
         "tr" : {
@@ -9479,6 +10067,12 @@
             "value" : "Отменить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ångra"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9573,6 +10167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Повторить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gör om"
           }
         },
         "tr" : {
@@ -9671,6 +10271,12 @@
             "value" : "Открыть историю вставок…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna inklistringshistorik…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9765,6 +10371,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть автозаполнение…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna autokomplettering…"
           }
         },
         "tr" : {
@@ -9863,6 +10475,12 @@
             "value" : "Специальная вставка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in special"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9957,6 +10575,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Специальная вставка"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in special"
           }
         },
         "tr" : {
@@ -10055,6 +10679,12 @@
             "value" : "Вставить выделенное"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in markering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10149,6 +10779,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставить медленно"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in långsamt"
           }
         },
         "tr" : {
@@ -10247,6 +10883,12 @@
             "value" : "Защищённый ввод с клавиатуры"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Säker tangentbordsinmatning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10341,6 +10983,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположить окна по горизонтали"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordna fönster horisontellt"
           }
         },
         "tr" : {
@@ -10439,6 +11087,12 @@
             "value" : "Закрыть"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stäng"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10533,6 +11187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить вертикально с текущим профилем"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dela vertikalt med aktuell profil"
           }
         },
         "tr" : {
@@ -10631,6 +11291,12 @@
             "value" : "Разделить горизонтально с текущим профилем"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dela horisontellt med aktuell profil"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10725,6 +11391,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить расположение окон"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spara fönsterarrangemang"
           }
         },
         "tr" : {
@@ -10823,6 +11495,12 @@
             "value" : "Выбрать панель разделения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj delad panel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10917,6 +11595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать панель разделения"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj delad panel"
           }
         },
         "tr" : {
@@ -11015,6 +11699,12 @@
             "value" : "Выбрать панель выше"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj panelen ovanför"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11109,6 +11799,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать панель ниже"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj panelen nedanför"
           }
         },
         "tr" : {
@@ -11207,6 +11903,12 @@
             "value" : "Выбрать панель слева"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj panelen till vänster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11301,6 +12003,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать панель справа"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj panelen till höger"
           }
         },
         "tr" : {
@@ -11399,6 +12107,12 @@
             "value" : "Использовать прозрачность"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd transparens"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11493,6 +12207,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Развернуть активную панель"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximera aktiv panel"
           }
         },
         "tr" : {
@@ -11591,6 +12311,12 @@
             "value" : "Пункт 3"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objekt 3"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11685,6 +12411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пункт 2"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objekt 2"
           }
         },
         "tr" : {
@@ -11783,6 +12515,12 @@
             "value" : "Пункт 1"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objekt 1"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11877,6 +12615,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить метку"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sätt märke"
           }
         },
         "tr" : {
@@ -11975,6 +12719,12 @@
             "value" : "Перейти к метке"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoppa till märke"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12069,6 +12819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Следующая панель"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nästa panel"
           }
         },
         "tr" : {
@@ -12167,6 +12923,12 @@
             "value" : "Предыдущая панель"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Föregående panel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12261,6 +13023,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать вкладки в полноэкранном режиме"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa flikar i helskärmsläge"
           }
         },
         "tr" : {
@@ -12359,6 +13127,12 @@
             "value" : "Трансляция ввода"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sänd indata"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12453,6 +13227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Трансляция ввода"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sänd indata"
           }
         },
         "tr" : {
@@ -12551,6 +13331,12 @@
             "value" : "Транслировать ввод во все панели во всех вкладках"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sänd indata till alla paneler i alla flikar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12645,6 +13431,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Транслировать ввод во все панели текущей вкладки"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sänd indata till alla paneler i aktuell flik"
           }
         },
         "tr" : {
@@ -12743,6 +13535,12 @@
             "value" : "Отправлять ввод только в текущий сеанс"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skicka indata endast till aktuell session"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12837,6 +13635,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Восстановить расположение окон"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återskapa fönsterarrangemang"
           }
         },
         "tr" : {
@@ -12935,6 +13739,12 @@
             "value" : "Восстановить расположение окон"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återskapa fönsterarrangemang"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13029,6 +13839,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти курсор"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hitta markören"
           }
         },
         "tr" : {
@@ -13127,6 +13943,12 @@
             "value" : "Разделить горизонтально…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dela horisontellt…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13221,6 +14043,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить вертикально…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dela vertikalt…"
           }
         },
         "tr" : {
@@ -13319,6 +14147,12 @@
             "value" : "Набор инструментов"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verktygsbälte"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13413,6 +14247,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Набор инструментов"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verktygsbälte"
           }
         },
         "tr" : {
@@ -13511,6 +14351,12 @@
             "value" : "Показать набор инструментов"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa verktygsbältet"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13605,6 +14451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новая вкладка с текущим профилем"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny flik med aktuell profil"
           }
         },
         "tr" : {
@@ -13703,6 +14555,12 @@
             "value" : "Запустить сопроцесс…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kör samprocess…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13797,6 +14655,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Остановить сопроцесс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stoppa samprocess"
           }
         },
         "tr" : {
@@ -13895,6 +14759,12 @@
             "value" : "Копировать"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13989,6 +14859,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить вкладку в новое окно"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flik till nytt fönster"
           }
         },
         "tr" : {
@@ -14087,6 +14963,12 @@
             "value" : "Переместить вкладку вправо"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flik åt höger"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14183,6 +15065,12 @@
             "value" : "Показывать индикатор фонового узора"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa indikator för bakgrundsmönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14274,6 +15162,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -14375,6 +15269,12 @@
             "value" : "tmux"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14469,6 +15369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новая вкладка tmux"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny tmux-flik"
           }
         },
         "tr" : {
@@ -14567,6 +15473,12 @@
             "value" : "Новое окно tmux"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nytt tmux-fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14661,6 +15573,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отсоединить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koppla från"
           }
         },
         "tr" : {
@@ -14759,6 +15677,12 @@
             "value" : "Панель управления"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Översikt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14853,6 +15777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Обычный размер текста"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal textstorlek"
           }
         },
         "tr" : {
@@ -14951,6 +15881,12 @@
             "value" : "Восстановить размер текста и сеанса"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återställ text- och sessionsstorlek"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15045,6 +15981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сделать iTerm2 терминалом по умолчанию"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gör iTerm2 till förvald terminal"
           }
         },
         "tr" : {
@@ -15143,6 +16085,12 @@
             "value" : "Сделать Terminal терминалом по умолчанию"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gör Terminal till förvald terminal"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15237,6 +16185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переключить трансляцию ввода в текущий сеанс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå på/av sändning av indata till aktuell session"
           }
         },
         "tr" : {
@@ -15335,6 +16289,12 @@
             "value" : "Ускорить вставку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in snabbare"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15429,6 +16389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Замедлить вставку"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in långsammare"
           }
         },
         "tr" : {
@@ -15527,6 +16493,12 @@
             "value" : "Ускорить медленную вставку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in långsamt, snabbare"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15621,6 +16593,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Замедлить медленную вставку"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in långsamt, långsammare"
           }
         },
         "tr" : {
@@ -15719,6 +16697,12 @@
             "value" : "Сбросить набор символов"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nollställ teckenuppsättning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15815,6 +16799,12 @@
             "value" : "Архивы"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arkiv"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15906,6 +16896,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -16007,6 +17003,12 @@
             "value" : "Аннотировать выделенное"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anteckna markering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16101,6 +17103,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить выделенное"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zooma in på markering"
           }
         },
         "tr" : {
@@ -16199,6 +17207,12 @@
             "value" : "Переместить разделитель влево"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta avdelare åt vänster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16293,6 +17307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключить все"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaktivera alla"
           }
         },
         "tr" : {
@@ -16391,6 +17411,12 @@
             "value" : "Переместить сеанс"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta session"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16485,6 +17511,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать редактор команд"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa kommandoredigeraren"
           }
         },
         "tr" : {
@@ -16583,6 +17615,12 @@
             "value" : "Принудительно отсоединить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tvinga frånkoppling"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16677,6 +17715,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Именованные метки"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namngivna märken"
           }
         },
         "tr" : {
@@ -16775,6 +17819,12 @@
             "value" : "Найти…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16869,6 +17919,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экспортировать запись"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportera inspelning"
           }
         },
         "tr" : {
@@ -16967,6 +18023,12 @@
             "value" : "Без строки заголовка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utan titelfält"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17058,6 +18120,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -17159,6 +18227,12 @@
             "value" : "Показать вырезки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa urklippsbitar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17253,6 +18327,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Настройки устройства Companion"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inställningar för följeslagarenhet"
           }
         },
         "tr" : {
@@ -17351,6 +18431,12 @@
             "value" : "Режим копирования"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieringsläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17445,6 +18531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить сеанс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta session"
           }
         },
         "tr" : {
@@ -17543,6 +18635,12 @@
             "value" : "Вкладка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17637,6 +18735,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Очистить до начала выделения"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rensa till början av markeringen"
           }
         },
         "tr" : {
@@ -17735,6 +18839,12 @@
             "value" : "Копировать статистику производительности"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera prestandastatistik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17829,6 +18939,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрипты"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skript"
           }
         },
         "tr" : {
@@ -17927,6 +19043,12 @@
             "value" : "Сохранить текущее окно как расположение"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spara aktuellt fönster som arrangemang"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18021,6 +19143,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Триггеры"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utlösare"
           }
         },
         "tr" : {
@@ -18119,6 +19247,12 @@
             "value" : "Показать направляющую курсора"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa markörlinjal"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18213,6 +19347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заблокировать размер"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lås storlek"
           }
         },
         "tr" : {
@@ -18311,6 +19451,12 @@
             "value" : "Записывать в файл"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logga till fil"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18405,6 +19551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экспортировать…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportera…"
           }
         },
         "tr" : {
@@ -18503,6 +19655,12 @@
             "value" : "Веб"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webb"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18597,6 +19755,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сообщать связанный текст"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapportera associerad text"
           }
         },
         "tr" : {
@@ -18695,6 +19859,12 @@
             "value" : "Новый скрипт Python"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nytt Python-skript"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18789,6 +19959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Лицензии открытого ПО"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licenser för öppen källkod"
           }
         },
         "tr" : {
@@ -18887,6 +20063,12 @@
             "value" : "Очистить мгновенный повтор"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rensa direktuppspelning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18981,6 +20163,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уменьшить высоту"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minska höjd"
           }
         },
         "tr" : {
@@ -19079,6 +20267,12 @@
             "value" : "Скрипты"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skript"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19173,6 +20367,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать скрипты в Finder"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa skript i Finder"
           }
         },
         "tr" : {
@@ -19271,6 +20471,12 @@
             "value" : "Сохранить содержимое…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spara innehåll…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19365,6 +20571,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Все окна на передний план"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg alla överst"
           }
         },
         "tr" : {
@@ -19463,6 +20675,12 @@
             "value" : "Свернуть все"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fäll ihop alla"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19557,6 +20775,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Архивы"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arkiv"
           }
         },
         "tr" : {
@@ -19655,6 +20879,12 @@
             "value" : "Восстановить расположение окон как вкладки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återskapa fönsterarrangemang som flikar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19749,6 +20979,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить аннотацию у курсора"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg till anteckning vid markören"
           }
         },
         "tr" : {
@@ -19847,6 +21083,12 @@
             "value" : "Отключить прозрачность для активного окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaktivera transparens för aktivt fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19941,6 +21183,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скобочная вставка"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inklistring inom hakparentes"
           }
         },
         "tr" : {
@@ -20039,6 +21287,12 @@
             "value" : "Заменить отформатированным JSON"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersätt med formaterad JSON"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20133,6 +21387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "На передний план"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg överst"
           }
         },
         "tr" : {
@@ -20231,6 +21491,12 @@
             "value" : "Закрепить плавающую панель"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Docka flytande panel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20325,6 +21591,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть плавающие панели"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Göm flytande paneler"
           }
         },
         "tr" : {
@@ -20423,6 +21695,12 @@
             "value" : "Переместить плавающую панель вниз"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flytande panel nedåt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20517,6 +21795,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить плавающую панель влево"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flytande panel åt vänster"
           }
         },
         "tr" : {
@@ -20615,6 +21899,12 @@
             "value" : "Переместить плавающую панель вправо"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flytande panel åt höger"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20709,6 +21999,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить плавающую панель вверх"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flytande panel uppåt"
           }
         },
         "tr" : {
@@ -20807,6 +22103,12 @@
             "value" : "Новая плавающая панель с текущим профилем"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny flytande panel med aktuell profil"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20901,6 +22203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Плавающие панели"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytande paneler"
           }
         },
         "tr" : {
@@ -20999,6 +22307,12 @@
             "value" : "Плавающие панели"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytande paneler"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21093,6 +22407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "На задний план"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skicka underst"
           }
         },
         "tr" : {
@@ -21191,6 +22511,12 @@
             "value" : "Показать совет дня"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa dagens tips"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21285,6 +22611,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Следующая аннотация"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nästa anteckning"
           }
         },
         "tr" : {
@@ -21383,6 +22715,12 @@
             "value" : "Кокпит"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21477,6 +22815,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить сеанс во вкладку"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta session till flik"
           }
         },
         "tr" : {
@@ -21575,6 +22919,12 @@
             "value" : "Низ экрана"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skärmens nederkant"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21669,6 +23019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Запрашивать преобразование табуляции в пробелы при вставке"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fråga om tabbtecken ska konverteras till mellanslag vid inklistring"
           }
         },
         "tr" : {
@@ -21767,6 +23123,12 @@
             "value" : "Оповещения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varningar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21861,6 +23223,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать с управляющими последовательностями"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera med styrsekvenser"
           }
         },
         "tr" : {
@@ -21959,6 +23327,12 @@
             "value" : "Изменить размер окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändra fönsterstorlek"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22053,6 +23427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сброс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nollställ"
           }
         },
         "tr" : {
@@ -22151,6 +23531,12 @@
             "value" : "Дублировать вкладку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicera flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22245,6 +23631,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Обновить страницу"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ladda om sidan"
           }
         },
         "tr" : {
@@ -22343,6 +23735,12 @@
             "value" : "Переместить сеанс в окно"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta session till fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22437,6 +23835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сообщать все клавиши как escape-коды"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapportera alla tangenter som escapekoder"
           }
         },
         "tr" : {
@@ -22535,6 +23939,12 @@
             "value" : "Режим необработанного ввода клавиш"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läge för rå tangentrapportering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22629,6 +24039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Импортировать…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importera…"
           }
         },
         "tr" : {
@@ -22727,6 +24143,12 @@
             "value" : "Предупреждать перед многострочной вставкой"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varna före inklistring av flera rader"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22821,6 +24243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать встроенный чат"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa inbäddad chatt"
           }
         },
         "tr" : {
@@ -22919,6 +24347,12 @@
             "value" : "Переключить буферизованный ввод"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå på/av buffertindata"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23013,6 +24447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалённый узел может управлять iTerm2"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fjärrvärden kan styra iTerm2"
           }
         },
         "tr" : {
@@ -23111,6 +24551,12 @@
             "value" : "Проверить обрезку элементов управления настроек"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrollera avkortning av inställningsreglage"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23205,6 +24651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Триггеры"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utlösare"
           }
         },
         "tr" : {
@@ -23303,6 +24755,12 @@
             "value" : "Выделение учитывает мягкие границы"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markering respekterar mjuka gränser"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23397,6 +24855,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выйти из рабочей группы"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lämna arbetsgrupp"
           }
         },
         "tr" : {
@@ -23495,6 +24959,12 @@
             "value" : "Выбрать вывод последней команды"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markera utdata från senaste kommandot"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23589,6 +25059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Перезапустить сеанс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starta om session"
           }
         },
         "tr" : {
@@ -23687,6 +25163,12 @@
             "value" : "Открыть Python REPL"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna Python-REPL"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23781,6 +25263,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Верх экрана"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skärmens överkant"
           }
         },
         "tr" : {
@@ -23879,6 +25367,12 @@
             "value" : "Объединить все окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå samman alla fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23973,6 +25467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрепить окно быстрого вызова"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fäst snabbtangentsfönster"
           }
         },
         "tr" : {
@@ -24071,6 +25571,12 @@
             "value" : "modifyOtherKeys Mode 2"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys-läge 2"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24165,6 +25671,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Быстрое открытие"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna snabbt"
           }
         },
         "tr" : {
@@ -24263,6 +25775,12 @@
             "value" : "Управление"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantera"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24357,6 +25875,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Устранять неоднозначность Escape"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Särskilj Esc"
           }
         },
         "tr" : {
@@ -24455,6 +25979,12 @@
             "value" : "Выбрать результат для открытия"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj resultat att öppna"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24549,6 +26079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ограничить предупреждение о многострочной вставке приглашением оболочки"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begränsa varning för inklistring av flera rader till skalprompten"
           }
         },
         "tr" : {
@@ -24647,6 +26183,12 @@
             "value" : "Включить триггеры в интерактивных приложениях"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivera utlösare i interaktiva appar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24741,6 +26283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пункт 2"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objekt 2"
           }
         },
         "tr" : {
@@ -24839,6 +26387,12 @@
             "value" : "Передача событий мыши"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musrapportering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24933,6 +26487,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Метки и аннотации"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Märken och anteckningar"
           }
         },
         "tr" : {
@@ -25031,6 +26591,12 @@
             "value" : "Заблокировать раскладку"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lås layout"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25125,6 +26691,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заблокировать положение"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lås plats"
           }
         },
         "tr" : {
@@ -25223,6 +26795,12 @@
             "value" : "Новое окно с текущим профилем"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nytt fönster med aktuell profil"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25317,6 +26895,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть сеанс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begrav session"
           }
         },
         "tr" : {
@@ -25415,6 +26999,12 @@
             "value" : "Показать модальное окно оповещения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa modal varningsruta"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25509,6 +27099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Включить все"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivera alla"
           }
         },
         "tr" : {
@@ -25607,6 +27203,12 @@
             "value" : "Следующая метка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nästa märke"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25701,6 +27303,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположить окна"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordna fönster"
           }
         },
         "tr" : {
@@ -25799,6 +27407,12 @@
             "value" : "Найти все совпадения умного выделения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hitta alla träffar för smart markering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25893,6 +27507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Воспроизвести звук"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spela upp ett ljud"
           }
         },
         "tr" : {
@@ -25991,6 +27611,12 @@
             "value" : "Открыть историю команд…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna kommandohistorik…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26085,6 +27711,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать со стилями"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera med stilar"
           }
         },
         "tr" : {
@@ -26183,6 +27815,12 @@
             "value" : "Альтернативный экран"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternativ skärm"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26279,6 +27917,12 @@
             "value" : "Во всю высоту у правого края экрана"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full höjd, skärmens högra sida"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26370,6 +28014,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -26471,6 +28121,12 @@
             "value" : "Стандартный режим сообщения о клавишах"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardläge för tangentrapportering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26565,6 +28221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить размер панели разделения"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändra storlek på delad panel"
           }
         },
         "tr" : {
@@ -26663,6 +28325,12 @@
             "value" : "Оповещения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varningar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26757,6 +28425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уведомлять об изменении статуса"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meddela vid statusändring"
           }
         },
         "tr" : {
@@ -26855,6 +28529,12 @@
             "value" : "Выбрать следующую группу вкладок"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj nästa flikgrupp"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26949,6 +28629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить интеграцию Claude Code"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avinstallera Claude Code-integrering"
           }
         },
         "tr" : {
@@ -27047,6 +28733,12 @@
             "value" : "Изменить заголовок вкладки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera fliktitel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27141,6 +28833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположения"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrangemang"
           }
         },
         "tr" : {
@@ -27239,6 +28937,12 @@
             "value" : "Предыдущий сосед"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Föregående medlem"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27333,6 +29037,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сообщать альтернативные клавиши"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapportera alternativa tangenter"
           }
         },
         "tr" : {
@@ -27431,6 +29141,12 @@
             "value" : "Разделить панель"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delad panel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27525,6 +29241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Состояние терминала"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminaltillstånd"
           }
         },
         "tr" : {
@@ -27623,6 +29345,12 @@
             "value" : "Отменить закрытие"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ångra stängning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27717,6 +29445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Чаты ИИ"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-chattar"
           }
         },
         "tr" : {
@@ -27815,6 +29549,12 @@
             "value" : "Вперёд"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Framåt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27909,6 +29649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заблокировать ширину панели разделения"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lås bredden på delad panel"
           }
         },
         "tr" : {
@@ -28007,6 +29753,12 @@
             "value" : "Рабочие группы"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbetsgrupper"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28101,6 +29853,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить архив текущего сеанса…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spara arkiv av aktuell session…"
           }
         },
         "tr" : {
@@ -28199,6 +29957,12 @@
             "value" : "Заменить выделенное"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersätt markering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28290,6 +30054,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -28391,6 +30161,12 @@
             "value" : "Показать аннотации"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa anteckningar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28482,6 +30258,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -28583,6 +30365,12 @@
             "value" : "Управление"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantera"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28677,6 +30465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пункт 3"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objekt 3"
           }
         },
         "tr" : {
@@ -28775,6 +30569,12 @@
             "value" : "Выбрать предыдущую группу вкладок"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj föregående flikgrupp"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28869,6 +30669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрытые сессии"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begravda sessioner"
           }
         },
         "tr" : {
@@ -28967,6 +30773,12 @@
             "value" : "Предыдущая аннотация"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Föregående anteckning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29061,6 +30873,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уведомлять об отметках в сессиях за пределами экрана"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varna vid märken i sessioner utanför skärmen"
           }
         },
         "tr" : {
@@ -29159,6 +30977,12 @@
             "value" : "По центру, без заголовка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrerad, utan titelfält"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29253,6 +31077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить интеграцию с Claude Code"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installera Claude Code-integrering"
           }
         },
         "tr" : {
@@ -29351,6 +31181,12 @@
             "value" : "Отправить уведомление"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skicka notis"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29445,6 +31281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Текущая сессия является источником трансляции"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuell session är sändningskälla"
           }
         },
         "tr" : {
@@ -29543,6 +31385,12 @@
             "value" : "Уведомлять о следующей отметке"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varna vid nästa märke"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29637,6 +31485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить ширину"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öka bredd"
           }
         },
         "tr" : {
@@ -29735,6 +31589,12 @@
             "value" : "Режим CSI u"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSI u-läge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29829,6 +31689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить разделитель вниз"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta avdelare nedåt"
           }
         },
         "tr" : {
@@ -29927,6 +31793,12 @@
             "value" : "Изменить размер разделённой панели"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändra storlek på delad panel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30021,6 +31893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переустановить интеграцию с Claude Code"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installera om Claude Code-integrering"
           }
         },
         "tr" : {
@@ -30119,6 +31997,12 @@
             "value" : "Установить интеграцию с оболочкой"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installera skalintegrering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30213,6 +32097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Фильтр"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrera"
           }
         },
         "tr" : {
@@ -30311,6 +32201,12 @@
             "value" : "Изменить триггеры"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera utlösare"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30405,6 +32301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приостановить панель"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa panel"
           }
         },
         "tr" : {
@@ -30503,6 +32405,12 @@
             "value" : "Сохранить ретроспективные отладочные журналы"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spara retrospektiva felsökningsloggar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30597,6 +32505,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сниппеты"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textsnuttar"
           }
         },
         "tr" : {
@@ -30695,6 +32609,12 @@
             "value" : "Выбрать текущую команду"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markera aktuellt kommando"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30789,6 +32709,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сделать снимок экрана…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta skärmavbild…"
           }
         },
         "tr" : {
@@ -30887,6 +32813,12 @@
             "value" : "Отрисовывать выделение нативно"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendera markering nativt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30981,6 +32913,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать заметку сессии"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa sessionsanteckning"
           }
         },
         "tr" : {
@@ -31079,6 +33017,12 @@
             "value" : "Сниппеты"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textsnuttar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31173,6 +33117,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить заголовок окна"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera fönstertitel"
           }
         },
         "tr" : {
@@ -31271,6 +33221,12 @@
             "value" : "Скрытые оповещения…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dolda varningar…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31365,6 +33321,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Предыдущая отметка"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Föregående märke"
           }
         },
         "tr" : {
@@ -31463,6 +33425,12 @@
             "value" : "Установить уже загруженную среду выполнения Python"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installera redan hämtad Python-körmiljö"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31557,6 +33525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить разделитель вправо"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta avdelare åt höger"
           }
         },
         "tr" : {
@@ -31655,6 +33629,12 @@
             "value" : "Вкладка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31749,6 +33729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Загрузить файлы…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hämta filer…"
           }
         },
         "tr" : {
@@ -31847,6 +33833,12 @@
             "value" : "Переместить вкладку влево"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flytta flik åt vänster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31941,6 +33933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить вкладку в новую группу…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg till flik i ny grupp…"
           }
         },
         "tr" : {
@@ -32039,6 +34037,12 @@
             "value" : "Показывать панель инструментов"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa verktygsfältet"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32133,6 +34137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить вкладку из группы"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort flik från grupp"
           }
         },
         "tr" : {
@@ -32231,6 +34241,12 @@
             "value" : "Автокомпозер"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisk kommandoredigerare"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32325,6 +34341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть чат ИИ…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna AI-chatt…"
           }
         },
         "tr" : {
@@ -32423,6 +34445,12 @@
             "value" : "Показывать метки времени"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa tidsstämplar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32517,6 +34545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расширенная вставка…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancerad inklistring…"
           }
         },
         "tr" : {
@@ -32615,6 +34649,12 @@
             "value" : "Упорядочить окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordna fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32709,6 +34749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уровень эмуляции"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emuleringsnivå"
           }
         },
         "tr" : {
@@ -32807,6 +34853,12 @@
             "value" : "Выбрать совпадения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markera träffar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32901,6 +34953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть выделенное"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna markering"
           }
         },
         "tr" : {
@@ -32999,6 +35057,12 @@
             "value" : "История"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33093,6 +35157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Восстановить архив…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återskapa arkiv…"
           }
         },
         "tr" : {
@@ -33191,6 +35261,12 @@
             "value" : "Стиль окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fönsterstil"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33285,6 +35361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Во всю ширину внизу экрана"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full bredd, skärmens nederkant"
           }
         },
         "tr" : {
@@ -33383,6 +35465,12 @@
             "value" : "Буквальные управляющие коды"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bokstavliga styrtecken"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33477,6 +35565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Очистить поиск"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rensa sökning"
           }
         },
         "tr" : {
@@ -33575,6 +35669,12 @@
             "value" : "Объяснить вывод с помощью ИИ"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Förklara utdata med AI"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33669,6 +35769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уровень эмуляции"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emuleringsnivå"
           }
         },
         "tr" : {
@@ -33767,6 +35873,12 @@
             "value" : "Найти URL-адреса"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök efter URL:er"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33861,6 +35973,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заменить отформатированным JSON"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersätt med formaterad JSON"
           }
         },
         "tr" : {
@@ -33959,6 +36077,12 @@
             "value" : "Действия"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åtgärder"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34053,6 +36177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменения размера обновляют профиль"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Storleksändringar uppdaterar profilen"
           }
         },
         "tr" : {
@@ -34151,6 +36281,12 @@
             "value" : "Удалить недавние профили из меню Dock"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort senaste profiler från Dock-menyn"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34245,6 +36381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрытые сессии"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begravda sessioner"
           }
         },
         "tr" : {
@@ -34343,6 +36485,12 @@
             "value" : "Управление зависимостями…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hantera beroenden…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34437,6 +36585,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bakåt"
           }
         },
         "tr" : {
@@ -34535,6 +36689,12 @@
             "value" : "Рабочие группы"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbetsgrupper"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34629,6 +36789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Загрузить расстановку из файла…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läs in arrangemang från fil…"
           }
         },
         "tr" : {
@@ -34727,6 +36893,12 @@
             "value" : "Комбинации клавиш режима копирования"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kortkommandon för kopieringsläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34821,6 +36993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить панель"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delad panel"
           }
         },
         "tr" : {
@@ -34919,6 +37097,12 @@
             "value" : "Изменить размер окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändra fönsterstorlek"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35013,6 +37197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сообщать обо всех типах событий"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapportera alla händelsetyper"
           }
         },
         "tr" : {
@@ -35111,6 +37301,12 @@
             "value" : "Добавить триггер…"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lägg till utlösare…"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35205,6 +37401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Веб"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Webb"
           }
         },
         "tr" : {
@@ -35303,6 +37505,12 @@
             "value" : "Режим modifyOtherKeys 1"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys-läge 1"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35397,6 +37605,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уменьшить ширину"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minska bredd"
           }
         },
         "tr" : {
@@ -35495,6 +37709,12 @@
             "value" : "Справа от экрана"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skärmens högra sida"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35589,6 +37809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставить файл в кодировке Base64"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in fil Base64-kodad"
           }
         },
         "tr" : {
@@ -35687,6 +37913,12 @@
             "value" : "Очистить до последней отметки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rensa till senaste märket"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35781,6 +38013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выровнять разделённые панели"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fördela delade paneler jämnt"
           }
         },
         "tr" : {
@@ -35879,6 +38117,12 @@
             "value" : "Импортировать запись"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importera inspelning"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35973,6 +38217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Прикладная клавиатура"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programknappsats"
           }
         },
         "tr" : {
@@ -36071,6 +38321,12 @@
             "value" : "Во всю ширину вверху экрана"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full bredd, skärmens överkant"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36162,6 +38418,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -36263,6 +38525,12 @@
             "value" : "VT200"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36357,6 +38625,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключиться"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koppla från"
           }
         },
         "tr" : {
@@ -36455,6 +38729,12 @@
             "value" : "Предупреждать перед вставкой однострочного текста, заканчивающегося переводом строки, в командной строке оболочки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varna före inklistring av en rad som slutar med radbrytning vid skalprompten"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36549,6 +38829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти везде…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök globalt…"
           }
         },
         "tr" : {
@@ -36647,6 +38933,12 @@
             "value" : "Развёрнуто"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximerad"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36741,6 +39033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Консоль"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konsol"
           }
         },
         "tr" : {
@@ -36839,6 +39137,12 @@
             "value" : "Новая вкладка рядом с текущей"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ny flik bredvid aktuell flik"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36933,6 +39237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Восстановить расстановку окон как вкладки"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återskapa fönsterarrangemang som flikar"
           }
         },
         "tr" : {
@@ -37031,6 +39341,12 @@
             "value" : "Заменить значением в кодировке Base64"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersätt med Base64-kodat värde"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37125,6 +39441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Задействовать искусственный интеллект"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivera artificiell intelligens"
           }
         },
         "tr" : {
@@ -37223,6 +39545,12 @@
             "value" : "Сессия"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37319,6 +39647,12 @@
             "value" : "Именованные отметки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namngivna märken"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37413,6 +39747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Следующий сосед"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nästa medlem"
           }
         },
         "tr" : {

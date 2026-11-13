@@ -71,6 +71,12 @@
             "value" : "Разделить текущую панель XXXally"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dela aktuell panel XXX"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -167,6 +173,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dela"
           }
         },
         "tr" : {

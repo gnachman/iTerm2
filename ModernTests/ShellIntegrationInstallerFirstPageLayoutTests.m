@@ -130,7 +130,7 @@
 }
 
 - (void)testUtilitiesFitInEveryLanguage {
-    for (NSString *language in @[ @"en", @"de", @"es", @"fr", @"it", @"ja", @"nl", @"pl", @"pt-BR", @"ru", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"en", @"de", @"es", @"fr", @"it", @"ja", @"nl", @"pl", @"pt-BR", @"ru", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
         [self checkLanguage:language];
     }
 }

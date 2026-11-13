@@ -71,6 +71,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -165,6 +171,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shell-интеграция"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skalintegrering"
           }
         },
         "tr": {

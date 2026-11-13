@@ -71,6 +71,12 @@
             "value" : "Для определения приглашения требуется интеграция с оболочкой"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kräver skalintegrering för att identifiera prompten"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Эта функция включается, когда запущенное приложение отправило escape-код для включения режима «вставки в скобках». Вставляемая строка будет «обёрнута» escape-кодами, указывающими, что этот текст получен в результате операции вставки."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiveras när det körande programmet har skickat en escapekod för att slå på ”läget för inklistring inom hakparentes”. Den inklistrade strängen omges då av escapekoder som anger att texten kommer från en inklistring."
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Экранировать табуляции с помощью ^V"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapea tabbtecken med ^V"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставлять с табуляциями"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in med tabbtecken"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Заменить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersätt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать пунктуацию Unicode"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertera Unicode-skiljetecken"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Учитывает escape-коды vim"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respekterar vims escapesekvenser"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 мс"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Преобразует различные виды кавычек и тире в их эквиваленты ASCII."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konverterar olika former av citattecken och tankstreck till deras ASCII-motsvarigheter."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать табуляции в пробелы:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertera tabbtecken till mellanslag:"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Как правило, ни DOS-, ни UNIX-переводы строк не используются в качестве ввода. Стандартом является CR."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radbrytningar i DOS och UNIX används vanligtvis inte som indata. CR är standard."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экранировать символы оболочки с помощью \\"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapea skaltecken med \\"
           }
         },
         "tr" : {
@@ -1223,6 +1295,12 @@
             "value" : "Размер фрагмента:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delstorlek:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстановка"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersättning"
           }
         },
         "tr" : {
@@ -1415,6 +1499,12 @@
             "value" : "Как правило, ни DOS-, ни UNIX-переводы строк не используются в качестве ввода. Стандартом является CR."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radbrytningar i DOS och UNIX används vanligtvis inte som indata. CR är standard."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Единственные «безопасные» управляющие коды: табуляция, перевод строки, перевод страницы и возврат каретки."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabb, radmatning, sidmatning och vagnretur är de enda ”säkra” kontrolltecknen."
           }
         },
         "tr" : {
@@ -1607,6 +1703,12 @@
             "value" : "Преобразования"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omvandlingar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1701,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Синтаксис регулярных выражений ICU"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICU-syntax för reguljära uttryck"
           }
         },
         "tr" : {
@@ -1799,6 +1907,12 @@
             "value" : "100 мс"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1893,6 +2007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 КБ"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
           }
         },
         "tr" : {
@@ -1991,6 +2111,12 @@
             "value" : "на"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "med"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скорость"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hastighet"
           }
         },
         "tr" : {
@@ -2183,6 +2315,12 @@
             "value" : "Удалять небезопасные управляющие коды"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort osäkra kontrolltecken"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2277,6 +2415,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ожидать приглашение оболочки перед вставкой каждой строки"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vänta på skalprompten före inklistring av varje rad"
           }
         },
         "tr" : {
@@ -2375,6 +2519,12 @@
             "value" : "Межблочная пауза:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fördröjning:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2469,6 +2619,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 байт"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 byte"
           }
         },
         "tr" : {
@@ -2567,6 +2723,12 @@
             "value" : "Рег. выражение"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reguljärt uttryck"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2661,6 +2823,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 КБ"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
           }
         },
         "tr" : {
@@ -2759,6 +2927,12 @@
             "value" : "150 мс"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2850,6 +3024,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -2951,6 +3131,12 @@
             "value" : "Радио"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radioknapp"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3045,6 +3231,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалять переводы строк"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort radbrytningar"
           }
         },
         "tr" : {
@@ -3143,6 +3335,12 @@
             "value" : "$1, $2 и т. д. для групп захвата"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Använd $1, $2 osv. för fångstgrupper"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3237,6 +3435,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Режим вставки в скобках"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läge för inklistring inom hakparentes"
           }
         },
         "tr" : {
@@ -3335,6 +3539,12 @@
             "value" : "1 МБ"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3429,6 +3639,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать CRLF и LF в CR"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertera CRLF och LF till CR"
           }
         },
         "tr" : {
@@ -3527,6 +3743,12 @@
             "value" : "Кодировать в Base64"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base64-koda"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3621,6 +3843,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 с"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 s"
           }
         },
         "tr" : {

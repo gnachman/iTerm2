@@ -10,7 +10,7 @@
 import XCTest
 
 final class XibCatalogGapLocalizationTests: XCTestCase {
-    private let languages = ["de", "es", "fr", "it", "ja", "nl", "pl", "pt-BR", "ru", "tr", "vi", "zh-Hans", "zh-Hant"]
+    private let languages = ["de", "es", "fr", "it", "ja", "nl", "pl", "pt-BR", "ru", "sv", "tr", "vi", "zh-Hans", "zh-Hant"]
 
     private func strings(_ relativePath: String) throws -> [String: Any] {
         let root = URL(fileURLWithPath: #filePath)

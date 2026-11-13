@@ -71,6 +71,12 @@
             "value" : "Простой скрипт, у которого нет других зависимостей, кроме библиотеки iterm2."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ett enkelt skript som inte har några beroenden förutom iterm2-biblioteket."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -162,6 +168,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -263,6 +275,12 @@
             "value" : "Базовый"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grundläggande"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -354,6 +372,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -455,6 +479,12 @@
             "value" : "Демон длительного выполнения"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Långkörande daemon"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Простой"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enkel"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите этот шаблон для простого скрипта, который выполняет действия и завершает работу."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj den här mallen för ett enkelt skript som utför åtgärder och sedan avslutas."
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Скрипт, который зависит от пакетов PyPI, помимо библиотеки iterm2. Для этого скрипта будет создано отдельное окружение pyenv."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ett skript som är beroende av PyPI-paket utöver iterm2-biblioteket. En privat pyenv skapas för skriptet."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -930,6 +984,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1031,6 +1091,12 @@
             "value" : "Выберите шаблон скрипта:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj en skriptmall:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Полное окружение"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fullständig miljö"
           }
         },
         "tr" : {
@@ -1223,6 +1295,12 @@
             "value" : "Выберите этот шаблон для скрипта, который остаётся запущенным и реагирует на уведомления."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj den här mallen för ett skript som fortsätter köras och svarar på notiser."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1314,6 +1392,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -1413,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите окружение Python:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj en Python-miljö:"
           }
         },
         "tr" : {

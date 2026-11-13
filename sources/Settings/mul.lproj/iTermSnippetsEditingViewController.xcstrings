@@ -71,6 +71,12 @@
             "value" : "Изменить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redigera"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -167,6 +173,12 @@
             "value" : "Заголовок"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Текст"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
           }
         },
         "tr" : {

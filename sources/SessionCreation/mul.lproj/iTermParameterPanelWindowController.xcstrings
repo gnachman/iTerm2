@@ -71,6 +71,12 @@
             "value": "Введите значение для "
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ange värdet för "
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -165,6 +171,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "ОК"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
         "tr": {
@@ -263,6 +275,12 @@
             "value": "Параметр сеанса"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessionsparameter"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -359,6 +377,12 @@
             "value": "Отмена"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -453,6 +477,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Имя"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Namn"
           }
         },
         "tr": {

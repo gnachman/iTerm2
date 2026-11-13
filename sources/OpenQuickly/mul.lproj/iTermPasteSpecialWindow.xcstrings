@@ -71,6 +71,12 @@
             "value" : "мм:сс"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx строк, xxx байт."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx rader, xxx byte."
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Вставить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klistra in"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -359,6 +377,12 @@
             "value" : "Отмена"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -453,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Минимальная длительность:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minsta varaktighet:"
           }
         },
         "tr" : {

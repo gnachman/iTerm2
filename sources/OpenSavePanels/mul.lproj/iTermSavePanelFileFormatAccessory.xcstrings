@@ -71,6 +71,12 @@
             "value": "Включать метки времени"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta med tidsstämplar"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -165,6 +171,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Формат файла:"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filformat:"
           }
         },
         "tr": {

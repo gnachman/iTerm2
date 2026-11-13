@@ -71,6 +71,12 @@
             "value" : "Путь к SSH:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sökväg till SSH:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Файлы для копирования на удалённый хост:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filer att kopiera till fjärrvärden:"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Назначение"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mål"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -359,6 +377,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -450,6 +474,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -551,6 +581,12 @@
             "value" : "Обзор"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -645,6 +681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
         "tr" : {
@@ -743,6 +785,12 @@
             "value" : "Файл или папка"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fil eller mapp"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -839,6 +887,12 @@
             "value" : "Интеграция SSH"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH-integrering"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переменные окружения для копирования на удалённый хост:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miljövariabler att kopiera till fjärrvärden:"
           }
         },
         "tr" : {

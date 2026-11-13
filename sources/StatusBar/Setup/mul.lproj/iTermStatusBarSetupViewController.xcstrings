@@ -71,6 +71,12 @@
             "value" : "Перетащите компонент из меню в «Активные компоненты», чтобы добавить его в строку состояния."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dra en komponent från menyn till Aktiva komponenter för att lägga till den i statusfältet."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Предпочитать плотную упаковку стабильному расположению"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Föredra tät packning framför stabil positionering"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Активные компоненты"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiva komponenter"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Отключено"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaktiverad"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалять компоненты с пустыми значениями"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta bort komponenter med tomma värden"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Рисовать разделитель между строкой состояния и терминалом"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rita en avgränsare mellan statusfältet och terminalen"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Автоматически"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisk"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Меню компонентов строки состояния"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meny för statusfältskomponenter"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дополнительно…"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancerat…"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Алгоритм плотной упаковки позволяет одновременно отображать больше компонентов строки состояния, но они чаще смещаются."
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmen för tät packning gör att fler statusfältskomponenter syns samtidigt, men de tenderar att hoppa runt mer."
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Автоматическая радуга:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Automatisk regnbåge:"
           }
         },
         "tr" : {
@@ -1223,6 +1295,12 @@
             "value" : "Здесь появится название шрифта"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typsnittsnamnet visas här"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Тёмные цвета"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mörka färger"
           }
         },
         "tr" : {
@@ -1415,6 +1499,12 @@
             "value" : "Изменить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändra"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Цвет текста по умолчанию:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Förvald textfärg:"
           }
         },
         "tr" : {
@@ -1607,6 +1703,12 @@
             "value" : "Настроить компонент"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurera komponent"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1701,6 +1803,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Алгоритм плотной упаковки позволяет одновременно отображать больше компонентов строки состояния, но они чаще смещаются."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmen för tät packning gör att fler statusfältskomponenter syns samtidigt, men de tenderar att hoppa runt mer."
           }
         },
         "tr" : {
@@ -1799,6 +1907,12 @@
             "value" : "Цвет разделителя:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avgränsarfärg:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1893,6 +2007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avbryt"
           }
         },
         "tr" : {
@@ -1991,6 +2111,12 @@
             "value" : "Светлые цвета"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ljusa färger"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Шрифт:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typsnitt:"
           }
         },
         "tr" : {
@@ -2183,6 +2315,12 @@
             "value" : "Цвет фона:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bakgrundsfärg:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2279,6 +2417,12 @@
             "value" : "ОК"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2373,6 +2517,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Рисует тонкую линию между строкой состояния и содержимым терминала."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritar en tunn linje mellan statusfältet och terminalinnehållet."
           }
         },
         "tr" : {

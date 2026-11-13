@@ -71,6 +71,12 @@
             "value": "Установщик среды выполнения Python"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installationsprogram för Python-körmiljö"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -167,6 +173,12 @@
             "value": "Отмена"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avbryt"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
@@ -261,6 +273,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Загрузка дополнительных компонентов…"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hämtar valfria komponenter…"
           }
         },
         "tr": {

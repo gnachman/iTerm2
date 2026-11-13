@@ -71,6 +71,12 @@
             "value" : "Настройки"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inställningar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Настройки"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inställningar"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Группа"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gruppera"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Группа"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gruppera"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Уведомить"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meddela"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уведомить"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meddela"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Кокпит"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -743,6 +785,12 @@
             "value" : "Поиск"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -837,6 +885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поиск"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sök"
           }
         },
         "tr" : {

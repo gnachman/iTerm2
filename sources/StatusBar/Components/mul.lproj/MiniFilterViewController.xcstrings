@@ -71,6 +71,12 @@
             "value" : "Подстрока с учётом регистра"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, skiftlägeskänslig"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока с умным учётом регистра"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, smart skiftläge"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Регулярное выражение с учётом регистра"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, skiftlägeskänslig"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение без учёта регистра"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ignorera skiftläge"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Подстрока без учёта регистра"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delsträng, ignorera skiftläge"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Фильтр"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
           }
         },
         "tr" : {

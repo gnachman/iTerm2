@@ -71,6 +71,12 @@
             "value" : "Путь"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sökväg"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visa"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Сигнатура"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signatur"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Инспектор скриптов"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriptgranskare"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Сеансы, вкладки и окна"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessioner, flikar och fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переменные"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variabler"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Роль"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Roll"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать путь"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera sökväg"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Зарегистрированные функции"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrerade funktioner"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Значение"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Värde"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Копировать ID"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera ID"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1127,6 +1193,12 @@
             "value" : "Имя объекта (ID)"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektnamn (ID)"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1218,6 +1290,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1319,6 +1397,12 @@
             "value" : "Скрипт"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skript"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1413,6 +1497,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать значение"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiera värde"
           }
         },
         "tr" : {

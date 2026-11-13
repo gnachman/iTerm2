@@ -71,6 +71,12 @@
             "value" : "Использовать каталог предыдущего сеанса"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återanvänd föregående sessions katalog"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -165,6 +171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Домашний каталог"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hemkatalog"
           }
         },
         "tr" : {
@@ -263,6 +275,12 @@
             "value" : "Рабочий каталог для новых вкладок"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbetskatalog för nya flikar"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -357,6 +375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Радио"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radioknapp"
           }
         },
         "tr" : {
@@ -455,6 +479,12 @@
             "value" : "Рабочий каталог для новых окон"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbetskatalog för nya fönster"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Использовать каталог предыдущего сеанса"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återanvänd föregående sessions katalog"
           }
         },
         "tr" : {
@@ -647,6 +683,12 @@
             "value" : "Радио"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radioknapp"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Использовать каталог предыдущего сеанса"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Återanvänd föregående sessions katalog"
           }
         },
         "tr" : {
@@ -839,6 +887,12 @@
             "value" : "Каталог:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -933,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Рабочий каталог для новых разделённых панелей"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbetskatalog för nya delade paneler"
           }
         },
         "tr" : {
@@ -1031,6 +1091,12 @@
             "value" : "Дополнительные настройки рабочего каталога"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancerade inställningar för arbetskatalog"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1125,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Каталог:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog:"
           }
         },
         "tr" : {
@@ -1223,6 +1295,12 @@
             "value" : "Каталог:"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalog:"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1317,6 +1395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Радио"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radioknapp"
           }
         },
         "tr" : {
@@ -1415,6 +1499,12 @@
             "value" : "Домашний каталог"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hemkatalog"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1511,6 +1601,12 @@
             "value" : "Домашний каталог"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hemkatalog"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1605,6 +1701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "tr" : {

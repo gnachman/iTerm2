@@ -71,6 +71,12 @@
             "value": "Флажок"
           }
         },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Markera"
+          }
+        },
         "tr": {
           "stringUnit": {
             "state": "translated",
