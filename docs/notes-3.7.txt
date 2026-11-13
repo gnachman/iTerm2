@@ -119,7 +119,8 @@ Improvements:
   each session’s running job, which previously
   grew with the number of processes running on
   your Mac.
-- In beta builds, each session now handles its
+- In beta builds, and for a small share of
+  everyone else, each session now handles its
   output independently, so heavy output in some
   sessions no longer makes typing lag in the
   others. If you suspect it of causing a problem,

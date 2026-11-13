@@ -297,6 +297,31 @@ BOOL UseSystemCursorWhenPossibleDefault(void) {
     return YES;
 }
 
+// Returns a number in [0, 100) for this install, chosen at random the first time and stored under
+// `key` so the install stays in or out of a staged rollout across launches. Give each rollout its
+// own key so that different rollouts reach different users.
+static NSInteger iTermStagedRolloutBucket(NSString *key) {
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+    NSNumber *stored = [NSNumber castFrom:[userDefaults objectForKey:key]];
+    if (stored && stored.integerValue >= 0 && stored.integerValue < 100) {
+        return stored.integerValue;
+    }
+    const NSInteger bucket = arc4random_uniform(100);
+    [userDefaults setInteger:bucket forKey:key];
+    return bucket;
+}
+
+// On for beta users and for a percentage of everyone else.
+static BOOL UseTaskIOMonitorsDefault(void) {
+    static const NSInteger rolloutPercent = 1;
+    static BOOL value;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        value = YES_IF_BETA_ELSE_NO || iTermStagedRolloutBucket(@"NoSyncRolloutBucketUseTaskIOMonitors") < rolloutPercent;
+    });
+    return value;
+}
+
 #pragma mark - iTermAdvancedSettingsModel
 
 @implementation iTermAdvancedSettingsModel
@@ -896,7 +921,7 @@ DEFINE_BOOL(fastForegroundJobUpdates, YES, SECTION_EXPERIMENTAL, NSLocalizedStri
 DEFINE_BOOL(limitSessionsProcessingOutput, YES, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.limitSessionsProcessingOutput", nil, [NSBundle mainBundle], @"Limit how many sessions process output at once, as set by “Sessions processing output at once” in Settings > General > Magic?\nTurn this off if you suspect the limit of causing a problem, such as a session that stops updating. This applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect.", @"Advanced setting: limitSessionsProcessingOutput"));
 DEFINE_FLOAT(visibleSessionExecutionWeight, 4, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.visibleSessionExecutionWeight", nil, [NSBundle mainBundle], @"How many times as much processing time a visible session gets as a hidden one when more sessions have output to process than can run at once.\nThis applies only with the new implementation of session input and output. You must restart iTerm2 for this setting to take effect.", @"Advanced setting: visibleSessionExecutionWeight"));
 DEFINE_FLOAT(tokenExecutionTimeSlice, 0.005, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.tokenExecutionTimeSlice", nil, [NSBundle mainBundle], @"Seconds a session processes output before letting a waiting session take a turn.\nThis applies only with the new implementation of session input and output, when more sessions have output to process than can run at once. You must restart iTerm2 for this setting to take effect.", @"Advanced setting: tokenExecutionTimeSlice"));
-DEFINE_BOOL(useTaskIOMonitors, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.useTaskIOMonitors", nil, [NSBundle mainBundle], @"Use the new implementation of session input and output, which keeps sessions with heavy output from slowing down typing in other sessions?\nTurn this off if you suspect it of causing a problem. You must restart iTerm2 for this setting to take effect.", @"Advanced setting: useTaskIOMonitors"));
+DEFINE_BOOL(useTaskIOMonitors, UseTaskIOMonitorsDefault(), SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.useTaskIOMonitors", nil, [NSBundle mainBundle], @"Use the new implementation of session input and output, which keeps sessions with heavy output from slowing down typing in other sessions?\nTurn this off if you suspect it of causing a problem. You must restart iTerm2 for this setting to take effect.", @"Advanced setting: useTaskIOMonitors"));
 DEFINE_BOOL(tmuxVariableWindowSizesSupported, YES, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.tmuxVariableWindowSizesSupported", nil, [NSBundle mainBundle], @"Allow variable window sizes in tmux integration.\nRequres tmux version 2.9 or later.", @"Advanced setting: tmuxVariableWindowSizesSupported"));
 DEFINE_BOOL(aggressiveBaseCharacterDetection, YES, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.aggressiveBaseCharacterDetection", nil, [NSBundle mainBundle], @"Detect base unicode characters with lookup table.\nApple's algorithm for segmenting composed characters makes bad choices, such as for Tamil. Enable this to reduce text overlapping.", @"Advanced setting: aggressiveBaseCharacterDetection"));
 DEFINE_BOOL(escapeWithQuotes, NO, SECTION_EXPERIMENTAL, NSLocalizedStringWithDefaultValue(@"AdvancedSetting.escapeWithQuotes", nil, [NSBundle mainBundle], @"Escape file names with single quotes instead of backslashes.\nThis is intended for users of xonsh, which does not accept backslash escaping.", @"Advanced setting: escapeWithQuotes"));
