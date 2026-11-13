@@ -95,6 +95,12 @@
             "value": "Чёрно-белый"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Čiernobielo"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

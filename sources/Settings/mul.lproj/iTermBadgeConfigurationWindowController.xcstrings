@@ -95,6 +95,12 @@
             "value" : "%"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -216,6 +222,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -347,6 +359,12 @@
             "value" : "Максимальная ширина:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximálna šírka:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Верхний отступ:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Horný okraj:"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Правое поле:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pravý okraj:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +750,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%"
@@ -851,6 +887,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -972,6 +1014,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -1103,6 +1151,12 @@
             "value" : "Максимальная высота:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximálna výška:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {

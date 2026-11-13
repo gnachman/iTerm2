@@ -95,6 +95,12 @@
             "value": "Флажок"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Označiť"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

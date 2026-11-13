@@ -69,7 +69,7 @@ final class ProfilesWindowSplitButtonTests: XCTestCase {
                     "ProfilesWindow.SplitVerticallyInNewWindow"]
         for key in keys {
             let localizations = (strings[key] as? [String: Any])?["localizations"] as? [String: Any]
-            for language in ["cs", "da", "de", "es", "fi", "fr", "it", "ja", "nb", "nl", "pl", "pt-BR", "ru", "sv", "tr", "vi", "zh-Hans", "zh-Hant"] {
+            for language in ["cs", "da", "de", "es", "fi", "fr", "it", "ja", "nb", "nl", "pl", "pt-BR", "ru", "sk", "sv", "tr", "vi", "zh-Hans", "zh-Hant"] {
                 let unit = (localizations?[language] as? [String: Any])?["stringUnit"] as? [String: Any]
                 XCTAssertEqual(unit?["state"] as? String, "translated", "\(key) \(language)")
             }

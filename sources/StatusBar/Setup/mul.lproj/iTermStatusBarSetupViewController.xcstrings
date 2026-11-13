@@ -95,6 +95,12 @@
             "value" : "Перетащите компонент из меню в «Активные компоненты», чтобы добавить его в строку состояния."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potiahnutím komponentu z menu do časti „Aktívne komponenty“ ho pridáte na stavovú lištu."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Предпочитать плотную упаковку стабильному расположению"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uprednostniť tesné usporiadanie pred stabilnou polohou"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Активные компоненты"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktívne komponenty"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Отключено"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnuté"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалять компоненты с пустыми значениями"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrániť komponenty s prázdnymi hodnotami"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Рисовать разделитель между строкой состояния и терминалом"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nakresliť oddeľovač medzi stavovou lištou a terminálom"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Автоматически"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaticky"
           }
         },
         "sv" : {
@@ -1103,6 +1151,12 @@
             "value" : "Меню компонентов строки состояния"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu komponentov stavovej lišty"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дополнительно…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozšírené…"
           }
         },
         "sv" : {
@@ -1355,6 +1415,12 @@
             "value" : "Алгоритм плотной упаковки позволяет одновременно отображать больше компонентов строки состояния, но они чаще смещаются."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmus tesného usporiadania umožňuje zobraziť naraz viac komponentov stavovej lišty, ale tie sa viac presúvajú."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Автоматическая радуга:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Automatická dúha:"
           }
         },
         "sv" : {
@@ -1607,6 +1679,12 @@
             "value" : "Здесь появится название шрифта"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu je názov písma"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1731,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Тёмные цвета"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tmavé farby"
           }
         },
         "sv" : {
@@ -1859,6 +1943,12 @@
             "value" : "Изменить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1983,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Цвет текста по умолчанию:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predvolená farba textu:"
           }
         },
         "sv" : {
@@ -2111,6 +2207,12 @@
             "value" : "Настроить компонент"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastaviť komponent"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2235,6 +2337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Алгоритм плотной упаковки позволяет одновременно отображать больше компонентов строки состояния, но они чаще смещаются."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmus tesného usporiadania umožňuje zobraziť naraz viac komponentov stavovej lišty, ale tie sa viac presúvajú."
           }
         },
         "sv" : {
@@ -2363,6 +2471,12 @@
             "value" : "Цвет разделителя:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farba oddeľovača:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2487,6 +2601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {
@@ -2615,6 +2735,12 @@
             "value" : "Светлые цвета"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Svetlé farby"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2739,6 +2865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Шрифт:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Písmo:"
           }
         },
         "sv" : {
@@ -2867,6 +2999,12 @@
             "value" : "Цвет фона:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farba pozadia:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2993,6 +3131,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3117,6 +3261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Рисует тонкую линию между строкой состояния и содержимым терминала."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nakreslí tenkú čiaru medzi stavovou lištou a obsahom terminálu."
           }
         },
         "sv" : {

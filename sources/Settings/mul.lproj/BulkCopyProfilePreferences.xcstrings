@@ -95,6 +95,12 @@
             "value" : "Цвета"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farby"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Текст"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Веб"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сеанс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relácia"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Дополнительно"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozšírené"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +755,12 @@
             "value" : "Окно"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -846,6 +882,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx"
@@ -977,6 +1019,12 @@
             "value" : "Терминал"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminál"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1101,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "В эти профили:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre tieto profily:"
           }
         },
         "sv" : {
@@ -1229,6 +1283,12 @@
             "value" : "Отмена"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1353,6 +1413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать настройки закладки"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať nastavenia záložky"
           }
         },
         "sv" : {
@@ -1481,6 +1547,12 @@
             "value" : "Клавиши"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klávesy"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1605,6 +1677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať"
           }
         },
         "sv" : {

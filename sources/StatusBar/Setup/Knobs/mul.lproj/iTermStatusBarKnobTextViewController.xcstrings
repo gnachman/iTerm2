@@ -95,6 +95,12 @@
             "value": "Подпись"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popis"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

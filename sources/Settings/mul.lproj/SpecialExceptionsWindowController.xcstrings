@@ -95,6 +95,12 @@
             "value" : "Установить пакет Nerd Font…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalovať balík Nerd Font…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -221,6 +227,12 @@
             "value" : "Изменить специальное исключение"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť špeciálnu výnimku"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -342,6 +354,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -473,6 +491,12 @@
             "value" : "Специальные исключения переопределяют шрифты для определённых диапазонов Unicode или письменностей."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Špeciálne výnimky prepisujú písma pre konkrétne rozsahy alebo písma Unicode."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +618,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -725,6 +755,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Шрифта:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Z písma:"
           }
         },
         "sv" : {
@@ -977,6 +1019,12 @@
             "value" : "Для символов, начиная с"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre znaky od"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1101,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить пресет…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pridať predvoľbu…"
           }
         },
         "sv" : {
@@ -1229,6 +1283,12 @@
             "value" : "Отмена"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1353,6 +1413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "до"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "do"
           }
         },
         "sv" : {
@@ -1481,6 +1547,12 @@
             "value" : "Управление специальными исключениями"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spravovať špeciálne výnimky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1605,6 +1677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "sv" : {
@@ -1733,6 +1811,12 @@
             "value" : "Использовать кодовые точки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použiť kódové body"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1859,6 +1943,12 @@
             "value" : "Отмена"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1980,6 +2070,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

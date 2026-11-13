@@ -95,6 +95,12 @@
             "value" : "Подстрока с учётом регистра"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podreťazec rozlišujúci veľkosť písmen"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока с умным учётом регистра"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podreťazec s inteligentnou veľkosťou písmen"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Регулярное выражение с учётом регистра"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex rozlišujúci veľkosť písmen"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Регулярное выражение без учёта регистра"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex ignorujúci veľkosť písmen"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Подстрока без учёта регистра"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podreťazec ignorujúci veľkosť písmen"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Фильтр"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrovať"
           }
         },
         "sv" : {

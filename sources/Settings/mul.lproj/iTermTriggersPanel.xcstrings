@@ -95,6 +95,12 @@
             "value" : "Использовать интерполированные строки для параметров"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použiť interpolované reťazce pre parametre"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать в профиль"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať do profilu"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Закрыть"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvoriť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Триггеры"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spúšťače"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Регулярное выражение"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulárny výraz"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите один триггер для просмотра или изменения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyberte jeden spúšťač na zobrazenie alebo úpravu"
           }
         },
         "sv" : {

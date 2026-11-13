@@ -95,6 +95,12 @@
             "value": "Вставка…"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vkladá sa…"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

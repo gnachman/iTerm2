@@ -95,6 +95,12 @@
             "value" : "Путь"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cesta"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Сигнатура"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podpis"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Инспектор скриптов"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inšpektor skriptov"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Сеансы, вкладки и окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relácie, taby a okná"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переменные"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premenné"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Роль"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rola"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать путь"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať cestu"
           }
         },
         "sv" : {
@@ -1103,6 +1151,12 @@
             "value" : "Зарегистрированные функции"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrované funkcie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Значение"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hodnota"
           }
         },
         "sv" : {
@@ -1355,6 +1415,12 @@
             "value" : "Копировать ID"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať ID"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1481,6 +1547,12 @@
             "value" : "Имя объекта (ID)"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Názov objektu (ID)"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1602,6 +1674,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1733,6 +1811,12 @@
             "value" : "Скрипт"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skript"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1857,6 +1941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать значение"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať hodnotu"
           }
         },
         "sv" : {

@@ -95,6 +95,12 @@
             "value" : "/directory"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скопировать каталог"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať adresár"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "12 байт"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bajtov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выделить вывод команды"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať výstup príkazu"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "1 ч 35 мин"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вывод:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výstup:"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Скопировано"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skopírované"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скопировать команду в буфер обмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skopírovať príkaz do schránky"
           }
         },
         "sv" : {
@@ -1103,6 +1151,12 @@
             "value" : "Начато в %@"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustené: %@"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть команду в Композиторе"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť príkaz v editore príkazov"
           }
         },
         "sv" : {
@@ -1355,6 +1415,12 @@
             "value" : "Перетаскиваемая папка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priečinok, ktorý sa dá potiahnuť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "команда"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "príkaz"
           }
         },
         "sv" : {
@@ -1607,6 +1679,12 @@
             "value" : "Вставить команду в терминал"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapísať príkaz do terminálu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1731,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Каталог:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresár:"
           }
         },
         "sv" : {
@@ -1859,6 +1943,12 @@
             "value" : "Код возврата:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Návratový kód:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1983,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставить каталог в терминал"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapísať adresár do terminálu"
           }
         },
         "sv" : {
@@ -2111,6 +2207,12 @@
             "value" : "Время выполнения:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Čas behu:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2235,6 +2337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скопировать вывод команды"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skopírovať výstup príkazu"
           }
         },
         "sv" : {
@@ -2363,6 +2471,12 @@
             "value" : "Поделиться командой…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdieľať príkaz…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2489,6 +2603,12 @@
             "value" : "Команда:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Príkaz:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2610,6 +2730,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -2739,6 +2865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключить показ команды за пределами экрана"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnúť zobrazovanie príkazu mimo obrazovky"
           }
         },
         "sv" : {

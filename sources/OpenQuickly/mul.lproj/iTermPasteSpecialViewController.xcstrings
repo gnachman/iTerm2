@@ -95,6 +95,12 @@
             "value" : "Для определения приглашения требуется интеграция с оболочкой"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na zistenie výzvy je potrebná integrácia shellu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Эта функция включается, когда запущенное приложение отправило escape-код для включения режима «вставки в скобках». Вставляемая строка будет «обёрнута» escape-кодами, указывающими, что этот текст получен в результате операции вставки."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapne sa, keď spustená apka odošle escape kód na zapnutie „režimu vkladania so zátvorkami“. Vložený reťazec bude „uzavretý“ escape kódmi, ktoré označujú, že text vo vnútri pochádza z operácie vloženia."
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Экранировать табуляции с помощью ^V"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapovať tabulátory pomocou ^V"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставлять с табуляциями"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložiť s tabulátormi"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Заменить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать пунктуацию Unicode"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previesť interpunkciu Unicode"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Учитывает escape-коды vim"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rešpektuje escape sekvencie vimu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 мс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
           }
         },
         "sv" : {
@@ -1103,6 +1151,12 @@
             "value" : "Преобразует различные виды кавычек и тире в их эквиваленты ASCII."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prevádza rôzne formy úvodzoviek a pomlčiek na ich ekvivalenty v ASCII."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать табуляции в пробелы:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previesť tabulátory na medzery:"
           }
         },
         "sv" : {
@@ -1355,6 +1415,12 @@
             "value" : "Как правило, ни DOS-, ни UNIX-переводы строк не используются в качестве ввода. Стандартом является CR."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nové riadky DOS aj UNIX sa vo vstupe vo všeobecnosti nepoužívajú. Štandardom je CR."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экранировать символы оболочки с помощью \\"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapovať znaky shellu pomocou \\"
           }
         },
         "sv" : {
@@ -1607,6 +1679,12 @@
             "value" : "Размер фрагмента:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Veľkosť časti:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1731,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстановка"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhrada"
           }
         },
         "sv" : {
@@ -1859,6 +1943,12 @@
             "value" : "Как правило, ни DOS-, ни UNIX-переводы строк не используются в качестве ввода. Стандартом является CR."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nové riadky DOS aj UNIX sa vo vstupe vo všeobecnosti nepoužívajú. Štandardom je CR."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1983,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Единственные «безопасные» управляющие коды: табуляция, перевод строки, перевод страницы и возврат каретки."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabulátor, posun riadka, posun strany a návrat vozíka sú jediné „bezpečné“ riadiace kódy."
           }
         },
         "sv" : {
@@ -2111,6 +2207,12 @@
             "value" : "Преобразования"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformácie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2235,6 +2337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Синтаксис регулярных выражений ICU"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syntax regulárnych výrazov ICU"
           }
         },
         "sv" : {
@@ -2363,6 +2471,12 @@
             "value" : "100 мс"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2487,6 +2601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 КБ"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
           }
         },
         "sv" : {
@@ -2615,6 +2735,12 @@
             "value" : "на"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "za"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2739,6 +2865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скорость"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rýchlosť"
           }
         },
         "sv" : {
@@ -2867,6 +2999,12 @@
             "value" : "Удалять небезопасные управляющие коды"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrániť nebezpečné riadiace kódy"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2991,6 +3129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ожидать приглашение оболочки перед вставкой каждой строки"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pred vložením každého riadka počkať na výzvu shellu"
           }
         },
         "sv" : {
@@ -3119,6 +3263,12 @@
             "value" : "Межблочная пауза:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauza:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3243,6 +3393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 байт"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 bajt"
           }
         },
         "sv" : {
@@ -3371,6 +3527,12 @@
             "value" : "Рег. выражение"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulárny výraz"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3495,6 +3657,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 КБ"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
           }
         },
         "sv" : {
@@ -3623,6 +3791,12 @@
             "value" : "150 мс"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3744,6 +3918,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -3875,6 +4055,12 @@
             "value" : "Радио"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prepínač"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3999,6 +4185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалять переводы строк"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrániť nové riadky"
           }
         },
         "sv" : {
@@ -4127,6 +4319,12 @@
             "value" : "$1, $2 и т. д. для групп захвата"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skupiny: $1, $2 atď."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4251,6 +4449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Режим вставки в скобках"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Režim vkladania so zátvorkami"
           }
         },
         "sv" : {
@@ -4379,6 +4583,12 @@
             "value" : "1 МБ"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4503,6 +4713,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Преобразовывать CRLF и LF в CR"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previesť CRLF a LF na CR"
           }
         },
         "sv" : {
@@ -4631,6 +4847,12 @@
             "value" : "Кодировать в Base64"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kódovať v Base64"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4755,6 +4977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 с"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 s"
           }
         },
         "sv" : {

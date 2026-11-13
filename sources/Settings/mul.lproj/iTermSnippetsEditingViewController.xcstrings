@@ -95,6 +95,12 @@
             "value" : "Изменить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -221,6 +227,12 @@
             "value" : "Заголовок"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Názov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -345,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Текст"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
           }
         },
         "sv" : {

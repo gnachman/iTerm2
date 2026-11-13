@@ -95,6 +95,12 @@
             "value" : "Разделить текущую панель XXXally"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdeliť aktuálny panel XXX"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -221,6 +227,12 @@
             "value" : "Отмена"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -345,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdeliť"
           }
         },
         "sv" : {

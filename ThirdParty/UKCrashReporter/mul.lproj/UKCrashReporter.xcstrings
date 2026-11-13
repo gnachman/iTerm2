@@ -95,6 +95,12 @@
             "value" : "Описание"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Popis"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Журнал сбоя"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Záznam o páde"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Отчёт о сбое"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlásenie o páde"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Похоже, что {APPNAME} завершилось сбоем при последнем использовании. Хотите отправить журнал сбоя разработчикам?\n\nЖурналы сбоев от Apple не отправляются другим разработчикам, поэтому это единственный способ, с помощью которого разработчики {APPNAME} могут узнать об этом сбое и исправить его."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zdá sa, že pri poslednom použití aplikácie {APPNAME} došlo k pádu. Chcete vývojárom odoslať záznam o páde?\n\nZáznamy o páde od Applu sa ostatným vývojárom neposielajú, takže toto je jediný spôsob, ako sa vývojári aplikácie {APPNAME} o tomto páde dozvedia a môžu ho opraviť."
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Вы можете удалить любую информацию, которую не хотите передавать, но это усложнит обнаружение ошибки. По умолчанию передаются журнал сбоя, а также сведения о вашем Mac и ваших настройках."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Môžete odstrániť akékoľvek informácie, ktoré nechcete odoslať, ale sťažíte tým nájdenie chyby. Predvolene sa odosiela záznam o páde, model vášho Macu a vaše nastavenia."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odoslať"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Напомнить позже"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pripomenúť neskôr"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отклонить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zahodiť"
           }
         },
         "sv" : {

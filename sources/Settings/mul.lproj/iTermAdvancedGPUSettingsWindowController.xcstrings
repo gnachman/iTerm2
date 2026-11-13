@@ -95,6 +95,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключать GPU-рендерер в режиме низкого энергопотребления"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnúť vykresľovanie na GPU v režime nízkej spotreby"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Предпочитать встроенный GPU дискретному"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uprednostniť integrovanú GPU pred dedikovanou"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -473,6 +491,12 @@
             "value" : "Отключать GPU-рендерер при отключении от питания"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnúť vykresľovanie na GPU po odpojení od napájania"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {

@@ -95,6 +95,12 @@
             "value": "Размер табуляции в пробелах:"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veľkosť tabulátora v medzerách:"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -216,6 +222,12 @@
           }
         },
         "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "sk": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

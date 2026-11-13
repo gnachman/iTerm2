@@ -95,6 +95,12 @@
             "value" : "Уменьшить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oddialiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить среду выполнения Python"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalovať behové prostredie Python"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Переместить вкладку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť tab"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дублировать сеанс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikovať reláciu"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Открыть адрес…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť umiestnenie…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить высоту"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zväčšiť výšku"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Переместить вкладку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť tab"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Оповещение о фокусе"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlásenie fokusu"
           }
         },
         "sv" : {
@@ -1103,6 +1151,12 @@
             "value" : "Обычный"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normálne"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить разделитель вверх"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť oddeľovač nahor"
           }
         },
         "sv" : {
@@ -1355,6 +1415,12 @@
             "value" : "Заменить декодированным из Base64 значением"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradiť hodnotou dekódovanou z Base64"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сеанс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relácia"
           }
         },
         "sv" : {
@@ -1607,6 +1679,12 @@
             "value" : "Переместить сеанс в панель разделения"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť reláciu do rozdeleného panela"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1731,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Менеджер паролей"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Správca hesiel"
           }
         },
         "sv" : {
@@ -1859,6 +1943,12 @@
             "value" : "Пункт 1"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 1"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1983,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "По центру"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na stred"
           }
         },
         "sv" : {
@@ -2111,6 +2207,12 @@
             "value" : "Заменить выделенное"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradiť výber"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2235,6 +2337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Слева от экрана"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vľavo na obrazovke"
           }
         },
         "sv" : {
@@ -2363,6 +2471,12 @@
             "value" : "Курсор приложения"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzor aplikácie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2487,6 +2601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usporiadania"
           }
         },
         "sv" : {
@@ -2615,6 +2735,12 @@
             "value" : "Свернуть выбранные строки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zbaliť vybrané riadky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2739,6 +2865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть недавние каталоги…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť nedávne adresáre…"
           }
         },
         "sv" : {
@@ -2867,6 +2999,12 @@
             "value" : "Во весь экран"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celá obrazovka"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2991,6 +3129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить именованную метку"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastaviť pomenovanú značku"
           }
         },
         "sv" : {
@@ -3119,6 +3263,12 @@
             "value" : "Действия"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akcie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3243,6 +3393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Захватить кадр GPU"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zachytiť snímku GPU"
           }
         },
         "sv" : {
@@ -3371,6 +3527,12 @@
             "value" : "Метки и аннотации"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Značky a anotácie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3495,6 +3657,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Слева от экрана на всю высоту"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celá výška vľavo na obrazovke"
           }
         },
         "sv" : {
@@ -3623,6 +3791,12 @@
             "value" : "Дублировать окно"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikovať okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3747,6 +3921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Автозавершение команд"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatické dopĺňanie príkazov"
           }
         },
         "sv" : {
@@ -3875,6 +4055,12 @@
             "value" : "Стиль окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Štýl okna"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3999,6 +4185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Доступность GPU-рендерера"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostupnosť vykresľovacieho modulu GPU"
           }
         },
         "sv" : {
@@ -4127,6 +4319,12 @@
             "value" : "Окно"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4251,6 +4449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Свернуть"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimalizovať"
           }
         },
         "sv" : {
@@ -4379,6 +4583,12 @@
             "value" : "Окно"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4500,6 +4710,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -4631,6 +4847,12 @@
             "value" : "iTerm2"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4755,6 +4977,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить профиль в расположении…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť profil v usporiadaní…"
           }
         },
         "sv" : {
@@ -4883,6 +5111,12 @@
             "value" : "Оболочка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5007,6 +5241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить ширину по умолчанию"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastaviť predvolenú šírku"
           }
         },
         "sv" : {
@@ -5135,6 +5375,12 @@
             "value" : "Оболочка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5259,6 +5505,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Справка"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomocník"
           }
         },
         "sv" : {
@@ -5387,6 +5639,12 @@
             "value" : "Справка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomocník"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5511,6 +5769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Справка по iTerm2"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomocník iTerm2"
           }
         },
         "sv" : {
@@ -5639,6 +5903,12 @@
             "value" : "Настройки…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavenia…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5763,6 +6033,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Службы"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Služby"
           }
         },
         "sv" : {
@@ -5891,6 +6167,12 @@
             "value" : "Службы"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Služby"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6015,6 +6297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть iTerm2"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skryť iTerm2"
           }
         },
         "sv" : {
@@ -6143,6 +6431,12 @@
             "value" : "Завершить iTerm2"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukončiť iTerm2"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6267,6 +6561,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть остальные"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skryť ostatné"
           }
         },
         "sv" : {
@@ -6395,6 +6695,12 @@
             "value" : "Показать все"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť všetky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6519,6 +6825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вырезать"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vystrihnúť"
           }
         },
         "sv" : {
@@ -6647,6 +6959,12 @@
             "value" : "Правка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6771,6 +7089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Правка"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť"
           }
         },
         "sv" : {
@@ -6899,6 +7223,12 @@
             "value" : "Выделить всё"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Označiť všetko"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7023,6 +7353,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložiť"
           }
         },
         "sv" : {
@@ -7151,6 +7487,12 @@
             "value" : "Очистить буфер"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyčistiť buffer"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7275,6 +7617,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Журнал"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Záznam"
           }
         },
         "sv" : {
@@ -7403,6 +7751,12 @@
             "value" : "Журнал"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Záznam"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7527,6 +7881,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "О программе iTerm2"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplikácii iTerm2"
           }
         },
         "sv" : {
@@ -7655,6 +8015,12 @@
             "value" : "Профили"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profily"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7779,6 +8145,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Профили"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profily"
           }
         },
         "sv" : {
@@ -7907,6 +8279,12 @@
             "value" : "Закрыть окно терминала"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvoriť okno Terminálu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8031,6 +8409,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрыть все панели во вкладке"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvoriť všetky panely v tabe"
           }
         },
         "sv" : {
@@ -8159,6 +8543,12 @@
             "value" : "Параметры страницы…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavenie strany…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8283,6 +8673,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить выделенный текст…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uložiť vybraný text…"
           }
         },
         "sv" : {
@@ -8411,6 +8807,12 @@
             "value" : "Очистить буфер прокрутки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyčistiť buffer histórie rolovania"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8535,6 +8937,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти выделенное"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použiť výber na hľadanie"
           }
         },
         "sv" : {
@@ -8663,6 +9071,12 @@
             "value" : "Найти"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8787,6 +9201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť"
           }
         },
         "sv" : {
@@ -8915,6 +9335,12 @@
             "value" : "Найти следующее"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť ďalšie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9039,6 +9465,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти предыдущее"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť predošlé"
           }
         },
         "sv" : {
@@ -9167,6 +9599,12 @@
             "value" : "Перейти к выделенному"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prejsť na výber"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9291,6 +9729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вид"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť"
           }
         },
         "sv" : {
@@ -9419,6 +9863,12 @@
             "value" : "Вид"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9543,6 +9993,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить текст"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zväčšiť text"
           }
         },
         "sv" : {
@@ -9671,6 +10127,12 @@
             "value" : "Уменьшить текст"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmenšiť text"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9795,6 +10257,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Печать"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tlačiť"
           }
         },
         "sv" : {
@@ -9923,6 +10391,12 @@
             "value" : "Экран"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obrazovka"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10047,6 +10521,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Печать"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tlačiť"
           }
         },
         "sv" : {
@@ -10175,6 +10655,12 @@
             "value" : "Выделение"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výber"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10299,6 +10785,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Буфер"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffer"
           }
         },
         "sv" : {
@@ -10427,6 +10919,12 @@
             "value" : "Выбрать предыдущую вкладку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať predošlý tab"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10551,6 +11049,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать следующую вкладку"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať ďalší tab"
           }
         },
         "sv" : {
@@ -10679,6 +11183,12 @@
             "value" : "Выбрать вкладку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať tab"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10803,6 +11313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать вкладку"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať tab"
           }
         },
         "sv" : {
@@ -10931,6 +11447,12 @@
             "value" : "Новая вкладка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nový tab"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11055,6 +11577,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новое окно"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nové okno"
           }
         },
         "sv" : {
@@ -11183,6 +11711,12 @@
             "value" : "Нажмите Option для нового окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stlačením klávesu Option otvoríte nové okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11307,6 +11841,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть в новом окне"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť v novom okne"
           }
         },
         "sv" : {
@@ -11435,6 +11975,12 @@
             "value" : "Проверить обновления…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skontrolovať aktualizácie…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11559,6 +12105,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť veľkosť"
           }
         },
         "sv" : {
@@ -11687,6 +12239,12 @@
             "value" : "Сброс"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetovať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11811,6 +12369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переключить полноэкранный режим"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnúť/vypnúť celú obrazovku"
           }
         },
         "sv" : {
@@ -11939,6 +12503,12 @@
             "value" : "Переключить отладочное журналирование"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnúť/vypnúť ladiaci záznam"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12063,6 +12633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть профили…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť profily…"
           }
         },
         "sv" : {
@@ -12191,6 +12767,12 @@
             "value" : "Изменить сеанс…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť reláciu…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12315,6 +12897,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Начать мгновенный повтор"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustiť okamžité prehratie"
           }
         },
         "sv" : {
@@ -12443,6 +13031,12 @@
             "value" : "Отменить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odvolať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12567,6 +13161,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Повторить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnoviť"
           }
         },
         "sv" : {
@@ -12695,6 +13295,12 @@
             "value" : "Открыть историю вставок…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť históriu vkladania…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12819,6 +13425,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть автозаполнение…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť automatické dopĺňanie…"
           }
         },
         "sv" : {
@@ -12947,6 +13559,12 @@
             "value" : "Специальная вставка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložiť špeciálne"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13071,6 +13689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Специальная вставка"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložiť špeciálne"
           }
         },
         "sv" : {
@@ -13199,6 +13823,12 @@
             "value" : "Вставить выделенное"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložiť výber"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13323,6 +13953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставить медленно"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložiť pomaly"
           }
         },
         "sv" : {
@@ -13451,6 +14087,12 @@
             "value" : "Защищённый ввод с клавиатуры"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zabezpečené zadávanie z klávesnice"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13575,6 +14217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположить окна по горизонтали"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usporiadať okná vodorovne"
           }
         },
         "sv" : {
@@ -13703,6 +14351,12 @@
             "value" : "Закрыть"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvoriť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13827,6 +14481,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить вертикально с текущим профилем"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdeliť zvisle s aktuálnym profilom"
           }
         },
         "sv" : {
@@ -13955,6 +14615,12 @@
             "value" : "Разделить горизонтально с текущим профилем"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdeliť vodorovne s aktuálnym profilom"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14079,6 +14745,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить расположение окон"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uložiť usporiadanie okien"
           }
         },
         "sv" : {
@@ -14207,6 +14879,12 @@
             "value" : "Выбрать панель разделения"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať rozdelený panel"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14331,6 +15009,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать панель разделения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať rozdelený panel"
           }
         },
         "sv" : {
@@ -14459,6 +15143,12 @@
             "value" : "Выбрать панель выше"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať panel hore"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14583,6 +15273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать панель ниже"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať panel dole"
           }
         },
         "sv" : {
@@ -14711,6 +15407,12 @@
             "value" : "Выбрать панель слева"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať panel vľavo"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14835,6 +15537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать панель справа"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať panel vpravo"
           }
         },
         "sv" : {
@@ -14963,6 +15671,12 @@
             "value" : "Использовать прозрачность"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Použiť priehľadnosť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15087,6 +15801,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Развернуть активную панель"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximalizovať aktívny panel"
           }
         },
         "sv" : {
@@ -15215,6 +15935,12 @@
             "value" : "Пункт 3"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 3"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15339,6 +16065,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пункт 2"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 2"
           }
         },
         "sv" : {
@@ -15467,6 +16199,12 @@
             "value" : "Пункт 1"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 1"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15591,6 +16329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить метку"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastaviť značku"
           }
         },
         "sv" : {
@@ -15719,6 +16463,12 @@
             "value" : "Перейти к метке"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prejsť na značku"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15843,6 +16593,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Следующая панель"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ďalší panel"
           }
         },
         "sv" : {
@@ -15971,6 +16727,12 @@
             "value" : "Предыдущая панель"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predošlý panel"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16095,6 +16857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать вкладки в полноэкранном режиме"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť taby na celej obrazovke"
           }
         },
         "sv" : {
@@ -16223,6 +16991,12 @@
             "value" : "Трансляция ввода"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vysielanie vstupu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16347,6 +17121,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Трансляция ввода"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vysielanie vstupu"
           }
         },
         "sv" : {
@@ -16475,6 +17255,12 @@
             "value" : "Транслировать ввод во все панели во всех вкладках"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vysielať vstup do všetkých panelov vo všetkých taboch"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16599,6 +17385,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Транслировать ввод во все панели текущей вкладки"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vysielať vstup do všetkých panelov v aktuálnom tabe"
           }
         },
         "sv" : {
@@ -16727,6 +17519,12 @@
             "value" : "Отправлять ввод только в текущий сеанс"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odosielať vstup iba do aktuálnej relácie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16851,6 +17649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Восстановить расположение окон"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnoviť usporiadanie okien"
           }
         },
         "sv" : {
@@ -16979,6 +17783,12 @@
             "value" : "Восстановить расположение окон"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnoviť usporiadanie okien"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17103,6 +17913,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти курсор"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť kurzor"
           }
         },
         "sv" : {
@@ -17231,6 +18047,12 @@
             "value" : "Разделить горизонтально…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdeliť vodorovne…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17355,6 +18177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить вертикально…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdeliť zvisle…"
           }
         },
         "sv" : {
@@ -17483,6 +18311,12 @@
             "value" : "Набор инструментов"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pás s nástrojmi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17607,6 +18441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Набор инструментов"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pás s nástrojmi"
           }
         },
         "sv" : {
@@ -17735,6 +18575,12 @@
             "value" : "Показать набор инструментов"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť pás s nástrojmi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17859,6 +18705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новая вкладка с текущим профилем"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nový tab s aktuálnym profilom"
           }
         },
         "sv" : {
@@ -17987,6 +18839,12 @@
             "value" : "Запустить сопроцесс…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustiť koproces…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18111,6 +18969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Остановить сопроцесс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zastaviť koproces"
           }
         },
         "sv" : {
@@ -18239,6 +19103,12 @@
             "value" : "Копировать"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18363,6 +19233,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить вкладку в новое окно"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť tab do nového okna"
           }
         },
         "sv" : {
@@ -18491,6 +19367,12 @@
             "value" : "Переместить вкладку вправо"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť tab doprava"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18617,6 +19499,12 @@
             "value" : "Показывать индикатор фонового узора"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť indikátor vzoru pozadia"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18738,6 +19626,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -18869,6 +19763,12 @@
             "value" : "tmux"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18993,6 +19893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Новая вкладка tmux"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nový tab tmux"
           }
         },
         "sv" : {
@@ -19121,6 +20027,12 @@
             "value" : "Новое окно tmux"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nové okno tmux"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19245,6 +20157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отсоединить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpojiť"
           }
         },
         "sv" : {
@@ -19373,6 +20291,12 @@
             "value" : "Панель управления"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovládací panel"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19497,6 +20421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Обычный размер текста"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normálna veľkosť textu"
           }
         },
         "sv" : {
@@ -19625,6 +20555,12 @@
             "value" : "Восстановить размер текста и сеанса"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnoviť veľkosť textu a relácie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19749,6 +20685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сделать iTerm2 терминалом по умолчанию"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastaviť iTerm2 ako predvolený terminál"
           }
         },
         "sv" : {
@@ -19877,6 +20819,12 @@
             "value" : "Сделать Terminal терминалом по умолчанию"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastaviť Terminál ako predvolený terminál"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20001,6 +20949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переключить трансляцию ввода в текущий сеанс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnúť/vypnúť vysielanie vstupu do aktuálnej relácie"
           }
         },
         "sv" : {
@@ -20129,6 +21083,12 @@
             "value" : "Ускорить вставку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vkladať rýchlejšie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20253,6 +21213,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Замедлить вставку"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vkladať pomalšie"
           }
         },
         "sv" : {
@@ -20381,6 +21347,12 @@
             "value" : "Ускорить медленную вставку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomalé vkladanie rýchlejšie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20505,6 +21477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Замедлить медленную вставку"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomalé vkladanie pomalšie"
           }
         },
         "sv" : {
@@ -20633,6 +21611,12 @@
             "value" : "Сбросить набор символов"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetovať znakovú sadu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20759,6 +21743,12 @@
             "value" : "Архивы"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archívy"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20880,6 +21870,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -21011,6 +22007,12 @@
             "value" : "Аннотировать выделенное"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anotovať výber"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21135,6 +22137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить выделенное"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priblížiť výber"
           }
         },
         "sv" : {
@@ -21263,6 +22271,12 @@
             "value" : "Переместить разделитель влево"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť oddeľovač doľava"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21387,6 +22401,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключить все"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnúť všetko"
           }
         },
         "sv" : {
@@ -21515,6 +22535,12 @@
             "value" : "Переместить сеанс"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť reláciu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21639,6 +22665,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать редактор команд"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť editor príkazov"
           }
         },
         "sv" : {
@@ -21767,6 +22799,12 @@
             "value" : "Принудительно отсоединить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vynútiť odpojenie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21891,6 +22929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Именованные метки"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomenované značky"
           }
         },
         "sv" : {
@@ -22019,6 +23063,12 @@
             "value" : "Найти…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22143,6 +23193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экспортировать запись"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportovať nahrávku"
           }
         },
         "sv" : {
@@ -22271,6 +23327,12 @@
             "value" : "Без строки заголовка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez lišty s názvom"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22392,6 +23454,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -22523,6 +23591,12 @@
             "value" : "Показать вырезки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť výstrižky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22647,6 +23721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Настройки устройства Companion"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavenia sprievodného zariadenia"
           }
         },
         "sv" : {
@@ -22775,6 +23855,12 @@
             "value" : "Режим копирования"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Režim kopírovania"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22899,6 +23985,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить сеанс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť reláciu"
           }
         },
         "sv" : {
@@ -23027,6 +24119,12 @@
             "value" : "Вкладка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23151,6 +24249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Очистить до начала выделения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyčistiť po začiatok výberu"
           }
         },
         "sv" : {
@@ -23279,6 +24383,12 @@
             "value" : "Копировать статистику производительности"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať štatistiky výkonu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23403,6 +24513,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрипты"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripty"
           }
         },
         "sv" : {
@@ -23531,6 +24647,12 @@
             "value" : "Сохранить текущее окно как расположение"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uložiť aktuálne okno ako usporiadanie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23655,6 +24777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Триггеры"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spúšťače"
           }
         },
         "sv" : {
@@ -23783,6 +24911,12 @@
             "value" : "Показать направляющую курсора"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť vodiacu čiaru kurzora"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23907,6 +25041,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заблокировать размер"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknúť veľkosť"
           }
         },
         "sv" : {
@@ -24035,6 +25175,12 @@
             "value" : "Записывать в файл"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaznamenávať do súboru"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24159,6 +25305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Экспортировать…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportovať…"
           }
         },
         "sv" : {
@@ -24287,6 +25439,12 @@
             "value" : "Веб"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24411,6 +25569,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сообщать связанный текст"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlásiť priradený text"
           }
         },
         "sv" : {
@@ -24539,6 +25703,12 @@
             "value" : "Новый скрипт Python"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nový skript Python"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24663,6 +25833,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Лицензии открытого ПО"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licencie open source"
           }
         },
         "sv" : {
@@ -24791,6 +25967,12 @@
             "value" : "Очистить мгновенный повтор"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vymazať okamžité prehratie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24915,6 +26097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уменьшить высоту"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmenšiť výšku"
           }
         },
         "sv" : {
@@ -25043,6 +26231,12 @@
             "value" : "Скрипты"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripty"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25167,6 +26361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать скрипты в Finder"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť skripty vo Finderi"
           }
         },
         "sv" : {
@@ -25295,6 +26495,12 @@
             "value" : "Сохранить содержимое…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uložiť obsah…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25419,6 +26625,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Все окна на передний план"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť všetky do popredia"
           }
         },
         "sv" : {
@@ -25547,6 +26759,12 @@
             "value" : "Свернуть все"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zbaliť všetko"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25671,6 +26889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Архивы"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archívy"
           }
         },
         "sv" : {
@@ -25799,6 +27023,12 @@
             "value" : "Восстановить расположение окон как вкладки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnoviť usporiadanie okien ako taby"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25923,6 +27153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить аннотацию у курсора"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pridať anotáciu na kurzor"
           }
         },
         "sv" : {
@@ -26051,6 +27287,12 @@
             "value" : "Отключить прозрачность для активного окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vypnúť priehľadnosť pre aktívne okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26177,6 +27419,12 @@
             "value" : "Скобочная вставка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vkladanie so zátvorkami"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26301,6 +27549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заменить отформатированным JSON"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradiť formátovaným JSON"
           }
         },
         "sv" : {
@@ -26458,6 +27712,12 @@
             "state" : "translated",
             "value" : "Převést do popředí"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť do popredia"
+          }
         }
       }
     },
@@ -26583,6 +27843,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ukotvit plovoucí podokno"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukotviť plávajúci panel"
           }
         }
       }
@@ -26710,6 +27976,12 @@
             "state" : "translated",
             "value" : "Skrýt plovoucí podokna"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skryť plávajúce panely"
+          }
         }
       }
     },
@@ -26835,6 +28107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno dolů"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť plávajúci panel nadol"
           }
         }
       }
@@ -26962,6 +28240,12 @@
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno doleva"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť plávajúci panel doľava"
+          }
         }
       }
     },
@@ -27087,6 +28371,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno doprava"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť plávajúci panel doprava"
           }
         }
       }
@@ -27214,6 +28504,12 @@
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno nahoru"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť plávajúci panel nahor"
+          }
         }
       }
     },
@@ -27339,6 +28635,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nové plovoucí podokno s aktuálním profilem"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nový plávajúci panel s aktuálnym profilom"
           }
         }
       }
@@ -27466,6 +28768,12 @@
             "state" : "translated",
             "value" : "Plovoucí podokna"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plávajúce panely"
+          }
         }
       }
     },
@@ -27591,6 +28899,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plovoucí podokna"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plávajúce panely"
           }
         }
       }
@@ -27718,6 +29032,12 @@
             "state" : "translated",
             "value" : "Převést do pozadí"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť do pozadia"
+          }
         }
       }
     },
@@ -27813,6 +29133,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать совет дня"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť tip dňa"
           }
         },
         "sv" : {
@@ -27941,6 +29267,12 @@
             "value" : "Следующая аннотация"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ďalšia anotácia"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28065,6 +29397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Кокпит"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
           }
         },
         "sv" : {
@@ -28193,6 +29531,12 @@
             "value" : "Переместить сеанс во вкладку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť reláciu do tabu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28317,6 +29661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Низ экрана"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dolu na obrazovke"
           }
         },
         "sv" : {
@@ -28445,6 +29795,12 @@
             "value" : "Запрашивать преобразование табуляции в пробелы при вставке"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pýtať sa na prevod tabulátorov na medzery pri vkladaní"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28569,6 +29925,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Оповещения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozornenia"
           }
         },
         "sv" : {
@@ -28697,6 +30059,12 @@
             "value" : "Копировать с управляющими последовательностями"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať s riadiacimi sekvenciami"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28821,6 +30189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить размер окна"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť veľkosť okna"
           }
         },
         "sv" : {
@@ -28949,6 +30323,12 @@
             "value" : "Сброс"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetovať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29073,6 +30453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дублировать вкладку"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikovať tab"
           }
         },
         "sv" : {
@@ -29201,6 +30587,12 @@
             "value" : "Обновить страницу"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu načítať stránku"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29325,6 +30717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить сеанс в окно"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť reláciu do okna"
           }
         },
         "sv" : {
@@ -29453,6 +30851,12 @@
             "value" : "Сообщать все клавиши как escape-коды"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlásiť všetky klávesy ako escape kódy"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29577,6 +30981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Режим необработанного ввода клавиш"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Režim hlásenia nespracovaných klávesov"
           }
         },
         "sv" : {
@@ -29705,6 +31115,12 @@
             "value" : "Импортировать…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importovať…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29829,6 +31245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Предупреждать перед многострочной вставкой"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozorniť pred vložením viacerých riadkov"
           }
         },
         "sv" : {
@@ -29957,6 +31379,12 @@
             "value" : "Показать встроенный чат"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť vložený chat"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30083,6 +31511,12 @@
             "value" : "Переключить буферизованный ввод"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnúť/vypnúť vstup do buffera"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30207,6 +31641,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалённый узел может управлять iTerm2"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vzdialený hostiteľ môže ovládať iTerm2"
           }
         },
         "sv" : {
@@ -30364,6 +31804,12 @@
             "state" : "translated",
             "value" : "Zkontrolovat zkracování ovládacích prvků nastavení"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skontrolovať orezávanie ovládacích prvkov nastavení"
+          }
         }
       }
     },
@@ -30459,6 +31905,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Триггеры"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spúšťače"
           }
         },
         "sv" : {
@@ -30587,6 +32039,12 @@
             "value" : "Выделение учитывает мягкие границы"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výber rešpektuje mäkké hranice"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30711,6 +32169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выйти из рабочей группы"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opustiť pracovnú skupinu"
           }
         },
         "sv" : {
@@ -30839,6 +32303,12 @@
             "value" : "Выбрать вывод последней команды"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať výstup posledného príkazu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30963,6 +32433,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Перезапустить сеанс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reštartovať reláciu"
           }
         },
         "sv" : {
@@ -31091,6 +32567,12 @@
             "value" : "Открыть Python REPL"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť Python REPL"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31215,6 +32697,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Верх экрана"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hore na obrazovke"
           }
         },
         "sv" : {
@@ -31343,6 +32831,12 @@
             "value" : "Объединить все окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zlúčiť všetky okná"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31467,6 +32961,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрепить окно быстрого вызова"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pripnúť okno aktivačnej skratky"
           }
         },
         "sv" : {
@@ -31595,6 +33095,12 @@
             "value" : "modifyOtherKeys Mode 2"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, režim 2"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31719,6 +33225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Быстрое открытие"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rýchlo otvoriť"
           }
         },
         "sv" : {
@@ -31847,6 +33359,12 @@
             "value" : "Управление"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spravovať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31971,6 +33489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Устранять неоднозначность Escape"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jednoznačný Esc"
           }
         },
         "sv" : {
@@ -32099,6 +33623,12 @@
             "value" : "Выбрать результат для открытия"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať výsledok na otvorenie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32223,6 +33753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ограничить предупреждение о многострочной вставке приглашением оболочки"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obmedziť upozornenie na vkladanie viacerých riadkov na výzvu shellu"
           }
         },
         "sv" : {
@@ -32351,6 +33887,12 @@
             "value" : "Включить триггеры в интерактивных приложениях"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnúť spúšťače v interaktívnych apkách"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32475,6 +34017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пункт 2"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 2"
           }
         },
         "sv" : {
@@ -32603,6 +34151,12 @@
             "value" : "Передача событий мыши"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlásenie myši"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32727,6 +34281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Метки и аннотации"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Značky a anotácie"
           }
         },
         "sv" : {
@@ -32855,6 +34415,12 @@
             "value" : "Заблокировать раскладку"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknúť rozloženie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32979,6 +34545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заблокировать положение"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknúť umiestnenie"
           }
         },
         "sv" : {
@@ -33107,6 +34679,12 @@
             "value" : "Новое окно с текущим профилем"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nové okno s aktuálnym profilom"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33231,6 +34809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрыть сеанс"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pochovať reláciu"
           }
         },
         "sv" : {
@@ -33359,6 +34943,12 @@
             "value" : "Показать модальное окно оповещения"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť modálne okno s upozornením"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33483,6 +35073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Включить все"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnúť všetko"
           }
         },
         "sv" : {
@@ -33611,6 +35207,12 @@
             "value" : "Следующая метка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ďalšia značka"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33735,6 +35337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположить окна"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usporiadať okná"
           }
         },
         "sv" : {
@@ -33863,6 +35471,12 @@
             "value" : "Найти все совпадения умного выделения"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť všetky zhody inteligentného výberu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33987,6 +35601,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Воспроизвести звук"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prehrať zvuk"
           }
         },
         "sv" : {
@@ -34115,6 +35735,12 @@
             "value" : "Открыть историю команд…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť históriu príkazov…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34239,6 +35865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Копировать со стилями"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopírovať so štýlmi"
           }
         },
         "sv" : {
@@ -34367,6 +35999,12 @@
             "value" : "Альтернативный экран"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternatívna obrazovka"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34493,6 +36131,12 @@
             "value" : "Во всю высоту у правого края экрана"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celá výška vpravo na obrazovke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34614,6 +36258,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -34745,6 +36395,12 @@
             "value" : "Стандартный режим сообщения о клавишах"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Štandardný režim hlásenia klávesov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34869,6 +36525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить размер панели разделения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť veľkosť rozdeleného panela"
           }
         },
         "sv" : {
@@ -34997,6 +36659,12 @@
             "value" : "Оповещения"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozornenia"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35121,6 +36789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уведомлять об изменении статуса"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozorniť pri zmene stavu"
           }
         },
         "sv" : {
@@ -35249,6 +36923,12 @@
             "value" : "Выбрать следующую группу вкладок"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať ďalšiu skupinu tabov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35373,6 +37053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить интеграцию Claude Code"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odinštalovať integráciu Claude Code"
           }
         },
         "sv" : {
@@ -35501,6 +37187,12 @@
             "value" : "Изменить заголовок вкладки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť názov tabu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35625,6 +37317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расположения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usporiadania"
           }
         },
         "sv" : {
@@ -35753,6 +37451,12 @@
             "value" : "Предыдущий сосед"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predošlý člen"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35877,6 +37581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сообщать альтернативные клавиши"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlásiť alternatívne klávesy"
           }
         },
         "sv" : {
@@ -36005,6 +37715,12 @@
             "value" : "Разделить панель"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdelený panel"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36129,6 +37845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Состояние терминала"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stav terminálu"
           }
         },
         "sv" : {
@@ -36257,6 +37979,12 @@
             "value" : "Отменить закрытие"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odvolať zatvorenie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36381,6 +38109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Чаты ИИ"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaty s AI"
           }
         },
         "sv" : {
@@ -36509,6 +38243,12 @@
             "value" : "Вперёд"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dopredu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36633,6 +38373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заблокировать ширину панели разделения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamknúť šírku rozdeleného panela"
           }
         },
         "sv" : {
@@ -36761,6 +38507,12 @@
             "value" : "Рабочие группы"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pracovné skupiny"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36885,6 +38637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить архив текущего сеанса…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uložiť archív aktuálnej relácie…"
           }
         },
         "sv" : {
@@ -37013,6 +38771,12 @@
             "value" : "Заменить выделенное"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradiť výber"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37134,6 +38898,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -37265,6 +39035,12 @@
             "value" : "Показать аннотации"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť anotácie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37386,6 +39162,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -37517,6 +39299,12 @@
             "value" : "Управление"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spravovať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37641,6 +39429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Пункт 3"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Položka 3"
           }
         },
         "sv" : {
@@ -37769,6 +39563,12 @@
             "value" : "Выбрать предыдущую группу вкладок"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať predošlú skupinu tabov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37893,6 +39693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрытые сессии"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pochované relácie"
           }
         },
         "sv" : {
@@ -38021,6 +39827,12 @@
             "value" : "Предыдущая аннотация"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predošlá anotácia"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38145,6 +39957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уведомлять об отметках в сессиях за пределами экрана"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozorniť na značky v relácii mimo obrazovky"
           }
         },
         "sv" : {
@@ -38302,6 +40120,12 @@
             "state" : "translated",
             "value" : "Na střed, bez záhlaví"
           }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na stred, bez lišty s názvom"
+          }
         }
       }
     },
@@ -38397,6 +40221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установить интеграцию с Claude Code"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalovať integráciu Claude Code"
           }
         },
         "sv" : {
@@ -38525,6 +40355,12 @@
             "value" : "Отправить уведомление"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odoslať hlásenie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38649,6 +40485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Текущая сессия является источником трансляции"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuálna relácia je zdrojom vysielania"
           }
         },
         "sv" : {
@@ -38777,6 +40619,12 @@
             "value" : "Уведомлять о следующей отметке"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozorniť pri ďalšej značke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38901,6 +40749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Увеличить ширину"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zväčšiť šírku"
           }
         },
         "sv" : {
@@ -39029,6 +40883,12 @@
             "value" : "Режим CSI u"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Režim CSI u"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39153,6 +41013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить разделитель вниз"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť oddeľovač nadol"
           }
         },
         "sv" : {
@@ -39281,6 +41147,12 @@
             "value" : "Изменить размер разделённой панели"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť veľkosť rozdeleného panela"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39405,6 +41277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переустановить интеграцию с Claude Code"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu inštalovať integráciu Claude Code"
           }
         },
         "sv" : {
@@ -39533,6 +41411,12 @@
             "value" : "Установить интеграцию с оболочкой"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalovať integráciu shellu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39657,6 +41541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Фильтр"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrovať"
           }
         },
         "sv" : {
@@ -39785,6 +41675,12 @@
             "value" : "Изменить триггеры"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť spúšťače"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39909,6 +41805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приостановить панель"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastaviť panel"
           }
         },
         "sv" : {
@@ -40037,6 +41939,12 @@
             "value" : "Сохранить ретроспективные отладочные журналы"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uložiť retrospektívne ladiace záznamy"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40161,6 +42069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сниппеты"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úryvky"
           }
         },
         "sv" : {
@@ -40289,6 +42203,12 @@
             "value" : "Выбрать текущую команду"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať aktuálny príkaz"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40413,6 +42333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сделать снимок экрана…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vytvoriť snímku obrazovky…"
           }
         },
         "sv" : {
@@ -40541,6 +42467,12 @@
             "value" : "Отрисовывать выделение нативно"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vykresliť výber natívne"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40665,6 +42597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показать заметку сессии"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť poznámku relácie"
           }
         },
         "sv" : {
@@ -40793,6 +42731,12 @@
             "value" : "Сниппеты"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úryvky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40917,6 +42861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить заголовок окна"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upraviť názov okna"
           }
         },
         "sv" : {
@@ -41045,6 +42995,12 @@
             "value" : "Скрытые оповещения…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potlačené upozornenia…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41169,6 +43125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Предыдущая отметка"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Predošlá značka"
           }
         },
         "sv" : {
@@ -41297,6 +43259,12 @@
             "value" : "Установить уже загруженную среду выполнения Python"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalovať už stiahnuté behové prostredie Python"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41421,6 +43389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переместить разделитель вправо"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posunúť oddeľovač doprava"
           }
         },
         "sv" : {
@@ -41549,6 +43523,12 @@
             "value" : "Вкладка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41673,6 +43653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Загрузить файлы…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stiahnuť súbory…"
           }
         },
         "sv" : {
@@ -41801,6 +43787,12 @@
             "value" : "Переместить вкладку влево"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presunúť tab doľava"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41925,6 +43917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить вкладку в новую группу…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pridať tab do novej skupiny…"
           }
         },
         "sv" : {
@@ -42053,6 +44051,12 @@
             "value" : "Показывать панель инструментов"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť panel s nástrojmi"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42177,6 +44181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить вкладку из группы"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrániť tab zo skupiny"
           }
         },
         "sv" : {
@@ -42305,6 +44315,12 @@
             "value" : "Автокомпозер"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatický editor príkazov"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42429,6 +44445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть чат ИИ…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť chat s AI…"
           }
         },
         "sv" : {
@@ -42557,6 +44579,12 @@
             "value" : "Показывать метки времени"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť časové pečiatky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42681,6 +44709,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расширенная вставка…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozšírené vkladanie…"
           }
         },
         "sv" : {
@@ -42809,6 +44843,12 @@
             "value" : "Упорядочить окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usporiadať okná"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42933,6 +44973,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уровень эмуляции"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úroveň emulácie"
           }
         },
         "sv" : {
@@ -43061,6 +45107,12 @@
             "value" : "Выбрать совпадения"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať zhody"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43185,6 +45237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Открыть выделенное"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť výber"
           }
         },
         "sv" : {
@@ -43313,6 +45371,12 @@
             "value" : "История"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "História"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43437,6 +45501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Восстановить архив…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnoviť archív…"
           }
         },
         "sv" : {
@@ -43565,6 +45635,12 @@
             "value" : "Стиль окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Štýl okna"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43689,6 +45765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Во всю ширину внизу экрана"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celá šírka dole na obrazovke"
           }
         },
         "sv" : {
@@ -43817,6 +45899,12 @@
             "value" : "Буквальные управляющие коды"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doslovné riadiace znaky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43941,6 +46029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Очистить поиск"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vymazať hľadanie"
           }
         },
         "sv" : {
@@ -44069,6 +46163,12 @@
             "value" : "Объяснить вывод с помощью ИИ"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vysvetliť výstup pomocou AI"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44193,6 +46293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уровень эмуляции"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úroveň emulácie"
           }
         },
         "sv" : {
@@ -44321,6 +46427,12 @@
             "value" : "Найти URL-адреса"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť URL"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44445,6 +46557,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заменить отформатированным JSON"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradiť formátovaným JSON"
           }
         },
         "sv" : {
@@ -44573,6 +46691,12 @@
             "value" : "Действия"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akcie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44697,6 +46821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменения размера обновляют профиль"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeny veľkosti aktualizujú profil"
           }
         },
         "sv" : {
@@ -44825,6 +46955,12 @@
             "value" : "Удалить недавние профили из меню Dock"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odstrániť nedávne profily z menu Docku"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44949,6 +47085,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скрытые сессии"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pochované relácie"
           }
         },
         "sv" : {
@@ -45077,6 +47219,12 @@
             "value" : "Управление зависимостями…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spravovať závislosti…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45201,6 +47349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dozadu"
           }
         },
         "sv" : {
@@ -45329,6 +47483,12 @@
             "value" : "Рабочие группы"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pracovné skupiny"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45453,6 +47613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Загрузить расстановку из файла…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Načítať usporiadanie zo súboru…"
           }
         },
         "sv" : {
@@ -45581,6 +47747,12 @@
             "value" : "Комбинации клавиш режима копирования"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skratky režimu kopírovania"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45705,6 +47877,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разделить панель"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozdelený panel"
           }
         },
         "sv" : {
@@ -45833,6 +48011,12 @@
             "value" : "Изменить размер окна"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť veľkosť okna"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45957,6 +48141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сообщать обо всех типах событий"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlásiť všetky typy udalostí"
           }
         },
         "sv" : {
@@ -46085,6 +48275,12 @@
             "value" : "Добавить триггер…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pridať spúšťač…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46209,6 +48405,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Веб"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
           }
         },
         "sv" : {
@@ -46337,6 +48539,12 @@
             "value" : "Режим modifyOtherKeys 1"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, režim 1"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46461,6 +48669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уменьшить ширину"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmenšiť šírku"
           }
         },
         "sv" : {
@@ -46589,6 +48803,12 @@
             "value" : "Справа от экрана"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vpravo na obrazovke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46713,6 +48933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вставить файл в кодировке Base64"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vložiť súbor kódovaný v Base64"
           }
         },
         "sv" : {
@@ -46841,6 +49067,12 @@
             "value" : "Очистить до последней отметки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vyčistiť po poslednú značku"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46965,6 +49197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выровнять разделённые панели"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rovnomerne rozložiť rozdelené panely"
           }
         },
         "sv" : {
@@ -47093,6 +49331,12 @@
             "value" : "Импортировать запись"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importovať nahrávku"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47217,6 +49461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Прикладная клавиатура"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klávesnica aplikácie"
           }
         },
         "sv" : {
@@ -47345,6 +49595,12 @@
             "value" : "Во всю ширину вверху экрана"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celá šírka hore na obrazovke"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47466,6 +49722,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -47597,6 +49859,12 @@
             "value" : "VT200"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47721,6 +49989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отключиться"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpojiť"
           }
         },
         "sv" : {
@@ -47849,6 +50123,12 @@
             "value" : "Предупреждать перед вставкой однострочного текста, заканчивающегося переводом строки, в командной строке оболочки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozorniť pred vložením jedného riadka zakončeného novým riadkom vo výzve shellu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47973,6 +50253,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти везде…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť globálne…"
           }
         },
         "sv" : {
@@ -48101,6 +50387,12 @@
             "value" : "Развёрнуто"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximalizované"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48225,6 +50517,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Консоль"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konzola"
           }
         },
         "sv" : {
@@ -48353,6 +50651,12 @@
             "value" : "Новая вкладка рядом с текущей"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nový tab vedľa aktuálneho tabu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48477,6 +50781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Восстановить расстановку окон как вкладки"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnoviť usporiadanie okien ako taby"
           }
         },
         "sv" : {
@@ -48605,6 +50915,12 @@
             "value" : "Заменить значением в кодировке Base64"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nahradiť hodnotou kódovanou v Base64"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48729,6 +51045,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Задействовать искусственный интеллект"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapojiť umelú inteligenciu"
           }
         },
         "sv" : {
@@ -48857,6 +51179,12 @@
             "value" : "Сессия"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relácia"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48983,6 +51311,12 @@
             "value" : "Именованные отметки"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomenované značky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49107,6 +51441,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Следующий сосед"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ďalší člen"
           }
         },
         "sv" : {

@@ -108,6 +108,12 @@
             "value" : "iTerm2"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -232,6 +238,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать AppleScript."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať AppleScript."
           }
         },
         "sv" : {
@@ -360,6 +372,12 @@
             "value" : "Приложение в iTerm2 хочет использовать Bluetooth."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať Bluetooth."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -484,6 +502,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать данные календаря."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať údaje Kalendára."
           }
         },
         "sv" : {
@@ -612,6 +636,12 @@
             "value" : "Приложение в iTerm2 хочет использовать камеру."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať kameru."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -738,6 +768,12 @@
             "value" : "Приложение в iTerm2 хочет использовать ваши контакты."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať vaše kontakty."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -859,6 +895,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -990,6 +1032,12 @@
             "value" : "Приложение в iTerm2 хочет получить доступ к локальной сети."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce pristupovať k lokálnej sieti."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1114,6 +1162,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать данные о вашем местоположении, даже в фоновом режиме."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať informácie o vašej polohe, aj na pozadí."
           }
         },
         "sv" : {
@@ -1242,6 +1296,12 @@
             "value" : "Приложение в iTerm2 хочет использовать данные о вашем местоположении."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať informácie o vašej polohe."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1366,6 +1426,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать данные о вашем местоположении, пока оно активно."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať informácie o vašej polohe, keď je aktívna."
           }
         },
         "sv" : {
@@ -1494,6 +1560,12 @@
             "value" : "Приложение в iTerm2 хочет использовать ваш микрофон."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať váš mikrofón."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1618,6 +1690,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Приложение в iTerm2 хочет использовать фотобиблиотеку."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať knižnicu fotografií."
           }
         },
         "sv" : {
@@ -1746,6 +1824,12 @@
             "value" : "Приложение в iTerm2 хочет использовать ваши напоминания."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať vaše pripomienky."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1872,6 +1956,12 @@
             "value" : "Приложение в iTerm2 хочет использовать распознавание речи."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikácia v iTerm2 chce používať rozpoznávanie reči."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1996,6 +2086,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Операция, выполняемая программой в iTerm2, требует повышенных прав."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operácia vykonávaná programom v iTerm2 vyžaduje zvýšené oprávnenia."
           }
         },
         "sv" : {

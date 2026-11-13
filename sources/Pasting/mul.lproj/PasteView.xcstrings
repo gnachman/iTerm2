@@ -95,6 +95,12 @@
             "value": "Вставка…"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vkladá sa…"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -219,6 +225,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отмена"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zrušiť"
           }
         },
         "sv": {

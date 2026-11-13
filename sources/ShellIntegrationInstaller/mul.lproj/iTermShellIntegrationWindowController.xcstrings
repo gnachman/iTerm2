@@ -95,6 +95,12 @@
             "value" : "Загружает последнюю версию. Выполняет curl | bash"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stiahne najnovšiu verziu. Spustí curl | bash"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Продолжить"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovať"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "1. Определяет, какой shell вы используете.\n2. Добавляет файлы скриптов в вашем домашнем каталоге.\n3. Устанавливает служебные скрипты.\n4. Изменяет стартовые скрипты вашего shell."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Zistí sa, ktorý shell používate.\n2. Pridajú sa súbory skriptov do vášho domovského priečinka.\n3. Nainštalujú sa pomocné skripty.\n4. Upravia sa spúšťacie skripty vášho shellu."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Späť"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Утилиты включают скрипты для загрузки файлов, встроенного отображения изображений и не только. "
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomocné nástroje zahŕňajú skripty na sťahovanie súborov, zobrazovanie obrázkov priamo v termináli a ďalšie. "
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Späť"
           }
         },
         "sv" : {
@@ -1103,6 +1151,12 @@
             "value" : "Продолжить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {
@@ -1355,6 +1415,12 @@
             "value" : "Пропустить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preskočiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {
@@ -1607,6 +1679,12 @@
             "value" : "Просмотреть команду"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhľad príkazu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1731,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Установка без интернета"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalácia bez internetu"
           }
         },
         "sv" : {
@@ -1859,6 +1943,12 @@
             "value" : "Загрузить и запустить установщик"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stiahnuť a spustiť inštalátor"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1983,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Также установить утилиты iTerm2"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nainštalovať aj pomocné nástroje iTerm2"
           }
         },
         "sv" : {
@@ -2111,6 +2207,12 @@
             "value" : "Пошаговая ручная установка. Загрузка не требуется."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprevádzaná ručná inštalácia. Nevyžaduje sa sťahovanie."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2235,6 +2337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Просмотреть команду"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhľad príkazu"
           }
         },
         "sv" : {
@@ -2363,6 +2471,12 @@
             "value" : "Продолжить"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokračovať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2484,6 +2598,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -2615,6 +2735,12 @@
             "value" : "Просмотреть команду"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhľad príkazu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2739,6 +2865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Назад"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Späť"
           }
         },
         "sv" : {
@@ -2867,6 +2999,12 @@
             "value" : "Как вы хотите установить Shell-интеграцию?\n\nВ ходе этого процесса будут изменены стартовые скрипты вашего shell. Этот установщик будет вводить команды в окне терминала за вас."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ako chcete nainštalovať integráciu shellu?\n\nPočas tohto procesu sa upravia spúšťacie skripty vášho shellu. Inštalátor zadá príkazy do okna terminálu za vás."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2991,6 +3129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Просмотреть команду"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Náhľad príkazu"
           }
         },
         "sv" : {
@@ -3119,6 +3263,12 @@
             "value" : "Установка завершена!"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalácia je dokončená!"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3243,6 +3393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Будет выполнена следующая команда:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spustí sa nasledujúci príkaz:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "sv" : {
@@ -3371,6 +3527,12 @@
             "value" : "Создайте новую вкладку, чтобы опробовать это.\n\nДля лучшего результата установите shell-интеграцию на всех хостах, к которым вы подключаетесь по ssh."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na vyskúšanie vytvorte nový tab.\n\nNa dosiahnutie najlepších výsledkov nainštalujte integráciu shellu na všetkých hostiteľoch, na ktoré sa pripájate cez ssh."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3495,6 +3657,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell-интеграция состоит из скриптов, которые помогают вашему shell взаимодействовать с iTerm2, чтобы отслеживать выполняемые вами команды, текущий каталог и другое состояние. "
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrácia shellu pozostáva zo skriptov, ktoré pomáhajú vášmu shellu komunikovať s iTerm2, aby mohol sledovať príkazy, ktoré spúšťate, váš aktuálny adresár a ďalší stav. "
           }
         },
         "sv" : {
@@ -3623,6 +3791,12 @@
             "value" : "Установить Shell-интеграцию"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inštalovať integráciu shellu"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3747,6 +3921,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {

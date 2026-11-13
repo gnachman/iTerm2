@@ -95,6 +95,12 @@
             "value": "Включать метки времени"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zahrnúť časové pečiatky"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -219,6 +225,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Формат файла:"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formát súboru:"
           }
         },
         "sv": {

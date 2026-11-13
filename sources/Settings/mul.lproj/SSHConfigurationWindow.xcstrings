@@ -95,6 +95,12 @@
             "value" : "Путь к SSH:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cesta k SSH:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Файлы для копирования на удалённый хост:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Súbory na skopírovanie na vzdialeného hostiteľa:"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Назначение"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cieľ"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -473,6 +491,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +618,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -725,6 +755,12 @@
             "value" : "Обзор"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prehľadávať"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {
@@ -977,6 +1019,12 @@
             "value" : "Файл или папка"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Súbor alebo priečinok"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1103,6 +1151,12 @@
             "value" : "Интеграция SSH"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrácia SSH"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Переменные окружения для копирования на удалённый хост:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premenné prostredia na skopírovanie na vzdialeného hostiteľa:"
           }
         },
         "sv" : {

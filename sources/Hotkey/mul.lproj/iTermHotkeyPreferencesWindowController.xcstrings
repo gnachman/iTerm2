@@ -95,6 +95,12 @@
             "value" : "⌥ Option"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Закрепить окно горячей клавиши (остаётся открытым при потере фокуса клавиатуры)"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pripnúť okno aktivačnej skratky (zostane otvorené po strate fokusu klávesnice)"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Горячая клавиша:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivačná skratka:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Примечание: окно открывается повторно, только если оно было закрыто из-за активации другого приложения."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poznámka: okno sa znova otvorí, len ak bolo zatvorené preto, že sa aktivovala iná apka."
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Дополнительные горячие клавиши"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ďalšie aktivačné skratky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "При нажатии горячей клавиши, привязанной к этому профилю, отдельное окно будет показано или скрыто. Каждый профиль с горячей клавишей управляет своим собственным окном горячей клавиши."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po stlačení aktivačnej skratky priradenej tomuto profilu sa zobrazí alebo skryje vyhradené okno. Každý profil s aktivačnou skratkou ovláda vlastné okno aktivačnej skratky."
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Не делать ничего особенного"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nerobiť nič zvláštne"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -972,6 +1014,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1103,6 +1151,12 @@
             "value" : "Показывать это окно горячей клавиши"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť toto okno aktivačnej skratky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1229,6 +1283,12 @@
             "value" : "Настройки окна горячей клавиши"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavenia okna aktivačnej skratky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1350,6 +1410,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -1481,6 +1547,12 @@
             "value" : "⚠️ Это сочетание клавиш уже используется другим профилем"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Túto skratku používa iný profil"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1602,6 +1674,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -1733,6 +1811,12 @@
             "value" : "Клавиша двойного нажатия:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kláves pre dvojité stlačenie:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1857,6 +1941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Автоматически открывать повторно при активации приложения"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaticky znovu otvoriť pri opätovnej aktivácii apky"
           }
         },
         "sv" : {
@@ -1985,6 +2075,12 @@
             "value" : "⚠️ Это двойное нажатие уже используется другим профилем"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Toto dvojité stlačenie používa iný profil"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2109,6 +2205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать это окно горячей клавиши, если не открыто ни одно другое окно"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zobraziť toto okno aktivačnej skratky, ak nie je otvorené žiadne iné okno"
           }
         },
         "sv" : {
@@ -2237,6 +2339,12 @@
             "value" : "Плавающие окна перекрывают другие окна и Dock, а также полноэкранные окна других приложений (если пространству окна горячей клавиши назначены все пространства)."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plávajúce okná sa prekrývajú s inými oknami, Dockom a oknami iných apiek na celej obrazovke (ak je plocha okna aktivačnej skratky nastavená na Všetky plochy)."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2361,6 +2469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
           }
         },
         "sv" : {
@@ -2489,6 +2603,12 @@
             "value" : "При щелчке по значку в Dock:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Po kliknutí na ikonu v Docku:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2613,6 +2733,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Анимировать показ и скрытие"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animovať zobrazenie a skrytie"
           }
         },
         "sv" : {
@@ -2741,6 +2867,12 @@
             "value" : "ОК"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2865,6 +2997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "sv" : {
@@ -2993,6 +3131,12 @@
             "value" : "Плавающее окно"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plávajúce okno"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3114,6 +3258,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -3243,6 +3393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дополнительные горячие клавиши…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ďalšie aktivačné skratky…"
           }
         },
         "sv" : {

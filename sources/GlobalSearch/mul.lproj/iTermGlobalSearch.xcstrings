@@ -95,6 +95,12 @@
             "value" : "ЯЧЕЙКА ЗАГОЛОВКА"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HLAVIČKA"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти везде"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť globálne"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Подстрока (с учётом регистра)"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podreťazec, rozlišuje veľkosť písmen"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (автоматически)"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podreťazec, automaticky"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Регулярное выражение (без учёта регистра)"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulárny výraz, ignoruje veľkosť písmen"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Найти"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nájsť"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Регулярное выражение (с учётом регистра)"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regulárny výraz, rozlišuje veľkosť písmen"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подстрока (без учёта регистра)"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podreťazec, ignoruje veľkosť písmen"
           }
         },
         "sv" : {

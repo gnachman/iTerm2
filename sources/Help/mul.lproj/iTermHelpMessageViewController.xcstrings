@@ -95,6 +95,12 @@
             "value": "Метка"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popis"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

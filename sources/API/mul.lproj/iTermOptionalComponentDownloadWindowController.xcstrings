@@ -95,6 +95,12 @@
             "value": "Установщик среды выполнения Python"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inštalátor behového prostredia Python"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -221,6 +227,12 @@
             "value": "Отмена"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zrušiť"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -345,6 +357,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Загрузка дополнительных компонентов…"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sťahujú sa voliteľné komponenty…"
           }
         },
         "sv": {

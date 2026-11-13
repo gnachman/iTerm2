@@ -95,6 +95,12 @@
             "value" : "Быстрое открытие"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rýchlo otvoriť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -221,6 +227,12 @@
             "value" : "Подробности"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podrobnosti"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -345,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Поиск сессий, профилей или расстановок окон"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hľadať relácie, profily alebo usporiadania"
           }
         },
         "sv" : {

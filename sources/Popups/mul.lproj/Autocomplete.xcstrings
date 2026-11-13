@@ -95,6 +95,12 @@
             "value" : "Автозаполнение"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatické dopĺňanie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",

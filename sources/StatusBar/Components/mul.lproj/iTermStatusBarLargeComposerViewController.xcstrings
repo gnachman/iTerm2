@@ -95,6 +95,12 @@
             "value" : "Автодополнение ИИ включено: весь текст отправляется в ИИ"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dopĺňanie pomocou AI zapnuté: všetok text sa odosiela do AI"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Описывает, как использовать Композитор."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Popisuje, ako používať editor príkazov."
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Нажмите ⇧↩ для отправки."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odošlete stlačením ⇧↩."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ИИ"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "sv" : {

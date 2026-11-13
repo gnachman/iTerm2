@@ -95,6 +95,12 @@
             "value" : "Использовать каталог предыдущего сеанса"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu použiť adresár predošlej relácie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Домашний каталог"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domovský priečinok"
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Рабочий каталог для новых вкладок"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pracovný adresár pre nové taby"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Радио"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prepínač"
           }
         },
         "sv" : {
@@ -599,6 +623,12 @@
             "value" : "Рабочий каталог для новых окон"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pracovný adresár pre nové okná"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -723,6 +753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Использовать каталог предыдущего сеанса"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu použiť adresár predošlej relácie"
           }
         },
         "sv" : {
@@ -851,6 +887,12 @@
             "value" : "Радио"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prepínač"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -975,6 +1017,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Использовать каталог предыдущего сеанса"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Znovu použiť adresár predošlej relácie"
           }
         },
         "sv" : {
@@ -1103,6 +1151,12 @@
             "value" : "Каталог:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresár:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1227,6 +1281,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Рабочий каталог для новых разделённых панелей"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pracovný adresár pre nové rozdelené panely"
           }
         },
         "sv" : {
@@ -1355,6 +1415,12 @@
             "value" : "Дополнительные настройки рабочего каталога"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rozšírené nastavenia pracovného adresára"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1479,6 +1545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Каталог:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresár:"
           }
         },
         "sv" : {
@@ -1607,6 +1679,12 @@
             "value" : "Каталог:"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresár:"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1731,6 +1809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Радио"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prepínač"
           }
         },
         "sv" : {
@@ -1859,6 +1943,12 @@
             "value" : "Домашний каталог"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domovský priečinok"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1985,6 +2075,12 @@
             "value" : "Домашний каталог"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domovský priečinok"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2109,6 +2205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "sv" : {

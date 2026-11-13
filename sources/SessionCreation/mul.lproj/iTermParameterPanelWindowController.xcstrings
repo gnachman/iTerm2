@@ -95,6 +95,12 @@
             "value": "Введите значение для "
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zadajte hodnotu pre "
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -219,6 +225,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "ОК"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
         "sv": {
@@ -347,6 +359,12 @@
             "value": "Параметр сеанса"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parameter relácie"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -473,6 +491,12 @@
             "value": "Отмена"
           }
         },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zrušiť"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -597,6 +621,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Имя"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Názov"
           }
         },
         "sv": {

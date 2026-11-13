@@ -95,6 +95,12 @@
             "value" : "Настроить искусственный интеллект"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nastavenie umelej inteligencie"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,6 +225,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ваш поставщик ИИ может взимать плату за каждый отправленный или полученный токен."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Váš poskytovateľ AI vám môže účtovať poplatok za každý odoslaný alebo prijatý token."
           }
         },
         "sv" : {
@@ -347,6 +359,12 @@
             "value" : "Введите ключ API"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem zadajte API kľúč"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -473,6 +491,12 @@
             "value" : "Отмена"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zrušiť"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ОК"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "sv" : {

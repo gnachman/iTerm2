@@ -95,6 +95,12 @@
             "value" : "Подождите! Устанавливается новое окружение Python…"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chvíľu strpenia! Inštaluje sa nové prostredie Python…"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",

@@ -95,6 +95,12 @@
             "value" : "Используйте iTerm2, даже когда вы не рядом со своим Mac. Вы можете управлять им через чат с ИИ, просматривать содержимое сеанса и получать push-уведомления. Сквозное шифрование защищает ваши данные. <a href=\"iterm2whatsnew:companion\">Попробуйте прямо сейчас!</a>"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Používajte iTerm2, aj keď ste mimo svojho Macu. Môžete ho ovládať cez chat s AI, zobrazovať obsah relácií a dostávať push upozornenia. Koncové šifrovanie chráni vaše dáta. <a href=\"iterm2whatsnew:companion\">Vyskúšajte to hneď!</a>"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -216,6 +222,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -347,6 +359,12 @@
             "value" : "Новый режим чата с ИИ, Оркестрация, позволяет ИИ взять управление на себя. Он может создавать окна, дожидаться завершения задач (даже в интерактивных приложениях), а новый автоматический проверщик безопасности избавляет вас от необходимости отвечать почти на все запросы разрешений. <a href=\"iterm2whatsnew:orchestration\">Попробуйте прямо сейчас!</a>"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nový režim chatu s AI, Orchestrácia, nechá AI viesť celé dianie za vás. Dokáže vytvárať okná, čakať na dokončenie úloh (aj v interaktívnych apkách) a nový automatický kontrolór bezpečnosti vás zbaví nutnosti odpovedať na takmer všetky žiadosti o povolenie. <a href=\"iterm2whatsnew:orchestration\">Vyskúšajte to hneď!</a>"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -468,6 +486,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -599,6 +623,12 @@
             "value" : "Новая функция «Снимки экрана» упрощает создание PNG-файла с содержимым терминала. Она поддерживает скрытие данных и выделения. Используйте <a href=\"iterm2whatsnew:screenshot\">Сеанс > Сделать снимок экрана</a>, чтобы активировать её."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nová funkcia Snímky obrazovky zjednodušuje vytvorenie PNG z obsahu terminálu. Podporuje redigovanie a zvýraznenie. Aktivujete ju cez <a href=\"iterm2whatsnew:screenshot\">Relácia > Vytvoriť snímku obrazovky</a>."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -725,6 +755,12 @@
             "value" : "Что нового в версии 3.7"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novinky vo verzii 3.7"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -846,6 +882,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -977,6 +1019,12 @@
             "value" : "●"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1101,6 +1149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Интеграция с Claude Code"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrácia Claude Code"
           }
         },
         "sv" : {
@@ -1229,6 +1283,12 @@
             "value" : "Чтобы упростить работу с большим количеством вкладок, теперь их можно объединять в сворачиваемые группы. Кроме того, панель вкладок теперь прокручивается, а не показывает меню переполнения."
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na lepšiu správu veľkého počtu tabov môžete taby teraz spájať do zbaliteľných skupín. Lišta s tabmi sa tiež rolovaním posúva, namiesto zobrazenia menu s prebytočnými tabmi."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1350,6 +1410,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1481,6 +1547,12 @@
             "value" : "Интеграция с Claude Code объединяет несколько связанных сеансов (например, просмотр кода и чтение различий) в единый настраиваемый интерфейс. Она также показывает статус Claude, чтобы вам было проще найти экземпляры, ожидающие вашего внимания. <a href=\"iterm2whatsnew:claudecode\">Попробуйте прямо сейчас!</a>"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrácia Claude Code usporiada viacero súvisiacich relácií (napríklad revíziu kódu a čítanie diffov) do prispôsobiteľného rozhrania. Zobrazuje aj stav Claude, takže ľahko nájdete inštancie, ktoré čakajú na vašu pozornosť. <a href=\"iterm2whatsnew:claudecode\">Vyskúšajte to hneď!</a>"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1607,6 +1679,12 @@
             "value" : "Приложение Companion для iPhone"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprievodná apka pre iPhone"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1728,6 +1806,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1859,6 +1943,12 @@
             "value" : "Оркестрация"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orchestrácia"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1983,6 +2073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Группы вкладок"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skupiny tabov"
           }
         },
         "sv" : {
@@ -2111,6 +2207,12 @@
             "value" : "Снимки экрана"
           }
         },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snímky obrazovky"
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2232,6 +2334,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "sk" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"
