@@ -452,6 +452,25 @@ static BOOL sOSC7DisabledWarningShown;
     }];
 }
 
+// Like addPausedNoDelegateSideEffect: but urgent, and the side effect runs even if self has been
+// freed by the time it executes. Use it for a block that must always run, such as one that
+// settles a promise.
+- (void)addUrgentPausedNoDelegateSideEffect:(void (^)(iTermTokenExecutorUnpauser *unpauser))sideEffect
+                                       name:(NSString *)name {
+    DLog(@"[side effects] %@ Add urgent paused no-delegate side effect %@", self.config.sessionGuid, name);
+    __weak __typeof(self) weakSelf = self;
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [_tokenExecutor addUrgentSideEffect:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            DLog(@"[side effects] %@ running after dealloc", name);
+            sideEffect(unpauser);
+            return;
+        }
+        [strongSelf performPausedNoDelegateSideEffect:unpauser block:sideEffect name:name];
+    }];
+}
+
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect
                              name:(NSString *)name {
     DLog(@"[side effects] %@ Add interval tree side effect %@", self.config.sessionGuid, name);
@@ -8292,12 +8311,19 @@ lengthExcludingInBandSignaling:data.length
 
 #pragma mark - iTermTriggerScopeProvider
 
-- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
+- (void)performBlockWithScope:(void (^)(iTermVariableScope * _Nullable scope, id<iTermObject> _Nullable object))block {
     // Urgent because token execution is paused until this runs. At a non-visible session's
     // side-effect period that could take a second, and while paused the session stops reading
     // input, which for a tmux pane stalls every session. Issue 13160.
-    [self addUrgentPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    // A no-delegate side effect, because the block must run even if the session has gone away:
+    // it settles a promise, which asserts if it is freed unsettled.
+    __weak __typeof(self) weakSelf = self;
+    [self addUrgentPausedNoDelegateSideEffect:^(iTermTokenExecutorUnpauser *unpauser) {
         [iTermGCD assertMainQueueSafe];
+        id<VT100ScreenDelegate> delegate = weakSelf.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+        if (!delegate) {
+            DLog(@"No delegate to provide a variable scope for a trigger");
+        }
         block([delegate triggerSideEffectVariableScope], delegate);
         [unpauser unpause];
     } name:@"trigger requested scope"];

@@ -139,7 +139,7 @@ final class TriggerUntrustedParameterTests: XCTestCase {
 }
 
 private final class UnusedTriggerScopeProvider: NSObject, iTermTriggerScopeProvider, iTermTriggerCallbackScheduler {
-    func performBlock(scope block: @escaping (iTermVariableScope, iTermObject) -> Void) {
+    func performBlock(scope block: @escaping (iTermVariableScope?, iTermObject?) -> Void) {
         XCTFail("scope should not be needed without interpolation")
     }
 

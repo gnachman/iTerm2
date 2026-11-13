@@ -139,6 +139,27 @@ class EventTriggerEvaluator: NSObject {
     /// Whether we're currently idle (per trigger)
     private var isIdleForTrigger: [ObjectIdentifier: Bool] = [:]
 
+    /// A trigger that fired while firing was held, to be passed to fireTriggerHandler later.
+    private struct HeldFire {
+        let trigger: Trigger
+        let capturedStrings: [String]
+        let useInterpolation: Bool
+    }
+
+    private enum FiringState {
+        /// Fires go straight to fireTriggerHandler.
+        case live
+        /// Fires are queued until resumeFiring(). The session can't perform actions yet.
+        case held([HeldFire])
+        /// Fires are dropped and nothing is observed. The session has terminated.
+        case stopped
+    }
+
+    private var firingState = FiringState.live
+
+    /// Upper bound on queued fires, so a flood of events can't grow the queue without limit.
+    private static let maxHeldFires = 100
+
     // MARK: - Initialization
 
     @objc init(sessionDescription: String) {
@@ -182,11 +203,65 @@ class EventTriggerEvaluator: NSObject {
 
         RLog("[\(sessionDescription)] Loaded \(enabledEventTriggerCount) enabled event triggers across \(eventTriggers.count) event types")
 
+        if case .stopped = firingState {
+            DLog("[\(sessionDescription)] Firing is stopped; not starting timers or observers")
+            return
+        }
+
         // Start idle timers for idle/activity-after-idle triggers
         startIdleTimers()
 
         // Register observers for variable-changed triggers
         setupVariableObservers()
+    }
+
+    // MARK: - Firing State
+
+    /// Queue fires instead of passing them to fireTriggerHandler until resumeFiring() is called.
+    /// PTYSession calls this when it is created, because its screen can't perform trigger
+    /// actions until the session is set up. A split pane's new session joins its tab first, and
+    /// that can change a variable a Variable Changed trigger observes.
+    @objc func holdFiring() {
+        switch firingState {
+        case .live:
+            RLog("[\(sessionDescription)] Holding trigger fires")
+            firingState = .held([])
+        case .held, .stopped:
+            break
+        }
+    }
+
+    /// Pass fires to fireTriggerHandler again. Fires that were held are delivered now, in order.
+    /// If firing was stopped, timers and variable observers are set up again.
+    @objc func resumeFiring() {
+        switch firingState {
+        case .live:
+            break
+        case .held(let fires):
+            RLog("[\(sessionDescription)] Resuming trigger fires; delivering \(fires.count) held")
+            firingState = .live
+            for fire in fires {
+                deliver(fire)
+            }
+        case .stopped:
+            RLog("[\(sessionDescription)] Restarting trigger fires")
+            firingState = .live
+            startIdleTimers()
+            setupVariableObservers()
+        }
+    }
+
+    /// Drop held fires, stop timers, and stop observing variables. Called when the session
+    /// terminates, since its variable scope may outlive it (e.g., tab variables change while the
+    /// rest of a closing window's sessions are removed).
+    @objc func stopFiring() {
+        if case .stopped = firingState {
+            return
+        }
+        RLog("[\(sessionDescription)] Stopping trigger fires")
+        firingState = .stopped
+        invalidateAllTimers()
+        teardownVariableObservers()
     }
 
     /// Check if there are any event triggers loaded
@@ -669,6 +744,9 @@ class EventTriggerEvaluator: NSObject {
     }
 
     private func startIdleTimer(for trigger: Trigger) {
+        if case .stopped = firingState {
+            return
+        }
         let timeout = (trigger.eventParams?["timeout"] as? NSNumber)?.doubleValue ?? 30.0
         let triggerId = ObjectIdentifier(trigger)
 
@@ -754,12 +832,32 @@ class EventTriggerEvaluator: NSObject {
     }
 
     private func fireTrigger(_ trigger: Trigger, capturedStrings: [String]) {
+        let fire = HeldFire(trigger: trigger,
+                            capturedStrings: capturedStrings,
+                            useInterpolation: triggerParametersUseInterpolatedStrings)
+        switch firingState {
+        case .live:
+            deliver(fire)
+        case .held(var fires):
+            guard fires.count < Self.maxHeldFires else {
+                RLog("[\(sessionDescription)] Too many held fires; dropping trigger \(trigger.action)")
+                return
+            }
+            DLog("[\(sessionDescription)] Holding fire of trigger \(trigger.action) with captures: \(capturedStrings)")
+            fires.append(fire)
+            firingState = .held(fires)
+        case .stopped:
+            DLog("[\(sessionDescription)] Firing is stopped; dropping trigger \(trigger.action)")
+        }
+    }
+
+    private func deliver(_ fire: HeldFire) {
         guard let handler = fireTriggerHandler else {
-            RLog("[\(sessionDescription)] No fireTriggerHandler set, cannot fire trigger \(trigger.action)")
+            RLog("[\(sessionDescription)] No fireTriggerHandler set, cannot fire trigger \(fire.trigger.action)")
             return
         }
-        DLog("[\(sessionDescription)] Firing trigger \(trigger.action) with captures: \(capturedStrings)")
-        handler(trigger, capturedStrings, triggerParametersUseInterpolatedStrings)
+        DLog("[\(sessionDescription)] Firing trigger \(fire.trigger.action) with captures: \(fire.capturedStrings)")
+        handler(fire.trigger, fire.capturedStrings, fire.useInterpolation)
     }
 
     // MARK: - Filter Matching

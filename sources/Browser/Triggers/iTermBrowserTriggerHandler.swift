@@ -272,7 +272,7 @@ extension Client: BrowserTriggerClient {
 }
 
 extension Client: iTermTriggerScopeProvider {
-    func performBlock(scope block: @escaping (iTermVariableScope, any iTermObject) -> Void) {
+    func performBlock(scope block: @escaping (iTermVariableScope?, (any iTermObject)?) -> Void) {
         block(scope, object)
     }
 

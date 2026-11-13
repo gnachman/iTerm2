@@ -56,7 +56,10 @@ extern NSString * const kTriggerVariableValueRegexKey;
 @end
 
 @protocol iTermTriggerScopeProvider<NSObject>
-- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block;
+// Implementations must always run the block, even when the session has gone away: callers
+// settle a promise in it, and iTermPromiseSeal asserts if it is freed unsettled. scope and object
+// are nil when there is no scope to evaluate in, such as when the screen has no delegate.
+- (void)performBlockWithScope:(void (^)(iTermVariableScope * _Nullable scope, id<iTermObject> _Nullable object))block;
 - (id<iTermTriggerCallbackScheduler>)triggerCallbackScheduler;
 @end
 

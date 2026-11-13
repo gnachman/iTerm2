@@ -590,3 +590,10 @@ Bug Fixes:
     annotation that began before the first line;
   - opening the password manager after iTerm2
     was replaced while running.
+- Fixed a crash when splitting a pane or closing
+  a window, if the profile had a Variable Changed
+  trigger whose parameter used an interpolated
+  string. A Variable Changed trigger on a tab
+  variable now also runs for a new split pane.
+  Thanks to Evan Alter (@hadees) for tracking
+  it down.

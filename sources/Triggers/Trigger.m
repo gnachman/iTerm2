@@ -436,8 +436,13 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
     }
     if (parameter && parameter.kind != iTermTriggerInterpolatedParameterKindLiteral) {
         return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
-            [scopeProvider performBlockWithScope:^(iTermVariableScope * _Nonnull scope, id<iTermObject> _Nonnull object) {
+            [scopeProvider performBlockWithScope:^(iTermVariableScope * _Nullable scope, id<iTermObject> _Nullable object) {
                 assert([NSThread isMainThread]);
+                if (!scope || !object) {
+                    DLog(@"No scope to evaluate %@ in", p);
+                    [seal reject:[NSError errorWithDomain:@"com.iterm2.trigger" code:0 userInfo:nil]];
+                    return;
+                }
                 [self evaluateSwiftyStringParameter:p
                                      backreferences:stringArray
                                             absLine:absLine

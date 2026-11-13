@@ -2374,9 +2374,15 @@ launchCoprocessWithCommand:(NSString *)command
 
 #pragma mark - iTermTriggerScopeProvider
 
-- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
-    // For event triggers on main thread, we can call directly
-    block([self.delegate triggerSideEffectVariableScope], (id<iTermObject>)self.delegate);
+- (void)performBlockWithScope:(void (^)(iTermVariableScope * _Nullable scope, id<iTermObject> _Nullable object))block {
+    // For event triggers on main thread, we can call directly. PTYSession holds event trigger
+    // fires until the screen has a delegate and stops them when it terminates, but if one gets
+    // through anyway the block gets a nil scope and rejects the interpolated value.
+    id<VT100ScreenDelegate> delegate = self.delegate;
+    if (!delegate) {
+        RLog(@"No delegate to provide a variable scope for an event trigger");
+    }
+    block([delegate triggerSideEffectVariableScope], (id<iTermObject>)delegate);
 }
 
 - (id<iTermTriggerCallbackScheduler>)triggerCallbackScheduler {

@@ -1132,6 +1132,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         }];
         _expect = [[iTermExpect alloc] initDry:YES];
         _eventTriggerEvaluator = [[iTermEventTriggerEvaluator alloc] initWithSessionDescription:_guid];
+        // The screen has no delegate to perform trigger actions until -setScreenSize:parent:.
+        [_eventTriggerEvaluator holdFiring];
         __weak VT100Screen *weakScreen = _screen;
         _eventTriggerEvaluator.fireTriggerHandler = ^(Trigger *trigger, NSArray<NSString *> *capturedStrings, BOOL useInterpolation) {
             [weakScreen fireEventTrigger:trigger capturedStrings:capturedStrings useInterpolation:useInterpolation];
@@ -3046,6 +3048,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self updateMetalDriver];
 
+    // Deliver event triggers that fired before the session was set up, such as a Variable
+    // Changed trigger on a tab variable that changed when a split pane joined its tab. This
+    // waits until the view, text view, grid size, terminal, and shell delegate are in place,
+    // since the held actions run now.
+    [_eventTriggerEvaluator resumeFiring];
     return YES;
 }
 
@@ -4352,6 +4359,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
                                                         object:self
                                                       userInfo:@{ iTermSessionWillTerminateWasTmuxClientKey: @(wasTmuxClient) }];
+    // Session Ended triggers fired in -setExited: above. Removing this session changes its tab's
+    // variables, and so does closing the rest of the window, so stop observing them now.
+    [_eventTriggerEvaluator stopFiring];
     [_delegate removeSession:self];
 
     _screen.delegate = nil;
@@ -4516,6 +4526,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         _textview.delegate = self;
         _screen.terminalEnabled = YES;
         _screen.delegate = self;
+        [_eventTriggerEvaluator resumeFiring];
         if ([iTermAdvancedSettingsModel showLocationsInScrollbar] && [iTermAdvancedSettingsModel showMarksInScrollbar]) {
             _screen.intervalTreeObserver = self;
         }
