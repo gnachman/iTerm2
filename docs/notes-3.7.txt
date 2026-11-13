@@ -220,6 +220,8 @@ Bug Fixes:
 - Fixed a crash when typing a very long word or
   certain unusual characters into the Settings
   search field.
+- Fixed a crash on a very long international
+  domain name in terminal text.
 - The tooltip for “Enable support for
   right-to-left scripts” in Settings > General >
   Experimental described a tmux setting instead.

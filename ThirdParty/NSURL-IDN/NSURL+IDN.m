@@ -84,19 +84,21 @@ static BOOL validIDNCodeValue(unsigned codepoint)
 
 + (NSString *)_punycodeEncode:(NSString *)aString;
 {
-    // setup buffers
-    char outputBuffer[MAX_HOSTNAME_LEN]; 
     size_t stringLength = [aString length];
+
+    // check once for hostname too long here and just refuse to encode if it is (this handles it if all ASCII)
+    // there are additional checks for running over the buffer during the encoding loop
+    // iTerm2: this check must come before the alloca below, or a huge label exhausts the stack.
+    if (stringLength > MAX_HOSTNAME_LEN)
+        return aString;
+
+    // setup buffers
+    char outputBuffer[MAX_HOSTNAME_LEN];
     unichar *inputBuffer = alloca(stringLength * sizeof(unichar));
     unichar *inputPtr, *inputEnd = inputBuffer + stringLength;
     char *outputEnd = outputBuffer + MAX_HOSTNAME_LEN;
     char *outputPtr = outputBuffer;
-    
-    // check once for hostname too long here and just refuse to encode if it is (this handles it if all ASCII)
-    // there are additional checks for running over the buffer during the encoding loop
-    if (stringLength > MAX_HOSTNAME_LEN)
-        return aString;
-    
+
     [aString getCharacters:inputBuffer];
     
     // handle ASCII characters
