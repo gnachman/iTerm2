@@ -19,17 +19,11 @@
 
 #import <objc/runtime.h>
 
-NSArray<NSString *> *iTermAllFunctionSignaturesFromNamespaceAndNameAndArguments(NSString *namespace,
-                                                                                NSString *name,
-                                                                                NSArray<NSString *> *argumentNames,
-                                                                                NSSet<NSString *> *optionalArguments) {
-    NSArray<NSString *> *requiredArgs = [argumentNames filteredArrayUsingBlock:^BOOL(NSString *name) {
-        return ![optionalArguments containsObject:name];
-    }];
-    return [[[optionalArguments allCombinations] allObjects] mapWithBlock:^id _Nullable(NSSet<NSString *> *optionals) {
-        NSArray<NSString *> *amendedArgumentNames = [requiredArgs arrayByAddingObjectsFromArray:optionals.allObjects];
-        return iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, amendedArgumentNames);
-    }];
+static NSString *iTermQualifiedFunctionName(NSString *namespace, NSString *name) {
+    if (!namespace) {
+        return name;
+    }
+    return [NSString stringWithFormat:@"%@.%@", namespace, name];
 }
 
 NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString *namespace, NSString *name, NSArray<NSString *> *argumentNames) {
@@ -76,6 +70,8 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 
 @interface iTermBuiltInFunction()
 - (nullable NSError *)typeCheckParameters:(NSDictionary<NSString *, id> *)parameters;
+- (BOOL)acceptsArgumentNames:(NSSet<NSString *> *)names;
+- (BOOL)couldBeConfusedWith:(iTermBuiltInFunction *)other;
 @end
 
 @implementation iTermBuiltInFunction
@@ -103,6 +99,33 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 }
 
 #pragma mark - File Private
+
+- (NSSet<NSString *> *)requiredArguments {
+    NSMutableSet<NSString *> *required = [NSMutableSet setWithArray:_argumentsAndTypes.allKeys];
+    // Through the accessor: iTermBuiltInMethod keeps its own.
+    [required minusSet:self.optionalArguments];
+    return required;
+}
+
+// Whether a call passing exactly these argument names is a call to this function: every name is
+// one it takes, and every argument it requires is among them.
+- (BOOL)acceptsArgumentNames:(NSSet<NSString *> *)names {
+    for (NSString *name in names) {
+        if (!_argumentsAndTypes[name]) {
+            return NO;
+        }
+    }
+    return [self.requiredArguments isSubsetOfSet:names];
+}
+
+// Whether some set of argument names is accepted by both, in which case a call with those names
+// would not say which function it means. That is so exactly when the smallest set that satisfies
+// both, everything either requires, is made of names both take.
+- (BOOL)couldBeConfusedWith:(iTermBuiltInFunction *)other {
+    NSMutableSet<NSString *> *required = [self.requiredArguments mutableCopy];
+    [required unionSet:other.requiredArguments];
+    return [self acceptsArgumentNames:required] && [other acceptsArgumentNames:required];
+}
 
 - (nullable NSError *)typeCheckParameters:(NSDictionary<NSString *, id> *)parameters {
     for (NSString *name in parameters) {
@@ -149,8 +172,12 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 @end
 
 @implementation iTermBuiltInFunctions {
-    // NOTE: The keys include the namespace, but the iTermBuiltInFunction object is ignorant of it.
-    NSMutableDictionary<NSString *, iTermBuiltInFunction *> *_functions;
+    // Functions by qualified name (namespace.name; the iTermBuiltInFunction object is ignorant of
+    // its namespace). More than one may share a name as long as no call could mean either. A
+    // call is matched to a function by its argument names (see -functionWithQualifiedName:
+    // argumentNames:), so optional arguments cost nothing to register however many there are.
+    // The arrays are immutable so that a saved state is a snapshot.
+    NSMutableDictionary<NSString *, NSArray<iTermBuiltInFunction *> *> *_functions;
 }
 
 - (id)savedState {
@@ -158,7 +185,18 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 }
 
 - (void)restoreState:(id)savedState {
-    _functions = savedState;
+    _functions = [savedState mutableCopy];
+}
+
+- (nullable iTermBuiltInFunction *)functionWithQualifiedName:(NSString *)qualifiedName
+                                               argumentNames:(NSArray<NSString *> *)argumentNames {
+    NSSet<NSString *> *names = [NSSet setWithArray:argumentNames];
+    for (iTermBuiltInFunction *function in _functions[qualifiedName]) {
+        if ([function acceptsArgumentNames:names]) {
+            return function;
+        }
+    }
+    return nil;
 }
 
 + (void)registerStandardFunctions {
@@ -202,34 +240,33 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 }
 
 - (void)registerFunction:(iTermBuiltInFunction *)function namespace:(NSString *)namespace {
-    NSArray<NSString *> *signatures = iTermAllFunctionSignaturesFromNamespaceAndNameAndArguments(namespace, function.name, function.argumentsAndTypes.allKeys, function.optionalArguments);
-    for (NSString *signature in signatures) {
-        assert(!_functions[signature]);
-        _functions[signature] = function;
+    NSString *qualifiedName = iTermQualifiedFunctionName(namespace, function.name);
+    NSArray<iTermBuiltInFunction *> *existing = _functions[qualifiedName] ?: @[];
+    for (iTermBuiltInFunction *other in existing) {
+        assert(![function couldBeConfusedWith:other]);
     }
+    _functions[qualifiedName] = [existing arrayByAddingObject:function];
 }
 
 - (BOOL)haveFunctionWithName:(NSString *)name
                    namespace:(NSString *)namespace
                    arguments:(NSArray<NSString *> *)arguments {
-    NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
-    return _functions[signature] != nil;
+    return [self functionWithQualifiedName:iTermQualifiedFunctionName(namespace, name)
+                             argumentNames:arguments] != nil;
 }
 
 - (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name {
-    return [_functions.allKeys objectPassingTest:^BOOL(NSString *signature, NSUInteger index, BOOL *stop) {
-        NSString *signatureName = iTermFunctionNameFromSignature(signature);
-        return [signatureName isEqualToString:name];
-    }];
+    iTermBuiltInFunction *function = _functions[name].firstObject;
+    if (!function) {
+        return nil;
+    }
+    return iTermFunctionSignatureFromNamespaceAndNameAndArguments(nil, name, function.argumentsAndTypes.allKeys);
 }
 
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary {
-    // Convert _functions: (signature -> bif) to (name -> [arg, arg, ...])
-    NSDictionary *signatureToArgs = [_functions mapValuesWithBlock:^id(NSString *signature, iTermBuiltInFunction *bif) {
-        return bif.argumentsAndTypes.allKeys;
-    }];
-    NSDictionary *nameToArgs = [signatureToArgs mapKeysWithBlock:^id(NSString *signature, id object) {
-        return iTermFunctionNameFromSignature(signature);
+    // Convert _functions: (name -> [bif]) to (name -> [arg, arg, ...])
+    NSDictionary *nameToArgs = [_functions mapValuesWithBlock:^id(NSString *name, NSArray<iTermBuiltInFunction *> *functions) {
+        return functions.lastObject.argumentsAndTypes.allKeys;
     }];
     NSDictionary *publicNameToArgs = [nameToArgs filteredWithBlock:^BOOL(NSString *name, id object) {
         return ![name hasPrefix:@"iterm2.private"];
@@ -244,9 +281,10 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
           sideEffectsAllowed:(BOOL)sideEffectsAllowed
                   completion:(nonnull iTermBuiltInFunctionCompletionBlock)completion {
     NSArray<NSString *> *arguments = parameters.allKeys;
-    NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
-    iTermBuiltInFunction *function = _functions[signature];
+    iTermBuiltInFunction *function = [self functionWithQualifiedName:iTermQualifiedFunctionName(namespace, name)
+                                                       argumentNames:arguments];
     if (!function) {
+        NSString *signature = iTermFunctionSignatureFromNamespaceAndNameAndArguments(namespace, name, arguments);
         NSError *error = [self undeclaredIdentifierError:signature];
         completion(nil, error);
         return;
@@ -295,19 +333,17 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 }
 
 - (iTermBuiltInMethod *)methodWithSignature:(NSString *)signature {
-    iTermBuiltInMethod *result = [iTermBuiltInMethod castFrom:_functions[signature]];
-    if (result) {
-        return result;
+    NSString *qualifiedName = iTermFunctionNameFromSignature(signature);
+    NSSet<NSString *> *signatureArguments = iTermArgumentNamesFromSignature(signature);
+    if (!qualifiedName || !signatureArguments) {
+        return nil;
     }
-    for (NSString *methodSignature in _functions) {
-        iTermBuiltInMethod *method = [iTermBuiltInMethod castFrom:_functions[methodSignature]];
-        assert(method);
-        NSString *namespace = iTermNamespaceFromSignature(methodSignature);
-        if ([method matchedBySignature:signature inNamespace:namespace]) {
-            return method;
-        }
-    }
-    return nil;
+    // "f()" parses as one argument with an empty name.
+    NSArray<NSString *> *argumentNames = [signatureArguments.allObjects filteredArrayUsingBlock:^BOOL(NSString *name) {
+        return name.length > 0;
+    }];
+    return [iTermBuiltInMethod castFrom:[self functionWithQualifiedName:qualifiedName
+                                                          argumentNames:argumentNames]];
 }
 
 @end
@@ -495,32 +531,10 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     return self;
 }
 
-- (BOOL)matchedBySignature:(NSString *)signature inNamespace:(NSString *)namespace {
-    NSString *name = iTermFunctionNameFromSignature(signature);
-    NSString *myFullyQualifiedName = namespace ? [NSString stringWithFormat:@"%@.%@", namespace, self.name] : self.name;
-    if (![myFullyQualifiedName isEqualToString:name]) {
-        return NO;
-    }
-    NSSet<NSString *> *signatureArgs = iTermArgumentNamesFromSignature(signature);
-    if (!signatureArgs) {
-        return NO;
-    }
-    // Check that all required args are in signature
-    for (NSString *argName in self.argumentsAndTypes) {
-        if ([_optionalArguments containsObject:argName]) {
-            continue;
-        }
-        if (![signatureArgs containsObject:argName]) {
-            return NO;
-        }
-    }
-    // Check that all args in signature are known
-    for (NSString *argName in signatureArgs) {
-        if (!self.argumentsAndTypes[argName]) {
-            return NO;
-        }
-    }
-    return YES;
+// The optional arguments are kept here and not handed to the superclass, so this is what tells
+// the registry which arguments a call may leave out.
+- (NSSet<NSString *> *)optionalArguments {
+    return _optionalArguments;
 }
 
 - (void)callWithArguments:(NSDictionary<NSString *, id> *)parameters

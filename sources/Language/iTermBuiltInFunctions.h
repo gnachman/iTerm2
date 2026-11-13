@@ -15,13 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nullable namespace_, NSString *name, NSArray<NSString *> *argumentNames);
 
-// Returns all combinations of valid arguments. Of size pow(2,optionalArguments.count).
-NSArray<NSString *> *
-iTermAllFunctionSignaturesFromNamespaceAndNameAndArguments(NSString *namespace,
-                                                           NSString *name,
-                                                           NSArray<NSString *> *argumentNames,
-                                                           NSSet<NSString *> *optionalArguments);
-
 typedef void (^iTermBuiltInFunctionCompletionBlock)(id _Nullable result, NSError * _Nullable error);
 typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull parameters, _Nonnull  iTermBuiltInFunctionCompletionBlock completion);
 
@@ -79,8 +72,6 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
              cancellation:(nullable iTermScriptCallCancellation *)cancellation
                completion:(iTermBuiltInFunctionCompletionBlock)block;
 
-- (BOOL)matchedBySignature:(NSString *)signature inNamespace:(NSString *)namespace_;
-
 @end
 
 @interface iTermBuiltInFunctions : NSObject
@@ -108,7 +99,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier;
 - (NSError *)invalidReferenceError:(NSString *)reference name:(NSString *)name;
-- (NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name;
+- (nullable NSString *)signatureOfAnyRegisteredFunctionWithName:(NSString *)name;
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)registeredFunctionSignatureDictionary;
 - (nullable iTermBuiltInMethod *)methodWithSignature:(NSString *)signature;
 
