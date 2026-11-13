@@ -249,7 +249,8 @@
     XCTAssertNotNil(hint, @"%@", error);
     const NSRect frame = [self rectOfXMLElement:hint];
     NSXMLElement *cell = [[hint nodesForXPath:@"textFieldCell" error:nil] firstObject];
-    XCTAssertEqualObjects([cell attributeForName:@"lineBreakMode"].stringValue, @"wordWrapping");
+    // Xcode omits lineBreakMode when it is the default, word wrapping.
+    XCTAssertEqualObjects([cell attributeForName:@"lineBreakMode"].stringValue ?: @"wordWrapping", @"wordWrapping");
 
     NSTextField *twoLineLabel = [NSTextField wrappingLabelWithString:@""];
     twoLineLabel.font = [NSFont systemFontOfSize:NSFont.systemFontSize];
