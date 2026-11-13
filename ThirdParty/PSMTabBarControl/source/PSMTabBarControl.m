@@ -162,6 +162,16 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     // The tab a tab switcher has highlighted, drawn with an outline.
     __weak NSTabViewItem *_previewedTabViewItem;
 
+    // Multiple selection made by Shift-clicking (see -multiSelectedTabViewItems).
+    // The table holds its tabs weakly and has no order; bar order comes from
+    // _cells. The anchor is the end of the range that stays put while Shift-clicks
+    // move the other end. Both are emptied when the selection ends.
+    NSHashTable<NSTabViewItem *> *_multiSelection;
+    __weak NSTabViewItem *_multiSelectionAnchor;
+    // Set while a Shift-click changes the active tab, so -tabView:didSelectTabViewItem:
+    // knows not to end the selection it is extending.
+    BOOL _extendingMultiSelection;
+
     // The tab a drag is resting over, which will be selected if it stays there. Not retained: it
     // is checked against _cells before use.
     PSMTabBarCell *_springLoadingCell;
@@ -472,6 +482,7 @@ static const NSTimeInterval PSMTabBarSpringLoadingDelay = 0.6;
     [_overflowPopUpButton release];
     [_cells release];
     [_tabView release];
+    [_multiSelection release];
     [_preDragSelectedTabViewItem release];
     [_addTabButton release];
     [partnerView release];
@@ -1646,6 +1657,7 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
               clipRect:rect
             horizontal:horizontalFlag
           withOverflow:_lainOutWithOverflow];
+    [self drawMultiSelectionHighlights];
     [self drawPreviewedTabOutline];
     if (needClip) {
         [NSGraphicsContext restoreGraphicsState];
@@ -1677,6 +1689,11 @@ static CAShapeLayer *PSMMaskShapeForPath(NSBezierPath *path, NSRect subviewFrame
          @(sourceIndex), @(destIndex), @(_tabView.numberOfTabViewItems), _cells);
     NSTabViewItem *theItem = [_tabView tabViewItemAtIndex:sourceIndex];
     BOOL reselect = ([_tabView selectedTabViewItem] == theItem);
+
+    // Moving one tab would leave the rest of a multiple selection behind (or,
+    // for the active tab, end it as a side effect of reselecting it), so any
+    // move ends the selection, as a drag does.
+    [self clearTabMultiSelection];
 
     id<NSTabViewDelegate> tempDelegate = [_tabView delegate];
     [_tabView setDelegate:nil];
@@ -3723,7 +3740,7 @@ typedef struct {
                     _preDragSelectedTabIndex = (cell.state != NSControlStateValueOn
                                                 ? [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem]
                                                 : NSNotFound);
-                    [self tabClick:cell];
+                    [self tabClick:cell extendingSelection:[self eventExtendsTabSelection:theEvent]];
                 }
             }
         }
@@ -3799,6 +3816,8 @@ typedef struct {
                 NSArray<PSMTabBarCell *> *members = [self tabGroupMemberCellsForChip:chip];
                 if (members.count > 0) {
                     _didDrag = YES;
+                    // As for a single tab, a drag ends the multiple selection.
+                    [self clearTabMultiSelection];
                     [[PSMTabDragAssistant sharedDragAssistant] startDraggingGroupWithChip:chip
                                                                                  members:members
                                                                               fromTabBar:self
@@ -3838,6 +3857,9 @@ typedef struct {
                 [[self delegate] respondsToSelector:@selector(tabView:shouldDragTabViewItem:fromTabBar:)] &&
                 [[self delegate] tabView:_tabView shouldDragTabViewItem:[cell representedObject] fromTabBar:self]) {
             _didDrag = YES;
+            // A drag moves only the dragged tab, which would leave the rest of a
+            // multiple selection behind, so a drag ends the selection.
+            [self clearTabMultiSelection];
             ILog(@"Start dragging with mouse down event %@ in window %p with frame %@", [self lastMouseDownEvent], self.window, NSStringFromRect(self.window.frame));
             [[PSMTabDragAssistant sharedDragAssistant] startDraggingCell:cell fromTabBar:self withMouseDownEvent:[self lastMouseDownEvent]];
         }
@@ -3947,9 +3969,14 @@ typedef struct {
         // Is a valid click on the tab.
         [mouseDownCell setCloseButtonPressed:NO];
         switch (theEvent.clickCount) {
-            case 1:
-                [self tabClick:cell];
+            case 1: {
+                // Whether Shift extends the selection is decided when the button
+                // goes down, so letting go of Shift before the button doesn't
+                // turn a Shift-click into a plain one on the way up.
+                NSEvent *const downEvent = [self lastMouseDownEvent] ?: theEvent;
+                [self tabClick:cell extendingSelection:[self eventExtendsTabSelection:downEvent]];
                 return;
+            }
 
             case 2:
                 [self tabDoubleClick:cell];
@@ -4341,9 +4368,166 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 }
 
 - (void)tabClick:(id)sender {
-    if ([sender representedObject]) {
-        [_tabView selectTabViewItem:[sender representedObject]];
-        [self update];
+    [self tabClick:sender extendingSelection:NO];
+}
+
+- (BOOL)eventExtendsTabSelection:(NSEvent *)event {
+    return (event.modifierFlags & NSEventModifierFlagShift) != 0;
+}
+
+// A click on a tab. A plain click selects just that tab. A Shift-click selects
+// the range from the anchor through it (see -extendTabMultiSelectionToCell:).
+// With select-on-mouse-down a click arrives here twice, on the down and on the
+// up; both handlers are idempotent, so the second does nothing new.
+- (void)tabClick:(PSMTabBarCell *)cell extendingSelection:(BOOL)extend {
+    NSTabViewItem *item = [cell representedObject];
+    if (!item) {
+        return;
+    }
+    if (extend) {
+        [self extendTabMultiSelectionToCell:cell];
+    } else {
+        // Clicking the tab that is already active changes nothing in the tab
+        // view, so -tabView:didSelectTabViewItem: would not end the selection.
+        [self clearTabMultiSelection];
+        [_tabView selectTabViewItem:item];
+    }
+    [self update];
+}
+
+#pragma mark - Multiple selection
+
+- (NSArray<NSTabViewItem *> *)multiSelectedTabViewItems {
+    if (_multiSelection.count < 2) {
+        return @[];
+    }
+    NSMutableArray<NSTabViewItem *> *result = [NSMutableArray array];
+    for (PSMTabBarCell *cell in _cells) {
+        if ([self cellIsSelectableTab:cell] && [_multiSelection containsObject:cell.representedObject]) {
+            [result addObject:cell.representedObject];
+        }
+    }
+    // Members can be hidden after they were selected (say, the window got
+    // narrower and they moved into the overflow menu). What is left is only a
+    // multiple selection if two remain.
+    if (result.count < 2) {
+        return @[];
+    }
+    return result;
+}
+
+- (void)clearTabMultiSelection {
+    _multiSelectionAnchor = nil;
+    if (_multiSelection.count == 0) {
+        return;
+    }
+    [_multiSelection removeAllObjects];
+    [self setNeedsDisplay:YES];
+}
+
+// A real tab the user can see and click: not a group chip, not a drag
+// placeholder, and drawn in the bar.
+- (BOOL)cellIsSelectableTab:(PSMTabBarCell *)cell {
+    return (cell.representedObject != nil &&
+            !cell.isTabGroupChip &&
+            !cell.isPlaceholder &&
+            [self cellIsDrawnInBar:cell]);
+}
+
+- (NSArray<PSMTabBarCell *> *)selectableTabCellsFromCell:(PSMTabBarCell *)anchor
+                                                  toCell:(PSMTabBarCell *)target {
+    const NSUInteger anchorIndex = [_cells indexOfObjectIdenticalTo:anchor];
+    const NSUInteger targetIndex = [_cells indexOfObjectIdenticalTo:target];
+    if (anchorIndex == NSNotFound || targetIndex == NSNotFound) {
+        return @[];
+    }
+    const NSUInteger first = MIN(anchorIndex, targetIndex);
+    const NSUInteger last = MAX(anchorIndex, targetIndex);
+    NSMutableArray<PSMTabBarCell *> *result = [NSMutableArray array];
+    for (NSUInteger i = first; i <= last; i++) {
+        PSMTabBarCell *cell = _cells[i];
+        if ([self cellIsSelectableTab:cell]) {
+            [result addObject:cell];
+        }
+    }
+    return result;
+}
+
+- (PSMTabBarCell *)cellForTabViewItem:(NSTabViewItem *)item {
+    if (!item) {
+        return nil;
+    }
+    for (PSMTabBarCell *cell in _cells) {
+        if (cell.representedObject == item && !cell.isTabGroupChip) {
+            return cell;
+        }
+    }
+    return nil;
+}
+
+// Shift-click on `cell`: select every tab from the anchor through `cell` and make
+// `cell` the active tab. The anchor is kept across Shift-clicks, so a second one
+// grows or shrinks the range from the same end. It is the active tab when no
+// selection is under way, or when the old anchor can no longer be seen.
+- (void)extendTabMultiSelectionToCell:(PSMTabBarCell *)cell {
+    PSMTabBarCell *anchorCell = [self cellForTabViewItem:_multiSelectionAnchor];
+    if (!anchorCell || ![self cellIsSelectableTab:anchorCell]) {
+        anchorCell = [self cellForTabViewItem:_tabView.selectedTabViewItem];
+    }
+    NSArray<PSMTabBarCell *> *range = nil;
+    if (anchorCell && [self cellIsSelectableTab:cell]) {
+        range = [self selectableTabCellsFromCell:anchorCell toCell:cell];
+    }
+    if (range.count < 2) {
+        // Nothing to extend from (or Shift-clicking the anchor itself), so this
+        // is an ordinary click.
+        [self clearTabMultiSelection];
+        [_tabView selectTabViewItem:[cell representedObject]];
+        return;
+    }
+    if (!_multiSelection) {
+        _multiSelection = [[NSHashTable weakObjectsHashTable] retain];
+    }
+    [_multiSelection removeAllObjects];
+    for (PSMTabBarCell *member in range) {
+        [_multiSelection addObject:member.representedObject];
+    }
+    _multiSelectionAnchor = anchorCell.representedObject;
+    DLog(@"Multiple selection now %@ anchored at %@", [self multiSelectedTabViewItems], _multiSelectionAnchor);
+
+    _extendingMultiSelection = YES;
+    [_tabView selectTabViewItem:[cell representedObject]];
+    _extendingMultiSelection = NO;
+    [self setNeedsDisplay:YES];
+}
+
+// Tint the selected tabs other than the active one, which already looks
+// selected. Drawn over the cells, in the shape the style gives a tab, so it works
+// with every style without each one knowing about multiple selection.
+- (void)drawMultiSelectionHighlights {
+    NSArray<NSTabViewItem *> *items = [self multiSelectedTabViewItems];
+    if (items.count == 0) {
+        return;
+    }
+    NSTabViewItem *activeItem = _tabView.selectedTabViewItem;
+    NSColor *fillColor = [[NSColor controlAccentColor] colorWithAlphaComponent:0.25];
+    for (PSMTabBarCell *cell in _cells) {
+        NSTabViewItem *item = cell.representedObject;
+        if (item == activeItem ||
+            ![items containsObject:item] ||
+            ![self cellIsSelectableTab:cell] ||
+            NSIsEmptyRect(cell.frame)) {
+            continue;
+        }
+        NSBezierPath *path = nil;
+        if ([_style respondsToSelector:@selector(previewOutlinePathForTabCell:lineWidth:)]) {
+            path = [_style previewOutlinePathForTabCell:cell lineWidth:0];
+        }
+        if (!path) {
+            path = [NSBezierPath bezierPathWithRect:cell.frame];
+        }
+        [fillColor set];
+        [path fill];
     }
 }
 
@@ -4611,6 +4795,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (void)tabView:(NSTabView *)aTabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     // here's a weird one - this message is sent before the "aDidChangeNumberOfTabViewItems"
     // message, thus I can end up updating when there are no cells, if no tabs were (yet) present
+    if (!_extendingMultiSelection) {
+        // Selecting a tab any other way (a key, a menu, closing the active tab)
+        // ends a multiple selection, as a plain click does.
+        [self clearTabMultiSelection];
+    }
     if ([_cells count] > 0) {
         _keepSelectedTabInView = YES;
         [self update];
@@ -4656,6 +4845,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     for (PSMTabBarCell *cell in cellsToRemove) {
         if ([[self delegate] respondsToSelector:@selector(tabView:didCloseTabViewItem:)]) {
             [[self delegate] tabView:aTabView didCloseTabViewItem:[cell representedObject]];
+        }
+        // A tab that leaves (closed, or moved to another window) leaves the
+        // multiple selection too, so it is not selected if it comes back.
+        if ([cell representedObject]) {
+            [_multiSelection removeObject:[cell representedObject]];
         }
 
         [self removeTabForCell:cell];
@@ -5064,6 +5258,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         const BOOL collapsed = value.boolValue;
         if (cell.isCollapsedHidden != collapsed) {
             cell.isCollapsedHidden = collapsed;
+            if (collapsed) {
+                // Collapsing a group deselects its tabs, so expanding it later
+                // doesn't bring back a selection the user can no longer see.
+                [_multiSelection removeObject:item];
+            }
             changed = YES;
         }
     }

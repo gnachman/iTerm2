@@ -9313,9 +9313,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (!theTab) {
         return NO;
     }
+    // Opened on one of several Shift-selected tabs: offer to group them all.
+    NSArray<NSTabViewItem *> *selectedItems = _contentView.tabBarControl.multiSelectedTabViewItems;
+    if ([selectedItems containsObject:tabViewItem]) {
+        [self addTabGroupMenuItemsToMenu:rootMenu forSelectedTabViewItems:selectedItems clickedTabViewItem:tabViewItem];
+        return YES;
+    }
     NSMenu *groupMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
 
-    NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewGroup", nil, [NSBundle mainBundle], @"New Group…", @"Menu item that creates a new tab group")
+    NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:[self titleForNewTabGroupMenuItem]
                                                            action:@selector(addTabToNewGroup:)
                                                     keyEquivalent:@""] autorelease];
     newGroupItem.representedObject = tabViewItem;
@@ -9326,8 +9332,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (groups.count > 0) {
         [groupMenu addItem:[NSMenuItem separatorItem]];
         for (iTermTabGroup *group in groups) {
-            NSString *title = group.name.length > 0 ? group.name : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Untitled", nil, [NSBundle mainBundle], @"Untitled", @"Fallback title when a session or window has no name");
-            NSMenuItem *gi = [[[NSMenuItem alloc] initWithTitle:title
+            NSMenuItem *gi = [[[NSMenuItem alloc] initWithTitle:[self menuTitleForTabGroup:group]
                                                          action:@selector(addTabToExistingGroup:)
                                                   keyEquivalent:@""] autorelease];
             gi.representedObject = @{ @"tab": tabViewItem, @"group": group.uniqueIdentifier };
@@ -9345,12 +9350,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [rootMenu setSubmenu:groupMenu forItem:groupRoot];
 
     if (theTab.tabGroupID) {
-        NSMenuItem *renameItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RenameGroup", nil, [NSBundle mainBundle], @"Rename Group…", @"Menu item that renames a tab group")
-                                                            action:@selector(renameTabGroup:)
-                                                     keyEquivalent:@""] autorelease];
-        renameItem.representedObject = tabViewItem;
-        renameItem.target = self;
-        [rootMenu addItem:renameItem];
+        [self addRenameTabGroupMenuItemToMenu:rootMenu forTabViewItem:tabViewItem];
 
         NSMenuItem *removeItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RemoveTabFromGroup", nil, [NSBundle mainBundle], @"Remove Tab from Group", @"Menu item that removes a tab from its group")
                                                              action:@selector(removeTabFromGroup:)
@@ -9362,25 +9362,238 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return YES;
 }
 
+- (NSString *)titleForNewTabGroupMenuItem {
+    return NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewGroup", nil, [NSBundle mainBundle], @"New Group…", @"Menu item that creates a new tab group");
+}
+
+- (NSString *)menuTitleForTabGroup:(iTermTabGroup *)group {
+    return group.name.length > 0 ? group.name : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Untitled", nil, [NSBundle mainBundle], @"Untitled", @"Fallback title when a session or window has no name");
+}
+
+// Rename Group… for the group `tabViewItem`'s tab belongs to.
+- (void)addRenameTabGroupMenuItemToMenu:(NSMenu *)rootMenu forTabViewItem:(NSTabViewItem *)tabViewItem {
+    NSMenuItem *renameItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RenameGroup", nil, [NSBundle mainBundle], @"Rename Group…", @"Menu item that renames a tab group")
+                                                        action:@selector(renameTabGroup:)
+                                                 keyEquivalent:@""] autorelease];
+    renameItem.representedObject = tabViewItem;
+    renameItem.target = self;
+    [rootMenu addItem:renameItem];
+}
+
+// The tab group items of the context menu of a tab that is one of several
+// Shift-selected tabs. "Add Tabs to Group" and "Remove Tabs from Group" act on
+// all of `selectedItems`; Rename Group… still renames the clicked tab's group.
+- (void)addTabGroupMenuItemsToMenu:(NSMenu *)rootMenu
+           forSelectedTabViewItems:(NSArray<NSTabViewItem *> *)selectedItems
+                clickedTabViewItem:(NSTabViewItem *)clickedItem {
+    NSArray<PTYTab *> *selectedTabs = [self tabsForTabViewItems:selectedItems];
+    NSMenu *groupMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+
+    NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:[self titleForNewTabGroupMenuItem]
+                                                           action:@selector(addSelectedTabsToNewGroup:)
+                                                    keyEquivalent:@""] autorelease];
+    newGroupItem.representedObject = @{ @"tabs": selectedItems, @"clicked": clickedItem };
+    newGroupItem.target = self;
+    [groupMenu addItem:newGroupItem];
+
+    NSArray<iTermTabGroup *> *groups = [self tabGroupsInWindow];
+    if (groups.count > 0) {
+        [groupMenu addItem:[NSMenuItem separatorItem]];
+        for (iTermTabGroup *group in groups) {
+            NSMenuItem *gi = [[[NSMenuItem alloc] initWithTitle:[self menuTitleForTabGroup:group]
+                                                         action:@selector(addSelectedTabsToExistingGroup:)
+                                                  keyEquivalent:@""] autorelease];
+            gi.representedObject = @{ @"tabs": selectedItems, @"group": group.uniqueIdentifier };
+            gi.target = self;
+            // Checked when every selected tab is already in the group, a dash when
+            // only some are.
+            NSUInteger membersInGroup = 0;
+            for (PTYTab *aTab in selectedTabs) {
+                if ([aTab.tabGroupID isEqualToString:group.uniqueIdentifier]) {
+                    membersInGroup++;
+                }
+            }
+            if (membersInGroup == selectedTabs.count) {
+                gi.state = NSControlStateValueOn;
+            } else if (membersInGroup > 0) {
+                gi.state = NSControlStateValueMixed;
+            } else {
+                gi.state = NSControlStateValueOff;
+            }
+            [groupMenu addItem:gi];
+        }
+    }
+
+    NSMenuItem *groupRoot = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.AddTabsToGroup", nil, [NSBundle mainBundle], @"Add Tabs to Group", @"Menu item that adds all the selected tabs to a group. Shown in a tab’s context menu when several tabs were selected by Shift-clicking.")
+                                                        action:nil
+                                                 keyEquivalent:@""] autorelease];
+    [rootMenu addItem:groupRoot];
+    [rootMenu setSubmenu:groupMenu forItem:groupRoot];
+
+    PTYTab *clickedTab = [clickedItem identifier];
+    if (clickedTab.tabGroupID) {
+        [self addRenameTabGroupMenuItemToMenu:rootMenu forTabViewItem:clickedItem];
+    }
+    BOOL anyGrouped = NO;
+    for (PTYTab *aTab in selectedTabs) {
+        if (aTab.tabGroupID) {
+            anyGrouped = YES;
+            break;
+        }
+    }
+    if (anyGrouped) {
+        NSMenuItem *removeItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.RemoveTabsFromGroup", nil, [NSBundle mainBundle], @"Remove Tabs from Group", @"Menu item that removes all the selected tabs from their groups. Shown in a tab’s context menu when several tabs were selected by Shift-clicking.")
+                                                             action:@selector(removeSelectedTabsFromGroup:)
+                                                      keyEquivalent:@""] autorelease];
+        removeItem.representedObject = selectedItems;
+        removeItem.target = self;
+        [rootMenu addItem:removeItem];
+    }
+}
+
 - (void)addTabToNewGroup:(id)sender {
     NSTabViewItem *tabViewItem = [sender representedObject];
     [self addTab:[tabViewItem identifier] toNewGroupWithDefaultName:[tabViewItem label]];
+}
+
+// Asks for the name of a new tab group, suggesting `label` (a tab's title).
+// Returns nil if the user cancelled.
+- (NSString *)promptForNewTabGroupNameSuggesting:(NSString *)label {
+    NSString *defaultName = label.length > 0 ? label : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Group", nil, [NSBundle mainBundle], @"Group", @"Default name for a new tab group");
+    return [self promptForTabGroupName:defaultName title:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabGroup", nil, [NSBundle mainBundle], @"New Tab Group", @"Title of the dialog for creating a new tab group")];
 }
 
 - (void)addTab:(PTYTab *)theTab toNewGroupWithDefaultName:(NSString *)label {
     if (!theTab) {
         return;
     }
-    NSString *defaultName = label.length > 0 ? label : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Group", nil, [NSBundle mainBundle], @"Group", @"Default name for a new tab group");
-    NSString *name = [self promptForTabGroupName:defaultName title:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabGroup", nil, [NSBundle mainBundle], @"New Tab Group", @"Title of the dialog for creating a new tab group")];
+    NSString *name = [self promptForNewTabGroupNameSuggesting:label];
     if (!name) {
         return;  // user cancelled
     }
-    theTab.tabGroupID = [[NSUUID UUID] UUIDString];
-    theTab.tabGroupName = name;
-    theTab.tabGroupColor = [self nextTabGroupColor];
-    RLog(@"tabGroup: New Group %@ (%@) from tab %@", theTab.tabGroupID, name, defaultName);
+    [self addTab:theTab toNewGroupNamed:name];
+}
+
+- (void)addTab:(PTYTab *)theTab toNewGroupNamed:(NSString *)name {
+    [self startTabGroupNamed:name withTab:theTab addingTabs:@[ theTab ]];
+    RLog(@"tabGroup: New Group %@ (%@) from tab %@", theTab.tabGroupID, name, [theTab.tabViewItem label]);
+}
+
+// Make `founder` the first member of a new group named `name`, then put the rest
+// of `tabs` in it. The founder may be leaving another group, and the others join
+// as they would an existing group, so the order is repaired afterward.
+- (void)startTabGroupNamed:(NSString *)name
+                   withTab:(PTYTab *)founder
+                addingTabs:(NSArray<PTYTab *> *)tabs {
+    founder.tabGroupID = [[NSUUID UUID] UUIDString];
+    founder.tabGroupName = name;
+    founder.tabGroupColor = [self nextTabGroupColor];
+    founder.tabGroupCollapsed = NO;
+    [self addTabs:tabs toTabGroupWithID:founder.tabGroupID];
+}
+
+// The tabs of `items` that are still in this window, in the same order. A menu
+// holds its items, so this guards against a tab that closed or moved away
+// before the user chose one.
+- (NSArray<PTYTab *> *)tabsForTabViewItems:(NSArray<NSTabViewItem *> *)items {
+    NSArray<PTYTab *> *tabs = [self tabs];
+    NSMutableArray<PTYTab *> *result = [NSMutableArray array];
+    for (NSTabViewItem *item in items) {
+        PTYTab *aTab = [item identifier];
+        if (aTab && [tabs containsObject:aTab]) {
+            [result addObject:aTab];
+        }
+    }
+    return result;
+}
+
+// The tab that starts a new group made from a selection: the right-clicked one,
+// as New Group… does for a single tab, or the first if that one is gone.
+- (PTYTab *)founderOfNewGroupAmongTabs:(NSArray<PTYTab *> *)tabs
+                    clickedTabViewItem:(NSTabViewItem *)clickedItem {
+    PTYTab *clickedTab = [clickedItem identifier];
+    return [tabs containsObject:clickedTab] ? clickedTab : tabs.firstObject;
+}
+
+// New Group… from the context menu of one of several Shift-selected tabs.
+- (void)addSelectedTabsToNewGroup:(id)sender {
+    NSDictionary *selection = [sender representedObject];
+    PTYTab *founder = [self founderOfNewGroupAmongTabs:[self tabsForTabViewItems:selection[@"tabs"]]
+                                    clickedTabViewItem:selection[@"clicked"]];
+    if (!founder) {
+        return;
+    }
+    NSString *name = [self promptForNewTabGroupNameSuggesting:[founder.tabViewItem label]];
+    if (!name) {
+        return;  // user cancelled; the tabs stay selected
+    }
+    // Tabs can close or move to another window while the prompt is up, so
+    // which tabs to group is worked out again now.
+    [self addSelectedTabs:selection toNewGroupNamed:name];
+}
+
+// `selection` is the represented object of the New Group… item: the selected
+// tab view items under "tabs" and the right-clicked one under "clicked".
+- (void)addSelectedTabs:(NSDictionary *)selection toNewGroupNamed:(NSString *)name {
+    NSArray<PTYTab *> *tabs = [self tabsForTabViewItems:selection[@"tabs"]];
+    PTYTab *founder = [self founderOfNewGroupAmongTabs:tabs clickedTabViewItem:selection[@"clicked"]];
+    if (!founder) {
+        return;
+    }
+    [self startTabGroupNamed:name withTab:founder addingTabs:tabs];
+    RLog(@"tabGroup: New Group %@ (%@) from %@ selected tabs", founder.tabGroupID, name, @(tabs.count));
+}
+
+- (void)addSelectedTabsToExistingGroup:(id)sender {
+    NSDictionary *rep = [sender representedObject];
+    NSArray<PTYTab *> *tabs = [self tabsForTabViewItems:rep[@"tabs"]];
+    NSString *groupID = rep[@"group"];
+    RLog(@"tabGroup: adding %@ selected tabs to existing group %@", @(tabs.count), groupID);
+    [self addTabs:tabs toTabGroupWithID:groupID];
+}
+
+// Put each of `tabs` in the group `groupID`, which must already have a member,
+// the way -addTabToExistingGroup: puts in one tab: each takes on the group's
+// name, color, collapsed state, and whether it is pinned. Then the order is
+// repaired once for all of them.
+- (void)addTabs:(NSArray<PTYTab *> *)tabs toTabGroupWithID:(NSString *)groupID {
+    PTYTab *existingMember = [self tabsInGroup:groupID].firstObject;
+    if (!existingMember) {
+        return;
+    }
+    // A tab whose pinned state changes to match the group moves to the pinned
+    // boundary. Pinning from left to right and unpinning from right to left puts
+    // each next to the one before, so the tabs keep their order (as in
+    // -togglePinTab:).
+    const BOOL groupIsPinned = existingMember.isPinned;
+    NSArray<PTYTab *> *ordered = groupIsPinned ? tabs : tabs.reverseObjectEnumerator.allObjects;
+    for (PTYTab *aTab in ordered) {
+        if ([aTab.tabGroupID isEqualToString:groupID]) {
+            continue;
+        }
+        aTab.tabGroupID = groupID;
+        [self reconcileTabGroupDefinitionForTab:aTab];
+    }
+    [_contentView.tabBarControl clearTabMultiSelection];
     [self updateTabColors];
+    [self tabsDidReorder];
+    [self expandTabGroupIfSelectedTabIsCollapsed];
+}
+
+- (void)removeSelectedTabsFromGroup:(id)sender {
+    NSArray<PTYTab *> *tabs = [self tabsForTabViewItems:[sender representedObject]];
+    for (PTYTab *aTab in tabs) {
+        if (!aTab.tabGroupID) {
+            continue;
+        }
+        RLog(@"tabGroup: removed selected tab %@ from group %@", [aTab.tabViewItem label], aTab.tabGroupID);
+        aTab.tabGroupID = nil;
+        [self reconcileTabGroupDefinitionForTab:aTab];
+    }
+    [_contentView.tabBarControl clearTabMultiSelection];
+    [self updateTabColors];
+    // Keep each group that lost members in one block (see -removeTabFromGroup:label:).
+    [self tabsDidReorder];
 }
 
 - (void)addTabToExistingGroup:(id)sender {

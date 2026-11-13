@@ -293,6 +293,24 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // -addTabViewItem: sets up.
 - (NSMutableArray *)cells;
 
+// Multiple selection. Shift-clicking a tab selects every tab from the anchor
+// (the tab that was active when the selection began) through the clicked tab,
+// and makes the clicked tab active, as in Chrome. Any other change of the
+// active tab, a click without Shift, or moving a tab ends it. Collapsing a
+// group deselects its tabs.
+//
+// The selected tabs in bar order, including the active tab. Empty unless at
+// least two tabs are selected. A tab in the overflow menu or hidden in a
+// collapsed group never counts, so it is never acted on unseen.
+@property(nonatomic, readonly) NSArray<NSTabViewItem *> *multiSelectedTabViewItems;
+- (void)clearTabMultiSelection;
+// The tab cells from `anchor` through `target` inclusive, in bar order, leaving
+// out group chips, placeholders, and cells not drawn in the bar. Empty if either
+// cell is not in the bar.
+- (NSArray<PSMTabBarCell *> *)selectableTabCellsFromCell:(PSMTabBarCell *)anchor
+                                                  toCell:(PSMTabBarCell *)target
+    NS_SWIFT_NAME(selectableTabCells(from:to:));
+
 // special effects
 - (void)hideTabBar:(BOOL)hide animate:(BOOL)animate;
 - (BOOL)isTabBarHidden;
