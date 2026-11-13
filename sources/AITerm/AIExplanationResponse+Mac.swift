@@ -99,7 +99,8 @@ extension ExplanationResponse {
 
     private mutating func parseMainResponse() -> String? {
         guard let startRange = unparsed.range(of: "<response>"),
-              let endRange = unparsed.range(of: "</response>") else {
+              let endRange = unparsed.range(of: "</response>",
+                                            range: startRange.upperBound..<unparsed.endIndex) else {
             return nil
         }
         let start = startRange.upperBound

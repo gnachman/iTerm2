@@ -505,3 +505,7 @@ Bug Fixes:
   cursor on part of a ligature, such as the
   second “-” of “--” in Fira Code, no longer
   hides the rest of the ligature. Issue 13203.
+- Explain Output with AI could show the wrong
+  text as the explanation, or crash, depending
+  on how the AI’s reply was laid out. Thanks
+  to Kim Dong Han (@ehdgks0627) for the fix.
