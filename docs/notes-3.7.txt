@@ -217,6 +217,9 @@ Bug Fixes:
   could crash iTerm2’s image decoder or use
   gigabytes of memory. Images with more pixels
   than 8192×8192 are now rejected.
+- Fixed a crash when typing a very long word or
+  certain unusual characters into the Settings
+  search field.
 - The tooltip for “Enable support for
   right-to-left scripts” in Settings > General >
   Experimental described a tmux setting instead.
