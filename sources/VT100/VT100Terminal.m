@@ -4821,9 +4821,10 @@ static NSString *VT100TerminalCompactFloat(CGFloat value) {
         return;
     }
     if ([iTermProgramStatusReport isFeatureQuery:body]) {
-        // The reply is a constant, so it reads no state that could be stale.
+        // The reply is a constant, so it reads no state that could be stale. tmux does not know
+        // this query, so a tmux integration pane answers it too.
         if ([_delegate terminalShouldSendCoalescibleReport:YES]) {
-            [_delegate terminalSendReport:iTermProgramStatusReport.featureQueryReply];
+            [_delegate terminalSendReportAllowedInTmux:iTermProgramStatusReport.featureQueryReply];
         }
         return;
     }

@@ -199,6 +199,10 @@ Bug Fixes:
   without clearing it no longer stays up
   forever. It now hides after 15 seconds with
   no update. Issue 13166.
+- In tmux integration, a program that asked
+  whether iTerm2 supports the Program Status
+  Protocol got no answer, so it never reported
+  its status there.
 - In tmux integration, full-screen programs such
   as htop or vim could show garbled output in a
   zoomed pane after zooming it or resizing the

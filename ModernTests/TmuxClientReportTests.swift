@@ -53,4 +53,14 @@ final class TmuxClientReportTests: XCTestCase {
         XCTAssertEqual(reports.count, 1, "\(reports)")
         XCTAssertTrue(reports.first?.hasPrefix("\u{1b}]1337;WindowFrame=") ?? false, "\(reports)")
     }
+
+    // tmux knows nothing of OSC 7501, so a program in a tmux integration pane that asks whether
+    // the terminal speaks the Program Status Protocol has to hear back from iTerm2, or it never
+    // reports its status there. Claude Code asks this way.
+    func testProgramStatusFeatureQueryIsAnsweredInTmux() {
+        let harness = tmuxHarness()
+        harness.send(Array("\u{1b}]7501;?\u{1b}\\".utf8))
+        let reports = waitForReports(harness, timeout: 5)
+        XCTAssertEqual(reports, ["\u{1b}]7501;?\u{1b}\\"])
+    }
 }
