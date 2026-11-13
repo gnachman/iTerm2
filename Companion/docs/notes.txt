@@ -114,6 +114,9 @@ Bug Fixes:
   connecting, then coming back later, could
   wrongly say your Mac’s iTerm2 was too old. It
   now reconnects instead.
+- Fixed occasional crashes during dictation,
+  and a canceled model download no longer
+  leaves a partial model that looks complete.
 
 New Features:
 - You can now type into a live session. Tap the

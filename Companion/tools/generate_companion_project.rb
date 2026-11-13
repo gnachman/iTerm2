@@ -35,7 +35,7 @@ MARKETING_VERSION = '1.5'
 CURRENT_PROJECT_VERSION = '1'
 PACKAGE_PRODUCTS = %w[CompanionProtocol CompanionNoise CompanionTransport]
 WHISPERKIT_URL = 'https://github.com/argmaxinc/WhisperKit.git'
-WHISPERKIT_MIN_VERSION = '1.0.0'
+WHISPERKIT_MIN_VERSION = '1.1.1'
 
 # Chat-model sources shared with the Mac app. These compile into BOTH the
 # iTerm2 app and this iOS app, so they must stay platform-neutral (each file
