@@ -101,6 +101,12 @@
             "value" : "Descrição"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descriere"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Log de falhas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jurnal de blocări"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Relatório de falhas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportor de blocări"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parece que o {APPNAME} travou na última vez em que foi usado. Deseja enviar um log de falhas aos desenvolvedores?\n\nOs logs de falhas da Apple não são enviados a outros desenvolvedores, então esta é a única maneira de os desenvolvedores do {APPNAME} descobrirem e corrigirem esta falha."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se pare că {APPNAME} s-a blocat la ultima utilizare. Doriți să trimiteți un jurnal de blocări dezvoltatorilor?\n\nJurnalele de blocări de la Apple nu sunt trimise altor dezvoltatori, așa că aceasta este singura modalitate prin care dezvoltatorii {APPNAME} pot afla despre această blocare și o pot remedia."
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Você pode apagar qualquer informação que não queira transmitir, mas isto tornará mais difícil detectar o bug. Por padrão, são transmitidos o log de falhas, o Mac que você está usando e seus ajustes."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puteți șterge orice informație pe care nu doriți să o transmiteți, dar astfel va fi mai greu de depistat eroarea. În mod implicit, se transmit jurnalul de blocări, modelul de Mac pe care îl folosiți și configurările dvs."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enviar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trimiteți"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Lembrar mais tarde"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reamintiți-mi mai târziu"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descartar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renunțați"
           }
         },
         "ru" : {

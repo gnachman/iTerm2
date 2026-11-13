@@ -101,6 +101,12 @@
             "value": "Marcar"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bifați"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",

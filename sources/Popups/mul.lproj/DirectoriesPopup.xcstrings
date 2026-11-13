@@ -101,6 +101,12 @@
             "value" : "Diretório"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Último uso"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ultima utilizare"
           }
         },
         "ru" : {

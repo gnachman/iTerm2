@@ -101,6 +101,12 @@
             "value" : "Editar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -251,6 +257,12 @@
             "value" : "Título"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titlu"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texto"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
           }
         },
         "ru" : {

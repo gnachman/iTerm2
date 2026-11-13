@@ -101,6 +101,12 @@
             "value" : "Um script simples que não tem nenhuma dependência além da biblioteca iterm2."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un script simplu care nu are alte dependențe în afară de biblioteca iterm2."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -246,6 +252,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -401,6 +413,12 @@
             "value" : "Básico"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De bază"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -546,6 +564,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -701,6 +725,12 @@
             "value" : "Daemon de longa duração"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daemon de lungă durată"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Simples"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simplu"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escolha este modelo para um script simples que executa ações e termina."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alegeți acest șablon pentru un script simplu care efectuează acțiuni și se încheie."
           }
         },
         "ru" : {
@@ -1301,6 +1349,12 @@
             "value" : "Um script que depende de pacotes do PyPI além da biblioteca iterm2. Um pyenv privado será criado para este script."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un script care depinde de pachete PyPI, altele decât biblioteca iterm2. Pentru acest script se va crea un pyenv privat."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1446,6 +1500,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1601,6 +1661,12 @@
             "value" : "Escolha um modelo de script:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alegeți un șablon de script:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1749,6 +1815,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ambiente completo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mediu complet"
           }
         },
         "ru" : {
@@ -1901,6 +1973,12 @@
             "value" : "Escolha este modelo para um script que permanece em execução e responde a notificações."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alegeți acest șablon pentru un script care rămâne în rulare și răspunde la notificări."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2046,6 +2124,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -2199,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escolha um ambiente Python:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alegeți un mediu Python:"
           }
         },
         "ru" : {

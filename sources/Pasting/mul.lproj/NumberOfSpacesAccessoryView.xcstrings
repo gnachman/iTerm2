@@ -101,6 +101,12 @@
             "value": "Tamanho da tabulação em espaços:"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimensiunea tabulatorului în spații:"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -246,6 +252,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "ro": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

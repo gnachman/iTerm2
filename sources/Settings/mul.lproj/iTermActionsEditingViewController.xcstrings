@@ -101,6 +101,12 @@
             "value" : "Ação"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acțiune"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,6 +297,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Título"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titlu"
           }
         },
         "ru" : {

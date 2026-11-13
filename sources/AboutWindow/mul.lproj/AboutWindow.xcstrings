@@ -101,6 +101,12 @@
             "value": "iTerm2"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -249,6 +255,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Por George Nachman e colaboradores"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De George Nachman și colaboratori"
           }
         },
         "ru": {

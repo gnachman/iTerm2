@@ -101,6 +101,12 @@
             "value": "Colando…"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se lipește…"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",

@@ -101,6 +101,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -246,6 +252,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

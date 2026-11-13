@@ -101,6 +101,12 @@
             "value" : "Item 1"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 1"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 2"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Item 3"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 3"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comando"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comandă"
           }
         },
         "ru" : {

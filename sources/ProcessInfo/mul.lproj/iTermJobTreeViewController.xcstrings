@@ -101,6 +101,12 @@
             "value" : "pid"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pid"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Processo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proces"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Copiar ID do processo"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați ID-ul procesului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 1"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Item 2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 3"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Notificar ao encerrar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificați la terminare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar comando"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați comanda"
           }
         },
         "ru" : {

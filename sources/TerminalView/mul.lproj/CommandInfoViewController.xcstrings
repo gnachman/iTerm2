@@ -101,6 +101,12 @@
             "value" : "/directory"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar diretório"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați directorul"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "12 bytes"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 byți"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -551,6 +569,12 @@
             "value" : "Selecionar a saída do comando"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați ieșirea comenzii"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -696,6 +720,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1h 35m"
@@ -851,6 +881,12 @@
             "value" : "Saída:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieșire:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -999,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiat"
           }
         },
         "ru" : {
@@ -1151,6 +1193,12 @@
             "value" : "Copiar comando para a área de transferência"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați comanda în clipboard"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciado em %@"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Început la %@"
           }
         },
         "ru" : {
@@ -1451,6 +1505,12 @@
             "value" : "Abrir comando no Compositor"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți comanda în Editorul de comenzi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pasta arrastável"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosar care poate fi tras"
           }
         },
         "ru" : {
@@ -1751,6 +1817,12 @@
             "value" : "comando"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comandă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1899,6 +1971,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escrever comando no terminal"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scrieți comanda în terminal"
           }
         },
         "ru" : {
@@ -2051,6 +2129,12 @@
             "value" : "Diretório:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Código de retorno:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cod de retur:"
           }
         },
         "ru" : {
@@ -2351,6 +2441,12 @@
             "value" : "Escrever diretório no terminal"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scrieți directorul în terminal"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,6 +2595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tempo de execução:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durată de rulare:"
           }
         },
         "ru" : {
@@ -2651,6 +2753,12 @@
             "value" : "Copiar a saída do comando"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați ieșirea comenzii"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2799,6 +2907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Compartilhar comando…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partajați comanda…"
           }
         },
         "ru" : {
@@ -2951,6 +3065,12 @@
             "value" : "Comando:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comandă:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3096,6 +3216,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -3249,6 +3375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar exibição de comando fora da tela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivați afișarea comenzii din afara ecranului"
           }
         },
         "ru" : {

@@ -101,6 +101,12 @@
             "value": "Instalador do runtime do Python"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalator al mediului de rulare Python"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -251,6 +257,12 @@
             "value": "Cancelar"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anulați"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -399,6 +411,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Transferindo componentes opcionais…"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se descarcă componentele opționale…"
           }
         },
         "ru": {

@@ -101,6 +101,12 @@
             "value" : "Baixa a versão mais recente. Executa curl | bash"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descarcă cea mai recentă versiune. Rulează curl | bash"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -251,6 +257,12 @@
             "value" : "Continuar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +408,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -551,6 +569,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -699,6 +723,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1. Descubra qual shell você usa.\n2. Adicione arquivos de script na sua pasta de início.\n3. Instale scripts utilitários.\n4. Modifique os scripts de inicialização do seu shell."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Descoperirea shellului pe care îl folosiți.\n2. Adăugarea fișierelor de script în dosarul dvs. de reședință.\n3. Instalarea scripturilor utilitare.\n4. Modificarea scripturilor de pornire ale shellului dvs."
           }
         },
         "ru" : {
@@ -851,6 +881,12 @@
             "value" : "Voltar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înapoi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -999,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Os utilitários incluem scripts para baixar arquivos, exibir imagens em linha e muito mais. "
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilitarele includ scripturi pentru descărcarea fișierelor, afișarea imaginilor în linie și altele. "
           }
         },
         "ru" : {
@@ -1151,6 +1193,12 @@
             "value" : "Voltar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înapoi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continuar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuați"
           }
         },
         "ru" : {
@@ -1451,6 +1505,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pular"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omiteți"
           }
         },
         "ru" : {
@@ -1751,6 +1817,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1899,6 +1971,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pré-visualizar comando"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previzualizați comanda"
           }
         },
         "ru" : {
@@ -2051,6 +2129,12 @@
             "value" : "Instalação sem internet"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalare fără internet"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Baixar e executar o instalador"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descărcați și rulați instalatorul"
           }
         },
         "ru" : {
@@ -2351,6 +2441,12 @@
             "value" : "Também instalar os utilitários do iTerm2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalați și utilitarele iTerm2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,6 +2595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalação manual guiada. Nenhum download necessário."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalare manuală ghidată. Nu necesită descărcare."
           }
         },
         "ru" : {
@@ -2651,6 +2753,12 @@
             "value" : "Pré-visualizar comando"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previzualizați comanda"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2801,6 +2909,12 @@
             "value" : "Continuar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2946,6 +3060,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -3101,6 +3221,12 @@
             "value" : "Pré-visualizar comando"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previzualizați comanda"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3249,6 +3375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Voltar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înapoi"
           }
         },
         "ru" : {
@@ -3401,6 +3533,12 @@
             "value" : "Como você gostaria de instalar a Shell Integration?\n\nNesse processo, os scripts de inicialização do seu shell serão modificados. Este instalador digitará os comandos na janela do terminal para você."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cum doriți să instalați integrarea shell?\n\nÎn acest proces, scripturile de pornire ale shellului dvs. vor fi modificate. Acest instalator va introduce comenzi în fereastra de terminal în locul dvs."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3549,6 +3687,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pré-visualizar comando"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previzualizați comanda"
           }
         },
         "ru" : {
@@ -3701,6 +3845,12 @@
             "value" : "Instalação concluída!"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalare finalizată!"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3849,6 +3999,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Isto executará o seguinte comando:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceasta va rula următoarea comandă:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "ru" : {
@@ -4001,6 +4157,12 @@
             "value" : "Crie uma nova aba para testar.\n\nPara obter os melhores resultados, instale a Shell Integration em todos os hosts nos quais você entra via ssh."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creați o filă nouă pentru a încerca.\n\nPentru cele mai bune rezultate, instalați integrarea shell pe toate gazdele la care vă conectați prin ssh."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4149,6 +4311,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A Shell Integration consiste em scripts que ajudam o seu shell a se comunicar com o iTerm2 para que ele possa rastrear os comandos que você está executando, o seu diretório atual e outros estados. "
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrarea shell constă din scripturi care ajută shellul dvs. să comunice cu iTerm2, astfel încât acesta să poată urmări comenzile pe care le rulați, directorul curent și alte stări. "
           }
         },
         "ru" : {
@@ -4301,6 +4469,12 @@
             "value" : "Instalar Shell Integration"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalați integrarea shell"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4449,6 +4623,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
           }
         },
         "ru" : {

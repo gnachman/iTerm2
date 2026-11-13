@@ -101,6 +101,12 @@
             "value" : "Caminho do SSH:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calea către SSH:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arquivos para copiar para o host remoto:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fișiere de copiat pe gazda la distanță:"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Destino"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Destinație"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -546,6 +564,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -701,6 +725,12 @@
             "value" : "/usr/bin/ssh"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Explorar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explorați"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arquivo ou pasta"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fișier sau dosar"
           }
         },
         "ru" : {
@@ -1301,6 +1349,12 @@
             "value" : "Integração com SSH"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrare SSH"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variáveis de ambiente para copiar para o host remoto:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Variabile de mediu de copiat pe gazda la distanță:"
           }
         },
         "ru" : {

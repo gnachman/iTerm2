@@ -101,6 +101,12 @@
             "value": "Incluir marcas de tempo"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Includeți marcajele temporale"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -249,6 +255,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Formato do arquivo:"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format de fișier:"
           }
         },
         "ru": {

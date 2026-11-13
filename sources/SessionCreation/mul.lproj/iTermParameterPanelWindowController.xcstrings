@@ -101,6 +101,12 @@
             "value": "Insira o valor de "
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduceți valoarea pentru "
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -246,6 +252,12 @@
           }
         },
         "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "ro": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
@@ -401,6 +413,12 @@
             "value": "Parâmetro da sessão"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parametru de sesiune"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -551,6 +569,12 @@
             "value": "Cancelar"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anulați"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -699,6 +723,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nome"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nume"
           }
         },
         "ru": {

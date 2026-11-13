@@ -101,6 +101,12 @@
             "value" : "Apagar histórico de busca"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ștergeți istoricul căutărilor"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substring com diferenciação de maiúsculas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subșir sensibil la majuscule/minuscule"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Substring sem diferenciação de maiúsculas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subșir insensibil la majuscule/minuscule"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căutare"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Regex com diferenciação de maiúsculas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex sensibil la majuscule/minuscule"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -851,6 +881,12 @@
             "value" : "Substring com caixa inteligente"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subșir cu majuscule/minuscule inteligent"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -999,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex sem diferenciação de maiúsculas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex insensibil la majuscule/minuscule"
           }
         },
         "ru" : {

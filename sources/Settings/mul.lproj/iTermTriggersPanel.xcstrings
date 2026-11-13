@@ -101,6 +101,12 @@
             "value" : "Usar strings interpoladas para os parâmetros"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folosiți șiruri interpolate pentru parametri"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar para o perfil"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați în profil"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Fechar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Închideți"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gatilhos"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Declanșatoare"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Expressão regular"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expresie regulată"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecione um trigger para ver ou editar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați un declanșator pentru a-l vizualiza sau edita"
           }
         },
         "ru" : {

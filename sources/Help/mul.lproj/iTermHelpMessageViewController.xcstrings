@@ -101,6 +101,12 @@
             "value": "Rótulo"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etichetă"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",

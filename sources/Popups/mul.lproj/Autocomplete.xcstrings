@@ -101,6 +101,12 @@
             "value" : "Autocompletar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completare automată"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",

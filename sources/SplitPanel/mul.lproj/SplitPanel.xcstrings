@@ -101,6 +101,12 @@
             "value" : "Dividir o painel atual XXXalmente"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divizați panoul curent XXX"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -251,6 +257,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divizați"
           }
         },
         "ru" : {

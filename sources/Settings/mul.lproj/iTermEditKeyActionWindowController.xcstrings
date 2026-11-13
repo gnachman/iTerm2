@@ -101,6 +101,12 @@
             "value" : "Mover por marca"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutare pe marcaj"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Definir atalho de teclado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setați scurtătura din tastatură"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Predefinição de cores:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preconfigurare de culori:"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Ação:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acțiune:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rótulo a mostrar na Touch Bar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etichetă de afișat în Touch Bar"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Mover por caractere"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutare pe caracter"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1188,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ex.: 0x7f"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ex.: 0x7f"
@@ -1301,6 +1349,12 @@
             "value" : "Perfil:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover por palavra"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutare pe cuvânt"
           }
         },
         "ru" : {
@@ -1601,6 +1661,12 @@
             "value" : "A mensagem de erro aparece aqui"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesajul de eroare apare aici"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1751,6 +1817,12 @@
             "value" : "Ação:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acțiune:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1896,6 +1968,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esc+"
@@ -2051,6 +2129,12 @@
             "value" : "Atalho de teclado:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scurtătură din tastatură:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2201,6 +2285,12 @@
             "value" : "Mover por linha"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutare pe linie"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2346,6 +2436,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

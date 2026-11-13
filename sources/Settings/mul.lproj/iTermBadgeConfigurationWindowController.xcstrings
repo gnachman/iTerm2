@@ -101,6 +101,12 @@
             "value" : "%"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -246,6 +252,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -401,6 +413,12 @@
             "value" : "Largura máxima:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lățime maximă:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Margem superior:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Margine sus:"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Margem direita:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Margine dreapta:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -846,6 +876,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%"
@@ -1001,6 +1037,12 @@
             "value" : "OK"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1188,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pt"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "pt"
@@ -1301,6 +1349,12 @@
             "value" : "Altura máxima:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înălțime maximă:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
           }
         },
         "ru" : {

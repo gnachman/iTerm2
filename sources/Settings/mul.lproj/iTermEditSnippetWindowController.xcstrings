@@ -101,6 +101,12 @@
             "value" : "Valor:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valoare:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar fragmento"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editare fragment"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Título:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titlu:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texto literal sem escape"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text literal fără escape"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Use / nos nomes das etiquetas para criar pastas no menu Editar > Fragmentos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folosiți / în numele etichetelor pentru a crea dosare în meniul Editare > Fragmente"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -851,6 +881,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -996,6 +1032,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1151,6 +1193,12 @@
             "value" : "Escape para compatibilidade retroativa"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape pentru compatibilitate retroactivă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1301,6 +1349,12 @@
             "value" : "Etiquetas:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etichete:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escape de barra invertida estilo C"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape cu bară oblică inversă în stil C"
           }
         },
         "ru" : {

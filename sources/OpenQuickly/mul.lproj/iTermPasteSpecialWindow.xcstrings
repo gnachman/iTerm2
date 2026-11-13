@@ -101,6 +101,12 @@
             "value" : "mm:ss"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx linhas, xxx bytes."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx linii, xxx byți."
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Colar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -551,6 +569,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -699,6 +723,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duração mínima:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durată minimă:"
           }
         },
         "ru" : {

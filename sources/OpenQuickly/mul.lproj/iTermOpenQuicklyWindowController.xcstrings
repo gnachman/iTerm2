@@ -101,6 +101,12 @@
             "value" : "Abrir rapidamente"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschidere rapidă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -251,6 +257,12 @@
             "value" : "Detalhe"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalii"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar sessões, perfis ou disposições"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căutați sesiuni, profiluri sau aranjamente"
           }
         },
         "ru" : {

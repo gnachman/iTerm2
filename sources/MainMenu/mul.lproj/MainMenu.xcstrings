@@ -101,6 +101,12 @@
             "value" : "Reduzir zoom"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Micșorați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar runtime do Python"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalați mediul de rulare Python"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Mover aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați fila"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar sessão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicați sesiunea"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Abrir localização…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți locația…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar altura"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Măriți înălțimea"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Mover aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați fila"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1151,6 +1193,12 @@
             "value" : "Relatório de foco"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportare focalizare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1296,6 +1344,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Normal"
@@ -1451,6 +1505,12 @@
             "value" : "Mover divisor para cima"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați separatorul în sus"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir por valor decodificado em Base 64"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înlocuiți cu valoarea decodificată din Base 64"
           }
         },
         "ru" : {
@@ -1751,6 +1817,12 @@
             "value" : "Sessão"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiune"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1899,6 +1971,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sessão para painel dividido"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați sesiunea într-un panou divizat"
           }
         },
         "ru" : {
@@ -2051,6 +2129,12 @@
             "value" : "Cofre de senhas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionar de parole"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 1"
           }
         },
         "ru" : {
@@ -2351,6 +2441,12 @@
             "value" : "Centralizado"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,6 +2595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir seleção"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înlocuiți selecția"
           }
         },
         "ru" : {
@@ -2651,6 +2753,12 @@
             "value" : "À esquerda da tela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partea stângă a ecranului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2799,6 +2907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cursor de aplicativo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cursor de aplicație"
           }
         },
         "ru" : {
@@ -2951,6 +3065,12 @@
             "value" : "Arranjos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aranjamente"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3099,6 +3219,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recolher linhas selecionadas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restrângeți liniile selectate"
           }
         },
         "ru" : {
@@ -3251,6 +3377,12 @@
             "value" : "Abrir diretórios recentes…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți directoarele recente…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3399,6 +3531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tela cheia"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pe tot ecranul"
           }
         },
         "ru" : {
@@ -3551,6 +3689,12 @@
             "value" : "Definir marca nomeada"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setați un marcaj denumit"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3699,6 +3843,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ações"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acțiuni"
           }
         },
         "ru" : {
@@ -3851,6 +4001,12 @@
             "value" : "Capturar quadro da GPU"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturați un cadru GPU"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3999,6 +4155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas e anotações"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcaje și adnotări"
           }
         },
         "ru" : {
@@ -4151,6 +4313,12 @@
             "value" : "Altura total no lado esquerdo da tela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înălțime completă, în stânga ecranului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4299,6 +4467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicați fereastra"
           }
         },
         "ru" : {
@@ -4451,6 +4625,12 @@
             "value" : "Autocompletar comandos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completare automată a comenzilor"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4599,6 +4779,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estilo da janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stilul ferestrei"
           }
         },
         "ru" : {
@@ -4751,6 +4937,12 @@
             "value" : "Disponibilidade do renderizador de GPU"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponibilitatea motorului de randare GPU"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4899,6 +5091,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră"
           }
         },
         "ru" : {
@@ -5051,6 +5249,12 @@
             "value" : "Minimizar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimizați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5201,6 +5405,12 @@
             "value" : "Janela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5346,6 +5556,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -5501,6 +5717,12 @@
             "value" : "iTerm2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5651,6 +5873,12 @@
             "value" : "Alterar perfil na disposição…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schimbați profilul în aranjament…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5796,6 +6024,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -5951,6 +6185,12 @@
             "value" : "Definir largura padrão"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setați lățimea implicită"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6096,6 +6336,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shell"
@@ -6251,6 +6497,12 @@
             "value" : "Ajuda"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajutor"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6399,6 +6651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajuda"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajutor"
           }
         },
         "ru" : {
@@ -6551,6 +6809,12 @@
             "value" : "Ajuda do iTerm2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajutor iTerm2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6699,6 +6963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurări…"
           }
         },
         "ru" : {
@@ -6851,6 +7121,12 @@
             "value" : "Serviços"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servicii"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6999,6 +7275,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Serviços"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servicii"
           }
         },
         "ru" : {
@@ -7151,6 +7433,12 @@
             "value" : "Ocultar o iTerm2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ascundeți iTerm2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7299,6 +7587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Encerrar o iTerm2"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Închideți aplicația iTerm2"
           }
         },
         "ru" : {
@@ -7451,6 +7745,12 @@
             "value" : "Ocultar outros"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ascundeți restul"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7599,6 +7899,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar tudo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați tot"
           }
         },
         "ru" : {
@@ -7751,6 +8057,12 @@
             "value" : "Recortar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tăiați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7899,6 +8211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editare"
           }
         },
         "ru" : {
@@ -8051,6 +8369,12 @@
             "value" : "Editar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8199,6 +8523,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar tudo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați tot"
           }
         },
         "ru" : {
@@ -8351,6 +8681,12 @@
             "value" : "Colar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8499,6 +8835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar buffer"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goliți bufferul"
           }
         },
         "ru" : {
@@ -8651,6 +8993,12 @@
             "value" : "Registro"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jurnal"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8799,6 +9147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registro"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jurnal"
           }
         },
         "ru" : {
@@ -8951,6 +9305,12 @@
             "value" : "Sobre o iTerm2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Despre iTerm2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9099,6 +9459,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfis"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiluri"
           }
         },
         "ru" : {
@@ -9251,6 +9617,12 @@
             "value" : "Perfis"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiluri"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9399,6 +9771,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fechar janela do Terminal"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Închideți fereastra Terminal"
           }
         },
         "ru" : {
@@ -9551,6 +9929,12 @@
             "value" : "Fechar todos os painéis na aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Închideți toate panourile din filă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9699,6 +10083,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configurar página…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurare pagină…"
           }
         },
         "ru" : {
@@ -9851,6 +10241,12 @@
             "value" : "Salvar texto selecionado…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvați textul selectat…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9999,6 +10395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar histórico de rolagem"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goliți istoricul de derulare"
           }
         },
         "ru" : {
@@ -10151,6 +10553,12 @@
             "value" : "Usar seleção para buscar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folosiți selecția pentru căutare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10299,6 +10707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți"
           }
         },
         "ru" : {
@@ -10451,6 +10865,12 @@
             "value" : "Buscar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10599,6 +11019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar próximo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți următorul"
           }
         },
         "ru" : {
@@ -10751,6 +11177,12 @@
             "value" : "Buscar anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți anteriorul"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10899,6 +11331,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir para a seleção"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salt la selecție"
           }
         },
         "ru" : {
@@ -11051,6 +11489,12 @@
             "value" : "Visualizar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vizualizare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11199,6 +11643,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visualizar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vizualizare"
           }
         },
         "ru" : {
@@ -11351,6 +11801,12 @@
             "value" : "Aumentar texto"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Măriți textul"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11499,6 +11955,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diminuir texto"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Micșorați textul"
           }
         },
         "ru" : {
@@ -11651,6 +12113,12 @@
             "value" : "Imprimir"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11799,6 +12267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ecran"
           }
         },
         "ru" : {
@@ -11951,6 +12425,12 @@
             "value" : "Imprimir"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12101,6 +12581,12 @@
             "value" : "Seleção"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecție"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12246,6 +12732,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buffer"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buffer"
@@ -12401,6 +12893,12 @@
             "value" : "Selecionar aba anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați fila anterioară"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12549,6 +13047,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar próxima aba"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați fila următoare"
           }
         },
         "ru" : {
@@ -12701,6 +13205,12 @@
             "value" : "Selecionar aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați fila"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12849,6 +13359,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar aba"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați fila"
           }
         },
         "ru" : {
@@ -13001,6 +13517,12 @@
             "value" : "Nova aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filă nouă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13149,6 +13671,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră nouă"
           }
         },
         "ru" : {
@@ -13301,6 +13829,12 @@
             "value" : "Pressione Option para nova janela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apăsați Opțiune pentru fereastră nouă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13449,6 +13983,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir em nova janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți într-o fereastră nouă"
           }
         },
         "ru" : {
@@ -13601,6 +14141,12 @@
             "value" : "Buscar atualizações…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căutați actualizări…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13746,6 +14292,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom"
@@ -13901,6 +14453,12 @@
             "value" : "Redefinir"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14049,6 +14607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ativar/desativar tela cheia"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comutați pe tot ecranul"
           }
         },
         "ru" : {
@@ -14201,6 +14765,12 @@
             "value" : "Ativar/desativar registro de depuração"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comutați jurnalul de depanare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14349,6 +14919,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir perfis…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți profilurile…"
           }
         },
         "ru" : {
@@ -14501,6 +15077,12 @@
             "value" : "Editar sessão…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editați sesiunea…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14649,6 +15231,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciar Instant Replay"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porniți reluarea instantanee"
           }
         },
         "ru" : {
@@ -14801,6 +15389,12 @@
             "value" : "Desfazer"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Infirmați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14949,6 +15543,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Refazer"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refaceți"
           }
         },
         "ru" : {
@@ -15101,6 +15701,12 @@
             "value" : "Abrir histórico de colagem…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți istoricul lipirii…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15249,6 +15855,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir autocompletar…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți completarea automată…"
           }
         },
         "ru" : {
@@ -15401,6 +16013,12 @@
             "value" : "Colar especial"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipire specială"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15549,6 +16167,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar especial"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipire specială"
           }
         },
         "ru" : {
@@ -15701,6 +16325,12 @@
             "value" : "Colar seleção"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți selecția"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15849,6 +16479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar lentamente"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți lent"
           }
         },
         "ru" : {
@@ -16001,6 +16637,12 @@
             "value" : "Entrada de teclado segura"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introducere securizată de la tastatură"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16149,6 +16791,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organizar janelas horizontalmente"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aranjați ferestrele orizontal"
           }
         },
         "ru" : {
@@ -16301,6 +16949,12 @@
             "value" : "Fechar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Închideți"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16449,6 +17103,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir verticalmente com o perfil atual"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divizați vertical cu profilul curent"
           }
         },
         "ru" : {
@@ -16601,6 +17261,12 @@
             "value" : "Dividir horizontalmente com o perfil atual"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divizați orizontal cu profilul curent"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16749,6 +17415,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salvar disposição de janelas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvați aranjamentul de ferestre"
           }
         },
         "ru" : {
@@ -16901,6 +17573,12 @@
             "value" : "Selecionar painel dividido"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați panoul divizat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17049,6 +17727,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar painel dividido"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați panoul divizat"
           }
         },
         "ru" : {
@@ -17201,6 +17885,12 @@
             "value" : "Selecionar painel acima"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați panoul de deasupra"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17349,6 +18039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar painel abaixo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați panoul de dedesubt"
           }
         },
         "ru" : {
@@ -17501,6 +18197,12 @@
             "value" : "Selecionar painel à esquerda"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați panoul din stânga"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17649,6 +18351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Selecionar painel à direita"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați panoul din dreapta"
           }
         },
         "ru" : {
@@ -17801,6 +18509,12 @@
             "value" : "Usar transparência"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folosiți transparența"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17949,6 +18663,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maximizar painel ativo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximizați panoul activ"
           }
         },
         "ru" : {
@@ -18101,6 +18821,12 @@
             "value" : "Item 3"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 3"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18249,6 +18975,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 2"
           }
         },
         "ru" : {
@@ -18401,6 +19133,12 @@
             "value" : "Item 1"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 1"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18549,6 +19287,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Definir marca"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setați marcajul"
           }
         },
         "ru" : {
@@ -18701,6 +19445,12 @@
             "value" : "Ir para a marca"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salt la marcaj"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18849,6 +19599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Próximo painel"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panoul următor"
           }
         },
         "ru" : {
@@ -19001,6 +19757,12 @@
             "value" : "Painel anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panoul anterior"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19149,6 +19911,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar abas em tela cheia"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați filele pe tot ecranul"
           }
         },
         "ru" : {
@@ -19301,6 +20069,12 @@
             "value" : "Transmitir entrada"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difuzare intrare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19449,6 +20223,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difuzare intrare"
           }
         },
         "ru" : {
@@ -19601,6 +20381,12 @@
             "value" : "Transmitir entrada para todos os painéis de todas as abas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difuzați intrarea în toate panourile din toate filele"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19749,6 +20535,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada para todos os painéis da aba atual"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difuzați intrarea în toate panourile din fila curentă"
           }
         },
         "ru" : {
@@ -19901,6 +20693,12 @@
             "value" : "Enviar entrada apenas para a sessão atual"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trimiteți intrarea doar în sesiunea curentă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20049,6 +20847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar disposição de janelas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurați aranjamentul de ferestre"
           }
         },
         "ru" : {
@@ -20201,6 +21005,12 @@
             "value" : "Restaurar disposição de janelas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurați aranjamentul de ferestre"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20349,6 +21159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Localizar cursor"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți cursorul"
           }
         },
         "ru" : {
@@ -20501,6 +21317,12 @@
             "value" : "Dividir horizontalmente…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divizați orizontal…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20649,6 +21471,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir verticalmente…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divizați vertical…"
           }
         },
         "ru" : {
@@ -20801,6 +21629,12 @@
             "value" : "Caixa de ferramentas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centură de instrumente"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20949,6 +21783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Caixa de ferramentas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centură de instrumente"
           }
         },
         "ru" : {
@@ -21101,6 +21941,12 @@
             "value" : "Mostrar Caixa de ferramentas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați centura de instrumente"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21249,6 +22095,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova aba com o perfil atual"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filă nouă cu profilul curent"
           }
         },
         "ru" : {
@@ -21401,6 +22253,12 @@
             "value" : "Executar coprocesso…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rulați coprocesul…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21549,6 +22407,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parar coprocesso"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opriți coprocesul"
           }
         },
         "ru" : {
@@ -21701,6 +22565,12 @@
             "value" : "Copiar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21849,6 +22719,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover aba para nova janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați fila într-o fereastră nouă"
           }
         },
         "ru" : {
@@ -22001,6 +22877,12 @@
             "value" : "Mover aba para a direita"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați fila la dreapta"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22151,6 +23033,12 @@
             "value" : "Mostrar indicador de padrão de fundo"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați indicatorul modelului de fundal"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22296,6 +23184,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -22451,6 +23345,12 @@
             "value" : "tmux"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22599,6 +23499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova aba do tmux"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filă tmux nouă"
           }
         },
         "ru" : {
@@ -22751,6 +23657,12 @@
             "value" : "Nova janela do tmux"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră tmux nouă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22899,6 +23811,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desanexar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detașați"
           }
         },
         "ru" : {
@@ -23051,6 +23969,12 @@
             "value" : "Painel"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablou de bord"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23199,6 +24123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamanho normal do texto"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimensiune normală a textului"
           }
         },
         "ru" : {
@@ -23351,6 +24281,12 @@
             "value" : "Restaurar tamanho do texto e da sessão"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurați dimensiunea textului și a sesiunii"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23499,6 +24435,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tornar o iTerm2 o terminal padrão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setați iTerm2 ca terminal implicit"
           }
         },
         "ru" : {
@@ -23651,6 +24593,12 @@
             "value" : "Tornar o Terminal o terminal padrão"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setați Terminal ca terminal implicit"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23799,6 +24747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ativar/desativar transmissão de entrada para a sessão atual"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comutați difuzarea intrării în sesiunea curentă"
           }
         },
         "ru" : {
@@ -23951,6 +24905,12 @@
             "value" : "Colar mais rápido"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți mai repede"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24099,6 +25059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar mais devagar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți mai încet"
           }
         },
         "ru" : {
@@ -24251,6 +25217,12 @@
             "value" : "Colar lentamente mais rápido"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți încet, mai repede"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24399,6 +25371,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar lentamente mais devagar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți încet, mai încet"
           }
         },
         "ru" : {
@@ -24551,6 +25529,12 @@
             "value" : "Redefinir conjunto de caracteres"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetați setul de caractere"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24701,6 +25685,12 @@
             "value" : "Arquivos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arhive"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24846,6 +25836,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -25001,6 +25997,12 @@
             "value" : "Anotar seleção"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adnotați selecția"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25149,6 +26151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ampliar seleção"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Măriți selecția"
           }
         },
         "ru" : {
@@ -25301,6 +26309,12 @@
             "value" : "Mover divisória para a esquerda"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați separatorul la stânga"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25449,6 +26463,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar tudo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivați tot"
           }
         },
         "ru" : {
@@ -25601,6 +26621,12 @@
             "value" : "Mover sessão"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați sesiunea"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25749,6 +26775,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar Compositor"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați editorul de comenzi"
           }
         },
         "ru" : {
@@ -25901,6 +26933,12 @@
             "value" : "Forçar desanexação"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detașați forțat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26049,6 +27087,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas nomeadas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcaje denumite"
           }
         },
         "ru" : {
@@ -26201,6 +27245,12 @@
             "value" : "Buscar…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26349,6 +27399,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportar gravação"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportați înregistrarea"
           }
         },
         "ru" : {
@@ -26501,6 +27557,12 @@
             "value" : "Sem barra de título"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fără bară de titlu"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26646,6 +27708,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -26801,6 +27869,12 @@
             "value" : "Mostrar recortes"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați decupajele"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26949,6 +28023,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes do dispositivo Companion"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurări pentru dispozitivul însoțitor"
           }
         },
         "ru" : {
@@ -27101,6 +28181,12 @@
             "value" : "Modo de cópia"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod copiere"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27249,6 +28335,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sessão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați sesiunea"
           }
         },
         "ru" : {
@@ -27401,6 +28493,12 @@
             "value" : "Aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27549,6 +28647,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar até o início da seleção"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goliți până la începutul selecției"
           }
         },
         "ru" : {
@@ -27701,6 +28805,12 @@
             "value" : "Copiar estatísticas de desempenho"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați statisticile de performanță"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27849,6 +28959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scripts"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripturi"
           }
         },
         "ru" : {
@@ -28001,6 +29117,12 @@
             "value" : "Salvar janela atual como disposição"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvați fereastra curentă ca aranjament"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28149,6 +29271,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gatilhos"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Declanșatoare"
           }
         },
         "ru" : {
@@ -28301,6 +29429,12 @@
             "value" : "Mostrar guia do cursor"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați ghidajul cursorului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28449,6 +29583,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear tamanho"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocați dimensiunea"
           }
         },
         "ru" : {
@@ -28601,6 +29741,12 @@
             "value" : "Registrar em arquivo"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înregistrați în fișier"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28751,6 +29897,12 @@
             "value" : "Exportar…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportați…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28896,6 +30048,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -29051,6 +30209,12 @@
             "value" : "Relatar texto associado"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportați textul asociat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29199,6 +30363,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novo script Python"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script Python nou"
           }
         },
         "ru" : {
@@ -29351,6 +30521,12 @@
             "value" : "Licenças de código aberto"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licențe open source"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29499,6 +30675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar Instant Replay"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goliți reluarea instantanee"
           }
         },
         "ru" : {
@@ -29651,6 +30833,12 @@
             "value" : "Diminuir altura"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Micșorați înălțimea"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29799,6 +30987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scripts"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripturi"
           }
         },
         "ru" : {
@@ -29951,6 +31145,12 @@
             "value" : "Revelar scripts no Finder"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați scripturile în Finder"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30099,6 +31299,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salvar conteúdo…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvați conținutul…"
           }
         },
         "ru" : {
@@ -30251,6 +31457,12 @@
             "value" : "Trazer tudo para a frente"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aduceți tot în față"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30399,6 +31611,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recolher tudo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restrângeți tot"
           }
         },
         "ru" : {
@@ -30551,6 +31769,12 @@
             "value" : "Arquivos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arhive"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30699,6 +31923,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar organização de janelas como abas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurați aranjamentul de ferestre ca file"
           }
         },
         "ru" : {
@@ -30851,6 +32081,12 @@
             "value" : "Adicionar anotação no cursor"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugați o adnotare la cursor"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30999,6 +32235,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar transparência para a janela ativa"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivați transparența pentru fereastra activă"
           }
         },
         "ru" : {
@@ -31151,6 +32393,12 @@
             "value" : "Delimitação de colagem"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipire delimitată"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31299,6 +32547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir por JSON formatado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înlocuiți cu JSON formatat"
           }
         },
         "ru" : {
@@ -31487,6 +32741,12 @@
             "value" : "Előtérbe hozás"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aduceți în față"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31635,6 +32895,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lebegő panel dokkolása"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andocați panoul flotant"
           }
         },
         "sk" : {
@@ -31787,6 +33053,12 @@
             "value" : "Lebegő panelek elrejtése"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ascundeți panourile flotante"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31935,6 +33207,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lebegő panel mozgatása lefelé"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați panoul flotant în jos"
           }
         },
         "sk" : {
@@ -32087,6 +33365,12 @@
             "value" : "Lebegő panel mozgatása balra"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați panoul flotant la stânga"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32235,6 +33519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lebegő panel mozgatása jobbra"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați panoul flotant la dreapta"
           }
         },
         "sk" : {
@@ -32387,6 +33677,12 @@
             "value" : "Lebegő panel mozgatása felfelé"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați panoul flotant în sus"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32535,6 +33831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Új lebegő panel az aktuális profillal"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panou flotant nou cu profilul curent"
           }
         },
         "sk" : {
@@ -32687,6 +33989,12 @@
             "value" : "Lebegő panelek"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panouri flotante"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32835,6 +34143,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lebegő panelek"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panouri flotante"
           }
         },
         "sk" : {
@@ -32987,6 +34301,12 @@
             "value" : "Hátraküldés"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trimiteți în spate"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33099,6 +34419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar dica do dia"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați sfatul zilei"
           }
         },
         "ru" : {
@@ -33251,6 +34577,12 @@
             "value" : "Próxima anotação"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adnotarea următoare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33399,6 +34731,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cabine de comando"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
           }
         },
         "ru" : {
@@ -33551,6 +34889,12 @@
             "value" : "Mover sessão para aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați sesiunea într-o filă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33699,6 +35043,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte inferior da tela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partea de jos a ecranului"
           }
         },
         "ru" : {
@@ -33851,6 +35201,12 @@
             "value" : "Perguntar se deve converter tabulações em espaços ao colar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Întrebați înainte de a converti tabulatorii în spații la lipire"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33999,6 +35355,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerte"
           }
         },
         "ru" : {
@@ -34151,6 +35513,12 @@
             "value" : "Copiar com sequências de controle"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați cu secvențe de control"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34299,6 +35667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redimensionar janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionați fereastra"
           }
         },
         "ru" : {
@@ -34451,6 +35825,12 @@
             "value" : "Redefinir"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34599,6 +35979,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar aba"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicați fila"
           }
         },
         "ru" : {
@@ -34751,6 +36137,12 @@
             "value" : "Recarregar página"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reîncărcați pagina"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34899,6 +36291,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sessão para janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați sesiunea într-o fereastră"
           }
         },
         "ru" : {
@@ -35051,6 +36449,12 @@
             "value" : "Relatar todas as teclas como códigos de escape"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportați toate tastele ca coduri escape"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35199,6 +36603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo de relatório de teclas bruto"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod de raportare a tastelor brute"
           }
         },
         "ru" : {
@@ -35351,6 +36761,12 @@
             "value" : "Importar…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importați…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35499,6 +36915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avisar antes de colar múltiplas linhas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avertizați înainte de lipirea mai multor linii"
           }
         },
         "ru" : {
@@ -35651,6 +37073,12 @@
             "value" : "Mostrar chat inline"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați chatul în linie"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35801,6 +37229,12 @@
             "value" : "Alternar entrada em buffer"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comutați intrarea în buffer"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35949,6 +37383,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O host remoto pode controlar o iTerm2"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gazda la distanță poate controla iTerm2"
           }
         },
         "ru" : {
@@ -36137,6 +37577,12 @@
             "value" : "Beállításvezérlők csonkolásának ellenőrzése"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verificați trunchierea controalelor din configurări"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36249,6 +37695,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gatilhos"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Declanșatoare"
           }
         },
         "ru" : {
@@ -36401,6 +37853,12 @@
             "value" : "Seleção respeita limites flexíveis"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecția respectă limitele flexibile"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36549,6 +38007,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sair do grupo de trabalho"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieșiți din grupul de lucru"
           }
         },
         "ru" : {
@@ -36701,6 +38165,12 @@
             "value" : "Selecionar saída do último comando"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați ieșirea ultimei comenzi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36849,6 +38319,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reiniciar sessão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reporniți sesiunea"
           }
         },
         "ru" : {
@@ -37001,6 +38477,12 @@
             "value" : "Abrir Python REPL"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți Python REPL"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37149,6 +38631,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte superior da tela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partea de sus a ecranului"
           }
         },
         "ru" : {
@@ -37301,6 +38789,12 @@
             "value" : "Mesclar todas as janelas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Îmbinați toate ferestrele"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37449,6 +38943,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fixar janela de hotkey"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixați fereastra cu tastă rapidă"
           }
         },
         "ru" : {
@@ -37601,6 +39101,12 @@
             "value" : "modifyOtherKeys modo 2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, mod 2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37749,6 +39255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir rapidamente"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschidere rapidă"
           }
         },
         "ru" : {
@@ -37901,6 +39413,12 @@
             "value" : "Gerenciar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38049,6 +39567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desambiguar Escape"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezambiguizați Escape"
           }
         },
         "ru" : {
@@ -38201,6 +39725,12 @@
             "value" : "Escolher resultado para abrir"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alegeți rezultatul de deschis"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38349,6 +39879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limitar aviso de colagem de múltiplas linhas ao prompt do shell"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limitați avertizarea la lipirea mai multor linii la promptul shellului"
           }
         },
         "ru" : {
@@ -38501,6 +40037,12 @@
             "value" : "Ativar gatilhos em apps interativos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activați declanșatoarele în aplicațiile interactive"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38649,6 +40191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 2"
           }
         },
         "ru" : {
@@ -38801,6 +40349,12 @@
             "value" : "Relatório de mouse"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportare maus"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38949,6 +40503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas e anotações"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcaje și adnotări"
           }
         },
         "ru" : {
@@ -39101,6 +40661,12 @@
             "value" : "Bloquear layout"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocați aspectul"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39249,6 +40815,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear localização"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocați locația"
           }
         },
         "ru" : {
@@ -39401,6 +40973,12 @@
             "value" : "Nova janela com o perfil atual"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră nouă cu profilul curent"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39549,6 +41127,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ocultar sessão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Îngropați sesiunea"
           }
         },
         "ru" : {
@@ -39701,6 +41285,12 @@
             "value" : "Mostrar caixa de alerta modal"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați o casetă de alertă modală"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39849,6 +41439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ativar tudo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activați tot"
           }
         },
         "ru" : {
@@ -40001,6 +41597,12 @@
             "value" : "Próxima marca"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcajul următor"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40149,6 +41751,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organizar janelas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aranjați ferestrele"
           }
         },
         "ru" : {
@@ -40301,6 +41909,12 @@
             "value" : "Buscar todas as correspondências de seleção inteligente"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți toate potrivirile de selecție inteligentă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40449,6 +42063,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reproduzir um som"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redați un sunet"
           }
         },
         "ru" : {
@@ -40601,6 +42221,12 @@
             "value" : "Abrir histórico de comandos…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți istoricul comenzilor…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40749,6 +42375,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar com estilos"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiați cu stiluri"
           }
         },
         "ru" : {
@@ -40901,6 +42533,12 @@
             "value" : "Tela alternativa"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ecran alternativ"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41051,6 +42689,12 @@
             "value" : "Direita da tela em altura total"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înălțime completă, în dreapta ecranului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41196,6 +42840,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -41351,6 +43001,12 @@
             "value" : "Modo de relatório de teclas padrão"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod standard de raportare a tastelor"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41499,6 +43155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redimensionar painel"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionați panoul divizat"
           }
         },
         "ru" : {
@@ -41651,6 +43313,12 @@
             "value" : "Alertas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerte"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41799,6 +43467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notificar ao mudar de status"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificați la schimbarea stării"
           }
         },
         "ru" : {
@@ -41951,6 +43625,12 @@
             "value" : "Selecionar próximo grupo de abas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați grupul de file următor"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42099,6 +43779,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desinstalar integração do Claude Code"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezinstalați integrarea cu Claude Code"
           }
         },
         "ru" : {
@@ -42251,6 +43937,12 @@
             "value" : "Editar título da aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editați titlul filei"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42399,6 +44091,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arranjos"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aranjamente"
           }
         },
         "ru" : {
@@ -42551,6 +44249,12 @@
             "value" : "Par anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membrul anterior"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42699,6 +44403,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relatar teclas alternativas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportați tastele alternative"
           }
         },
         "ru" : {
@@ -42851,6 +44561,12 @@
             "value" : "Dividir painel"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panou divizat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42999,6 +44715,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estado do terminal"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starea terminalului"
           }
         },
         "ru" : {
@@ -43151,6 +44873,12 @@
             "value" : "Desfazer fechamento"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Infirmați închiderea"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43299,6 +45027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chats de IA"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaturi AI"
           }
         },
         "ru" : {
@@ -43451,6 +45185,12 @@
             "value" : "Avançar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înainte"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43599,6 +45339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear largura do painel"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocați lățimea panoului divizat"
           }
         },
         "ru" : {
@@ -43751,6 +45497,12 @@
             "value" : "Grupos de trabalho"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupuri de lucru"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43899,6 +45651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salvar arquivo da sessão atual…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvați o arhivă a sesiunii curente…"
           }
         },
         "ru" : {
@@ -44051,6 +45809,12 @@
             "value" : "Substituir seleção"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înlocuiți selecția"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44196,6 +45960,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -44351,6 +46121,12 @@
             "value" : "Mostrar anotações"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați adnotările"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44496,6 +46272,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -44651,6 +46433,12 @@
             "value" : "Gerenciar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44799,6 +46587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 3"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 3"
           }
         },
         "ru" : {
@@ -44951,6 +46745,12 @@
             "value" : "Selecionar grupo de abas anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați grupul de file anterior"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45099,6 +46899,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessões ocultas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiuni îngropate"
           }
         },
         "ru" : {
@@ -45251,6 +47057,12 @@
             "value" : "Anotação anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adnotarea anterioară"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45399,6 +47211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertar sobre marcas em sessões fora da tela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertați la marcajele din sesiunile din afara ecranului"
           }
         },
         "ru" : {
@@ -45587,6 +47405,12 @@
             "value" : "Középen, címsor nélkül"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrat, fără bară de titlu"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45699,6 +47523,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar integração do Claude Code"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalați integrarea cu Claude Code"
           }
         },
         "ru" : {
@@ -45851,6 +47681,12 @@
             "value" : "Enviar notificação"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postați o notificare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45999,6 +47835,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessão atual é a origem da transmissão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiunea curentă este sursa difuzării"
           }
         },
         "ru" : {
@@ -46151,6 +47993,12 @@
             "value" : "Alertar na próxima marca"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertați la următorul marcaj"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46299,6 +48147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar largura"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Măriți lățimea"
           }
         },
         "ru" : {
@@ -46451,6 +48305,12 @@
             "value" : "Modo CSI u"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod CSI u"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46599,6 +48459,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor para baixo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați separatorul în jos"
           }
         },
         "ru" : {
@@ -46751,6 +48617,12 @@
             "value" : "Redimensionar painel"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionați panoul divizat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46899,6 +48771,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reinstalar integração do Claude Code"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reinstalați integrarea cu Claude Code"
           }
         },
         "ru" : {
@@ -47051,6 +48929,12 @@
             "value" : "Instalar Shell Integration"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalați integrarea shell"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47199,6 +49083,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrați"
           }
         },
         "ru" : {
@@ -47351,6 +49241,12 @@
             "value" : "Editar gatilhos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editați declanșatoarele"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47499,6 +49395,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar painel"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puneți panoul în pauză"
           }
         },
         "ru" : {
@@ -47651,6 +49553,12 @@
             "value" : "Salvar logs de depuração retrospectivos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salvați jurnale de depanare retrospective"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47799,6 +49707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fragmentos"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmente"
           }
         },
         "ru" : {
@@ -47951,6 +49865,12 @@
             "value" : "Selecionar comando atual"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați comanda curentă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48099,6 +50019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fazer captura de tela…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faceți o captură de ecran…"
           }
         },
         "ru" : {
@@ -48251,6 +50177,12 @@
             "value" : "Renderizar seleção nativamente"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Randați selecția nativ"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48399,6 +50331,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar nota da sessão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați nota sesiunii"
           }
         },
         "ru" : {
@@ -48551,6 +50489,12 @@
             "value" : "Fragmentos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fragmente"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48699,6 +50643,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar título da janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editați titlul ferestrei"
           }
         },
         "ru" : {
@@ -48851,6 +50801,12 @@
             "value" : "Alertas suprimidos…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerte suprimate…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48999,6 +50955,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marca anterior"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcajul anterior"
           }
         },
         "ru" : {
@@ -49151,6 +51113,12 @@
             "value" : "Instalar runtime Python já transferido"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalați mediul de rulare Python deja descărcat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49299,6 +51267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor para a direita"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați separatorul la dreapta"
           }
         },
         "ru" : {
@@ -49451,6 +51425,12 @@
             "value" : "Aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49599,6 +51579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transferir arquivos…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descărcați fișiere…"
           }
         },
         "ru" : {
@@ -49751,6 +51737,12 @@
             "value" : "Mover aba para a esquerda"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutați fila la stânga"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49899,6 +51891,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar aba a novo grupo…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugați fila la un grup nou…"
           }
         },
         "ru" : {
@@ -50051,6 +52049,12 @@
             "value" : "Mostrar barra de ferramentas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați bara de instrumente"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50199,6 +52203,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover aba do grupo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminați fila din grup"
           }
         },
         "ru" : {
@@ -50351,6 +52361,12 @@
             "value" : "Auto Compositor"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor automat de comenzi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50499,6 +52515,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir chat de IA…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți un chat AI…"
           }
         },
         "ru" : {
@@ -50651,6 +52673,12 @@
             "value" : "Mostrar marcações de tempo"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați marcajele temporale"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50799,6 +52827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colagem avançada…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipire avansată…"
           }
         },
         "ru" : {
@@ -50951,6 +52985,12 @@
             "value" : "Organizar janelas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aranjați ferestrele"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51099,6 +53139,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nível de emulação"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nivel de emulare"
           }
         },
         "ru" : {
@@ -51251,6 +53297,12 @@
             "value" : "Selecionar correspondências"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați potrivirile"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51399,6 +53451,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir seleção"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți selecția"
           }
         },
         "ru" : {
@@ -51551,6 +53609,12 @@
             "value" : "Histórico"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Istoric"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51699,6 +53763,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar arquivo…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurați arhiva…"
           }
         },
         "ru" : {
@@ -51851,6 +53921,12 @@
             "value" : "Estilo da janela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stilul ferestrei"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51999,6 +54075,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte inferior da tela em largura total"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lățime completă, în partea de jos a ecranului"
           }
         },
         "ru" : {
@@ -52151,6 +54233,12 @@
             "value" : "Controles literais"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controale literale"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52299,6 +54387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limpar busca"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goliți căutarea"
           }
         },
         "ru" : {
@@ -52451,6 +54545,12 @@
             "value" : "Explicar saída com IA"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explicați ieșirea cu AI"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52599,6 +54699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nível de emulação"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nivel de emulare"
           }
         },
         "ru" : {
@@ -52751,6 +54857,12 @@
             "value" : "Buscar URLs"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți URL-uri"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52899,6 +55011,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substituir por JSON formatado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înlocuiți cu JSON formatat"
           }
         },
         "ru" : {
@@ -53051,6 +55169,12 @@
             "value" : "Ações"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acțiuni"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53199,6 +55323,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mudanças de tamanho atualizam o perfil"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modificările de dimensiune actualizează profilul"
           }
         },
         "ru" : {
@@ -53351,6 +55481,12 @@
             "value" : "Remover perfis recentes do menu do Dock"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminați profilurile recente din meniul Dock"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53499,6 +55635,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessões ocultas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiuni îngropate"
           }
         },
         "ru" : {
@@ -53651,6 +55793,12 @@
             "value" : "Gerenciar dependências…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionați dependențele…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53799,6 +55947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Voltar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înapoi"
           }
         },
         "ru" : {
@@ -53951,6 +56105,12 @@
             "value" : "Grupos de trabalho"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupuri de lucru"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54099,6 +56259,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Carregar organização de arquivo…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Încărcați aranjamentul din fișier…"
           }
         },
         "ru" : {
@@ -54251,6 +56417,12 @@
             "value" : "Atalhos do modo de cópia"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scurtături pentru modul copiere"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54399,6 +56571,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir painel"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panou divizat"
           }
         },
         "ru" : {
@@ -54551,6 +56729,12 @@
             "value" : "Redimensionar janela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionați fereastra"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54699,6 +56883,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relatar todos os tipos de eventos"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportați toate tipurile de evenimente"
           }
         },
         "ru" : {
@@ -54851,6 +57041,12 @@
             "value" : "Adicionar gatilho…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugați un declanșator…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -54996,6 +57192,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -55151,6 +57353,12 @@
             "value" : "modifyOtherKeys modo 1"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys, mod 1"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55299,6 +57507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diminuir largura"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Micșorați lățimea"
           }
         },
         "ru" : {
@@ -55451,6 +57665,12 @@
             "value" : "À direita da tela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partea dreaptă a ecranului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55599,6 +57819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Colar arquivo codificado em Base64"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lipiți fișierul codificat Base64"
           }
         },
         "ru" : {
@@ -55751,6 +57977,12 @@
             "value" : "Limpar até a última marca"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goliți până la ultimul marcaj"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55899,6 +58131,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Distribuir painéis divididos uniformemente"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aranjați uniform panourile divizate"
           }
         },
         "ru" : {
@@ -56051,6 +58289,12 @@
             "value" : "Importar gravação"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importați înregistrarea"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56199,6 +58443,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclado numérico do aplicativo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tastatură numerică de aplicație"
           }
         },
         "ru" : {
@@ -56351,6 +58601,12 @@
             "value" : "Parte superior da tela em largura total"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lățime completă, în partea de sus a ecranului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56496,6 +58752,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -56651,6 +58913,12 @@
             "value" : "VT200"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -56799,6 +59067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desconectar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deconectați"
           }
         },
         "ru" : {
@@ -56951,6 +59225,12 @@
             "value" : "Avisar antes de colar uma linha que termina com nova linha no prompt do shell"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avertizați înainte de lipirea unei linii terminate cu linie nouă la promptul shellului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57099,6 +59379,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar globalmente…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Găsiți global…"
           }
         },
         "ru" : {
@@ -57251,6 +59537,12 @@
             "value" : "Maximizada"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximizată"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57399,6 +59691,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Console"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consolă"
           }
         },
         "ru" : {
@@ -57551,6 +59849,12 @@
             "value" : "Nova aba ao lado da aba atual"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filă nouă lângă fila curentă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57699,6 +60003,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar organização de janelas como abas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurați aranjamentul de ferestre ca file"
           }
         },
         "ru" : {
@@ -57851,6 +60161,12 @@
             "value" : "Substituir por valor codificado em Base64"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Înlocuiți cu valoarea codificată în Base 64"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -57999,6 +60315,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ativar inteligência artificial"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activați inteligența artificială"
           }
         },
         "ru" : {
@@ -58151,6 +60473,12 @@
             "value" : "Sessão"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiune"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58301,6 +60629,12 @@
             "value" : "Marcas nomeadas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marcaje denumite"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -58449,6 +60783,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Próximo par"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membrul următor"
           }
         },
         "ru" : {

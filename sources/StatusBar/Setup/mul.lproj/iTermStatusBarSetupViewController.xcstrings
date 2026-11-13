@@ -101,6 +101,12 @@
             "value" : "Arraste um componente do menu para Componentes ativos a fim de adicioná-lo à sua barra de status."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trageți o componentă din meniu în Componente active pentru a o adăuga în bara de stare."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -251,6 +257,12 @@
             "value" : "Preferir empacotamento compacto ao posicionamento estável"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferați împachetarea compactă în locul poziționării stabile"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +408,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -551,6 +569,12 @@
             "value" : "Componentes ativos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Componente active"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -699,6 +723,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivat"
           }
         },
         "ru" : {
@@ -851,6 +881,12 @@
             "value" : "Remover componentes com valores vazios"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminați componentele cu valori goale"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -999,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desenhar separador entre a barra de status e o terminal"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenați un separator între bara de stare și terminal"
           }
         },
         "ru" : {
@@ -1151,6 +1193,12 @@
             "value" : "Automático"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Menu de componentes da barra de status"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meniul componentelor barei de stare"
           }
         },
         "ru" : {
@@ -1451,6 +1505,12 @@
             "value" : "Avançado…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avansat…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O algoritmo de empacotamento compacto permite que mais componentes da barra de status fiquem visíveis ao mesmo tempo, mas eles tendem a se mover mais."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmul de împachetare compactă permite afișarea simultană a mai multor componente ale barei de stare, dar acestea tind să se mute mai des."
           }
         },
         "ru" : {
@@ -1751,6 +1817,12 @@
             "value" : "🌈 Arco-íris automático:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Curcubeu automat:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1899,6 +1971,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O nome da fonte aparece aqui"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numele fontului apare aici"
           }
         },
         "ru" : {
@@ -2051,6 +2129,12 @@
             "value" : "Cores escuras"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culori întunecate"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alterar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schimbați"
           }
         },
         "ru" : {
@@ -2351,6 +2441,12 @@
             "value" : "Cor de texto padrão:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culoarea implicită a textului:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,6 +2595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configurar componente"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurați componenta"
           }
         },
         "ru" : {
@@ -2651,6 +2753,12 @@
             "value" : "O algoritmo de empacotamento compacto permite que mais componentes da barra de status fiquem visíveis ao mesmo tempo, mas eles tendem a se mover mais."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritmul de împachetare compactă permite afișarea simultană a mai multor componente ale barei de stare, dar acestea tind să se mute mai des."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2799,6 +2907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cor do separador:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culoarea separatorului:"
           }
         },
         "ru" : {
@@ -2951,6 +3065,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3099,6 +3219,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cores claras"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culori luminoase"
           }
         },
         "ru" : {
@@ -3251,6 +3377,12 @@
             "value" : "Fonte:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3401,6 +3533,12 @@
             "value" : "Cor do plano de fundo:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Culoare de fundal:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3546,6 +3684,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3699,6 +3843,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desenha uma linha fina entre a barra de status e o conteúdo do terminal."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenează o linie subțire între bara de stare și conținutul terminalului."
           }
         },
         "ru" : {

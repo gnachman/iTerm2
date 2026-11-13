@@ -101,6 +101,12 @@
             "value" : "Painel do tmux"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tablou de bord tmux"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessão"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiune"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Anexar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atașați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar janelas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căutați ferestre"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Janela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir em janelas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți în ferestre"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Ocultar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ascundeți"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir em janelas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți în ferestre"
           }
         },
         "ru" : {
@@ -1301,6 +1349,12 @@
             "value" : "Abrir em abas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți în file"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desanexar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detașați"
           }
         },
         "ru" : {
@@ -1601,6 +1661,12 @@
             "value" : "Abrir painel ao anexar se houver janelas ocultas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți tabloul de bord la atașare dacă există ferestre ascunse"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1749,6 +1815,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não abrir janelas ao anexar se houver pelo menos esta quantidade de janelas:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu deschideți ferestre la atașare dacă există cel puțin atâtea ferestre:"
           }
         },
         "ru" : {

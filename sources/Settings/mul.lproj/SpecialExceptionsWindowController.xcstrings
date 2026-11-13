@@ -101,6 +101,12 @@
             "value" : "Instalar pacote Nerd Font…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalați pachetul Nerd Font…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -251,6 +257,12 @@
             "value" : "Editar exceção especial"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editare excepție specială"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +408,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -551,6 +569,12 @@
             "value" : "As exceções especiais substituem fontes para intervalos ou sistemas de escrita Unicode específicos."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excepțiile speciale înlocuiesc fonturile pentru anumite intervale Unicode sau scrieri."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -696,6 +720,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -851,6 +881,12 @@
             "value" : "OK"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -999,6 +1035,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Da fonte:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Din fontul:"
           }
         },
         "ru" : {
@@ -1151,6 +1193,12 @@
             "value" : "Para caracteres começando em"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentru caracterele începând de la"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar predefinição…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugați preconfigurare…"
           }
         },
         "ru" : {
@@ -1451,6 +1505,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "até"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "până la"
           }
         },
         "ru" : {
@@ -1751,6 +1817,12 @@
             "value" : "Gerenciar exceções especiais"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionare excepții speciale"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1896,6 +1968,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -2051,6 +2129,12 @@
             "value" : "Usar pontos de código"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folosiți puncte de cod"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2201,6 +2285,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2346,6 +2436,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

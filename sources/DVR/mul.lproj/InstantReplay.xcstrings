@@ -101,6 +101,12 @@
             "value": "Exportar…"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportați…"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -249,6 +255,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Agora"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acum"
           }
         },
         "ru": {
@@ -401,6 +413,12 @@
             "value": "Controle do Instant Replay"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control pentru reluarea instantanee"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -549,6 +567,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancelar"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anulați"
           }
         },
         "ru": {
@@ -701,6 +725,12 @@
             "value": "Visualização ao vivo"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vizualizare live"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -849,6 +879,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hora"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oră"
           }
         },
         "ru": {

@@ -101,6 +101,12 @@
             "value": "Preto e branco"
           }
         },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alb-negru"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",

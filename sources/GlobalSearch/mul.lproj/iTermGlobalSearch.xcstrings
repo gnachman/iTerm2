@@ -101,6 +101,12 @@
             "value" : "CÉLULA DE CABEÇALHO"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CELULĂ ANTET"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar globalmente"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căutare globală"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Substring - distinção de maiúsculas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subșir: sensibil la majuscule/minuscule"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substring - automático"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subșir: automat"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Regex - sem distinção de maiúsculas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expresie regulată: insensibilă la majuscule/minuscule"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căutare"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Regex - distinção de maiúsculas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expresie regulată: sensibilă la majuscule/minuscule"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1191,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Substring - sem distinção de maiúsculas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subșir: insensibil la majuscule/minuscule"
           }
         },
         "ru" : {

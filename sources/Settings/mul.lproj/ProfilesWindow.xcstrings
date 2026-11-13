@@ -101,6 +101,12 @@
             "value" : "Perfis"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiluri"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar perfis…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editați profilurile…"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Nova aba"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filă nouă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nova janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră nouă"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Fechar esta janela após abrir um perfil."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Închideți această fereastră după deschiderea unui profil."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Novas abas em nova janela"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File într-o fereastră nouă"
           }
         },
         "ru" : {
@@ -1085,6 +1121,12 @@
             "value" : "Tags >"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etich. ›"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1269,6 +1311,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Új lebegő panel"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panou flotant nou"
           }
         },
         "sk" : {

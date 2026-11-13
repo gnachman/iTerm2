@@ -101,6 +101,12 @@
             "value" : "Use o iTerm2 mesmo longe do seu Mac. Você pode controlá-lo via chat de IA, ver o conteúdo das sessões e receber notificações push. A criptografia de ponta a ponta mantém seus dados seguros. <a href=\"iterm2whatsnew:companion\">Experimente agora!</a>"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folosiți iTerm2 chiar și când sunteți departe de Mac. Îl puteți controla prin chatul AI, puteți vizualiza conținutul sesiunilor și puteți primi notificări push. Criptarea integrală păstrează datele în siguranță. <a href=\"iterm2whatsnew:companion\">Încercați acum!</a>"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -246,6 +252,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -401,6 +413,12 @@
             "value" : "Um novo modo de chat de IA, Orchestration, deixa a IA no comando por você. Ele pode criar janelas, esperar a conclusão de tarefas (mesmo em apps interativos) e o novo verificador de segurança automático livra você de ter que responder a quase todas as solicitações de permissão. <a href=\"iterm2whatsnew:orchestration\">Experimente agora!</a>"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un nou mod de chat AI, Orchestrarea, lasă AI-ul să conducă totul în locul dvs. Poate crea ferestre, poate aștepta finalizarea sarcinilor (chiar și în aplicații interactive), iar noul verificator automat de securitate vă scutește de a răspunde la aproape toate solicitările de permisiune. <a href=\"iterm2whatsnew:orchestration\">Încercați acum!</a>"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -546,6 +564,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -701,6 +725,12 @@
             "value" : "O novo recurso Capturas de tela simplifica a criação de um PNG do conteúdo do seu terminal. Ele oferece suporte a ocultações e destaques. Use <a href=\"iterm2whatsnew:screenshot\">Sessão > Criar captura de tela</a> para ativá-lo."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noua funcție Capturi de ecran simplifică crearea unui PNG cu conținutul terminalului. Acceptă cenzurări și evidențieri. Folosiți <a href=\"iterm2whatsnew:screenshot\">Sesiune > Faceți o captură de ecran…</a> pentru a o activa."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -851,6 +881,12 @@
             "value" : "Novidades da versão 3.7"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noutăți din versiunea 3.7"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -996,6 +1032,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1151,6 +1193,12 @@
             "value" : "●"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Integração com o Claude Code"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrarea Claude Code"
           }
         },
         "ru" : {
@@ -1451,6 +1505,12 @@
             "value" : "Para ajudar a gerenciar um grande número de abas, agora você pode combinar abas em grupos recolhíveis. A barra de abas agora rola em vez de mostrar um menu de excedentes."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentru a gestiona mai ușor un număr mare de file, acum le puteți combina în grupuri restrângibile. De asemenea, bara filelor se derulează acum, în loc să afișeze un meniu de depășire."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1596,6 +1656,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1751,6 +1817,12 @@
             "value" : "A integração com o Claude Code organiza várias sessões relacionadas (como revisão de código e leitura de diffs) em uma interface personalizável. Ela também mostra o status do Claude para que você encontre facilmente as instâncias que aguardam sua atenção. <a href=\"iterm2whatsnew:claudecode\">Experimente agora!</a>"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integrarea Claude Code organizează mai multe sesiuni înrudite (cum ar fi revizuirea de cod și citirea diff-urilor) într-o interfață personalizabilă. Totodată afișează starea Claude, astfel încât să găsiți ușor instanțele care așteaptă atenția dvs. <a href=\"iterm2whatsnew:claudecode\">Încercați acum!</a>"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1901,6 +1973,12 @@
             "value" : "App complementar para iPhone"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicația însoțitoare pentru iPhone"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2046,6 +2124,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -2201,6 +2285,12 @@
             "value" : "Orchestration"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orchestrare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2349,6 +2439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Grupos de abas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupuri de file"
           }
         },
         "ru" : {
@@ -2501,6 +2597,12 @@
             "value" : "Capturas de tela"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturi de ecran"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2646,6 +2748,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

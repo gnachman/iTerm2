@@ -101,6 +101,12 @@
             "value" : "Predefinições…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preconfigurări…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar item da Touch Bar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugați articol în Touch Bar"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Ação"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acțiune"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mitigações da Touch Bar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atenuări pentru Touch Bar"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Indicador visual da tecla esc"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indicator vizual pentru tasta esc"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Combinação de teclas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Combinație de taste"
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Feedback tátil ao pressionar esc"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback haptic la apăsarea tastei esc"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1188,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Som de clique para a tecla esc"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sunet de clic pentru tasta esc"
           }
         },
         "ru" : {

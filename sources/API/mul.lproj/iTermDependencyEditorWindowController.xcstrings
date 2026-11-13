@@ -101,6 +101,12 @@
             "value" : "Item 2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este script precisa ser atualizado para um “ambiente completo” para adicionar dependências. Isso cria uma cópia do runtime do Python, mas não usará espaço em disco adicional."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acest script trebuie actualizat la un „mediu complet” pentru a adăuga dependențe. Astfel se creează o copie a mediului de rulare Python, dar nu se va folosi spațiu suplimentar pe disc."
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Versão do Python:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versiune Python:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminați"
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Item 3"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 3"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -851,6 +881,12 @@
             "value" : "Atualizar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -996,6 +1032,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script:"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Script:"
@@ -1151,6 +1193,12 @@
             "value" : "Editor de dependências de scripts"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor de dependențe ale scriptului"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 1"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 1"
           }
         },
         "ru" : {
@@ -1451,6 +1505,12 @@
             "value" : "Nome do pacote"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nume pachet"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Item 2"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 2"
           }
         },
         "ru" : {
@@ -1751,6 +1817,12 @@
             "value" : "Item 3"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 3"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1899,6 +1971,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verificar atualização"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căutați actualizări"
           }
         },
         "ru" : {
@@ -2051,6 +2129,12 @@
             "value" : "Versão instalada"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versiune instalată"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2201,6 +2285,12 @@
             "value" : "Item 1"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articol 1"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2346,6 +2436,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -2499,6 +2595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adăugați"
           }
         },
         "ru" : {

@@ -101,6 +101,12 @@
             "value" : "⌥ Option"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Opțiune"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fixar janela de hotkey (permanece aberta ao perder o foco do teclado)"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixați fereastra cu tastă rapidă (rămâne deschisă la pierderea focalizării tastaturii)"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Hotkey:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tastă rapidă:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nota: a janela só é reaberta se tiver sido fechada porque outro app se tornou ativo."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notă: fereastra se redeschide numai dacă a fost închisă deoarece o altă aplicație a devenit activă."
           }
         },
         "ru" : {
@@ -701,6 +725,12 @@
             "value" : "Hotkeys adicionais"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taste rapide suplimentare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -849,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ao pressionar a hotkey vinculada a este perfil, uma janela dedicada será exibida ou ocultada. Cada perfil com uma hotkey controla sua própria janela de hotkey."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Când apăsați tasta rapidă asociată acestui profil, o fereastră dedicată se va afișa sau se va ascunde. Fiecare profil cu o tastă rapidă controlează propria fereastră cu tastă rapidă."
           }
         },
         "ru" : {
@@ -1001,6 +1037,12 @@
             "value" : "Não fazer nada de especial"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu faceți nimic special"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1146,6 +1188,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1301,6 +1349,12 @@
             "value" : "Mostrar esta janela de hotkey"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați această fereastră cu tastă rapidă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1449,6 +1503,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes da janela de hotkey"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurări pentru fereastra cu tastă rapidă"
           }
         },
         "ru" : {
@@ -1601,6 +1661,12 @@
             "value" : "⌘ Command"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Comandă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1751,6 +1817,12 @@
             "value" : "⚠️ Outro perfil usa este atalho"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Alt profil folosește această scurtătură"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1896,6 +1968,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -2051,6 +2129,12 @@
             "value" : "Tecla de toque duplo:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tastă cu dublă atingere:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2199,6 +2283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reabrir automaticamente ao reativar o app"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redeschideți automat la reactivarea aplicației"
           }
         },
         "ru" : {
@@ -2351,6 +2441,12 @@
             "value" : "⚠️ Outro perfil usa este toque duplo"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Alt profil folosește această dublă atingere"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,6 +2595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar esta janela de hotkey se nenhuma outra janela estiver aberta"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afișați această fereastră cu tastă rapidă dacă nu este deschisă nicio altă fereastră"
           }
         },
         "ru" : {
@@ -2651,6 +2753,12 @@
             "value" : "Janelas flutuantes se sobrepõem a outras janelas e ao Dock, e às janelas em tela cheia de outros apps (se o espaço da janela de hotkey estiver definido como Todos os espaços)."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ferestrele flotante se suprapun peste alte ferestre, peste Dock și peste ferestrele pe tot ecranul ale altor aplicații (dacă spațiul ferestrei cu tastă rapidă este setat la Toate spațiile)."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2799,6 +2907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
           }
         },
         "ru" : {
@@ -2951,6 +3065,12 @@
             "value" : "Ao clicar no ícone do Dock:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La clic pe pictograma din Dock:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3101,6 +3221,12 @@
             "value" : "Animar exibição e ocultação"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animați afișarea și ascunderea"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3246,6 +3372,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3401,6 +3533,12 @@
             "value" : "OK"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3551,6 +3689,12 @@
             "value" : "Janela flutuante"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fereastră flotantă"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3696,6 +3840,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -3849,6 +3999,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hotkeys adicionais…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taste rapide suplimentare…"
           }
         },
         "ru" : {

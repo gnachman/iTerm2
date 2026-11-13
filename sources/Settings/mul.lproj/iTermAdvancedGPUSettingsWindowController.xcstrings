@@ -101,6 +101,12 @@
             "value" : "OK"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desativar renderizador de GPU no modo de baixo consumo"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivați motorul de randare GPU în modul de consum redus"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Preferir GPU integrada à dedicada"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferați GPU-ul integrat în locul celui dedicat"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -551,6 +569,12 @@
             "value" : "Desativar renderizador de GPU quando desconectado da energia"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dezactivați motorul de randare GPU când nu este conectat la alimentare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -699,6 +723,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
           }
         },
         "ru" : {

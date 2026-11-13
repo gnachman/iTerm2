@@ -114,6 +114,12 @@
             "value" : "iTerm2"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -262,6 +268,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um aplicativo no iTerm2 quer usar o AppleScript."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească AppleScript."
           }
         },
         "ru" : {
@@ -414,6 +426,12 @@
             "value" : "Um aplicativo no iTerm2 quer usar o Bluetooth."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească Bluetooth."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -562,6 +580,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um aplicativo no iTerm2 quer usar os dados do Calendário."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească datele din Calendar."
           }
         },
         "ru" : {
@@ -714,6 +738,12 @@
             "value" : "Um aplicativo no iTerm2 quer usar a câmera."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească camera."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -864,6 +894,12 @@
             "value" : "Um aplicativo no iTerm2 quer usar seus contatos."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească contactele dvs."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1009,6 +1045,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -1164,6 +1206,12 @@
             "value" : "Um aplicativo no iTerm2 quer acessar a rede local."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să acceseze rețeaua locală."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1312,6 +1360,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um aplicativo no iTerm2 quer usar suas informações de localização, mesmo em segundo plano."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească informațiile dvs. de localizare, chiar și în fundal."
           }
         },
         "ru" : {
@@ -1464,6 +1518,12 @@
             "value" : "Um aplicativo no iTerm2 quer usar suas informações de localização."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească informațiile dvs. de localizare."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1612,6 +1672,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um aplicativo no iTerm2 quer usar suas informações de localização enquanto estiver ativo."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească informațiile dvs. de localizare cât timp este activă."
           }
         },
         "ru" : {
@@ -1764,6 +1830,12 @@
             "value" : "Um aplicativo no iTerm2 quer usar seu microfone."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească microfonul dvs."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1912,6 +1984,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Um aplicativo no iTerm2 quer usar a fototeca."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească biblioteca de fotografii."
           }
         },
         "ru" : {
@@ -2064,6 +2142,12 @@
             "value" : "Um aplicativo no iTerm2 quer usar seus lembretes."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească mementourile dvs."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2214,6 +2298,12 @@
             "value" : "Um aplicativo no iTerm2 quer usar o reconhecimento de fala."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aplicație din iTerm2 dorește să folosească recunoașterea vocală."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2362,6 +2452,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A operação sendo executada por um programa no iTerm2 requer permissão elevada."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operația efectuată de un program din iTerm2 necesită permisiuni elevate."
           }
         },
         "ru" : {

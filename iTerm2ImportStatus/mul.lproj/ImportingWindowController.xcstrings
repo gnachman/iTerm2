@@ -137,6 +137,12 @@
             "value" : "Állapot"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stare"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -287,6 +293,12 @@
             "value" : "Importálás…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se importă…"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -435,6 +447,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beállítások és adatok importálása…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se importă configurările și datele…"
           }
         },
         "sk" : {

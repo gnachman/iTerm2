@@ -101,6 +101,12 @@
             "value" : "Reutilizar o diretório da sessão anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reutilizați directorul sesiunii anterioare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diretório inicial"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosar de reședință"
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Diretório de trabalho para novas abas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director de lucru pentru filele noi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -546,6 +564,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -701,6 +725,12 @@
             "value" : "Diretório de trabalho para novas janelas"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director de lucru pentru ferestrele noi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -851,6 +881,12 @@
             "value" : "Reutilizar o diretório da sessão anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reutilizați directorul sesiunii anterioare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -996,6 +1032,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -1151,6 +1193,12 @@
             "value" : "Reutilizar o diretório da sessão anterior"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reutilizați directorul sesiunii anterioare"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diretório:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director:"
           }
         },
         "ru" : {
@@ -1451,6 +1505,12 @@
             "value" : "Diretório de trabalho para novos painéis divididos"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director de lucru pentru panourile divizate noi"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1599,6 +1659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes avançados do diretório de trabalho"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurări avansate pentru directorul de lucru"
           }
         },
         "ru" : {
@@ -1751,6 +1817,12 @@
             "value" : "Diretório:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1901,6 +1973,12 @@
             "value" : "Diretório:"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Director:"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2046,6 +2124,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
@@ -2201,6 +2285,12 @@
             "value" : "Diretório inicial"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosar de reședință"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2351,6 +2441,12 @@
             "value" : "Diretório inicial"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosar de reședință"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2496,6 +2592,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

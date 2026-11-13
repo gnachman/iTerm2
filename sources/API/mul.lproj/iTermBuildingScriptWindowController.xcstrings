@@ -101,6 +101,12 @@
             "value" : "Aguarde! Instalando um novo ambiente Python…"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un moment! Se instalează un nou mediu Python…"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",

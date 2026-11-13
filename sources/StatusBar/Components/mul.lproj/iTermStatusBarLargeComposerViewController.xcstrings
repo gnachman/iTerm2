@@ -101,6 +101,12 @@
             "value" : "Preenchimento por IA ativado: todo o texto é enviado à IA"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completare AI activată: tot textul este trimis către AI"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descreve como usar o Compositor."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descrie modul de utilizare a editorului de comenzi."
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Pressione ⇧↩ para enviar."
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apăsați ⇧↩ pentru a trimite."
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +567,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "IA"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "ru" : {

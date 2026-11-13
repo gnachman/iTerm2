@@ -101,6 +101,12 @@
             "value" : "Configurar inteligência artificial"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurați inteligența artificială"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -249,6 +255,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seu provedor de IA pode cobrar por cada token enviado ou recebido."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Furnizorul dvs. de AI vă poate taxa pentru fiecare token trimis sau primit."
           }
         },
         "ru" : {
@@ -401,6 +413,12 @@
             "value" : "Digite a chave de API aqui"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduceți aici cheia API"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -551,6 +569,12 @@
             "value" : "Cancelar"
           }
         },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anulați"
+          }
+        },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
@@ -696,6 +720,12 @@
           }
         },
         "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ro" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
