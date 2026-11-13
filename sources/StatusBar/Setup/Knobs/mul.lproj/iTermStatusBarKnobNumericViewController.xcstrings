@@ -71,6 +71,12 @@
             "value": "Etiket"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nhãn"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

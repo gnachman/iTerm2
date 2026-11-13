@@ -71,6 +71,12 @@
             "value" : "Öğe 2"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bağımlılık eklemek için bu betiğin “Tam Ortam” seçeneğine yükseltilmesi gerekir. Bu işlem Python çalışma zamanının bir kopyasını oluşturur ancak ek disk alanı kullanmaz."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tập lệnh này phải được nâng cấp lên “môi trường đầy đủ” để thêm các phụ thuộc. Việc này tạo một bản sao của môi trường chạy Python nhưng sẽ không dùng thêm dung lượng đĩa."
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Python sürümü:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản Python:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kaldır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Öğe 3"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 3"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yükselt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nâng cấp"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Betik:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tập lệnh:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Betik Bağımlılık Düzenleyicisi"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trình sửa phụ thuộc của tập lệnh"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Öğe 1"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paket Adı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tên gói"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "Öğe 2"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öğe 3"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 3"
           }
         },
         "zh-Hans" : {
@@ -1079,6 +1151,12 @@
             "value" : "Güncellemeyi Denetle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra cập nhật"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1161,6 +1239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yüklü Sürüm"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản đã cài đặt"
           }
         },
         "zh-Hans" : {
@@ -1247,6 +1331,12 @@
             "value" : "Öğe 1"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1331,6 +1421,12 @@
             "value" : "Tamam"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1413,6 +1509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm"
           }
         },
         "zh-Hans" : {

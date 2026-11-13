@@ -71,6 +71,12 @@
             "value": "Dışa Aktar…"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xuất…"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -153,6 +159,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Şimdi"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bây giờ"
           }
         },
         "zh-Hans": {
@@ -239,6 +251,12 @@
             "value": "Anında Tekrar Denetimi"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Điều khiển phát lại tức thì"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -321,6 +339,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vazgeç"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hủy"
           }
         },
         "zh-Hans": {
@@ -407,6 +431,12 @@
             "value": "Canlı Görünüm"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xem trực tiếp"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -489,6 +519,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zaman"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thời gian"
           }
         },
         "zh-Hans": {

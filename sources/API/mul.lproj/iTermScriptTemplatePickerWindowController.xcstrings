@@ -71,6 +71,12 @@
             "value" : "iterm2 kitaplığı dışında hiçbir bağımlılığı olmayan basit bir betik."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một tập lệnh đơn giản không có phụ thuộc nào ngoài thư viện iterm2."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -150,6 +156,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -239,6 +251,12 @@
             "value" : "Temel"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cơ bản"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -318,6 +336,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -407,6 +431,12 @@
             "value" : "Uzun Süre Çalışan Arka Plan Hizmeti"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daemon chạy lâu dài"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Basit"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đơn giản"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Vazgeç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eylemleri gerçekleştirip sonlanan basit bir betik için bu şablonu seçin."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn mẫu này cho tập lệnh đơn giản thực hiện các tác vụ rồi kết thúc."
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "iterm2 kitaplığı dışında PyPI paketlerine bağımlı bir betik. Bu betik için özel bir pyenv oluşturulur."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một tập lệnh phụ thuộc vào các gói PyPI khác ngoài thư viện iterm2. Một pyenv riêng sẽ được tạo cho tập lệnh này."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -822,6 +876,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -911,6 +971,12 @@
             "value" : "Bir betik şablonu seçin:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn mẫu tập lệnh:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tam Ortam"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Môi trường đầy đủ"
           }
         },
         "zh-Hans" : {
@@ -1079,6 +1151,12 @@
             "value" : "Çalışmaya devam eden ve bildirimlere yanıt veren bir betik için bu şablonu seçin."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn mẫu này cho tập lệnh luôn chạy và phản hồi các thông báo."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1158,6 +1236,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -1245,6 +1329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bir Python ortamı seçin:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn môi trường Python:"
           }
         },
         "zh-Hans" : {

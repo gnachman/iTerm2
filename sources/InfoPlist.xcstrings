@@ -84,6 +84,12 @@
             "value" : "iTerm2"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -166,6 +172,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama AppleScript’i kullanmak istiyor."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng AppleScript."
           }
         },
         "zh-Hans" : {
@@ -252,6 +264,12 @@
             "value" : "iTerm2’deki bir uygulama Bluetooth’u kullanmak istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng Bluetooth."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -334,6 +352,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama Takvim verilerini kullanmak istiyor."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng dữ liệu Lịch."
           }
         },
         "zh-Hans" : {
@@ -420,6 +444,12 @@
             "value" : "iTerm2’deki bir uygulama kamerayı kullanmak istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng camera."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -504,6 +534,12 @@
             "value" : "iTerm2’deki bir uygulama kişilerinizi kullanmak istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng danh bạ của bạn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -583,6 +619,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -672,6 +714,12 @@
             "value" : "iTerm2’deki bir uygulama yerel ağa erişmek istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn truy cập mạng cục bộ."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -754,6 +802,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama, arka planda bile konum bilgilerinizi kullanmak istiyor."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng thông tin vị trí của bạn, kể cả khi chạy nền."
           }
         },
         "zh-Hans" : {
@@ -840,6 +894,12 @@
             "value" : "iTerm2’deki bir uygulama konum bilgilerinizi kullanmak istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng thông tin vị trí của bạn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -922,6 +982,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama, etkinken konum bilgilerinizi kullanmak istiyor."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng thông tin vị trí của bạn khi đang hoạt động."
           }
         },
         "zh-Hans" : {
@@ -1008,6 +1074,12 @@
             "value" : "iTerm2’deki bir uygulama mikrofonunuzu kullanmak istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng micro của bạn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1090,6 +1162,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir uygulama Fotoğraflar kitaplığını kullanmak istiyor."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng thư viện ảnh."
           }
         },
         "zh-Hans" : {
@@ -1176,6 +1254,12 @@
             "value" : "iTerm2’deki bir uygulama anımsatıcılarınızı kullanmak istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng lời nhắc của bạn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1260,6 +1344,12 @@
             "value" : "iTerm2’deki bir uygulama konuşma tanımayı kullanmak istiyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một ứng dụng trong iTerm2 muốn dùng tính năng nhận dạng giọng nói."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1342,6 +1432,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’deki bir programın yaptığı işlem yükseltilmiş izin gerektiriyor."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thao tác đang được một chương trình trong iTerm2 thực hiện yêu cầu quyền nâng cao."
           }
         },
         "zh-Hans" : {

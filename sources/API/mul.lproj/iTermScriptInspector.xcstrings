@@ -71,6 +71,12 @@
             "value" : "Yol"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đường dẫn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Göster"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "İmza"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chữ ký"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Betik Denetçisi"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trình kiểm tra tập lệnh"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Oturumlar, Sekmeler ve Pencereler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên, tab và cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değişkenler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biến"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Rol"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vai trò"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yolu Kopyala"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép đường dẫn"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Kayıtlı İşlevler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hàm đã đăng ký"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değer"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giá trị"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "Kimliği Kopyala"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép ID"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -995,6 +1061,12 @@
             "value" : "Nesne Adı (Kimlik)"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tên đối tượng (ID)"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1074,6 +1146,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1163,6 +1241,12 @@
             "value" : "Betik"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tập lệnh"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1245,6 +1329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değeri Kopyala"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép giá trị"
           }
         },
         "zh-Hans" : {

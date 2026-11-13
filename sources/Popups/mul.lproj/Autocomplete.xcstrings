@@ -71,6 +71,12 @@
             "value" : "Otomatik Tamamlama"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động hoàn tất"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",

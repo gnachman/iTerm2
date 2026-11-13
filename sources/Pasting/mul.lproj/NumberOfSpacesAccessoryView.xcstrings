@@ -71,6 +71,12 @@
             "value": "Sekme boyutu (boşluk sayısı):"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kích thước tab tính bằng dấu cách:"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -150,6 +156,12 @@
           }
         },
         "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "vi": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

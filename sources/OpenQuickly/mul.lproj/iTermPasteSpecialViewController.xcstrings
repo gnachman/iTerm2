@@ -71,6 +71,12 @@
             "value" : "İstem algılama için Kabuk Entegrasyonu gerekir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cần tích hợp shell để phát hiện dấu nhắc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu seçenek, çalışan uygulama “ayraçlı yapıştırma modunu” açan bir kaçış kodu gönderdiğinde etkinleşir. Yapıştırılan dize, içindeki metnin bir yapıştırma işleminden geldiğini belirten kaçış kodlarıyla “ayraçlanır”."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tùy chọn này được bật khi ứng dụng đang chạy đã gửi mã thoát để bật “chế độ dán có đánh dấu”. Chuỗi được dán sẽ được “đánh dấu” bằng các mã thoát cho biết văn bản bên trong đến từ thao tác dán."
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Sekmeleri ^V ile kaçır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoát tab bằng ^V"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmelerle yapıştır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán kèm tab"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Değiştir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay thế"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unicode noktalama işaretlerini dönüştür"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuyển dấu câu Unicode"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "vim kaçış dizilerine uyar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tôn trọng chuỗi thoát của vim"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +696,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
@@ -743,6 +791,12 @@
             "value" : "Çeşitli tırnak işareti ve tire biçimlerini ASCII karşılıklarına dönüştürür."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuyển nhiều dạng dấu ngoặc kép và dấu gạch ngang sang ký tự ASCII tương đương."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmeleri boşluğa dönüştür:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuyển tab thành dấu cách:"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "DOS ve UNIX satır sonları genellikle girdi olarak kullanılmaz. Standart olan CR’dir."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ký tự xuống dòng kiểu DOS và UNIX thường không dùng làm đầu vào. CR là chuẩn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kabuk karakterlerini \\ ile kaçır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoát ký tự shell bằng \\"
           }
         },
         "zh-Hans" : {
@@ -1079,6 +1151,12 @@
             "value" : "Parça boyutu:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kích thước đoạn:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1161,6 +1239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yerine konacak"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuỗi thay thế"
           }
         },
         "zh-Hans" : {
@@ -1247,6 +1331,12 @@
             "value" : "DOS ve UNIX satır sonları genellikle girdi olarak kullanılmaz. Standart olan CR’dir."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ký tự xuống dòng kiểu DOS và UNIX thường không dùng làm đầu vào. CR là chuẩn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1329,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekme, satır besleme, sayfa besleme ve satır başı yalnızca “güvenli” denetim kodlarıdır."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab, line feed, form feed và carriage return là các mã điều khiển “an toàn” duy nhất."
           }
         },
         "zh-Hans" : {
@@ -1415,6 +1511,12 @@
             "value" : "Dönüşümler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biến đổi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1499,6 +1601,12 @@
             "value" : "ICU düzenli ifade sözdizimi"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cú pháp biểu thức chính quy ICU"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1578,6 +1686,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100 ms"
@@ -1667,6 +1781,12 @@
             "value" : "1 kB"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kB"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1749,6 +1869,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ile"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bằng"
           }
         },
         "zh-Hans" : {
@@ -1835,6 +1961,12 @@
             "value" : "Hız"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tốc độ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1917,6 +2049,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Güvenli olmayan denetim kodlarını kaldır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa mã điều khiển không an toàn"
           }
         },
         "zh-Hans" : {
@@ -2003,6 +2141,12 @@
             "value" : "Her satırı yapıştırmadan önce kabuk istemini bekle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chờ dấu nhắc shell trước khi dán từng dòng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parça gecikmesi:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Độ trễ đoạn:"
           }
         },
         "zh-Hans" : {
@@ -2171,6 +2321,12 @@
             "value" : "1 bayt"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 byte"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2255,6 +2411,12 @@
             "value" : "Düzenli ifade"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biểu thức chính quy"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2334,6 +2496,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kB"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1,2 kB"
@@ -2423,6 +2591,12 @@
             "value" : "150 ms"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2502,6 +2676,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100"
@@ -2591,6 +2771,12 @@
             "value" : "Radyo"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nút chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2673,6 +2859,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Satır sonlarını kaldır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa ký tự xuống dòng"
           }
         },
         "zh-Hans" : {
@@ -2759,6 +2951,12 @@
             "value" : "Yakalama grupları için $1, $2 vb. kullanın"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng $1, $2, v.v. cho nhóm bắt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2843,6 +3041,12 @@
             "value" : "Ayraçlı yapıştırma modu"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chế độ dán có đánh dấu"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2922,6 +3126,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
@@ -3011,6 +3221,12 @@
             "value" : "CRLF ve LF’yi CR’ye dönüştür"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuyển CRLF và LF thành CR"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3095,6 +3311,12 @@
             "value" : "Base 64 olarak kodla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mã hóa Base 64"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3177,6 +3399,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 sn"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 giây"
           }
         },
         "zh-Hans" : {

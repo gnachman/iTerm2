@@ -71,6 +71,12 @@
             "value" : "Arama Geçmişini Sil"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa lịch sử tìm kiếm"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarlı Alt Dize"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuỗi con, phân biệt chữ hoa/thường"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Büyük/Küçük Harfe Duyarsız Alt Dize"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuỗi con, không phân biệt chữ hoa/thường"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ara"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm kiếm"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Büyük/Küçük Harfe Duyarlı Düzenli İfade"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, phân biệt chữ hoa/thường"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -491,6 +521,12 @@
             "value" : "Akıllı Büyük/Küçük Harf Alt Dize"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuỗi con, chữ hoa/thường thông minh"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -573,6 +609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyük/Küçük Harfe Duyarsız Düzenli İfade"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, không phân biệt chữ hoa/thường"
           }
         },
         "zh-Hans" : {

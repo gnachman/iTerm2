@@ -71,6 +71,12 @@
             "value": "Şu parametrenin değerini girin: "
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nhập giá trị cho "
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -153,6 +159,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tamam"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
         "zh-Hans": {
@@ -239,6 +251,12 @@
             "value": "Oturum Parametresi"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tham số phiên"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -323,6 +341,12 @@
             "value": "Vazgeç"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hủy"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -405,6 +429,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ad"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tên"
           }
         },
         "zh-Hans": {

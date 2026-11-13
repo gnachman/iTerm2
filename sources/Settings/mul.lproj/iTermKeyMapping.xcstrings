@@ -71,6 +71,12 @@
             "value" : "Hazır Ayarlar…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt sẵn…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar Öğesi Ekle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm mục Touch Bar"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Eylem"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tác vụ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touch Bar Hafifletmeleri"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giảm thiểu Touch Bar"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Görsel esc tuşu göstergesi"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉ báo trực quan cho phím esc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tuş Kombinasyonu"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tổ hợp phím"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "esc tuşuna basarken dokunsal geri bildirim"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phản hồi xúc giác khi nhấn esc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -659,6 +701,12 @@
             "value" : "Tamam"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "esc tuşu için tuş tıklama sesi"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng bấm cho phím esc"
           }
         },
         "zh-Hans" : {

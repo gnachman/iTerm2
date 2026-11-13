@@ -71,6 +71,12 @@
             "value" : "Durum"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trạng thái"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155,6 +161,12 @@
             "value" : "İçe Aktarılıyor…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang nhập…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -237,6 +249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayarlar ve veriler içe aktarılıyor…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang nhập cài đặt và dữ liệu…"
           }
         },
         "zh-Hans" : {

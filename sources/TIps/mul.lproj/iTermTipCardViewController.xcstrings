@@ -71,6 +71,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -153,6 +159,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kabuk Entegrasyonu"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tích hợp shell"
           }
         },
         "zh-Hans": {

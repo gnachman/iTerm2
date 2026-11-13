@@ -71,6 +71,12 @@
             "value": "Yapıştırılıyor…"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đang dán…"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

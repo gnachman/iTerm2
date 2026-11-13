@@ -71,6 +71,12 @@
             "value" : "BAŞLIK HÜCRESİ"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ô TIÊU ĐỀ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Genel Olarak Bul"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm trên toàn cục"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Alt Dize: Büyük/Küçük Harfe Duyarlı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuỗi con, phân biệt chữ hoa/thường"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alt Dize: Otomatik"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuỗi con, tự động"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Düzenli İfade: Büyük/Küçük Harfe Duyarsız"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, không phân biệt chữ hoa/thường"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bul"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Düzenli İfade: Büyük/Küçük Harfe Duyarlı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, phân biệt chữ hoa/thường"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alt Dize: Büyük/Küçük Harfe Duyarsız"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chuỗi con, không phân biệt chữ hoa/thường"
           }
         },
         "zh-Hans" : {

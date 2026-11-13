@@ -71,6 +71,12 @@
             "value" : "Değer:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giá trị:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parçacığı Düzenle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sửa đoạn mã"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Başlık:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiêu đề:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kaçışsız Düz Metin"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Văn bản nguyên văn không thoát"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Düzen > Parçacıklar menüsünde klasör oluşturmak için etiket adlarında / kullanın"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng / trong tên thẻ để tạo thư mục trong menu Sửa > Đoạn mã"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Tamam"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geriye Dönük Uyumluluk Kaçışı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoát tương thích ngược"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Etiketler:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thẻ:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "C Tarzı Ters Eğik Çizgi Kaçışı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoát bằng gạch chéo ngược kiểu C"
           }
         },
         "zh-Hans" : {

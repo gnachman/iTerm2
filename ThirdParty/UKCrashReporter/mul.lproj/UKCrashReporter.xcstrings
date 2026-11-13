@@ -71,6 +71,12 @@
             "value" : "Açıklama"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mô tả"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Çökme Günlüğü"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhật ký sự cố"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Çökme Raporlayıcı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trình báo cáo sự cố"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "{APPNAME} uygulamasının en son kullanıldığında çöktüğü anlaşılıyor. Geliştiricilere bir çökme günlüğü göndermek ister misiniz?\n\nApple’ın çökme günlükleri diğer geliştiricilere gönderilmez; bu nedenle {APPNAME} geliştiricilerinin bu çökmeden haberdar olmasının ve düzeltmesinin tek yolu budur."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Có vẻ như {APPNAME} đã gặp sự cố trong lần sử dụng gần nhất. Bạn có muốn gửi nhật ký sự cố cho các nhà phát triển không?\n\nNhật ký sự cố của Apple không được gửi cho các nhà phát triển khác, vì vậy đây là cách duy nhất để các nhà phát triển {APPNAME} biết và khắc phục sự cố này."
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "İletilmesini istemediğiniz bilgileri silebilirsiniz, ancak bu hatanın bulunmasını zorlaştırır. Varsayılan olarak çökme günlüğü, kullandığınız Mac modeli ve ayarlarınız iletilir."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bạn có thể xóa bất kỳ thông tin nào bạn không muốn gửi đi, nhưng điều này sẽ khiến việc phát hiện lỗi khó hơn. Theo mặc định, nhật ký sự cố cùng với mẫu Mac bạn đang dùng và các cài đặt của bạn sẽ được gửi đi."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gönder"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gửi"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Daha Sonra Hatırlat"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhắc tôi sau"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yok Say"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bỏ"
           }
         },
         "zh-Hans" : {

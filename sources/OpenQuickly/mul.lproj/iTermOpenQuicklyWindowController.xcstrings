@@ -71,6 +71,12 @@
             "value" : "Hızlı Aç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở nhanh"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -155,6 +161,12 @@
             "value" : "Ayrıntı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chi tiết"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -237,6 +249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturumlarda, profillerde veya düzenlerde ara"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm phiên, hồ sơ hoặc bố cục"
           }
         },
         "zh-Hans" : {

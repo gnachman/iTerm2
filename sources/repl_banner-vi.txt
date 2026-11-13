@@ -1,0 +1,12 @@
+[1mChào mừng bạn đến với REPL Python của iTerm2![m
+
+Đây là trình thông dịch Python tương tác, nơi bạn có thể thử nghiệm các
+tập lệnh. Không giống các trình thông dịch Python tiêu chuẩn, bạn có thể
+dùng “await” bên ngoài hàm bất đồng bộ. Đây là một tập lệnh mẫu để thử:
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+await iterm2.Window.async_create(connection)
+
+]8;;https://iterm2.com/python-api⌘-bấm vào đây để xem tài liệu API Python của iTerm2]8;;
+

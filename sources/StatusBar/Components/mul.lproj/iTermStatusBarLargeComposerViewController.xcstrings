@@ -71,6 +71,12 @@
             "value" : "YZ tamamlama etkin: tüm metin YZ’ye gönderilir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã bật hoàn thành bằng AI: toàn bộ văn bản được gửi đến AI"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oluşturucunun nasıl kullanılacağını açıklar."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mô tả cách dùng trình soạn lệnh."
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Göndermek için ⇧↩ tuşlarına basın."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhấn ⇧↩ để gửi."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "YZ"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "zh-Hans" : {

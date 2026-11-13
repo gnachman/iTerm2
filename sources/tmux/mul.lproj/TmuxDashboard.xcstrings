@@ -71,6 +71,12 @@
             "value" : "tmux Gösterge Paneli"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bảng điều khiển tmux"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturum"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Bağlan"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gắn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencerelerde ara"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Pencere"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencerelerde Aç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trong cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Gizle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ẩn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencerelerde Aç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trong cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Sekmelerde Aç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trong tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayrıl"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tách"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "Gizli pencereler varsa bağlanırken gösterge panelini aç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở bảng điều khiển khi gắn nếu có cửa sổ bị ẩn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "En az bu kadar pencere varsa bağlanırken pencere açma:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không mở cửa sổ khi gắn nếu có ít nhất số cửa sổ này:"
           }
         },
         "zh-Hans" : {

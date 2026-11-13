@@ -71,6 +71,12 @@
             "value" : "Mac’inizden uzakta olduğunuzda da iTerm2’yi kullanın. Onu YZ sohbeti üzerinden kontrol edebilir, oturum içeriğini görüntüleyebilir ve anlık bildirimler alabilirsiniz. Uçtan uca şifreleme verilerinizi güvende tutar. <a href=\"iterm2whatsnew:companion\">Hemen deneyin!</a>"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng iTerm2 khi bạn rời xa Mac. Bạn có thể điều khiển nó qua trò chuyện AI, xem nội dung phiên và nhận thông báo đẩy. Mã hóa đầu cuối giữ an toàn cho dữ liệu của bạn. <a href=\"iterm2whatsnew:companion\">Dùng thử ngay!</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -150,6 +156,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -239,6 +251,12 @@
             "value" : "Yeni bir YZ sohbet modu olan Orkestrasyon, işi sizin yerinize YZ’nin yönetmesini sağlar. Pencere oluşturabilir, görevlerin tamamlanmasını bekleyebilir (etkileşimli uygulamalarda bile) ve yeni otomatik güvenlik denetleyicisi sayesinde neredeyse tüm izin istemlerini yanıtlamanız gerekmez. <a href=\"iterm2whatsnew:orchestration\">Hemen deneyin!</a>"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Một chế độ trò chuyện AI mới, Điều phối, để AI lo mọi việc cho bạn. Nó có thể tạo cửa sổ, chờ các tác vụ hoàn tất (kể cả trong ứng dụng tương tác), và trình kiểm tra an toàn tự động mới giúp bạn không phải trả lời gần như mọi lời nhắc cấp quyền. <a href=\"iterm2whatsnew:orchestration\">Dùng thử ngay!</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -318,6 +336,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -407,6 +431,12 @@
             "value" : "Yeni Ekran Görüntüleri özelliği, terminal içeriğinizin PNG’sini oluşturmayı kolaylaştırır. Karartma ve vurgulamayı destekler. Etkinleştirmek için <a href=\"iterm2whatsnew:screenshot\">Oturum > Ekran Görüntüsü Oluştur</a> komutunu kullanın."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tính năng Ảnh chụp màn hình mới giúp việc tạo PNG từ nội dung terminal của bạn trở nên đơn giản hơn. Nó hỗ trợ che thông tin và đánh dấu nổi bật. Dùng <a href=\"iterm2whatsnew:screenshot\">Phiên > Chụp ảnh màn hình</a> để kích hoạt."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -491,6 +521,12 @@
             "value" : "Sürüm 3.7’deki Yenilikler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Có gì mới trong phiên bản 3.7"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -570,6 +606,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -659,6 +701,12 @@
             "value" : "●"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -741,6 +789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code Entegrasyonu"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tích hợp Claude Code"
           }
         },
         "zh-Hans" : {
@@ -827,6 +881,12 @@
             "value" : "Çok sayıda sekmeyi yönetmenize yardımcı olmak için artık sekmeleri daraltılabilir gruplar halinde birleştirebilirsiniz. Ayrıca sekme çubuğu artık taşma menüsü göstermek yerine kayıyor."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Để giúp quản lý số lượng lớn tab, giờ đây bạn có thể gộp các tab thành các nhóm có thể thu gọn. Thanh tab cũng cuộn thay vì hiển thị menu tràn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -906,6 +966,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -995,6 +1061,12 @@
             "value" : "Claude Code entegrasyonu, kod incelemesi ve diff okuma gibi birbiriyle ilişkili birden fazla oturumu özelleştirilebilir bir arayüzde düzenler. Ayrıca Claude’un durumunu göstererek dikkatinizi bekleyen örnekleri kolayca bulmanızı sağlar. <a href=\"iterm2whatsnew:claudecode\">Hemen deneyin!</a>"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tích hợp Claude Code sắp xếp nhiều phiên liên quan, chẳng hạn như xem xét mã và đọc diff, vào một giao diện tùy chỉnh được. Nó cũng hiển thị trạng thái của Claude để bạn dễ dàng tìm các phiên bản đang chờ bạn xử lý. <a href=\"iterm2whatsnew:claudecode\">Dùng thử ngay!</a>"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1079,6 +1151,12 @@
             "value" : "iPhone Eşlik Eden Uygulaması"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ứng dụng đồng hành trên iPhone"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1158,6 +1236,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1247,6 +1331,12 @@
             "value" : "Orkestrasyon"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Điều phối"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1329,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekme Grupları"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhóm tab"
           }
         },
         "zh-Hans" : {
@@ -1415,6 +1511,12 @@
             "value" : "Ekran Görüntüleri"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ảnh chụp màn hình"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1494,6 +1596,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

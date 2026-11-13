@@ -71,6 +71,12 @@
             "value" : "/directory"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dizini kopyala"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép thư mục"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "12 bayt"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 byte"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutun çıktısını seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn đầu ra của lệnh"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "1sa 35dk"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Çıktı:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đầu ra:"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Kopyalandı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã sao chép"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu panoya kopyala"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép lệnh vào bảng nhớ tạm"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Başlangıç: %@"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bắt đầu lúc %@"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu Oluşturucu’da aç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở lệnh trong Trình soạn lệnh"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "Sürüklenebilir klasör"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thư mục có thể kéo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "komut"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lệnh"
           }
         },
         "zh-Hans" : {
@@ -1079,6 +1151,12 @@
             "value" : "Komutu terminale yaz"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghi lệnh vào terminal"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1161,6 +1239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dizin:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thư mục:"
           }
         },
         "zh-Hans" : {
@@ -1247,6 +1331,12 @@
             "value" : "Dönüş kodu:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mã trả về:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1329,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dizini terminale yaz"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghi thư mục vào terminal"
           }
         },
         "zh-Hans" : {
@@ -1415,6 +1511,12 @@
             "value" : "Çalışma süresi:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thời gian chạy:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1497,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutun çıktısını kopyala"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép đầu ra của lệnh"
           }
         },
         "zh-Hans" : {
@@ -1583,6 +1691,12 @@
             "value" : "Komutu paylaş…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chia sẻ lệnh…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1667,6 +1781,12 @@
             "value" : "Komut:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lệnh:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1746,6 +1866,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -1833,6 +1959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekran dışı komutu göstermeyi devre dışı bırak"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt hiển thị lệnh ngoài màn hình"
           }
         },
         "zh-Hans" : {

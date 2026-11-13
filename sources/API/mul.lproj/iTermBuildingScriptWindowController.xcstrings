@@ -71,6 +71,12 @@
             "value" : "Lütfen bekleyin! Yeni bir Python ortamı yükleniyor…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vui lòng chờ! Đang cài đặt môi trường Python mới…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",

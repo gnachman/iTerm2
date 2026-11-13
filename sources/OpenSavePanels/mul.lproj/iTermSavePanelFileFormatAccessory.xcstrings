@@ -71,6 +71,12 @@
             "value": "Zaman damgalarını ekle"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bao gồm dấu thời gian"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -153,6 +159,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dosya biçimi:"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Định dạng tệp:"
           }
         },
         "zh-Hans": {

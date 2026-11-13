@@ -71,6 +71,12 @@
             "value": "Python Çalışma Zamanı Yükleyicisi"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trình cài đặt môi trường chạy Python"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -155,6 +161,12 @@
             "value": "Vazgeç"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hủy"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -237,6 +249,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "İsteğe bağlı bileşenler indiriliyor…"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đang tải về các thành phần tùy chọn…"
           }
         },
         "zh-Hans": {

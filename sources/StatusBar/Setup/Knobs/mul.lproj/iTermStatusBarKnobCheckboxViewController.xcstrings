@@ -71,6 +71,12 @@
             "value": "İşaretle"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chọn"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",

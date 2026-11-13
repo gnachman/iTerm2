@@ -71,6 +71,12 @@
             "value" : "Durum çubuğunuza eklemek için menüden bir bileşeni Etkin Bileşenler’e sürükleyin."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kéo một thành phần từ menu vào Thành phần đang hoạt động để thêm vào thanh trạng thái của bạn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kararlı konum yerine sıkı yerleşimi tercih et"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ưu tiên xếp sát hơn vị trí ổn định"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Tamam"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Etkin Bileşenler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thành phần đang hoạt động"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Devre Dışı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã tắt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Değeri boş olan bileşenleri kaldır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa các thành phần có giá trị rỗng"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Durum çubuğu ile terminal arasına ayırıcı çiz"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vẽ đường phân cách giữa thanh trạng thái và terminal"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otomatik"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Durum Çubuğu Bileşeni Menüsü"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menu thành phần thanh trạng thái"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gelişmiş…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nâng cao…"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "Sıkı yerleşim algoritması aynı anda daha fazla durum çubuğu bileşeninin görünmesini sağlar, ancak bileşenler daha çok yer değiştirme eğilimindedir."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thuật toán xếp sát cho phép hiển thị nhiều thành phần thanh trạng thái hơn cùng lúc nhưng chúng dễ nhảy vị trí hơn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌈 Otomatik gökkuşağı:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Cầu vồng tự động:"
           }
         },
         "zh-Hans" : {
@@ -1079,6 +1151,12 @@
             "value" : "Font adı buraya gelir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tên phông chữ hiển thị ở đây"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1161,6 +1239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Koyu Renkler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Màu tối"
           }
         },
         "zh-Hans" : {
@@ -1247,6 +1331,12 @@
             "value" : "Değiştir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay đổi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1329,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varsayılan metin rengi:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Màu văn bản mặc định:"
           }
         },
         "zh-Hans" : {
@@ -1415,6 +1511,12 @@
             "value" : "Bileşeni Yapılandır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Định cấu hình thành phần"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1497,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sıkı yerleşim algoritması aynı anda daha fazla durum çubuğu bileşeninin görünmesini sağlar, ancak bileşenler daha çok yer değiştirme eğilimindedir."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thuật toán xếp sát cho phép hiển thị nhiều thành phần thanh trạng thái hơn cùng lúc nhưng chúng dễ nhảy vị trí hơn."
           }
         },
         "zh-Hans" : {
@@ -1583,6 +1691,12 @@
             "value" : "Ayırıcı rengi:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Màu đường phân cách:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1665,6 +1779,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
           }
         },
         "zh-Hans" : {
@@ -1751,6 +1871,12 @@
             "value" : "Açık Renkler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Màu sáng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1833,6 +1959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Font:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phông chữ:"
           }
         },
         "zh-Hans" : {
@@ -1919,6 +2051,12 @@
             "value" : "Arka plan rengi:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Màu nền:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2003,6 +2141,12 @@
             "value" : "Tamam"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2085,6 +2229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durum çubuğu ile terminal içeriği arasına ince bir çizgi çizer."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vẽ một đường mảnh giữa thanh trạng thái và nội dung terminal."
           }
         },
         "zh-Hans" : {

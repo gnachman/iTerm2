@@ -71,6 +71,12 @@
             "value" : "⌥ Option"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kısayol tuşu penceresini sabitle (klavye odağı kaybolunca açık kalır)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghim cửa sổ phím nóng (vẫn mở khi mất tiêu điểm bàn phím)"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Kısayol tuşu:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phím nóng:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Not: Pencere yalnızca başka bir uygulama etkin hale geldiği için kapatıldıysa yeniden açılır."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu ý: cửa sổ chỉ được mở lại nếu nó bị đóng do một ứng dụng khác trở thành ứng dụng đang hoạt động."
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Ek Kısayol Tuşları"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phím nóng bổ sung"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu profile atanan kısayol tuşuna bastığınızda ayrılmış bir pencere görünür veya gizlenir. Kısayol tuşu olan her profil kendi Kısayol Tuşu Penceresini denetler."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi bạn nhấn phím nóng gán cho hồ sơ này, một cửa sổ riêng sẽ hiển thị hoặc ẩn. Mỗi hồ sơ có phím nóng điều khiển cửa sổ phím nóng của riêng nó."
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Özel bir şey yapma"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không làm gì đặc biệt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,6 +696,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -743,6 +791,12 @@
             "value" : "Bu Kısayol Tuşu Penceresini Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị cửa sổ phím nóng này"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -827,6 +881,12 @@
             "value" : "Kısayol Tuşu Penceresi Ayarları"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt cửa sổ phím nóng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -906,6 +966,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌘ Command"
@@ -995,6 +1061,12 @@
             "value" : "⚠️ Başka bir profil bu kısayolu kullanıyor"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Hồ sơ khác đang dùng phím tắt này"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1074,6 +1146,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⇧ Shift"
@@ -1163,6 +1241,12 @@
             "value" : "Çift dokunma tuşu:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phím chạm hai lần:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1245,6 +1329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uygulama yeniden etkinleşince otomatik olarak yeniden aç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động mở lại khi kích hoạt lại ứng dụng"
           }
         },
         "zh-Hans" : {
@@ -1331,6 +1421,12 @@
             "value" : "⚠️ Başka bir profil bu çift dokunmayı kullanıyor"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Hồ sơ khác đang dùng thao tác chạm hai lần này"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1413,6 +1509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Başka pencere açık değilse bu Kısayol Tuşu Penceresini göster"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị cửa sổ phím nóng này nếu không có cửa sổ nào khác đang mở"
           }
         },
         "zh-Hans" : {
@@ -1499,6 +1601,12 @@
             "value" : "Yüzen pencereler diğer pencerelerin, Dock’un ve (Kısayol Tuşu Penceresinin alanı Tüm Alanlar olarak ayarlıysa) diğer uygulamaların Tam Ekran pencerelerinin üzerinde görünür."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ nổi nằm đè lên các cửa sổ khác, Dock và cửa sổ toàn màn hình của ứng dụng khác (nếu không gian của cửa sổ phím nóng được đặt là Tất cả không gian)."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1581,6 +1689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
           }
         },
         "zh-Hans" : {
@@ -1667,6 +1781,12 @@
             "value" : "Dock simgesi tıklandığında:"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi bấm biểu tượng Dock:"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1749,6 +1869,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gösterirken ve gizlerken canlandır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạo hiệu ứng khi hiển thị và ẩn"
           }
         },
         "zh-Hans" : {
@@ -1835,6 +1961,12 @@
             "value" : "Tamam"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1917,6 +2049,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamam"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "zh-Hans" : {
@@ -2003,6 +2141,12 @@
             "value" : "Yüzen pencere"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ nổi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2082,6 +2226,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ Control"
@@ -2169,6 +2319,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ek Kısayol Tuşları…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phím nóng bổ sung…"
           }
         },
         "zh-Hans" : {

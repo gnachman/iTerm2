@@ -71,6 +71,12 @@
             "value" : "En son sürümü indirir. curl | bash çalıştırır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tải về phiên bản mới nhất. Chạy curl | bash"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Devam Et"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếp tục"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Tamam"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "1. Hangi kabuğu kullandığınızı bulma.\n2. Ana dizininize betik dosyaları ekleme.\n3. Yardımcı betikleri yükleme.\n4. Kabuğunuzun başlangıç betiklerini değiştirme."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Tìm hiểu bạn dùng shell nào.\n2. Thêm các tệp tập lệnh vào thư mục chính của bạn.\n3. Cài đặt các tập lệnh tiện ích.\n4. Sửa đổi các tập lệnh khởi động của shell."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geri Dön"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quay lại"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Yardımcı araçlar arasında dosya indirme, resimleri satır içinde gösterme ve daha fazlası için betikler bulunur. "
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Các tiện ích gồm tập lệnh để tải tệp về, hiển thị ảnh trực tiếp trong terminal, và nhiều hơn nữa. "
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geri Dön"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quay lại"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Devam Et"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếp tục"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "Atla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bỏ qua"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
           }
         },
         "zh-Hans" : {
@@ -1079,6 +1151,12 @@
             "value" : "Komutu Önizle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xem trước lệnh"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1161,6 +1239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "İnternetsiz Yükleme"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt không cần internet"
           }
         },
         "zh-Hans" : {
@@ -1247,6 +1331,12 @@
             "value" : "Yükleyiciyi İndir ve Çalıştır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tải về và chạy trình cài đặt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1329,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 yardımcı araçlarını da yükle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt cả các tiện ích iTerm2"
           }
         },
         "zh-Hans" : {
@@ -1415,6 +1511,12 @@
             "value" : "Adım adım kılavuzlu elle yükleme. İndirme gerekmez."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt thủ công có hướng dẫn. Không cần tải về."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1497,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu Önizle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xem trước lệnh"
           }
         },
         "zh-Hans" : {
@@ -1583,6 +1691,12 @@
             "value" : "Devam Et"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếp tục"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1662,6 +1776,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -1751,6 +1871,12 @@
             "value" : "Komutu Önizle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xem trước lệnh"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1833,6 +1959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geri Dön"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quay lại"
           }
         },
         "zh-Hans" : {
@@ -1919,6 +2051,12 @@
             "value" : "Kabuk Entegrasyonunu nasıl yüklemek istersiniz?\n\nBu işlemde kabuğunuzun başlangıç betikleri değiştirilecektir. Bu yükleyici komutları sizin yerinize terminal penceresine girecektir."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bạn muốn cài đặt tích hợp shell bằng cách nào?\n\nTrong quá trình này, các tập lệnh khởi động của shell sẽ bị sửa đổi. Trình cài đặt sẽ nhập lệnh vào cửa sổ terminal giúp bạn."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2139,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komutu Önizle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xem trước lệnh"
           }
         },
         "zh-Hans" : {
@@ -2087,6 +2231,12 @@
             "value" : "Yükleme tamamlandı!"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã cài đặt xong!"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2169,6 +2319,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu, şu komutu çalıştıracak:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thao tác này sẽ chạy lệnh sau:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "zh-Hans" : {
@@ -2255,6 +2411,12 @@
             "value" : "Denemek için yeni bir sekme oluşturun.\n\nEn iyi sonuç için kabuk entegrasyonunu ssh ile bağlandığınız tüm ana makinelere yükleyin."
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạo một tab mới để dùng thử.\n\nĐể có kết quả tốt nhất, hãy cài đặt tích hợp shell trên mọi máy chủ mà bạn ssh vào."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2337,6 +2499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kabuk Entegrasyonu, kabuğunuzun iTerm2 ile iletişim kurmasına yardımcı olan betiklerden oluşur; böylece iTerm2 çalıştırdığınız komutları, geçerli dizininizi ve diğer durumları izleyebilir. "
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tích hợp shell gồm các tập lệnh giúp shell của bạn giao tiếp với iTerm2 để iTerm2 có thể theo dõi các lệnh bạn đang chạy, thư mục hiện tại và các trạng thái khác. "
           }
         },
         "zh-Hans" : {
@@ -2423,6 +2591,12 @@
             "value" : "Kabuk Entegrasyonunu Yükle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt tích hợp shell"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2505,6 +2679,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vazgeç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hủy"
           }
         },
         "zh-Hans" : {

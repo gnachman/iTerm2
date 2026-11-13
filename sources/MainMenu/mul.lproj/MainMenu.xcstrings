@@ -71,6 +71,12 @@
             "value" : "Uzaklaştır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu nhỏ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python Çalışma Zamanını Yükle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt môi trường chạy Python"
           }
         },
         "zh-Hans" : {
@@ -239,6 +251,12 @@
             "value" : "Sekmeyi Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturumu Çoğalt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạo bản sao phiên"
           }
         },
         "zh-Hans" : {
@@ -407,6 +431,12 @@
             "value" : "Konumu Aç…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở vị trí…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -489,6 +519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yüksekliği Artır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tăng chiều cao"
           }
         },
         "zh-Hans" : {
@@ -575,6 +611,12 @@
             "value" : "Sekmeyi Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -657,6 +699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odak Raporlama"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Báo cáo tiêu điểm"
           }
         },
         "zh-Hans" : {
@@ -743,6 +791,12 @@
             "value" : "Normal"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bình thường"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölücüyü Yukarı Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển thanh chia lên trên"
           }
         },
         "zh-Hans" : {
@@ -911,6 +971,12 @@
             "value" : "Base 64 Çözülmüş Değerle Değiştir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay bằng giá trị đã giải mã Base 64"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -993,6 +1059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturum"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên"
           }
         },
         "zh-Hans" : {
@@ -1079,6 +1151,12 @@
             "value" : "Oturumu Bölmeye Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển phiên vào khung chia"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1161,6 +1239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parola Yöneticisi"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trình quản lý mật khẩu"
           }
         },
         "zh-Hans" : {
@@ -1247,6 +1331,12 @@
             "value" : "Öğe 1"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1329,6 +1419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ortalanmış"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ở giữa"
           }
         },
         "zh-Hans" : {
@@ -1415,6 +1511,12 @@
             "value" : "Seçimi Değiştir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay thế vùng chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1497,6 +1599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekranın Solu"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bên trái màn hình"
           }
         },
         "zh-Hans" : {
@@ -1583,6 +1691,12 @@
             "value" : "Uygulama İmleci"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Con trỏ ứng dụng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1665,6 +1779,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Düzenler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bố cục"
           }
         },
         "zh-Hans" : {
@@ -1751,6 +1871,12 @@
             "value" : "Seçili Satırları Daralt"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu gọn các dòng đã chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1833,6 +1959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Son Dizinleri Aç…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở thư mục gần đây…"
           }
         },
         "zh-Hans" : {
@@ -1919,6 +2051,12 @@
             "value" : "Tam Ekran"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toàn màn hình"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2001,6 +2139,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adlandırılmış İşaret Koy"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt dấu có tên"
           }
         },
         "zh-Hans" : {
@@ -2087,6 +2231,12 @@
             "value" : "Eylemler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tác vụ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2169,6 +2319,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU Karesini Yakala"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chụp khung hình GPU"
           }
         },
         "zh-Hans" : {
@@ -2255,6 +2411,12 @@
             "value" : "İşaretler ve Ek Açıklamalar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dấu và chú thích"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2337,6 +2499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tam Yükseklik, Ekranın Solu"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toàn chiều cao, bên trái màn hình"
           }
         },
         "zh-Hans" : {
@@ -2423,6 +2591,12 @@
             "value" : "Pencereyi Çoğalt"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạo bản sao cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2505,6 +2679,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otomatik Komut Tamamlama"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động hoàn tất lệnh"
           }
         },
         "zh-Hans" : {
@@ -2591,6 +2771,12 @@
             "value" : "Pencere Stili"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểu cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2673,6 +2859,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPU İşleyici Kullanılabilirliği"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khả năng dùng trình kết xuất GPU"
           }
         },
         "zh-Hans" : {
@@ -2759,6 +2951,12 @@
             "value" : "Pencere"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2841,6 +3039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Küçült"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu nhỏ"
           }
         },
         "zh-Hans" : {
@@ -2927,6 +3131,12 @@
             "value" : "Pencere"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3006,6 +3216,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -3095,6 +3311,12 @@
             "value" : "iTerm2"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3177,6 +3399,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Düzendeki Profili Değiştir…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi hồ sơ trong bố cục…"
           }
         },
         "zh-Hans" : {
@@ -3263,6 +3491,12 @@
             "value" : "Kabuk"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3345,6 +3579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Varsayılan Genişliği Ayarla"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt chiều rộng mặc định"
           }
         },
         "zh-Hans" : {
@@ -3431,6 +3671,12 @@
             "value" : "Kabuk"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shell"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3513,6 +3759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yardım"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trợ giúp"
           }
         },
         "zh-Hans" : {
@@ -3599,6 +3851,12 @@
             "value" : "Yardım"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trợ giúp"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3681,6 +3939,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 Yardımı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trợ giúp iTerm2"
           }
         },
         "zh-Hans" : {
@@ -3767,6 +4031,12 @@
             "value" : "Ayarlar…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3849,6 +4119,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hizmetler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch vụ"
           }
         },
         "zh-Hans" : {
@@ -3935,6 +4211,12 @@
             "value" : "Hizmetler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch vụ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4017,6 +4299,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’yi Gizle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ẩn iTerm2"
           }
         },
         "zh-Hans" : {
@@ -4103,6 +4391,12 @@
             "value" : "iTerm2’den Çık"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoát iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4185,6 +4479,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diğerlerini Gizle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ẩn mục khác"
           }
         },
         "zh-Hans" : {
@@ -4271,6 +4571,12 @@
             "value" : "Tümünü Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị tất cả"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4353,6 +4659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kes"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cắt"
           }
         },
         "zh-Hans" : {
@@ -4439,6 +4751,12 @@
             "value" : "Düzen"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sửa"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4521,6 +4839,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Düzen"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sửa"
           }
         },
         "zh-Hans" : {
@@ -4607,6 +4931,12 @@
             "value" : "Tümünü Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn tất cả"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4689,6 +5019,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yapıştır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán"
           }
         },
         "zh-Hans" : {
@@ -4775,6 +5111,12 @@
             "value" : "Arabelleği Temizle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa bộ đệm"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4857,6 +5199,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Günlük"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhật ký"
           }
         },
         "zh-Hans" : {
@@ -4943,6 +5291,12 @@
             "value" : "Günlük"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhật ký"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5025,6 +5379,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2 Hakkında"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giới thiệu về iTerm2"
           }
         },
         "zh-Hans" : {
@@ -5111,6 +5471,12 @@
             "value" : "Profiller"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hồ sơ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5193,6 +5559,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profiller"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hồ sơ"
           }
         },
         "zh-Hans" : {
@@ -5279,6 +5651,12 @@
             "value" : "Terminal Penceresini Kapat"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đóng cửa sổ Terminal"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5361,6 +5739,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmedeki Tüm Bölmeleri Kapat"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đóng tất cả khung trong tab"
           }
         },
         "zh-Hans" : {
@@ -5447,6 +5831,12 @@
             "value" : "Sayfa Yapısı…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thiết lập trang…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5529,6 +5919,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seçili Metni Kaydet…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu văn bản đã chọn…"
           }
         },
         "zh-Hans" : {
@@ -5615,6 +6011,12 @@
             "value" : "Geri Kaydırma Arabelleğini Temizle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa bộ đệm cuộn ngược"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5697,6 +6099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seçimi Bulmak İçin Kullan"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng vùng chọn để tìm"
           }
         },
         "zh-Hans" : {
@@ -5783,6 +6191,12 @@
             "value" : "Bul"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5865,6 +6279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bul"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm"
           }
         },
         "zh-Hans" : {
@@ -5951,6 +6371,12 @@
             "value" : "Sonrakini Bul"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm tiếp"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6033,6 +6459,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öncekini Bul"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm trước"
           }
         },
         "zh-Hans" : {
@@ -6119,6 +6551,12 @@
             "value" : "Seçime Git"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhảy đến vùng chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6201,6 +6639,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Görüntü"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xem"
           }
         },
         "zh-Hans" : {
@@ -6287,6 +6731,12 @@
             "value" : "Görüntü"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xem"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6369,6 +6819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Metni Büyüt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phóng to văn bản"
           }
         },
         "zh-Hans" : {
@@ -6455,6 +6911,12 @@
             "value" : "Metni Küçült"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu nhỏ văn bản"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6537,6 +6999,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yazdır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In"
           }
         },
         "zh-Hans" : {
@@ -6623,6 +7091,12 @@
             "value" : "Ekran"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Màn hình"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6705,6 +7179,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yazdır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In"
           }
         },
         "zh-Hans" : {
@@ -6791,6 +7271,12 @@
             "value" : "Seçim"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vùng chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6873,6 +7359,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arabellek"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bộ đệm"
           }
         },
         "zh-Hans" : {
@@ -6959,6 +7451,12 @@
             "value" : "Önceki Sekmeyi Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn tab trước"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7041,6 +7539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonraki Sekmeyi Seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn tab tiếp theo"
           }
         },
         "zh-Hans" : {
@@ -7127,6 +7631,12 @@
             "value" : "Sekme Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7209,6 +7719,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekme Seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn tab"
           }
         },
         "zh-Hans" : {
@@ -7295,6 +7811,12 @@
             "value" : "Yeni Sekme"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab mới"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7377,6 +7899,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni Pencere"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ mới"
           }
         },
         "zh-Hans" : {
@@ -7463,6 +7991,12 @@
             "value" : "Yeni Pencere İçin Option’a Basın"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhấn Option để mở cửa sổ mới"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7545,6 +8079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni Pencerede Aç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trong cửa sổ mới"
           }
         },
         "zh-Hans" : {
@@ -7631,6 +8171,12 @@
             "value" : "Güncellemeleri Denetle…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra bản cập nhật…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7713,6 +8259,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Büyüt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu/Phóng"
           }
         },
         "zh-Hans" : {
@@ -7799,6 +8351,12 @@
             "value" : "Sıfırla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt lại"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7881,6 +8439,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tam Ekranı Aç/Kapat"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật/tắt toàn màn hình"
           }
         },
         "zh-Hans" : {
@@ -7967,6 +8531,12 @@
             "value" : "Hata Ayıklama Günlüğünü Aç/Kapat"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật/tắt ghi nhật ký gỡ lỗi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8049,6 +8619,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profilleri Aç…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở hồ sơ…"
           }
         },
         "zh-Hans" : {
@@ -8135,6 +8711,12 @@
             "value" : "Oturumu Düzenle…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sửa phiên…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8217,6 +8799,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anında Tekrarı Başlat"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bắt đầu phát lại tức thì"
           }
         },
         "zh-Hans" : {
@@ -8303,6 +8891,12 @@
             "value" : "Geri Al"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoàn tác"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8385,6 +8979,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yinele"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Làm lại"
           }
         },
         "zh-Hans" : {
@@ -8471,6 +9071,12 @@
             "value" : "Yapıştırma Geçmişini Aç…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở lịch sử dán…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8553,6 +9159,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Otomatik Tamamlamayı Aç…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở tự động hoàn thành…"
           }
         },
         "zh-Hans" : {
@@ -8639,6 +9251,12 @@
             "value" : "Özel Yapıştır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán đặc biệt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8721,6 +9339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Özel Yapıştır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán đặc biệt"
           }
         },
         "zh-Hans" : {
@@ -8807,6 +9431,12 @@
             "value" : "Seçimi Yapıştır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán vùng chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8889,6 +9519,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yavaş Yapıştır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán chậm"
           }
         },
         "zh-Hans" : {
@@ -8975,6 +9611,12 @@
             "value" : "Güvenli Klavye Girişi"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhập bằng bàn phím an toàn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9057,6 +9699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencereleri Yatay Düzenle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sắp xếp cửa sổ theo chiều ngang"
           }
         },
         "zh-Hans" : {
@@ -9143,6 +9791,12 @@
             "value" : "Kapat"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đóng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9225,6 +9879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geçerli Profille Dikey Böl"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chia theo chiều dọc với hồ sơ hiện tại"
           }
         },
         "zh-Hans" : {
@@ -9311,6 +9971,12 @@
             "value" : "Geçerli Profille Yatay Böl"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chia theo chiều ngang với hồ sơ hiện tại"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9393,6 +10059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencere Düzenini Kaydet"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu bố cục cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -9479,6 +10151,12 @@
             "value" : "Bölme Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn khung chia"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9561,6 +10239,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölme Seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn khung chia"
           }
         },
         "zh-Hans" : {
@@ -9647,6 +10331,12 @@
             "value" : "Üstteki Bölmeyi Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn khung phía trên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9729,6 +10419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alttaki Bölmeyi Seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn khung phía dưới"
           }
         },
         "zh-Hans" : {
@@ -9815,6 +10511,12 @@
             "value" : "Soldaki Bölmeyi Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn khung bên trái"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9897,6 +10599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sağdaki Bölmeyi Seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn khung bên phải"
           }
         },
         "zh-Hans" : {
@@ -9983,6 +10691,12 @@
             "value" : "Saydamlık Kullan"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng độ trong suốt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10065,6 +10779,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Etkin Bölmeyi Büyüt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phóng to khung đang dùng"
           }
         },
         "zh-Hans" : {
@@ -10151,6 +10871,12 @@
             "value" : "Öğe 3"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 3"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10233,6 +10959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öğe 2"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 2"
           }
         },
         "zh-Hans" : {
@@ -10319,6 +11051,12 @@
             "value" : "Öğe 1"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10401,6 +11139,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "İşaret Koy"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt dấu"
           }
         },
         "zh-Hans" : {
@@ -10487,6 +11231,12 @@
             "value" : "İşarete Git"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhảy đến dấu"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10569,6 +11319,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonraki Bölme"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khung tiếp theo"
           }
         },
         "zh-Hans" : {
@@ -10655,6 +11411,12 @@
             "value" : "Önceki Bölme"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khung trước"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10737,6 +11499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmeleri Tam Ekranda Göster"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị tab ở chế độ toàn màn hình"
           }
         },
         "zh-Hans" : {
@@ -10823,6 +11591,12 @@
             "value" : "Girdiyi Yayınla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phát đầu vào"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10905,6 +11679,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Girdiyi Yayınla"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phát đầu vào"
           }
         },
         "zh-Hans" : {
@@ -10991,6 +11771,12 @@
             "value" : "Girdiyi Tüm Sekmelerdeki Tüm Bölmelere Yayınla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phát đầu vào đến tất cả khung trong tất cả tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11073,6 +11859,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Girdiyi Geçerli Sekmedeki Tüm Bölmelere Yayınla"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phát đầu vào đến tất cả khung trong tab hiện tại"
           }
         },
         "zh-Hans" : {
@@ -11159,6 +11951,12 @@
             "value" : "Girdiyi Yalnızca Geçerli Oturuma Gönder"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉ gửi đầu vào đến phiên hiện tại"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11241,6 +12039,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencere Düzenini Geri Yükle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khôi phục bố cục cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -11327,6 +12131,12 @@
             "value" : "Pencere Düzenini Geri Yükle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khôi phục bố cục cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11409,6 +12219,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "İmleci Bul"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm con trỏ"
           }
         },
         "zh-Hans" : {
@@ -11495,6 +12311,12 @@
             "value" : "Yatay Böl…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chia theo chiều ngang…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11577,6 +12399,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dikey Böl…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chia theo chiều dọc…"
           }
         },
         "zh-Hans" : {
@@ -11663,6 +12491,12 @@
             "value" : "Araç Kemeri"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đai công cụ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11745,6 +12579,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Araç Kemeri"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đai công cụ"
           }
         },
         "zh-Hans" : {
@@ -11831,6 +12671,12 @@
             "value" : "Araç Kemerini Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị đai công cụ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11913,6 +12759,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geçerli Profille Yeni Sekme"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab mới với hồ sơ hiện tại"
           }
         },
         "zh-Hans" : {
@@ -11999,6 +12851,12 @@
             "value" : "Yardımcı İşlem Çalıştır…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chạy tiến trình đồng hành…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12081,6 +12939,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yardımcı İşlemi Durdur"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dừng tiến trình đồng hành"
           }
         },
         "zh-Hans" : {
@@ -12167,6 +13031,12 @@
             "value" : "Kopyala"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12249,6 +13119,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmeyi Yeni Pencereye Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển tab sang cửa sổ mới"
           }
         },
         "zh-Hans" : {
@@ -12335,6 +13211,12 @@
             "value" : "Sekmeyi Sağa Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển tab sang phải"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12419,6 +13301,12 @@
             "value" : "Arka Plan Deseni Göstergesini Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị chỉ báo mẫu nền"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12498,6 +13386,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -12587,6 +13481,12 @@
             "value" : "tmux"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12669,6 +13569,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni tmux Sekmesi"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab tmux mới"
           }
         },
         "zh-Hans" : {
@@ -12755,6 +13661,12 @@
             "value" : "Yeni tmux Penceresi"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ tmux mới"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12837,6 +13749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayrıl"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tách"
           }
         },
         "zh-Hans" : {
@@ -12923,6 +13841,12 @@
             "value" : "Gösterge Paneli"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bảng điều khiển"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13005,6 +13929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Metni Normal Boyuta Getir"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt văn bản về cỡ bình thường"
           }
         },
         "zh-Hans" : {
@@ -13091,6 +14021,12 @@
             "value" : "Metin ve Oturum Boyutunu Geri Yükle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khôi phục cỡ văn bản và phiên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13173,6 +14109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2’yi Varsayılan Terminal Yap"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt iTerm2 làm terminal mặc định"
           }
         },
         "zh-Hans" : {
@@ -13259,6 +14201,12 @@
             "value" : "Terminal’i Varsayılan Terminal Yap"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt Terminal làm terminal mặc định"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13341,6 +14289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geçerli Oturuma Girdi Yayınını Aç/Kapat"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật/tắt phát đầu vào đến phiên hiện tại"
           }
         },
         "zh-Hans" : {
@@ -13427,6 +14381,12 @@
             "value" : "Daha Hızlı Yapıştır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán nhanh hơn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13509,6 +14469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Daha Yavaş Yapıştır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán chậm hơn"
           }
         },
         "zh-Hans" : {
@@ -13595,6 +14561,12 @@
             "value" : "Yavaş Yapıştırmayı Hızlandır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán chậm, nhanh hơn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13677,6 +14649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yavaş Yapıştırmayı Yavaşlat"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán chậm, chậm hơn"
           }
         },
         "zh-Hans" : {
@@ -13763,6 +14741,12 @@
             "value" : "Karakter Kümesini Sıfırla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt lại bộ ký tự"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13847,6 +14831,12 @@
             "value" : "Arşivler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu trữ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13926,6 +14916,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -14015,6 +15011,12 @@
             "value" : "Seçime Ek Açıklama Ekle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chú thích vùng chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14097,6 +15099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seçimi Yakınlaştır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phóng to vùng chọn"
           }
         },
         "zh-Hans" : {
@@ -14183,6 +15191,12 @@
             "value" : "Bölücüyü Sola Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển thanh chia sang trái"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14265,6 +15279,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tümünü Devre Dışı Bırak"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt tất cả"
           }
         },
         "zh-Hans" : {
@@ -14351,6 +15371,12 @@
             "value" : "Oturumu Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển phiên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14433,6 +15459,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oluşturucuyu Göster"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị trình soạn lệnh"
           }
         },
         "zh-Hans" : {
@@ -14519,6 +15551,12 @@
             "value" : "Ayrılmaya Zorla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buộc tách"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14601,6 +15639,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adlandırılmış İşaretler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dấu có tên"
           }
         },
         "zh-Hans" : {
@@ -14687,6 +15731,12 @@
             "value" : "Bul…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14769,6 +15819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kaydı Dışa Aktar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xuất bản ghi"
           }
         },
         "zh-Hans" : {
@@ -14855,6 +15911,12 @@
             "value" : "Başlık Çubuğu Yok"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không có thanh tiêu đề"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14934,6 +15996,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -15023,6 +16091,12 @@
             "value" : "Kırpıntıları Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị mẩu cắt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15105,6 +16179,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eşlik Eden Aygıt Ayarları"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt thiết bị đồng hành"
           }
         },
         "zh-Hans" : {
@@ -15191,6 +16271,12 @@
             "value" : "Kopyalama Modu"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chế độ sao chép"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15273,6 +16359,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturumu Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển phiên"
           }
         },
         "zh-Hans" : {
@@ -15359,6 +16451,12 @@
             "value" : "Sekme"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15441,6 +16539,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seçimin Başlangıcına Kadar Temizle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa đến đầu vùng chọn"
           }
         },
         "zh-Hans" : {
@@ -15527,6 +16631,12 @@
             "value" : "Performans İstatistiklerini Kopyala"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép thống kê hiệu năng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15609,6 +16719,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Betikler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tập lệnh"
           }
         },
         "zh-Hans" : {
@@ -15695,6 +16811,12 @@
             "value" : "Geçerli Pencereyi Düzen Olarak Kaydet"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu cửa sổ hiện tại thành bố cục"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15777,6 +16899,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tetikleyiciler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trình kích hoạt"
           }
         },
         "zh-Hans" : {
@@ -15863,6 +16991,12 @@
             "value" : "İmleç Kılavuzunu Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị vạch dẫn con trỏ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15945,6 +17079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Boyutu Kilitle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa kích thước"
           }
         },
         "zh-Hans" : {
@@ -16031,6 +17171,12 @@
             "value" : "Dosyaya Günlükle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghi nhật ký vào tệp"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16115,6 +17261,12 @@
             "value" : "Dışa Aktar…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xuất…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16194,6 +17346,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -16283,6 +17441,12 @@
             "value" : "İlişkili Metni Raporla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Báo cáo văn bản liên kết"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16365,6 +17529,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni Python Betiği"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tập lệnh Python mới"
           }
         },
         "zh-Hans" : {
@@ -16451,6 +17621,12 @@
             "value" : "Açık Kaynak Lisansları"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giấy phép nguồn mở"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16533,6 +17709,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anında Tekrarı Temizle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa phát lại tức thì"
           }
         },
         "zh-Hans" : {
@@ -16619,6 +17801,12 @@
             "value" : "Yüksekliği Azalt"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giảm chiều cao"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16701,6 +17889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Betikler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tập lệnh"
           }
         },
         "zh-Hans" : {
@@ -16787,6 +17981,12 @@
             "value" : "Betikleri Finder’da Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị tập lệnh trong Finder"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16869,6 +18069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "İçeriği Kaydet…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu nội dung…"
           }
         },
         "zh-Hans" : {
@@ -16955,6 +18161,12 @@
             "value" : "Tümünü Öne Getir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đưa tất cả ra trước"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17037,6 +18249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tümünü Daralt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thu gọn tất cả"
           }
         },
         "zh-Hans" : {
@@ -17123,6 +18341,12 @@
             "value" : "Arşivler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu trữ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17205,6 +18429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencere Düzenini Sekmeler Olarak Geri Yükle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khôi phục bố cục cửa sổ dưới dạng tab"
           }
         },
         "zh-Hans" : {
@@ -17291,6 +18521,12 @@
             "value" : "İmlecin Konumuna Ek Açıklama Ekle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm chú thích tại con trỏ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17373,6 +18609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Etkin Pencere İçin Saydamlığı Devre Dışı Bırak"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt độ trong suốt cho cửa sổ đang dùng"
           }
         },
         "zh-Hans" : {
@@ -17459,6 +18701,12 @@
             "value" : "Ayraçlı Yapıştırma"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán có đánh dấu"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17541,6 +18789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Biçimlendirilmiş JSON ile Değiştir"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay bằng JSON được định dạng"
           }
         },
         "zh-Hans" : {
@@ -17627,6 +18881,12 @@
             "value" : "Öne Getir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đưa ra trước"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17709,6 +18969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yüzen Bölmeyi Yerleştir"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gắn khung nổi vào"
           }
         },
         "zh-Hans" : {
@@ -17795,6 +19061,12 @@
             "value" : "Yüzen Bölmeleri Gizle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ẩn khung nổi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17877,6 +19149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yüzen Bölmeyi Aşağı Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển khung nổi xuống dưới"
           }
         },
         "zh-Hans" : {
@@ -17963,6 +19241,12 @@
             "value" : "Yüzen Bölmeyi Sola Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển khung nổi sang trái"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18045,6 +19329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yüzen Bölmeyi Sağa Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển khung nổi sang phải"
           }
         },
         "zh-Hans" : {
@@ -18131,6 +19421,12 @@
             "value" : "Yüzen Bölmeyi Yukarı Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển khung nổi lên trên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18213,6 +19509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geçerli Profille Yeni Yüzen Bölme"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khung nổi mới với hồ sơ hiện tại"
           }
         },
         "zh-Hans" : {
@@ -18299,6 +19601,12 @@
             "value" : "Yüzen Bölmeler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khung nổi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18381,6 +19689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yüzen Bölmeler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khung nổi"
           }
         },
         "zh-Hans" : {
@@ -18467,6 +19781,12 @@
             "value" : "Arkaya Gönder"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đưa ra sau"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18549,6 +19869,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Günün İpucunu Göster"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị mẹo trong ngày"
           }
         },
         "zh-Hans" : {
@@ -18635,6 +19961,12 @@
             "value" : "Sonraki Ek Açıklama"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chú thích tiếp theo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18714,6 +20046,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -18803,6 +20141,12 @@
             "value" : "Oturumu Sekmeye Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển phiên sang tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18885,6 +20229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekranın Altı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuối màn hình"
           }
         },
         "zh-Hans" : {
@@ -18971,6 +20321,12 @@
             "value" : "Yapıştırırken Sekmeleri Boşluğa Dönüştürmeyi Sor"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hỏi trước khi chuyển tab thành dấu cách khi dán"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19053,6 +20409,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uyarılar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảnh báo"
           }
         },
         "zh-Hans" : {
@@ -19139,6 +20501,12 @@
             "value" : "Denetim Dizileriyle Kopyala"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép kèm chuỗi điều khiển"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19221,6 +20589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencereyi Yeniden Boyutlandır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi kích thước cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -19307,6 +20681,12 @@
             "value" : "Sıfırla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đặt lại"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19389,6 +20769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmeyi Çoğalt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạo bản sao tab"
           }
         },
         "zh-Hans" : {
@@ -19475,6 +20861,12 @@
             "value" : "Sayfayı Yeniden Yükle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tải lại trang"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19557,6 +20949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturumu Pencereye Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển phiên sang cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -19643,6 +21041,12 @@
             "value" : "Tüm Tuşları Kaçış Kodu Olarak Raporla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Báo cáo mọi phím dưới dạng mã thoát"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19725,6 +21129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ham Tuş Raporlama Modu"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chế độ báo cáo phím thô"
           }
         },
         "zh-Hans" : {
@@ -19811,6 +21221,12 @@
             "value" : "İçe Aktar…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhập…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19893,6 +21309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Çok Satırlı Yapıştırmadan Önce Uyar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảnh báo trước khi dán nhiều dòng"
           }
         },
         "zh-Hans" : {
@@ -19979,6 +21401,12 @@
             "value" : "Satır İçi Sohbeti Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị trò chuyện nội tuyến"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20061,6 +21489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arabellek Girdisini Aç/Kapat"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật/tắt đầu vào bộ đệm"
           }
         },
         "zh-Hans" : {
@@ -20147,6 +21581,12 @@
             "value" : "Uzak ana makine iTerm2’yi denetleyebilir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máy chủ từ xa có thể điều khiển iTerm2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20229,6 +21669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayar Denetimlerinin Kesilmesini Denetle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra cắt cụt điều khiển cài đặt"
           }
         },
         "zh-Hans" : {
@@ -20315,6 +21761,12 @@
             "value" : "Tetikleyiciler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trình kích hoạt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20397,6 +21849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seçim Yumuşak Sınırlara Uyar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vùng chọn tôn trọng ranh giới mềm"
           }
         },
         "zh-Hans" : {
@@ -20483,6 +21941,12 @@
             "value" : "Çalışma Grubundan Çık"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thoát nhóm làm việc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20565,6 +22029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Son Komutun Çıktısını Seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn đầu ra của lệnh cuối"
           }
         },
         "zh-Hans" : {
@@ -20651,6 +22121,12 @@
             "value" : "Oturumu Yeniden Başlat"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khởi động lại phiên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20733,6 +22209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Python REPL’i Aç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở Python REPL"
           }
         },
         "zh-Hans" : {
@@ -20819,6 +22301,12 @@
             "value" : "Ekranın Üstü"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đầu màn hình"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20901,6 +22389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tüm Pencereleri Birleştir"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gộp tất cả cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -20987,6 +22481,12 @@
             "value" : "Kısayol Tuşu Penceresini Sabitle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghim cửa sổ phím nóng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21069,6 +22569,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "modifyOtherKeys Modu 2"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys chế độ 2"
           }
         },
         "zh-Hans" : {
@@ -21155,6 +22661,12 @@
             "value" : "Hızlı Aç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở nhanh"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21237,6 +22749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yönet"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quản lý"
           }
         },
         "zh-Hans" : {
@@ -21323,6 +22841,12 @@
             "value" : "Esc Belirsizliğini Gider"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phân biệt Esc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21405,6 +22929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Açılacak Sonucu Seç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn kết quả để mở"
           }
         },
         "zh-Hans" : {
@@ -21491,6 +23021,12 @@
             "value" : "Çok Satırlı Yapıştırma Uyarısını Kabuk İstemiyle Sınırla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chỉ cảnh báo dán nhiều dòng tại dấu nhắc shell"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21573,6 +23109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Etkileşimli Uygulamalarda Tetikleyicileri Etkinleştir"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật trình kích hoạt trong ứng dụng tương tác"
           }
         },
         "zh-Hans" : {
@@ -21659,6 +23201,12 @@
             "value" : "Öğe 2"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 2"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21741,6 +23289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fare Raporlama"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Báo cáo chuột"
           }
         },
         "zh-Hans" : {
@@ -21827,6 +23381,12 @@
             "value" : "İşaretler ve Ek Açıklamalar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dấu và chú thích"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21909,6 +23469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yerleşimi Kilitle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa bố cục"
           }
         },
         "zh-Hans" : {
@@ -21995,6 +23561,12 @@
             "value" : "Konumu Kilitle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa vị trí"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22077,6 +23649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geçerli Profille Yeni Pencere"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ mới với hồ sơ hiện tại"
           }
         },
         "zh-Hans" : {
@@ -22163,6 +23741,12 @@
             "value" : "Oturumu Göm"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chôn phiên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22245,6 +23829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kipli Uyarı Kutusunu Göster"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị hộp cảnh báo phương thức"
           }
         },
         "zh-Hans" : {
@@ -22331,6 +23921,12 @@
             "value" : "Tümünü Etkinleştir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật tất cả"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22413,6 +24009,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonraki İşaret"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dấu tiếp theo"
           }
         },
         "zh-Hans" : {
@@ -22499,6 +24101,12 @@
             "value" : "Pencereleri Düzenle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sắp xếp cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22581,6 +24189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tüm Akıllı Seçim Eşleşmelerini Bul"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm tất cả kết quả khớp của chọn thông minh"
           }
         },
         "zh-Hans" : {
@@ -22667,6 +24281,12 @@
             "value" : "Ses Çal"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phát âm thanh"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22749,6 +24369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Komut Geçmişini Aç…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở lịch sử lệnh…"
           }
         },
         "zh-Hans" : {
@@ -22835,6 +24461,12 @@
             "value" : "Stillerle Kopyala"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép kèm kiểu"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22917,6 +24549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alternatif Ekran"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Màn hình thay thế"
           }
         },
         "zh-Hans" : {
@@ -23003,6 +24641,12 @@
             "value" : "Tam Yükseklik, Ekranın Sağı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toàn chiều cao, bên phải màn hình"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23082,6 +24726,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -23171,6 +24821,12 @@
             "value" : "Standart Tuş Raporlama Modu"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chế độ báo cáo phím tiêu chuẩn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23253,6 +24909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölmeyi Yeniden Boyutlandır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi kích thước khung chia"
           }
         },
         "zh-Hans" : {
@@ -23339,6 +25001,12 @@
             "value" : "Uyarılar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảnh báo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23421,6 +25089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durum Değiştiğinde Bildir"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thông báo khi trạng thái thay đổi"
           }
         },
         "zh-Hans" : {
@@ -23507,6 +25181,12 @@
             "value" : "Sonraki Sekme Grubunu Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn nhóm tab tiếp theo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23589,6 +25269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code Entegrasyonunu Kaldır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gỡ cài đặt tích hợp Claude Code"
           }
         },
         "zh-Hans" : {
@@ -23675,6 +25361,12 @@
             "value" : "Sekme Başlığını Düzenle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sửa tiêu đề tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23757,6 +25449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Düzenler"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bố cục"
           }
         },
         "zh-Hans" : {
@@ -23843,6 +25541,12 @@
             "value" : "Önceki Eş"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thành viên trước"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23925,6 +25629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alternatif Tuşları Raporla"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Báo cáo phím thay thế"
           }
         },
         "zh-Hans" : {
@@ -24011,6 +25721,12 @@
             "value" : "Bölme"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khung chia"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24093,6 +25809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Terminal Durumu"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trạng thái terminal"
           }
         },
         "zh-Hans" : {
@@ -24179,6 +25901,12 @@
             "value" : "Kapatmayı Geri Al"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoàn tác đóng"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24261,6 +25989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "YZ Sohbetleri"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trò chuyện AI"
           }
         },
         "zh-Hans" : {
@@ -24347,6 +26081,12 @@
             "value" : "İleri"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiến tới"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24429,6 +26169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölme Genişliğini Kilitle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa chiều rộng khung chia"
           }
         },
         "zh-Hans" : {
@@ -24515,6 +26261,12 @@
             "value" : "Çalışma Grupları"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhóm làm việc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24597,6 +26349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geçerli Oturumun Arşivini Kaydet…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu bản lưu trữ của phiên hiện tại…"
           }
         },
         "zh-Hans" : {
@@ -24683,6 +26441,12 @@
             "value" : "Seçimi Değiştir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay thế vùng chọn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24762,6 +26526,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -24851,6 +26621,12 @@
             "value" : "Ek Açıklamaları Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị chú thích"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24930,6 +26706,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -25019,6 +26801,12 @@
             "value" : "Yönet"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quản lý"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25101,6 +26889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Öğe 3"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục 3"
           }
         },
         "zh-Hans" : {
@@ -25187,6 +26981,12 @@
             "value" : "Önceki Sekme Grubunu Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn nhóm tab trước"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25269,6 +27069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gömülü Oturumlar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên đã chôn"
           }
         },
         "zh-Hans" : {
@@ -25355,6 +27161,12 @@
             "value" : "Önceki Ek Açıklama"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chú thích trước"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25437,6 +27249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekran Dışı Oturumlardaki İşaretlerde Uyar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảnh báo về dấu trong phiên ngoài màn hình"
           }
         },
         "zh-Hans" : {
@@ -25523,6 +27341,12 @@
             "value" : "Ortalanmış, Başlık Çubuğu Yok"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ở giữa, không có thanh tiêu đề"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25605,6 +27429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code Entegrasyonunu Yükle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt tích hợp Claude Code"
           }
         },
         "zh-Hans" : {
@@ -25691,6 +27521,12 @@
             "value" : "Bildirim Gönder"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đăng thông báo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25773,6 +27609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geçerli Oturum Yayın Kaynağı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên hiện tại là nguồn phát"
           }
         },
         "zh-Hans" : {
@@ -25859,6 +27701,12 @@
             "value" : "Sonraki İşarette Uyar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảnh báo ở dấu tiếp theo"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25941,6 +27789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Genişliği Artır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tăng chiều rộng"
           }
         },
         "zh-Hans" : {
@@ -26027,6 +27881,12 @@
             "value" : "CSI u Modu"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chế độ CSI u"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26109,6 +27969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölücüyü Aşağı Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển thanh chia xuống dưới"
           }
         },
         "zh-Hans" : {
@@ -26195,6 +28061,12 @@
             "value" : "Bölmeyi Yeniden Boyutlandır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi kích thước khung chia"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26277,6 +28149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Claude Code Entegrasyonunu Yeniden Yükle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt lại tích hợp Claude Code"
           }
         },
         "zh-Hans" : {
@@ -26363,6 +28241,12 @@
             "value" : "Kabuk Entegrasyonunu Yükle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt tích hợp shell"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26445,6 +28329,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrele"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lọc"
           }
         },
         "zh-Hans" : {
@@ -26531,6 +28421,12 @@
             "value" : "Tetikleyicileri Düzenle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sửa trình kích hoạt"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26613,6 +28509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölmeyi Duraklat"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạm dừng khung"
           }
         },
         "zh-Hans" : {
@@ -26699,6 +28601,12 @@
             "value" : "Geriye Dönük Hata Ayıklama Günlüklerini Kaydet"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu nhật ký gỡ lỗi hồi cứu"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26781,6 +28689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parçacıklar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đoạn mã"
           }
         },
         "zh-Hans" : {
@@ -26867,6 +28781,12 @@
             "value" : "Geçerli Komutu Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn lệnh hiện tại"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26949,6 +28869,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ekran Görüntüsü Al…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chụp ảnh màn hình…"
           }
         },
         "zh-Hans" : {
@@ -27035,6 +28961,12 @@
             "value" : "Seçimi Yerel Olarak İşle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kết xuất vùng chọn gốc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27117,6 +29049,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oturum Notunu Göster"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị ghi chú phiên"
           }
         },
         "zh-Hans" : {
@@ -27203,6 +29141,12 @@
             "value" : "Parçacıklar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đoạn mã"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27285,6 +29229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencere Başlığını Düzenle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sửa tiêu đề cửa sổ"
           }
         },
         "zh-Hans" : {
@@ -27371,6 +29321,12 @@
             "value" : "Gizlenen Uyarılar…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảnh báo đã ẩn…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27453,6 +29409,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Önceki İşaret"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dấu trước"
           }
         },
         "zh-Hans" : {
@@ -27539,6 +29501,12 @@
             "value" : "Önceden İndirilmiş Python Çalışma Zamanını Yükle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt môi trường chạy Python đã tải về"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27621,6 +29589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölücüyü Sağa Taşı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển thanh chia sang phải"
           }
         },
         "zh-Hans" : {
@@ -27707,6 +29681,12 @@
             "value" : "Sekme"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27789,6 +29769,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dosyaları İndir…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tải tệp về…"
           }
         },
         "zh-Hans" : {
@@ -27875,6 +29861,12 @@
             "value" : "Sekmeyi Sola Taşı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di chuyển tab sang trái"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27957,6 +29949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmeyi Yeni Gruba Ekle…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm tab vào nhóm mới…"
           }
         },
         "zh-Hans" : {
@@ -28043,6 +30041,12 @@
             "value" : "Araç Çubuğunu Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị thanh công cụ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28125,6 +30129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sekmeyi Gruptan Kaldır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa tab khỏi nhóm"
           }
         },
         "zh-Hans" : {
@@ -28211,6 +30221,12 @@
             "value" : "Otomatik Oluşturucu"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trình soạn lệnh tự động"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28293,6 +30309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "YZ Sohbetini Aç…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trò chuyện AI…"
           }
         },
         "zh-Hans" : {
@@ -28379,6 +30401,12 @@
             "value" : "Zaman Damgalarını Göster"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị dấu thời gian"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28461,6 +30489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gelişmiş Yapıştırma…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán nâng cao…"
           }
         },
         "zh-Hans" : {
@@ -28547,6 +30581,12 @@
             "value" : "Pencereleri Düzenle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sắp xếp cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28629,6 +30669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emülasyon Düzeyi"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mức mô phỏng"
           }
         },
         "zh-Hans" : {
@@ -28715,6 +30761,12 @@
             "value" : "Eşleşmeleri Seç"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn kết quả khớp"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28797,6 +30849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seçimi Aç"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở vùng chọn"
           }
         },
         "zh-Hans" : {
@@ -28883,6 +30941,12 @@
             "value" : "Geçmiş"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lịch sử"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28965,6 +31029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arşivi Geri Yükle…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khôi phục bản lưu trữ…"
           }
         },
         "zh-Hans" : {
@@ -29051,6 +31121,12 @@
             "value" : "Pencere Stili"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểu cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29133,6 +31209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tam Genişlik, Ekranın Altı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toàn chiều rộng, cuối màn hình"
           }
         },
         "zh-Hans" : {
@@ -29219,6 +31301,12 @@
             "value" : "Düz Denetim Karakterleri"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Điều khiển nguyên văn"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29301,6 +31389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aramayı Temizle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa tìm kiếm"
           }
         },
         "zh-Hans" : {
@@ -29387,6 +31481,12 @@
             "value" : "Çıktıyı YZ ile Açıkla"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giải thích đầu ra bằng AI"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29469,6 +31569,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Emülasyon Düzeyi"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mức mô phỏng"
           }
         },
         "zh-Hans" : {
@@ -29555,6 +31661,12 @@
             "value" : "URL’leri Bul"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm URL"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29637,6 +31749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Biçimlendirilmiş JSON ile Değiştir"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay bằng JSON được định dạng"
           }
         },
         "zh-Hans" : {
@@ -29723,6 +31841,12 @@
             "value" : "Eylemler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tác vụ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29805,6 +31929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Boyut Değişiklikleri Profili Günceller"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay đổi kích thước cập nhật hồ sơ"
           }
         },
         "zh-Hans" : {
@@ -29891,6 +32021,12 @@
             "value" : "Son Profilleri Dock Menüsünden Kaldır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa hồ sơ gần đây khỏi menu Dock"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29973,6 +32109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gömülü Oturumlar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên đã chôn"
           }
         },
         "zh-Hans" : {
@@ -30059,6 +32201,12 @@
             "value" : "Bağımlılıkları Yönet…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quản lý phần phụ thuộc…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30141,6 +32289,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geri"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quay lại"
           }
         },
         "zh-Hans" : {
@@ -30227,6 +32381,12 @@
             "value" : "Çalışma Grupları"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhóm làm việc"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30309,6 +32469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Düzeni Dosyadan Yükle…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tải bố cục từ tệp…"
           }
         },
         "zh-Hans" : {
@@ -30395,6 +32561,12 @@
             "value" : "Kopyalama Modu Kısayolları"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phím tắt chế độ sao chép"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30477,6 +32649,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölme"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khung chia"
           }
         },
         "zh-Hans" : {
@@ -30563,6 +32741,12 @@
             "value" : "Pencereyi Yeniden Boyutlandır"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi kích thước cửa sổ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30645,6 +32829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tüm Olay Türlerini Raporla"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Báo cáo mọi loại sự kiện"
           }
         },
         "zh-Hans" : {
@@ -30731,6 +32921,12 @@
             "value" : "Tetikleyici Ekle…"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm trình kích hoạt…"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30810,6 +33006,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -30899,6 +33101,12 @@
             "value" : "modifyOtherKeys Modu 1"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys chế độ 1"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30981,6 +33189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Genişliği Azalt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giảm chiều rộng"
           }
         },
         "zh-Hans" : {
@@ -31067,6 +33281,12 @@
             "value" : "Ekranın Sağı"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bên phải màn hình"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31149,6 +33369,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dosyayı Base64 Kodlu Yapıştır"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dán tệp mã hóa Base64"
           }
         },
         "zh-Hans" : {
@@ -31235,6 +33461,12 @@
             "value" : "Son İşarete Kadar Temizle"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa đến dấu cuối"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31317,6 +33549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bölmeleri Eşit Dağıt"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sắp xếp đều các khung chia"
           }
         },
         "zh-Hans" : {
@@ -31403,6 +33641,12 @@
             "value" : "Kaydı İçe Aktar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhập bản ghi"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31485,6 +33729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Uygulama Tuş Takımı"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bàn phím số ứng dụng"
           }
         },
         "zh-Hans" : {
@@ -31571,6 +33821,12 @@
             "value" : "Tam Genişlik, Ekranın Üstü"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toàn chiều rộng, đầu màn hình"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31650,6 +33906,12 @@
           }
         },
         "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -31739,6 +34001,12 @@
             "value" : "VT200"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31821,6 +34089,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bağlantıyı Kes"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ngắt kết nối"
           }
         },
         "zh-Hans" : {
@@ -31907,6 +34181,12 @@
             "value" : "Kabuk İsteminde Satır Sonuyla Biten Tek Satırı Yapıştırmadan Önce Uyar"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảnh báo trước khi dán một dòng kết thúc bằng xuống dòng tại dấu nhắc shell"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31989,6 +34269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Genel Olarak Bul…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tìm toàn cục…"
           }
         },
         "zh-Hans" : {
@@ -32075,6 +34361,12 @@
             "value" : "Büyütülmüş"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phóng to tối đa"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32157,6 +34449,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konsol"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Console"
           }
         },
         "zh-Hans" : {
@@ -32243,6 +34541,12 @@
             "value" : "Geçerli Sekmenin Yanında Yeni Sekme"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab mới cạnh tab hiện tại"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32325,6 +34629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pencere Düzenini Sekmeler Olarak Geri Yükle"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khôi phục bố cục cửa sổ dưới dạng tab"
           }
         },
         "zh-Hans" : {
@@ -32411,6 +34721,12 @@
             "value" : "Base 64 Kodlu Değerle Değiştir"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay bằng giá trị đã mã hóa Base 64"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32493,6 +34809,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yapay Zekâyı Devreye Sok"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kích hoạt trí tuệ nhân tạo"
           }
         },
         "zh-Hans" : {
@@ -32579,6 +34901,12 @@
             "value" : "Oturum"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32663,6 +34991,12 @@
             "value" : "Adlandırılmış İşaretler"
           }
         },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dấu có tên"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32745,6 +35079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonraki Eş"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thành viên tiếp theo"
           }
         },
         "zh-Hans" : {

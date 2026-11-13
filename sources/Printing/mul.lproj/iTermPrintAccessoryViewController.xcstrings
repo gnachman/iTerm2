@@ -71,6 +71,12 @@
             "value": "Siyah beyaz"
           }
         },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đen trắng"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
