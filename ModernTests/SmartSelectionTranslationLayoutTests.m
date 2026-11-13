@@ -30,7 +30,7 @@
 }
 
 + (NSArray<NSString *> *)languages {
-    return @[ @"da", @"de", @"es", @"fr", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ru", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ];
+    return @[ @"da", @"de", @"es", @"fi", @"fr", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ru", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ];
 }
 
 - (void)setUp {

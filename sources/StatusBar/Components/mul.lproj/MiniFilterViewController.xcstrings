@@ -29,6 +29,12 @@
             "value" : "Subcadena que distingue mayúsculas y minúsculas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, huomioi kirjainkoon"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena con mayúsculas inteligentes"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, älykäs kirjainkoko"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Regex que distingue mayúsculas y minúsculas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, huomioi kirjainkoon"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex que no distingue mayúsculas y minúsculas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ei huomioi kirjainkokoa"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Subcadena que no distingue mayúsculas y minúsculas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, ei huomioi kirjainkokoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suodata"
           }
         },
         "fr" : {

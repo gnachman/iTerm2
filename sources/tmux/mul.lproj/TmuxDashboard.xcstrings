@@ -29,6 +29,12 @@
             "value" : "Tablero de tmux"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmuxin hallintapaneeli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sesión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Istunto"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Conectar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liitä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar ventanas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi ikkunoita"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Ventana"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir en ventanas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa ikkunoissa"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Ocultar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kätke"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir en ventanas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa ikkunoissa"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Abrir en pestañas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa välilehdissä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desconectar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Irrota"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Abrir el tablero al conectar si hay ventanas ocultas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa hallintapaneeli liitettäessä, jos kätkettyjä ikkunoita on"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No abrir ventanas al conectar si hay al menos este número de ventanas:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Älä avaa ikkunoita liitettäessä, jos ikkunoita on vähintään tämän verran:"
           }
         },
         "fr" : {

@@ -29,6 +29,12 @@
             "value" : "⌥ Opción"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ optio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fijar ventana de tecla rápida (permanece abierta al perder el foco del teclado)"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiinnitä pikanäppäinikkuna (pysyy auki, kun näppäimistökohdistus menetetään)"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Tecla rápida:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pikanäppäin:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nota: la ventana solo se vuelve a abrir si se cerró porque otra app pasó a estar activa."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Huomaa: ikkuna avataan uudelleen vain, jos se suljettiin, koska toinen sovellus aktivoitui."
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Teclas rápidas adicionales"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisäpikanäppäimet"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Al pulsar la tecla rápida asignada a este perfil, se mostrará u ocultará una ventana dedicada. Cada perfil con una tecla rápida controla su propia ventana de tecla rápida."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun painat tähän profiiliin sidottua pikanäppäintä, oma ikkuna näytetään tai kätketään. Jokainen pikanäppäimellä varustettu profiili ohjaa omaa pikanäppäinikkunaansa."
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "No hacer nada especial"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Älä tee mitään erityistä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -822,6 +864,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -941,6 +989,12 @@
             "value" : "Mostrar esta ventana de tecla rápida"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä tämä pikanäppäinikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes de la ventana de tecla rápida"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pikanäppäinikkunan asetukset"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "⌘ Comando"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ komento"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Otro perfil usa este atajo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Toinen profiili käyttää tätä oikotietä"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "⇧ Mayúsculas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ vaihto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tecla de doble toque:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaksoisnapautusnäppäin:"
           }
         },
         "fr" : {
@@ -1625,6 +1709,12 @@
             "value" : "Reabrir automáticamente al reactivar la app"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa automaattisesti uudelleen sovelluksen aktivoituessa uudelleen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1737,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Otro perfil usa este doble toque"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Toinen profiili käyttää tätä kaksoisnapautusta"
           }
         },
         "fr" : {
@@ -1853,6 +1949,12 @@
             "value" : "Mostrar esta ventana de tecla rápida si no hay otra ventana abierta"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä tämä pikanäppäinikkuna, jos mikään muu ikkuna ei ole auki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Las ventanas flotantes se superponen a otras ventanas, al Dock y a las ventanas en pantalla completa de otras apps (si el espacio de la ventana de tecla rápida está configurado como Todos los espacios)."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kelluvat ikkunat peittävät muut ikkunat, Dockin ja muiden sovellusten koko näytön ikkunat (jos pikanäppäinikkunan työpöytä on asetettu kaikille työpöydille)."
           }
         },
         "fr" : {
@@ -2081,6 +2189,12 @@
             "value" : "Cancelar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2193,6 +2307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Al hacer clic en el icono del Dock:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock-kuvaketta klikattaessa:"
           }
         },
         "fr" : {
@@ -2309,6 +2429,12 @@
             "value" : "Animar al mostrar y ocultar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animoi näyttäminen ja kätkeminen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2421,6 +2547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aceptar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "fr" : {
@@ -2537,6 +2669,12 @@
             "value" : "Aceptar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2649,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ventana flotante"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kelluva ikkuna"
           }
         },
         "fr" : {
@@ -2765,6 +2909,12 @@
             "value" : "^ Control"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ ctrl"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2877,6 +3027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclas rápidas adicionales…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisäpikanäppäimet…"
           }
         },
         "fr" : {

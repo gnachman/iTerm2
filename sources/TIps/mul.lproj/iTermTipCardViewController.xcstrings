@@ -29,6 +29,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -141,6 +147,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Integración con el shell"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Komentotulkki-integraatio"
           }
         },
         "fr": {

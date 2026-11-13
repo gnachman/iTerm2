@@ -29,6 +29,12 @@
             "value" : "Dividir el panel actual XXXmente"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaa nykyinen paneeli XXX"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -143,6 +149,12 @@
             "value" : "Cancelar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -255,6 +267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaa"
           }
         },
         "fr" : {

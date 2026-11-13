@@ -29,6 +29,12 @@
             "value": "Pegando…"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sijoitetaan…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -141,6 +147,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancelar"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kumoa"
           }
         },
         "fr": {

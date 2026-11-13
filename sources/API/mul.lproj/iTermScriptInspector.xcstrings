@@ -29,6 +29,12 @@
             "value" : "Ruta"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Polku"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Firma"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allekirjoitus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspector de scripts"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriptitarkastin"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Sesiones, pestañas y ventanas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Istunnot, välilehdet ja ikkunat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuttujat"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Rol"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rooli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar ruta"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi polku"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Funciones registradas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rekisteröidyt funktiot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arvo"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Copiar ID"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi ID"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1283,6 +1349,12 @@
             "value" : "Nombre del objeto (ID)"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektin nimi (ID)"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1392,6 +1464,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1511,6 +1589,12 @@
             "value" : "Script"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1623,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar valor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi arvo"
           }
         },
         "fr" : {

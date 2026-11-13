@@ -29,6 +29,12 @@
             "value" : "Ignorar en silencio los errores de este comando"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohita tämän komennon virheet hiljaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comando del coproceso que ejecutar:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suoritettava rinnakkaisprosessin komento:"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Aceptar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -371,6 +389,12 @@
             "value" : "Cancelar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Introducir comando"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anna komento"
           }
         },
         "fr" : {

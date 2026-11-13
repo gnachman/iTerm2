@@ -29,6 +29,12 @@
             "value": "iTerm2"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -141,6 +147,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Por George Nachman y colaboradores"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekijä George Nachman ja avustajat"
           }
         },
         "fr": {

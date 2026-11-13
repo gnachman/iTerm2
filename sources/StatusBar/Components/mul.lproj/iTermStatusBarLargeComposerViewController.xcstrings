@@ -29,6 +29,12 @@
             "value" : "Autocompletado con IA activado: todo el texto se envía a la IA"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-täydennys käytössä: kaikki teksti lähetetään AI:lle"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Describe cómo usar el compositor."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kuvaa, miten komentoeditoria käytetään."
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Pulsa ⇧↩ para enviar."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lähetä painamalla ⇧↩."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "IA"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "fr" : {

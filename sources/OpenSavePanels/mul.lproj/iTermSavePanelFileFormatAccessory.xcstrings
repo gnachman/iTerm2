@@ -29,6 +29,12 @@
             "value": "Incluir marcas de tiempo"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sisällytä aikaleimat"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -141,6 +147,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Formato de archivo:"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiedostomuoto:"
           }
         },
         "fr": {

@@ -29,6 +29,12 @@
             "value": "Pegando…"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sijoitetaan…"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",

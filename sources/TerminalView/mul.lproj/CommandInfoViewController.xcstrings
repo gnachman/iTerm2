@@ -29,6 +29,12 @@
             "value" : "/directory"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar directorio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi hakemisto"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "12 bytes"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 tavua"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar la salida del comando"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse komennon tuloste"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "1h 35m"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 t 35 min"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salida:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuloste:"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Copiado"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioitu"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar comando al portapapeles"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi komento leikepöydälle"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Iniciado a las %@"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alkoi: %@"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir comando en el compositor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa komento komentoeditorissa"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Carpeta arrastrable"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vedettävä kansio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "comando"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "komento"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Escribir comando en la terminal"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirjoita komento päätteeseen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Directorio:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hakemisto:"
           }
         },
         "fr" : {
@@ -1625,6 +1709,12 @@
             "value" : "Código de retorno:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paluuarvo:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1737,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escribir directorio en la terminal"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirjoita hakemisto päätteeseen"
           }
         },
         "fr" : {
@@ -1853,6 +1949,12 @@
             "value" : "Tiempo de ejecución:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suoritusaika:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar la salida del comando"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi komennon tuloste"
           }
         },
         "fr" : {
@@ -2081,6 +2189,12 @@
             "value" : "Compartir comando…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaa komento…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2195,6 +2309,12 @@
             "value" : "Comando:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komento:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2304,6 +2424,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -2421,6 +2547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desactivar mostrar el comando fuera de pantalla"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Älä näytä näytön ulkopuolista komentoa"
           }
         },
         "fr" : {

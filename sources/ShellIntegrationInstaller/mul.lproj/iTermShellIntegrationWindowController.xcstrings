@@ -29,6 +29,12 @@
             "value" : "Descarga la última versión. Ejecuta curl | bash"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lataa uusimman version. Suorittaa komennon curl | bash"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continuar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jatka"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Aceptar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "1. Descubrir qué shell usas.\n2. Añadir archivos de script en tu directorio de inicio.\n3. Instalar scripts de utilidades.\n4. Modificar los scripts de inicio de tu shell."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Selvitetään, mitä komentotulkkia käytät.\n2. Lisätään skriptitiedostoja kotihakemistoosi.\n3. Asennetaan apuskriptit.\n4. Muokataan komentotulkkisi käynnistysskriptejä."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atrás"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takaisin"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Las utilidades incluyen scripts para descargar archivos, mostrar imágenes en línea y más. "
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apuohjelmiin kuuluu skriptejä tiedostojen lataamiseen, kuvien näyttämiseen rivin sisällä ja muuhun. "
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atrás"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takaisin"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Continuar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jatka"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Omitir"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohita"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Vista previa del comando"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esikatsele komentoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalación sin internet"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asennus ilman internetiä"
           }
         },
         "fr" : {
@@ -1625,6 +1709,12 @@
             "value" : "Descargar y ejecutar el instalador"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lataa ja suorita asennusohjelma"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1737,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar también las utilidades de iTerm2"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna myös iTerm2:n apuohjelmat"
           }
         },
         "fr" : {
@@ -1853,6 +1949,12 @@
             "value" : "Instalación manual guiada. No requiere descarga."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohjattu manuaalinen asennus. Latausta ei tarvita."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vista previa del comando"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esikatsele komentoa"
           }
         },
         "fr" : {
@@ -2081,6 +2189,12 @@
             "value" : "Continuar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jatka"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2190,6 +2304,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🎉"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🎉"
@@ -2309,6 +2429,12 @@
             "value" : "Vista previa del comando"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esikatsele komentoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2421,6 +2547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atrás"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takaisin"
           }
         },
         "fr" : {
@@ -2537,6 +2669,12 @@
             "value" : "¿Cómo quieres instalar la integración con el shell?\n\nEn este proceso se modificarán los scripts de inicio de tu shell. Este instalador introducirá los comandos en la ventana de la terminal por ti."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Miten haluat asentaa komentotulkki-integraation?\n\nTässä prosessissa komentotulkkisi käynnistysskriptejä muokataan. Tämä asennusohjelma syöttää komennot päätteen ikkunaan puolestasi."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2649,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vista previa del comando"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esikatsele komentoa"
           }
         },
         "fr" : {
@@ -2765,6 +2909,12 @@
             "value" : "¡Instalación completada!"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asennus valmis!"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2877,6 +3027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Se ejecutará el siguiente comando:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä suorittaa seuraavan komennon:\n\ncurl -L https://iterm2.com/shell_integration/v2/install_shell_integration_and_utilities.sh | bash"
           }
         },
         "fr" : {
@@ -2993,6 +3149,12 @@
             "value" : "Crea una pestaña nueva para probarlo.\n\nPara obtener los mejores resultados, instala la integración con el shell en todos los hosts a los que te conectes por ssh."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kokeile luomalla uusi välilehti.\n\nParhaan tuloksen saat asentamalla komentotulkki-integraation kaikille palvelimille, joihin muodostat SSH-yhteyden."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3105,6 +3267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La integración con el shell consiste en scripts que ayudan a tu shell a comunicarse con iTerm2 para que pueda registrar los comandos que ejecutas, tu directorio actual y otros estados. "
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komentotulkki-integraatio koostuu skripteistä, jotka auttavat komentotulkkiasi viestimään iTerm2:n kanssa, jotta se voi seurata suorittamiasi komentoja, nykyistä hakemistoasi ja muuta tilaa. "
           }
         },
         "fr" : {
@@ -3221,6 +3389,12 @@
             "value" : "Instalar integración con el shell"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna komentotulkki-integraatio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3333,6 +3507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
           }
         },
         "fr" : {

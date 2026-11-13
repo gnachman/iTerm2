@@ -29,6 +29,12 @@
             "value" : "Alejar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loitonna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar entorno de ejecución de Python"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna Python-suoritusympäristö"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Mover pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä välilehti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar sesión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monista istunto"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Abrir ubicación…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa sijainti…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar alto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää korkeutta"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Mover pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä välilehti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Informe del foco"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohdistuksen raportointi"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Normal"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normaali"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor hacia arriba"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä jakajaa ylös"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Reemplazar por valor decodificado de Base 64"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaa Base 64 -dekoodatulla arvolla"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sesión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Istunto"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Mover sesión a panel dividido"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä istunto jaettuun paneeliin"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gestor de contraseñas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salasanojen hallinta"
           }
         },
         "fr" : {
@@ -1625,6 +1709,12 @@
             "value" : "Ítem 1"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 1"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1737,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Centrado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keskitetty"
           }
         },
         "fr" : {
@@ -1853,6 +1949,12 @@
             "value" : "Reemplazar selección"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaa valinta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1965,6 +2067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A la izquierda de la pantalla"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytön vasen reuna"
           }
         },
         "fr" : {
@@ -2081,6 +2189,12 @@
             "value" : "Cursor de aplicación"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovelluskohdistin"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2193,6 +2307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disposiciones"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestelyt"
           }
         },
         "fr" : {
@@ -2309,6 +2429,12 @@
             "value" : "Plegar líneas seleccionadas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kutista valitut rivit"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2421,6 +2547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir directorios recientes…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa äskeiset hakemistot…"
           }
         },
         "fr" : {
@@ -2537,6 +2669,12 @@
             "value" : "Pantalla completa"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koko näyttö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2649,6 +2787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Establecer marca con nombre"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aseta nimetty merkki"
           }
         },
         "fr" : {
@@ -2765,6 +2909,12 @@
             "value" : "Acciones"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toiminnot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2877,6 +3027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Capturar fotograma de la GPU"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaappaa GPU-kehys"
           }
         },
         "fr" : {
@@ -2993,6 +3149,12 @@
             "value" : "Marcas y anotaciones"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merkit ja huomautukset"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3105,6 +3267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Altura completa a la izquierda de la pantalla"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koko korkeus, näytön vasen reuna"
           }
         },
         "fr" : {
@@ -3221,6 +3389,12 @@
             "value" : "Duplicar ventana"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monista ikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3333,6 +3507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autocompletar comandos"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komentojen automaattinen täydennys"
           }
         },
         "fr" : {
@@ -3449,6 +3629,12 @@
             "value" : "Estilo de ventana"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikkunan tyyli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3561,6 +3747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disponibilidad del renderizador de GPU"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPU-renderöijän saatavuus"
           }
         },
         "fr" : {
@@ -3677,6 +3869,12 @@
             "value" : "Ventana"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3789,6 +3987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Minimizar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pienennä"
           }
         },
         "fr" : {
@@ -3905,6 +4109,12 @@
             "value" : "Ventana"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4014,6 +4224,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -4133,6 +4349,12 @@
             "value" : "iTerm2"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4245,6 +4467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cambiar perfil en la disposición…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaihda profiilia järjestelyssä…"
           }
         },
         "fr" : {
@@ -4361,6 +4589,12 @@
             "value" : "Shell"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komentotulkki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4473,6 +4707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Definir ancho predeterminado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aseta oletusleveys"
           }
         },
         "fr" : {
@@ -4589,6 +4829,12 @@
             "value" : "Shell"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komentotulkki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4701,6 +4947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayuda"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohje"
           }
         },
         "fr" : {
@@ -4817,6 +5069,12 @@
             "value" : "Ayuda"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohje"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4929,6 +5187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ayuda de iTerm2"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2-ohje"
           }
         },
         "fr" : {
@@ -5045,6 +5309,12 @@
             "value" : "Ajustes…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asetukset…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5157,6 +5427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Servicios"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palvelut"
           }
         },
         "fr" : {
@@ -5273,6 +5549,12 @@
             "value" : "Servicios"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palvelut"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5385,6 +5667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ocultar iTerm2"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kätke iTerm2"
           }
         },
         "fr" : {
@@ -5501,6 +5789,12 @@
             "value" : "Salir de iTerm2"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lopeta iTerm2"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5613,6 +5907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ocultar otros"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kätke muut"
           }
         },
         "fr" : {
@@ -5729,6 +6029,12 @@
             "value" : "Mostrar todo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä kaikki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5841,6 +6147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cortar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leikkaa"
           }
         },
         "fr" : {
@@ -5957,6 +6269,12 @@
             "value" : "Edición"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muokkaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6069,6 +6387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edición"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muokkaa"
           }
         },
         "fr" : {
@@ -6185,6 +6509,12 @@
             "value" : "Seleccionar todo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse kaikki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6297,6 +6627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita"
           }
         },
         "fr" : {
@@ -6413,6 +6749,12 @@
             "value" : "Borrar búfer"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyhjennä puskuri"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6525,6 +6867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Registro"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loki"
           }
         },
         "fr" : {
@@ -6641,6 +6989,12 @@
             "value" : "Registro"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6753,6 +7107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acerca de iTerm2"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tietoja: iTerm2"
           }
         },
         "fr" : {
@@ -6869,6 +7229,12 @@
             "value" : "Perfiles"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiilit"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6981,6 +7347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfiles"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiilit"
           }
         },
         "fr" : {
@@ -7097,6 +7469,12 @@
             "value" : "Cerrar ventana de Terminal"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sulje Terminal-ikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7209,6 +7587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cerrar todos los paneles de la pestaña"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sulje kaikki välilehden paneelit"
           }
         },
         "fr" : {
@@ -7325,6 +7709,12 @@
             "value" : "Ajustar página…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sivun asetukset…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7437,6 +7827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardar texto seleccionado…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallenna valittu teksti…"
           }
         },
         "fr" : {
@@ -7553,6 +7949,12 @@
             "value" : "Borrar búfer de desplazamiento"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyhjennä vierityshistoria"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7665,6 +8067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usar selección para buscar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä valintaa hakuun"
           }
         },
         "fr" : {
@@ -7781,6 +8189,12 @@
             "value" : "Buscar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7893,6 +8307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi"
           }
         },
         "fr" : {
@@ -8009,6 +8429,12 @@
             "value" : "Buscar siguiente"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi seuraava"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8121,6 +8547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar anterior"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi edellinen"
           }
         },
         "fr" : {
@@ -8237,6 +8669,12 @@
             "value" : "Ir a la selección"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirry valintaan"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8349,6 +8787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Visualización"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä"
           }
         },
         "fr" : {
@@ -8465,6 +8909,12 @@
             "value" : "Visualización"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8577,6 +9027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar texto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suurenna tekstiä"
           }
         },
         "fr" : {
@@ -8693,6 +9149,12 @@
             "value" : "Reducir texto"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pienennä tekstiä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8805,6 +9267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imprimir"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tulosta"
           }
         },
         "fr" : {
@@ -8921,6 +9389,12 @@
             "value" : "Pantalla"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näyttö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9033,6 +9507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imprimir"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tulosta"
           }
         },
         "fr" : {
@@ -9149,6 +9629,12 @@
             "value" : "Selección"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valinta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9261,6 +9747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Búfer"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puskuri"
           }
         },
         "fr" : {
@@ -9377,6 +9869,12 @@
             "value" : "Seleccionar pestaña anterior"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse edellinen välilehti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9489,6 +9987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar pestaña siguiente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse seuraava välilehti"
           }
         },
         "fr" : {
@@ -9605,6 +10109,12 @@
             "value" : "Seleccionar pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse välilehti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9717,6 +10227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar pestaña"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse välilehti"
           }
         },
         "fr" : {
@@ -9833,6 +10349,12 @@
             "value" : "Nueva pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi välilehti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9945,6 +10467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva ventana"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi ikkuna"
           }
         },
         "fr" : {
@@ -10061,6 +10589,12 @@
             "value" : "Pulsa Opción para ventana nueva"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paina optiota uutta ikkunaa varten"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10173,6 +10707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir en ventana nueva"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa uudessa ikkunassa"
           }
         },
         "fr" : {
@@ -10289,6 +10829,12 @@
             "value" : "Buscar actualizaciones…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarkista päivitykset…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10401,6 +10947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoomaa"
           }
         },
         "fr" : {
@@ -10517,6 +11069,12 @@
             "value" : "Restablecer"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nollaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10629,6 +11187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar/desactivar pantalla completa"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koko näyttö päälle/pois"
           }
         },
         "fr" : {
@@ -10745,6 +11309,12 @@
             "value" : "Activar/desactivar registro de depuración"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vianmääritysloki päälle/pois"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10857,6 +11427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir perfiles…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa profiilit…"
           }
         },
         "fr" : {
@@ -10973,6 +11549,12 @@
             "value" : "Editar sesión…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muokkaa istuntoa…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11085,6 +11667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Iniciar repetición instantánea"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aloita pikatoisto"
           }
         },
         "fr" : {
@@ -11201,6 +11789,12 @@
             "value" : "Deshacer"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peru"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11313,6 +11907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rehacer"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tee sittenkin"
           }
         },
         "fr" : {
@@ -11429,6 +12029,12 @@
             "value" : "Abrir historial de pegado…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa sijoitushistoria…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11541,6 +12147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir autocompletado…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa automaattinen täydennys…"
           }
         },
         "fr" : {
@@ -11657,6 +12269,12 @@
             "value" : "Pegado especial"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erikoissijoitus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11769,6 +12387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegado especial"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erikoissijoitus"
           }
         },
         "fr" : {
@@ -11885,6 +12509,12 @@
             "value" : "Pegar selección"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita valinta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11997,6 +12627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar lentamente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita hitaasti"
           }
         },
         "fr" : {
@@ -12113,6 +12749,12 @@
             "value" : "Entrada segura de teclado"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suojattu näppäimistösyöttö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12225,6 +12867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organizar ventanas horizontalmente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestä ikkunat vaakasuunnassa"
           }
         },
         "fr" : {
@@ -12341,6 +12989,12 @@
             "value" : "Cerrar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sulje"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12453,6 +13107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir verticalmente con el perfil actual"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaa pystysuunnassa nykyisellä profiililla"
           }
         },
         "fr" : {
@@ -12569,6 +13229,12 @@
             "value" : "Dividir horizontalmente con el perfil actual"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaa vaakasuunnassa nykyisellä profiililla"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12681,6 +13347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardar disposición de ventanas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallenna ikkunajärjestely"
           }
         },
         "fr" : {
@@ -12797,6 +13469,12 @@
             "value" : "Seleccionar panel dividido"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse jaettu paneeli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12909,6 +13587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar panel dividido"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse jaettu paneeli"
           }
         },
         "fr" : {
@@ -13025,6 +13709,12 @@
             "value" : "Seleccionar panel de arriba"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse yläpuolinen paneeli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13137,6 +13827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar panel de abajo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse alapuolinen paneeli"
           }
         },
         "fr" : {
@@ -13253,6 +13949,12 @@
             "value" : "Seleccionar panel de la izquierda"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse vasemmanpuoleinen paneeli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13365,6 +14067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seleccionar panel de la derecha"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse oikeanpuoleinen paneeli"
           }
         },
         "fr" : {
@@ -13481,6 +14189,12 @@
             "value" : "Usar transparencia"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä läpinäkyvyyttä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13593,6 +14307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maximizar panel activo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suurenna aktiivinen paneeli"
           }
         },
         "fr" : {
@@ -13709,6 +14429,12 @@
             "value" : "Ítem 3"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 3"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13821,6 +14547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 2"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 2"
           }
         },
         "fr" : {
@@ -13937,6 +14669,12 @@
             "value" : "Ítem 1"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 1"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14049,6 +14787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Establecer marca"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aseta merkki"
           }
         },
         "fr" : {
@@ -14165,6 +14909,12 @@
             "value" : "Ir a la marca"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirry merkkiin"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14277,6 +15027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panel siguiente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuraava paneeli"
           }
         },
         "fr" : {
@@ -14393,6 +15149,12 @@
             "value" : "Panel anterior"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edellinen paneeli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14505,6 +15267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar pestañas en pantalla completa"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä välilehdet koko näytön tilassa"
           }
         },
         "fr" : {
@@ -14621,6 +15389,12 @@
             "value" : "Transmitir entrada"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syötteen monilähetys"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14733,6 +15507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syötteen monilähetys"
           }
         },
         "fr" : {
@@ -14849,6 +15629,12 @@
             "value" : "Transmitir entrada a todos los paneles de todas las pestañas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lähetä syöte kaikkiin paneeleihin kaikissa välilehdissä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14961,6 +15747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transmitir entrada a todos los paneles de la pestaña actual"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lähetä syöte kaikkiin paneeleihin nykyisessä välilehdessä"
           }
         },
         "fr" : {
@@ -15077,6 +15869,12 @@
             "value" : "Enviar entrada solo a la sesión actual"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lähetä syöte vain nykyiseen istuntoon"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15189,6 +15987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar disposición de ventanas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palauta ikkunajärjestely"
           }
         },
         "fr" : {
@@ -15305,6 +16109,12 @@
             "value" : "Restaurar disposición de ventanas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palauta ikkunajärjestely"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15417,6 +16227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar cursor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi kohdistin"
           }
         },
         "fr" : {
@@ -15533,6 +16349,12 @@
             "value" : "Dividir horizontalmente…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaa vaakasuunnassa…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15645,6 +16467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dividir verticalmente…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaa pystysuunnassa…"
           }
         },
         "fr" : {
@@ -15761,6 +16589,12 @@
             "value" : "Caja de herramientas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Työkaluvyö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15873,6 +16707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Caja de herramientas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Työkaluvyö"
           }
         },
         "fr" : {
@@ -15989,6 +16829,12 @@
             "value" : "Mostrar caja de herramientas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä työkaluvyö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16101,6 +16947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva pestaña con el perfil actual"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi välilehti nykyisellä profiililla"
           }
         },
         "fr" : {
@@ -16217,6 +17069,12 @@
             "value" : "Ejecutar coproceso…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suorita rinnakkaisprosessi…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16329,6 +17187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detener coproceso"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pysäytä rinnakkaisprosessi"
           }
         },
         "fr" : {
@@ -16445,6 +17309,12 @@
             "value" : "Copiar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16557,6 +17427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover pestaña a nueva ventana"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä välilehti uuteen ikkunaan"
           }
         },
         "fr" : {
@@ -16673,6 +17549,12 @@
             "value" : "Mover pestaña a la derecha"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä välilehteä oikealle"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16787,6 +17669,12 @@
             "value" : "Mostrar indicador de patrón de fondo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä taustakuvion ilmaisin"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16896,6 +17784,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -17015,6 +17909,12 @@
             "value" : "tmux"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17127,6 +18027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nueva pestaña de tmux"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi tmux-välilehti"
           }
         },
         "fr" : {
@@ -17243,6 +18149,12 @@
             "value" : "Nueva ventana de tmux"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi tmux-ikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17355,6 +18267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desconectar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Irrota"
           }
         },
         "fr" : {
@@ -17471,6 +18389,12 @@
             "value" : "Tablero"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallintapaneeli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17583,6 +18507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tamaño normal del texto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekstin normaalikoko"
           }
         },
         "fr" : {
@@ -17699,6 +18629,12 @@
             "value" : "Restaurar tamaño del texto y de la sesión"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palauta tekstin ja istunnon koko"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17811,6 +18747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hacer de iTerm2 la terminal predeterminada"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aseta iTerm2 oletuspäätteeksi"
           }
         },
         "fr" : {
@@ -17927,6 +18869,12 @@
             "value" : "Hacer de Terminal la terminal predeterminada"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aseta Terminal oletuspäätteeksi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18039,6 +18987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar/desactivar transmisión de entrada a la sesión actual"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nykyisen istunnon syötteen monilähetys päälle/pois"
           }
         },
         "fr" : {
@@ -18155,6 +19109,12 @@
             "value" : "Pegar más rápido"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita nopeammin"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18267,6 +19227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar más despacio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita hitaammin"
           }
         },
         "fr" : {
@@ -18383,6 +19349,12 @@
             "value" : "Pegar despacio más rápido"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita hitaasti nopeammin"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18495,6 +19467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar despacio más despacio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita hitaasti hitaammin"
           }
         },
         "fr" : {
@@ -18611,6 +19589,12 @@
             "value" : "Restablecer juego de caracteres"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nollaa merkistö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18725,6 +19709,12 @@
             "value" : "Archivos"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arkistot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18834,6 +19824,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -18953,6 +19949,12 @@
             "value" : "Anotar selección"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää huomautus valintaan"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19065,6 +20067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ampliar selección"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoomaa valintaan"
           }
         },
         "fr" : {
@@ -19181,6 +20189,12 @@
             "value" : "Mover divisor hacia la izquierda"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä jakajaa vasemmalle"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19293,6 +20307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desactivar todo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista kaikki käytöstä"
           }
         },
         "fr" : {
@@ -19409,6 +20429,12 @@
             "value" : "Mover sesión"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä istunto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19521,6 +20547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar compositor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä komentoeditori"
           }
         },
         "fr" : {
@@ -19637,6 +20669,12 @@
             "value" : "Forzar desconexión"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pakota irrotus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19749,6 +20787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas con nombre"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimetyt merkit"
           }
         },
         "fr" : {
@@ -19865,6 +20909,12 @@
             "value" : "Buscar…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19977,6 +21027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportar grabación"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vie tallenne"
           }
         },
         "fr" : {
@@ -20093,6 +21149,12 @@
             "value" : "Sin barra de título"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ei otsikkopalkkia"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20202,6 +21264,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -20321,6 +21389,12 @@
             "value" : "Mostrar recortes"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä leikkeet"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20433,6 +21507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajustes del dispositivo complementario"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumppanilaitteen asetukset"
           }
         },
         "fr" : {
@@ -20549,6 +21629,12 @@
             "value" : "Modo de copia"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiointitila"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20661,6 +21747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sesión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä istunto"
           }
         },
         "fr" : {
@@ -20777,6 +21869,12 @@
             "value" : "Pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välilehti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20889,6 +21987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar hasta el inicio de la selección"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyhjennä valinnan alkuun asti"
           }
         },
         "fr" : {
@@ -21005,6 +22109,12 @@
             "value" : "Copiar estadísticas de rendimiento"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi suorituskykytilastot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21117,6 +22227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scripts"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriptit"
           }
         },
         "fr" : {
@@ -21233,6 +22349,12 @@
             "value" : "Guardar ventana actual como disposición"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallenna nykyinen ikkuna järjestelynä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21345,6 +22467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disparadores"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käynnistimet"
           }
         },
         "fr" : {
@@ -21461,6 +22589,12 @@
             "value" : "Mostrar guía del cursor"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä kohdistinviiva"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21573,6 +22707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear tamaño"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lukitse koko"
           }
         },
         "fr" : {
@@ -21689,6 +22829,12 @@
             "value" : "Registrar en archivo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirjaa tiedostoon"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21801,6 +22947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exportar…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vie…"
           }
         },
         "fr" : {
@@ -21917,6 +23069,12 @@
             "value" : "Web"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verkko"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22029,6 +23187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Informar de texto asociado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportoi liittyvä teksti"
           }
         },
         "fr" : {
@@ -22145,6 +23309,12 @@
             "value" : "Nuevo script de Python"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi Python-skripti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22257,6 +23427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Licencias de código abierto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avoimen lähdekoodin lisenssit"
           }
         },
         "fr" : {
@@ -22373,6 +23549,12 @@
             "value" : "Borrar repetición instantánea"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyhjennä pikatoisto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22485,6 +23667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reducir alto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vähennä korkeutta"
           }
         },
         "fr" : {
@@ -22601,6 +23789,12 @@
             "value" : "Scripts"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriptit"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22713,6 +23907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar scripts en Finder"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä skriptit Finderissa"
           }
         },
         "fr" : {
@@ -22829,6 +24029,12 @@
             "value" : "Guardar contenido…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallenna sisältö…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22941,6 +24147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Traer todo al frente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuo kaikki eteen"
           }
         },
         "fr" : {
@@ -23057,6 +24269,12 @@
             "value" : "Plegar todo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kutista kaikki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23169,6 +24387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Archivos"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arkistot"
           }
         },
         "fr" : {
@@ -23285,6 +24509,12 @@
             "value" : "Restaurar disposición de ventanas como pestañas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palauta ikkunajärjestely välilehtinä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23397,6 +24627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Añadir anotación en el cursor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää huomautus kohdistimen kohdalle"
           }
         },
         "fr" : {
@@ -23513,6 +24749,12 @@
             "value" : "Desactivar transparencia en la ventana activa"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista läpinäkyvyys käytöstä aktiivisessa ikkunassa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23627,6 +24869,12 @@
             "value" : "Pegado entre delimitadores"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sulkeistettu sijoitus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23739,6 +24987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reemplazar por JSON con formato legible"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaa muotoillulla JSON:lla"
           }
         },
         "fr" : {
@@ -23933,6 +25187,12 @@
             "value" : "Anbring forrest"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuo eteen"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24045,6 +25305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Forankr flydende rude"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telakoi kelluva paneeli"
           }
         },
         "nb" : {
@@ -24161,6 +25427,12 @@
             "value" : "Skjul flydende ruder"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kätke kelluvat paneelit"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24273,6 +25545,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flyt flydende rude ned"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä kelluvaa paneelia alas"
           }
         },
         "nb" : {
@@ -24389,6 +25667,12 @@
             "value" : "Flyt flydende rude til venstre"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä kelluvaa paneelia vasemmalle"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24501,6 +25785,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flyt flydende rude til højre"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä kelluvaa paneelia oikealle"
           }
         },
         "nb" : {
@@ -24617,6 +25907,12 @@
             "value" : "Flyt flydende rude op"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä kelluvaa paneelia ylös"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24729,6 +26025,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ny flydende rude med aktuel profil"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi kelluva paneeli nykyisellä profiililla"
           }
         },
         "nb" : {
@@ -24845,6 +26147,12 @@
             "value" : "Flydende ruder"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kelluvat paneelit"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24957,6 +26265,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flydende ruder"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kelluvat paneelit"
           }
         },
         "nb" : {
@@ -25073,6 +26387,12 @@
             "value" : "Anbring bagest"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vie taakse"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25107,6 +26427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar consejo del día"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä päivän vinkki"
           }
         },
         "fr" : {
@@ -25223,6 +26549,12 @@
             "value" : "Anotación siguiente"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuraava huomautus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25335,6 +26667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cabina"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
           }
         },
         "fr" : {
@@ -25451,6 +26789,12 @@
             "value" : "Mover sesión a pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä istunto välilehteen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25563,6 +26907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte inferior de la pantalla"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytön alareuna"
           }
         },
         "fr" : {
@@ -25679,6 +27029,12 @@
             "value" : "Preguntar si convertir tabuladores en espacios al pegar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kysy sarkainten muuntamisesta välilyönneiksi sijoitettaessa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25791,6 +27147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varoitukset"
           }
         },
         "fr" : {
@@ -25907,6 +27269,12 @@
             "value" : "Copiar con secuencias de control"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi ohjaussarjoineen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26019,6 +27387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cambiar tamaño de la ventana"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuta ikkunan kokoa"
           }
         },
         "fr" : {
@@ -26135,6 +27509,12 @@
             "value" : "Restablecer"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nollaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26247,6 +27627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicar pestaña"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monista välilehti"
           }
         },
         "fr" : {
@@ -26363,6 +27749,12 @@
             "value" : "Recargar página"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lataa sivu uudelleen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26475,6 +27867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover sesión a ventana"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä istunto ikkunaan"
           }
         },
         "fr" : {
@@ -26591,6 +27989,12 @@
             "value" : "Informar de todas las teclas como códigos de escape"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportoi kaikki näppäimet escape-koodeina"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26703,6 +28107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modo de informe de teclas sin procesar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raakanäppäinten raportointitila"
           }
         },
         "fr" : {
@@ -26819,6 +28229,12 @@
             "value" : "Importar…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuo…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26931,6 +28347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avisar antes de pegar varias líneas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varoita ennen usean rivin sijoitusta"
           }
         },
         "fr" : {
@@ -27047,6 +28469,12 @@
             "value" : "Mostrar chat en línea"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä rivinsisäinen keskustelu"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27161,6 +28589,12 @@
             "value" : "Activar/desactivar entrada en búfer"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puskurisyöte päälle/pois"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27273,6 +28707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "El host remoto puede controlar iTerm2"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etäpalvelin voi ohjata iTerm2:ta"
           }
         },
         "fr" : {
@@ -27467,6 +28907,12 @@
             "value" : "Kontroller afkortning af indstillingskontroller"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarkista asetusten ohjainten typistyminen"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27501,6 +28947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disparadores"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käynnistimet"
           }
         },
         "fr" : {
@@ -27617,6 +29069,12 @@
             "value" : "La selección respeta los límites flexibles"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valinta noudattaa pehmeitä rajoja"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27729,6 +29187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Salir del grupo de trabajo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poistu työryhmästä"
           }
         },
         "fr" : {
@@ -27845,6 +29309,12 @@
             "value" : "Seleccionar salida del último comando"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse viimeisen komennon tuloste"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27957,6 +29427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reiniciar sesión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käynnistä istunto uudelleen"
           }
         },
         "fr" : {
@@ -28073,6 +29549,12 @@
             "value" : "Abrir Python REPL"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa Python REPL"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28185,6 +29667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parte superior de la pantalla"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytön yläreuna"
           }
         },
         "fr" : {
@@ -28301,6 +29789,12 @@
             "value" : "Combinar todas las ventanas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yhdistä kaikki ikkunat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28413,6 +29907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fijar ventana de tecla rápida"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiinnitä pikanäppäinikkuna"
           }
         },
         "fr" : {
@@ -28529,6 +30029,12 @@
             "value" : "modifyOtherKeys modo 2"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys-tila 2"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28641,6 +30147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir rápidamente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa nopeasti"
           }
         },
         "fr" : {
@@ -28757,6 +30269,12 @@
             "value" : "Gestionar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallitse"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28869,6 +30387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desambiguar Esc"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erottele esc"
           }
         },
         "fr" : {
@@ -28985,6 +30509,12 @@
             "value" : "Elegir resultado para abrir"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse avattava tulos"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29097,6 +30627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limitar aviso de pegado de varias líneas al prompt del shell"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rajoita usean rivin sijoitusvaroitus komentokehotteeseen"
           }
         },
         "fr" : {
@@ -29213,6 +30749,12 @@
             "value" : "Activar disparadores en apps interactivas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ota käynnistimet käyttöön interaktiivisissa sovelluksissa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29325,6 +30867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 2"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 2"
           }
         },
         "fr" : {
@@ -29441,6 +30989,12 @@
             "value" : "Informe del ratón"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiiren raportointi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29553,6 +31107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marcas y anotaciones"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merkit ja huomautukset"
           }
         },
         "fr" : {
@@ -29669,6 +31229,12 @@
             "value" : "Bloquear diseño"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lukitse asettelu"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29781,6 +31347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear ubicación"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lukitse sijainti"
           }
         },
         "fr" : {
@@ -29897,6 +31469,12 @@
             "value" : "Nueva ventana con el perfil actual"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi ikkuna nykyisellä profiililla"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30009,6 +31587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enterrar sesión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hautaa istunto"
           }
         },
         "fr" : {
@@ -30125,6 +31709,12 @@
             "value" : "Mostrar cuadro de alerta modal"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä modaalinen varoitusikkuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30237,6 +31827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar todo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ota kaikki käyttöön"
           }
         },
         "fr" : {
@@ -30353,6 +31949,12 @@
             "value" : "Marca siguiente"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuraava merkki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30465,6 +32067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organizar ventanas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestä ikkunat"
           }
         },
         "fr" : {
@@ -30581,6 +32189,12 @@
             "value" : "Buscar todas las coincidencias de selección inteligente"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi kaikki älykkään valinnan osumat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30693,6 +32307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reproducir un sonido"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toista ääni"
           }
         },
         "fr" : {
@@ -30809,6 +32429,12 @@
             "value" : "Abrir historial de comandos…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa komentohistoria…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30921,6 +32547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiar con estilos"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopioi tyyleineen"
           }
         },
         "fr" : {
@@ -31037,6 +32669,12 @@
             "value" : "Pantalla alternativa"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaihtoehtoinen näyttö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31151,6 +32789,12 @@
             "value" : "Altura completa a la derecha de la pantalla"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koko korkeus, näytön oikea reuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31260,6 +32904,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -31379,6 +33029,12 @@
             "value" : "Modo de informe de teclas estándar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tavallinen näppäinten raportointitila"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31491,6 +33147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cambiar tamaño del panel dividido"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuta jaetun paneelin kokoa"
           }
         },
         "fr" : {
@@ -31607,6 +33269,12 @@
             "value" : "Alertas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varoitukset"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31719,6 +33387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notificar al cambiar el estado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilmoita tilan muuttuessa"
           }
         },
         "fr" : {
@@ -31835,6 +33509,12 @@
             "value" : "Seleccionar grupo de pestañas siguiente"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse seuraava välilehtiryhmä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31947,6 +33627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desinstalar integración con Claude Code"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista Claude Code -integraation asennus"
           }
         },
         "fr" : {
@@ -32063,6 +33749,12 @@
             "value" : "Editar título de la pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muokkaa välilehden otsikkoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32175,6 +33867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disposiciones"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestelyt"
           }
         },
         "fr" : {
@@ -32291,6 +33989,12 @@
             "value" : "Par anterior"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edellinen jäsen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32403,6 +34107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Informar de teclas alternativas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportoi vaihtoehtoiset näppäimet"
           }
         },
         "fr" : {
@@ -32519,6 +34229,12 @@
             "value" : "Panel dividido"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaettu paneeli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32631,6 +34347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Estado de la terminal"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Päätteen tila"
           }
         },
         "fr" : {
@@ -32747,6 +34469,12 @@
             "value" : "Deshacer cierre"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peru sulkeminen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32859,6 +34587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chats de IA"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI-keskustelut"
           }
         },
         "fr" : {
@@ -32975,6 +34709,12 @@
             "value" : "Adelante"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eteenpäin"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33087,6 +34827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear ancho del panel dividido"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lukitse jaetun paneelin leveys"
           }
         },
         "fr" : {
@@ -33203,6 +34949,12 @@
             "value" : "Grupos de trabajo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Työryhmät"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33315,6 +35067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardar archivo de la sesión actual…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallenna nykyisen istunnon arkisto…"
           }
         },
         "fr" : {
@@ -33431,6 +35189,12 @@
             "value" : "Reemplazar selección"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaa valinta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33540,6 +35304,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -33659,6 +35429,12 @@
             "value" : "Mostrar anotaciones"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä huomautukset"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33768,6 +35544,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -33887,6 +35669,12 @@
             "value" : "Gestionar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallitse"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33999,6 +35787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 3"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 3"
           }
         },
         "fr" : {
@@ -34115,6 +35909,12 @@
             "value" : "Seleccionar grupo de pestañas anterior"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse edellinen välilehtiryhmä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34227,6 +36027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sesiones enterradas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haudatut istunnot"
           }
         },
         "fr" : {
@@ -34343,6 +36149,12 @@
             "value" : "Anotación anterior"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edellinen huomautus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34455,6 +36267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertar sobre marcas en sesiones fuera de pantalla"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varoita merkeistä ruudun ulkopuolisissa istunnoissa"
           }
         },
         "fr" : {
@@ -34649,6 +36467,12 @@
             "value" : "Centreret, ingen titellinje"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keskitetty, ei otsikkopalkkia"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34683,6 +36507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalar integración con Claude Code"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna Claude Code -integraatio"
           }
         },
         "fr" : {
@@ -34799,6 +36629,12 @@
             "value" : "Publicar notificación"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lähetä ilmoitus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34911,6 +36747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La sesión actual es el origen de la transmisión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nykyinen istunto on monilähetyksen lähde"
           }
         },
         "fr" : {
@@ -35027,6 +36869,12 @@
             "value" : "Alertar en la siguiente marca"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varoita seuraavasta merkistä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35139,6 +36987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aumentar ancho"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää leveyttä"
           }
         },
         "fr" : {
@@ -35255,6 +37109,12 @@
             "value" : "Modo CSI u"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSI u -tila"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35367,6 +37227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor hacia abajo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä jakajaa alas"
           }
         },
         "fr" : {
@@ -35483,6 +37349,12 @@
             "value" : "Cambiar tamaño del panel dividido"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuta jaetun paneelin kokoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35595,6 +37467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reinstalar integración con Claude Code"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna Claude Code -integraatio uudelleen"
           }
         },
         "fr" : {
@@ -35711,6 +37589,12 @@
             "value" : "Instalar integración con el shell"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna komentotulkki-integraatio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35823,6 +37707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suodata"
           }
         },
         "fr" : {
@@ -35939,6 +37829,12 @@
             "value" : "Editar disparadores"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muokkaa käynnistimiä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36051,6 +37947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar panel"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keskeytä paneeli"
           }
         },
         "fr" : {
@@ -36167,6 +38069,12 @@
             "value" : "Guardar registros de depuración retrospectivos"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tallenna takautuvat vianmäärityslokit"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36279,6 +38187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fragmentos"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katkelmat"
           }
         },
         "fr" : {
@@ -36395,6 +38309,12 @@
             "value" : "Seleccionar comando actual"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse nykyinen komento"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36507,6 +38427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hacer captura de pantalla…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ota kuvakaappaus…"
           }
         },
         "fr" : {
@@ -36623,6 +38549,12 @@
             "value" : "Renderizar selección de forma nativa"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderöi valinta natiivisti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36735,6 +38667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostrar nota de la sesión"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä istunnon muistiinpano"
           }
         },
         "fr" : {
@@ -36851,6 +38789,12 @@
             "value" : "Fragmentos"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katkelmat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36963,6 +38907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar título de la ventana"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muokkaa ikkunan otsikkoa"
           }
         },
         "fr" : {
@@ -37079,6 +39029,12 @@
             "value" : "Alertas suprimidas…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaimennetut varoitukset…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37191,6 +39147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marca anterior"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edellinen merkki"
           }
         },
         "fr" : {
@@ -37307,6 +39269,12 @@
             "value" : "Instalar entorno de ejecución de Python ya descargado"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna jo ladattu Python-suoritusympäristö"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37419,6 +39387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mover divisor hacia la derecha"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä jakajaa oikealle"
           }
         },
         "fr" : {
@@ -37535,6 +39509,12 @@
             "value" : "Pestaña"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välilehti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37647,6 +39627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Descargar archivos…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lataa tiedostoja…"
           }
         },
         "fr" : {
@@ -37763,6 +39749,12 @@
             "value" : "Mover pestaña a la izquierda"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siirrä välilehteä vasemmalle"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37875,6 +39867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Añadir pestaña a nuevo grupo…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää välilehti uuteen ryhmään…"
           }
         },
         "fr" : {
@@ -37991,6 +39989,12 @@
             "value" : "Mostrar barra de herramientas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä työkalupalkki"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38103,6 +40107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitar pestaña del grupo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista välilehti ryhmästä"
           }
         },
         "fr" : {
@@ -38219,6 +40229,12 @@
             "value" : "Compositor automático"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaattinen komentoeditori"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38331,6 +40347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir chat de IA…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa AI-keskustelu…"
           }
         },
         "fr" : {
@@ -38447,6 +40469,12 @@
             "value" : "Mostrar marcas de tiempo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytä aikaleimat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38559,6 +40587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegado avanzado…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edistynyt sijoitus…"
           }
         },
         "fr" : {
@@ -38675,6 +40709,12 @@
             "value" : "Organizar ventanas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Järjestä ikkunat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38787,6 +40827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nivel de emulación"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emulointitaso"
           }
         },
         "fr" : {
@@ -38903,6 +40949,12 @@
             "value" : "Seleccionar coincidencias"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse osumat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39015,6 +41067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir selección"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa valinta"
           }
         },
         "fr" : {
@@ -39131,6 +41189,12 @@
             "value" : "Historial"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historia"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39243,6 +41307,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar archivo…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palauta arkisto…"
           }
         },
         "fr" : {
@@ -39359,6 +41429,12 @@
             "value" : "Estilo de ventana"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikkunan tyyli"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39471,6 +41547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ancho completo en la parte inferior de la pantalla"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koko leveys näytön alareunassa"
           }
         },
         "fr" : {
@@ -39587,6 +41669,12 @@
             "value" : "Controles literales"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kirjaimelliset ohjausmerkit"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39699,6 +41787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar búsqueda"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyhjennä haku"
           }
         },
         "fr" : {
@@ -39815,6 +41909,12 @@
             "value" : "Explicar salida con IA"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selitä tuloste AI:lla"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39927,6 +42027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nivel de emulación"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emulointitaso"
           }
         },
         "fr" : {
@@ -40043,6 +42149,12 @@
             "value" : "Buscar URLs"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi URL-osoitteita"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40155,6 +42267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reemplazar por JSON con formato legible"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaa muotoillulla JSON:lla"
           }
         },
         "fr" : {
@@ -40271,6 +42389,12 @@
             "value" : "Acciones"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toiminnot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40383,6 +42507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Los cambios de tamaño actualizan el perfil"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koon muutokset päivittävät profiilin"
           }
         },
         "fr" : {
@@ -40499,6 +42629,12 @@
             "value" : "Eliminar perfiles recientes del menú del Dock"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista viimeisimmät profiilit Dock-valikosta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40611,6 +42747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sesiones enterradas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haudatut istunnot"
           }
         },
         "fr" : {
@@ -40727,6 +42869,12 @@
             "value" : "Gestionar dependencias…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallitse riippuvuuksia…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40839,6 +42987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atrás"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takaisin"
           }
         },
         "fr" : {
@@ -40955,6 +43109,12 @@
             "value" : "Grupos de trabajo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Työryhmät"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41067,6 +43227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cargar disposición desde archivo…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lataa järjestely tiedostosta…"
           }
         },
         "fr" : {
@@ -41183,6 +43349,12 @@
             "value" : "Atajos del modo de copia"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiointitilan oikotiet"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41295,6 +43467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Panel dividido"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jaettu paneeli"
           }
         },
         "fr" : {
@@ -41411,6 +43589,12 @@
             "value" : "Cambiar tamaño de la ventana"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuta ikkunan kokoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41523,6 +43707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Informar de todos los tipos de eventos"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raportoi kaikki tapahtumatyypit"
           }
         },
         "fr" : {
@@ -41639,6 +43829,12 @@
             "value" : "Añadir disparador…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää käynnistin…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41751,6 +43947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verkko"
           }
         },
         "fr" : {
@@ -41867,6 +44069,12 @@
             "value" : "modifyOtherKeys modo 1"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys-tila 1"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41979,6 +44187,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reducir ancho"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vähennä leveyttä"
           }
         },
         "fr" : {
@@ -42095,6 +44309,12 @@
             "value" : "A la derecha de la pantalla"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Näytön oikea reuna"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42207,6 +44427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar archivo codificado en Base64"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita tiedosto Base64-koodattuna"
           }
         },
         "fr" : {
@@ -42323,6 +44549,12 @@
             "value" : "Borrar hasta la última marca"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyhjennä viimeiseen merkkiin asti"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42435,6 +44667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Distribuir paneles divididos de forma uniforme"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tasaa jaetut paneelit"
           }
         },
         "fr" : {
@@ -42551,6 +44789,12 @@
             "value" : "Importar grabación"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuo tallenne"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42663,6 +44907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teclado numérico de aplicación"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovelluksen näppäinlohko"
           }
         },
         "fr" : {
@@ -42779,6 +45029,12 @@
             "value" : "Ancho completo en la parte superior de la pantalla"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koko leveys näytön yläreunassa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42888,6 +45144,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -43007,6 +45269,12 @@
             "value" : "VT200"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43119,6 +45387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desconectar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katkaise yhteys"
           }
         },
         "fr" : {
@@ -43235,6 +45509,12 @@
             "value" : "Avisar antes de pegar una línea que termina en salto de línea en el prompt del shell"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varoita ennen yhden rivinvaihtoon päättyvän rivin sijoitusta komentokehotteeseen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43347,6 +45627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Buscar globalmente…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etsi kaikkialta…"
           }
         },
         "fr" : {
@@ -43463,6 +45749,12 @@
             "value" : "Maximizada"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suurennettu"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43575,6 +45867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Consola"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konsoli"
           }
         },
         "fr" : {
@@ -43691,6 +45989,12 @@
             "value" : "Nueva pestaña junto a la pestaña actual"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusi välilehti nykyisen viereen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43803,6 +46107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurar disposición de ventanas como pestañas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palauta ikkunajärjestely välilehtinä"
           }
         },
         "fr" : {
@@ -43919,6 +46229,12 @@
             "value" : "Reemplazar por valor codificado en Base 64"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaa Base 64 -koodatulla arvolla"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44031,6 +46347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activar inteligencia artificial"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ota tekoäly käyttöön"
           }
         },
         "fr" : {
@@ -44147,6 +46469,12 @@
             "value" : "Sesión"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Istunto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44261,6 +46589,12 @@
             "value" : "Marcas con nombre"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimetyt merkit"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44373,6 +46707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Par siguiente"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuraava jäsen"
           }
         },
         "fr" : {

@@ -29,6 +29,12 @@
             "value": "Tamaño del tabulador en espacios:"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sarkaimen koko välilyönteinä:"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",
@@ -138,6 +144,12 @@
           }
         },
         "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "fi": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

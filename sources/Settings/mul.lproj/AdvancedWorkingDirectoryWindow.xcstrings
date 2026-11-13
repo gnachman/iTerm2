@@ -29,6 +29,12 @@
             "value" : "Reutilizar el directorio de la sesión anterior"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä edellisen istunnon hakemistoa uudelleen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Directorio de inicio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kotihakemisto"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Directorio de trabajo para pestañas nuevas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusien välilehtien työhakemisto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valintapainike"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Directorio de trabajo para ventanas nuevas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusien ikkunoiden työhakemisto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reutilizar el directorio de la sesión anterior"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä edellisen istunnon hakemistoa uudelleen"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Radio"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valintapainike"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reutilizar el directorio de la sesión anterior"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä edellisen istunnon hakemistoa uudelleen"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Directorio:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hakemisto:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Directorio de trabajo para paneles divididos nuevos"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uusien jaettujen paneelien työhakemisto"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Ajustes avanzados del directorio de trabajo"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Työhakemiston lisävalinnat"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Directorio:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hakemisto:"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Directorio:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hakemisto:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valintapainike"
           }
         },
         "fr" : {
@@ -1625,6 +1709,12 @@
             "value" : "Directorio de inicio"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kotihakemisto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1739,6 +1829,12 @@
             "value" : "Directorio de inicio"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kotihakemisto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1851,6 +1947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aceptar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "fr" : {

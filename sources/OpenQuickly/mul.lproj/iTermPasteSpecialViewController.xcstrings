@@ -29,6 +29,12 @@
             "value" : "Requiere la integración con el shell para detectar el prompt"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edellyttää komentotulkki-integraatiota kehotteen tunnistamiseen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Se activa cuando la app en ejecución ha enviado un código de escape para activar el “modo de pegado entre delimitadores”. El texto pegado quedará “delimitado” por códigos de escape que indican que el contenido procede de una operación de pegado."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tämä on käytössä, kun käynnissä oleva sovellus on lähettänyt escape-koodin, joka ottaa käyttöön ”sulkeistetun sijoituksen tilan”. Sijoitettava merkkijono ”sulkeistetaan” escape-koodeilla, jotka ilmaisevat, että teksti tulee sijoituksesta."
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Escapar tabuladores con ^V"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapoi sarkaimet ^V:llä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pegar con tabuladores"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita sarkaimineen"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Reemplazar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convertir puntuación Unicode"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muunna Unicode-välimerkit"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Respeta las secuencias de escape de vim"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noudattaa vimin escape-sarjoja"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -822,6 +864,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 ms"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 ms"
@@ -941,6 +989,12 @@
             "value" : "Convierte varias formas de comillas y guiones a sus equivalentes ASCII."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muuntaa erilaiset lainausmerkit ja ajatusviivat ASCII-vastineikseen."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convertir tabuladores en espacios:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muunna sarkaimet välilyönneiksi:"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Los saltos de línea de DOS y UNIX no suelen usarse como entrada. CR es el estándar."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS- ja UNIX-rivinvaihtoja ei yleensä käytetä syötteenä. CR on vakio."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escapar caracteres del shell con \\"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapoi komentotulkin merkit merkillä \\"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Tamaño del bloque:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osan koko:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sustitución"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korvaava teksti"
           }
         },
         "fr" : {
@@ -1625,6 +1709,12 @@
             "value" : "Los saltos de línea de DOS y UNIX no suelen usarse como entrada. CR es el estándar."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DOS- ja UNIX-rivinvaihtoja ei yleensä käytetä syötteenä. CR on vakio."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1737,6 +1827,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tabulador, avance de línea, avance de página y retorno de carro son los únicos códigos de control “seguros”."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sarkain, rivinsyöttö, sivunvaihto ja rivinpalautus ovat ainoat ”turvalliset” ohjauskoodit."
           }
         },
         "fr" : {
@@ -1853,6 +1949,12 @@
             "value" : "Transformaciones"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muunnokset"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1967,6 +2069,12 @@
             "value" : "Sintaxis de expresiones regulares de ICU"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICU:n säännöllisen lausekkeen syntaksi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2076,6 +2184,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 ms"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "100 ms"
@@ -2195,6 +2309,12 @@
             "value" : "1 kB"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 kt"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2307,6 +2427,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "con"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tällä:"
           }
         },
         "fr" : {
@@ -2423,6 +2549,12 @@
             "value" : "Velocidad"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nopeus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2535,6 +2667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitar códigos de control no seguros"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista turvattomat ohjauskoodit"
           }
         },
         "fr" : {
@@ -2651,6 +2789,12 @@
             "value" : "Esperar el prompt del shell antes de pegar cada línea"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odota komentokehotetta ennen jokaisen rivin sijoitusta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2763,6 +2907,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausa entre bloques:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viive:"
           }
         },
         "fr" : {
@@ -2879,6 +3029,12 @@
             "value" : "1 byte"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 tavu"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2991,6 +3147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expresión regular"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Säännöllinen lauseke"
           }
         },
         "fr" : {
@@ -3107,6 +3269,12 @@
             "value" : "1,2 kB"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,2 kt"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3216,6 +3384,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "150 ms"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "150 ms"
@@ -3335,6 +3509,12 @@
             "value" : "100"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3447,6 +3627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Radio"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valintapainike"
           }
         },
         "fr" : {
@@ -3563,6 +3749,12 @@
             "value" : "Quitar saltos de línea"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista rivinvaihdot"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3675,6 +3867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usa $1, $2, etc. para grupos de captura"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ryhmät: $1, $2 jne."
           }
         },
         "fr" : {
@@ -3791,6 +3989,12 @@
             "value" : "Modo de pegado entre delimitadores"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sulkeistetun sijoituksen tila"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3903,6 +4107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 MB"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Mt"
           }
         },
         "fr" : {
@@ -4019,6 +4229,12 @@
             "value" : "Convertir CRLF y LF en CR"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muunna CRLF ja LF merkiksi CR"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4133,6 +4349,12 @@
             "value" : "Codificar en Base 64"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base 64 -koodaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4242,6 +4464,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 s"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "10 s"

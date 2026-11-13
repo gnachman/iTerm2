@@ -29,6 +29,12 @@
             "value" : "Ítem 2"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 2"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este script debe actualizarse a un “entorno completo” para poder añadir dependencias. Al hacerlo se crea una copia del entorno de ejecución de Python, pero no se usará espacio adicional en disco."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripti on päivitettävä ”täyteen ympäristöön”, jotta riippuvuuksia voi lisätä. Tällöin Python-suoritusympäristöstä tehdään kopio, mutta se ei käytä ylimääräistä levytilaa."
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Versión de Python:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Python-versio:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Eliminar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Ítem 3"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 3"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actualizar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Päivitä"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Script:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripti:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editor de dependencias del script"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skriptin riippuvuuksien muokkaus"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Ítem 1"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 1"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nombre del paquete"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paketin nimi"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Ítem 2"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 2"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ítem 3"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 3"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Buscar actualización"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarkista päivitys"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Versión instalada"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asennettu versio"
           }
         },
         "fr" : {
@@ -1625,6 +1709,12 @@
             "value" : "Ítem 1"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde 1"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1739,6 +1829,12 @@
             "value" : "Aceptar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1851,6 +1947,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Añadir"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää"
           }
         },
         "fr" : {

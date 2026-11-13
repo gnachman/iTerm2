@@ -29,6 +29,12 @@
             "value" : "Autocompletar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automaattinen täydennys"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",

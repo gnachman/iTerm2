@@ -29,6 +29,12 @@
             "value" : "Aceptar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Desactivar el renderizador de GPU en modo de bajo consumo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista GPU-renderöijä käytöstä virransäästötilassa"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Preferir la GPU integrada a la dedicada"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suosi integroitua GPU:ta erilliseen GPU:hun nähden"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -371,6 +389,12 @@
             "value" : "Desactivar el renderizador de GPU al desconectar de la corriente"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poista GPU-renderöijä käytöstä, kun virtalähde on irrotettu"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
           }
         },
         "fr" : {

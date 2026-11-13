@@ -29,6 +29,12 @@
             "value" : "Filtrar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suodata"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena que no distingue mayúsculas y minúsculas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, ei huomioi kirjainkokoa"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Subcadena con mayúsculas inteligentes"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, älykäs kirjainkoko"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -369,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena que distingue mayúsculas y minúsculas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, huomioi kirjainkoon"
           }
         },
         "fr" : {
@@ -485,6 +509,12 @@
             "value" : "Regex que no distingue mayúsculas y minúsculas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ei huomioi kirjainkokoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Borrar historial de búsqueda"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tyhjennä hakuhistoria"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Buscando solo en el comando seleccionado"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haetaan vain valitusta komennosta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex que no distingue mayúsculas y minúsculas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, ei huomioi kirjainkokoa"
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Filtrar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suodata"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena que distingue mayúsculas y minúsculas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, huomioi kirjainkoon"
           }
         },
         "fr" : {
@@ -1169,6 +1229,12 @@
             "value" : "Regex que distingue mayúsculas y minúsculas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, huomioi kirjainkoon"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subcadena con mayúsculas inteligentes"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, älykäs kirjainkoko"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Subcadena que no distingue mayúsculas y minúsculas"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osamerkkijono, ei huomioi kirjainkokoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1509,6 +1587,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regex que distingue mayúsculas y minúsculas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex, huomioi kirjainkoon"
           }
         },
         "fr" : {

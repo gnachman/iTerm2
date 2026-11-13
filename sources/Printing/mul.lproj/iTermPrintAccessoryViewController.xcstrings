@@ -29,6 +29,12 @@
             "value": "Blanco y negro"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mustavalkoinen"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",

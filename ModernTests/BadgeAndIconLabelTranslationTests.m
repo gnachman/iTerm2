@@ -15,7 +15,7 @@
 @implementation BadgeAndIconLabelTranslationTests
 
 - (void)testBadgeAndIconLabelsDiffer {
-    for (NSString *language in @[ @"da", @"de", @"es", @"fr", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ru", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
+    for (NSString *language in @[ @"da", @"de", @"es", @"fi", @"fr", @"it", @"ja", @"nb", @"nl", @"pl", @"pt-BR", @"ru", @"sv", @"tr", @"vi", @"zh-Hans", @"zh-Hant" ]) {
         NSString *path = [[NSBundle mainBundle] pathForResource:@"PreferencePanel"
                                                          ofType:@"strings"
                                                     inDirectory:nil

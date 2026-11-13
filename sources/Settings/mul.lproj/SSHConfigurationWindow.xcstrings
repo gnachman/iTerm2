@@ -29,6 +29,12 @@
             "value" : "Ruta de SSH:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH:n polku:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Archivos que copiar al host remoto:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etäpalvelimelle kopioitavat tiedostot:"
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Destino"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kohde"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -371,6 +389,12 @@
             "value" : "Aceptar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +504,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/usr/bin/ssh"
@@ -599,6 +629,12 @@
             "value" : "Examinar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selaa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
           }
         },
         "fr" : {
@@ -827,6 +869,12 @@
             "value" : "Archivo o carpeta"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiedosto tai kansio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -941,6 +989,12 @@
             "value" : "Integración con SSH"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSH-integraatio"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1053,6 +1107,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables de entorno que copiar al host remoto:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etäpalvelimelle kopioitavat ympäristömuuttujat:"
           }
         },
         "fr" : {

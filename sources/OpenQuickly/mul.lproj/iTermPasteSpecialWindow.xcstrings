@@ -29,6 +29,12 @@
             "value" : "mm:ss"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -141,6 +147,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx líneas, xxx bytes."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx riviä, xxx tavua."
           }
         },
         "fr" : {
@@ -257,6 +269,12 @@
             "value" : "Pegar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sijoita"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -371,6 +389,12 @@
             "value" : "Cancelar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -483,6 +507,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duración mínima:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vähimmäiskesto:"
           }
         },
         "fr" : {

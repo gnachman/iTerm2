@@ -107,6 +107,12 @@
             "value" : "Status"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tila"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -221,6 +227,12 @@
             "value" : "Importerer…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuodaan…"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -333,6 +345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importerer indstillinger og data…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuodaan asetuksia ja tietoja…"
           }
         },
         "nb" : {

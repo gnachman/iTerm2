@@ -42,6 +42,12 @@
             "value" : "iTerm2"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -154,6 +160,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar AppleScript."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää AppleScriptiä."
           }
         },
         "fr" : {
@@ -270,6 +282,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar Bluetooth."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää Bluetoothia."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -382,6 +400,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar datos de Calendario."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää Kalenterin tietoja."
           }
         },
         "fr" : {
@@ -498,6 +522,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar la cámara."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää kameraa."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -612,6 +642,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tus contactos."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää yhteystietojasi."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -721,6 +757,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GPL v2"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "GPL v2"
@@ -840,6 +882,12 @@
             "value" : "Una aplicación en iTerm2 quiere acceder a la red local."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää lähiverkkoa."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -952,6 +1000,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar tu información de ubicación, incluso en segundo plano."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää sijaintitietojasi, myös taustalla."
           }
         },
         "fr" : {
@@ -1068,6 +1122,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tu información de ubicación."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää sijaintitietojasi."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1180,6 +1240,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar tu información de ubicación mientras está activa."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää sijaintitietojasi, kun se on aktiivinen."
           }
         },
         "fr" : {
@@ -1296,6 +1362,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tu micrófono."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää mikrofoniasi."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1408,6 +1480,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Una aplicación en iTerm2 quiere usar la fototeca."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää kuvakirjastoa."
           }
         },
         "fr" : {
@@ -1524,6 +1602,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar tus recordatorios."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää muistutuksiasi."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1638,6 +1722,12 @@
             "value" : "Una aplicación en iTerm2 quiere usar el reconocimiento de voz."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sovellus iTerm2:ssa haluaa käyttää puheentunnistusta."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1750,6 +1840,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La operación que está realizando un programa en iTerm2 requiere permisos elevados."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2:ssa suoritettavan ohjelman tekemä toiminto vaatii korotetut käyttöoikeudet."
           }
         },
         "fr" : {

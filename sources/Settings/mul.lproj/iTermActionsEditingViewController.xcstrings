@@ -29,6 +29,12 @@
             "value" : "Acción"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toiminto"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Título"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otsikko"
           }
         },
         "fr" : {

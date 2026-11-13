@@ -29,6 +29,12 @@
             "value" : "¡Un momento! Instalando un nuevo entorno de Python…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hetkinen! Asennetaan uutta Python-ympäristöä…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",

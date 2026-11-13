@@ -29,6 +29,12 @@
             "value": "Marcar"
           }
         },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse"
+          }
+        },
         "fr": {
           "stringUnit": {
             "state": "translated",

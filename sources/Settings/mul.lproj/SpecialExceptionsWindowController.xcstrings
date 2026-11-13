@@ -29,6 +29,12 @@
             "value" : "Instalar paquete Nerd Font…"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asenna Nerd Font -paketti…"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -143,6 +149,12 @@
             "value" : "Editar excepción especial"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muokkaa erityispoikkeusta"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -252,6 +264,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -371,6 +389,12 @@
             "value" : "Las excepciones especiales reemplazan los tipos de letra para intervalos o escrituras Unicode concretos."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erityispoikkeukset ohittavat fontit tietyille Unicode-alueille tai kirjoitusjärjestelmille."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,6 +504,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -599,6 +629,12 @@
             "value" : "Aceptar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +747,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Del tipo de letra:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fontista:"
           }
         },
         "fr" : {
@@ -827,6 +869,12 @@
             "value" : "Para los caracteres desde"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merkeille alkaen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -939,6 +987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Añadir preajuste…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lisää esiasetus…"
           }
         },
         "fr" : {
@@ -1055,6 +1109,12 @@
             "value" : "Cancelar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1167,6 +1227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "hasta"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "asti"
           }
         },
         "fr" : {
@@ -1283,6 +1349,12 @@
             "value" : "Gestionar excepciones especiales"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallitse erityispoikkeuksia"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1395,6 +1467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aceptar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
         "fr" : {
@@ -1511,6 +1589,12 @@
             "value" : "Usar puntos de código"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käytä koodipisteitä"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1625,6 +1709,12 @@
             "value" : "Cancelar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1734,6 +1824,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

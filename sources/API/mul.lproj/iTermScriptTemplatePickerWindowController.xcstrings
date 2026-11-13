@@ -29,6 +29,12 @@
             "value" : "Un script sencillo que no tiene más dependencias que la biblioteca iterm2."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yksinkertainen skripti, jolla ei ole muita riippuvuuksia kuin iterm2-kirjasto."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -138,6 +144,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -257,6 +269,12 @@
             "value" : "Básico"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perus"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -366,6 +384,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -485,6 +509,12 @@
             "value" : "Daemon de larga duración"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pitkäikäinen apuprosessi"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sencillo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yksinkertainen"
           }
         },
         "fr" : {
@@ -713,6 +749,12 @@
             "value" : "Cancelar"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kumoa"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -825,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elige esta plantilla para un script sencillo que realiza acciones y termina."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse tämä malli yksinkertaiselle skriptille, joka suorittaa toimintoja ja päättyy."
           }
         },
         "fr" : {
@@ -941,6 +989,12 @@
             "value" : "Un script que depende de paquetes de PyPI distintos de la biblioteca iterm2. Se creará un pyenv privado para este script."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripti, joka riippuu muista PyPI-paketeista kuin iterm2-kirjastosta. Skriptille luodaan oma pyenv."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1050,6 +1104,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1169,6 +1229,12 @@
             "value" : "Elige una plantilla de script:"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse skriptimalli:"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1281,6 +1347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entorno completo"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Täysi ympäristö"
           }
         },
         "fr" : {
@@ -1397,6 +1469,12 @@
             "value" : "Elige esta plantilla para un script que sigue en ejecución y responde a notificaciones."
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse tämä malli skriptille, joka pysyy käynnissä ja vastaa ilmoituksiin."
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1506,6 +1584,12 @@
           }
         },
         "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -1623,6 +1707,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elige un entorno de Python:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse Python-ympäristö:"
           }
         },
         "fr" : {
