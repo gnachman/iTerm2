@@ -47,6 +47,12 @@
             "value" : "Élément 2"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce script doit être converti en « environnement complet » pour pouvoir ajouter des dépendances. Cela crée une copie de l’environnement d’exécution Python, sans utiliser d’espace disque supplémentaire."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ova skripta mora se nadograditi na “puno okruženje” da bi se mogle dodati ovisnosti. Time se izrađuje kopija okruženja za izvođenje Pythona, ali se ne troši dodatni prostor na disku."
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Version de Python :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzija Pythona:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukloni"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Élément 3"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 3"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mettre à niveau"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadogradi"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Script :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripta:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Éditeur des dépendances du script"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uređivač ovisnosti skripte"
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Élément 1"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 1"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nom du paquet"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naziv paketa"
           }
         },
         "it" : {
@@ -1427,6 +1487,12 @@
             "value" : "Élément 2"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1563,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Élément 3"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 3"
           }
         },
         "it" : {
@@ -1703,6 +1775,12 @@
             "value" : "Rechercher une mise à jour"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provjeri ažuriranja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1839,6 +1917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version installée"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instalirana verzija"
           }
         },
         "it" : {
@@ -1979,6 +2063,12 @@
             "value" : "Élément 1"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 1"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2112,6 +2202,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -2253,6 +2349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj"
           }
         },
         "it" : {

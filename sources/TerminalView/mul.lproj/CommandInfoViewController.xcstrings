@@ -47,6 +47,12 @@
             "value" : "/répertoire"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/directory"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier le répertoire"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj direktorij"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "12 octets"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 bajtova"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner la sortie de la commande"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi izlaz naredbe"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "1 h 35 min"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h 35m"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sortie :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izlaz:"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Copié"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopirano"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la commande dans le presse-papiers"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj naredbu u memorijski pretinac"
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Démarré à %@"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokrenuto: %@"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir la commande dans le compositeur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori naredbu u Uređivaču naredbi"
           }
         },
         "it" : {
@@ -1427,6 +1487,12 @@
             "value" : "Dossier déplaçable"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mapa koja se može povući"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1563,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "commande"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "naredba"
           }
         },
         "it" : {
@@ -1703,6 +1775,12 @@
             "value" : "Écrire la commande dans le terminal"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapiši naredbu u terminal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1839,6 +1917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répertoire :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direktorij:"
           }
         },
         "it" : {
@@ -1979,6 +2063,12 @@
             "value" : "Code de retour :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povratni kôd:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2115,6 +2205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Écrire le répertoire dans le terminal"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapiši direktorij u terminal"
           }
         },
         "it" : {
@@ -2255,6 +2351,12 @@
             "value" : "Durée d’exécution :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vrijeme izvođenja:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la sortie de la commande"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj izlaz naredbe"
           }
         },
         "it" : {
@@ -2531,6 +2639,12 @@
             "value" : "Partager la commande…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podijeli naredbu…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2669,6 +2783,12 @@
             "value" : "Commande :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naredba:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2802,6 +2922,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "127"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "127"
@@ -2943,6 +3069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactiver l’affichage de la commande hors écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onemogući prikaz naredbe izvan zaslona"
           }
         },
         "it" : {

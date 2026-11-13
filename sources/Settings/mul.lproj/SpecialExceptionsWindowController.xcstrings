@@ -47,6 +47,12 @@
             "value" : "Installer le pack Nerd Font…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instaliraj paket Nerd Font…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -185,6 +191,12 @@
             "value" : "Modifier l’exception spéciale"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi posebnu iznimku"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -318,6 +330,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -461,6 +479,12 @@
             "value" : "Les exceptions spéciales remplacent les polices pour certaines plages ou écritures Unicode."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posebne iznimke nadjačavaju fontove za određene raspone ili pisma u Unicodeu."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +618,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"
@@ -737,6 +767,12 @@
             "value" : "OK"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -873,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "De la police :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fonta:"
           }
         },
         "it" : {
@@ -1013,6 +1055,12 @@
             "value" : "Pour les caractères à partir de"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za znakove od"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter un préréglage…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj podešenje…"
           }
         },
         "it" : {
@@ -1289,6 +1343,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "à"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "do"
           }
         },
         "it" : {
@@ -1565,6 +1631,12 @@
             "value" : "Gérer les exceptions spéciales"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upravljaj posebnim iznimkama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1698,6 +1770,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1841,6 +1919,12 @@
             "value" : "Utiliser les points de code"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koristi kodne točke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1979,6 +2063,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2112,6 +2202,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "U+xxx"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "U+xxx"

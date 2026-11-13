@@ -47,6 +47,12 @@
             "value" : "Réglages"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Grouper"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupiraj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Grouper"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupiraj"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Notifier"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obavijesti"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -737,6 +767,12 @@
             "value" : "Notifier"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obavijesti"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -870,6 +906,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -1013,6 +1055,12 @@
             "value" : "Rechercher"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traži"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traži"
           }
         },
         "it" : {

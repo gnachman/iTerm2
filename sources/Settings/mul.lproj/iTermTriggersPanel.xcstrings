@@ -47,6 +47,12 @@
             "value" : "Utiliser des chaînes interpolées pour les paramètres"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koristi interpolirane nizove za parametre"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier dans le profil"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj u profil"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Fermer"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvori"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déclencheurs"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okidači"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Expression régulière"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regularni izraz"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionnez un déclencheur pour l’afficher ou le modifier"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberite jedan okidač za prikaz ili uređivanje"
           }
         },
         "it" : {

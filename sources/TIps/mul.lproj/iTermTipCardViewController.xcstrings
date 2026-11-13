@@ -47,6 +47,12 @@
             "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -183,6 +189,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Intégration du shell"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integracija ljuske"
           }
         },
         "it": {

@@ -47,6 +47,12 @@
             "value" : "Faites glisser un composant du menu vers Composants actifs pour l’ajouter à votre barre d’état."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povucite komponentu iz izbornika u Aktivne komponente da biste je dodali na traku statusa."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -185,6 +191,12 @@
             "value" : "Préférer un agencement compact à un positionnement stable"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radije zbijeno slaganje nego stabilan položaj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -318,6 +330,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -461,6 +479,12 @@
             "value" : "Composants actifs"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivne komponente"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactivé"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onemogućeno"
           }
         },
         "it" : {
@@ -737,6 +767,12 @@
             "value" : "Supprimer les composants dont la valeur est vide"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukloni komponente s praznim vrijednostima"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -873,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dessiner un séparateur entre la barre d’état et le terminal"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nacrtaj razdjelnik između trake statusa i terminala"
           }
         },
         "it" : {
@@ -1013,6 +1055,12 @@
             "value" : "Automatique"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatski"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Menu des composants de la barre d’état"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izbornik komponenti trake statusa"
           }
         },
         "it" : {
@@ -1289,6 +1343,12 @@
             "value" : "Avancé…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napredno…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’agencement compact permet d’afficher davantage de composants de la barre d’état à la fois, mais ils ont tendance à bouger davantage."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritam zbijenog slaganja omogućuje da je istodobno vidljivo više komponenti trake statusa, ali one se češće pomiču."
           }
         },
         "it" : {
@@ -1565,6 +1631,12 @@
             "value" : "🌈 Arc-en-ciel auto :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌈 Automatska duga:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1701,6 +1773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le nom de la police va ici"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovdje ide naziv fonta"
           }
         },
         "it" : {
@@ -1841,6 +1919,12 @@
             "value" : "Couleurs sombres"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamne boje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1977,6 +2061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promijeni"
           }
         },
         "it" : {
@@ -2117,6 +2207,12 @@
             "value" : "Couleur de texte par défaut :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardna boja teksta:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2253,6 +2349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Configurer le composant"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfiguriraj komponentu"
           }
         },
         "it" : {
@@ -2393,6 +2495,12 @@
             "value" : "L’agencement compact permet d’afficher davantage de composants de la barre d’état à la fois, mais ils ont tendance à bouger davantage."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algoritam zbijenog slaganja omogućuje da je istodobno vidljivo više komponenti trake statusa, ali one se češće pomiču."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2529,6 +2637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couleur du séparateur :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boja razdjelnika:"
           }
         },
         "it" : {
@@ -2669,6 +2783,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2805,6 +2925,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couleurs claires"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Svijetle boje"
           }
         },
         "it" : {
@@ -2945,6 +3071,12 @@
             "value" : "Police :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3083,6 +3215,12 @@
             "value" : "Couleur d’arrière-plan :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boja pozadine:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3216,6 +3354,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3357,6 +3501,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dessine une ligne fine entre la barre d’état et le contenu du terminal."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crta tanku liniju između trake statusa i sadržaja terminala."
           }
         },
         "it" : {

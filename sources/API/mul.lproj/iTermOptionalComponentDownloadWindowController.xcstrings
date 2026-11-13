@@ -47,6 +47,12 @@
             "value": "Programme d’installation de l’environnement d’exécution Python"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalacijski program okruženja za izvođenje Pythona"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -185,6 +191,12 @@
             "value": "Annuler"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odustani"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -321,6 +333,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Téléchargement des composants facultatifs…"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preuzimanje neobveznih komponenti…"
           }
         },
         "it": {

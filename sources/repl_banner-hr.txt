@@ -1,0 +1,13 @@
+[1mDobro došli u iTerm2 Python REPL![m
+
+Ovo je interaktivni Python interpreter u kojem možete eksperimentirati sa
+skriptama. Za razliku od standardnih Python interpretera, “await” možete
+koristiti i izvan asinkrone funkcije. Evo primjera skripte koju možete
+isprobati:
+
+import iterm2
+connection=await iterm2.Connection.async_create()
+await iterm2.Window.async_create(connection)
+
+]8;;https://iterm2.com/python-api⌘-kliknite ovdje za dokumentaciju iTerm2 Python API-ja]8;;
+

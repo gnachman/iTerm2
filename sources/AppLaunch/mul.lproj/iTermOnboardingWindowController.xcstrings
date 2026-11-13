@@ -47,6 +47,12 @@
             "value" : "Utilisez iTerm2 même loin de votre Mac. Vous pouvez le contrôler via le chat IA, consulter le contenu des sessions et recevoir des notifications push. Le chiffrement de bout en bout protège vos données. <a href=\"iterm2whatsnew:companion\">Essayez-le maintenant !</a>"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koristite iTerm2 i kad niste uz svoj Mac. Možete njime upravljati putem AI razgovora, pregledavati sadržaj sesija i primati push obavijesti. Sveobuhvatno šifriranje čuva vaše podatke sigurnima. <a href=\"iterm2whatsnew:companion\">Isprobajte odmah!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -180,6 +186,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -323,6 +335,12 @@
             "value" : "Un nouveau mode de chat IA, l’orchestration, laisse l’IA diriger les opérations à votre place. Elle peut créer des fenêtres, attendre la fin de tâches (même dans des apps interactives), et le nouveau vérificateur de sécurité automatique vous évite de répondre à presque toutes les demandes d’autorisation. <a href=\"iterm2whatsnew:orchestration\">Essayez-la maintenant !</a>"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novi mod AI razgovora, Orkestracija, omogućuje AI-ju da sve odradi umjesto vas. Može izrađivati prozore, čekati završetak zadataka (čak i u interaktivnim aplikacijama), a novi automatski sigurnosni provjeravatelj oslobađa vas odgovaranja na gotovo sve zahtjeve za dopuštenje. <a href=\"iterm2whatsnew:orchestration\">Isprobajte odmah!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -456,6 +474,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -599,6 +623,12 @@
             "value" : "La nouvelle fonctionnalité Captures d’écran simplifie la création d’un PNG du contenu de votre terminal. Elle prend en charge le caviardage et la mise en évidence. Utilisez <a href=\"iterm2whatsnew:screenshot\">Session > Capturer l’écran</a> pour l’activer."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova značajka Snimke zaslona pojednostavljuje izradu PNG-a sadržaja vašeg terminala. Podržava zacrnjivanja i isticanja. Aktivirajte je s <a href=\"iterm2whatsnew:screenshot\">Sesija > Snimi zaslon</a>."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -737,6 +767,12 @@
             "value" : "Nouveautés de la version 3.7"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novosti u verziji 3.7"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -870,6 +906,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ">"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ">"
@@ -1013,6 +1055,12 @@
             "value" : "●"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Intégration de Claude Code"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracija s alatom Claude Code"
           }
         },
         "it" : {
@@ -1289,6 +1343,12 @@
             "value" : "Pour mieux gérer un grand nombre d’onglets, vous pouvez désormais les regrouper en groupes repliables. La barre d’onglets défile maintenant au lieu d’afficher un menu de débordement."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za lakše upravljanje velikim brojem kartica sada ih možete spojiti u grupe koje se mogu sažeti. Traka s karticama sada se i listanjem pomiče umjesto da prikazuje izbornik prelijevanja."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1422,6 +1482,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1565,6 +1631,12 @@
             "value" : "L’intégration de Claude Code organise plusieurs sessions liées (comme la revue de code et la lecture des diffs) dans une interface personnalisable. Elle expose aussi l’état de Claude pour que vous trouviez facilement les instances qui attendent votre attention. <a href=\"iterm2whatsnew:claudecode\">Essayez-la maintenant !</a>"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracija s alatom Claude Code organizira više povezanih sesija, kao što su pregled koda i čitanje diffova, u prilagodljivo sučelje. Također prikazuje Claudeov status pa lako možete pronaći instance koje čekaju vašu pažnju. <a href=\"iterm2whatsnew:claudecode\">Isprobajte odmah!</a>"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1703,6 +1775,12 @@
             "value" : "App compagnon pour iPhone"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prateća aplikacija za iPhone"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1836,6 +1914,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "●"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "●"
@@ -1979,6 +2063,12 @@
             "value" : "Orchestration"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orkestracija"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2115,6 +2205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Groupes d’onglets"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grupe kartica"
           }
         },
         "it" : {
@@ -2255,6 +2351,12 @@
             "value" : "Captures d’écran"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snimke zaslona"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2388,6 +2490,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "<"

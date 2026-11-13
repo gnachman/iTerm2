@@ -47,6 +47,12 @@
             "value" : "Configurer l’intelligence artificielle"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi umjetnu inteligenciju"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Votre fournisseur d’IA peut vous facturer chaque jeton envoyé ou reçu."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaš pružatelj AI usluge može vam naplatiti svaki poslani ili primljeni token."
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Saisissez la clé d’API ici"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovdje unesite API ključ"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -461,6 +479,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -594,6 +618,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

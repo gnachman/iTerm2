@@ -47,6 +47,12 @@
             "value" : "Chemin de SSH :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Putanja do SSH-a:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fichiers à copier sur l’hôte distant :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datoteke za kopiranje na udaljeni host:"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Destination"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odredište"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -456,6 +474,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -599,6 +623,12 @@
             "value" : "/usr/bin/ssh"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/usr/bin/ssh"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Parcourir"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pregledaj"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fichier ou dossier"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datoteka ili mapa"
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Intégration SSH"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Integracija za SSH"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables d’environnement à copier sur l’hôte distant :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varijable okruženja za kopiranje na udaljeni host:"
           }
         },
         "it" : {

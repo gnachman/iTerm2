@@ -47,6 +47,12 @@
             "value" : "⌥ Option"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌥ Option"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épingler la fenêtre à raccourci global (reste ouverte quand le clavier perd le focus)"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakvači prozor brze tipke (ostaje otvoren kad izgubi fokus tipkovnice)"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Raccourci global :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brza tipka:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remarque : la fenêtre n’est rouverte que si elle a été fermée parce qu’une autre app est devenue active."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napomena: prozor se ponovno otvara samo ako je zatvoren zato što je druga aplikacija postala aktivna."
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Raccourcis globaux supplémentaires"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodatne brze tipke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quand vous appuyez sur le raccourci global associé à ce profil, une fenêtre dédiée s’affiche ou se masque. Chaque profil doté d’un raccourci global contrôle sa propre fenêtre à raccourci global."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kad pritisnete brzu tipku dodijeljenu ovom profilu, namjenski prozor bit će prikazan ili sakriven. Svaki profil s brzom tipkom upravlja vlastitim prozorom brze tipke."
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Ne rien faire de particulier"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nemoj ništa posebno raditi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1008,6 +1050,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️"
@@ -1151,6 +1199,12 @@
             "value" : "Afficher cette fenêtre à raccourci global"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži ovaj prozor brze tipke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages de la fenêtre à raccourci global"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke prozora brze tipke"
           }
         },
         "it" : {
@@ -1427,6 +1487,12 @@
             "value" : "⌘ Commande"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ Command"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1563,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce raccourci"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Drugi profil koristi ovaj prečac"
           }
         },
         "it" : {
@@ -1703,6 +1775,12 @@
             "value" : "⇧ Maj"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇧ Shift"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1839,6 +1917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Touche de double appui :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipka za dvostruki dodir:"
           }
         },
         "it" : {
@@ -1979,6 +2063,12 @@
             "value" : "Rouvrir automatiquement à la réactivation de l’app"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatski ponovno otvori pri ponovnoj aktivaciji aplikacije"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2115,6 +2205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⚠️ Un autre profil utilise ce double appui"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Drugi profil koristi ovaj dvostruki dodir"
           }
         },
         "it" : {
@@ -2255,6 +2351,12 @@
             "value" : "Afficher cette fenêtre à raccourci global si aucune autre fenêtre n’est ouverte"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži ovaj prozor brze tipke ako nijedan drugi prozor nije otvoren"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les fenêtres flottantes recouvrent les autres fenêtres, le Dock et les fenêtres en plein écran des autres apps (si l’espace de la fenêtre à raccourci global est réglé sur Tous les espaces)."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plutajući prozori preklapaju druge prozore i Dock te prozore drugih aplikacija u prikazu preko cijelog zaslona (ako je radna površina prozora brze tipke postavljena na Sve radne površine)."
           }
         },
         "it" : {
@@ -2531,6 +2639,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2667,6 +2781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Au clic sur l’icône du Dock :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pri kliku na ikonu Docka:"
           }
         },
         "it" : {
@@ -2807,6 +2927,12 @@
             "value" : "Animer l’affichage et le masquage"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animiraj prikazivanje i sakrivanje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2940,6 +3066,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -3083,6 +3215,12 @@
             "value" : "OK"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3219,6 +3357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenêtre flottante"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plutajući prozor"
           }
         },
         "it" : {
@@ -3359,6 +3503,12 @@
             "value" : "^ Contrôle"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "^ Control"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3495,6 +3645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourcis globaux supplémentaires…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodatne brze tipke…"
           }
         },
         "it" : {

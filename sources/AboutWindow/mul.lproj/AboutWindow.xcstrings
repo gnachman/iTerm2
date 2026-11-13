@@ -47,6 +47,12 @@
             "value": "iTerm2"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iTerm2"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -183,6 +189,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Par George Nachman et les contributeurs"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autor: George Nachman i suradnici"
           }
         },
         "it": {

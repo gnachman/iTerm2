@@ -47,6 +47,12 @@
             "value" : "Profils"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profili"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier les profils…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi profile…"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Nouvel onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova kartica"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouvelle fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novi prozor"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Fermer cette fenêtre après l’ouverture d’un profil."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvori ovaj prozor nakon otvaranja profila."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onglets en nouvelle fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartice u novom prozoru"
           }
         },
         "it" : {
@@ -959,6 +995,12 @@
             "value" : "Tags >"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag >"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1173,6 +1215,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nové plovoucí podokno"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo plutajuće okno"
           }
         },
         "sk" : {

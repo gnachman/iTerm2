@@ -47,6 +47,12 @@
             "value" : "Un script simple qui n’a aucune dépendance en dehors de la bibliothèque iterm2."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jednostavna skripta koja nema nikakvih ovisnosti osim biblioteke iterm2."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -180,6 +186,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😈"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😈"
@@ -323,6 +335,12 @@
             "value" : "De base"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Osnovno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -456,6 +474,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "😊"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "😊"
@@ -599,6 +623,12 @@
             "value" : "Démon de longue durée"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daemon dugog trajanja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Simple"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jednostavno"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez ce modèle pour un script simple qui effectue des actions puis se termine."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberite ovaj predložak za jednostavnu skriptu koja izvršava radnje i završava."
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Un script qui dépend de paquets PyPI autres que la bibliothèque iterm2. Un pyenv privé sera créé pour ce script."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripta koja ovisi o PyPI paketima koji nisu biblioteka iterm2. Za ovu skriptu izradit će se privatni pyenv."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1284,6 +1338,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔗"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔗"
@@ -1427,6 +1487,12 @@
             "value" : "Choisissez un modèle de script :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberite predložak skripte:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1563,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Environnement complet"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puno okruženje"
           }
         },
         "it" : {
@@ -1703,6 +1775,12 @@
             "value" : "Choisissez ce modèle pour un script qui reste actif et répond aux notifications."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberite ovaj predložak za skriptu koja ostaje pokrenuta i reagira na obavijesti."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1836,6 +1914,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🛠️"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "🛠️"
@@ -1977,6 +2061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez un environnement Python :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberite Python okruženje:"
           }
         },
         "it" : {

@@ -47,6 +47,12 @@
             "value" : "Description"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opis"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journal de plantage"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapis rušenja"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Rapport de plantage"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prijava rušenja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Il semble que {APPNAME} ait planté lors de sa dernière utilisation. Voulez-vous envoyer un journal de plantage aux développeurs ?\n\nLes journaux de plantage d’Apple ne sont pas transmis aux autres développeurs. C’est donc le seul moyen pour les développeurs de {APPNAME} de découvrir et de corriger ce plantage."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Čini se da se {APPNAME} srušio prilikom posljednjeg korištenja. Želite li poslati zapis rušenja programerima?\n\nZapisi rušenja koje šalje Apple ne šalju se drugim programerima, pa je ovo jedini način na koji programeri aplikacije {APPNAME} mogu saznati za ovo rušenje i popraviti ga."
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Vous pouvez supprimer toute information que vous ne souhaitez pas transmettre, mais cela rendra la détection du bug plus difficile. Par défaut, le journal de plantage, le modèle de Mac que vous utilisez et vos réglages sont transmis."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Možete obrisati sve podatke koje ne želite poslati, ali to će otežati otkrivanje greške. Standardno se šalju zapis rušenja, model Maca koji koristite i vaše postavke."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Envoyer"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Šalji"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Me le rappeler plus tard"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podsjeti me kasnije"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorer"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odbaci"
           }
         },
         "it" : {

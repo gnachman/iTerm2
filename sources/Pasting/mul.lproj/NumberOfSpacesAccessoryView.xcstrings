@@ -47,6 +47,12 @@
             "value": "Taille de la tabulation en espaces :"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Veličina tabulatora u razmacima:"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -180,6 +186,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "hr": {
           "stringUnit": {
             "state": "translated",
             "value": "100"

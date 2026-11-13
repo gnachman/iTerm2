@@ -47,6 +47,12 @@
             "value" : "Valeur :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vrijednost:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier l’extrait"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi isječak"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Titre :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naslov:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texte littéral sans échappement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doslovni tekst bez escapeiranja"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Utilisez / dans les noms de tags pour créer des dossiers dans le menu Édition > Extraits"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koristite / u nazivima tagova za stvaranje mapa u izborniku Uredi > Isječci"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -737,6 +767,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -870,6 +906,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1013,6 +1055,12 @@
             "value" : "Échappement de compatibilité ascendante"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapeiranje radi povratne kompatibilnosti"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1151,6 +1199,12 @@
             "value" : "Tags :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tagovi:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Échappement par barre oblique inverse de style C"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escapeiranje obrnutom kosom crtom u stilu jezika C"
           }
         },
         "it" : {

@@ -47,6 +47,12 @@
             "value" : "Complétion automatique"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatsko dovršavanje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",

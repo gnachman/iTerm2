@@ -47,6 +47,12 @@
             "value" : "Tableau de bord tmux"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadzorna ploča za tmux"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesija"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Attacher"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priključi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher des fenêtres"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traži prozore"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prozor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir dans des fenêtres"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori u prozorima"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Masquer"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakrij"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir dans des fenêtres"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori u prozorima"
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Ouvrir dans des onglets"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori u karticama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Détacher"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odvoji"
           }
         },
         "it" : {
@@ -1427,6 +1487,12 @@
             "value" : "Ouvrir le tableau de bord à l’attachement s’il y a des fenêtres masquées"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori nadzornu ploču pri priključivanju ako postoje skriveni prozori"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1563,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ne pas ouvrir de fenêtres à l’attachement s’il y en a au moins ce nombre :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nemoj otvarati prozore pri priključivanju ako postoji barem ovoliko prozora:"
           }
         },
         "it" : {

@@ -47,6 +47,12 @@
             "value": "Collage en cours…"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lijepljenje…"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",

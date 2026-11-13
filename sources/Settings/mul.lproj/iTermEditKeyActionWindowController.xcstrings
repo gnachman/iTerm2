@@ -47,6 +47,12 @@
             "value" : "Déplacer par marque"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni po oznaci"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Définir le raccourci clavier"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi prečac tipkovnice"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Préréglage de couleurs :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podešenje boja:"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Action :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radnja:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Libellé à afficher dans la Touch Bar"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznaka za prikaz na Touch Baru"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Déplacer par caractère"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni po znaku"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ex. : 0x7f"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "npr.: 0x7f"
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Profil :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer par mot"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni po riječi"
           }
         },
         "it" : {
@@ -1427,6 +1487,12 @@
             "value" : "Le message d’erreur apparaît ici"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovdje ide poruka o grešci"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1563,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Action :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radnja:"
           }
         },
         "it" : {
@@ -1703,6 +1775,12 @@
             "value" : "Échap+"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc+"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1839,6 +1917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourci clavier :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prečac tipkovnice:"
           }
         },
         "it" : {
@@ -1979,6 +2063,12 @@
             "value" : "Déplacer par ligne"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni po retku"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2112,6 +2202,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"

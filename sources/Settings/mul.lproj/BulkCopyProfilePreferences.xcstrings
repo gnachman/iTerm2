@@ -47,6 +47,12 @@
             "value" : "Couleurs"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -185,6 +191,12 @@
             "value" : "Texte"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -318,6 +330,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -461,6 +479,12 @@
             "value" : "Session"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesija"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avancé"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napredno"
           }
         },
         "it" : {
@@ -737,6 +767,12 @@
             "value" : "Fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prozor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -870,6 +906,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx"
@@ -1013,6 +1055,12 @@
             "value" : "Terminal"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1149,6 +1197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vers ces profils :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za ove profile:"
           }
         },
         "it" : {
@@ -1289,6 +1343,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1425,6 +1485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier les réglages du signet"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj postavke profila"
           }
         },
         "it" : {
@@ -1565,6 +1631,12 @@
             "value" : "Touches"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1701,6 +1773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj"
           }
         },
         "it" : {

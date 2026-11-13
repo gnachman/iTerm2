@@ -47,6 +47,12 @@
             "value": "Saisissez la valeur pour "
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unesite vrijednost za "
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -180,6 +186,12 @@
           }
         },
         "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "hr": {
           "stringUnit": {
             "state": "translated",
             "value": "OK"
@@ -323,6 +335,12 @@
             "value": "Paramètre de session"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parametar sesije"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -461,6 +479,12 @@
             "value": "Annuler"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odustani"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -597,6 +621,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nom"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naziv"
           }
         },
         "it": {

@@ -47,6 +47,12 @@
             "value" : "Patientez ! Installation d’un nouvel environnement Python…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Samo trenutak! Instalira se novo Python okruženje…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",

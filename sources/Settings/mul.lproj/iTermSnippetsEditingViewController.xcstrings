@@ -47,6 +47,12 @@
             "value" : "Modifier"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -185,6 +191,12 @@
             "value" : "Titre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naslov"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Texte"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tekst"
           }
         },
         "it" : {

@@ -47,6 +47,12 @@
             "value" : "CELLULE D’EN-TÊTE"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZAGLAVLJE"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher globalement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi globalno"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Sous-chaîne : sensible à la casse"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz: osjetljivo na veličinu slova"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne : automatique"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz: automatski"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Regex : insensible à la casse"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex: neosjetljivo na veličinu slova"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Regex : sensible à la casse"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regex: osjetljivo na veličinu slova"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sous-chaîne : insensible à la casse"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podniz: neosjetljivo na veličinu slova"
           }
         },
         "it" : {

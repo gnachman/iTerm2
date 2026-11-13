@@ -47,6 +47,12 @@
             "value" : "Préréglages…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podešenja…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter un élément à la Touch Bar"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj stavku za Touch Bar"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Action"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radnja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Contournements de la Touch Bar"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ublažavanja za Touch Bar"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Indicateur visuel de la touche échap"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vizualni indikator tipke esc"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Combinaison de touches"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kombinacija tipki"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Retour haptique à l’appui sur échap"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptička povratna informacija pri pritisku tipke esc"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1008,6 +1050,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -1149,6 +1197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clic sonore pour la touche échap"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zvuk klika za tipku esc"
           }
         },
         "it" : {

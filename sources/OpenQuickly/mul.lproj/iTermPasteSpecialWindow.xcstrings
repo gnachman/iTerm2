@@ -47,6 +47,12 @@
             "value" : "mm:ss"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mm:ss"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "xxx lignes, xxx octets."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "xxx redaka, xxx bajtova."
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Coller"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zalijepi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -461,6 +479,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Durée minimale :"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimalno trajanje:"
           }
         },
         "it" : {

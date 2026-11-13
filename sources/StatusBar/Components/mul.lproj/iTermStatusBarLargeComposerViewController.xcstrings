@@ -47,6 +47,12 @@
             "value" : "Complétion IA activée : tout le texte est envoyé à l’IA"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI dovršavanje omogućeno: sav tekst šalje se AI-ju"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Décrit comment utiliser le compositeur."
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opisuje kako se koristi uređivač naredbi."
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Appuyez sur ⇧↩ pour envoyer."
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pritisnite ⇧↩ za slanje."
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "IA"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI"
           }
         },
         "it" : {

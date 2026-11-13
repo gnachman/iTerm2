@@ -47,6 +47,12 @@
             "value" : "Scinder le volet actuel XXXalement"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvoji trenutačno okno XXX"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -185,6 +191,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scinder"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvoji"
           }
         },
         "it" : {

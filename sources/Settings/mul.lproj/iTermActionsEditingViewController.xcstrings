@@ -47,6 +47,12 @@
             "value" : "Action"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radnja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,6 +231,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Titre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naslov"
           }
         },
         "it" : {

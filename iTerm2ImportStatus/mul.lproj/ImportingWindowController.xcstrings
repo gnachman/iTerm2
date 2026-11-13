@@ -125,6 +125,12 @@
             "value" : "Stav"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -263,6 +269,12 @@
             "value" : "Importuje se…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importiranje…"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,6 +411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importují se nastavení a data…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importiranje postavki i podataka…"
           }
         },
         "sk" : {

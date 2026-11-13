@@ -47,6 +47,12 @@
             "value" : "OK"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactiver le moteur de rendu GPU en mode économie d’énergie"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onemogući alat za renderiranje pomoću GPU-a u modu niske potrošnje"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Préférer le GPU intégré au GPU dédié"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radije koristi integriranu nego zasebnu GPU"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -461,6 +479,12 @@
             "value" : "Désactiver le moteur de rendu GPU hors alimentation secteur"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onemogući alat za renderiranje pomoću GPU-a kada nije priključen na struju"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
           }
         },
         "it" : {

@@ -47,6 +47,12 @@
             "value": "Inclure les horodatages"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uključi vremenske oznake"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -183,6 +189,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Format de fichier :"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format datoteke:"
           }
         },
         "it": {

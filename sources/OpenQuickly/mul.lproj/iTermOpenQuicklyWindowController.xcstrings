@@ -47,6 +47,12 @@
             "value" : "Ouverture rapide"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori brzo"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -185,6 +191,12 @@
             "value" : "Détail"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -321,6 +333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher des sessions, profils ou dispositions"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traži sesije, profile ili rasporede"
           }
         },
         "it" : {

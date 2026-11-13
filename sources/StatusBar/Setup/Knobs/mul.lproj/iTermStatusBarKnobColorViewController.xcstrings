@@ -47,6 +47,12 @@
             "value": "Libellé"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oznaka"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",

@@ -47,6 +47,12 @@
             "value" : "Chemin"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Putanja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Signature"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Potpis"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspecteur de scripts"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspektor skriptiranja"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Sessions, onglets et fenêtres"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesije, kartice i prozori"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Variables"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varijable"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Rôle"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uloga"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier le chemin"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj putanju"
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Fonctions enregistrées"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrirane funkcije"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Valeur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vrijednost"
           }
         },
         "it" : {
@@ -1427,6 +1487,12 @@
             "value" : "Copier l’ID"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj ID"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1565,6 +1631,12 @@
             "value" : "Nom de l’objet (ID)"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naziv objekta (ID)"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1698,6 +1770,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⨁"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⨁"
@@ -1841,6 +1919,12 @@
             "value" : "Script"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripta"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1977,6 +2061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier la valeur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj vrijednost"
           }
         },
         "it" : {

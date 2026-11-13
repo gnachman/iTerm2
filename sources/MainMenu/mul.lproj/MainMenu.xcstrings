@@ -47,6 +47,12 @@
             "value" : "Zoom arrière"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smanji zum"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installer l’environnement d’exécution Python"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instaliraj okruženje za izvođenje Pythona"
           }
         },
         "it" : {
@@ -323,6 +335,12 @@
             "value" : "Déplacer l’onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti karticu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -459,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dupliquer la session"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliciraj sesiju"
           }
         },
         "it" : {
@@ -599,6 +623,12 @@
             "value" : "Ouvrir l’emplacement…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori lokaciju…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,6 +765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Augmenter la hauteur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povećaj visinu"
           }
         },
         "it" : {
@@ -875,6 +911,12 @@
             "value" : "Déplacer l’onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti karticu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1011,6 +1053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Signalement du focus"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izvještavanje o fokusu"
           }
         },
         "it" : {
@@ -1151,6 +1199,12 @@
             "value" : "Normal"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normalno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1287,6 +1341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer le séparateur vers le haut"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni razdjelnik prema gore"
           }
         },
         "it" : {
@@ -1427,6 +1487,12 @@
             "value" : "Remplacer par la valeur décodée en Base 64"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamijeni vrijednošću dekodiranom iz Base 64"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1563,6 +1629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesija"
           }
         },
         "it" : {
@@ -1703,6 +1775,12 @@
             "value" : "Déplacer la session vers un volet scindé"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti sesiju u razdvojeno okno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1839,6 +1917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gestionnaire de mots de passe"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upravitelj lozinki"
           }
         },
         "it" : {
@@ -1979,6 +2063,12 @@
             "value" : "Élément 1"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 1"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2115,6 +2205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Centré"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrirano"
           }
         },
         "it" : {
@@ -2255,6 +2351,12 @@
             "value" : "Remplacer la sélection"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamijeni odabir"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2391,6 +2493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "À gauche de l’écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lijevi rub zaslona"
           }
         },
         "it" : {
@@ -2531,6 +2639,12 @@
             "value" : "Curseur d’application"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kursor aplikacije"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2667,6 +2781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dispositions"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rasporedi"
           }
         },
         "it" : {
@@ -2807,6 +2927,12 @@
             "value" : "Replier les lignes sélectionnées"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sažmi odabrane retke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2943,6 +3069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir les répertoires récents…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori nedavne direktorije…"
           }
         },
         "it" : {
@@ -3083,6 +3215,12 @@
             "value" : "Plein écran"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cijeli zaslon"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3219,6 +3357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Définir une marque nommée"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi imenovanu oznaku"
           }
         },
         "it" : {
@@ -3359,6 +3503,12 @@
             "value" : "Actions"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radnje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3495,6 +3645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Capturer une image GPU"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snimi okvir GPU-a"
           }
         },
         "it" : {
@@ -3635,6 +3791,12 @@
             "value" : "Marques et annotations"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznake i bilješke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3771,6 +3933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pleine hauteur à gauche de l’écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cijela visina na lijevom rubu zaslona"
           }
         },
         "it" : {
@@ -3911,6 +4079,12 @@
             "value" : "Dupliquer la fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliciraj prozor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4047,6 +4221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Complétion automatique des commandes"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatsko dovršavanje naredbi"
           }
         },
         "it" : {
@@ -4187,6 +4367,12 @@
             "value" : "Style de fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stil prozora"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4323,6 +4509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Disponibilité du moteur de rendu GPU"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostupnost alata za renderiranje pomoću GPU-a"
           }
         },
         "it" : {
@@ -4463,6 +4655,12 @@
             "value" : "Fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prozor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4599,6 +4797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Placer dans le Dock"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smanji"
           }
         },
         "it" : {
@@ -4739,6 +4943,12 @@
             "value" : "Fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prozor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4872,6 +5082,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iTerm2"
@@ -5015,6 +5231,12 @@
             "value" : "iTerm2"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iTerm2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5151,6 +5373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Changer le profil dans la disposition…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promijeni profil u rasporedu…"
           }
         },
         "it" : {
@@ -5291,6 +5519,12 @@
             "value" : "Shell"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ljuska"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5427,6 +5661,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Définir la largeur par défaut"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi standardnu širinu"
           }
         },
         "it" : {
@@ -5567,6 +5807,12 @@
             "value" : "Shell"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ljuska"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5703,6 +5949,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aide"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoć"
           }
         },
         "it" : {
@@ -5843,6 +6095,12 @@
             "value" : "Aide"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoć"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5979,6 +6237,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aide d’iTerm2"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomoć za iTerm2"
           }
         },
         "it" : {
@@ -6119,6 +6383,12 @@
             "value" : "Réglages…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6255,6 +6525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Services"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usluge"
           }
         },
         "it" : {
@@ -6395,6 +6671,12 @@
             "value" : "Services"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usluge"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6531,6 +6813,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Masquer iTerm2"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakrij iTerm2"
           }
         },
         "it" : {
@@ -6671,6 +6959,12 @@
             "value" : "Quitter iTerm2"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvori iTerm2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6807,6 +7101,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Masquer les autres"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakrij ostalo"
           }
         },
         "it" : {
@@ -6947,6 +7247,12 @@
             "value" : "Tout afficher"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži sve"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7083,6 +7389,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couper"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izreži"
           }
         },
         "it" : {
@@ -7223,6 +7535,12 @@
             "value" : "Édition"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7359,6 +7677,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Édition"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi"
           }
         },
         "it" : {
@@ -7499,6 +7823,12 @@
             "value" : "Tout sélectionner"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi sve"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7635,6 +7965,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zalijepi"
           }
         },
         "it" : {
@@ -7775,6 +8111,12 @@
             "value" : "Effacer le tampon"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Očisti međuspremnik"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7911,6 +8253,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journal"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapis"
           }
         },
         "it" : {
@@ -8051,6 +8399,12 @@
             "value" : "Journal"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapis"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8187,6 +8541,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "À propos d’iTerm2"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Više o aplikaciji iTerm2"
           }
         },
         "it" : {
@@ -8327,6 +8687,12 @@
             "value" : "Profils"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profili"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8463,6 +8829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Profils"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profili"
           }
         },
         "it" : {
@@ -8603,6 +8975,12 @@
             "value" : "Fermer la fenêtre de Terminal"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvori prozor aplikacije Terminal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8739,6 +9117,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fermer tous les volets de l’onglet"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvori sva okna u kartici"
           }
         },
         "it" : {
@@ -8879,6 +9263,12 @@
             "value" : "Format d’impression…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke stranice…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9015,6 +9405,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrer le texte sélectionné…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremi odabrani tekst…"
           }
         },
         "it" : {
@@ -9155,6 +9551,12 @@
             "value" : "Effacer l’historique de défilement"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Očisti međuspremnik listanja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9291,6 +9693,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utiliser la sélection pour la recherche"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koristi odabir za traženje"
           }
         },
         "it" : {
@@ -9431,6 +9839,12 @@
             "value" : "Rechercher"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9567,6 +9981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi"
           }
         },
         "it" : {
@@ -9707,6 +10127,12 @@
             "value" : "Rechercher le suivant"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi sljedeće"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9843,6 +10269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher le précédent"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi prethodno"
           }
         },
         "it" : {
@@ -9983,6 +10415,12 @@
             "value" : "Aller à la sélection"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idi na odabir"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10119,6 +10557,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Présentation"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaz"
           }
         },
         "it" : {
@@ -10259,6 +10703,12 @@
             "value" : "Présentation"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaz"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10395,6 +10845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agrandir le texte"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povećaj tekst"
           }
         },
         "it" : {
@@ -10535,6 +10991,12 @@
             "value" : "Réduire le texte"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smanji tekst"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10671,6 +11133,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imprimer"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ispiši"
           }
         },
         "it" : {
@@ -10811,6 +11279,12 @@
             "value" : "Écran"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaslon"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10947,6 +11421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Imprimer"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ispiši"
           }
         },
         "it" : {
@@ -11087,6 +11567,12 @@
             "value" : "Sélection"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odabir"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11223,6 +11709,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tampon"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Međuspremnik"
           }
         },
         "it" : {
@@ -11363,6 +11855,12 @@
             "value" : "Sélectionner l’onglet précédent"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi prethodnu karticu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11499,6 +11997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner l’onglet suivant"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi sljedeću karticu"
           }
         },
         "it" : {
@@ -11639,6 +12143,12 @@
             "value" : "Sélectionner l’onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi karticu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11775,6 +12285,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner l’onglet"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi karticu"
           }
         },
         "it" : {
@@ -11915,6 +12431,12 @@
             "value" : "Nouvel onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova kartica"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12051,6 +12573,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouvelle fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novi prozor"
           }
         },
         "it" : {
@@ -12191,6 +12719,12 @@
             "value" : "Appuyez sur Option pour une nouvelle fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pritisnite Option za novi prozor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12327,6 +12861,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir dans une nouvelle fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori u novom prozoru"
           }
         },
         "it" : {
@@ -12467,6 +13007,12 @@
             "value" : "Rechercher les mises à jour…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provjeri ažuriranja…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12603,6 +13149,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réduire/agrandir"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zumiraj"
           }
         },
         "it" : {
@@ -12743,6 +13295,12 @@
             "value" : "Réinitialiser"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetiraj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12879,6 +13437,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activer/désactiver le plein écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključi/isključi cijeli zaslon"
           }
         },
         "it" : {
@@ -13019,6 +13583,12 @@
             "value" : "Activer/désactiver le journal de débogage"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključi/isključi zapisivanje za uklanjanje grešaka"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13155,6 +13725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir les profils…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori profile…"
           }
         },
         "it" : {
@@ -13295,6 +13871,12 @@
             "value" : "Modifier la session…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi sesiju…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13431,6 +14013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Démarrer la relecture instantanée"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokreni trenutačnu reprodukciju"
           }
         },
         "it" : {
@@ -13571,6 +14159,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poništi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13707,6 +14301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rétablir"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponovi"
           }
         },
         "it" : {
@@ -13847,6 +14447,12 @@
             "value" : "Ouvrir l’historique des collages…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori povijest lijepljenja…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13983,6 +14589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir la saisie automatique…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori automatsko dovršavanje…"
           }
         },
         "it" : {
@@ -14123,6 +14735,12 @@
             "value" : "Collage spécial"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posebno lijepljenje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14259,6 +14877,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Collage spécial"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posebno lijepljenje"
           }
         },
         "it" : {
@@ -14399,6 +15023,12 @@
             "value" : "Coller la sélection"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zalijepi odabir"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14535,6 +15165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller lentement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zalijepi polako"
           }
         },
         "it" : {
@@ -14675,6 +15311,12 @@
             "value" : "Entrée clavier sécurisée"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigurni unos s tipkovnice"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -14811,6 +15453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organiser les fenêtres horizontalement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poredaj prozore vodoravno"
           }
         },
         "it" : {
@@ -14951,6 +15599,12 @@
             "value" : "Fermer"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zatvori"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15087,6 +15741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scinder verticalement avec le profil actuel"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvoji okomito s trenutačnim profilom"
           }
         },
         "it" : {
@@ -15227,6 +15887,12 @@
             "value" : "Scinder horizontalement avec le profil actuel"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvoji vodoravno s trenutačnim profilom"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15363,6 +16029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrer la disposition de fenêtres"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremi raspored prozora"
           }
         },
         "it" : {
@@ -15503,6 +16175,12 @@
             "value" : "Sélectionner le volet scindé"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi razdvojeno okno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15639,6 +16317,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner le volet scindé"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi razdvojeno okno"
           }
         },
         "it" : {
@@ -15779,6 +16463,12 @@
             "value" : "Sélectionner le volet du dessus"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi okno iznad"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15915,6 +16605,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner le volet du dessous"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi okno ispod"
           }
         },
         "it" : {
@@ -16055,6 +16751,12 @@
             "value" : "Sélectionner le volet de gauche"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi okno lijevo"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16191,6 +16893,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner le volet de droite"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi okno desno"
           }
         },
         "it" : {
@@ -16331,6 +17039,12 @@
             "value" : "Utiliser la transparence"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koristi prozirnost"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16467,6 +17181,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agrandir le volet actif"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maksimiziraj aktivno okno"
           }
         },
         "it" : {
@@ -16607,6 +17327,12 @@
             "value" : "Élément 3"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 3"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16743,6 +17469,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Élément 2"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 2"
           }
         },
         "it" : {
@@ -16883,6 +17615,12 @@
             "value" : "Élément 1"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 1"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17019,6 +17757,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Définir une marque"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi oznaku"
           }
         },
         "it" : {
@@ -17159,6 +17903,12 @@
             "value" : "Aller à la marque"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idi na oznaku"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17295,6 +18045,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Volet suivant"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sljedeće okno"
           }
         },
         "it" : {
@@ -17435,6 +18191,12 @@
             "value" : "Volet précédent"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prethodno okno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17571,6 +18333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher les onglets en plein écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži kartice u prikazu preko cijelog zaslona"
           }
         },
         "it" : {
@@ -17711,6 +18479,12 @@
             "value" : "Diffuser la saisie"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emitiranje ulaza"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17847,6 +18621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diffuser la saisie"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emitiranje ulaza"
           }
         },
         "it" : {
@@ -17987,6 +18767,12 @@
             "value" : "Diffuser la saisie à tous les volets de tous les onglets"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emitiraj ulaz u sva okna u svim karticama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18123,6 +18909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diffuser la saisie à tous les volets de l’onglet actuel"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emitiraj ulaz u sva okna u trenutačnoj kartici"
           }
         },
         "it" : {
@@ -18263,6 +19055,12 @@
             "value" : "Envoyer la saisie à la session actuelle uniquement"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Šalji ulaz samo u trenutačnu sesiju"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18399,6 +19197,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurer une disposition de fenêtres"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovi raspored prozora"
           }
         },
         "it" : {
@@ -18539,6 +19343,12 @@
             "value" : "Restaurer une disposition de fenêtres"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovi raspored prozora"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18675,6 +19485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Repérer le curseur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi kursor"
           }
         },
         "it" : {
@@ -18815,6 +19631,12 @@
             "value" : "Scinder horizontalement…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvoji vodoravno…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18951,6 +19773,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scinder verticalement…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvoji okomito…"
           }
         },
         "it" : {
@@ -19091,6 +19919,12 @@
             "value" : "Boîte à outils"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pojas s alatima"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19227,6 +20061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Boîte à outils"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pojas s alatima"
           }
         },
         "it" : {
@@ -19367,6 +20207,12 @@
             "value" : "Afficher la boîte à outils"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži pojas s alatima"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19503,6 +20349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouvel onglet avec le profil actuel"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova kartica s trenutačnim profilom"
           }
         },
         "it" : {
@@ -19643,6 +20495,12 @@
             "value" : "Exécuter un coprocessus…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pokreni koproces…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19779,6 +20637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arrêter le coprocessus"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaustavi koproces"
           }
         },
         "it" : {
@@ -19919,6 +20783,12 @@
             "value" : "Copier"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20055,6 +20925,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer l’onglet vers une nouvelle fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti karticu u novi prozor"
           }
         },
         "it" : {
@@ -20195,6 +21071,12 @@
             "value" : "Déplacer l’onglet vers la droite"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti karticu udesno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20333,6 +21215,12 @@
             "value" : "Afficher l’indicateur de motif d’arrière-plan"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži indikator uzorka pozadine"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20466,6 +21354,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tmux"
@@ -20609,6 +21503,12 @@
             "value" : "tmux"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tmux"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20745,6 +21645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouvel onglet tmux"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova kartica za tmux"
           }
         },
         "it" : {
@@ -20885,6 +21791,12 @@
             "value" : "Nouvelle fenêtre tmux"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novi prozor za tmux"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21021,6 +21933,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Détacher"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odvoji"
           }
         },
         "it" : {
@@ -21161,6 +22079,12 @@
             "value" : "Tableau de bord"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nadzorna ploča"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21297,6 +22221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rétablir la taille normale du texte"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normalna veličina teksta"
           }
         },
         "it" : {
@@ -21437,6 +22367,12 @@
             "value" : "Restaurer la taille du texte et de la session"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovi veličinu teksta i sesije"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21573,6 +22509,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Faire d’iTerm2 le terminal par défaut"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi iTerm2 kao standardni terminal"
           }
         },
         "it" : {
@@ -21713,6 +22655,12 @@
             "value" : "Faire de Terminal le terminal par défaut"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi Terminal kao standardni terminal"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21849,6 +22797,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activer/désactiver la diffusion de la saisie à la session actuelle"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključi/isključi emitiranje ulaza u trenutačnu sesiju"
           }
         },
         "it" : {
@@ -21989,6 +22943,12 @@
             "value" : "Coller plus vite"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lijepi brže"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22125,6 +23085,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller plus lentement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lijepi sporije"
           }
         },
         "it" : {
@@ -22265,6 +23231,12 @@
             "value" : "Coller lentement, plus vite"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sporo lijepi brže"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22401,6 +23373,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller lentement, plus lentement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sporo lijepi sporije"
           }
         },
         "it" : {
@@ -22541,6 +23519,12 @@
             "value" : "Réinitialiser le jeu de caractères"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetiraj skup znakova"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22679,6 +23663,12 @@
             "value" : "Archives"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arhive"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22812,6 +23802,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT400"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT400"
@@ -22955,6 +23951,12 @@
             "value" : "Annoter la sélection"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj bilješku odabiru"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23091,6 +24093,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoomer sur la sélection"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zumiraj odabir"
           }
         },
         "it" : {
@@ -23231,6 +24239,12 @@
             "value" : "Déplacer le séparateur vers la gauche"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni razdjelnik ulijevo"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23367,6 +24381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tout désactiver"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onemogući sve"
           }
         },
         "it" : {
@@ -23507,6 +24527,12 @@
             "value" : "Déplacer la session"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti sesiju"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23643,6 +24669,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher le compositeur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži uređivač naredbi"
           }
         },
         "it" : {
@@ -23783,6 +24815,12 @@
             "value" : "Forcer le détachement"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prisilno odvoji"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23919,6 +24957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marques nommées"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imenovane oznake"
           }
         },
         "it" : {
@@ -24059,6 +25103,12 @@
             "value" : "Rechercher…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24195,6 +25245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exporter l’enregistrement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksportiraj snimku"
           }
         },
         "it" : {
@@ -24335,6 +25391,12 @@
             "value" : "Sans barre de titre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez trake naslova"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24468,6 +25530,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT500"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT500"
@@ -24611,6 +25679,12 @@
             "value" : "Afficher les coupures"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži izreske"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -24747,6 +25821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages de l’appareil compagnon"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavke pratećeg uređaja"
           }
         },
         "it" : {
@@ -24887,6 +25967,12 @@
             "value" : "Mode copie"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod kopiranja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25023,6 +26109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer la session"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti sesiju"
           }
         },
         "it" : {
@@ -25163,6 +26255,12 @@
             "value" : "Onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartica"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25299,6 +26397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Effacer jusqu’au début de la sélection"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Očisti do početka odabira"
           }
         },
         "it" : {
@@ -25439,6 +26543,12 @@
             "value" : "Copier les statistiques de performance"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj statistiku performansi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25575,6 +26685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scripts"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripte"
           }
         },
         "it" : {
@@ -25715,6 +26831,12 @@
             "value" : "Enregistrer la fenêtre actuelle comme disposition"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremi trenutačni prozor kao raspored"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -25851,6 +26973,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déclencheurs"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okidači"
           }
         },
         "it" : {
@@ -25991,6 +27119,12 @@
             "value" : "Afficher le repère du curseur"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži vodilicu kursora"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26127,6 +27261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verrouiller la taille"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaključaj veličinu"
           }
         },
         "it" : {
@@ -26267,6 +27407,12 @@
             "value" : "Journaliser dans un fichier"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapisuj u datoteku"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26405,6 +27551,12 @@
             "value" : "Exporter…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksportiraj…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26538,6 +27690,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -26681,6 +27839,12 @@
             "value" : "Signaler le texte associé"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izvještavaj o pridruženom tekstu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -26817,6 +27981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouveau script Python"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova Python skripta"
           }
         },
         "it" : {
@@ -26957,6 +28127,12 @@
             "value" : "Licences open source"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori licence otvorenog koda"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27093,6 +28269,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Effacer la relecture instantanée"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Očisti trenutačnu reprodukciju"
           }
         },
         "it" : {
@@ -27233,6 +28415,12 @@
             "value" : "Réduire la hauteur"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smanji visinu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27369,6 +28557,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scripts"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skripte"
           }
         },
         "it" : {
@@ -27509,6 +28703,12 @@
             "value" : "Afficher les scripts dans le Finder"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži skripte u Finderu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27645,6 +28845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrer le contenu…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremi sadržaj…"
           }
         },
         "it" : {
@@ -27785,6 +28991,12 @@
             "value" : "Tout ramener au premier plan"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi sve naprijed"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27921,6 +29133,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tout replier"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sažmi sve"
           }
         },
         "it" : {
@@ -28061,6 +29279,12 @@
             "value" : "Archives"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arhive"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28197,6 +29421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurer une disposition de fenêtres sous forme d’onglets"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovi raspored prozora kao kartice"
           }
         },
         "it" : {
@@ -28337,6 +29567,12 @@
             "value" : "Ajouter une annotation au curseur"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj bilješku na kursoru"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28473,6 +29709,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désactiver la transparence pour la fenêtre active"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onemogući prozirnost za aktivni prozor"
           }
         },
         "it" : {
@@ -28613,6 +29855,12 @@
             "value" : "Collage délimité"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lijepljenje u zagradama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -28749,6 +29997,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remplacer par du JSON mis en forme"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamijeni formatiranim JSON-om"
           }
         },
         "it" : {
@@ -28967,6 +30221,12 @@
             "value" : "Převést do popředí"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postavi naprijed"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29103,6 +30363,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ukotvit plovoucí podokno"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usidri plutajuće okno"
           }
         },
         "sk" : {
@@ -29243,6 +30509,12 @@
             "value" : "Skrýt plovoucí podokna"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakrij plutajuća okna"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29379,6 +30651,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno dolů"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni plutajuće okno prema dolje"
           }
         },
         "sk" : {
@@ -29519,6 +30797,12 @@
             "value" : "Přesunout plovoucí podokno doleva"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni plutajuće okno ulijevo"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29655,6 +30939,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Přesunout plovoucí podokno doprava"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni plutajuće okno udesno"
           }
         },
         "sk" : {
@@ -29795,6 +31085,12 @@
             "value" : "Přesunout plovoucí podokno nahoru"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni plutajuće okno prema gore"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -29931,6 +31227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nové plovoucí podokno s aktuálním profilem"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo plutajuće okno s trenutačnim profilom"
           }
         },
         "sk" : {
@@ -30071,6 +31373,12 @@
             "value" : "Plovoucí podokna"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plutajuća okna"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30207,6 +31515,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plovoucí podokna"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plutajuća okna"
           }
         },
         "sk" : {
@@ -30347,6 +31661,12 @@
             "value" : "Převést do pozadí"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pošalji natrag"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30405,6 +31725,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher l’astuce du jour"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži savjet dana"
           }
         },
         "it" : {
@@ -30545,6 +31871,12 @@
             "value" : "Annotation suivante"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sljedeća bilješka"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30678,6 +32010,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cockpit"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cockpit"
@@ -30821,6 +32159,12 @@
             "value" : "Déplacer la session vers un onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti sesiju u karticu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -30957,6 +32301,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bas de l’écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donji rub zaslona"
           }
         },
         "it" : {
@@ -31097,6 +32447,12 @@
             "value" : "Proposer de convertir les tabulations en espaces au collage"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pitaj za pretvaranje tabulatora u razmake pri lijepljenju"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31233,6 +32589,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alertes"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozorenja"
           }
         },
         "it" : {
@@ -31373,6 +32735,12 @@
             "value" : "Copier avec les séquences de contrôle"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj s kontrolnim sekvencama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31509,6 +32877,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redimensionner la fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promijeni veličinu prozora"
           }
         },
         "it" : {
@@ -31649,6 +33023,12 @@
             "value" : "Réinitialiser"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resetiraj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -31785,6 +33165,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dupliquer l’onglet"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dupliciraj karticu"
           }
         },
         "it" : {
@@ -31925,6 +33311,12 @@
             "value" : "Recharger la page"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponovno učitaj stranicu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32061,6 +33453,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer la session vers une fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti sesiju u prozor"
           }
         },
         "it" : {
@@ -32201,6 +33599,12 @@
             "value" : "Signaler toutes les touches comme séquences d’échappement"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izvještavaj o svim tipkama kao escape kodovima"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32337,6 +33741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mode de signalement brut des touches"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mod izvještavanja o neobrađenim tipkama"
           }
         },
         "it" : {
@@ -32477,6 +33887,12 @@
             "value" : "Importer…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importiraj…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32613,6 +34029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Avertir avant un collage multiligne"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozori prije lijepljenja više redaka"
           }
         },
         "it" : {
@@ -32753,6 +34175,12 @@
             "value" : "Afficher le chat intégré"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži ugrađeni razgovor"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -32891,6 +34319,12 @@
             "value" : "Activer/désactiver la saisie en tampon"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključi/isključi unos u međuspremnik"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33027,6 +34461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’hôte distant peut contrôler iTerm2"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Udaljeni host može upravljati aplikacijom iTerm2"
           }
         },
         "it" : {
@@ -33245,6 +34685,12 @@
             "value" : "Zkontrolovat zkracování ovládacích prvků nastavení"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Provjeri skraćivanje kontrola postavki"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33303,6 +34749,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déclencheurs"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okidači"
           }
         },
         "it" : {
@@ -33443,6 +34895,12 @@
             "value" : "La sélection respecte les limites souples"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odabir poštuje meke granice"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33579,6 +35037,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitter le groupe de travail"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izađi iz radne grupe"
           }
         },
         "it" : {
@@ -33719,6 +35183,12 @@
             "value" : "Sélectionner la sortie de la dernière commande"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi izlaz zadnje naredbe"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33855,6 +35325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redémarrer la session"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponovno pokreni sesiju"
           }
         },
         "it" : {
@@ -33995,6 +35471,12 @@
             "value" : "Ouvrir le REPL Python"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori Python REPL"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34131,6 +35613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Haut de l’écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gornji rub zaslona"
           }
         },
         "it" : {
@@ -34271,6 +35759,12 @@
             "value" : "Fusionner toutes les fenêtres"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spoji sve prozore"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34407,6 +35901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épingler la fenêtre à raccourci global"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakvači prozor brze tipke"
           }
         },
         "it" : {
@@ -34547,6 +36047,12 @@
             "value" : "modifyOtherKeys mode 2"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys mod 2"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34683,6 +36189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouverture rapide"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori brzo"
           }
         },
         "it" : {
@@ -34823,6 +36335,12 @@
             "value" : "Gérer"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upravljaj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -34959,6 +36477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lever l’ambiguïté d’Échap"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razlikuj Esc"
           }
         },
         "it" : {
@@ -35099,6 +36623,12 @@
             "value" : "Choisir le résultat à ouvrir"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi rezultat za otvaranje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35235,6 +36765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Limiter l’avertissement de collage multiligne à l’invite du shell"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ograniči upozorenje o lijepljenju više redaka na odzivnik ljuske"
           }
         },
         "it" : {
@@ -35375,6 +36911,12 @@
             "value" : "Activer les déclencheurs dans les apps interactives"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omogući okidače u interaktivnim aplikacijama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35511,6 +37053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Élément 2"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 2"
           }
         },
         "it" : {
@@ -35651,6 +37199,12 @@
             "value" : "Signalement de la souris"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izvještavanje o mišu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35787,6 +37341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marques et annotations"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oznake i bilješke"
           }
         },
         "it" : {
@@ -35927,6 +37487,12 @@
             "value" : "Verrouiller la disposition"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaključaj izgled"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36063,6 +37629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verrouiller l’emplacement"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaključaj lokaciju"
           }
         },
         "it" : {
@@ -36203,6 +37775,12 @@
             "value" : "Nouvelle fenêtre avec le profil actuel"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novi prozor s trenutačnim profilom"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36339,6 +37917,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enfouir la session"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakopaj sesiju"
           }
         },
         "it" : {
@@ -36479,6 +38063,12 @@
             "value" : "Afficher une boîte d’alerte modale"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži modalni okvir upozorenja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36615,6 +38205,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tout activer"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omogući sve"
           }
         },
         "it" : {
@@ -36755,6 +38351,12 @@
             "value" : "Marque suivante"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sljedeća oznaka"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36891,6 +38493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Organiser les fenêtres"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posloži prozore"
           }
         },
         "it" : {
@@ -37031,6 +38639,12 @@
             "value" : "Rechercher toutes les correspondances de sélection intelligente"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi sva podudaranja pametnog odabira"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37167,6 +38781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Émettre un son"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduciraj zvuk"
           }
         },
         "it" : {
@@ -37307,6 +38927,12 @@
             "value" : "Ouvrir l’historique des commandes…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori povijest naredbi…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37443,6 +39069,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier avec les styles"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiraj sa stilovima"
           }
         },
         "it" : {
@@ -37583,6 +39215,12 @@
             "value" : "Écran alternatif"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternativni zaslon"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37721,6 +39359,12 @@
             "value" : "Pleine hauteur à droite de l’écran"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cijela visina na desnom rubu zaslona"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -37854,6 +39498,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -37997,6 +39647,12 @@
             "value" : "Mode de signalement standard des touches"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardni mod izvještavanja o tipkama"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38133,6 +39789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Redimensionner le volet scindé"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promijeni veličinu razdvojenog okna"
           }
         },
         "it" : {
@@ -38273,6 +39935,12 @@
             "value" : "Alertes"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozorenja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38409,6 +40077,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notifier en cas de changement d’état"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obavijesti o promjeni statusa"
           }
         },
         "it" : {
@@ -38549,6 +40223,12 @@
             "value" : "Sélectionner le groupe d’onglets suivant"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi sljedeću grupu kartica"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38685,6 +40365,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désinstaller l’intégration de Claude Code"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deinstaliraj integraciju za Claude Code"
           }
         },
         "it" : {
@@ -38825,6 +40511,12 @@
             "value" : "Modifier le titre de l’onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi naslov kartice"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38961,6 +40653,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dispositions"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rasporedi"
           }
         },
         "it" : {
@@ -39101,6 +40799,12 @@
             "value" : "Pair précédent"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prethodni član"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39237,6 +40941,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Signaler les touches alternatives"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izvještavaj o alternativnim tipkama"
           }
         },
         "it" : {
@@ -39377,6 +41087,12 @@
             "value" : "Volet scindé"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvojeno okno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39513,6 +41229,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "État du terminal"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stanje terminala"
           }
         },
         "it" : {
@@ -39653,6 +41375,12 @@
             "value" : "Annuler la fermeture"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poništi zatvaranje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39789,6 +41517,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chats IA"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI razgovori"
           }
         },
         "it" : {
@@ -39929,6 +41663,12 @@
             "value" : "Suivant"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naprijed"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40065,6 +41805,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verrouiller la largeur du volet scindé"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaključaj širinu razdvojenog okna"
           }
         },
         "it" : {
@@ -40205,6 +41951,12 @@
             "value" : "Groupes de travail"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radne grupe"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40341,6 +42093,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrer une archive de la session actuelle…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremi arhivu trenutačne sesije…"
           }
         },
         "it" : {
@@ -40481,6 +42239,12 @@
             "value" : "Remplacer la sélection"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamijeni odabir"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40614,6 +42378,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT300"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT300"
@@ -40757,6 +42527,12 @@
             "value" : "Afficher les annotations"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži bilješke"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -40890,6 +42666,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ssh"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ssh"
@@ -41033,6 +42815,12 @@
             "value" : "Gérer"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upravljaj"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41169,6 +42957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Élément 3"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stavka 3"
           }
         },
         "it" : {
@@ -41309,6 +43103,12 @@
             "value" : "Sélectionner le groupe d’onglets précédent"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi prethodnu grupu kartica"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41445,6 +43245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessions enfouies"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakopane sesije"
           }
         },
         "it" : {
@@ -41585,6 +43391,12 @@
             "value" : "Annotation précédente"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prethodna bilješka"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41721,6 +43533,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alerter pour les marques des sessions hors écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozori na oznake u sesijama izvan zaslona"
           }
         },
         "it" : {
@@ -41939,6 +43757,12 @@
             "value" : "Na střed, bez záhlaví"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centrirano, bez trake naslova"
+          }
+        },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
@@ -41997,6 +43821,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installer l’intégration de Claude Code"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instaliraj integraciju za Claude Code"
           }
         },
         "it" : {
@@ -42137,6 +43967,12 @@
             "value" : "Envoyer une notification"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objavi obavijest"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42273,6 +44109,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La session actuelle est la source de diffusion"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trenutačna sesija je izvor emitiranja"
           }
         },
         "it" : {
@@ -42413,6 +44255,12 @@
             "value" : "Alerter à la prochaine marque"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozori na sljedećoj oznaci"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42549,6 +44397,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Augmenter la largeur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povećaj širinu"
           }
         },
         "it" : {
@@ -42689,6 +44543,12 @@
             "value" : "Mode CSI u"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSI u mod"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -42825,6 +44685,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer le séparateur vers le bas"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni razdjelnik prema dolje"
           }
         },
         "it" : {
@@ -42965,6 +44831,12 @@
             "value" : "Redimensionner le volet scindé"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promijeni veličinu razdvojenog okna"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43101,6 +44973,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réinstaller l’intégration de Claude Code"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponovno instaliraj integraciju za Claude Code"
           }
         },
         "it" : {
@@ -43241,6 +45119,12 @@
             "value" : "Installer l’intégration du shell"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instaliraj integraciju ljuske"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43377,6 +45261,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrer"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtriraj"
           }
         },
         "it" : {
@@ -43517,6 +45407,12 @@
             "value" : "Modifier les déclencheurs"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi okidače"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43653,6 +45549,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Suspendre le volet"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauziraj okno"
           }
         },
         "it" : {
@@ -43793,6 +45695,12 @@
             "value" : "Enregistrer les journaux de débogage rétrospectifs"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremi retrospektivne zapise uklanjanja grešaka"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43929,6 +45837,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Extraits"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isječci"
           }
         },
         "it" : {
@@ -44069,6 +45983,12 @@
             "value" : "Sélectionner la commande actuelle"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi trenutačnu naredbu"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44205,6 +46125,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Faire une capture d’écran…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snimi zaslon…"
           }
         },
         "it" : {
@@ -44345,6 +46271,12 @@
             "value" : "Afficher la sélection en mode natif"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renderiraj odabir nativno"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44481,6 +46413,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher la note de la session"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži bilješku sesije"
           }
         },
         "it" : {
@@ -44621,6 +46559,12 @@
             "value" : "Extraits"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isječci"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -44757,6 +46701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier le titre de la fenêtre"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uredi naslov prozora"
           }
         },
         "it" : {
@@ -44897,6 +46847,12 @@
             "value" : "Alertes désactivées…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utišana upozorenja…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45033,6 +46989,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marque précédente"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prethodna oznaka"
           }
         },
         "it" : {
@@ -45173,6 +47135,12 @@
             "value" : "Installer l’environnement d’exécution Python déjà téléchargé"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instaliraj već preuzeto okruženje za izvođenje Pythona"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45309,6 +47277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplacer le séparateur vers la droite"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pomakni razdjelnik udesno"
           }
         },
         "it" : {
@@ -45449,6 +47423,12 @@
             "value" : "Onglet"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kartica"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45585,6 +47565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Télécharger des fichiers…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preuzmi datoteke…"
           }
         },
         "it" : {
@@ -45725,6 +47711,12 @@
             "value" : "Déplacer l’onglet vers la gauche"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premjesti karticu ulijevo"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -45861,6 +47853,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter l’onglet à un nouveau groupe…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj karticu u novu grupu…"
           }
         },
         "it" : {
@@ -46001,6 +47999,12 @@
             "value" : "Afficher la barre d’outils"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži alatnu traku"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46137,6 +48141,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retirer l’onglet du groupe"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukloni karticu iz grupe"
           }
         },
         "it" : {
@@ -46277,6 +48287,12 @@
             "value" : "Compositeur automatique"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatski uređivač naredbi"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46413,6 +48429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir un chat IA…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori AI razgovor…"
           }
         },
         "it" : {
@@ -46553,6 +48575,12 @@
             "value" : "Afficher les horodatages"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prikaži vremenske oznake"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46689,6 +48717,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Collage avancé…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Napredno lijepljenje…"
           }
         },
         "it" : {
@@ -46829,6 +48863,12 @@
             "value" : "Organiser les fenêtres"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posloži prozore"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -46965,6 +49005,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Niveau d’émulation"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razina emulacije"
           }
         },
         "it" : {
@@ -47105,6 +49151,12 @@
             "value" : "Sélectionner les correspondances"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi podudaranja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47241,6 +49293,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir la sélection"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori odabir"
           }
         },
         "it" : {
@@ -47381,6 +49439,12 @@
             "value" : "Historique"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povijest"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47517,6 +49581,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurer l’archive…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovi arhivu…"
           }
         },
         "it" : {
@@ -47657,6 +49727,12 @@
             "value" : "Style de fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stil prozora"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -47793,6 +49869,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pleine largeur en bas de l’écran"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cijela širina na donjem rubu zaslona"
           }
         },
         "it" : {
@@ -47933,6 +50015,12 @@
             "value" : "Contrôles littéraux"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doslovne kontrole"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48069,6 +50157,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Effacer la recherche"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Očisti traženje"
           }
         },
         "it" : {
@@ -48209,6 +50303,12 @@
             "value" : "Expliquer la sortie avec l’IA"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objasni izlaz pomoću AI-ja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48345,6 +50445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Niveau d’émulation"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razina emulacije"
           }
         },
         "it" : {
@@ -48485,6 +50591,12 @@
             "value" : "Rechercher des URL"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi URL-ove"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48621,6 +50733,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remplacer par du JSON mis en forme"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamijeni formatiranim JSON-om"
           }
         },
         "it" : {
@@ -48761,6 +50879,12 @@
             "value" : "Actions"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radnje"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -48897,6 +51021,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les changements de taille mettent à jour le profil"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promjene veličine ažuriraju profil"
           }
         },
         "it" : {
@@ -49037,6 +51167,12 @@
             "value" : "Supprimer les profils récents du menu du Dock"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ukloni nedavne profile iz izbornika Docka"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49173,6 +51309,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sessions enfouies"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakopane sesije"
           }
         },
         "it" : {
@@ -49313,6 +51455,12 @@
             "value" : "Gérer les dépendances…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upravljaj ovisnostima…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49449,6 +51597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Précédent"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Natrag"
           }
         },
         "it" : {
@@ -49589,6 +51743,12 @@
             "value" : "Groupes de travail"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radne grupe"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -49725,6 +51885,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Charger une disposition depuis un fichier…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Učitaj raspored iz datoteke…"
           }
         },
         "it" : {
@@ -49865,6 +52031,12 @@
             "value" : "Raccourcis du mode copie"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prečaci moda kopiranja"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50001,6 +52173,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Volet scindé"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Razdvojeno okno"
           }
         },
         "it" : {
@@ -50141,6 +52319,12 @@
             "value" : "Redimensionner la fenêtre"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promijeni veličinu prozora"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50277,6 +52461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Signaler tous les types d’événements"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izvještavaj o svim vrstama događaja"
           }
         },
         "it" : {
@@ -50417,6 +52607,12 @@
             "value" : "Ajouter un déclencheur…"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj okidač…"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50550,6 +52746,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Web"
@@ -50693,6 +52895,12 @@
             "value" : "modifyOtherKeys mode 1"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modifyOtherKeys mod 1"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -50829,6 +53037,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réduire la largeur"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smanji širinu"
           }
         },
         "it" : {
@@ -50969,6 +53183,12 @@
             "value" : "À droite de l’écran"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desni rub zaslona"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51105,6 +53325,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Coller le fichier encodé en Base64"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zalijepi datoteku kodiranu u Base64"
           }
         },
         "it" : {
@@ -51245,6 +53471,12 @@
             "value" : "Effacer jusqu’à la dernière marque"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Očisti do zadnje oznake"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51381,6 +53613,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Répartir uniformément les volets scindés"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ravnomjerno rasporedi razdvojena okna"
           }
         },
         "it" : {
@@ -51521,6 +53759,12 @@
             "value" : "Importer l’enregistrement"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importiraj snimku"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51657,6 +53901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pavé numérique d’application"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numerička tipkovnica aplikacije"
           }
         },
         "it" : {
@@ -51797,6 +54047,12 @@
             "value" : "Pleine largeur en haut de l’écran"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cijela širina na gornjem rubu zaslona"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51930,6 +54186,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT100"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "VT100"
@@ -52073,6 +54335,12 @@
             "value" : "VT200"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VT200"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52209,6 +54477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déconnecter"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prekini vezu"
           }
         },
         "it" : {
@@ -52349,6 +54623,12 @@
             "value" : "Avertir avant de coller une ligne se terminant par un retour à la ligne à l’invite du shell"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upozori prije lijepljenja jednog retka koji završava novim retkom na odzivniku ljuske"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52485,6 +54765,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher globalement…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronađi globalno…"
           }
         },
         "it" : {
@@ -52625,6 +54911,12 @@
             "value" : "Agrandie"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maksimizirano"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -52761,6 +55053,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Console"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konzola"
           }
         },
         "it" : {
@@ -52901,6 +55199,12 @@
             "value" : "Nouvel onglet à côté de l’onglet actuel"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova kartica pokraj trenutačne kartice"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53037,6 +55341,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Restaurer une disposition de fenêtres sous forme d’onglets"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obnovi raspored prozora kao kartice"
           }
         },
         "it" : {
@@ -53177,6 +55487,12 @@
             "value" : "Remplacer par la valeur encodée en Base 64"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zamijeni vrijednošću kodiranom u Base 64"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53313,6 +55629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activer l’intelligence artificielle"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiviraj umjetnu inteligenciju"
           }
         },
         "it" : {
@@ -53453,6 +55775,12 @@
             "value" : "Session"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesija"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53591,6 +55919,12 @@
             "value" : "Marques nommées"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imenovane oznake"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53727,6 +56061,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pair suivant"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sljedeći član"
           }
         },
         "it" : {

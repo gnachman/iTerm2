@@ -47,6 +47,12 @@
             "value" : "Ignorer silencieusement les erreurs de cette commande"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Šutke ignoriraj greške ove naredbe"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -185,6 +191,12 @@
             "value" : "Commande de coprocessus à exécuter :"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Naredba koprocesa za pokretanje:"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -318,6 +330,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -461,6 +479,12 @@
             "value" : "Annuler"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odustani"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -597,6 +621,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saisir une commande"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unesi naredbu"
           }
         },
         "it" : {

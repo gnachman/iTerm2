@@ -47,6 +47,12 @@
             "value": "Exporter…"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eksportiraj…"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -183,6 +189,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Maintenant"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sada"
           }
         },
         "it": {
@@ -323,6 +335,12 @@
             "value": "Contrôle de la relecture instantanée"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upravljanje trenutnom reprodukcijom"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -459,6 +477,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Annuler"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odustani"
           }
         },
         "it": {
@@ -599,6 +623,12 @@
             "value": "Vue en direct"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prikaz uživo"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
@@ -735,6 +765,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Heure"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vrijeme"
           }
         },
         "it": {

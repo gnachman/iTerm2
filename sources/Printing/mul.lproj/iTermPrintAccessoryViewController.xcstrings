@@ -47,6 +47,12 @@
             "value": "Noir et blanc"
           }
         },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crno-bijelo"
+          }
+        },
         "it": {
           "stringUnit": {
             "state": "translated",
