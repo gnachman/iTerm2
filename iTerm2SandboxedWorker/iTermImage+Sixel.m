@@ -51,6 +51,15 @@ static NSImage *DecodeSixelData(NSData *data) {
     if (data.length >= INT_MAX) {
         return nil;
     }
+    // Refuse oversized buffers inside libsixel, before it commits memory for them.
+    sixel_allocator_t *allocator = NULL;
+    if (SIXEL_FAILED(sixel_allocator_new(&allocator,
+                                         iTermSixelMalloc,
+                                         iTermSixelCalloc,
+                                         iTermSixelRealloc,
+                                         free))) {
+        return nil;
+    }
     SIXELSTATUS status = sixel_decode_raw((unsigned char *)[[data mutableCopy] mutableBytes],
                                           (int)data.length,
                                           &pixels,
@@ -58,7 +67,8 @@ static NSImage *DecodeSixelData(NSData *data) {
                                           &height,
                                           &palette,
                                           &ncolors,
-                                          NULL);
+                                          allocator);
+    sixel_allocator_unref(allocator);
     size_t pixelCount = 0;
     size_t byteCount = 0;
     if (status != SIXEL_OK || ncolors <= 0 || !iTermSixelRGBASize(width, height, &pixelCount, &byteCount)) {
